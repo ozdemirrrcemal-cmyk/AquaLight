@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 🌙 Basit Material 3 Tema -->
+    <!-- 🌙 Basit Material 3 Tema (tam koyu ton uyumlu) -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
 
         <!-- Ana renkler -->
@@ -16,11 +16,16 @@
 
         <!-- Arka plan -->
         <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="colorSurface">@color/md_theme_light_background</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
 
-        <!-- Sistem bar renkleri -->
-        <item name="android:statusBarColor">?attr/colorPrimary</item>
-        <item name="android:navigationBarColor">?attr/colorSurface</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <!-- Sistem bar renkleri (üst + alt) -->
+        <item name="android:statusBarColor">@color/md_theme_light_background</item>
+        <item name="android:navigationBarColor">@color/md_theme_light_background</item>
+
+        <!-- Açık ikon modu kapalı (beyaz ikonlar görünsün) -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
 
         <!-- ActionBar kapalı -->
         <item name="windowActionBar">false</item>

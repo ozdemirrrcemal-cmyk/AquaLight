@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Material 3 color scheme -->
-    <color name="md_theme_light_primary">#006A6A</color>
+    <!-- 🎨 Material 3 color scheme -->
+    <color name="md_theme_light_primary">#0A192F</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_primaryContainer">#71F7F8</color>
-    <color name="md_theme_light_onPrimaryContainer">#002020</color>
+    <color name="md_theme_light_primaryContainer">#0A192F</color>
+    <color name="md_theme_light_onPrimaryContainer">#FFFFFF</color>
 
     <color name="md_theme_light_secondary">#4A6363</color>
     <color name="md_theme_light_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_secondaryContainer">#CCE8E7</color>
-    <color name="md_theme_light_onSecondaryContainer">#041F1F</color>
+    <color name="md_theme_light_secondaryContainer">#0A192F</color>
+    <color name="md_theme_light_onSecondaryContainer">#FFFFFF</color>
 
-    <color name="md_theme_light_background">#FAFDFC</color>
-    <color name="md_theme_light_onBackground">#191C1C</color>
-    <color name="md_theme_light_surface">#FAFDFC</color>
-    <color name="md_theme_light_onSurface">#191C1C</color>
+    <!-- Arka plan ve yüzey renkleri -->
+    <color name="md_theme_light_background">#0A192F</color>
+    <color name="md_theme_light_onBackground">#FFFFFF</color>
+    <color name="md_theme_light_surface">#0A192F</color>
+    <color name="md_theme_light_onSurface">#FFFFFF</color>
 
 </resources>
