@@ -1,0 +1,34 @@
+package com.aqua.aqualight.ui.splash
+
+import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.animation.AnimationUtils
+import android.widget.ImageView
+import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.auth.LoginActivity
+import com.aqua.aqualight.utils.NotificationHelper
+
+class SplashActivity : BaseActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_splash)
+
+        // Bildirim kanalını oluştur (Android 8.0+ için)
+        NotificationHelper.createNotificationChannel(this)
+
+        // Logo animasyonu
+        val logo: ImageView = findViewById(R.id.logoImage)
+        val anim = AnimationUtils.loadAnimation(this, R.anim.logo_fade_scale)
+        logo.startAnimation(anim)
+
+        // 2.4 saniye sonra LoginActivity’ye geç
+        Handler(Looper.getMainLooper()).postDelayed({
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }, 2400)
+    }
+}
