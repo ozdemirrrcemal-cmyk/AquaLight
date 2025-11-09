@@ -19,7 +19,7 @@ else
 fi
 
 echo "🧩 Değişiklikler git'e ekleniyor..."
-git add .
+git add -A
 
 echo "🧾 Commit oluşturuluyor: '$COMMIT_MSG'"
 git commit -m "$COMMIT_MSG" || echo "⚠️ Commit yapılacak değişiklik yok."
