@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 🌙 Material 3 Tema -->
+    <!-- 🌙 Basit Material 3 Tema -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
 
         <!-- Ana renkler -->
@@ -13,13 +13,9 @@
         <!-- İkincil renkler -->
         <item name="colorSecondary">@color/md_theme_light_secondary</item>
         <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
-        <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
-        <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
 
-        <!-- Arka plan ve yüzey renkleri -->
+        <!-- Arka plan -->
         <item name="android:colorBackground">@color/md_theme_light_background</item>
-        <item name="colorSurface">@color/md_theme_light_surface</item>
-        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
 
         <!-- Sistem bar renkleri -->
         <item name="android:statusBarColor">?attr/colorPrimary</item>
@@ -29,9 +25,6 @@
         <!-- ActionBar kapalı -->
         <item name="windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
-
-        <!-- Material 3 animasyonları -->
-        <item name="android:windowAnimationStyle">@style/Animation.Material3.Default</item>
 
     </style>
 
