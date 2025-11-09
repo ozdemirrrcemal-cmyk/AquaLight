@@ -18,9 +18,9 @@
         android:contentDescription="@string/splasch_logo_description"
         android:adjustViewBounds="true"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintTop_margin="140dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="140dp" />
 
     <!-- AquaLight -->
     <TextView
@@ -36,7 +36,7 @@
         app:layout_constraintTop_toBottomOf="@id/logoImage"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_margin="24dp"/>
+        android:layout_marginTop="24dp" />
 
     <!-- Nature Aquarium -->
     <TextView
@@ -52,6 +52,6 @@
         app:layout_constraintTop_toBottomOf="@id/appTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_margin="6dp"/>
+        android:layout_marginTop="6dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
