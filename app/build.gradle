@@ -32,24 +32,50 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // 🔥 Dex ve R8 çakışmalarını önle
+    packagingOptions {
+        resources.excludes += [
+            'META-INF/DEPENDENCIES',
+            'META-INF/LICENSE',
+            'META-INF/LICENSE.txt',
+            'META-INF/license.txt',
+            'META-INF/NOTICE',
+            'META-INF/NOTICE.txt',
+            'META-INF/notice.txt',
+            'META-INF/AL2.0',
+            'META-INF/LGPL2.1'
+        ]
+    }
+
+    // 🔥 Büyük Firebase projelerinde bu şart
+    dexOptions {
+        javaMaxHeapSize "4g"
+    }
+
+    // 🔥 Desugaring aktif
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 }
 
 dependencies {
 
-    // AndroidX temel kütüphaneler
     implementation "androidx.core:core-ktx:1.12.0"
     implementation "androidx.appcompat:appcompat:1.6.1"
     implementation "com.google.android.material:material:1.10.0"
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
 
-    // Navigation + Fragments
+    // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:2.7.5"
     implementation "androidx.navigation:navigation-ui-ktx:2.7.5"
 
     // RecyclerView
     implementation "androidx.recyclerview:recyclerview:1.3.2"
 
-    // Firebase BOM (tüm Firebase sürümleri senkron)
+    // Firebase BOM (Tüm modüller aynı versiyondan)
     implementation platform("com.google.firebase:firebase-bom:32.7.0")
     implementation "com.google.firebase:firebase-analytics"
     implementation "com.google.firebase:firebase-auth"
@@ -62,12 +88,13 @@ dependencies {
     implementation "com.google.firebase:firebase-perf"
 
     // Google Sign-In
-    implementation "com.google.android.gms:play-services-auth:20.7.0"
+    implementation "com.google.android.gms:play-services-auth:21.1.0"
 
-    // Test kütüphaneleri
+    // 🔥 Desugaring library (Java 8+ API desteği)
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
+
+    // Test
     testImplementation "junit:junit:4.13.2"
     androidTestImplementation "androidx.test.ext:junit:1.1.5"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
 }
-
-apply plugin: 'com.google.gms.google-services'
