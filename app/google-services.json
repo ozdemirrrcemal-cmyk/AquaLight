@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "660201044993",
+    "project_id": "aqualight-58aa2",
+    "storage_bucket": "aqualight-58aa2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:660201044993:android:ea2494342aaf9979351400",
+        "android_client_info": {
+          "package_name": "com.aqua.aqualight"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqi2U8ADE3oVnHBzXTsEWbPne3qy1lpDU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
