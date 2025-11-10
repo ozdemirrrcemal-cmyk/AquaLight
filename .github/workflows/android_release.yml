@@ -33,8 +33,8 @@ jobs:
       env:
         RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
       run: |
-        echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > release-key.jks
-        echo "✅ release-key.jks dosyası oluşturuldu"
+        echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > app/release-key.jks
+        echo "✅ app/release-key.jks oluşturuldu!"
 
     - name: ⚙️ Grant permission for Gradle
       run: chmod +x ./gradlew
@@ -61,11 +61,11 @@ jobs:
 
         echo "version_name=$NEW_VERSION_NAME" >> $GITHUB_OUTPUT
 
-    # 🚀 Build signed release APK (YAML hatası DÜZELTİLDİ)
+    # 🚀 Build signed release APK
     - name: 🚀 Build Signed Release APK
       run: |
         ./gradlew assembleRelease --stacktrace --no-daemon \
-          -Pandroid.injected.signing.store.file=release-key.jks \
+          -Pandroid.injected.signing.store.file=app/release-key.jks \
           -Pandroid.injected.signing.store.password=${{ secrets.RELEASE_KEYSTORE_PASSWORD }} \
           -Pandroid.injected.signing.key.alias=${{ secrets.RELEASE_KEY_ALIAS }} \
           -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
