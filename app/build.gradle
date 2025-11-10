@@ -18,8 +18,19 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // 🔐 Release imzalama ayarları (EKLENDİ)
+    signingConfigs {
+        release {
+            storeFile file("../release-key.jks") // ✅ repo kökü, app klasörü değil!
+            storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
+            keyAlias System.getenv("RELEASE_KEY_ALIAS")
+            keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release // ✅ release imzası eklendi
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
