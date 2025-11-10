@@ -45,11 +45,18 @@ jobs:
     - name: ⚙️ Grant permission for Gradle
       run: chmod +x ./gradlew
 
-    # 🧹 Temizlik (proje + cache)
-    - name: 🧹 Clean Gradle & project
+    # 🧹 Manuel cache temizleme (sadece commit mesajı 'clean-cache' ise)
+    - name: 🧹 Optional cache cleanup
+      if: ${{ github.event.head_commit.message == 'clean-cache' }}
       run: |
-        rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper
-        ./gradlew clean --no-daemon
+        echo "🧽 Commit 'clean-cache' algılandı — tüm build cache siliniyor..."
+        rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper app/build build
+
+    # ⚡ Hızlı temizlik (her build öncesi sadece build klasörleri)
+    - name: ⚡ Quick project clean
+      run: |
+        echo "🧹 Hızlı temizlik yapılıyor (app/build + build)..."
+        rm -rf app/build build
 
     # 🚀 Release APK derle
     - name: 🚀 Build Signed Release APK
