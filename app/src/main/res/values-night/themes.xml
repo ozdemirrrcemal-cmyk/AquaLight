@@ -11,13 +11,14 @@
         <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>
 
         <!-- Arka plan ve yüzey -->
+        <item name="colorBackground">@color/md_theme_dark_background</item>
         <item name="android:colorBackground">@color/md_theme_dark_background</item>
         <item name="colorSurface">@color/md_theme_dark_surface</item>
         <item name="colorOnSurface">@color/md_theme_dark_onSurface</item>
 
         <!-- Sistem bar renkleri -->
-        <item name="android:statusBarColor">@color/md_theme_dark_surface</item>
-        <item name="android:navigationBarColor">@color/md_theme_dark_surface</item>
+        <item name="android:statusBarColor">@color/md_theme_dark_background</item>
+        <item name="android:navigationBarColor">@color/md_theme_dark_background</item>
 
         <!-- Koyu modda beyaz ikonlar -->
         <item name="android:windowLightStatusBar">false</item>
@@ -38,7 +39,7 @@
     </style>
 
     <style name="SplashSubtitleText">
-        <item name="android:textColor">#AAB6C1</item>
+        <item name="android:textColor">@color/md_theme_dark_onSurface</item>
         <item name="android:textSize">16sp</item>
         <item name="fontFamily">@font/raleway_medium</item>
         <item name="android:letterSpacing">0.04</item>

@@ -11,6 +11,7 @@
         <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
 
         <!-- Arka plan ve yüzey -->
+        <item name="colorBackground">@color/md_theme_light_background</item>
         <item name="android:colorBackground">@color/md_theme_light_background</item>
         <item name="colorSurface">@color/md_theme_light_surface</item>
         <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
