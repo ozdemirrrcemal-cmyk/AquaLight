@@ -14,7 +14,7 @@
         android:id="@+id/logoImage"
         android:layout_width="160dp"
         android:layout_height="160dp"
-        android:src="@drawable/logo"
+        android:src="@drawable/logo_login"
         android:contentDescription="@string/splasch_logo_description"
         android:adjustViewBounds="true"
         app:layout_constraintTop_toTopOf="parent"
