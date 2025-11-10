@@ -1,28 +1,24 @@
 #!/bin/bash
-# 🚀 AIDE → GitHub tam senkronizasyon scripti (Cemal Özdemir için)
+# AIDE → GitHub senkronizasyon scripti
 
 AIDE_DIR="/storage/internal/project/AquaLight"
 GIT_DIR="$HOME/projects/AquaLight"
 
-echo "🧹 Senkronizasyon başlıyor..."
+echo "Senkronizasyon basliyor..."
 
-# 🔹 Git klasörüne gir
-cd "$GIT_DIR" || { echo "❌ Git klasörüne girilemedi!"; exit 1; }
+cd "$GIT_DIR" || { echo "Git klasorune girilemedi!"; exit 1; }
 
-# 🔹 Eğer detached HEAD varsa main'e dön
 if [ "$(git rev-parse --abbrev-ref HEAD)" = "HEAD" ]; then
-    echo "⚙️ Detached HEAD algılandı, main dalına geçiliyor..."
+    echo "Detached HEAD algilandi, main dalina geciliyor..."
     git checkout main || git checkout -b main origin/main
 fi
 
-# 🔹 Rebase kalıntısı varsa iptal et
 if [ -d ".git/rebase-apply" ] || [ -d ".git/rebase-merge" ]; then
-    echo "⚠️ Önceki rebase işlemi tespit edildi, temizleniyor..."
+    echo "Onceki rebase islemi tespit edildi, temizleniyor..."
     git rebase --abort 2>/dev/null
 fi
 
-# 🔹 Dosyaları birebir senkronize et (AIDE'deki silinenler de kaldırılır)
-echo "📁 Dosyalar kopyalanıyor..."
+echo "Dosyalar kopyalaniyor..."
 rsync -av --delete "$AIDE_DIR"/ "$GIT_DIR"/ \
   --exclude=".git" \
   --exclude=".gradle" \
@@ -30,28 +26,24 @@ rsync -av --delete "$AIDE_DIR"/ "$GIT_DIR"/ \
   --exclude="*.iml" \
   >/dev/null
 
-# 🔹 Değişiklikleri ekle (silinenler dahil)
-echo "🧩 Değişiklikler hazırlanıyor..."
+echo "Degisiklikler hazirlaniyor..."
 git add -A
 
-# 🔹 Commit mesajı
 if [ -z "$1" ]; then
-    COMMIT_MSG="sync: AIDE değişiklikleri"
+    COMMIT_MSG="sync: AIDE degisiklikleri"
 else
     COMMIT_MSG="$1"
 fi
 
-# 🔹 Commit oluştur
 if git diff --cached --quiet; then
-    echo "⚠️ Commit yapılacak değişiklik yok."
+    echo "Commit yapilacak degisiklik yok."
 else
-    echo "🧾 Commit oluşturuluyor: '$COMMIT_MSG'"
+    echo "Commit olusturuluyor: '$COMMIT_MSG'"
     git commit -m "$COMMIT_MSG"
 fi
 
-# 🔹 GitHub ile senkronize et
-echo "🌐 GitHub ile senkronize ediliyor..."
+echo "GitHub ile senkronize ediliyor..."
 git pull --rebase origin main
-git push origin main && echo "✅ Gönderim tamamlandı!" || echo "❌ Push başarısız!"
+git push origin main && echo "Gonderim tamamlandi!" || echo "Push basarisiz!"
 
-echo "✨ İşlem tamam!"
+echo "Islem tamam!"
