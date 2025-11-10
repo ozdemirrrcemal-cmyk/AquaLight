@@ -4,7 +4,7 @@
 AIDE_DIR="/storage/internal/project/AquaLight"
 GIT_DIR="$HOME/projects/AquaLight"
 
-MODE=${1:-debug}                       # 1. argüman: debug veya release (varsayılan debug)
+MODE=${1:-debug}                        # 1. argüman: debug veya release (varsayılan debug)
 MESSAGE=${2:-"sync: AIDE değişiklikleri"}  # 2. argüman: commit mesajı
 
 BRANCH="main"
@@ -17,7 +17,15 @@ echo "🧹 Senkronizasyon başlıyor ($MODE → $BRANCH)..."
 cd "$GIT_DIR" || { echo "❌ Git klasörüne girilemedi!"; exit 1; }
 
 # 🔁 Hedef dalı kontrol et / oluştur
+git fetch origin "$BRANCH" --quiet
 git checkout "$BRANCH" 2>/dev/null || git checkout -b "$BRANCH" "origin/$BRANCH"
+
+# ⚙️ Aktif dalı kontrol et, gerekirse düzelt
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$CURRENT_BRANCH" != "$BRANCH" ]]; then
+  echo "⚙️ Şu anda '$CURRENT_BRANCH' dalındasın, '$BRANCH' dalına geçiliyor..."
+  git checkout "$BRANCH"
+fi
 
 # 🧽 Rebase kalıntılarını temizle
 if [ -d ".git/rebase-apply" ] || [ -d ".git/rebase-merge" ]; then
