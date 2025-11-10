@@ -2,18 +2,18 @@ name: Android Release CI/CD
 
 on:
   push:
-    branches: [ "release" ]
+    branches: ["release"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # 📁 Kodu al
+    # 📁 Repo'yu al
     - name: 🧩 Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # 🔑 Git tag oluşturmak için gereklidir
+        fetch-depth: 0
 
     # ☕ JDK 17 kurulumu
     - name: ☕ Install JDK 17
@@ -27,13 +27,13 @@ jobs:
     - name: 🧰 Set up Android SDK
       uses: android-actions/setup-android@v3
 
-    # 📦 SDK paketlerini yükle
+    # 📦 Gerekli SDK paketleri
     - name: 📦 Install SDK packages
       run: |
         sdkmanager --update
         sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
 
-    # 🔑 Release keystore oluştur
+    # 🔑 Keystore oluştur (köke)
     - name: 🔑 Set up release keystore
       env:
         RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
@@ -45,38 +45,32 @@ jobs:
     - name: ⚙️ Grant permission for Gradle
       run: chmod +x ./gradlew
 
-    # 🧹 Projeyi temizle
-    - name: 🧹 Clean project
-      run: ./gradlew clean --no-daemon
+    # 🧹 Temizlik (proje + cache)
+    - name: 🧹 Clean Gradle & project
+      run: |
+        rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper
+        ./gradlew clean --no-daemon
 
-    # 🔢 Version Code & Name otomatik artır
+    # 🔢 Versiyon artırma
     - name: 📈 Increment versionCode and versionName
       id: version
       run: |
         VERSION_FILE="app/build.gradle"
         OLD_VERSION_CODE=$(grep "versionCode" $VERSION_FILE | awk '{print $2}')
         OLD_VERSION_NAME=$(grep "versionName" $VERSION_FILE | awk -F\" '{print $2}')
-
         NEW_VERSION_CODE=$((OLD_VERSION_CODE + 1))
         IFS='.' read -r MAJOR MINOR PATCH <<< "${OLD_VERSION_NAME}"
         NEW_VERSION_NAME="${MAJOR}.${MINOR}.$((PATCH + 1))"
-
-        echo "Yeni sürüm: $NEW_VERSION_NAME ($NEW_VERSION_CODE)"
         sed -i "s/versionCode.*/versionCode ${NEW_VERSION_CODE}/" $VERSION_FILE
         sed -i "s/versionName \".*\"/versionName \"${NEW_VERSION_NAME}\"/" $VERSION_FILE
-
         echo "version_name=$NEW_VERSION_NAME" >> $GITHUB_OUTPUT
+        echo "🔢 Yeni sürüm: $NEW_VERSION_NAME ($NEW_VERSION_CODE)"
 
-    # 🚀 İmzalı release APK oluştur
+    # 🚀 Release APK derle
     - name: 🚀 Build Signed Release APK
-      run: |
-        ./gradlew assembleRelease --stacktrace --no-daemon \
-          -Pandroid.injected.signing.store.file=release-key.jks \
-          -Pandroid.injected.signing.store.password=${{ secrets.RELEASE_KEYSTORE_PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=${{ secrets.RELEASE_KEY_ALIAS }} \
-          -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
+      run: ./gradlew assembleRelease --stacktrace --no-daemon
 
-    # ✅ APK kontrolü
+    # ✅ APK doğrula
     - name: ✅ Verify release output
       run: |
         if [ -f app/build/outputs/apk/release/app-release.apk ]; then
@@ -86,7 +80,7 @@ jobs:
           exit 1
         fi
 
-    # 🏷️ GitHub Tag oluştur
+    # 🏷️ Tag oluştur
     - name: 🏷️ Create and push version tag
       run: |
         VERSION=${{ steps.version.outputs.version_name }}
@@ -95,7 +89,7 @@ jobs:
         git tag -a "v${VERSION}" -m "Release ${VERSION}"
         git push origin "v${VERSION}"
 
-    # 📤 APK'yı artefakt olarak yükle
+    # 📤 APK’yı yükle
     - name: 📤 Upload Release APK
       uses: actions/upload-artifact@v4
       with:
