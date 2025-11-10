@@ -1,6 +1,31 @@
 <resources>
     <string name="app_name">AquaLight</string>
 	<string name="splasch_logo_description">AquaLight Logo</string>
-<string name="splasch_app_title">AquaLight</string>
-<string name="splasch_app_subtitle">Nature Aquarium</string>
+    <string name="splasch_app_title">AquaLight</string>
+    <string name="splasch_app_subtitle">Nature Aquarium</string>
+
+    <string name="main_login_app_name">AquaLight</string>
+    <string name="main_login_tagline">Nature Aquarium</string>
+
+    <!-- 🎬 Video / Blur Descriptions -->
+    <string name="main_login_video_background_description">Background aquarium video</string>
+    <string name="main_login_blur_overlay_description">Blur overlay for background</string>
+
+    <!-- 🖼️ Logo -->
+    <string name="main_login_logo_description">AquaLight logo</string>
+
+    <!-- 🧩 Fragment Containers -->
+    <string name="main_login_fragment_container_description">Fragment container for login</string>
+    <string name="main_login_fullscreen_container_description">Fullscreen container for temporary content</string>
+
+    <!-- 🔘 Button Labels -->
+    <string name="login_google">Continue with Google</string>
+    <string name="login_google_desc">Sign in using your Google account</string>
+
+    <string name="login_sign_in">Sign In</string>
+    <string name="login_sign_in_desc">Navigate to sign in screen</string>
+
+    <string name="login_register">Create Account</string>
+    <string name="login_register_desc">Navigate to registration screen</string>
+	
 </resources>

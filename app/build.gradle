@@ -18,10 +18,9 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // 🔐 Release imzalama ayarları
     signingConfigs {
         release {
-            storeFile file("../release-key.jks") // ✅ proje kökünde (app dışında)
+            storeFile file("../release-key.jks")
             storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
             keyAlias System.getenv("RELEASE_KEY_ALIAS")
             keyPassword System.getenv("RELEASE_KEY_PASSWORD")
@@ -30,7 +29,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release // ✅ release imzası aktif
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -66,15 +65,26 @@ android {
 }
 
 dependencies {
+    // 🧩 Android temel bileşenleri
     implementation "androidx.core:core-ktx:1.12.0"
     implementation "androidx.appcompat:appcompat:1.6.1"
     implementation "com.google.android.material:material:1.12.0"
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
 
+    // 🧭 Navigation bileşenleri
     implementation "androidx.navigation:navigation-fragment-ktx:2.7.5"
     implementation "androidx.navigation:navigation-ui-ktx:2.7.5"
+
+    // 📜 RecyclerView
     implementation "androidx.recyclerview:recyclerview:1.3.2"
 
+    // 🎬 ExoPlayer (arka plan video için)
+    implementation "com.google.android.exoplayer:exoplayer:2.19.1"
+
+    // 🧊 BlurView (arka plan blur efekti için)
+    implementation "com.github.Dimezis:BlurView:version-2.0.3"
+
+    // 🔥 Firebase
     implementation platform("com.google.firebase:firebase-bom:32.7.0")
     implementation "com.google.firebase:firebase-analytics"
     implementation "com.google.firebase:firebase-auth"
@@ -86,9 +96,13 @@ dependencies {
     implementation "com.google.firebase:firebase-config"
     implementation "com.google.firebase:firebase-perf"
 
+    // 🔐 Google Sign-In
     implementation "com.google.android.gms:play-services-auth:21.1.0"
+
+    // ☕ Java 8+ API Desteği
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"
 
+    // 🧪 Test kütüphaneleri
     testImplementation "junit:junit:4.13.2"
     androidTestImplementation "androidx.test.ext:junit:1.1.5"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"

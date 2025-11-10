@@ -28,7 +28,46 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <!-- Splash metin stilleri -->
+    <!-- 🔴 Kırmızı Buton -->
+    <style name="RedButton" parent="Widget.Material3.Button">
+        <item name="android:backgroundTint">#DB4437</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="cornerRadius">15dp</item>
+        <item name="android:paddingTop">17dp</item>
+        <item name="android:paddingBottom">17dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:fontFamily">@font/poppins_medium</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- ⚫ Siyah Buton -->
+    <style name="BlackButton" parent="Widget.Material3.Button">
+        <item name="android:backgroundTint">@android:color/black</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="cornerRadius">15dp</item>
+        <item name="android:paddingTop">17dp</item>
+        <item name="android:paddingBottom">17dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:fontFamily">@font/poppins_medium</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- ⚪ Beyaz Buton -->
+    <style name="WhiteButton" parent="Widget.Material3.Button">
+        <item name="android:backgroundTint">@android:color/white</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="cornerRadius">15dp</item>
+        <item name="android:paddingTop">17dp</item>
+        <item name="android:paddingBottom">17dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:fontFamily">@font/poppins_medium</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- 🌊 Splash ekran yazı stilleri -->
     <style name="SplashTitleText">
         <item name="android:textColor">@color/md_theme_light_onPrimary</item>
         <item name="android:textSize">32sp</item>

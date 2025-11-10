@@ -15,7 +15,7 @@
     <color name="md_theme_dark_background">#0A192F</color>
     <color name="md_theme_dark_onBackground">#FFFFFF</color>
     <color name="md_theme_dark_surface">#0A192F</color>
-    <color name="md_theme_dark_onSurface">#FFFFFF</color>
+    <color name="md_theme_dark_onSurface">#AAB6C1</color>
 
     <!-- ☀️ Material 3 Light Color Scheme -->
     <color name="md_theme_light_primary">#152B45</color>
@@ -31,6 +31,6 @@
     <color name="md_theme_light_background">#152B45</color>
     <color name="md_theme_light_onBackground">#FFFFFF</color>
     <color name="md_theme_light_surface">#152B45</color>
-    <color name="md_theme_light_onSurface">#FFFFFF</color>
+    <color name="md_theme_light_onSurface">#AAB6C1</color>
 
 </resources>
