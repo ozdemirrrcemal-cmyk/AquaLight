@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 🌙 Dark Mode Colors -->
+    <color name="background_color">#0A192F</color> <!-- koyu tema arka plan -->
+    <color name="text_primary_color">#FFFFFF</color>
+
+    <color name="md_theme_dark_primary">#0A192F</color>
+    <color name="md_theme_dark_onPrimary">#FFFFFF</color>
+    <color name="md_theme_dark_secondary">#4A6363</color>
+    <color name="md_theme_dark_onSecondary">#FFFFFF</color>
+    <color name="md_theme_dark_surface">#0A192F</color>
+    <color name="md_theme_dark_onSurface">#FFFFFF</color>
+
+</resources>
