@@ -51,21 +51,6 @@ jobs:
         rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper
         ./gradlew clean --no-daemon
 
-    # 🔢 Versiyon artırma
-    - name: 📈 Increment versionCode and versionName
-      id: version
-      run: |
-        VERSION_FILE="app/build.gradle"
-        OLD_VERSION_CODE=$(grep "versionCode" $VERSION_FILE | awk '{print $2}')
-        OLD_VERSION_NAME=$(grep "versionName" $VERSION_FILE | awk -F\" '{print $2}')
-        NEW_VERSION_CODE=$((OLD_VERSION_CODE + 1))
-        IFS='.' read -r MAJOR MINOR PATCH <<< "${OLD_VERSION_NAME}"
-        NEW_VERSION_NAME="${MAJOR}.${MINOR}.$((PATCH + 1))"
-        sed -i "s/versionCode.*/versionCode ${NEW_VERSION_CODE}/" $VERSION_FILE
-        sed -i "s/versionName \".*\"/versionName \"${NEW_VERSION_NAME}\"/" $VERSION_FILE
-        echo "version_name=$NEW_VERSION_NAME" >> $GITHUB_OUTPUT
-        echo "🔢 Yeni sürüm: $NEW_VERSION_NAME ($NEW_VERSION_CODE)"
-
     # 🚀 Release APK derle
     - name: 🚀 Build Signed Release APK
       env:
@@ -84,18 +69,9 @@ jobs:
           exit 1
         fi
 
-    # 🏷️ Tag oluştur
-    - name: 🏷️ Create and push version tag
-      run: |
-        VERSION=${{ steps.version.outputs.version_name }}
-        git config user.name "github-actions"
-        git config user.email "actions@github.com"
-        git tag -a "v${VERSION}" -m "Release ${VERSION}"
-        git push origin "v${VERSION}"
-
     # 📤 APK’yı yükle
     - name: 📤 Upload Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: AquaLight-${{ steps.version.outputs.version_name }}
+        name: AquaLight-ManualBuild
         path: app/build/outputs/apk/release/app-release.apk
