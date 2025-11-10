@@ -9,7 +9,7 @@
     android:background="#0A192F"
     tools:context=".ui.splash.SplashActivity">
 
-    <!-- Logo -->
+    <!-- 🔹 Logo -->
     <ImageView
         android:id="@+id/logoImage"
         android:layout_width="160dp"
@@ -22,33 +22,21 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="140dp" />
 
-    <!-- AquaLight -->
+    <!-- 🔹 AquaLight Başlık -->
     <TextView
         android:id="@+id/appTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/SplashTitleText"
         android:text="@string/splasch_app_title"
-        android:textColor="#FFFFFF"
-        android:textSize="32sp"
-        android:fontFamily="@font/poppins_bold"
-        android:letterSpacing="0.08"
-        android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/logoImage"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="24dp" />
 
-    <!-- Nature Aquarium -->
+    <!-- 🔹 Alt Başlık -->
     <TextView
         android:id="@+id/appSubtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/SplashSubtitleText"
         android:text="@string/splasch_app_subtitle"
-        android:textColor="#AAB6C1"
-        android:textSize="16sp"
-        android:fontFamily="@font/raleway_medium"
-        android:letterSpacing="0.04"
-        android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/appTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

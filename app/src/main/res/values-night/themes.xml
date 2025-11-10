@@ -1,29 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 🌙 Basit Material 3 Tema (tam koyu ton uyumlu) -->
+    <!-- 🌙 Night Mode için koyu tonlarla uyumlu Material 3 Tema -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
 
-        <!-- Ana renkler -->
-        <item name="colorPrimary">@color/md_theme_light_primary</item>
-        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
-        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
-        <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
-
-        <!-- İkincil renkler -->
-        <item name="colorSecondary">@color/md_theme_light_secondary</item>
-        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
-
-        <!-- Arka plan -->
+        <!-- Arka plan tamamen aynı koyu ton -->
         <item name="android:colorBackground">#0A192F</item>
         <item name="colorSurface">#0A192F</item>
-        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
+        <item name="colorOnSurface">#FFFFFF</item>
 
-        <!-- Sistem bar renkleri (üst + alt) -->
+        <!-- Sistem barlar -->
         <item name="android:statusBarColor">#0A192F</item>
         <item name="android:navigationBarColor">#0A192F</item>
 
-        <!-- Koyu tema ikon uyumu -->
+        <!-- Beyaz ikonlar görünür olsun -->
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
 
@@ -33,21 +23,17 @@
 
     </style>
 
-    <!-- Splash başlık ve alt başlık -->
+    <!-- Splash metin stilleri gece de aynı kalsın -->
     <style name="SplashTitleText">
         <item name="android:textColor">#FFFFFF</item>
         <item name="android:textSize">32sp</item>
         <item name="fontFamily">@font/poppins_bold</item>
-        <item name="android:letterSpacing">0.08</item>
-        <item name="android:gravity">center</item>
     </style>
 
     <style name="SplashSubtitleText">
         <item name="android:textColor">#AAB6C1</item>
         <item name="android:textSize">16sp</item>
         <item name="fontFamily">@font/raleway_medium</item>
-        <item name="android:letterSpacing">0.04</item>
-        <item name="android:gravity">center</item>
     </style>
 
 </resources>
