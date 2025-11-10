@@ -1,0 +1,66 @@
+# 🧩 Android & AIDE Projesi için .gitignore
+
+# Gradle
+.gradle/
+build/
+**/build/
+gradle-app.setting
+local.properties
+gradlew.bat
+
+# IDE dosyaları
+.idea/
+*.iml
+*.ipr
+*.iws
+/.idea/caches/
+/.idea/libraries/
+ /.idea/modules.xml
+ /.idea/workspace.xml
+
+# Android Studio
+captures/
+.externalNativeBuild/
+.cxx/
+.DS_Store
+Thumbs.db
+
+# Kopyalanan / Geçici dosyalar
+*.log
+*.bak
+*.tmp
+*.swp
+*.lock
+
+# AIDE özel
+/.aide/
+bin/
+gen/
+
+# Nano, Vim, AIDE gibi editörlerin bıraktığı yedekler
+*~
+*.save
+*.old
+
+# Çıktılar
+app/release/
+app/debug/
+outputs/
+app/build/outputs/apk/
+
+# Keystore (manuel eklenirse)
+*.keystore
+*.jks
+
+# Paket bağımlılık cache
+node_modules/
+yarn.lock
+
+# Gradle cache
+/.gradle/
+
+# Android lint ve test dosyaları
+lint/
+lint-results*
+test-results/
+reports/
