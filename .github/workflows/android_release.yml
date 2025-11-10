@@ -68,6 +68,10 @@ jobs:
 
     # 🚀 Release APK derle
     - name: 🚀 Build Signed Release APK
+      env:
+        RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
       run: ./gradlew assembleRelease --stacktrace --no-daemon
 
     # ✅ APK doğrula
