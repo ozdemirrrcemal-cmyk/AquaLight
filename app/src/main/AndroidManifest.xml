@@ -9,7 +9,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <!-- 🟢 SplashActivity artık uygulamanın başlangıç noktası -->
+        <!-- 🟢 SplashActivity: uygulamanın başlangıç noktası -->
         <activity
             android:name=".ui.splash.SplashActivity"
             android:exported="true"
@@ -20,7 +20,14 @@
             </intent-filter>
         </activity>
 
-        <!-- 🟣 Normal MainActivity (Splash'tan sonra açılacak) -->
+        <!-- 🟣 LoginActivity: Splash sonrası açılacak ekran -->
+        <activity
+            android:name=".ui.main.LoginActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme" />
+
+        <!-- ⚫ MainActivity: Girişten sonra kullanılacak ana ekran -->
         <activity
             android:name=".ui.main.MainActivity"
             android:exported="false"

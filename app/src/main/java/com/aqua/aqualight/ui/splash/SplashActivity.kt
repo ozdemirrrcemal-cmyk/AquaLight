@@ -8,7 +8,7 @@ import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.ui.main.MainActivity
+import com.aqua.aqualight.ui.main.LoginActivity
 
 class SplashActivity : BaseActivity() {
 
@@ -16,14 +16,14 @@ class SplashActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        // Logo animasyonu
+        // 🎞️ Logo animasyonu başlat
         val logo: ImageView = findViewById(R.id.logoImage)
         val anim = AnimationUtils.loadAnimation(this, R.anim.logo_fade_scale)
         logo.startAnimation(anim)
 
-        // 2.4 saniye sonra MainActivity’ye geç
+        // 2.4 saniye sonra LoginActivity'ye yönlendir
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }, 2400)
     }
