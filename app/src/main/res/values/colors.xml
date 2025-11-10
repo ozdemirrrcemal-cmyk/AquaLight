@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- 🎨 Material 3 Light Color Scheme -->
+    <!-- 🌙 Material 3 Dark Color Scheme -->
     <color name="md_theme_dark_primary">#0A192F</color>
     <color name="md_theme_dark_onPrimary">#FFFFFF</color>
     <color name="md_theme_dark_primaryContainer">#0A192F</color>
