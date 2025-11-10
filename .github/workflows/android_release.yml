@@ -1,0 +1,98 @@
+name: Android Release CI/CD
+
+on:
+  push:
+    branches: [ "release" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🧩 Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 🔑 Git tag oluşturmak için gereklidir
+
+    - name: ☕ Install JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: 🧰 Set up Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: 📦 Install SDK packages
+      run: |
+        sdkmanager --update
+        sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
+
+    - name: 🔑 Set up release keystore
+      env:
+        RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      run: |
+        echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > release-key.jks
+
+    - name: ⚙️ Grant permission for Gradle
+      run: chmod +x ./gradlew
+
+    # 🧹 Clean build
+    - name: Clean project
+      run: ./gradlew clean --no-daemon
+
+    # 🔢 Version Code & Name Otomatik Artışı
+    - name: 📈 Increment versionCode and versionName
+      id: version
+      run: |
+        VERSION_FILE="app/build.gradle"
+        OLD_VERSION_CODE=$(grep "versionCode" $VERSION_FILE | awk '{print $2}')
+        OLD_VERSION_NAME=$(grep "versionName" $VERSION_FILE | awk -F\" '{print $2}')
+
+        NEW_VERSION_CODE=$((OLD_VERSION_CODE + 1))
+        IFS='.' read -r MAJOR MINOR PATCH <<< "${OLD_VERSION_NAME}"
+        NEW_VERSION_NAME="${MAJOR}.${MINOR}.$((PATCH + 1))"
+
+        echo "Yeni sürüm: $NEW_VERSION_NAME ($NEW_VERSION_CODE)"
+        sed -i "s/versionCode.*/versionCode ${NEW_VERSION_CODE}/" $VERSION_FILE
+        sed -i "s/versionName \".*\"/versionName \"${NEW_VERSION_NAME}\"/" $VERSION_FILE
+
+        echo "version_name=$NEW_VERSION_NAME" >> $GITHUB_OUTPUT
+
+    # 🚀 Build signed release APK
+    - name: Build Signed Release APK
+      run: ./gradlew assembleRelease --stacktrace --no-daemon \
+        -Pandroid.injected.signing.store.file=release-key.jks \
+        -Pandroid.injected.signing.store.password=${{ secrets.RELEASE_KEYSTORE_PASSWORD }} \
+        -Pandroid.injected.signing.key.alias=${{ secrets.RELEASE_KEY_ALIAS }} \
+        -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
+
+    # ✅ Verify release output
+    - name: Verify APK
+      run: |
+        if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+          echo "✅ Release APK başarıyla oluşturuldu!"
+        else
+          echo "❌ APK bulunamadı!"
+          exit 1
+        fi
+
+    # 🏷️ GitHub Tag oluştur
+    - name: Create and push version tag
+      run: |
+        VERSION=${{ steps.version.outputs.version_name }}
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+        git tag -a "v${VERSION}" -m "Release ${VERSION}"
+        git push origin "v${VERSION}"
+
+    # 📤 APK'yı artefakt olarak yükle
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: AquaLight-${{ steps.version.outputs.version_name }}
+        path: app/build/outputs/apk/release/app-release.apk
