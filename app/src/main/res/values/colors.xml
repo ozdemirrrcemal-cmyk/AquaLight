@@ -1,21 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+<color name="md_theme_dark_primary">#0A192F</color>
+<color name="md_theme_dark_onPrimary">#FFFFFF</color>
+<color name="md_theme_dark_primaryContainer">#0A192F</color>
+<color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
 
-    <!-- 🎨 Material 3 Light Color Scheme -->
-    <color name="md_theme_light_primary">#152B45</color>
-    <color name="md_theme_light_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_primaryContainer">#274263</color>
-    <color name="md_theme_light_onPrimaryContainer">#E5E9EF</color>
+<color name="md_theme_dark_secondary">#4A6363</color>
+<color name="md_theme_dark_onSecondary">#FFFFFF</color>
+<color name="md_theme_dark_secondaryContainer">#0A192F</color>
+<color name="md_theme_dark_onSecondaryContainer">#FFFFFF</color>
 
-    <color name="md_theme_light_secondary">#4A6363</color>
-    <color name="md_theme_light_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_secondaryContainer">#CCE8E7</color>
-    <color name="md_theme_light_onSecondaryContainer">#041F1F</color>
-
-    <!-- Arka plan ve yüzey -->
-    <color name="md_theme_light_background">#152B45</color>
-    <color name="md_theme_light_onBackground">#FFFFFF</color>
-    <color name="md_theme_light_surface">#152B45</color>
-    <color name="md_theme_light_onSurface">#FFFFFF</color>
+<color name="md_theme_dark_background">#0A192F</color>
+<color name="md_theme_dark_onBackground">#FFFFFF</color>
+<color name="md_theme_dark_surface">#0A192F</color>
+<color name="md_theme_dark_onSurface">#FFFFFF</color>
 
 </resources>
