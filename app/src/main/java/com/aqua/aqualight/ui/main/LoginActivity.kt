@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.main
 
 import android.os.Bundle
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -13,12 +15,13 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.material.button.MaterialButton
 import eightbitlab.com.blurview.BlurView
 import eightbitlab.com.blurview.RenderScriptBlur
-import android.view.ViewGroup
 
 class LoginActivity : BaseActivity() {
 
-    private lateinit var videoBackground: PlayerView
+    private lateinit var playerView: PlayerView
     private lateinit var blurView: BlurView
+    private lateinit var player: ExoPlayer
+
     private lateinit var imgLogo: ImageView
     private lateinit var tvAquaLight: TextView
     private lateinit var tvNatureAquarium: TextView
@@ -27,24 +30,12 @@ class LoginActivity : BaseActivity() {
     private lateinit var btnRegister: MaterialButton
     private lateinit var buttonContainer: ConstraintLayout
 
-    private var player: ExoPlayer? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 🔳 Tam ekran görünüm
-        window.decorView.systemUiVisibility =
-            (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
-
         setContentView(R.layout.activity_login)
 
-        // 🎯 ID bağlantıları
-        videoBackground = findViewById(R.id.videoBackground)
+        // 🧱 ID eşleştirmeleri
+        playerView = findViewById(R.id.videoBackground)
         blurView = findViewById(R.id.blurView)
         imgLogo = findViewById(R.id.imgLogo)
         tvAquaLight = findViewById(R.id.tvAquaLight)
@@ -54,49 +45,48 @@ class LoginActivity : BaseActivity() {
         btnRegister = findViewById(R.id.btnRegister)
         buttonContainer = findViewById(R.id.buttonContainer)
 
+        setupFullScreen()
         setupVideoBackground()
-        setupBlur()
+        setupBlurView()
     }
 
+    // 🎬 ExoPlayer video arka plan
     private fun setupVideoBackground() {
-        player = ExoPlayer.Builder(this).build().also { exoPlayer ->
-            videoBackground.player = exoPlayer
-            val videoUri = "android.resource://${packageName}/${R.raw.aquarium}"
-            val mediaItem = MediaItem.fromUri(videoUri)
-            exoPlayer.setMediaItem(mediaItem)
-            exoPlayer.repeatMode = ExoPlayer.REPEAT_MODE_ALL
-            exoPlayer.playWhenReady = true
-            exoPlayer.prepare()
-        }
+        player = ExoPlayer.Builder(this).build()
+        playerView.player = player
+        playerView.useController = false
+        playerView.keepScreenOn = true
+
+        val mediaItem = MediaItem.fromUri("android.resource://${packageName}/${R.raw.aquarium}")
+        player.setMediaItem(mediaItem)
+        player.repeatMode = ExoPlayer.REPEAT_MODE_ALL
+        player.prepare()
+        player.playWhenReady = true
     }
 
-    private fun setupBlur() {
-        val radius = 18f
-        val decorView: View = window.decorView
-        val rootView: ViewGroup = decorView.findViewById(android.R.id.content)
-        val windowBackground = decorView.background
+    // 🧊 BlurView yüksek performanslı render
+    private fun setupBlurView() {
+        val radius = 15f
+        val decorView = window.decorView
+        val rootView = decorView.findViewById<View>(android.R.id.content)
 
         blurView.setupWith(rootView)
-            .setFrameClearDrawable(windowBackground)
+            .setFrameClearDrawable(window.decorView.background)
             .setBlurAlgorithm(RenderScriptBlur(this))
             .setBlurRadius(radius)
-            .setBlurAutoUpdate(true)
             .setHasFixedTransformationMatrix(true)
     }
 
-    override fun onPause() {
-        super.onPause()
-        player?.pause()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        player?.play()
+    // 🔳 Tam ekran immersive görünüm
+    private fun setupFullScreen() {
+        window.insetsController?.let {
+            it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+            it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        player?.release()
-        player = null
+        player.release()
     }
 }
