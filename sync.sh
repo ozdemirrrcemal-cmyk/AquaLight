@@ -1,41 +1,57 @@
 #!/bin/bash
-# 🚀 AIDE → GitHub otomatik senkronizasyon scripti
-# Cemal Özdemir - Kişisel proje yapılandırması
+# 🚀 AIDE → GitHub tam senkronizasyon scripti (Cemal Özdemir için)
 
 AIDE_DIR="/storage/internal/project/AquaLight"
 GIT_DIR="$HOME/projects/AquaLight"
 
-echo "📁 AIDE projesi senkronize ediliyor..."
+echo "🧹 Senkronizasyon başlıyor..."
 
-# Dosyaları kopyala (AIDE -> Git)
-cp -r "$AIDE_DIR"/* "$GIT_DIR"/ 2>/dev/null || {
-    echo "❌ Kopyalama hatası! AIDE dizinine erişilemiyor."
-    exit 1
-}
+# 🔹 Git klasörüne gir
+cd "$GIT_DIR" || { echo "❌ Git klasörüne girilemedi!"; exit 1; }
 
-# Git klasörüne geç
-cd "$GIT_DIR" || {
-    echo "❌ Git klasörüne girilemedi!"
-    exit 1
-}
+# 🔹 Eğer detached HEAD varsa main'e dön
+if [ "$(git rev-parse --abbrev-ref HEAD)" = "HEAD" ]; then
+    echo "⚙️ Detached HEAD algılandı, main dalına geçiliyor..."
+    git checkout main || git checkout -b main origin/main
+fi
 
-# Commit mesajı kontrolü
+# 🔹 Rebase kalıntısı varsa iptal et
+if [ -d ".git/rebase-apply" ] || [ -d ".git/rebase-merge" ]; then
+    echo "⚠️ Önceki rebase işlemi tespit edildi, temizleniyor..."
+    git rebase --abort 2>/dev/null
+fi
+
+# 🔹 Dosyaları birebir senkronize et (AIDE'deki silinenler de kaldırılır)
+echo "📁 Dosyalar kopyalanıyor..."
+rsync -av --delete "$AIDE_DIR"/ "$GIT_DIR"/ \
+  --exclude=".git" \
+  --exclude=".gradle" \
+  --exclude="build" \
+  --exclude="*.iml" \
+  >/dev/null
+
+# 🔹 Değişiklikleri ekle (silinenler dahil)
+echo "🧩 Değişiklikler hazırlanıyor..."
+git add -A
+
+# 🔹 Commit mesajı
 if [ -z "$1" ]; then
     COMMIT_MSG="sync: AIDE değişiklikleri"
 else
     COMMIT_MSG="$1"
 fi
 
-# Tüm değişiklikleri (ekleme, silme dahil) ekle
-echo "🧩 Değişiklikler git'e ekleniyor..."
-git add -A
+# 🔹 Commit oluştur
+if git diff --cached --quiet; then
+    echo "⚠️ Commit yapılacak değişiklik yok."
+else
+    echo "🧾 Commit oluşturuluyor: '$COMMIT_MSG'"
+    git commit -m "$COMMIT_MSG"
+fi
 
-# Commit oluştur
-echo "🧾 Commit oluşturuluyor: '$COMMIT_MSG'"
-git commit -m "$COMMIT_MSG" || echo "⚠️ Commit yapılacak değişiklik yok."
-
-# GitHub'a gönder
-echo "🚀 GitHub'a gönderiliyor..."
-git push && echo "✅ Senkronizasyon tamamlandı!" || echo "❌ Push başarısız!"
+# 🔹 GitHub ile senkronize et
+echo "🌐 GitHub ile senkronize ediliyor..."
+git pull --rebase origin main
+git push origin main && echo "✅ Gönderim tamamlandı!" || echo "❌ Push başarısız!"
 
 echo "✨ İşlem tamam!"
