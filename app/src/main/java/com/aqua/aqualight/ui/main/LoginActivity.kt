@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.main
 
 import android.os.Bundle
-import android.view.View
+import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.ImageView
@@ -64,16 +64,18 @@ class LoginActivity : BaseActivity() {
         player.playWhenReady = true
     }
 
-    // 🧊 BlurView yüksek performanslı render
+    // 🧊 BlurView - yüksek performanslı bulanık arka plan
     private fun setupBlurView() {
         val radius = 15f
         val decorView = window.decorView
-        val rootView = decorView.findViewById<View>(android.R.id.content)
+        val rootView = decorView.findViewById<ViewGroup>(android.R.id.content)
+        val windowBackground = decorView.background
 
         blurView.setupWith(rootView)
-            .setFrameClearDrawable(window.decorView.background)
+            .setFrameClearDrawable(windowBackground)
             .setBlurAlgorithm(RenderScriptBlur(this))
             .setBlurRadius(radius)
+            .setBlurAutoUpdate(true)
             .setHasFixedTransformationMatrix(true)
     }
 

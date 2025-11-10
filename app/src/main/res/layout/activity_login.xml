@@ -4,6 +4,7 @@
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="false"
     android:background="@android:color/black">
 
     <!-- 🎬 ExoPlayer video arka plan -->
@@ -13,15 +14,16 @@
         android:layout_height="match_parent"
         app:use_controller="false"
         android:keepScreenOn="true"
-        android:contentDescription="@string/main_login_video_background_description"
-        app:resize_mode="zoom" />
+        app:resize_mode="zoom"
+        android:contentDescription="@string/main_login_video_background_description" />
 
-    <!-- 🧊 Blur efekti (canlı render) -->
+    <!-- 🧊 Blur efekti (tam ekran canlı render) -->
     <eightbitlab.com.blurview.BlurView
         android:id="@+id/blurView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:alpha="0.75"
+        android:fitsSystemWindows="false"
         android:contentDescription="@string/main_login_blur_overlay_description" />
 
     <!-- 🌊 Üst kısım: Logo + yazılar -->
@@ -31,7 +33,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|top"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="48dp"
         android:layout_marginStart="32dp"
         android:gravity="start">
 
@@ -42,7 +44,8 @@
             android:layout_height="80dp"
             android:src="@drawable/logo_login"
             android:contentDescription="@string/main_login_logo_description"
-            android:importantForAccessibility="no" />
+            android:importantForAccessibility="no"
+            android:layout_marginBottom="8dp" />
 
         <!-- AquaLight -->
         <TextView
@@ -50,10 +53,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/main_login_app_name"
-            android:textColor="#0A192F"
-            android:textSize="20sp"
+            android:textColor="@color/md_theme_onSurface"
+            android:textSize="22sp"
             android:fontFamily="@font/poppins_bold"
-            android:layout_marginTop="0dp"
             android:includeFontPadding="false" />
 
         <!-- Nature Aquarium -->
@@ -62,10 +64,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/main_login_tagline"
-            android:textColor="#0A192F"
+            android:textColor="@color/md_theme_onSurfaceVariant"
             android:textSize="15sp"
             android:fontFamily="@font/raleway_medium"
-            android:layout_marginTop="0dp"
             android:includeFontPadding="false" />
     </LinearLayout>
 
@@ -118,7 +119,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>
