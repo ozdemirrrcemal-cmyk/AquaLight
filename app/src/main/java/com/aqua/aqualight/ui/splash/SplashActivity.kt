@@ -23,7 +23,7 @@ class SplashActivity : BaseActivity() {
 
         // 2.4 saniye sonra LoginActivity'ye yönlendir
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, LoginActivity::class.java))
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
         }, 2400)
     }
