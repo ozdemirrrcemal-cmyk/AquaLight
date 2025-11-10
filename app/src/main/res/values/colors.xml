@@ -16,6 +16,8 @@
     <color name="md_theme_dark_onBackground">#FFFFFF</color>
     <color name="md_theme_dark_surface">#0A192F</color>
     <color name="md_theme_dark_onSurface">#AAB6C1</color>
+	
+	<color name="google_button_border">#3C4043</color>
 
     <!-- ☀️ Material 3 Light Color Scheme -->
     <color name="md_theme_light_primary">#152B45</color>
