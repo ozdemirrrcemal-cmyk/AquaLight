@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- 🌞 Light Mode Colors -->
-    <color name="background_color">#F5F7FA</color>
-    <color name="text_primary_color">#0A192F</color>
+    <!-- 🎨 Material 3 Light Color Scheme -->
+    <color name="md_theme_light_primary">#152B45</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#274263</color>
+    <color name="md_theme_light_onPrimaryContainer">#E5E9EF</color>
 
-    <color name="md_theme_light_primary">#C8D3E1</color>
-    <color name="md_theme_light_onPrimary">#0A192F</color>
-    <color name="md_theme_light_secondary">#5C7C8A</color>
+    <color name="md_theme_light_secondary">#4A6363</color>
     <color name="md_theme_light_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_surface">#FFFFFF</color>
-    <color name="md_theme_light_onSurface">#0A192F</color>
+    <color name="md_theme_light_secondaryContainer">#CCE8E7</color>
+    <color name="md_theme_light_onSecondaryContainer">#041F1F</color>
+
+    <!-- Arka plan ve yüzey -->
+    <color name="md_theme_light_background">#152B45</color>
+    <color name="md_theme_light_onBackground">#FFFFFF</color>
+    <color name="md_theme_light_surface">#152B45</color>
+    <color name="md_theme_light_onSurface">#FFFFFF</color>
 
 </resources>

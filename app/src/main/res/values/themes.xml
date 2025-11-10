@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- ☀️ Material 3 Light Tema -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
 
-        <!-- Renk bağlantıları -->
-        <item name="colorPrimary">?attr/colorPrimary</item>
-        <item name="colorOnPrimary">?attr/colorOnPrimary</item>
+        <!-- Ana renkler -->
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
 
-        <item name="colorSecondary">?attr/colorSecondary</item>
-        <item name="colorOnSecondary">?attr/colorOnSecondary</item>
+        <!-- Arka plan ve yüzey -->
+        <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
 
-        <item name="android:colorBackground">?attr/colorSurface</item>
-        <item name="colorSurface">?attr/colorSurface</item>
-        <item name="colorOnSurface">?attr/colorOnSurface</item>
+        <!-- Sistem bar renkleri -->
+        <item name="android:statusBarColor">@color/md_theme_light_surface</item>
+        <item name="android:navigationBarColor">@color/md_theme_light_surface</item>
 
-        <!-- Bar renkleri -->
-        <item name="android:statusBarColor">?attr/colorSurface</item>
-        <item name="android:navigationBarColor">?attr/colorSurface</item>
-
-        <!-- Açık veya koyu mod ikonları -->
-        <item name="android:windowLightStatusBar">?attr/colorOnSurface</item>
-        <item name="android:windowLightNavigationBar">?attr/colorOnSurface</item>
+        <!-- Açık modda koyu ikonlar -->
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
 
         <!-- ActionBar kapalı -->
         <item name="windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
-
     </style>
 
     <!-- Splash metin stilleri -->
     <style name="SplashTitleText">
-        <item name="android:textColor">@color/md_theme_dark_onPrimary</item>
+        <item name="android:textColor">@color/md_theme_light_onPrimary</item>
         <item name="android:textSize">32sp</item>
         <item name="fontFamily">@font/poppins_bold</item>
         <item name="android:letterSpacing">0.08</item>
@@ -38,7 +38,7 @@
     </style>
 
     <style name="SplashSubtitleText">
-        <item name="android:textColor">#AAB6C1</item>
+        <item name="android:textColor">@color/md_theme_light_onSurface</item>
         <item name="android:textSize">16sp</item>
         <item name="fontFamily">@font/raleway_medium</item>
         <item name="android:letterSpacing">0.04</item>
