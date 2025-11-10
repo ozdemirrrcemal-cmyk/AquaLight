@@ -9,32 +9,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: 🧩 Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install JDK 17
+    - name: ☕ Install JDK 17
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: gradle
 
-    - name: Set up Android SDK
+    - name: 🧰 Set up Android SDK
       uses: android-actions/setup-android@v3
-      env:
-        SKIP_JDK_VERSION_CHECK: true
 
-    - name: Install required SDK packages
+    - name: 📦 Install SDK packages
       run: |
-        sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+        sdkmanager --update
+        sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
 
-    # 🔑 İZİN ADIMI (GRADLE'DAN ÖNCE!)
-    - name: Grant execute permission to gradlew
-      run: chmod +x ./gradlew
-
-    - name: Clean Gradle build cache
-      run: ./gradlew clean --no-daemon
-
-    - name: Generate debug keystore (if missing)
+    - name: 🔑 Generate debug keystore if missing
       run: |
         mkdir -p ~/.android
         if [ ! -f ~/.android/debug.keystore ]; then
@@ -49,11 +42,26 @@ jobs:
             -dname "CN=Android,O=AquaLight,C=TR"
         fi
 
-    - name: Build Debug APK
+    - name: ⚙️ Grant permission for Gradle
+      run: chmod +x ./gradlew
+
+    - name: 🧹 Clean project
+      run: ./gradlew clean --no-daemon
+
+    - name: 🚀 Build Debug APK
       run: ./gradlew assembleDebug --stacktrace --no-daemon
 
-    - name: Upload Debug APK
+    - name: ✅ Verify output APK
+      run: |
+        if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
+          echo "✅ APK başarıyla oluşturuldu!"
+        else
+          echo "❌ APK bulunamadı!"
+          exit 1
+        fi
+
+    - name: 📤 Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug
+        name: AquaLight-debug
         path: app/build/outputs/apk/debug/*.apk
