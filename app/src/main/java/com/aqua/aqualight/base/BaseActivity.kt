@@ -3,42 +3,53 @@ package com.aqua.aqualight.base
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsController
+import android.view.ViewGroup
 import android.view.WindowManager
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 open class BaseActivity : AppCompatActivity() {
 
-    // Bu Activity'ye ait tek Job
+    // Activity’ye özel coroutine scope
     private val activityJob = SupervisorJob()
-
-    // Ortak UI scope (Main thread) — gerektiğinde IO/Default ile context switch yaparsın
     protected val uiScope: CoroutineScope =
         CoroutineScope(Dispatchers.Main.immediate + activityJob)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setupSystemBars()
+        // DİKKAT: Burada system bars ile oynama yok! (decorView daha oluşmadı)
     }
 
-    /**
-     * Sistem çubuklarını gizleme / immersive mode
-     */
-    protected fun setupSystemBars() {
+    // İçerik yüklendikten hemen sonra immersive mode uygula
+    override fun setContentView(layoutResID: Int) {
+        super.setContentView(layoutResID)
+        applyEdgeToEdge()
+    }
+
+    override fun setContentView(view: View) {
+        super.setContentView(view)
+        applyEdgeToEdge()
+    }
+
+    override fun setContentView(view: View, params: ViewGroup.LayoutParams) {
+        super.setContentView(view, params)
+        applyEdgeToEdge()
+    }
+
+    protected fun applyEdgeToEdge() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(false)
-            window.insetsController?.let { controller ->
-                controller.hide(
-                    WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars()
-                )
-                controller.systemBarsBehavior =
-                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            val controller = WindowInsetsControllerCompat(window, window.decorView)
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(
+                WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars()
+            )
         } else {
             @Suppress("DEPRECATION")
             window.decorView.systemUiVisibility =
@@ -50,15 +61,11 @@ open class BaseActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Ortak hata loglama
-     */
     protected fun logError(tag: String, message: String?, throwable: Throwable? = null) {
-        Log.e(tag, message, throwable)
+        android.util.Log.e(tag, message, throwable)
     }
 
     override fun onDestroy() {
-        // Bu activity'de uiScope ile başlattığın TÜM coroutine'leri iptal et
         activityJob.cancel()
         super.onDestroy()
     }
