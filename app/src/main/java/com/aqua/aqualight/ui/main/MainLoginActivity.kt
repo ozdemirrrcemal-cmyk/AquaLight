@@ -1,4 +1,3 @@
-// 🌐 Bu sayfa: MainLoginActivity (BaseActivity’den türetilmiş)
 package com.aqua.aqualight.ui.main
 
 import android.content.Intent
@@ -16,12 +15,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.ui.auth.LoginFragment
 import com.eightbitlab.blurview.BlurView
 import com.eightbitlab.blurview.RenderEffectBlur
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.VideoSize
+import com.google.android.exoplayer2.video.VideoSize
 import com.google.android.exoplayer2.util.Util
 import kotlinx.coroutines.launch
 
@@ -34,18 +34,16 @@ class MainLoginActivity : BaseActivity() {
     private var videoWidth: Int = 0
     private var videoHeight: Int = 0
 
-    // ✅ Şifreli DataStore yapısına uygun kullanım
     private val userPrefs by lazy { UserPreferencesManager.create(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_login)
-        setupSystemBars() // BaseActivity’deki sistem UI ayarı
+        setupSystemBars()
 
         textureView = findViewById(R.id.videoBackground)
         blurView = findViewById(R.id.blurView)
 
-        // 🔹 Oturum kontrolü (şifreli DataStore’dan oku)
         observeUserSession()
     }
 
@@ -71,7 +69,6 @@ class MainLoginActivity : BaseActivity() {
             .commitAllowingStateLoss()
     }
 
-    // ---- Lifecycle: ExoPlayer başlat / durdur ----
     override fun onStart() {
         super.onStart()
         if (Util.SDK_INT >= 24) initPlayerIfNeeded()
@@ -97,14 +94,11 @@ class MainLoginActivity : BaseActivity() {
         if (Util.SDK_INT >= 24) releasePlayer()
     }
 
-    // ---- ExoPlayer kurulumu ----
     private fun initPlayerIfNeeded() {
         if (player != null) return
-
         try {
             val exo = ExoPlayer.Builder(this).build().also {
                 it.setVideoTextureView(textureView)
-
                 it.addListener(object : Player.Listener {
                     override fun onVideoSizeChanged(videoSize: VideoSize) {
                         videoWidth = videoSize.width
@@ -114,7 +108,6 @@ class MainLoginActivity : BaseActivity() {
                         if (w > 0 && h > 0) scaleVideoToFillScreen(w, h)
                     }
                 })
-
                 val uri = Uri.parse("android.resource://$packageName/${R.raw.aquarium}")
                 val mediaItem = MediaItem.fromUri(uri)
                 it.setMediaItem(mediaItem)
@@ -123,9 +116,7 @@ class MainLoginActivity : BaseActivity() {
                 it.prepare()
                 it.playWhenReady = true
             }
-
             player = exo
-
             textureView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
                 val w = v.width
                 val h = v.height
@@ -153,7 +144,6 @@ class MainLoginActivity : BaseActivity() {
         }
     }
 
-    // ---- BlurView kurulumu ----
     private fun applyBlurIfSupported() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
@@ -173,19 +163,15 @@ class MainLoginActivity : BaseActivity() {
         }
     }
 
-    // ---- Video’yu ekranı dolduracak şekilde ölçekle ----
     private fun scaleVideoToFillScreen(viewWidth: Int, viewHeight: Int) {
         if (videoWidth <= 0 || videoHeight <= 0 || viewWidth <= 0 || viewHeight <= 0) return
-
         val scaleX = viewWidth.toFloat() / videoWidth
         val scaleY = viewHeight.toFloat() / videoHeight
         val scale = maxOf(scaleX, scaleY)
-
         val scaledWidth = scale * videoWidth
         val scaledHeight = scale * videoHeight
         val dx = (viewWidth - scaledWidth) / 2f
         val dy = (viewHeight - scaledHeight) / 2f
-
         val matrix = Matrix().apply {
             setScale(scale, scale)
             postTranslate(dx, dy)
