@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId "com.aqua.aqualight"
-        minSdk 23
+        minSdk 27
         targetSdk 34
         versionCode 1
         versionName "1.0.10"

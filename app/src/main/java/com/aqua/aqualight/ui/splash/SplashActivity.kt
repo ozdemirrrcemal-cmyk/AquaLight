@@ -8,7 +8,7 @@ import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.ui.main.LoginActivity
+import com.aqua.aqualight.ui.main.MainActivity
 
 class SplashActivity : BaseActivity() {
 
