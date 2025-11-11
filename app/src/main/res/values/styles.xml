@@ -1,50 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- 🎨 Ortak şekiller -->
+    <style name="Shape.Rounded15">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">15dp</item>
+    </style>
+
+    <style name="Shape.Rounded4">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">4dp</item>
+    </style>
+
     <!-- 🔴 Kırmızı Buton -->
-    <style name="RedButton" parent="Widget.Material3.Button.Filled">
+    <style name="RedButton" parent="Widget.Material3.Button">
+        <!-- Arka plan -->
         <item name="android:backgroundTint">#DB4437</item>
+        <!-- Yazı rengi -->
         <item name="android:textColor">@android:color/white</item>
-        <item name="cornerRadius">15dp</item>
+        <!-- Köşe yuvarlaklığı -->
+        <item name="shapeAppearance">@style/Shape.Rounded15</item>
+        <!-- Boyut / Padding -->
+        <item name="android:minHeight">56dp</item>
         <item name="android:paddingTop">17dp</item>
         <item name="android:paddingBottom">17dp</item>
-        <item name="android:minHeight">56dp</item>
         <item name="android:elevation">0dp</item>
     </style>
 
     <!-- ⚫ Siyah Buton -->
-    <style name="BlackButton" parent="Widget.Material3.Button.Filled">
+    <style name="BlackButton" parent="Widget.Material3.Button">
         <item name="android:backgroundTint">@android:color/black</item>
         <item name="android:textColor">@android:color/white</item>
-        <item name="cornerRadius">15dp</item>
+        <item name="shapeAppearance">@style/Shape.Rounded15</item>
+        <item name="android:minHeight">56dp</item>
         <item name="android:paddingTop">17dp</item>
         <item name="android:paddingBottom">17dp</item>
-        <item name="android:minHeight">56dp</item>
         <item name="android:elevation">0dp</item>
     </style>
 
     <!-- ⚪ Beyaz Buton -->
-    <style name="WhiteButton" parent="Widget.Material3.Button.Outlined">
+    <style name="WhiteButton" parent="Widget.Material3.OutlinedButton">
         <item name="android:backgroundTint">@android:color/white</item>
         <item name="android:textColor">@android:color/black</item>
-        <item name="cornerRadius">15dp</item>
+        <item name="shapeAppearance">@style/Shape.Rounded15</item>
+        <item name="android:minHeight">56dp</item>
         <item name="android:paddingTop">17dp</item>
         <item name="android:paddingBottom">17dp</item>
-        <item name="android:minHeight">56dp</item>
         <item name="android:elevation">0dp</item>
     </style>
 
     <!-- 🧾 Doğrulama Butonu -->
-    <style name="VerifyButton" parent="Widget.Material3.Button.Outlined">
+    <style name="VerifyButton" parent="Widget.Material3.OutlinedButton">
         <item name="strokeWidth">1dp</item>
-        <item name="cornerRadius">4dp</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
-        <item name="android:paddingTop">0dp</item>
-        <item name="android:paddingBottom">0dp</item>
+        <item name="shapeAppearance">@style/Shape.Rounded4</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="android:textSize">14sp</item>
         <item name="android:fontFamily">@font/raleway_medium</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
         <item name="android:elevation">0dp</item>
     </style>
 
