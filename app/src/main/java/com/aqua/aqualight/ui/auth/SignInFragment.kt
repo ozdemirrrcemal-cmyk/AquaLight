@@ -37,16 +37,19 @@ class SignInFragment : Fragment() {
     }
 
     private fun setupUI() = with(binding) {
-        btnLogin.setOnClickListener { handleSignIn() }
+    btnLogin.setOnClickListener { handleSignIn() }
 
-        tvForgotPassword.setOnClickListener {
-            Toast.makeText(requireContext(), "Password reset coming soon", Toast.LENGTH_SHORT).show()
-        }
-
-        btnBack.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
+    tvForgotPassword.setOnClickListener {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, ResetPasswordFragment())
+            .addToBackStack(null)
+            .commit()
     }
+
+    btnBack.setOnClickListener {
+        parentFragmentManager.popBackStack()
+    }
+}
 
     private fun handleSignIn() {
         val email = binding.emailEditText.text?.toString()?.trim() ?: ""

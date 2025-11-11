@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
@@ -33,8 +34,22 @@ class LoginFragment : Fragment() {
     // ✅ Şifreli DataStore yöneticisi
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    companion object {
-        private const val RC_SIGN_IN = 9001
+    // 🔹 Modern Google Sign-In launcher
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            if (account != null) {
+                Log.d("LoginFragment", "✅ Google Sign-In account: ${account.email}")
+                firebaseAuthWithGoogle(account.idToken!!)
+            } else {
+                Log.w("LoginFragment", "⚠️ Google account null döndü!")
+            }
+        } catch (e: Exception) {
+            Log.e("LoginFragment", "Google Sign-In failed ❌", e)
+        }
     }
 
     override fun onCreateView(
@@ -75,24 +90,10 @@ class LoginFragment : Fragment() {
         }
     }
 
-    // 🔹 Google ile giriş işlemi
+    // ✅ Modern Google ile giriş işlemi (onActivityResult yerine)
     private fun signInWithGoogle() {
         val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == RC_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                val account = task.getResult(ApiException::class.java)!!
-                firebaseAuthWithGoogle(account.idToken!!)
-            } catch (e: ApiException) {
-                Log.w("LoginFragment", "Google sign in failed ❌", e)
-            }
-        }
+        googleSignInLauncher.launch(signInIntent)
     }
 
     // 🔹 Firebase kimlik doğrulama
@@ -103,7 +104,7 @@ class LoginFragment : Fragment() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null) {
-                        Log.d("LoginFragment", "✅ Google Sign-In Success: ${user.email}")
+                        Log.d("LoginFragment", "✅ Firebase Auth Success: ${user.email}")
 
                         // 🔐 Oturumu güvenli şekilde kaydet
                         lifecycleScope.launch {
@@ -122,9 +123,11 @@ class LoginFragment : Fragment() {
                             startActivity(intent)
                             requireActivity().finish()
                         }
+                    } else {
+                        Log.w("LoginFragment", "⚠️ Kullanıcı null döndü (Firebase).")
                     }
                 } else {
-                    Log.w("LoginFragment", "❌ Firebase auth failed", task.exception)
+                    Log.e("LoginFragment", "❌ Firebase auth failed", task.exception)
                 }
             }
     }

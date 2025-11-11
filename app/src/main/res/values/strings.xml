@@ -3,6 +3,7 @@
 	<string name="splasch_logo_description">AquaLight Logo</string>
     <string name="splasch_app_title">AquaLight</string>
     <string name="splasch_app_subtitle">Nature Aquarium</string>
+	<string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
 
        <!-- 🎬 Background video -->
     <string name="main_login_video_background_description">
