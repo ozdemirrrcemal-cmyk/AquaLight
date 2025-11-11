@@ -29,25 +29,23 @@ class UserPreferencesManager private constructor(private val dataStore: DataStor
         }
 
         private fun migrateLegacyIfNeeded(
-            context: Context,
-            legacySerializer: androidx.datastore.core.Serializer<UserPreferences>,
-            encryptedStore: DataStore<UserPreferences>
-        ) {
-            val legacyFile = File(context.filesDir, "user_prefs.pb")
-            if (legacyFile.exists()) {
-                try {
-                    val legacyData = legacySerializer.readFrom(legacyFile.inputStream())
-                    runBlocking {
-                        encryptedStore.updateData { _ -> legacyData }
-                    }
-                    // delete legacy file after successful migration
-                    legacyFile.delete()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    // keep legacy if migration fails
-                }
+    context: Context,
+    legacySerializer: androidx.datastore.core.Serializer<UserPreferences>,
+    encryptedStore: DataStore<UserPreferences>
+) {
+    val legacyFile = File(context.filesDir, "user_prefs.pb")
+    if (legacyFile.exists()) {
+        try {
+            runBlocking {
+                val legacyData = legacySerializer.readFrom(legacyFile.inputStream())
+                encryptedStore.updateData { _ -> legacyData }
             }
+            legacyFile.delete()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+    }
+}
     }
 
     // Flows

@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.main
 
 import android.content.Intent
 import android.graphics.Matrix
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -39,7 +41,7 @@ class MainLoginActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_login)
-        setupSystemBars()
+        setupSystemBars() // BaseActivity zaten çağırıyorsa bunu kaldırabilirsin.
 
         textureView = findViewById(R.id.videoBackground)
         blurView = findViewById(R.id.blurView)
@@ -147,13 +149,22 @@ class MainLoginActivity : BaseActivity() {
     private fun applyBlurIfSupported() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
-                val root = findViewById<View>(R.id.rootLayout) as ViewGroup
+                val root = findViewById<ViewGroup>(R.id.rootLayout)
+
                 blurView.visibility = View.VISIBLE
-                blurView.setupWith(root)
-                    .setFrameClearDrawable(window.decorView.background)
-                    .setBlurAlgorithm(RenderEffectBlur())
-                    .setBlurRadius(15f)
-                    .setHasFixedTransformationMatrix(true)
+                // 2.0.2+ API: algoritmayı setupWith içine veriyoruz
+                blurView.setupWith(
+                    root,
+                    RenderEffectBlur() // API 31+
+                )
+                .setFrameClearDrawable(
+                    window.decorView.background ?: ColorDrawable(Color.TRANSPARENT)
+                )
+                .setBlurRadius(15f)
+
+                // setHasFixedTransformationMatrix() artık yok; çağrılmıyor.
+                // setBlurAlgorithm() da kaldırıldı; yukarıda setupWith ile verildi.
+
             } catch (e: Exception) {
                 blurView.visibility = View.GONE
                 logError("MainLoginActivity", "BlurView hatası: ${e.message}")
