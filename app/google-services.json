@@ -12,7 +12,20 @@
           "package_name": "com.aqua.aqualight"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "660201044993-bds9gg9jm73p0jbaqum5vsk5vfnr7j5n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aqua.aqualight",
+            "certificate_hash": "cca01ae6795daef4ca21697ba8a7ddd52d5d1386"
+          }
+        },
+        {
+          "client_id": "660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBqi2U8ADE3oVnHBzXTsEWbPne3qy1lpDU"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
