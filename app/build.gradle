@@ -22,7 +22,7 @@ android {
     signingConfigs {
         release {
             storeFile file("../release-key.jks")
-            stor}ePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
+            storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
             keyAlias System.getenv("RELEASE_KEY_ALIAS")
             keyPassword System.getenv("RELEASE_KEY_PASSWORD")
         }
@@ -61,9 +61,9 @@ android {
     }
 
     buildFeatures {
+		buildConfig true
 		viewBinding true
         dataBinding true
-        buildConfig true
     }
 }
 
