@@ -38,7 +38,7 @@
     <!-- Kayıt ol butonu -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnRegister"
-        android:layout_width="0dp"
+        android:layout_wid{th="0dp"
         android:layout_height="wrap_content"
         android:text="@string/login_register"
         android:contentDescription="@string/login_register_desc"
