@@ -84,7 +84,7 @@ dependencies {
     implementation "com.google.android.exoplayer:exoplayer:2.19.1"
 
     // 🧊 BlurView (arka plan blur efekti için)
-    implementation 'com.github.Dimezis:BlurView:2.0.5'
+    implementation 'com.github.Dimezis:BlurView:version-2.0.4'
 
     // 🔥 Firebase
     implementation platform("com.google.firebase:firebase-bom:32.7.0")
