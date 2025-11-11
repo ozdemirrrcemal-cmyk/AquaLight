@@ -40,8 +40,7 @@ class MainLoginActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main_login)
-        setupSystemBars() // BaseActivity zaten çağırıyorsa bunu kaldırabilirsin.
+        setContentView(R.layout.activity_main_login) // BaseActivity edge-to-edge'i burada uygular
 
         textureView = findViewById(R.id.videoBackground)
         blurView = findViewById(R.id.blurView)
@@ -84,11 +83,7 @@ class MainLoginActivity : BaseActivity() {
 
     override fun onPause() {
         super.onPause()
-        if (Util.SDK_INT < 24) {
-            releasePlayer()
-        } else {
-            player?.playWhenReady = false
-        }
+        if (Util.SDK_INT < 24) releasePlayer() else player?.playWhenReady = false
     }
 
     override fun onStop() {
@@ -102,7 +97,7 @@ class MainLoginActivity : BaseActivity() {
             val exo = ExoPlayer.Builder(this).build().also {
                 it.setVideoTextureView(textureView)
                 it.addListener(object : Player.Listener {
-                    override fun onVideoSizeChanged(videoSize: VideoSize) {
+                    override fun onVideoSizeChanged(videoSize: com.google.android.exoplayer2.video.VideoSize) {
                         videoWidth = videoSize.width
                         videoHeight = videoSize.height
                         val w = textureView.width
@@ -111,8 +106,7 @@ class MainLoginActivity : BaseActivity() {
                     }
                 })
                 val uri = Uri.parse("android.resource://$packageName/${R.raw.aquarium}")
-                val mediaItem = MediaItem.fromUri(uri)
-                it.setMediaItem(mediaItem)
+                it.setMediaItem(MediaItem.fromUri(uri))
                 it.repeatMode = Player.REPEAT_MODE_ALL
                 it.volume = 0f
                 it.prepare()
@@ -138,7 +132,6 @@ class MainLoginActivity : BaseActivity() {
                 playWhenReady = false
                 release()
             }
-        } catch (_: Exception) {
         } finally {
             player = null
             videoWidth = 0
@@ -150,21 +143,10 @@ class MainLoginActivity : BaseActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
                 val root = findViewById<ViewGroup>(R.id.rootLayout)
-
                 blurView.visibility = View.VISIBLE
-                // 2.0.2+ API: algoritmayı setupWith içine veriyoruz
-                blurView.setupWith(
-                    root,
-                    RenderEffectBlur() // API 31+
-                )
-                .setFrameClearDrawable(
-                    window.decorView.background ?: ColorDrawable(Color.TRANSPARENT)
-                )
-                .setBlurRadius(15f)
-
-                // setHasFixedTransformationMatrix() artık yok; çağrılmıyor.
-                // setBlurAlgorithm() da kaldırıldı; yukarıda setupWith ile verildi.
-
+                blurView.setupWith(root, RenderEffectBlur())
+                    .setFrameClearDrawable(window.decorView.background ?: ColorDrawable(Color.TRANSPARENT))
+                    .setBlurRadius(15f)
             } catch (e: Exception) {
                 blurView.visibility = View.GONE
                 logError("MainLoginActivity", "BlurView hatası: ${e.message}")
@@ -179,10 +161,8 @@ class MainLoginActivity : BaseActivity() {
         val scaleX = viewWidth.toFloat() / videoWidth
         val scaleY = viewHeight.toFloat() / videoHeight
         val scale = maxOf(scaleX, scaleY)
-        val scaledWidth = scale * videoWidth
-        val scaledHeight = scale * videoHeight
-        val dx = (viewWidth - scaledWidth) / 2f
-        val dy = (viewHeight - scaledHeight) / 2f
+        val dx = (viewWidth - scale * videoWidth) / 2f
+        val dy = (viewHeight - scale * videoHeight) / 2f
         val matrix = Matrix().apply {
             setScale(scale, scale)
             postTranslate(dx, dy)
