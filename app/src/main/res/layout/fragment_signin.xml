@@ -12,11 +12,12 @@
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-		app:layout_constraintBottom_toTopOf="@id/passwordContainer"
-		app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintBottom_toTopOf="@id/passwordContainer"
+        app:layout_constraintVertical_chainStyle="packed"
         android:contentDescription="@string/signin_email_desc">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -34,10 +35,11 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:passwordToggleEnabled="true"
+        android:layout_marginBottom="4dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/emailContainer"
-		app:layout_constraintBottom_toTopOf="@id/tvForgotPassword"
+        app:layout_constraintBottom_toTopOf="@id/tvForgotPassword"
         android:contentDescription="@string/signin_password_desc">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -60,8 +62,8 @@
         android:contentDescription="@string/signin_forgot_password_desc"
         app:layout_constraintTop_toBottomOf="@id/passwordContainer"
         app:layout_constraintStart_toStartOf="@id/passwordContainer"
-		app:layout_constraintVertical_bias="0.5" />
-	
+        app:layout_constraintBottom_toTopOf="@id/btnLogin"
+        app:layout_constraintVertical_bias="0.5" />
 
     <!-- 🔴 Login Button -->
     <com.google.android.material.button.MaterialButton
@@ -74,8 +76,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btnBack"
-        android:layout_marginTop="4dp" />
-
+        android:layout_marginBottom="4dp" />
 
     <!-- ⚫ Back Button -->
     <com.google.android.material.button.MaterialButton
@@ -88,6 +89,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginTop="20dp" />
-
+        android:layout_marginBottom="20dp" />
+	
 </androidx.constraintlayout.widget.ConstraintLayout>
