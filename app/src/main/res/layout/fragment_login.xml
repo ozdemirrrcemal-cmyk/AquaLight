@@ -22,7 +22,7 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
-    android:layout_marginBottom="12dp" />
+    android:layout_marginBottom="4dp" />
 
     <!-- Giriş yap butonu -->
     <com.google.android.material.button.MaterialButton
@@ -35,7 +35,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/btnRegister"
-        android:layout_marginBottom="0dp" />
+        android:layout_marginBottom="4dp" />
 
     <!-- Kayıt ol butonu -->
     <com.google.android.material.button.MaterialButton
@@ -48,6 +48,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="0dp" />
+        android:layout_marginBottom="20dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
