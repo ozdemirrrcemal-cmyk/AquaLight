@@ -94,10 +94,22 @@ class MainLoginActivity : BaseActivity() {
     private fun initPlayerIfNeeded() {
         if (player != null) return
         try {
-            val exo = ExoPlayer.Builder(this).build().also {
-                it.setVideoTextureView(textureView)
-                it.addListener(object : Player.Listener {
-                    override fun onVideoSizeChanged(videoSize: com.google.android.exoplayer2.video.VideoSize) {
+            val exo = ExoPlayer.Builder(this).build().also { exo ->
+                exo.setVideoTextureView(textureView)
+
+                // 🔁 Pürüzsüz tek-öğe sonsuz döngü
+                exo.repeatMode = Player.REPEAT_MODE_ONE
+
+                exo.addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (state == Player.STATE_ENDED) {
+                            // Nadir durumlarda emniyet: anında başa sar ve oyna
+                            exo.seekTo(0)
+                            exo.playWhenReady = true
+                        }
+                    }
+
+                    override fun onVideoSizeChanged(videoSize: VideoSize) {
                         videoWidth = videoSize.width
                         videoHeight = videoSize.height
                         val w = textureView.width
@@ -105,14 +117,15 @@ class MainLoginActivity : BaseActivity() {
                         if (w > 0 && h > 0) scaleVideoToFillScreen(w, h)
                     }
                 })
+
                 val uri = Uri.parse("android.resource://$packageName/${R.raw.aquarium}")
-                it.setMediaItem(MediaItem.fromUri(uri))
-                it.repeatMode = Player.REPEAT_MODE_ALL
-                it.volume = 0f
-                it.prepare()
-                it.playWhenReady = true
+                exo.setMediaItem(MediaItem.fromUri(uri))
+                exo.volume = 0f
+                exo.prepare()
+                exo.playWhenReady = true
             }
             player = exo
+
             textureView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
                 val w = v.width
                 val h = v.height
@@ -146,7 +159,7 @@ class MainLoginActivity : BaseActivity() {
                 blurView.visibility = View.VISIBLE
                 blurView.setupWith(root, RenderEffectBlur())
                     .setFrameClearDrawable(window.decorView.background ?: ColorDrawable(Color.TRANSPARENT))
-                    .setBlurRadius(15f)
+                    .setBlurRadius(22f) // daha belirgin blur
             } catch (e: Exception) {
                 blurView.visibility = View.GONE
                 logError("MainLoginActivity", "BlurView hatası: ${e.message}")
