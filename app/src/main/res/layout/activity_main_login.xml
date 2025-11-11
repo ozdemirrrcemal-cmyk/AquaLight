@@ -13,12 +13,13 @@
         android:contentDescription="@string/main_login_video_background_description" />
 
     <!-- 🧊 BlurView (modern GPU blur efekti) -->
-    <com.eightbitlab.blurview.BlurView
-        android:id="@+id/blurView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        android:contentDescription="@string/main_login_blur_overlay_description" />
+    <!-- Doğru -->
+   <eightbitlab.com.blurview.BlurView
+    android:id="@+id/blurView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone"
+    android:contentDescription="@string/main_login_blur_overlay_description" />
 
     <!-- 🌊 Logo ve yazılar -->
     <LinearLayout
