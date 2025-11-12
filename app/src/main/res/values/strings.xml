@@ -95,5 +95,18 @@
 <string name="cancel">Cancel</string>
 <string name="confirm">Confirm</string>
 <string name="dialog_icon_desc">Dialog icon</string>
+
+    <!-- 🧩 Sign-in Dialog Strings -->
+    <string name="invalid_email_title">Invalid Email</string>
+    <string name="invalid_email_message">Please enter a valid email address.</string>
+
+    <string name="invalid_password_title">Weak Password</string>
+    <string name="invalid_password_message">Password must be at least 6 characters long.</string>
+
+    <string name="login_success_title">Welcome Back</string>
+    <string name="login_success_message">You have successfully signed in.</string>
+
+    <string name="signin_failed_title">Sign-in Failed</string>
+    <string name="signin_failed_default">An unexpected error occurred during sign-in.</string>
 	
 </resources>
