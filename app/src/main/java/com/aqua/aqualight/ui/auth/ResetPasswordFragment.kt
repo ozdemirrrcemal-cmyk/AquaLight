@@ -5,12 +5,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentResetPasswordBinding
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class ResetPasswordFragment : Fragment() {
 
@@ -30,50 +35,72 @@ class ResetPasswordFragment : Fragment() {
     }
 
     private fun setupUI() = with(binding) {
-        // 🔹 Şifre sıfırlama butonu
         btnSend.setOnClickListener { handleResetPassword() }
-
-        // 🔹 Geri butonu
-        btnBack.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
+        btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
     }
 
-    // 🔒 Şifre sıfırlama işlemi
     private fun handleResetPassword() {
         val email = binding.emailEditText.text?.toString()?.trim() ?: ""
 
-        // 🧩 E-posta kontrolü
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.emailContainer.error = getString(R.string.reset_invalid_email)
-            return
-        } else {
-            binding.emailContainer.error = null
-        }
+        // 🔄 Loading başlat
+        (requireActivity() as BaseActivity).showLoading(true)
 
-        binding.btnSend.isEnabled = false
-        binding.btnSend.text = getString(R.string.signin_loading)
+        lifecycleScope.launch {
+            delay(500) // ufak bekleme efekti
 
-        // 📩 Firebase üzerinden sıfırlama e-postası gönder
-        Firebase.auth.sendPasswordResetEmail(email)
-            .addOnCompleteListener(requireActivity()) { task ->
-                binding.btnSend.isEnabled = true
-                binding.btnSend.text = getString(R.string.reset_password_button)
-
-                if (task.isSuccessful) {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.reset_success_message),
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.reset_error_message),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+            // 🧩 E-posta kontrolü
+            if (email.isEmpty()) {
+                (requireActivity() as BaseActivity).showLoading(false)
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.WARNING,
+                    title = getString(R.string.reset_empty_email_title),
+                    message = getString(R.string.reset_empty_email_message)
+                )
+                return@launch
             }
+
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                (requireActivity() as BaseActivity).showLoading(false)
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.WARNING,
+                    title = getString(R.string.reset_invalid_email_title),
+                    message = getString(R.string.reset_invalid_email)
+                )
+                return@launch
+            }
+
+            // 🚀 Firebase işlemi
+            binding.btnSend.isEnabled = false
+            binding.btnSend.text = getString(R.string.signin_loading)
+
+            auth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(requireActivity()) { task ->
+                    (requireActivity() as BaseActivity).showLoading(false)
+                    binding.btnSend.isEnabled = true
+                    binding.btnSend.text = getString(R.string.reset_password_button)
+
+                    if (task.isSuccessful) {
+                        DialogManager.showInfoDialog(
+                            requireContext(),
+                            DialogType.SUCCESS,
+                            title = getString(R.string.reset_success_title),
+                            message = getString(R.string.reset_success_message),
+                            onDismiss = { parentFragmentManager.popBackStack() }
+                        )
+                    } else {
+                        val errorMsg = task.exception?.localizedMessage
+                            ?: getString(R.string.reset_error_message)
+                        DialogManager.showInfoDialog(
+                            requireContext(),
+                            DialogType.ERROR,
+                            title = getString(R.string.reset_failed_title),
+                            message = errorMsg
+                        )
+                    }
+                }
+        }
     }
 
     override fun onDestroyView() {

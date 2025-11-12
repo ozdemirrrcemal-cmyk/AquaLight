@@ -6,16 +6,19 @@ import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentRegisterBinding
 import com.aqua.aqualight.ui.main.MainActivity
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class RegisterFragment : Fragment() {
@@ -24,7 +27,7 @@ class RegisterFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val auth = Firebase.auth
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) } // ✅ Şifreli DataStore
+    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,9 +41,7 @@ class RegisterFragment : Fragment() {
 
     private fun setupUI() = with(binding) {
         btnRegister.setOnClickListener { handleRegister() }
-        btnBack.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
+        btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
     }
 
     private fun handleRegister() {
@@ -48,49 +49,96 @@ class RegisterFragment : Fragment() {
         val password = binding.passwordEditText.text?.toString()?.trim() ?: ""
         val repeatPassword = binding.etPasswordRepeat.text?.toString()?.trim() ?: ""
 
-        // 🧩 Form doğrulama
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.emailContainer.error = getString(R.string.invalid_email)
-            return
-        } else binding.emailContainer.error = null
+        // 🔄 Loading başlat
+        (requireActivity() as BaseActivity).showLoading(true)
 
-        if (password.length < 6) {
-            binding.passwordContainer.error = getString(R.string.invalid_password)
-            return
-        } else binding.passwordContainer.error = null
+        lifecycleScope.launch {
+            delay(500) // küçük görsel tepki
 
-        if (password != repeatPassword) {
-            binding.passwordRepeatContainer.error = getString(R.string.passwords_do_not_match)
-            return
-        } else binding.passwordRepeatContainer.error = null
-
-        // 🚀 Firebase kayıt işlemi
-        binding.btnRegister.isEnabled = false
-        binding.btnRegister.text = getString(R.string.register_loading)
-
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener(requireActivity()) { task ->
-                binding.btnRegister.isEnabled = true
-                binding.btnRegister.text = getString(R.string.register_button)
-
-                if (task.isSuccessful) {
-                    val user = task.result?.user
-                    if (user != null) {
-                        saveSession(user)
-                        Toast.makeText(requireContext(), "Account created successfully!", Toast.LENGTH_SHORT).show()
-                        navigateToMain()
-                    }
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Registration failed: ${task.exception?.localizedMessage}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+            // 🧩 Boş alan kontrolü
+            if (email.isEmpty() || password.isEmpty() || repeatPassword.isEmpty()) {
+                (requireActivity() as BaseActivity).showLoading(false)
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.WARNING,
+                    title = getString(R.string.register_empty_fields_title),
+                    message = getString(R.string.register_empty_fields_message)
+                )
+                return@launch
             }
+
+            // 📧 E-posta kontrolü
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                (requireActivity() as BaseActivity).showLoading(false)
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.WARNING,
+                    title = getString(R.string.invalid_email_title),
+                    message = getString(R.string.invalid_email)
+                )
+                return@launch
+            }
+
+            // 🔒 Şifre uzunluğu
+            if (password.length < 6) {
+                (requireActivity() as BaseActivity).showLoading(false)
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.WARNING,
+                    title = getString(R.string.invalid_password_title),
+                    message = getString(R.string.invalid_password)
+                )
+                return@launch
+            }
+
+            // 🔁 Şifre eşleşme kontrolü
+            if (password != repeatPassword) {
+                (requireActivity() as BaseActivity).showLoading(false)
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.WARNING,
+                    title = getString(R.string.passwords_do_not_match_title),
+                    message = getString(R.string.passwords_do_not_match)
+                )
+                return@launch
+            }
+
+            // 🚀 Firebase kayıt işlemi
+            binding.btnRegister.isEnabled = false
+            binding.btnRegister.text = getString(R.string.register_loading)
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(requireActivity()) { task ->
+                    (requireActivity() as BaseActivity).showLoading(false)
+                    binding.btnRegister.isEnabled = true
+                    binding.btnRegister.text = getString(R.string.register_button)
+
+                    if (task.isSuccessful) {
+                        val user = task.result?.user
+                        if (user != null) {
+                            saveSession(user)
+                            DialogManager.showInfoDialog(
+                                requireContext(),
+                                DialogType.SUCCESS,
+                                title = getString(R.string.register_success_title),
+                                message = getString(R.string.register_success_message),
+                                onDismiss = { navigateToMain() }
+                            )
+                        }
+                    } else {
+                        val errorMsg = task.exception?.localizedMessage
+                            ?: getString(R.string.register_failed_message)
+                        DialogManager.showInfoDialog(
+                            requireContext(),
+                            DialogType.ERROR,
+                            title = getString(R.string.register_failed_title),
+                            message = errorMsg
+                        )
+                    }
+                }
+        }
     }
 
-    // 🔐 Oturum ve profil bilgisini güvenli DataStore’a kaydet
     private fun saveSession(user: FirebaseUser) {
         lifecycleScope.launch {
             userPrefs.saveUserSession(
@@ -105,7 +153,6 @@ class RegisterFragment : Fragment() {
         }
     }
 
-    // 🔄 Başarılı kayıt sonrası ana ekrana geçiş
     private fun navigateToMain() {
         val intent = Intent(requireContext(), MainActivity::class.java)
         startActivity(intent)
