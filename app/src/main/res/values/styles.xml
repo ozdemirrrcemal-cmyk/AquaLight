@@ -35,7 +35,7 @@
 	<!-- 🎨 AppDialogTheme : Her dialog bu temayı kullanacak -->
    <style name="AppDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
     <!-- Arka plan şekli -->
-    <item name="android:background">@drawable/dialog_background</item>
+        <item name="android:background">@null</item>
 
     <!-- Köşeler -->
     <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Material3.Corner.Medium</item>
