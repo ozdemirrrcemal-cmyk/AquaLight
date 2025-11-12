@@ -79,6 +79,6 @@
 <!-- ✏️ TextInputEditText stili -->
 <style name="AuthEditText" parent="Widget.Material3.TextInputEditText.OutlinedBox">
     <item name="android:textColor">@color/auth_text_color</item>
-    <item name="android:cursorColor">@color/auth_focus_color</item>
+    <item name="colorControlActivated">@color/auth_focus_color</item> <!-- ✅ Güvenli -->
 </style>
 </resources>
