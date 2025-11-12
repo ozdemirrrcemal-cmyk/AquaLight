@@ -6,22 +6,25 @@
     android:layout_height="match_parent"
     android:padding="24dp">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnGoogleLogin"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/login_google"
-        android:contentDescription="@string/login_google_desc"
-        style="@style/WhiteButton"
-        app:icon="@drawable/ic_google"
-        app:iconTint="@null"
-        app:iconSize="18dp"
-        app:iconPadding="8dp"
-        app:iconGravity="start"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
-        android:layout_marginBottom="4dp" />
+   <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnGoogleLogin"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:text="@string/login_google"
+    android:contentDescription="@string/login_google_desc"
+    style="@style/WhiteButton"
+    app:icon="@drawable/ic_google"
+    app:iconTint="@null"
+	android:gravity="center_vertical"
+    app:iconSize="20dp"
+    app:iconPadding="4dp"
+    app:iconGravity="textStart"
+    android:paddingStart="12dp"
+    android:paddingEnd="16dp"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
+    android:layout_marginBottom="4dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSignIn"
