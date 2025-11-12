@@ -1,53 +1,36 @@
 <resources>
+
+    <!-- 🌊 Genel Uygulama Bilgileri -->
     <string name="app_name">AquaLight</string>
-	<string name="splasch_logo_description">AquaLight Logo</string>
+    <string name="splasch_logo_description">AquaLight Logo</string>
     <string name="splasch_app_title">AquaLight</string>
     <string name="splasch_app_subtitle">Nature Aquarium</string>
-	
-       <!-- 🎬 Background video -->
-    <string name="main_login_video_background_description">
-        Background video playing in login screen
-    </string>
 
-    <!-- 🧊 Blur overlay -->
-    <string name="main_login_blur_overlay_description">
-        Blur overlay layer for background
-    </string>
+    <!-- 🎬 Arka Plan & Görseller -->
+    <string name="main_login_video_background_description">Background video playing in login screen</string>
+    <string name="main_login_blur_overlay_description">Blur overlay layer for background</string>
+    <string name="main_login_logo_description">AquaLight app logo</string>
+    <string name="main_login_fragment_container_description">Fragment container displaying login or registration screens</string>
 
-    <!-- 🌊 Logo image -->
-    <string name="main_login_logo_description">
-        AquaLight app logo
-    </string>
-
-    <!-- 🧱 Fragment container -->
-    <string name="main_login_fragment_container_description">
-        Fragment container displaying login or registration screens
-    </string>
-
-	    <!-- Loading overlay descriptions -->
+    <!-- 🔄 Loading Overlay -->
     <string name="loading_overlay_desc">Loading screen overlay</string>
     <string name="loading_logo_desc">Application loading logo animation</string>
-	
-        <!-- 📧 Email & Password Hataları -->
+
+    <!-- ⚠️ Ortak Hata Mesajları -->
     <string name="invalid_email_title">Invalid Email</string>
     <string name="invalid_email">Please enter a valid email address.</string>
-
     <string name="invalid_password_title">Weak Password</string>
     <string name="invalid_password">Password must be at least 6 characters.</string>
 
-    <!-- 🔒 Boş Alan Uyarısı -->
+    <!-- 📥 Sign-In Ekranı -->
     <string name="signin_empty_fields_title">Missing Information</string>
     <string name="signin_empty_fields_message">Please fill in all required fields.</string>
-
-    <!-- 🚀 Giriş Başarısı -->
     <string name="login_success_title">Welcome Back!</string>
     <string name="login_success_message">You have successfully signed in.</string>
-
-    <!-- ❌ Giriş Başarısız -->
     <string name="signin_failed_title">Sign-in Failed</string>
     <string name="signin_failed_default">An unexpected error occurred during sign-in.</string>
 
-    <!-- 🔄 UI Etiketleri -->
+    <!-- 🔑 Sign-In Etiketleri -->
     <string name="signin_email_hint">Email address</string>
     <string name="signin_password_hint">Password</string>
     <string name="signin_forgot_password">Forgot password?</string>
@@ -57,105 +40,72 @@
     <string name="signin_back_button_desc">Return to previous screen</string>
     <string name="signin_loading">Signing in...</string>
 
-    <!-- ♿️ Content Description -->
+    <!-- ♿️ Sign-In Content Description -->
     <string name="signin_email_desc">Email input field for sign in</string>
     <string name="signin_password_desc">Password input field for sign in</string>
-	
-	 <!-- 📧 Dialog ekranı -->
-	<string name="ok">OK</string>
+
+    <!-- 💬 Dialog Ortak Metinleri -->
+    <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="confirm">Confirm</string>
     <string name="dialog_icon_desc">Dialog icon</string>
-	
 
-    <!-- 📧 Email Alanı -->
+    <!-- 🔁 Reset Password Ekranı -->
     <string name="reset_hint_email">Email address</string>
     <string name="reset_email_field_desc">Field to enter your email for password reset</string>
 
-    <!-- 🔁 Butonlar -->
     <string name="reset_password_button">Send Reset Link</string>
     <string name="reset_password_button_desc">Send password reset email</string>
     <string name="reset_back_button">Back</string>
     <string name="reset_back_button_desc">Return to previous screen</string>
+    <string name="reset_loading">Sending reset email...</string>
 
-    <!-- ⏳ Loading -->
-    <string name="signin_loading">Please wait...</string>
-
-    <!-- ⚠️ Hata Mesajları -->
+    <!-- Reset Error & Info -->
     <string name="reset_empty_email_title">Missing Email</string>
     <string name="reset_empty_email_message">Please enter your email address.</string>
-
     <string name="reset_invalid_email_title">Invalid Email</string>
     <string name="reset_invalid_email">Please enter a valid email address.</string>
-
-    <!-- ✅ Başarılı -->
     <string name="reset_success_title">Email Sent</string>
     <string name="reset_success_message">A password reset link has been sent to your email.</string>
-
-    <!-- ❌ Hatalı -->
     <string name="reset_failed_title">Reset Failed</string>
     <string name="reset_error_message">An error occurred while sending the reset email. Please try again later.</string>
-	
 
-    <!-- 📧 Email -->
+    <!-- 🧾 Register Ekranı -->
     <string name="register_hint_email">Email address</string>
     <string name="register_email_field_desc">Email input field for registration</string>
-
-    <!-- 🔒 Password -->
     <string name="register_hint_password">Password</string>
     <string name="register_password_field_desc">Password input field for registration</string>
-
-    <!-- 🔁 Password Repeat -->
     <string name="register_hint_password_repeat">Repeat password</string>
     <string name="register_password_repeat_field_desc">Repeat password input field</string>
 
-    <!-- 🔘 Buttons -->
     <string name="register_button">Create Account</string>
     <string name="register_button_desc">Create a new AquaLight account</string>
     <string name="register_back_button">Back</string>
     <string name="register_back_button_desc">Go back to sign-in screen</string>
-
-    <!-- ⏳ Loading -->
     <string name="register_loading">Creating account...</string>
 
-    <!-- ⚠️ Hatalar -->
     <string name="register_empty_fields_title">Incomplete Form</string>
     <string name="register_empty_fields_message">Please fill in all required fields.</string>
-
-    <string name="invalid_email_title">Invalid Email</string>
-    <string name="invalid_email">Please enter a valid email address.</string>
-
-    <string name="invalid_password_title">Weak Password</string>
-    <string name="invalid_password">Password must be at least 6 characters.</string>
-
     <string name="passwords_do_not_match_title">Passwords Do Not Match</string>
     <string name="passwords_do_not_match">Please ensure both passwords are the same.</string>
-
-    <!-- ✅ Başarılı -->
     <string name="register_success_title">Registration Successful</string>
     <string name="register_success_message">Your account has been created successfully!</string>
-
-    <!-- ❌ Hata -->
     <string name="register_failed_title">Registration Failed</string>
     <string name="register_failed_message">An error occurred while creating your account. Please try again later.</string>
 
-    <!-- 🟦 Login ekranı buton metinleri -->
+    <!-- 🟦 Login Ana Ekranı -->
     <string name="login_google">Sign in with Google</string>
     <string name="login_google_desc">Sign in using your Google account</string>
-
     <string name="login_sign_in">Sign In</string>
     <string name="login_sign_in_desc">Go to email sign-in screen</string>
-
     <string name="login_register">Create Account</string>
     <string name="login_register_desc">Go to registration screen</string>
-
-    <!-- ⚙️ Genel açıklamalar -->
     <string name="login_screen_desc">Login options screen</string>
-	<string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
 
-    <!-- 🔄 Giriş Durumları (opsiyonel log mesajları için) -->
+    <!-- 🔄 Login Durum Mesajları -->
     <string name="login_google_success">Signed in with Google successfully</string>
     <string name="login_google_failed">Google sign-in failed</string>
     <string name="login_firebase_failed">Firebase authentication failed</string>
-	
+
 </resources>
