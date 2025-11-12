@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewLifecycleOwner
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
@@ -35,7 +36,6 @@ class LoginFragment : Fragment() {
     private val auth = Firebase.auth
     private val baseActivity get() = activity as? BaseActivity
 
-    // ✅ Tekil DataStore yöneticisi
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
     private val googleSignInLauncher = registerForActivityResult(
@@ -46,10 +46,11 @@ class LoginFragment : Fragment() {
             val account = task.getResult(ApiException::class.java)
             if (account != null) {
                 Log.d("LoginFragment", "✅ Google Sign-In account: ${account.email}")
+                // 🔄 Loading göstergesi burada başlatıldı (daha doğru nokta)
+                baseActivity?.showLoading(true)
                 firebaseAuthWithGoogle(account.idToken!!)
             } else {
                 Log.w("LoginFragment", "⚠️ Google account null döndü!")
-                baseActivity?.showLoading(false)
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.WARNING,
@@ -59,13 +60,14 @@ class LoginFragment : Fragment() {
             }
         } catch (e: Exception) {
             Log.e("LoginFragment", "Google Sign-In failed ❌", e)
-            baseActivity?.showLoading(false)
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.ERROR,
                 title = getString(R.string.login_google_failed),
                 message = "Google girişi başarısız: ${e.localizedMessage}"
             )
+        } finally {
+            baseActivity?.showLoading(false)
         }
     }
 
@@ -106,8 +108,7 @@ class LoginFragment : Fragment() {
     }
 
     private fun signInWithGoogle() {
-        // 🔄 Kullanıcı butona tıklayınca loading overlay göster
-        baseActivity?.showLoading(true)
+        // ❌ Artık loading burada gösterilmiyor — sadece Firebase sürecinde gösteriliyor.
         val signInIntent = googleSignInClient.signInIntent
         googleSignInLauncher.launch(signInIntent)
     }
@@ -116,12 +117,12 @@ class LoginFragment : Fragment() {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnCompleteListener(requireActivity()) { task ->
-                baseActivity?.showLoading(false) // işlem bitince kapat
+                baseActivity?.showLoading(false)
 
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null) {
-                        lifecycleScope.launch {
+                        viewLifecycleOwner.lifecycleScope.launch {
                             userPrefs.saveUserSession(user.uid, true)
                             userPrefs.saveProfile(
                                 email = user.email ?: "",
@@ -137,7 +138,7 @@ class LoginFragment : Fragment() {
                                 onDismiss = {
                                     val intent = Intent(requireContext(), MainActivity::class.java)
                                     startActivity(intent)
-                                    requireActivity().finish()
+                                    requireActivity().finishAffinity() // 🔁 öneri 2: geri dönüşü engelle
                                 }
                             )
                         }
