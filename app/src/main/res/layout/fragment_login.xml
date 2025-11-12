@@ -19,11 +19,11 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="4dp"
     android:paddingStart="24dp"
     android:paddingEnd="24dp"
     android:gravity="center"
-    app:iconPadding="16dp"
+    app:iconPadding="10dp"
     app:iconGravity="start"
     />
 

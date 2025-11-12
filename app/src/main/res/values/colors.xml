@@ -49,7 +49,6 @@
     <color name="md_theme_light_error">#D32F2F</color>
     <color name="md_theme_light_onError">#FFFFFF</color>
 	
-	<color name="input_text">#FFFFFF</color>
 	<color name="colorSurfaceTransparent">#CC0A192F</color>
 	
 	<!-- 🎨 Dialog Icon Colors (Global temadan bağımsız) -->
@@ -57,5 +56,14 @@
 <color name="dialog_icon_warning">#FFC107</color>   <!-- Sarı -->
 <color name="dialog_icon_error">#F44336</color>     <!-- Kırmızı -->
 <color name="dialog_icon_info">#2196F3</color>      <!-- Mavi -->
+
+<!-- 🖤 İç metin rengi -->
+<color name="auth_text_color">#000000</color>
+
+<!-- 🌑 Border & hint rengi (unfocused) -->
+<color name="auth_unfocused_color">#333333</color>
+
+<!-- 🔵 Focus rengi -->
+<color name="auth_focus_color">#2196F3</color>
 
 </resources>
