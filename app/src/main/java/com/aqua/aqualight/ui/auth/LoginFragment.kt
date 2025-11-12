@@ -35,8 +35,10 @@ class LoginFragment : Fragment() {
     private val auth = Firebase.auth
     private val baseActivity get() = activity as? BaseActivity
 
+    // Tekil DataStore yöneticisi
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
+    // Google Sign-In sonucu yakalayan launcher
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -45,11 +47,13 @@ class LoginFragment : Fragment() {
             val account = task.getResult(ApiException::class.java)
             if (account != null) {
                 Log.d("LoginFragment", "✅ Google Sign-In account: ${account.email}")
-                // 🔄 Loading göstergesi burada başlatıldı (daha doğru nokta)
+
+                // 🔄 Mail seçildikten SONRA loading göster
                 baseActivity?.showLoading(true)
+
                 firebaseAuthWithGoogle(account.idToken!!)
             } else {
-                Log.w("LoginFragment", "⚠️ Google account null döndü!")
+                baseActivity?.showLoading(false)
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.WARNING,
@@ -59,14 +63,13 @@ class LoginFragment : Fragment() {
             }
         } catch (e: Exception) {
             Log.e("LoginFragment", "Google Sign-In failed ❌", e)
+            baseActivity?.showLoading(false)
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.ERROR,
                 title = getString(R.string.login_google_failed),
                 message = "Google girişi başarısız: ${e.localizedMessage}"
             )
-        } finally {
-            baseActivity?.showLoading(false)
         }
     }
 
@@ -89,7 +92,9 @@ class LoginFragment : Fragment() {
     }
 
     private fun setupButtonActions() = with(binding) {
-        btnGoogleLogin.setOnClickListener { signInWithGoogle() }
+        btnGoogleLogin.setOnClickListener {
+            signInWithGoogle()
+        }
 
         btnSignIn.setOnClickListener {
             parentFragmentManager.commit {
@@ -107,9 +112,12 @@ class LoginFragment : Fragment() {
     }
 
     private fun signInWithGoogle() {
-        // ❌ Artık loading burada gösterilmiyor — sadece Firebase sürecinde gösteriliyor.
+        // ✅ Loading’i şimdi değil, hesap seçilince göstereceğiz
         val signInIntent = googleSignInClient.signInIntent
         googleSignInLauncher.launch(signInIntent)
+
+        // ⚡️ Ara (beyaz/siyah) sayfa geçişini sıfırla
+        requireActivity().overridePendingTransition(0, 0)
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
@@ -137,7 +145,8 @@ class LoginFragment : Fragment() {
                                 onDismiss = {
                                     val intent = Intent(requireContext(), MainActivity::class.java)
                                     startActivity(intent)
-                                    requireActivity().finishAffinity() // 🔁 öneri 2: geri dönüşü engelle
+                                    // ✅ Geri tuşuyla login ekranına dönmeyi tamamen engeller
+                                    requireActivity().finishAffinity()
                                 }
                             )
                         }
