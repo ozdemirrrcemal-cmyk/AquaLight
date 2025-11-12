@@ -43,7 +43,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancel"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.Material3.Button"
             android:text="@string/cancel"
             android:layout_marginEnd="8dp"
             android:layout_width="wrap_content"
@@ -51,7 +51,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirm"
-            style="@style/Widget.Material3.Button.FilledButton"
+            style="@style/Widget.Material3.Button"
             android:text="@string/confirm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
