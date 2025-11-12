@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentSigninBinding
 import com.aqua.aqualight.ui.main.MainActivity
@@ -37,19 +38,19 @@ class SignInFragment : Fragment() {
     }
 
     private fun setupUI() = with(binding) {
-    btnLogin.setOnClickListener { handleSignIn() }
+        btnLogin.setOnClickListener { handleSignIn() }
 
-    tvForgotPassword.setOnClickListener {
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, ResetPasswordFragment())
-            .addToBackStack(null)
-            .commit()
-    }
+        tvForgotPassword.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, ResetPasswordFragment())
+                .addToBackStack(null)
+                .commit()
+        }
 
-    btnBack.setOnClickListener {
-        parentFragmentManager.popBackStack()
+        btnBack.setOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
     }
-}
 
     private fun handleSignIn() {
         val email = binding.emailEditText.text?.toString()?.trim() ?: ""
@@ -70,12 +71,18 @@ class SignInFragment : Fragment() {
             binding.passwordContainer.error = null
         }
 
+        // 🔄 Loading ekranını göster
+        (requireActivity() as BaseActivity).showLoading(true)
+
         // 🚀 Firebase Authentication işlemi
         binding.btnLogin.isEnabled = false
         binding.btnLogin.text = getString(R.string.signin_loading)
 
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(requireActivity()) { task ->
+                // ⏹️ Yükleme ekranını kapat
+                (requireActivity() as BaseActivity).showLoading(false)
+
                 binding.btnLogin.isEnabled = true
                 binding.btnLogin.text = getString(R.string.signin_login_button)
 

@@ -86,4 +86,8 @@
     <string name="reset_error_message">Failed to send reset email. Please try again.</string>
     <string name="reset_invalid_email">Please enter a valid email address.</string>
 	
+	<!-- Loading overlay descriptions -->
+    <string name="loading_overlay_desc">Loading screen overlay</string>
+    <string name="loading_logo_desc">Application loading logo animation</string>
+	
 </resources>
