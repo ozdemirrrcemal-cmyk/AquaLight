@@ -4,6 +4,6 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="?attr/colorPrimary"
+        android:fillColor="@color/dialog_icon_success"
         android:pathData="M12,2a10,10 0 1,0 0,20a10,10 0 1,0 0,-20zM10,16l-4,-4l1.41,-1.41L10,13.17l6.59,-6.59L18,8l-8,8z"/>
 </vector>

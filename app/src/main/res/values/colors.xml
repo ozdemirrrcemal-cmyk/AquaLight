@@ -51,5 +51,11 @@
 	
 	<color name="input_text">#FFFFFF</color>
 	<color name="colorSurfaceTransparent">#CC0A192F</color>
+	
+	<!-- 🎨 Dialog Icon Colors (Global temadan bağımsız) -->
+<color name="dialog_icon_success">#4CAF50</color>   <!-- Yeşil -->
+<color name="dialog_icon_warning">#FFC107</color>   <!-- Sarı -->
+<color name="dialog_icon_error">#F44336</color>     <!-- Kırmızı -->
+<color name="dialog_icon_info">#2196F3</color>      <!-- Mavi -->
 
 </resources>

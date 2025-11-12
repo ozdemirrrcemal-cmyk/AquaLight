@@ -13,7 +13,7 @@
     style="@style/WhiteButton"
     android:text="@string/login_google"
     android:contentDescription="@string/login_google_desc"
-    app:icon="@drawable/ic_google_color"
+    app:icon="@drawable/ic_google"
     app:iconTint="@null"
     app:iconSize="20dp"
     app:layout_constraintStart_toStartOf="parent"

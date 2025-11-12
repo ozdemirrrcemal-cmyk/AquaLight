@@ -28,5 +28,11 @@
     <color name="input_text">#FFFFFF</color>
 	<color name="colorSurfaceTransparent">#CC0A192F</color>
 	
+	<!-- 🌙 Dialog Icon Colors (Dark Mode tonları) -->
+<color name="dialog_icon_success">#81C784</color>
+<color name="dialog_icon_warning">#FFD54F</color>
+<color name="dialog_icon_error">#EF5350</color>
+<color name="dialog_icon_info">#64B5F6</color>
+	
 
 </resources>
