@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
@@ -41,7 +42,11 @@ class RegisterFragment : Fragment() {
 
     private fun setupUI() = with(binding) {
         btnRegister.setOnClickListener { handleRegister() }
-        btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
+
+        // 🔹 Geri butonu navigation ile yönetiliyor
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
     }
 
     private fun handleRegister() {
@@ -139,7 +144,8 @@ class RegisterFragment : Fragment() {
     private fun navigateToMain() {
         val intent = Intent(requireContext(), MainActivity::class.java)
         startActivity(intent)
-        requireActivity().finish()
+        // ✅ Login flow tamamen kapatılır, geri tuşuyla dönülmez
+        requireActivity().finishAffinity()
     }
 
     override fun onDestroyView() {

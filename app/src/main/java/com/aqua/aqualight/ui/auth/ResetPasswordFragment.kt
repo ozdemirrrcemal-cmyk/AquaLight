@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentResetPasswordBinding
@@ -36,7 +37,11 @@ class ResetPasswordFragment : Fragment() {
 
     private fun setupUI() = with(binding) {
         btnSend.setOnClickListener { handleResetPassword() }
-        btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
+
+        // 🔹 Navigation Component ile geri dön
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
     }
 
     private fun handleResetPassword() {
@@ -85,7 +90,8 @@ class ResetPasswordFragment : Fragment() {
                             DialogType.SUCCESS,
                             title = getString(R.string.reset_success_title),
                             message = getString(R.string.reset_success_message),
-                            onDismiss = { parentFragmentManager.popBackStack() }
+                            // 🔹 Navigation Component ile geri dön
+                            onDismiss = { findNavController().popBackStack() }
                         )
                     } else {
                         val errorMsg = task.exception?.localizedMessage

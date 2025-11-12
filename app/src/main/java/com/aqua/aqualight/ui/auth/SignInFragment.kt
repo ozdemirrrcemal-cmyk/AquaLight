@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
@@ -42,14 +43,15 @@ class SignInFragment : Fragment() {
     private fun setupUI() = with(binding) {
         btnLogin.setOnClickListener { handleSignIn() }
 
+        // 🔹 Şifremi unuttum → Navigation Component ile geçiş
         tvForgotPassword.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, ResetPasswordFragment())
-                .addToBackStack(null)
-                .commit()
+            findNavController().navigate(R.id.action_signInFragment_to_resetPasswordFragment)
         }
 
-        btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
+        // 🔹 Geri dön → Navigation Component stack kontrolü
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
     }
 
     private fun handleSignIn() {
@@ -151,7 +153,8 @@ class SignInFragment : Fragment() {
     private fun navigateToMain() {
         val intent = Intent(requireContext(), MainActivity::class.java)
         startActivity(intent)
-        requireActivity().finish()
+        // ✅ Login flow tamamen kapatılır, geri tuşuyla dönülmez
+        requireActivity().finishAffinity()
     }
 
     override fun onDestroyView() {

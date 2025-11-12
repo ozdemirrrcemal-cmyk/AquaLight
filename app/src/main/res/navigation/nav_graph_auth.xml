@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/loginFragment">
+
+    <!-- Login -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.aqua.aqualight.ui.auth.LoginFragment"
+        android:label="Giriş">
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_signInFragment"
+            app:destination="@id/signInFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_resetPasswordFragment"
+            app:destination="@id/resetPasswordFragment" />
+    </fragment>
+
+    <!-- Register -->
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.aqua.aqualight.ui.auth.RegisterFragment"
+        android:label="Kayıt" />
+
+    <!-- E-posta ile Giriş -->
+    <fragment
+        android:id="@+id/signInFragment"
+        android:name="com.aqua.aqualight.ui.auth.SignInFragment"
+        android:label="Giriş Yap" />
+
+    <!-- Şifre Sıfırla -->
+    <fragment
+        android:id="@+id/resetPasswordFragment"
+        android:name="com.aqua.aqualight.ui.auth.ResetPasswordFragment"
+        android:label="Şifre Sıfırla" />
+</navigation>

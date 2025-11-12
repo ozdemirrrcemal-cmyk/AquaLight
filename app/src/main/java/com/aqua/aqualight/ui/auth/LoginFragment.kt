@@ -8,8 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
@@ -92,27 +92,28 @@ class LoginFragment : Fragment() {
     }
 
     private fun setupButtonActions() = with(binding) {
+
         btnGoogleLogin.setOnClickListener {
             signInWithGoogle()
         }
 
+        // 🔹 Email ile giriş
         btnSignIn.setOnClickListener {
-            parentFragmentManager.commit {
-                replace(R.id.fragmentContainer, SignInFragment())
-                addToBackStack(null)
-            }
+            findNavController().navigate(R.id.action_loginFragment_to_signInFragment)
         }
 
+        // 🔹 Kayıt ol
         btnRegister.setOnClickListener {
-            parentFragmentManager.commit {
-                replace(R.id.fragmentContainer, RegisterFragment())
-                addToBackStack(null)
-            }
+            findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
+        }
+
+        // 🔹 Şifremi unuttum (eğer varsa)
+        txtForgotPassword?.setOnClickListener {
+            findNavController().navigate(R.id.action_loginFragment_to_resetPasswordFragment)
         }
     }
 
     private fun signInWithGoogle() {
-        // ✅ Loading’i şimdi değil, hesap seçilince göstereceğiz
         val signInIntent = googleSignInClient.signInIntent
         googleSignInLauncher.launch(signInIntent)
 
