@@ -10,21 +10,21 @@ import android.os.Bundle
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
+import androidx.activity.addCallback
+import androidx.navigation.fragment.NavHostFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
-import com.aqua.aqualight.ui.auth.LoginFragment
-import eightbitlab.com.blurview.BlurView
-import eightbitlab.com.blurview.RenderEffectBlur
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.video.VideoSize
 import com.google.android.exoplayer2.util.Util
+import com.google.android.exoplayer2.video.VideoSize
+import eightbitlab.com.blurview.BlurView
+import eightbitlab.com.blurview.RenderEffectBlur
 import kotlinx.coroutines.launch
 
 class MainLoginActivity : BaseActivity() {
@@ -33,17 +33,30 @@ class MainLoginActivity : BaseActivity() {
     private lateinit var blurView: BlurView
 
     private var player: ExoPlayer? = null
-    private var videoWidth: Int = 0
-    private var videoHeight: Int = 0
+    private var videoWidth = 0
+    private var videoHeight = 0
 
     private val userPrefs by lazy { UserPreferencesManager.create(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main_login) // BaseActivity edge-to-edge'i burada uygular
+        setContentView(R.layout.activity_main_login)
 
         textureView = findViewById(R.id.videoBackground)
         blurView = findViewById(R.id.blurView)
+
+        // 🔹 Navigation host fragment referansını çekiyoruz
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        val navController = navHostFragment?.navController
+
+        // ⛔️ Geri tuşu: Login ekranına dönmemesi için
+        onBackPressedDispatcher.addCallback(this) {
+            if (navController?.currentDestination?.id == R.id.loginFragment) {
+                finishAffinity()
+            } else {
+                navController?.popBackStack()
+            }
+        }
 
         observeUserSession()
     }
@@ -57,19 +70,15 @@ class MainLoginActivity : BaseActivity() {
                         startActivity(Intent(this@MainLoginActivity, MainActivity::class.java))
                         finish()
                     } else {
-                        showFragment(LoginFragment())
+                        // 🚀 Navigation graph zaten login flow’u yüklüyor
+                        // Artık manuel olarak fragment eklemeye gerek yok
                     }
                 }
             }
         }
     }
 
-    fun showFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .commitAllowingStateLoss()
-    }
-
+    // 🎬 Video işlemleri
     override fun onStart() {
         super.onStart()
         if (Util.SDK_INT >= 24) initPlayerIfNeeded()
@@ -96,14 +105,11 @@ class MainLoginActivity : BaseActivity() {
         try {
             val exo = ExoPlayer.Builder(this).build().also { exo ->
                 exo.setVideoTextureView(textureView)
-
-                // 🔁 Pürüzsüz tek-öğe sonsuz döngü
                 exo.repeatMode = Player.REPEAT_MODE_ONE
 
                 exo.addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(state: Int) {
                         if (state == Player.STATE_ENDED) {
-                            // Nadir durumlarda emniyet: anında başa sar ve oyna
                             exo.seekTo(0)
                             exo.playWhenReady = true
                         }
@@ -159,7 +165,7 @@ class MainLoginActivity : BaseActivity() {
                 blurView.visibility = View.VISIBLE
                 blurView.setupWith(root, RenderEffectBlur())
                     .setFrameClearDrawable(window.decorView.background ?: ColorDrawable(Color.TRANSPARENT))
-                    .setBlurRadius(22f) // daha belirgin blur
+                    .setBlurRadius(22f)
             } catch (e: Exception) {
                 blurView.visibility = View.GONE
                 logError("MainLoginActivity", "BlurView hatası: ${e.message}")

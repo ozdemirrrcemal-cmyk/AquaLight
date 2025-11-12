@@ -14,9 +14,6 @@
         <action
             android:id="@+id/action_loginFragment_to_signInFragment"
             app:destination="@id/signInFragment" />
-        <action
-            android:id="@+id/action_loginFragment_to_resetPasswordFragment"
-            app:destination="@id/resetPasswordFragment" />
     </fragment>
 
     <!-- Register -->
@@ -29,7 +26,11 @@
     <fragment
         android:id="@+id/signInFragment"
         android:name="com.aqua.aqualight.ui.auth.SignInFragment"
-        android:label="Giriş Yap" />
+        android:label="Giriş Yap">
+        <action
+            android:id="@+id/action_signInFragment_to_resetPasswordFragment"
+            app:destination="@id/resetPasswordFragment" />
+    </fragment>
 
     <!-- Şifre Sıfırla -->
     <fragment

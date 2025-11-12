@@ -35,10 +35,8 @@ class LoginFragment : Fragment() {
     private val auth = Firebase.auth
     private val baseActivity get() = activity as? BaseActivity
 
-    // Tekil DataStore yöneticisi
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // Google Sign-In sonucu yakalayan launcher
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -47,10 +45,7 @@ class LoginFragment : Fragment() {
             val account = task.getResult(ApiException::class.java)
             if (account != null) {
                 Log.d("LoginFragment", "✅ Google Sign-In account: ${account.email}")
-
-                // 🔄 Mail seçildikten SONRA loading göster
                 baseActivity?.showLoading(true)
-
                 firebaseAuthWithGoogle(account.idToken!!)
             } else {
                 baseActivity?.showLoading(false)
@@ -92,32 +87,20 @@ class LoginFragment : Fragment() {
     }
 
     private fun setupButtonActions() = with(binding) {
+        btnGoogleLogin.setOnClickListener { signInWithGoogle() }
 
-        btnGoogleLogin.setOnClickListener {
-            signInWithGoogle()
-        }
-
-        // 🔹 Email ile giriş
         btnSignIn.setOnClickListener {
             findNavController().navigate(R.id.action_loginFragment_to_signInFragment)
         }
 
-        // 🔹 Kayıt ol
         btnRegister.setOnClickListener {
             findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
-        }
-
-        // 🔹 Şifremi unuttum (eğer varsa)
-        txtForgotPassword?.setOnClickListener {
-            findNavController().navigate(R.id.action_loginFragment_to_resetPasswordFragment)
         }
     }
 
     private fun signInWithGoogle() {
         val signInIntent = googleSignInClient.signInIntent
         googleSignInLauncher.launch(signInIntent)
-
-        // ⚡️ Ara (beyaz/siyah) sayfa geçişini sıfırla
         requireActivity().overridePendingTransition(0, 0)
     }
 
@@ -146,7 +129,6 @@ class LoginFragment : Fragment() {
                                 onDismiss = {
                                     val intent = Intent(requireContext(), MainActivity::class.java)
                                     startActivity(intent)
-                                    // ✅ Geri tuşuyla login ekranına dönmeyi tamamen engeller
                                     requireActivity().finishAffinity()
                                 }
                             )
