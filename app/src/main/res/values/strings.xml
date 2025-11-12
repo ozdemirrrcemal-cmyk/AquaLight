@@ -34,6 +34,7 @@
     <string name="signin_email_hint">Email address</string>
     <string name="signin_password_hint">Password</string>
     <string name="signin_forgot_password">Forgot password?</string>
+	<string name="signin_forgot_password_desc">Forgot password link on sign-in screen</string>
     <string name="signin_login_button">Sign In</string>
     <string name="signin_login_button_desc">Sign in to your AquaLight account</string>
     <string name="signin_back_button">Back</string>
