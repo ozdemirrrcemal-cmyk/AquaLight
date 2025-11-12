@@ -26,15 +26,18 @@ object DialogManager {
         val messageView = view.findViewById<TextView>(R.id.dialogMessage)
         val button = view.findViewById<MaterialButton>(R.id.dialogButton)
 
-        val (iconRes, tint) = when (type) {
-            DialogType.ERROR -> R.drawable.ic_error_outline_24 to R.color.md_theme_light_error
-            DialogType.SUCCESS -> R.drawable.ic_check_circle_24 to R.color.md_theme_light_primary
-            DialogType.WARNING -> R.drawable.ic_warning_amber_24 to R.color.md_theme_light_outline
-            else -> R.drawable.ic_info_24 to R.color.md_theme_light_primary
+        // 🔹 4 farklı tip için ikon ataması
+        val iconRes = when (type) {
+            DialogType.ERROR -> R.drawable.ic_error
+            DialogType.SUCCESS -> R.drawable.ic_success
+            DialogType.WARNING -> R.drawable.ic_warning
+            DialogType.INFO -> R.drawable.ic_info
         }
 
+        // 🔸 Tint sorununu sıfırla, ikon kendi fillColor rengini kullansın
+        icon.imageTintList = null
         icon.setImageResource(iconRes)
-        icon.imageTintList = context.getColorStateList(tint)
+
         titleView.text = title
         messageView.text = message
         button.text = buttonText
@@ -49,6 +52,7 @@ object DialogManager {
             onDismiss?.invoke()
         }
 
+        // 🔸 Arka planı tamamen saydam yap
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
     }
@@ -70,17 +74,19 @@ object DialogManager {
         val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
         val btnConfirm = view.findViewById<MaterialButton>(R.id.btnConfirm)
 
-        val (iconRes, tint) = when (type) {
-            DialogType.ERROR -> R.drawable.ic_error_outline_24 to R.color.md_theme_light_error
-            DialogType.WARNING -> R.drawable.ic_warning_amber_24 to R.color.md_theme_light_outline
-            else -> R.drawable.ic_info_24 to R.color.md_theme_light_primary
+        val iconRes = when (type) {
+            DialogType.ERROR -> R.drawable.ic_error
+            DialogType.WARNING -> R.drawable.ic_warning
+            DialogType.SUCCESS -> R.drawable.ic_success
+            DialogType.INFO -> R.drawable.ic_info
         }
 
+        // 🔸 Tint’i sıfırla, fillColor aktif kalsın
+        icon.imageTintList = null
         icon.setImageResource(iconRes)
-        icon.imageTintList = context.getColorStateList(tint)
+
         titleView.text = title
         messageView.text = message
-
         btnCancel.text = cancelText
         btnConfirm.text = confirmText
 
