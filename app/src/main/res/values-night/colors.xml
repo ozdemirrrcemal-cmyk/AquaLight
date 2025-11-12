@@ -15,14 +15,14 @@
     <color name="md_theme_dark_background">#0A192F</color>
     <color name="md_theme_dark_onBackground">#FFFFFF</color>
     <color name="md_theme_dark_surface">#0A192F</color>
-    <color name="md_theme_dark_onSurface">#AAB6C1</color>
+    <color name="md_theme_dark_onSurface">#E0E6ED</color>
 
-    <!-- ✳️ Ek kontrast & outline renkleri -->
-    <color name="md_theme_dark_surfaceVariant">#1E2B3C</color>
-    <color name="md_theme_dark_onSurfaceVariant">#90A4AE</color>
-    <color name="md_theme_dark_outline">#607D8B</color>
+    <!-- ✳️ Koyu kontrast & outline renkleri -->
+    <color name="md_theme_dark_surfaceVariant">#121A24</color>         <!-- Arka plan varyantı -->
+    <color name="md_theme_dark_onSurfaceVariant">#5C6B75</color>       <!-- Hint rengi: koyu gri -->
+    <color name="md_theme_dark_outline">#455A64</color>                <!-- Border: koyu mavi-gri -->
     <color name="md_theme_dark_outlineVariant">#37474F</color>
-    <color name="md_theme_dark_error">#CF6679</color>
-    <color name="md_theme_dark_onError">#000000</color>
+    <color name="md_theme_dark_error">#B3261E</color>                  <!-- MD3 kırmızı tonu -->
+    <color name="md_theme_dark_onError">#FFFFFF</color>
 
 </resources>

@@ -22,6 +22,7 @@
         <item name="colorOutlineVariant">@color/md_theme_light_outlineVariant</item>
         <item name="colorError">@color/md_theme_light_error</item>
         <item name="colorOnError">@color/md_theme_light_onError</item>
+		<item name="android:textColorPrimary">@color/input_text</item>
 
         <!-- Sistem bar renkleri -->
         <item name="android:statusBarColor">@color/md_theme_light_surface</item>

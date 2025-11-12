@@ -15,12 +15,12 @@
     <color name="md_theme_dark_background">#0A192F</color>
     <color name="md_theme_dark_onBackground">#FFFFFF</color>
     <color name="md_theme_dark_surface">#0A192F</color>
-    <color name="md_theme_dark_onSurface">#AAB6C1</color>
+    <color name="md_theme_dark_onSurface">#E0E6ED</color>
 
-    <!-- ✳️ Ek kontrast & outline renkleri -->
-    <color name="md_theme_dark_surfaceVariant">#1E2B3C</color>
-    <color name="md_theme_dark_onSurfaceVariant">#90A4AE</color>
-    <color name="md_theme_dark_outline">#607D8B</color>
+    <!-- ✳️ Koyu kontrast & outline renkleri -->
+    <color name="md_theme_dark_surfaceVariant">#121A24</color>
+    <color name="md_theme_dark_onSurfaceVariant">#5C6B75</color>
+    <color name="md_theme_dark_outline">#455A64</color>
     <color name="md_theme_dark_outlineVariant">#37474F</color>
     <color name="md_theme_dark_error">#CF6679</color>
     <color name="md_theme_dark_onError">#000000</color>
@@ -39,14 +39,16 @@
     <color name="md_theme_light_background">#152B45</color>
     <color name="md_theme_light_onBackground">#FFFFFF</color>
     <color name="md_theme_light_surface">#152B45</color>
-    <color name="md_theme_light_onSurface">#AAB6C1</color>
+    <color name="md_theme_light_onSurface">#E0E6ED</color>
 
-    <!-- ✳️ Ek kontrast & outline renkleri -->
-    <color name="md_theme_light_surfaceVariant">#E1F5FE</color>
-    <color name="md_theme_light_onSurfaceVariant">#546E7A</color>
-    <color name="md_theme_light_outline">#90A4AE</color>
-    <color name="md_theme_light_outlineVariant">#B0BEC5</color>
+    <!-- ✳️ Koyu kontrast & outline renkleri -->
+    <color name="md_theme_light_surfaceVariant">#233042</color>
+    <color name="md_theme_light_onSurfaceVariant">#5C6B75</color> <!-- koyu gri, hint için -->
+    <color name="md_theme_light_outline">#455A64</color> <!-- koyu gri border -->
+    <color name="md_theme_light_outlineVariant">#37474F</color>
     <color name="md_theme_light_error">#D32F2F</color>
     <color name="md_theme_light_onError">#FFFFFF</color>
+	
+	<color name="input_text">#FFFFFF</color>
 
 </resources>
