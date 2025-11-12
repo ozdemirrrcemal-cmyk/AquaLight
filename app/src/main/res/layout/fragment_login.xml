@@ -6,25 +6,26 @@
     android:layout_height="match_parent"
     android:padding="24dp">
 
-   <com.google.android.material.button.MaterialButton
+  <com.google.android.material.button.MaterialButton
     android:id="@+id/btnGoogleLogin"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
+    style="@style/WhiteButton"
     android:text="@string/login_google"
     android:contentDescription="@string/login_google_desc"
-    style="@style/WhiteButton"
-    app:icon="@drawable/ic_google"
+    app:icon="@drawable/ic_google_color"
     app:iconTint="@null"
-	android:gravity="center_vertical"
     app:iconSize="20dp"
-    app:iconPadding="4dp"
-    app:iconGravity="textStart"
-    android:paddingStart="12dp"
-    android:paddingEnd="16dp"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintBottom_toTopOf="@+id/btnSignIn"
-    android:layout_marginBottom="4dp" />
+    android:layout_marginBottom="8dp"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:gravity="center"
+    app:iconPadding="16dp"
+    app:iconGravity="start"
+    />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSignIn"

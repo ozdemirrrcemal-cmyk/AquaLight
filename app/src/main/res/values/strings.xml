@@ -102,7 +102,7 @@
     <string name="login_register">Create Account</string>
     <string name="login_register_desc">Go to registration screen</string>
     <string name="login_screen_desc">Login options screen</string>
-    <string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
+   <string name="default_web_client_id">660201044993-bds9gg9jm73p0jbaqum5vsk5vfnr7j5n.apps.googleusercontent.com</string>
 
     <!-- 🔄 Login Durum Mesajları -->
     <string name="login_google_success">Signed in with Google successfully</string>
