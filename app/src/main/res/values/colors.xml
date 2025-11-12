@@ -50,5 +50,6 @@
     <color name="md_theme_light_onError">#FFFFFF</color>
 	
 	<color name="input_text">#FFFFFF</color>
+	<color name="colorSurfaceTransparent">#CC0A192F</color>
 
 </resources>

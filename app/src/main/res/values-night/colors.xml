@@ -24,5 +24,9 @@
     <color name="md_theme_dark_outlineVariant">#37474F</color>
     <color name="md_theme_dark_error">#B3261E</color>                  <!-- MD3 kırmızı tonu -->
     <color name="md_theme_dark_onError">#FFFFFF</color>
+	
+    <color name="input_text">#FFFFFF</color>
+	<color name="colorSurfaceTransparent">#CC0A192F</color>
+	
 
 </resources>
