@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "660201044993-9a01t76vrifvppco63qt7sksgnq3fi0j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aqua.aqualight",
+            "certificate_hash": "a0d541bbb3004014cce95797744d005347f9c858"
+          }
+        },
+        {
           "client_id": "660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com",
           "client_type": 3
         }
