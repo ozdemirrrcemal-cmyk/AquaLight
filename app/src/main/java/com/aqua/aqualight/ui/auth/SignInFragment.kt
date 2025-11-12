@@ -6,7 +6,6 @@ import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
@@ -14,6 +13,8 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentSigninBinding
 import com.aqua.aqualight.ui.main.MainActivity
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -58,17 +59,23 @@ class SignInFragment : Fragment() {
 
         // 🧩 Giriş doğrulama
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.emailContainer.error = getString(R.string.invalid_email)
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.WARNING,
+                title = getString(R.string.invalid_email_title),
+                message = getString(R.string.invalid_email)
+            )
             return
-        } else {
-            binding.emailContainer.error = null
         }
 
         if (password.length < 6) {
-            binding.passwordContainer.error = getString(R.string.invalid_password)
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.WARNING,
+                title = getString(R.string.invalid_password_title),
+                message = getString(R.string.invalid_password)
+            )
             return
-        } else {
-            binding.passwordContainer.error = null
         }
 
         // 🔄 Loading ekranını göster
@@ -90,15 +97,22 @@ class SignInFragment : Fragment() {
                     val user = task.result?.user
                     if (user != null) {
                         saveSession(user)
-                        Toast.makeText(requireContext(), "Welcome back!", Toast.LENGTH_SHORT).show()
-                        navigateToMain()
+                        DialogManager.showInfoDialog(
+                            requireContext(),
+                            DialogType.SUCCESS,
+                            title = getString(R.string.login_success_title),
+                            message = getString(R.string.login_success_message),
+                            onDismiss = { navigateToMain() }
+                        )
                     }
                 } else {
-                    Toast.makeText(
+                    val errorMsg = task.exception?.localizedMessage ?: getString(R.string.signin_failed_default)
+                    DialogManager.showInfoDialog(
                         requireContext(),
-                        "Sign-in failed: ${task.exception?.localizedMessage}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                        DialogType.ERROR,
+                        title = getString(R.string.signin_failed_title),
+                        message = errorMsg
+                    )
                 }
             }
     }

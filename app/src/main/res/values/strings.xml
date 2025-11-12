@@ -90,4 +90,10 @@
     <string name="loading_overlay_desc">Loading screen overlay</string>
     <string name="loading_logo_desc">Application loading logo animation</string>
 	
+	
+	<string name="ok">OK</string>
+<string name="cancel">Cancel</string>
+<string name="confirm">Confirm</string>
+<string name="dialog_icon_desc">Dialog icon</string>
+	
 </resources>
