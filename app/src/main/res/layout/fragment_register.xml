@@ -9,7 +9,7 @@
     <!-- 📧 Email input -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/emailContainer"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        style="@style/AuthTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
@@ -21,6 +21,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/emailEditText"
+			style="@style/AuthEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/register_hint_email"
@@ -30,7 +31,7 @@
     <!-- 🔒 Password input -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordContainer"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        style="@style/AuthTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:passwordToggleEnabled="true"
@@ -42,6 +43,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/passwordEditText"
+		    style="@style/AuthEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/register_hint_password"
@@ -51,7 +53,7 @@
     <!-- 🔁 Password Repeat input -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordRepeatContainer"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        style="@style/AuthTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:passwordToggleEnabled="true"
@@ -63,6 +65,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPasswordRepeat"
+			style="@style/AuthEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/register_hint_password_repeat"
