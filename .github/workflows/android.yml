@@ -17,19 +17,17 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Gradle için bellek ve performans ayarları
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Gradle wrapper dosyalarının güvenlik/doğrulaması
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v2
 
       - name: Install JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -44,18 +42,10 @@ jobs:
         run: |
           yes | sdkmanager --licenses >/dev/null
           sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmdline-tools;latest"
           echo "Installed packages:"
           sdkmanager --list | sed -n '1,120p' || true
 
-      # 🧹 Manuel temizleme: commit mesajında 'clean'/'theme'/'xml' varsa
-      - name: Clean Gradle cache if requested
-        if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'theme') || contains(github.event.head_commit.message, 'xml') }}
-        run: |
-          echo "⚠️ Manual clean requested. Clearing Gradle caches + build outputs..."
-          rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper app/build
-
-      # Ek Gradle cache (setup-java zaten bağımlılık cache'ini yapar; bu, build-cache'i hızlandırır)
       - name: Cache Gradle build-cache
         uses: actions/cache@v4
         with:
@@ -87,7 +77,6 @@ jobs:
               -dname "CN=Android,O=AquaLight,C=TR"
           fi
 
-      # Kalite katmanı: lint (hata olursa iş kırılır; sadece uyarılar build'i bozmaz)
       - name: Run Android Lint
         run: ./gradlew lintDebug --no-daemon --stacktrace
 
@@ -101,7 +90,6 @@ jobs:
             **/build/reports/lint-results-*.xml
           if-no-files-found: ignore
 
-      # Unit testler
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
@@ -115,14 +103,12 @@ jobs:
             **/build/reports/tests/testDebugUnitTest/*
           if-no-files-found: ignore
 
-      # Debug APK derle
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Verify Debug APK
         run: |
           set -e
-          echo "Looking for debug APK..."
           ls -la app/build/outputs/apk/debug || true
           if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
             echo "✅ APK bulundu"
