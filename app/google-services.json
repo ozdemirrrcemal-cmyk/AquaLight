@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "660201044993-bds9gg9jm73p0jbaqum5vsk5vfnr7j5n.apps.googleusercontent.com",
+          "client_id": "660201044993-2cgcjdfal4q9q8tdnt334dklcj9q9nmc.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.aqua.aqualight",
-            "certificate_hash": "cca01ae6795daef4ca21697ba8a7ddd52d5d1386"
+            "certificate_hash": "69bcb91965f59fa2999583492de7c2278f3c09a1"
           }
         },
         {
