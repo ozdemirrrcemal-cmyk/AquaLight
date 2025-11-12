@@ -15,6 +15,14 @@
         <item name="colorSurface">@color/md_theme_dark_surface</item>
         <item name="colorOnSurface">@color/md_theme_dark_onSurface</item>
 
+        <!-- ✳️ Eklenen renkler -->
+        <item name="colorSurfaceVariant">@color/md_theme_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_dark_onSurfaceVariant</item>
+        <item name="colorOutline">@color/md_theme_dark_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_dark_outlineVariant</item>
+        <item name="colorError">@color/md_theme_dark_error</item>
+        <item name="colorOnError">@color/md_theme_dark_onError</item>
+
         <!-- Sistem bar renkleri -->
         <item name="android:statusBarColor">@color/md_theme_dark_background</item>
         <item name="android:navigationBarColor">@color/md_theme_dark_background</item>
@@ -26,45 +34,6 @@
         <!-- ActionBar kapalı -->
         <item name="windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
-    </style>
-
-    <!-- 🔴 Kırmızı Buton -->
-    <style name="RedButton" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">#DB4437</item>
-        <item name="android:textColor">@android:color/white</item>
-        <item name="cornerRadius">15dp</item>
-        <item name="android:paddingTop">17dp</item>
-        <item name="android:paddingBottom">17dp</item>
-        <item name="android:minHeight">56dp</item>
-        <item name="android:elevation">0dp</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
-        <item name="android:textAllCaps">false</item>
-    </style>
-
-    <!-- ⚫ Siyah Buton -->
-    <style name="BlackButton" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">@android:color/black</item>
-        <item name="android:textColor">@android:color/white</item>
-        <item name="cornerRadius">15dp</item>
-        <item name="android:paddingTop">17dp</item>
-        <item name="android:paddingBottom">17dp</item>
-        <item name="android:minHeight">56dp</item>
-        <item name="android:elevation">0dp</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
-        <item name="android:textAllCaps">false</item>
-    </style>
-
-    <!-- ⚪ Beyaz Buton -->
-    <style name="WhiteButton" parent="Widget.Material3.Button">
-        <item name="android:backgroundTint">@android:color/white</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="cornerRadius">15dp</item>
-        <item name="android:paddingTop">17dp</item>
-        <item name="android:paddingBottom">17dp</item>
-        <item name="android:minHeight">56dp</item>
-        <item name="android:elevation">0dp</item>
-        <item name="android:fontFamily">@font/poppins_medium</item>
-        <item name="android:textAllCaps">false</item>
     </style>
 
     <!-- 🌙 Splash metin stilleri -->

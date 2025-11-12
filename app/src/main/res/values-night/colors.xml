@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- 🎨 Material 3 Dark Color Scheme -->
-    <color name="md_theme_dark_primary">#0A192F</color>
+    <!-- 🌙 Material 3 Dark Color Scheme -->
+    <color name="md_theme_dark_primary">#2196F3</color>
     <color name="md_theme_dark_onPrimary">#FFFFFF</color>
     <color name="md_theme_dark_primaryContainer">#0A192F</color>
     <color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
@@ -12,10 +12,17 @@
     <color name="md_theme_dark_secondaryContainer">#0A192F</color>
     <color name="md_theme_dark_onSecondaryContainer">#FFFFFF</color>
 
-    <!-- Arka plan ve yüzey -->
     <color name="md_theme_dark_background">#0A192F</color>
     <color name="md_theme_dark_onBackground">#FFFFFF</color>
     <color name="md_theme_dark_surface">#0A192F</color>
-    <color name="md_theme_dark_onSurface">#FFFFFF</color>
+    <color name="md_theme_dark_onSurface">#AAB6C1</color>
+
+    <!-- ✳️ Ek kontrast & outline renkleri -->
+    <color name="md_theme_dark_surfaceVariant">#1E2B3C</color>
+    <color name="md_theme_dark_onSurfaceVariant">#90A4AE</color>
+    <color name="md_theme_dark_outline">#607D8B</color>
+    <color name="md_theme_dark_outlineVariant">#37474F</color>
+    <color name="md_theme_dark_error">#CF6679</color>
+    <color name="md_theme_dark_onError">#000000</color>
 
 </resources>

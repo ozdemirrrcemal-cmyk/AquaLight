@@ -2,7 +2,7 @@
 <resources>
 
     <!-- 🌙 Material 3 Dark Color Scheme -->
-    <color name="md_theme_dark_primary">#0A192F</color>
+    <color name="md_theme_dark_primary">#2196F3</color>
     <color name="md_theme_dark_onPrimary">#FFFFFF</color>
     <color name="md_theme_dark_primaryContainer">#0A192F</color>
     <color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
@@ -17,11 +17,19 @@
     <color name="md_theme_dark_surface">#0A192F</color>
     <color name="md_theme_dark_onSurface">#AAB6C1</color>
 
+    <!-- ✳️ Ek kontrast & outline renkleri -->
+    <color name="md_theme_dark_surfaceVariant">#1E2B3C</color>
+    <color name="md_theme_dark_onSurfaceVariant">#90A4AE</color>
+    <color name="md_theme_dark_outline">#607D8B</color>
+    <color name="md_theme_dark_outlineVariant">#37474F</color>
+    <color name="md_theme_dark_error">#CF6679</color>
+    <color name="md_theme_dark_onError">#000000</color>
+
     <!-- ☀️ Material 3 Light Color Scheme -->
-    <color name="md_theme_light_primary">#152B45</color>
+    <color name="md_theme_light_primary">#2196F3</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_primaryContainer">#274263</color>
-    <color name="md_theme_light_onPrimaryContainer">#E5E9EF</color>
+    <color name="md_theme_light_primaryContainer">#E3F2FD</color>
+    <color name="md_theme_light_onPrimaryContainer">#0D47A1</color>
 
     <color name="md_theme_light_secondary">#4A6363</color>
     <color name="md_theme_light_onSecondary">#FFFFFF</color>
@@ -32,6 +40,13 @@
     <color name="md_theme_light_onBackground">#FFFFFF</color>
     <color name="md_theme_light_surface">#152B45</color>
     <color name="md_theme_light_onSurface">#AAB6C1</color>
-	
+
+    <!-- ✳️ Ek kontrast & outline renkleri -->
+    <color name="md_theme_light_surfaceVariant">#E1F5FE</color>
+    <color name="md_theme_light_onSurfaceVariant">#546E7A</color>
+    <color name="md_theme_light_outline">#90A4AE</color>
+    <color name="md_theme_light_outlineVariant">#B0BEC5</color>
+    <color name="md_theme_light_error">#D32F2F</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
 
 </resources>
