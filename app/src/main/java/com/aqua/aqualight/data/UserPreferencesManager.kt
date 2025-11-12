@@ -13,8 +13,17 @@ import java.io.File
 class UserPreferencesManager private constructor(private val dataStore: DataStore<UserPreferences>) {
 
     companion object {
+        @Volatile
+        private var INSTANCE: UserPreferencesManager? = null
+
         fun create(context: Context): UserPreferencesManager {
-            // delegate serializer is proto serializer
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: buildDataStore(context).also { INSTANCE = it }
+            }
+        }
+
+        // 🔒 Tekil (singleton) DataStore oluşturucu
+        private fun buildDataStore(context: Context): UserPreferencesManager {
             val delegate = UserPreferencesSerializer
             val encryptedSerializer = EncryptedUserPreferencesSerializer(context, delegate)
 
@@ -28,27 +37,28 @@ class UserPreferencesManager private constructor(private val dataStore: DataStor
             return UserPreferencesManager(ds)
         }
 
+        // 🔄 Eski format varsa yeni formata taşı
         private fun migrateLegacyIfNeeded(
-    context: Context,
-    legacySerializer: androidx.datastore.core.Serializer<UserPreferences>,
-    encryptedStore: DataStore<UserPreferences>
-) {
-    val legacyFile = File(context.filesDir, "user_prefs.pb")
-    if (legacyFile.exists()) {
-        try {
-            runBlocking {
-                val legacyData = legacySerializer.readFrom(legacyFile.inputStream())
-                encryptedStore.updateData { _ -> legacyData }
+            context: Context,
+            legacySerializer: androidx.datastore.core.Serializer<UserPreferences>,
+            encryptedStore: DataStore<UserPreferences>
+        ) {
+            val legacyFile = File(context.filesDir, "user_prefs.pb")
+            if (legacyFile.exists()) {
+                try {
+                    runBlocking {
+                        val legacyData = legacySerializer.readFrom(legacyFile.inputStream())
+                        encryptedStore.updateData { _ -> legacyData }
+                    }
+                    legacyFile.delete()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
-            legacyFile.delete()
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
-}
-    }
 
-    // Flows
+    // 🔹 Veri akışları
     val userPrefsFlow: Flow<UserPreferences> = dataStore.data
         .catch { emit(UserPreferences.getDefaultInstance()) }
 
@@ -58,6 +68,7 @@ class UserPreferencesManager private constructor(private val dataStore: DataStor
     val username: Flow<String> = userPrefsFlow.map { it.username }
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
 
+    // 🔹 Oturum kaydet
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -67,6 +78,7 @@ class UserPreferencesManager private constructor(private val dataStore: DataStor
         }
     }
 
+    // 🔹 Profil bilgilerini kaydet
     suspend fun saveProfile(email: String, username: String?, photoUrl: String?) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -77,6 +89,7 @@ class UserPreferencesManager private constructor(private val dataStore: DataStor
         }
     }
 
+    // 🔹 Oturumu temizle
     suspend fun clearUserData() {
         dataStore.updateData { prefs ->
             prefs.toBuilder()

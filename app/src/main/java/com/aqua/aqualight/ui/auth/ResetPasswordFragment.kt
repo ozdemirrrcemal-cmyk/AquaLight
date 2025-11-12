@@ -14,7 +14,6 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ResetPasswordFragment : Fragment() {
@@ -23,6 +22,7 @@ class ResetPasswordFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val auth = Firebase.auth
+    private val baseActivity get() = activity as? BaseActivity
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,44 +40,42 @@ class ResetPasswordFragment : Fragment() {
     }
 
     private fun handleResetPassword() {
-        val email = binding.emailEditText.text?.toString()?.trim() ?: ""
+        val email = binding.emailEditText.text?.toString()?.trim().orEmpty()
 
-        // 🔄 Loading başlat
-        (requireActivity() as BaseActivity).showLoading(true)
+        baseActivity?.showLoading(true)
 
         lifecycleScope.launch {
-            delay(500) // ufak bekleme efekti
+            when {
+                email.isEmpty() -> {
+                    baseActivity?.showLoading(false)
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.WARNING,
+                        title = getString(R.string.reset_empty_email_title),
+                        message = getString(R.string.reset_empty_email_message)
+                    )
+                    return@launch
+                }
 
-            // 🧩 E-posta kontrolü
-            if (email.isEmpty()) {
-                (requireActivity() as BaseActivity).showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.reset_empty_email_title),
-                    message = getString(R.string.reset_empty_email_message)
-                )
-                return@launch
+                !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                    baseActivity?.showLoading(false)
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.WARNING,
+                        title = getString(R.string.reset_invalid_email_title),
+                        message = getString(R.string.reset_invalid_email)
+                    )
+                    return@launch
+                }
             }
 
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                (requireActivity() as BaseActivity).showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.reset_invalid_email_title),
-                    message = getString(R.string.reset_invalid_email)
-                )
-                return@launch
-            }
-
-            // 🚀 Firebase işlemi
+            // 🚀 Firebase işlem başlıyor
             binding.btnSend.isEnabled = false
             binding.btnSend.text = getString(R.string.signin_loading)
 
             auth.sendPasswordResetEmail(email)
                 .addOnCompleteListener(requireActivity()) { task ->
-                    (requireActivity() as BaseActivity).showLoading(false)
+                    baseActivity?.showLoading(false)
                     binding.btnSend.isEnabled = true
                     binding.btnSend.text = getString(R.string.reset_password_button)
 

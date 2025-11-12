@@ -20,45 +20,44 @@ import kotlinx.coroutines.SupervisorJob
 
 open class BaseActivity : AppCompatActivity() {
 
-    // Activity’ye özel coroutine scope
+    // 🔹 Activity yaşam döngüsüne bağlı coroutine scope
     private val activityJob = SupervisorJob()
     protected val uiScope: CoroutineScope =
         CoroutineScope(Dispatchers.Main.immediate + activityJob)
 
-    // Loading overlay referansları
+    // 🔹 Loading overlay öğeleri
     private var loadingOverlay: FrameLayout? = null
     private var loadingLogo: ImageView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // System bars henüz oluşmadı, burada immersive mode uygulanmaz.
+        // Edge-to-edge ayarı burada değil, content yüklenince yapılmalı
     }
 
-    // İçerik yüklendikten hemen sonra immersive mode uygula + loading overlay ekle
     override fun setContentView(layoutResID: Int) {
         super.setContentView(layoutResID)
-        attachLoadingOverlay()
+        ensureLoadingOverlay()
         applyEdgeToEdge()
     }
 
     override fun setContentView(view: View) {
         super.setContentView(view)
-        attachLoadingOverlay()
+        ensureLoadingOverlay()
         applyEdgeToEdge()
     }
 
     override fun setContentView(view: View, params: ViewGroup.LayoutParams) {
         super.setContentView(view, params)
-        attachLoadingOverlay()
+        ensureLoadingOverlay()
         applyEdgeToEdge()
     }
 
     /**
-     * Loading overlay layout’unu activity köküne ekler (tek seferlik)
+     * 🧱 Loading overlay sadece bir kere eklenir (tekrarlanmaz)
      */
-    private fun attachLoadingOverlay() {
+    private fun ensureLoadingOverlay() {
+        val rootView = findViewById<ViewGroup>(android.R.id.content)
         if (loadingOverlay == null) {
-            val rootView = findViewById<ViewGroup>(android.R.id.content)
             val overlay = LayoutInflater.from(this)
                 .inflate(R.layout.loading_overlay, rootView, false) as FrameLayout
             rootView.addView(overlay)
@@ -68,7 +67,7 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     /**
-     * Ekranda dönen logo ile loading overlay’i gösterir veya gizler
+     * ⚡ Loading ekranını göster veya gizle
      */
     fun showLoading(show: Boolean) {
         val overlay = loadingOverlay ?: return
@@ -87,7 +86,7 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     /**
-     * Tam ekran immersive mode uygular (status/navigation bar gizli)
+     * 🌈 Tam ekran immersive (edge-to-edge) görünüm
      */
     protected fun applyEdgeToEdge() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -109,6 +108,9 @@ open class BaseActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * 🪶 Hata loglama
+     */
     protected fun logError(tag: String, message: String?, throwable: Throwable? = null) {
         android.util.Log.e(tag, message, throwable)
     }

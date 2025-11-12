@@ -11,9 +11,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLoginBinding
 import com.aqua.aqualight.ui.main.MainActivity
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -30,11 +33,11 @@ class LoginFragment : Fragment() {
 
     private lateinit var googleSignInClient: GoogleSignInClient
     private val auth = Firebase.auth
+    private val baseActivity get() = activity as? BaseActivity
 
-    // ✅ Şifreli DataStore yöneticisi
+    // ✅ Tekil DataStore yöneticisi
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // 🔹 Modern Google Sign-In launcher
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -46,9 +49,23 @@ class LoginFragment : Fragment() {
                 firebaseAuthWithGoogle(account.idToken!!)
             } else {
                 Log.w("LoginFragment", "⚠️ Google account null döndü!")
+                baseActivity?.showLoading(false)
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.WARNING,
+                    title = getString(R.string.login_google_failed),
+                    message = "Google hesabı seçilemedi. Lütfen tekrar deneyin."
+                )
             }
         } catch (e: Exception) {
             Log.e("LoginFragment", "Google Sign-In failed ❌", e)
+            baseActivity?.showLoading(false)
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.ERROR,
+                title = getString(R.string.login_google_failed),
+                message = "Google girişi başarısız: ${e.localizedMessage}"
+            )
         }
     }
 
@@ -62,7 +79,6 @@ class LoginFragment : Fragment() {
         return binding.root
     }
 
-    // 🔹 Google Sign-In yapılandırması
     private fun setupGoogleSignIn() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
@@ -71,7 +87,6 @@ class LoginFragment : Fragment() {
         googleSignInClient = GoogleSignIn.getClient(requireContext(), gso)
     }
 
-    // 🔹 Buton işlevleri
     private fun setupButtonActions() = with(binding) {
         btnGoogleLogin.setOnClickListener { signInWithGoogle() }
 
@@ -90,44 +105,58 @@ class LoginFragment : Fragment() {
         }
     }
 
-    // ✅ Modern Google ile giriş işlemi (onActivityResult yerine)
     private fun signInWithGoogle() {
+        // 🔄 Kullanıcı butona tıklayınca loading overlay göster
+        baseActivity?.showLoading(true)
         val signInIntent = googleSignInClient.signInIntent
         googleSignInLauncher.launch(signInIntent)
     }
 
-    // 🔹 Firebase kimlik doğrulama
     private fun firebaseAuthWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnCompleteListener(requireActivity()) { task ->
+                baseActivity?.showLoading(false) // işlem bitince kapat
+
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null) {
-                        Log.d("LoginFragment", "✅ Firebase Auth Success: ${user.email}")
-
-                        // 🔐 Oturumu güvenli şekilde kaydet
                         lifecycleScope.launch {
-                            userPrefs.saveUserSession(
-                                idToken = user.uid,
-                                isLoggedIn = true
-                            )
+                            userPrefs.saveUserSession(user.uid, true)
                             userPrefs.saveProfile(
                                 email = user.email ?: "",
                                 username = user.displayName ?: "",
                                 photoUrl = user.photoUrl?.toString() ?: ""
                             )
 
-                            // 🔄 Ana ekrana yönlendir
-                            val intent = Intent(requireContext(), MainActivity::class.java)
-                            startActivity(intent)
-                            requireActivity().finish()
+                            DialogManager.showInfoDialog(
+                                requireContext(),
+                                DialogType.SUCCESS,
+                                title = getString(R.string.login_google_success),
+                                message = "Google hesabınızla başarıyla giriş yaptınız.",
+                                onDismiss = {
+                                    val intent = Intent(requireContext(), MainActivity::class.java)
+                                    startActivity(intent)
+                                    requireActivity().finish()
+                                }
+                            )
                         }
                     } else {
-                        Log.w("LoginFragment", "⚠️ Kullanıcı null döndü (Firebase).")
+                        DialogManager.showInfoDialog(
+                            requireContext(),
+                            DialogType.WARNING,
+                            title = getString(R.string.login_firebase_failed),
+                            message = "Kullanıcı bilgisi alınamadı, lütfen tekrar deneyin."
+                        )
                     }
                 } else {
                     Log.e("LoginFragment", "❌ Firebase auth failed", task.exception)
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.ERROR,
+                        title = getString(R.string.login_firebase_failed),
+                        message = "Kimlik doğrulama başarısız. ${task.exception?.localizedMessage ?: ""}"
+                    )
                 }
             }
     }

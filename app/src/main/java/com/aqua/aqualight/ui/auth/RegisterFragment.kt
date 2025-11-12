@@ -18,7 +18,6 @@ import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class RegisterFragment : Fragment() {
@@ -28,6 +27,7 @@ class RegisterFragment : Fragment() {
 
     private val auth = Firebase.auth
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val baseActivity get() = activity as? BaseActivity
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,60 +45,33 @@ class RegisterFragment : Fragment() {
     }
 
     private fun handleRegister() {
-        val email = binding.emailEditText.text?.toString()?.trim() ?: ""
-        val password = binding.passwordEditText.text?.toString()?.trim() ?: ""
-        val repeatPassword = binding.etPasswordRepeat.text?.toString()?.trim() ?: ""
+        val email = binding.emailEditText.text?.toString()?.trim().orEmpty()
+        val password = binding.passwordEditText.text?.toString()?.trim().orEmpty()
+        val repeatPassword = binding.etPasswordRepeat.text?.toString()?.trim().orEmpty()
 
-        // 🔄 Loading başlat
-        (requireActivity() as BaseActivity).showLoading(true)
+        baseActivity?.showLoading(true)
 
         lifecycleScope.launch {
-            delay(500) // küçük görsel tepki
-
-            // 🧩 Boş alan kontrolü
-            if (email.isEmpty() || password.isEmpty() || repeatPassword.isEmpty()) {
-                (requireActivity() as BaseActivity).showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.register_empty_fields_title),
-                    message = getString(R.string.register_empty_fields_message)
-                )
-                return@launch
+            // 🔍 Giriş doğrulamaları
+            val warning = when {
+                email.isEmpty() || password.isEmpty() || repeatPassword.isEmpty() ->
+                    R.string.register_empty_fields_message to R.string.register_empty_fields_title
+                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+                    R.string.invalid_email to R.string.invalid_email_title
+                password.length < 6 ->
+                    R.string.invalid_password to R.string.invalid_password_title
+                password != repeatPassword ->
+                    R.string.passwords_do_not_match to R.string.passwords_do_not_match_title
+                else -> null
             }
 
-            // 📧 E-posta kontrolü
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                (requireActivity() as BaseActivity).showLoading(false)
+            if (warning != null) {
+                baseActivity?.showLoading(false)
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.WARNING,
-                    title = getString(R.string.invalid_email_title),
-                    message = getString(R.string.invalid_email)
-                )
-                return@launch
-            }
-
-            // 🔒 Şifre uzunluğu
-            if (password.length < 6) {
-                (requireActivity() as BaseActivity).showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.invalid_password_title),
-                    message = getString(R.string.invalid_password)
-                )
-                return@launch
-            }
-
-            // 🔁 Şifre eşleşme kontrolü
-            if (password != repeatPassword) {
-                (requireActivity() as BaseActivity).showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.passwords_do_not_match_title),
-                    message = getString(R.string.passwords_do_not_match)
+                    title = getString(warning.second),
+                    message = getString(warning.first)
                 )
                 return@launch
             }
@@ -109,21 +82,33 @@ class RegisterFragment : Fragment() {
 
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(requireActivity()) { task ->
-                    (requireActivity() as BaseActivity).showLoading(false)
+                    baseActivity?.showLoading(false)
                     binding.btnRegister.isEnabled = true
                     binding.btnRegister.text = getString(R.string.register_button)
 
                     if (task.isSuccessful) {
                         val user = task.result?.user
                         if (user != null) {
-                            saveSession(user)
-                            DialogManager.showInfoDialog(
-                                requireContext(),
-                                DialogType.SUCCESS,
-                                title = getString(R.string.register_success_title),
-                                message = getString(R.string.register_success_message),
-                                onDismiss = { navigateToMain() }
-                            )
+                            lifecycleScope.launch {
+                                try {
+                                    saveSession(user)
+                                    DialogManager.showInfoDialog(
+                                        requireContext(),
+                                        DialogType.SUCCESS,
+                                        title = getString(R.string.register_success_title),
+                                        message = getString(R.string.register_success_message),
+                                        onDismiss = { navigateToMain() }
+                                    )
+                                } catch (e: Exception) {
+                                    DialogManager.showInfoDialog(
+                                        requireContext(),
+                                        DialogType.ERROR,
+                                        title = getString(R.string.session_save_error_title),
+                                        message = e.localizedMessage
+                                            ?: getString(R.string.register_failed_message)
+                                    )
+                                }
+                            }
                         }
                     } else {
                         val errorMsg = task.exception?.localizedMessage
@@ -139,18 +124,16 @@ class RegisterFragment : Fragment() {
         }
     }
 
-    private fun saveSession(user: FirebaseUser) {
-        lifecycleScope.launch {
-            userPrefs.saveUserSession(
-                idToken = user.uid,
-                isLoggedIn = true
-            )
-            userPrefs.saveProfile(
-                email = user.email ?: "",
-                username = user.displayName ?: "",
-                photoUrl = user.photoUrl?.toString() ?: ""
-            )
-        }
+    private suspend fun saveSession(user: FirebaseUser) {
+        userPrefs.saveUserSession(
+            idToken = user.uid,
+            isLoggedIn = true
+        )
+        userPrefs.saveProfile(
+            email = user.email ?: "",
+            username = user.displayName ?: "",
+            photoUrl = user.photoUrl?.toString() ?: ""
+        )
     }
 
     private fun navigateToMain() {

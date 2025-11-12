@@ -18,7 +18,6 @@ import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SignInFragment : Fragment() {
@@ -28,6 +27,7 @@ class SignInFragment : Fragment() {
 
     private val auth = Firebase.auth
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val baseActivity get() = activity as? BaseActivity
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,83 +49,73 @@ class SignInFragment : Fragment() {
                 .commit()
         }
 
-        btnBack.setOnClickListener {
-            parentFragmentManager.popBackStack()
-        }
+        btnBack.setOnClickListener { parentFragmentManager.popBackStack() }
     }
 
     private fun handleSignIn() {
-        val email = binding.emailEditText.text?.toString()?.trim() ?: ""
-        val password = binding.passwordEditText.text?.toString()?.trim() ?: ""
+        val email = binding.emailEditText.text?.toString()?.trim().orEmpty()
+        val password = binding.passwordEditText.text?.toString()?.trim().orEmpty()
 
-        // 🔄 Loading ekranını kısa süreli göster
-        (requireActivity() as BaseActivity).showLoading(true)
+        baseActivity?.showLoading(true)
 
         lifecycleScope.launch {
-            delay(600) // kullanıcıya tepki hissi versin diye kısa delay
-
             // 🧩 Boş alan kontrolü
             if (email.isEmpty() || password.isEmpty()) {
-                (requireActivity() as BaseActivity).showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.signin_empty_fields_title),
-                    message = getString(R.string.signin_empty_fields_message)
-                )
+                baseActivity?.showLoading(false)
+                showWarning(R.string.signin_empty_fields_title, R.string.signin_empty_fields_message)
                 return@launch
             }
 
-            // 🧩 E-posta doğrulama
+            // 📧 E-posta doğrulama
             if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                (requireActivity() as BaseActivity).showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.invalid_email_title),
-                    message = getString(R.string.invalid_email)
-                )
+                baseActivity?.showLoading(false)
+                showWarning(R.string.invalid_email_title, R.string.invalid_email)
                 return@launch
             }
 
-            // 🧩 Şifre doğrulama
+            // 🔒 Şifre doğrulama
             if (password.length < 6) {
-                (requireActivity() as BaseActivity).showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.invalid_password_title),
-                    message = getString(R.string.invalid_password)
-                )
+                baseActivity?.showLoading(false)
+                showWarning(R.string.invalid_password_title, R.string.invalid_password)
                 return@launch
             }
 
-            // 🚀 Firebase Authentication işlemi
+            // 🚀 Firebase Authentication
             binding.btnLogin.isEnabled = false
             binding.btnLogin.text = getString(R.string.signin_loading)
 
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(requireActivity()) { task ->
-                    (requireActivity() as BaseActivity).showLoading(false)
+                    baseActivity?.showLoading(false)
                     binding.btnLogin.isEnabled = true
                     binding.btnLogin.text = getString(R.string.signin_login_button)
 
                     if (task.isSuccessful) {
                         val user = task.result?.user
                         if (user != null) {
-                            saveSession(user)
-                            DialogManager.showInfoDialog(
-                                requireContext(),
-                                DialogType.SUCCESS,
-                                title = getString(R.string.login_success_title),
-                                message = getString(R.string.login_success_message),
-                                onDismiss = { navigateToMain() }
-                            )
+                            lifecycleScope.launch {
+                                try {
+                                    saveSession(user)
+                                    DialogManager.showInfoDialog(
+                                        requireContext(),
+                                        DialogType.SUCCESS,
+                                        title = getString(R.string.login_success_title),
+                                        message = getString(R.string.login_success_message),
+                                        onDismiss = { navigateToMain() }
+                                    )
+                                } catch (e: Exception) {
+                                    DialogManager.showInfoDialog(
+                                        requireContext(),
+                                        DialogType.ERROR,
+                                        title = getString(R.string.session_save_error_title),
+                                        message = e.localizedMessage ?: "Session kaydedilemedi"
+                                    )
+                                }
+                            }
                         }
                     } else {
                         val errorMsg = task.exception?.localizedMessage
                             ?: getString(R.string.signin_failed_default)
-
                         DialogManager.showInfoDialog(
                             requireContext(),
                             DialogType.ERROR,
@@ -137,22 +127,27 @@ class SignInFragment : Fragment() {
         }
     }
 
-    // 🔐 Oturum bilgisini güvenli biçimde kaydet
-    private fun saveSession(user: FirebaseUser) {
-        lifecycleScope.launch {
-            userPrefs.saveUserSession(
-                idToken = user.uid,
-                isLoggedIn = true
-            )
-            userPrefs.saveProfile(
-                email = user.email ?: "",
-                username = user.displayName ?: "",
-                photoUrl = user.photoUrl?.toString() ?: ""
-            )
-        }
+    private fun showWarning(titleRes: Int, msgRes: Int) {
+        DialogManager.showInfoDialog(
+            requireContext(),
+            DialogType.WARNING,
+            title = getString(titleRes),
+            message = getString(msgRes)
+        )
     }
 
-    // 🔄 Başarılı giriş sonrası
+    private suspend fun saveSession(user: FirebaseUser) {
+        userPrefs.saveUserSession(
+            idToken = user.uid,
+            isLoggedIn = true
+        )
+        userPrefs.saveProfile(
+            email = user.email ?: "",
+            username = user.displayName ?: "",
+            photoUrl = user.photoUrl?.toString() ?: ""
+        )
+    }
+
     private fun navigateToMain() {
         val intent = Intent(requireContext(), MainActivity::class.java)
         startActivity(intent)
