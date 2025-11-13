@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_app"
+    app:startDestination="@id/aquariumFragment">
+
+    <fragment
+        android:id="@+id/aquariumFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment"
+        android:label="Aquarium"
+        tools:layout="@layout/fragment_aquarium" />
+
+    <fragment
+        android:id="@+id/devicesFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
+        android:label="Devices"
+        tools:layout="@layout/fragment_devices" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+</navigation>

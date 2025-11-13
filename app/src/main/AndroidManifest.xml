@@ -9,7 +9,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <!-- 🟢 SplashActivity: Uygulamanın başlangıç noktası -->
+        <!-- 🚀 Launcher -->
         <activity
             android:name="com.aqua.aqualight.ui.splash.SplashActivity"
             android:exported="true"
@@ -20,19 +20,12 @@
             </intent-filter>
         </activity>
 
-        <!-- 🔵 MainLoginActivity: Login, Register, ResetPassword fragmentlarını içerir -->
-        <activity
-            android:name="com.aqua.aqualight.ui.main.MainLoginActivity"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme" />
-
-        <!-- ⚫ MainActivity: Başarılı girişten sonra ana ekran -->
+        <!-- 🧭 Tek Activity: NavHost (nav_root) burada -->
         <activity
             android:name="com.aqua.aqualight.ui.main.MainActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/AppTheme" />
-
     </application>
+
 </manifest>

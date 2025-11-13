@@ -1,19 +1,19 @@
 package com.aqua.aqualight.ui.auth
 
-import android.content.Intent
-import android.os.Bundle
 import android.util.Patterns
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentRegisterBinding
-import com.aqua.aqualight.ui.main.MainActivity
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseUser
@@ -42,11 +42,7 @@ class RegisterFragment : Fragment() {
 
     private fun setupUI() = with(binding) {
         btnRegister.setOnClickListener { handleRegister() }
-
-        // 🔹 Geri butonu navigation ile yönetiliyor
-        btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
+        btnBack.setOnClickListener { findNavController().popBackStack() }
     }
 
     private fun handleRegister() {
@@ -57,7 +53,6 @@ class RegisterFragment : Fragment() {
         baseActivity?.showLoading(true)
 
         lifecycleScope.launch {
-            // 🔍 Giriş doğrulamaları
             val warning = when {
                 email.isEmpty() || password.isEmpty() || repeatPassword.isEmpty() ->
                     R.string.register_empty_fields_message to R.string.register_empty_fields_title
@@ -81,7 +76,6 @@ class RegisterFragment : Fragment() {
                 return@launch
             }
 
-            // 🚀 Firebase kayıt işlemi
             binding.btnRegister.isEnabled = false
             binding.btnRegister.text = getString(R.string.register_loading)
 
@@ -102,7 +96,7 @@ class RegisterFragment : Fragment() {
                                         DialogType.SUCCESS,
                                         title = getString(R.string.register_success_title),
                                         message = getString(R.string.register_success_message),
-                                        onDismiss = { navigateToMain() }
+                                        onDismiss = { navigateToAppGraph() }
                                     )
                                 } catch (e: Exception) {
                                     DialogManager.showInfoDialog(
@@ -141,11 +135,16 @@ class RegisterFragment : Fragment() {
         )
     }
 
-    private fun navigateToMain() {
-        val intent = Intent(requireContext(), MainActivity::class.java)
-        startActivity(intent)
-        // ✅ Login flow tamamen kapatılır, geri tuşuyla dönülmez
-        requireActivity().finishAffinity()
+    // 🔁 Activity açmak yerine kök nav graph'ta nav_app'e geç
+    private fun navigateToAppGraph() {
+        val rootNav = (requireActivity().supportFragmentManager
+            .findFragmentById(R.id.nav_host) as NavHostFragment).navController
+
+        val opts = navOptions {
+            popUpTo(R.id.authContainerFragment) { inclusive = true } // auth stack'i temizle
+            launchSingleTop = true
+        }
+        rootNav.navigate(R.id.nav_app, null, opts)
     }
 
     override fun onDestroyView() {

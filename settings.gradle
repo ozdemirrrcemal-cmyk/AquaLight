@@ -1,8 +1,16 @@
 pluginManagement {
   repositories {
-    gradlePluginPortal()
+    // AGP ve Google pluginleri için önce google()
     google()
     mavenCentral()
+    gradlePluginPortal()
+  }
+  plugins {
+    id 'com.android.application' version '8.10.0'
+    id 'org.jetbrains.kotlin.android' version '1.9.25'
+    id 'com.google.gms.google-services' version '4.4.2'
+    id 'com.google.firebase.crashlytics' version '2.9.9'
+    id 'com.google.protobuf' version '0.9.4'
   }
 }
 
@@ -16,4 +24,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "AquaLight"
-include(":app")
+include ':app'

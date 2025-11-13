@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.auth
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,12 +8,13 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLoginBinding
-import com.aqua.aqualight.ui.main.MainActivity
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -88,11 +88,9 @@ class LoginFragment : Fragment() {
 
     private fun setupButtonActions() = with(binding) {
         btnGoogleLogin.setOnClickListener { signInWithGoogle() }
-
         btnSignIn.setOnClickListener {
             findNavController().navigate(R.id.action_loginFragment_to_signInFragment)
         }
-
         btnRegister.setOnClickListener {
             findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
         }
@@ -126,11 +124,7 @@ class LoginFragment : Fragment() {
                                 DialogType.SUCCESS,
                                 title = getString(R.string.login_google_success),
                                 message = "Google hesabınızla başarıyla giriş yaptınız.",
-                                onDismiss = {
-                                    val intent = Intent(requireContext(), MainActivity::class.java)
-                                    startActivity(intent)
-                                    requireActivity().finishAffinity()
-                                }
+                                onDismiss = { navigateToAppGraph() }
                             )
                         }
                     } else {
@@ -151,6 +145,18 @@ class LoginFragment : Fragment() {
                     )
                 }
             }
+    }
+
+    private fun navigateToAppGraph() {
+        // MainActivity'deki kök NavHost'u hedef al
+        val rootNav = (requireActivity().supportFragmentManager
+            .findFragmentById(R.id.nav_host) as NavHostFragment).navController
+
+        val opts = navOptions {
+            popUpTo(R.id.authContainerFragment) { inclusive = true }
+            launchSingleTop = true
+        }
+        rootNav.navigate(R.id.nav_app, null, opts)
     }
 
     override fun onDestroyView() {
