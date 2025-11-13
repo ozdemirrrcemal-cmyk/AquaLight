@@ -1,10 +1,11 @@
 package com.aqua.aqualight.ui.auth
 
 import android.graphics.Color
+import android.graphics.ColorDrawable
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
-import android.graphics.drawable.ColorDrawable
+import android.graphics.RenderEffect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -40,7 +41,7 @@ class AuthContainerFragment : Fragment() {
         textureView = v.findViewById(R.id.videoBackground)
         blurView = v.findViewById(R.id.blurView)
 
-        // ⛔ Back: login sayfasındayken app'ten çık; diğerlerinde pop
+        // ⛔ Geri: login’deyken app’ten çık, diğerlerinde pop
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             val childNavHost =
                 childFragmentManager.findFragmentById(R.id.auth_nav_host) as? NavHostFragment
@@ -64,6 +65,7 @@ class AuthContainerFragment : Fragment() {
         super.onResume()
         if (Util.SDK_INT < 24 || player == null) initPlayerIfNeeded()
         applyBlurIfSupported()
+        applyDesaturationIfSupported()
     }
 
     override fun onPause() {
@@ -74,6 +76,13 @@ class AuthContainerFragment : Fragment() {
     override fun onStop() {
         super.onStop()
         if (Util.SDK_INT >= 24) releasePlayer()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        releasePlayer()
+        textureView = null
+        blurView = null
     }
 
     private fun initPlayerIfNeeded() {
@@ -108,14 +117,7 @@ class AuthContainerFragment : Fragment() {
                     scaleVideoToFillScreen(w, h)
                 }
             }
-
-            // (Opsiyonel) hafif desaturation
-            textureView?.let {
-                val cm = ColorMatrix().apply { setSaturation(0.9f) }
-                it.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-                it.setColorFilter(ColorMatrixColorFilter(cm))
-            }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             releasePlayer() // sessiz düş
         }
     }
@@ -139,13 +141,30 @@ class AuthContainerFragment : Fragment() {
                 val root = view as? ViewGroup ?: return
                 blurView?.visibility = View.VISIBLE
                 blurView?.setupWith(root, RenderEffectBlur())
-                    ?.setFrameClearDrawable(requireActivity().window.decorView.background ?: ColorDrawable(Color.TRANSPARENT))
+                    ?.setFrameClearDrawable(
+                        requireActivity().window.decorView.background
+                            ?: ColorDrawable(Color.TRANSPARENT)
+                    )
                     ?.setBlurRadius(22f)
             } catch (_: Exception) {
                 blurView?.visibility = View.GONE
             }
         } else {
             blurView?.visibility = View.GONE
+        }
+    }
+
+    // Hafif desaturation (yalnızca Android 12+)
+    private fun applyDesaturationIfSupported() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                val cm = ColorMatrix().apply { setSaturation(0.9f) }
+                val cf = ColorMatrixColorFilter(cm)
+                val effect = RenderEffect.createColorFilterEffect(cf)
+                textureView?.setRenderEffect(effect)
+            } catch (_: Exception) {
+                // cihaz desteklemiyorsa yoksay
+            }
         }
     }
 
