@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      # Gradle için makul JVM ayarı (daemon kapalı çünkü tek seferlik build)
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
 
     steps:
@@ -42,8 +43,10 @@ jobs:
         run: |
           yes | sdkmanager --licenses >/dev/null
           sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmdline-tools;latest"
-          echo "Installed packages:"
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          # Build-tools fallback: bazı runner'larda 36.0.1 mevcut olabiliyor
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
+          echo "Installed packages (first 120 lines):"
           sdkmanager --list | sed -n '1,120p' || true
 
       - name: Cache Gradle build-cache

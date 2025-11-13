@@ -38,7 +38,11 @@ jobs:
         run: |
           yes | sdkmanager --licenses >/dev/null
           sdkmanager --update
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmdline-tools;latest"
+          sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
+          # Fallback: bazı runner'larda 36.0.1 mevcut
+          sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
+          echo "Installed packages (first 120 lines):"
+          sdkmanager --list | sed -n '1,120p' || true
 
       - name: ⚡ Cache Gradle build-cache
         uses: actions/cache@v4
