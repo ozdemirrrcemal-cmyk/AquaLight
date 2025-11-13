@@ -6,7 +6,7 @@
     <string name="splasch_app_title">AquaLight</string>
     <string name="splasch_app_subtitle">Nature Aquarium</string>
 
-    <!-- 🎬 Arka Plan & Görseller -->
+    <!-- 🎬 Arka Plan & Görselleri -->
     <string name="main_login_video_background_description">Background video playing in login screen</string>
     <string name="main_login_blur_overlay_description">Blur overlay layer for background</string>
     <string name="main_login_logo_description">AquaLight app logo</string>
