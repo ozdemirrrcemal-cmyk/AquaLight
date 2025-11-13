@@ -17,7 +17,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Gradle için makul JVM ayarı (daemon kapalı çünkü tek seferlik build)
       GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
 
     steps:
@@ -44,12 +43,13 @@ jobs:
           yes | sdkmanager --licenses >/dev/null
           sdkmanager --update
           sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          # Build-tools fallback: bazı runner'larda 36.0.1 mevcut olabiliyor
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
           echo "Installed packages (first 120 lines):"
           sdkmanager --list | sed -n '1,120p' || true
 
+      # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
       - name: Cache Gradle build-cache
+        if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
         uses: actions/cache@v4
         with:
           path: |
@@ -60,6 +60,22 @@ jobs:
 
       - name: Grant execute permission to gradlew
         run: chmod +x ./gradlew
+
+      # İsteğe bağlı: bağımlılık modül cache’lerini temizle (refresh-deps)
+      - name: 🔄 Force refresh dependencies (optional)
+        if: contains(github.event.head_commit.message, 'refresh-deps')
+        run: |
+          rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
+          echo "Gradle module caches cleared."
+
+      # İsteğe bağlı: TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
+      # (setup-java ve cache restore’dan SONRA konumlandırıldı ki gerçekten silsin)
+      - name: 🧹 Hard clean caches & outputs (on demand)
+        if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
+        run: |
+          echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
+          rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
+          rm -rf **/build build app/build || true
 
       - name: Clean project (light)
         run: ./gradlew clean --no-daemon
@@ -96,18 +112,12 @@ jobs:
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
-      - name: Upload Test Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports-${{ github.run_number }}
-          path: |
-            **/build/test-results/testDebugUnitTest/*.xml
-            **/build/reports/tests/testDebugUnitTest/*
-          if-no-files-found: ignore
-
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: ./gradlew assembleDebug --stacktrace --no-daemon --refresh-dependencies
+
+      - name: 📋 Dump debugRuntimeClasspath (on failure)
+        if: failure()
+        run: ./gradlew :app:dependencies --configuration debugRuntimeClasspath --no-daemon
 
       - name: Verify Debug APK
         run: |
@@ -115,7 +125,7 @@ jobs:
           ls -la app/build/outputs/apk/debug || true
           if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
             echo "✅ APK bulundu"
-          else
+          else:
             echo "❌ APK yok"
             exit 1
           fi

@@ -1,13 +1,13 @@
 pluginManagement {
   repositories {
-    // AGP ve Google pluginleri için önce google()
     google()
+    maven { url "https://maven.google.com" } // explicit
     mavenCentral()
     gradlePluginPortal()
   }
   plugins {
     id 'com.android.application'         version '8.10.0'
-    id 'org.jetbrains.kotlin.android'    version '1.9.25'  
+    id 'org.jetbrains.kotlin.android'    version '1.9.25'
     id 'com.google.gms.google-services'  version '4.4.4'
     id 'com.google.firebase.crashlytics' version '3.0.6'
     id 'com.google.protobuf'             version '0.9.5'
@@ -18,8 +18,9 @@ dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
   repositories {
     google()
+    maven { url "https://maven.google.com" } // explicit
     mavenCentral()
-    maven { url 'https://jitpack.io' } // BlurView
+    maven { url 'https://jitpack.io' }       // BlurView
   }
 }
 

@@ -39,12 +39,13 @@ jobs:
           yes | sdkmanager --licenses >/dev/null
           sdkmanager --update
           sdkmanager "platform-tools" "platforms;android-36" "cmdline-tools;latest"
-          # Fallback: bazı runner'larda 36.0.1 mevcut
           sdkmanager "build-tools;36.0.0" || sdkmanager "build-tools;36.0.1" || true
           echo "Installed packages (first 120 lines):"
           sdkmanager --list | sed -n '1,120p' || true
 
+      # Cache restore, sadece TEMİZ İSTENMİYORSA yapılır
       - name: ⚡ Cache Gradle build-cache
+        if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
         uses: actions/cache@v4
         with:
           path: |
@@ -56,6 +57,24 @@ jobs:
       - name: ⚙️ Grant permission for Gradle
         run: chmod +x ./gradlew
 
+      # İsteğe bağlı: bağımlılık modül cache’lerini temizle (refresh-deps)
+      - name: 🔄 Force refresh dependencies (optional)
+        if: contains(github.event.head_commit.message, 'refresh-deps')
+        run: |
+          rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
+          echo "Gradle module caches cleared."
+
+      # TAM TEMİZLEME – commit mesajında 'clean' veya 'clean-cache' varsa
+      - name: 🧹 Hard clean caches & outputs (on demand)
+        if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
+        run: |
+          echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
+          rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
+          rm -rf **/build build app/build || true
+
+      - name: ⚡ Quick project clean
+        run: ./gradlew clean --no-daemon
+
       - name: 🔑 Set up release keystore
         if: ${{ !cancelled() }}
         env:
@@ -65,22 +84,23 @@ jobs:
           echo "✅ release-key.jks oluşturuldu (repo kökü)"
           ls -la
 
-      - name: ⚡ Quick project clean
-        run: ./gradlew clean --no-daemon
-
       - name: 🚀 Build Signed Release APK
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
+        run: ./gradlew assembleRelease --stacktrace --no-daemon --refresh-dependencies
+
+      - name: 📋 Dump releaseRuntimeClasspath (on failure)
+        if: failure()
+        run: ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --no-daemon
 
       - name: ✅ Verify release output
         run: |
           ls -la app/build/outputs/apk/release || true
           if [ -f app/build/outputs/apk/release/app-release.apk ]; then
             echo "✅ Release APK hazır"
-          else
+          else:
             echo "❌ APK bulunamadı!"
             exit 1
           fi
