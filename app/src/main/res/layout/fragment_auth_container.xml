@@ -13,6 +13,15 @@
         android:keepScreenOn="true"
         android:contentDescription="@string/main_login_video_background_description" />
 
+    <!-- 🐟 Poster (video hazır olana kadar görünen görsel) -->
+    <ImageView
+        android:id="@+id/posterImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/aquarium_poster"
+        android:contentDescription="@string/main_login_video_background_description" />
+
     <!-- 🧊 BlurView -->
     <eightbitlab.com.blurview.BlurView
         android:id="@+id/blurView"
