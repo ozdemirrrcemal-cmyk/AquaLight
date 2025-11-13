@@ -1,0 +1,31 @@
+// Root build.gradle (Groovy) — UYUM KATMANI
+buildscript {
+  repositories {
+    maven { url "https://dl.google.com/dl/android/maven2" }
+    google()
+    maven { url "https://maven.google.com" }
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+    gradlePluginPortal()
+  }
+  dependencies {
+    classpath 'com.android.tools.build:gradle:8.10.0'
+    classpath 'com.google.gms:google-services:4.4.4'
+    classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
+    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.5'
+  }
+}
+
+allprojects {
+  repositories {
+    maven { url "https://dl.google.com/dl/android/maven2" }
+    google()
+    maven { url "https://maven.google.com" }
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+  }
+}
+
+tasks.register("clean", Delete) {
+  delete rootProject.buildDir
+}
