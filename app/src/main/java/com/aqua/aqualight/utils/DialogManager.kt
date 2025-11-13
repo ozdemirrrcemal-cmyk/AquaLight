@@ -2,7 +2,10 @@ package com.aqua.aqualight.utils
 
 import android.app.AlertDialog
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import com.aqua.aqualight.R
@@ -18,7 +21,8 @@ object DialogManager {
         title: String,
         message: String,
         buttonText: String = "OK",
-        onDismiss: (() -> Unit)? = null
+        onDismiss: (() -> Unit)? = null,
+        autoDismissMillis: Long = 0L   // ✅ yeni: 0 = eski davranış, >0 = auto dismiss
     ) {
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_app, null)
         val icon = view.findViewById<ImageView>(R.id.dialogIcon)
@@ -47,9 +51,27 @@ object DialogManager {
             .setCancelable(false)
             .create()
 
-        button.setOnClickListener {
-            dialog.dismiss()
+        // ✔ DİKKAT: Artık onDismiss DİYALOG NASIL KAPANIRSA KAPANSIN burada çalışıyor
+        dialog.setOnDismissListener {
             onDismiss?.invoke()
+        }
+
+        if (autoDismissMillis <= 0L) {
+            // 🔹 ESKİ DAVRANIŞ: butonlu, kullanıcı kapatır
+            button.visibility = View.VISIBLE
+            button.setOnClickListener {
+                dialog.dismiss()
+            }
+        } else {
+            // 🔹 OTOMATİK KAPANAN MOD: buton yok, sadece mesaj göster
+            button.visibility = View.GONE
+
+            // Belirtilen süre sonra otomatik olarak kapat
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (dialog.isShowing) {
+                    dialog.dismiss()
+                }
+            }, autoDismissMillis)
         }
 
         // 🔸 Arka planı tamamen saydam yap

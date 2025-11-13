@@ -103,50 +103,52 @@ class LoginFragment : Fragment() {
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener(requireActivity()) { task ->
-                baseActivity?.showLoading(false)
+    val credential = GoogleAuthProvider.getCredential(idToken, null)
+    auth.signInWithCredential(credential)
+        .addOnCompleteListener(requireActivity()) { task ->
+            baseActivity?.showLoading(false)
 
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    if (user != null) {
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            userPrefs.saveUserSession(user.uid, true)
-                            userPrefs.saveProfile(
-                                email = user.email ?: "",
-                                username = user.displayName ?: "",
-                                photoUrl = user.photoUrl?.toString() ?: ""
-                            )
+            if (task.isSuccessful) {
+                val user = auth.currentUser
+                if (user != null) {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        userPrefs.saveUserSession(user.uid, true)
+                        userPrefs.saveProfile(
+                            email = user.email ?: "",
+                            username = user.displayName ?: "",
+                            photoUrl = user.photoUrl?.toString() ?: ""
+                        )
 
-                            DialogManager.showInfoDialog(
-                                requireContext(),
-                                DialogType.SUCCESS,
-                                title = getString(R.string.login_google_success),
-                                message = "Google hesabınızla başarıyla giriş yaptınız.",
-                                onDismiss = { navigateToAppGraph() }
-                            )
-                        }
-                    } else {
+                        // ✅ Success: butonsuz, otomatik kapanan dialog
                         DialogManager.showInfoDialog(
                             requireContext(),
-                            DialogType.WARNING,
-                            title = getString(R.string.login_firebase_failed),
-                            message = "Kullanıcı bilgisi alınamadı, lütfen tekrar deneyin."
+                            DialogType.SUCCESS,
+                            title = getString(R.string.login_google_success),
+                            message = "Google hesabınızla başarıyla giriş yaptınız.",
+                            onDismiss = { navigateToAppGraph() },
+                            autoDismissMillis = 1200L
                         )
                     }
                 } else {
-                    Log.e("LoginFragment", "❌ Firebase auth failed", task.exception)
                     DialogManager.showInfoDialog(
                         requireContext(),
-                        DialogType.ERROR,
+                        DialogType.WARNING,
                         title = getString(R.string.login_firebase_failed),
-                        message = "Kimlik doğrulama başarısız. ${task.exception?.localizedMessage ?: ""}"
+                        message = "Kullanıcı bilgisi alınamadı, lütfen tekrar deneyin."
                     )
                 }
+            } else {
+                Log.e("LoginFragment", "❌ Firebase auth failed", task.exception)
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.ERROR,
+                    title = getString(R.string.login_firebase_failed),
+                    message = "Kimlik doğrulama başarısız. ${task.exception?.localizedMessage ?: ""}"
+                )
             }
+        }
     }
-
+     
     private fun navigateToAppGraph() {
         // MainActivity'deki kök NavHost'u hedef al
         val rootNav = (requireActivity().supportFragmentManager
