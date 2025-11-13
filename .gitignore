@@ -1,66 +1,66 @@
-# 🧩 Android & AIDE Projesi için .gitignore
-
-# Gradle
-.gradle/
-build/
+# --- Gradle / Android ---
+/local.properties
+/.gradle/
 **/build/
-gradle-app.setting
-local.properties
-gradlew.bat
 
-# IDE dosyaları
-.idea/
+# Gradle Wrapper (repoda tutulur – ignore ETME)
+# (Negasyon gerek yok; sadece ignore listesine eklemiyoruz)
+# gradlew
+# gradlew.bat
+# gradle/wrapper/gradle-wrapper.properties
+# gradle/wrapper/gradle-wrapper.jar
+
+# --- IDE ---
+/.idea/
 *.iml
 *.ipr
 *.iws
 /.idea/caches/
 /.idea/libraries/
- /.idea/modules.xml
- /.idea/workspace.xml
+/.ideal/modules.xml
+/.idea/workspace.xml
 
-# Android Studio
+# --- NDK / External Build ---
+/externalNativeBuild/
+/.cxx/
+
+# --- Captures ---
 captures/
-.externalNativeBuild/
-.cxx/
+
+# --- OS çöplükleri ---
 .DS_Store
 Thumbs.db
 
-# Kopyalanan / Geçici dosyalar
+# --- Log / Geçici ---
 *.log
 *.bak
 *.tmp
 *.swp
 *.lock
-
-# AIDE özel
-/.aide/
-bin/
-gen/
-
-# Nano, Vim, AIDE gibi editörlerin bıraktığı yedekler
 *~
 *.save
 *.old
 
-# Çıktılar
-app/release/
-app/debug/
-outputs/
-app/build/outputs/apk/
+# --- AIDE özel ---
+/.aide/
+bin/
+gen/
 
-# Keystore (manuel eklenirse)
+# --- Çıktılar / Artifaktlar ---
+**/outputs/
+*.apk
+*.aab
+*.ap_
+
+# --- Keystore ---
 *.keystore
 *.jks
 
-# Paket bağımlılık cache
-node_modules/
-yarn.lock
-
-# Gradle cache
-/.gradle/
-
-# Android lint ve test dosyaları
+# --- Lint & Test ---
 lint/
 lint-results*
 test-results/
 reports/
+
+# --- (Opsiyonel) Firebase dosyası ---
+# app/google-services.json
