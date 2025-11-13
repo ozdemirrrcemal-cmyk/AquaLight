@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/aquarium_poster"  <!-- burada senin eklediğin görsel -->
+        android:src="@drawable/aquarium_poster"
         android:contentDescription="@string/main_login_video_background_description" />
 
     <!-- 2️⃣ Arka plan video (ilk başta görünmez) -->
