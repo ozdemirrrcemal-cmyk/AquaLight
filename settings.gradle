@@ -1,15 +1,14 @@
 pluginManagement {
   repositories {
-    // Google Maven'ı doğrudan adresle en üste koy
     maven { url "https://dl.google.com/dl/android/maven2" }
     google()
-    maven { url "https://maven.google.com" } // yedek
+    maven { url "https://maven.google.com" }
     mavenCentral()
     gradlePluginPortal()
   }
   plugins {
     id 'com.android.application'         version '8.10.0'
-    id 'org.jetbrains.kotlin.android'    version '1.9.25'
+    id 'org.jetbrains.kotlin.android'    version '2.1.0'   // ← GÜNCELLE
     id 'com.google.gms.google-services'  version '4.4.4'
     id 'com.google.firebase.crashlytics' version '3.0.6'
     id 'com.google.protobuf'             version '0.9.5'
@@ -19,12 +18,11 @@ pluginManagement {
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
   repositories {
-    // Burada da aynı sıra
     maven { url "https://dl.google.com/dl/android/maven2" }
     google()
-    maven { url "https://maven.google.com" } // yedek
+    maven { url "https://maven.google.com" }
     mavenCentral()
-    maven { url 'https://jitpack.io' }       // BlurView
+    maven { url 'https://jitpack.io' }
   }
 }
 

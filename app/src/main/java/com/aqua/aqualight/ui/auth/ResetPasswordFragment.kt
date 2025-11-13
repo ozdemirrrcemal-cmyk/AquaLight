@@ -13,8 +13,8 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentResetPasswordBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.Firebase
 import kotlinx.coroutines.launch
 
 class ResetPasswordFragment : Fragment() {
