@@ -5,12 +5,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 🎬 Arka plan video -->
+    <!-- 1️⃣ Videonun ilk karesi / benzeri poster -->
+    <ImageView
+        android:id="@+id/videoPoster"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/aquarium_poster"  <!-- burada senin eklediğin görsel -->
+        android:contentDescription="@string/main_login_video_background_description" />
+
+    <!-- 2️⃣ Arka plan video (ilk başta görünmez) -->
     <TextureView
         android:id="@+id/videoBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:keepScreenOn="true"
+        android:background="@android:color/transparent"
+        android:visibility="invisible"
         android:contentDescription="@string/main_login_video_background_description" />
 
     <!-- 🧊 BlurView -->

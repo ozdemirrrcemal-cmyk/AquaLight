@@ -5,14 +5,13 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
-import android.graphics.RenderEffect
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
@@ -30,6 +29,7 @@ class AuthContainerFragment : Fragment() {
 
     private var textureView: TextureView? = null
     private var blurView: BlurView? = null
+    private var posterView: ImageView? = null   // 🔹 yeni
 
     private var player: ExoPlayer? = null
     private var videoWidth = 0
@@ -41,6 +41,13 @@ class AuthContainerFragment : Fragment() {
         val v = inflater.inflate(R.layout.fragment_auth_container, container, false)
         textureView = v.findViewById(R.id.videoBackground)
         blurView = v.findViewById(R.id.blurView)
+        posterView = v.findViewById(R.id.videoPoster)
+
+        // Video ilk başta görünmesin, ilk kare gelince fade-in yapacağız
+        textureView?.apply {
+            visibility = View.INVISIBLE
+            alpha = 0f
+        }
 
         // geri davranışı
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
@@ -81,26 +88,44 @@ class AuthContainerFragment : Fragment() {
         releasePlayer()
         textureView = null
         blurView = null
+        posterView = null
     }
 
     private fun initPlayerIfNeeded() {
-        if (player != null || textureView == null) return
+        val tv = textureView ?: return
+        if (player != null) return
+
         try {
             val exo = ExoPlayer.Builder(requireContext()).build().also { exo ->
-                exo.setVideoTextureView(textureView)  // Media3
+                exo.setVideoTextureView(tv)  // Media3
                 exo.repeatMode = Player.REPEAT_MODE_ONE
 
                 exo.addListener(object : Player.Listener {
                     override fun onVideoSizeChanged(videoSize: VideoSize) {
                         videoWidth = videoSize.width
                         videoHeight = videoSize.height
-                        val w = textureView?.width ?: 0
-                        val h = textureView?.height ?: 0
+                        val w = tv.width
+                        val h = tv.height
                         if (w > 0 && h > 0) scaleVideoToFillScreen(w, h)
+                    }
+
+                    override fun onRenderedFirstFrame() {
+                        // 🔥 İlk kare çizildiği anda posteri kaldır + videoyu fade-in yap
+                        tv.post {
+                            tv.visibility = View.VISIBLE
+                            tv.animate()
+                                .alpha(1f)
+                                .setDuration(200)
+                                .start()
+
+                            posterView?.visibility = View.GONE
+                        }
                     }
                 })
 
-                val uri = Uri.parse("android.resource://${requireContext().packageName}/${R.raw.aquarium}")
+                val uri = android.net.Uri.parse(
+                    "android.resource://${requireContext().packageName}/${R.raw.aquarium}"
+                )
                 exo.setMediaItem(MediaItem.fromUri(uri))
                 exo.volume = 0f
                 exo.prepare()
@@ -108,7 +133,7 @@ class AuthContainerFragment : Fragment() {
             }
             player = exo
 
-            textureView?.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+            tv.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
                 val w = v.width
                 val h = v.height
                 if (w > 0 && h > 0 && videoWidth > 0 && videoHeight > 0) {
@@ -123,7 +148,6 @@ class AuthContainerFragment : Fragment() {
     private fun releasePlayer() {
         try {
             player?.run {
-                // siyah ekran/Surface leak riskini azalt
                 textureView?.let { clearVideoTextureView(it) }
                 playWhenReady = false
                 release()
@@ -159,7 +183,7 @@ class AuthContainerFragment : Fragment() {
             try {
                 val cm = ColorMatrix().apply { setSaturation(0.9f) }
                 val cf = ColorMatrixColorFilter(cm)
-                val effect = RenderEffect.createColorFilterEffect(cf)
+                val effect = android.graphics.RenderEffect.createColorFilterEffect(cf)
                 textureView?.setRenderEffect(effect)
             } catch (_: Exception) {
                 // cihaz desteklemiyorsa yoksay
