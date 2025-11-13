@@ -23,7 +23,11 @@ class MainActivity : BaseActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
+        // İçerik hazır olana kadar NavHost'u gizle (ufak flicker'ı azaltır)
+        binding.navHost.visibility = View.INVISIBLE
+
+        val navHost =
+            supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
         val navController = navHost.navController
 
         if (savedInstanceState == null) {
@@ -33,7 +37,10 @@ class MainActivity : BaseActivity() {
                 val loggedIn = prefs.isLoggedIn && prefs.idToken.isNotEmpty()
 
                 val graph = navController.navInflater.inflate(R.navigation.nav_root).apply {
-                    setStartDestination(if (loggedIn) R.id.nav_app else R.id.authContainerFragment)
+                    setStartDestination(
+                        if (loggedIn) R.id.nav_app
+                        else R.id.authContainerFragment
+                    )
                 }
                 navController.graph = graph
 
@@ -43,11 +50,17 @@ class MainActivity : BaseActivity() {
                 // Bottom bar ↔ nav setup
                 binding.bottomNav.setupWithNavController(navController)
                 hookBottomBarVisibility(navController)
+
+                // Artık graph hazır, içeriği göster
+                binding.navHost.visibility = View.VISIBLE
             }
         } else {
             // Navigation kendi state'ini restore etti; sadece bottom bar'ı bağla
             binding.bottomNav.setupWithNavController(navController)
             hookBottomBarVisibility(navController)
+
+            // Zaten restore edilmiş, direkt gösterilebilir
+            binding.navHost.visibility = View.VISIBLE
         }
     }
 

@@ -102,7 +102,7 @@ jobs:
         run: |
           set -e
           ls -la "app/build/outputs/apk/release" || true
-          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+          if [ -f "app/build/outputs/apk/release/AquaLight.apk" ]; then
             echo "✅ Release APK hazır"
           else
             echo "❌ APK bulunamadı!"
@@ -136,7 +136,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: AquaLight-Release-${{ github.run_number }}
-          path: app/build/outputs/apk/release/app-release.apk
+          path: app/build/outputs/apk/release/AquaLight.apk
 
       - name: 🧹 Cleanup keystore
         if: always()

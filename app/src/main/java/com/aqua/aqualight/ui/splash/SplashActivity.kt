@@ -12,6 +12,18 @@ import com.aqua.aqualight.ui.main.MainActivity
 
 class SplashActivity : BaseActivity() {
 
+    // Handler ve runnable'ı field olarak tuttuk ki onDestroy'da temizleyebilelim
+    private val handler = Handler(Looper.getMainLooper())
+
+    private val navigateRunnable = Runnable {
+        startActivity(
+            Intent(this@SplashActivity, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        )
+        overridePendingTransition(0, 0)
+        finish()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
@@ -21,14 +33,13 @@ class SplashActivity : BaseActivity() {
         val anim = AnimationUtils.loadAnimation(this, R.anim.logo_fade_scale)
         logo.startAnimation(anim)
 
-        // 2.4 sn sonra tek hedef: MainActivity (auth akışı onun içinde)
-        Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(
-                Intent(this@SplashActivity, MainActivity::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-            )
-            overridePendingTransition(0, 0)
-            finish()
-        }, 2400)
+        // 2.4 sn sonra MainActivity'ye geç
+        handler.postDelayed(navigateRunnable, 2400)
+    }
+
+    override fun onDestroy() {
+        // Activity ölürse gecikmiş runnable çalışmasın
+        handler.removeCallbacks(navigateRunnable)
+        super.onDestroy()
     }
 }

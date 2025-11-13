@@ -117,3 +117,11 @@ protobuf {
         }
     }
 }
+// app/build.gradle (en alt)
+androidComponents {
+  onVariants(selector().withBuildType("release")) { variant ->
+    variant.outputs.each { output ->
+      output.outputFileName.set("AquaLight.apk") // ✅ sabit isim
+    }
+  }
+}
