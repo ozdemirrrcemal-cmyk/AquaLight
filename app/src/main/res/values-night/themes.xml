@@ -1,68 +1,53 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
+<?xml version="1.0" encoding="utf-8"?>  <resources>  <!-- 🌙 Material 3 Dark Tema -->  
+<style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">  
 
-    <!-- 🌙 Material 3 Dark Tema -->
-    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
+    <!-- Ana renkler -->  
+    <item name="colorPrimary">@color/md_theme_dark_primary</item>  
+    <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>  
+    <item name="colorSecondary">@color/md_theme_dark_secondary</item>  
+    <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>  
 
-        <!-- Ana renkler -->
-        <item name="colorPrimary">@color/md_theme_dark_primary</item>
-        <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>
-        <item name="colorSecondary">@color/md_theme_dark_secondary</item>
-        <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>
+    <!-- Arka plan ve yüzey -->  
+    <item name="android:colorBackground">@color/md_theme_dark_background</item>  
+    <item name="colorSurface">@color/md_theme_dark_surface</item>  
+    <item name="colorOnSurface">@color/md_theme_dark_onSurface</item>  
 
-        <!-- Arka plan ve yüzey -->
-        <item name="android:colorBackground">@color/md_theme_dark_background</item>
-        <item name="colorSurface">@color/md_theme_dark_surface</item>
-        <item name="colorOnSurface">@color/md_theme_dark_onSurface</item>
+    <!-- ✳️ Eklenen renkler -->  
+    <item name="colorSurfaceVariant">@color/md_theme_dark_surfaceVariant</item>  
+    <item name="colorOnSurfaceVariant">@color/md_theme_dark_onSurfaceVariant</item>  
+    <item name="colorOutline">@color/md_theme_dark_outline</item>  
+    <item name="colorOutlineVariant">@color/md_theme_dark_outlineVariant</item>  
+    <item name="colorError">@color/md_theme_dark_error</item>  
+    <item name="colorOnError">@color/md_theme_dark_onError</item>  
 
-        <!-- ✳️ Eklenen renkler -->
-        <item name="colorSurfaceVariant">@color/md_theme_dark_surfaceVariant</item>
-        <item name="colorOnSurfaceVariant">@color/md_theme_dark_onSurfaceVariant</item>
-        <item name="colorOutline">@color/md_theme_dark_outline</item>
-        <item name="colorOutlineVariant">@color/md_theme_dark_outlineVariant</item>
-        <item name="colorError">@color/md_theme_dark_error</item>
-        <item name="colorOnError">@color/md_theme_dark_onError</item>
+    <!-- Sistem bar renkleri -->  
+    <item name="android:statusBarColor">@color/md_theme_dark_background</item>  
+    <item name="android:navigationBarColor">@color/md_theme_dark_background</item>  
 
-        <!-- Sistem bar renkleri -->
-        <item name="android:statusBarColor">@color/md_theme_dark_background</item>
-        <item name="android:navigationBarColor">@color/md_theme_dark_background</item>
+    <!-- Koyu modda beyaz ikonlar -->  
+    <item name="android:windowLightStatusBar">false</item>  
+    <item name="android:windowLightNavigationBar">false</item>  
 
-        <!-- Koyu modda beyaz ikonlar -->
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowLightNavigationBar">false</item>
+    <!-- ActionBar kapalı -->  
+    <item name="windowActionBar">false</item>  
+    <item name="android:windowNoTitle">true</item>  
+</style>  
 
-        <!-- ActionBar kapalı -->
-        <item name="windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
-    </style>
+<!-- 🌙 Splash metin stilleri -->  
+<style name="SplashTitleText">  
+    <item name="android:textColor">@color/md_theme_dark_onPrimary</item>  
+    <item name="android:textSize">32sp</item>  
+    <item name="fontFamily">@font/poppins_bold</item>  
+    <item name="android:letterSpacing">0.08</item>  
+    <item name="android:gravity">center</item>  
+</style>  
 
-    <!-- 🔹 Night için SplashScreen API teması -->
-    <style name="AppTheme.Splash" parent="Theme.SplashScreen">
-        <!-- Karanlık arka plan -->
-        <item name="windowSplashScreenBackground">@color/md_theme_dark_surface</item>
-
-        <!-- Ortadaki ikon: yine senin logon (istersen koyu versiyon yaparsın) -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_login</item>
-
-        <!-- Splash bittikten sonra kullanılacak asıl tema (night AppTheme) -->
-        <item name="postSplashScreenTheme">@style/AppTheme</item>
-    </style>
-
-    <!-- 🌙 Splash metin stilleri -->
-    <style name="SplashTitleText">
-        <item name="android:textColor">@color/md_theme_dark_onPrimary</item>
-        <item name="android:textSize">32sp</item>
-        <item name="fontFamily">@font/poppins_bold</item>
-        <item name="android:letterSpacing">0.08</item>
-        <item name="android:gravity">center</item>
-    </style>
-
-    <style name="SplashSubtitleText">
-        <item name="android:textColor">@color/md_theme_dark_onSurface</item>
-        <item name="android:textSize">16sp</item>
-        <item name="fontFamily">@font/raleway_medium</item>
-        <item name="android:letterSpacing">0.04</item>
-        <item name="android:gravity">center</item>
-    </style>
+<style name="SplashSubtitleText">  
+    <item name="android:textColor">@color/md_theme_dark_onSurface</item>  
+    <item name="android:textSize">16sp</item>  
+    <item name="fontFamily">@font/raleway_medium</item>  
+    <item name="android:letterSpacing">0.04</item>  
+    <item name="android:gravity">center</item>  
+</style>
 
 </resources>
