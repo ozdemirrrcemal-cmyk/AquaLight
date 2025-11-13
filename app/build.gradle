@@ -41,7 +41,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 
     packaging {
         resources {
@@ -61,9 +63,19 @@ android {
 }
 
 dependencies {
-    // --- Firebase BOM (en üstte!) ---
+    // ---- Firebase BOM (tüm firebase-* için sürümleri burada yönetiyoruz)
     implementation platform("com.google.firebase:firebase-bom:34.5.0")
-    implementation "com.google.firebase:firebase-common-ktx" // KTX glue (BOM kapsamı netleşsin)
+
+    // Firebase
+    implementation "com.google.firebase:firebase-analytics-ktx"
+    implementation "com.google.firebase:firebase-auth-ktx"
+    implementation "com.google.firebase:firebase-firestore-ktx"
+    implementation "com.google.firebase:firebase-database-ktx"
+    implementation "com.google.firebase:firebase-storage-ktx"
+    implementation "com.google.firebase:firebase-messaging-ktx"
+    implementation "com.google.firebase:firebase-config-ktx"
+    implementation "com.google.firebase:firebase-perf-ktx"
+    implementation "com.google.firebase:firebase-crashlytics" // KTX yok
 
     // AndroidX
     implementation "androidx.core:core-ktx:1.17.0"
@@ -79,19 +91,8 @@ dependencies {
     // ExoPlayer
     implementation "com.google.android.exoplayer:exoplayer:2.19.1"
 
-    // BlurView
+    // BlurView (JitPack)
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
-
-    // Firebase KTX (versiyonu BOM belirler)
-    implementation "com.google.firebase:firebase-analytics-ktx"
-    implementation "com.google.firebase:firebase-auth-ktx"
-    implementation "com.google.firebase:firebase-firestore-ktx"
-    implementation "com.google.firebase:firebase-database-ktx"
-    implementation "com.google.firebase:firebase-storage-ktx"
-    implementation "com.google.firebase:firebase-messaging-ktx"
-    implementation "com.google.firebase:firebase-config-ktx"
-    implementation "com.google.firebase:firebase-perf-ktx"
-    implementation "com.google.firebase:firebase-crashlytics" // KTX yok
 
     // Google Sign-In
     implementation "com.google.android.gms:play-services-auth:21.4.0"
