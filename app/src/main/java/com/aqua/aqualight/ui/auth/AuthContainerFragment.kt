@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.auth
 
 import android.graphics.Color
-import android.graphics.ColorDrawable
+import android.graphics.drawable.ColorDrawable   // ✅ DOĞRU import
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
