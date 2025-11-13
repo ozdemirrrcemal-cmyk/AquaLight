@@ -12,7 +12,6 @@ import com.aqua.aqualight.ui.main.MainActivity
 
 class SplashActivity : BaseActivity() {
 
-    // Handler ve runnable'ı field olarak tuttuk ki onDestroy'da temizleyebilelim
     private val handler = Handler(Looper.getMainLooper())
 
     private val navigateRunnable = Runnable {
@@ -42,7 +41,6 @@ class SplashActivity : BaseActivity() {
     }
 
     override fun onDestroy() {
-        // Activity ölürse gecikmiş runnable çalışmasın
         handler.removeCallbacks(navigateRunnable)
         super.onDestroy()
     }

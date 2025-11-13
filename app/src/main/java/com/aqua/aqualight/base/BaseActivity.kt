@@ -29,9 +29,12 @@ open class BaseActivity : AppCompatActivity() {
     private var loadingOverlay: FrameLayout? = null
     private var loadingLogo: ImageView? = null
 
+    // 🔹 Fullscreen state
+    private var isFullscreen: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Fullscreen burada otomatik verilmesin
+        // Varsayılan: hiçbir şey yapma, her Activity kendi karar verir
     }
 
     override fun setContentView(layoutResID: Int) {
@@ -83,12 +86,16 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     /**
-     * 🌈 Tam ekran immersive (edge-to-edge) görünüm kontrolü
-     * fullscreen = true ➜ sistem çubukları gizli
-     * fullscreen = false ➜ sistem çubukları görünür
+     * 🌈 Tam ekran immersive (edge-to-edge) görünüm
+     *  - fullscreen = true  → status + nav bar gizlenir
+     *  - fullscreen = false → sistem çubukları geri gelir
      */
-    protected fun setFullscreen(fullscreen: Boolean) {
+    fun setFullscreen(fullscreen: Boolean) {
+        if (fullscreen == isFullscreen) return
+        isFullscreen = fullscreen
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // İçeriği kenarlara kadar çiz / çizme
             WindowCompat.setDecorFitsSystemWindows(window, !fullscreen)
             val controller = WindowInsetsControllerCompat(window, window.decorView)
 
@@ -109,13 +116,19 @@ open class BaseActivity : AppCompatActivity() {
             @Suppress("DEPRECATION")
             if (fullscreen) {
                 window.decorView.systemUiVisibility =
-                    (View.SYSTEM_UI_FLAG_FULLSCREEN
+                    (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_FULLSCREEN
                             or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                             or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
 
+                @Suppress("DEPRECATION")
                 window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
             } else {
-                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                @Suppress("DEPRECATION")
                 window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
             }
         }
