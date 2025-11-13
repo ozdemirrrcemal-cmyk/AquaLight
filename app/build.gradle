@@ -1,9 +1,9 @@
 plugins {
-    id 'com.android.application'                      version '8.10.0'
-    id 'org.jetbrains.kotlin.android'                 version '2.2.21'
-    id 'com.google.gms.google-services'               version '4.4.4'
-    id 'com.google.firebase.crashlytics'              version '3.0.6'
-    id 'com.google.protobuf'                          version '0.9.5' // Proto DataStore
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
+    id 'com.google.protobuf' // Proto DataStore
 }
 
 android {
@@ -43,7 +43,6 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 
-    // Yeni DSL
     packaging {
         resources {
             excludes += [
@@ -79,7 +78,7 @@ dependencies {
     // BlurView (JitPack)
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
 
-    // Firebase (BoM + KTX)
+    // --- Firebase (BoM + KTX tek tip) ---
     implementation platform("com.google.firebase:firebase-bom:34.5.0")
     implementation "com.google.firebase:firebase-analytics-ktx"
     implementation "com.google.firebase:firebase-auth-ktx"
@@ -89,7 +88,7 @@ dependencies {
     implementation "com.google.firebase:firebase-messaging-ktx"
     implementation "com.google.firebase:firebase-config-ktx"
     implementation "com.google.firebase:firebase-perf-ktx"
-    implementation "com.google.firebase:firebase-crashlytics" // KTX yok, normal artefact
+    implementation "com.google.firebase:firebase-crashlytics" // KTX yok, standart artefact
 
     // Google Sign-In
     implementation "com.google.android.gms:play-services-auth:21.4.0"
