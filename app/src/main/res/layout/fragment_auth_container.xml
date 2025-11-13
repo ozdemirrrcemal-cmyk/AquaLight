@@ -3,9 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
 
-    <!-- 1️⃣ Videonun ilk karesi / benzeri poster -->
+    <!-- Videonun ilk karesinden alınmış poster -->
     <ImageView
         android:id="@+id/videoPoster"
         android:layout_width="match_parent"
@@ -14,17 +15,16 @@
         android:src="@drawable/aquarium_poster"
         android:contentDescription="@string/main_login_video_background_description" />
 
-    <!-- 2️⃣ Arka plan video (ilk başta görünmez) -->
+    <!-- Arka plan video (ilk başta görünmez, posterin üstüne gelecek) -->
     <TextureView
         android:id="@+id/videoBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:keepScreenOn="true"
-        android:background="@android:color/transparent"
         android:visibility="invisible"
         android:contentDescription="@string/main_login_video_background_description" />
 
-    <!-- 🧊 BlurView -->
+    <!-- BlurView -->
     <eightbitlab.com.blurview.BlurView
         android:id="@+id/blurView"
         android:layout_width="match_parent"
@@ -32,7 +32,7 @@
         android:visibility="gone"
         android:contentDescription="@string/main_login_blur_overlay_description" />
 
-    <!-- 🌊 Logo ve yazılar -->
+    <!-- Logo ve yazılar -->
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="wrap_content"
@@ -70,7 +70,7 @@
             android:includeFontPadding="false" />
     </LinearLayout>
 
-    <!-- 🚀 Auth graph için child NavHost -->
+    <!-- Auth graph için child NavHost -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/auth_nav_host"
         android:name="androidx.navigation.fragment.NavHostFragment"
