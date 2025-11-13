@@ -64,18 +64,28 @@ class AuthContainerFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        if (Build.VERSION.SDK_INT < 24 || player == null) initPlayerIfNeeded()
+
+        // Player yoksa veya eski cihazsa yeniden kur
+        if (Build.VERSION.SDK_INT < 24 || player == null) {
+            initPlayerIfNeeded()
+        }
+
+        // 🔥 Google Sign-In'den / başka ekrandan dönünce videoyu tekrar oynat
+        player?.playWhenReady = true
+
         applyBlurIfSupported()
         applyDesaturationIfSupported()
     }
 
     override fun onPause() {
         super.onPause()
-        if (Build.VERSION.SDK_INT < 24) releasePlayer() else player?.playWhenReady = false
+        // 🔹 Artık burada release yok; sadece pause
+        player?.playWhenReady = false
     }
 
     override fun onStop() {
         super.onStop()
+        // 🔹 Ekrandan tamamen çıkarken player'ı bırak
         if (Build.VERSION.SDK_INT >= 24) releasePlayer()
     }
 
