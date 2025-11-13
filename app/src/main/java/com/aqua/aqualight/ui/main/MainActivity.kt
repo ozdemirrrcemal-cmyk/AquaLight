@@ -64,18 +64,24 @@ class MainActivity : BaseActivity() {
         // Bottom bar ↔ nav bağla
         binding.bottomNav.setupWithNavController(navController)
 
-        // Sadece nav_app hiyerarşisindeyken alt bar gözüksün
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            val inApp = generateSequence(destination) { it.parent }
-                .any { it.id == R.id.nav_app }
-            binding.bottomNav.isVisible = inApp
+        // Hangi destination'larda bottom bar görünsün?
+        fun isInAppDest(destinationId: Int): Boolean {
+            return when (destinationId) {
+                R.id.aquariumFragment,
+                R.id.devicesFragment,
+                R.id.settingsFragment -> true
+                else -> false
+            }
         }
 
-        // İlk state’i tetikle (recreate sonrası)
+        // Her destination değiştiğinde çağrılır
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            binding.bottomNav.isVisible = isInAppDest(destination.id)
+        }
+
+        // Recreate / tema değişimi sonrası ilk state'i de elle tetikle
         navController.currentDestination?.let { dest ->
-            val inApp = generateSequence(dest) { it.parent }
-                .any { it.id == R.id.nav_app }
-            binding.bottomNav.isVisible = inApp
+            binding.bottomNav.isVisible = isInAppDest(dest.id)
         }
     }
-}
+} 
