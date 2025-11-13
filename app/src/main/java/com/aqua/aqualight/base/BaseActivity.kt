@@ -31,25 +31,22 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Edge-to-edge ayarı burada değil, content yüklenince yapılmalı
+        // Fullscreen burada otomatik verilmesin
     }
 
     override fun setContentView(layoutResID: Int) {
         super.setContentView(layoutResID)
         ensureLoadingOverlay()
-        applyEdgeToEdge()
     }
 
     override fun setContentView(view: View) {
         super.setContentView(view)
         ensureLoadingOverlay()
-        applyEdgeToEdge()
     }
 
     override fun setContentView(view: View, params: ViewGroup.LayoutParams) {
         super.setContentView(view, params)
         ensureLoadingOverlay()
-        applyEdgeToEdge()
     }
 
     /**
@@ -86,25 +83,41 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     /**
-     * 🌈 Tam ekran immersive (edge-to-edge) görünüm
+     * 🌈 Tam ekran immersive (edge-to-edge) görünüm kontrolü
+     * fullscreen = true ➜ sistem çubukları gizli
+     * fullscreen = false ➜ sistem çubukları görünür
      */
-    protected fun applyEdgeToEdge() {
+    protected fun setFullscreen(fullscreen: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            WindowCompat.setDecorFitsSystemWindows(window, false)
+            WindowCompat.setDecorFitsSystemWindows(window, !fullscreen)
             val controller = WindowInsetsControllerCompat(window, window.decorView)
-            controller.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            controller.hide(
-                WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars()
-            )
+
+            if (fullscreen) {
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                controller.hide(
+                    WindowInsetsCompat.Type.statusBars() or
+                            WindowInsetsCompat.Type.navigationBars()
+                )
+            } else {
+                controller.show(
+                    WindowInsetsCompat.Type.statusBars() or
+                            WindowInsetsCompat.Type.navigationBars()
+                )
+            }
         } else {
             @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility =
-                (View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
-            @Suppress("DEPRECATION")
-            window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            if (fullscreen) {
+                window.decorView.systemUiVisibility =
+                    (View.SYSTEM_UI_FLAG_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+
+                window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            } else {
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            }
         }
     }
 
