@@ -2,9 +2,7 @@ package com.aqua.aqualight.ui.main
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
@@ -22,8 +20,8 @@ class MainActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 🟦 Uygulama içi varsayılan: sistem çubukları açık
-        setFullscreen(false)
+        // ❌ Artık burada setFullscreen(false) YOK
+        // Sistem barları hep açık, kontrol tamamen theme.xml'de
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -54,7 +52,7 @@ class MainActivity : BaseActivity() {
 
                 // Bottom bar ↔ nav setup
                 binding.bottomNav.setupWithNavController(navController)
-                hookUiForDestination(navController)
+                binding.bottomNav.visibility = View.VISIBLE
 
                 // Artık graph hazır, içeriği göster
                 binding.navHost.visibility = View.VISIBLE
@@ -62,35 +60,10 @@ class MainActivity : BaseActivity() {
         } else {
             // Navigation kendi state'ini restore etti; sadece bottom bar'ı bağla
             binding.bottomNav.setupWithNavController(navController)
-            hookUiForDestination(navController)
+            binding.bottomNav.visibility = View.VISIBLE
 
             // Zaten restore edilmiş, direkt gösterilebilir
             binding.navHost.visibility = View.VISIBLE
-        }
-    }
-
-    private fun hookUiForDestination(navController: NavController) {
-        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            // 1) Sadece nav_app hiyerarşisindeyken bottom bar göster
-            val inApp = generateSequence(destination) { it.parent }
-                .any { it.id == R.id.nav_app }
-            binding.bottomNav.isVisible = inApp
-
-            // 2) AuthContainerFragment ekrandaysa tam ekran (login / video arka plan)
-            val inAuthContainer = destination.id == R.id.authContainerFragment
-
-            // İleride başka full-screen fragment'ler eklersen:
-            // val isOtherFullScreen = destination.id == R.id.someFullScreenFragment
-            // setFullscreen(inAuthContainer || isOtherFullScreen)
-
-            setFullscreen(inAuthContainer)
-        }
-
-        navController.addOnDestinationChangedListener(listener)
-
-        // 💡 Tema değişimi / rotate / recreate sonrası ilk state'i MANUEL tetikle
-        navController.currentDestination?.let { dest ->
-            listener.onDestinationChanged(navController, dest, null)
         }
     }
 }

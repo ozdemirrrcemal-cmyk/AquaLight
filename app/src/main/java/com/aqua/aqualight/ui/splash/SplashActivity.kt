@@ -25,10 +25,6 @@ class SplashActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 🔥 Splash her zaman tam ekran
-        setFullscreen(true)
-
         setContentView(R.layout.activity_splash)
 
         // 🎞️ Logo animasyonu
