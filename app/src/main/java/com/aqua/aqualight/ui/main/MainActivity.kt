@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.main
 
 import android.os.Bundle
-import android.view.View
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -25,18 +24,20 @@ class MainActivity : BaseActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Ufak flicker’ı azalt
-        binding.navHost.visibility = View.INVISIBLE
-
         val navHost =
             supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
         val navController = navHost.navController
 
         if (savedInstanceState == null) {
-            // 🔹 Uygulama ilk açılış: startDestination'ı login durumuna göre ayarla
+            // 🔹 Uygulama ilk açılış: graph'i login durumuna göre *ilk kez* set et
             lifecycleScope.launch {
-                val prefs = userPrefs.userPrefsFlow.first()
-                val loggedIn = prefs.isLoggedIn && prefs.idToken.isNotEmpty()
+                val loggedIn = try {
+                    val prefs = userPrefs.userPrefsFlow.first()
+                    prefs.isLoggedIn && prefs.idToken.isNotEmpty()
+                } catch (e: Exception) {
+                    // prefs okunamazsa fail-safe: login ekranına gönder
+                    false
+                }
 
                 val graph = navController.navInflater.inflate(R.navigation.nav_root).apply {
                     setStartDestination(
@@ -47,13 +48,15 @@ class MainActivity : BaseActivity() {
                 navController.graph = graph
 
                 setupBottomBar(navController)
-                binding.navHost.visibility = View.VISIBLE
+
+                // ✅ Artık doğru graph set edildi, kullanıcıya göster
+                binding.navHost.isVisible = true
             }
         } else {
-            // 🔹 Tema değişimi / rotate sonrası:
-            // Navigation kendi graph + backstack’ini restore ediyor, dokunmuyoruz
+            // 🔹 Rotate / tema değişimi sonrası:
+            // Navigation kendi graph + backstack’ini restore eder
             setupBottomBar(navController)
-            binding.navHost.visibility = View.VISIBLE
+            binding.navHost.isVisible = true
         }
     }
 
