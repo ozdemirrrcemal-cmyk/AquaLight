@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.auth
 
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable   // ✅ DOĞRU import
+import android.graphics.drawable.ColorDrawable
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
@@ -17,14 +17,15 @@ import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
 import com.aqua.aqualight.R
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.util.Util
-import com.google.android.exoplayer2.video.VideoSize
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
+import androidx.media3.common.util.UnstableApi
 import eightbitlab.com.blurview.BlurView
 import eightbitlab.com.blurview.RenderEffectBlur
 
+@OptIn(UnstableApi::class) // setVideoTextureView / clearVideoTextureView için
 class AuthContainerFragment : Fragment() {
 
     private var textureView: TextureView? = null
@@ -41,41 +42,38 @@ class AuthContainerFragment : Fragment() {
         textureView = v.findViewById(R.id.videoBackground)
         blurView = v.findViewById(R.id.blurView)
 
-        // ⛔ Geri: login’deyken app’ten çık, diğerlerinde pop
+        // geri davranışı
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             val childNavHost =
                 childFragmentManager.findFragmentById(R.id.auth_nav_host) as? NavHostFragment
             val current = childNavHost?.navController?.currentDestination?.id
-            if (current == R.id.loginFragment) {
-                requireActivity().finish()
-            } else {
-                childNavHost?.navController?.popBackStack()
-            }
+            if (current == R.id.loginFragment) requireActivity().finish()
+            else childNavHost?.navController?.popBackStack()
         }
         return v
     }
 
-    // 🎬 Video lifecycle
+    // ▶️ ExoPlayer lifecycle (Media3)
     override fun onStart() {
         super.onStart()
-        if (Util.SDK_INT >= 24) initPlayerIfNeeded()
+        if (Build.VERSION.SDK_INT >= 24) initPlayerIfNeeded()
     }
 
     override fun onResume() {
         super.onResume()
-        if (Util.SDK_INT < 24 || player == null) initPlayerIfNeeded()
+        if (Build.VERSION.SDK_INT < 24 || player == null) initPlayerIfNeeded()
         applyBlurIfSupported()
         applyDesaturationIfSupported()
     }
 
     override fun onPause() {
         super.onPause()
-        if (Util.SDK_INT < 24) releasePlayer() else player?.playWhenReady = false
+        if (Build.VERSION.SDK_INT < 24) releasePlayer() else player?.playWhenReady = false
     }
 
     override fun onStop() {
         super.onStop()
-        if (Util.SDK_INT >= 24) releasePlayer()
+        if (Build.VERSION.SDK_INT >= 24) releasePlayer()
     }
 
     override fun onDestroyView() {
@@ -89,7 +87,7 @@ class AuthContainerFragment : Fragment() {
         if (player != null || textureView == null) return
         try {
             val exo = ExoPlayer.Builder(requireContext()).build().also { exo ->
-                exo.setVideoTextureView(textureView)
+                exo.setVideoTextureView(textureView)  // Media3
                 exo.repeatMode = Player.REPEAT_MODE_ONE
 
                 exo.addListener(object : Player.Listener {
@@ -125,6 +123,8 @@ class AuthContainerFragment : Fragment() {
     private fun releasePlayer() {
         try {
             player?.run {
+                // siyah ekran/Surface leak riskini azalt
+                textureView?.let { clearVideoTextureView(it) }
                 playWhenReady = false
                 release()
             }
@@ -154,7 +154,6 @@ class AuthContainerFragment : Fragment() {
         }
     }
 
-    // Hafif desaturation (yalnızca Android 12+)
     private fun applyDesaturationIfSupported() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {

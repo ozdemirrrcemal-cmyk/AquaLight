@@ -43,8 +43,15 @@ jobs:
           echo "Installed packages (first 120 lines):"
           sdkmanager --list | sed -n '1,120p' || true
 
+      # Cache: quick-clean'de KAPANMAZ, sadece 'clean' (tek kelime) veya 'clean-cache' kapatır
       - name: ⚡ Cache Gradle build-cache
-        if: ${{ !contains(github.event.head_commit.message, 'clean') && !contains(github.event.head_commit.message, 'clean-cache') }}
+        if: ${{ 
+          !contains(github.event.head_commit.message, 'clean-cache') && 
+          !startsWith(github.event.head_commit.message, 'clean ') &&
+          !endsWith(github.event.head_commit.message, ' clean') &&
+          !contains(github.event.head_commit.message, ' clean ') &&
+          github.event.head_commit.message != 'clean'
+        }}
         uses: actions/cache@v4
         with:
           path: |
@@ -56,20 +63,30 @@ jobs:
       - name: ⚙️ Grant permission for Gradle
         run: chmod +x ./gradlew
 
+      # refresh-deps: modül cache’lerini boşalt
       - name: 🔄 Force refresh dependencies (optional)
         if: contains(github.event.head_commit.message, 'refresh-deps')
         run: |
           rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
           echo "Gradle module caches cleared."
 
+      # Hard clean: SADECE 'clean' (tek kelime) veya 'clean-cache'
       - name: 🧹 Hard clean caches & outputs (on demand)
-        if: ${{ contains(github.event.head_commit.message, 'clean') || contains(github.event.head_commit.message, 'clean-cache') }}
+        if: ${{ 
+          contains(github.event.head_commit.message, 'clean-cache') || 
+          startsWith(github.event.head_commit.message, 'clean ') || 
+          endsWith(github.event.head_commit.message, ' clean') || 
+          contains(github.event.head_commit.message, ' clean ') || 
+          github.event.head_commit.message == 'clean' 
+        }}
         run: |
           echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
           rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
           rm -rf **/build build app/build || true
 
-      - name: ⚡ Quick project clean
+      # Quick-clean: sadece gradlew clean
+      - name: ⚡ Quick project clean (optional)
+        if: contains(github.event.head_commit.message, 'quick-clean')
         run: ./gradlew clean --no-daemon
 
       - name: 🔑 Set up release keystore
@@ -86,7 +103,7 @@ jobs:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --stacktrace --no-daemon --refresh-dependencies
+        run: ./gradlew assembleRelease --stacktrace --no-daemon
 
       - name: 📋 Dump releaseRuntimeClasspath (on failure)
         if: failure()
