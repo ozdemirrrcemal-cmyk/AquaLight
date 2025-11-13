@@ -45,13 +45,7 @@ jobs:
 
       # Cache: quick-clean'de KAPANMAZ, sadece 'clean' (tek kelime) veya 'clean-cache' kapatır
       - name: ⚡ Cache Gradle build-cache
-        if: ${{ 
-          !contains(github.event.head_commit.message, 'clean-cache') && 
-          !startsWith(github.event.head_commit.message, 'clean ') &&
-          !endsWith(github.event.head_commit.message, ' clean') &&
-          !contains(github.event.head_commit.message, ' clean ') &&
-          github.event.head_commit.message != 'clean'
-        }}
+        if: ${{ !contains(github.event.head_commit.message, 'clean-cache') && !startsWith(github.event.head_commit.message, 'clean ') && !endsWith(github.event.head_commit.message, ' clean') && !contains(github.event.head_commit.message, ' clean ') && github.event.head_commit.message != 'clean' }}
         uses: actions/cache@v4
         with:
           path: |
@@ -72,13 +66,7 @@ jobs:
 
       # Hard clean: SADECE 'clean' (tek kelime) veya 'clean-cache'
       - name: 🧹 Hard clean caches & outputs (on demand)
-        if: ${{ 
-          contains(github.event.head_commit.message, 'clean-cache') || 
-          startsWith(github.event.head_commit.message, 'clean ') || 
-          endsWith(github.event.head_commit.message, ' clean') || 
-          contains(github.event.head_commit.message, ' clean ') || 
-          github.event.head_commit.message == 'clean' 
-        }}
+        if: ${{ contains(github.event.head_commit.message, 'clean-cache') || startsWith(github.event.head_commit.message, 'clean ') || endsWith(github.event.head_commit.message, ' clean') || contains(github.event.head_commit.message, ' clean ') || github.event.head_commit.message == 'clean' }}
         run: |
           echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
           rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
