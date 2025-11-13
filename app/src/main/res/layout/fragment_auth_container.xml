@@ -1,69 +1,72 @@
-<?xml version="1.0" encoding="utf-8"?>  <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"  
-xmlns:app="http://schemas.android.com/apk/res-auto"  
-android:id="@+id/rootLayout"  
-android:layout_width="match_parent"  
-android:layout_height="match_parent">
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-<!-- 🎬 Arka plan video -->  
-<TextureView  
-    android:id="@+id/videoBackground"  
-    android:layout_width="match_parent"  
-    android:layout_height="match_parent"  
-    android:keepScreenOn="true"  
-    android:contentDescription="@string/main_login_video_background_description" />  
+    <!-- 🎬 Arka plan video -->
+    <TextureView
+        android:id="@+id/videoBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:keepScreenOn="true"
+        android:contentDescription="@string/main_login_video_background_description" />
 
-<!-- 🧊 BlurView -->  
-<eightbitlab.com.blurview.BlurView  
-    android:id="@+id/blurView"  
-    android:layout_width="match_parent"  
-    android:layout_height="match_parent"  
-    android:visibility="gone"  
-    android:contentDescription="@string/main_login_blur_overlay_description" />  
+    <!-- 🧊 BlurView -->
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/blurView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:contentDescription="@string/main_login_blur_overlay_description" />
 
-<!-- 🌊 Logo ve yazılar -->  
-<LinearLayout  
-    android:orientation="vertical"  
-    android:layout_width="wrap_content"  
-    android:layout_height="wrap_content"  
-    android:layout_gravity="start|top"  
-    android:layout_marginTop="24dp"  
-    android:layout_marginStart="24dp"  
-    android:gravity="start">  
+    <!-- 🌊 Logo ve yazılar -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|top"
+        android:layout_marginTop="24dp"
+        android:layout_marginStart="24dp"
+        android:gravity="start">
 
-    <ImageView  
-        android:id="@+id/imgLogo"  
-        android:layout_width="80dp"  
-        android:layout_height="80dp"  
-        android:src="@drawable/logo_login"  
-        android:contentDescription="@string/main_login_logo_description" />  
+        <ImageView
+            android:id="@+id/imgLogo"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/logo_login"
+            android:contentDescription="@string/main_login_logo_description" />
 
-    <TextView  
-        android:id="@+id/tvAquaLight"  
-        android:layout_width="wrap_content"  
-        android:layout_height="wrap_content"  
-        android:text="@string/splasch_app_title"  
-        android:textColor="#0A192F"  
-        android:textSize="20sp"  
-        android:fontFamily="@font/poppins_bold"  
-        android:includeFontPadding="false" />  
+        <TextView
+            android:id="@+id/tvAquaLight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/splasch_app_title"
+            android:textColor="#0A192F"
+            android:textSize="20sp"
+            android:fontFamily="@font/poppins_bold"
+            android:includeFontPadding="false" />
 
-    <TextView  
-        android:id="@+id/tvNatureAquarium"  
-        android:layout_width="wrap_content"  
-        android:layout_height="wrap_content"  
-        android:text="@string/splasch_app_subtitle"  
-        android:textColor="#0A192F"  
-        android:textSize="15sp"  
-        android:fontFamily="@font/raleway_medium"  
-        android:includeFontPadding="false" />  
-</LinearLayout>  
+        <TextView
+            android:id="@+id/tvNatureAquarium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/splasch_app_subtitle"
+            android:textColor="#0A192F"
+            android:textSize="15sp"
+            android:fontFamily="@font/raleway_medium"
+            android:includeFontPadding="false" />
+    </LinearLayout>
 
-<!-- 🚀 Auth graph için child NavHost -->  
-<androidx.fragment.app.FragmentContainerView  
-    android:id="@+id/auth_nav_host"  
-    android:name="androidx.navigation.fragment.NavHostFragment"  
-    app:navGraph="@navigation/nav_graph_auth"  
-    app:defaultNavHost="false"  
-    android:layout_width="match_parent"  
-    android:layout_height="match_parent"  
-    android:contentDescription="@string/main_login_fragment_container_description" />
+    <!-- 🚀 Auth graph için child NavHost -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/auth_nav_host"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        app:navGraph="@navigation/nav_graph_auth"
+        app:defaultNavHost="false"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/main_login_fragment_container_description" />
+
+</FrameLayout>
