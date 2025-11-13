@@ -20,21 +20,21 @@ class MainActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ❌ Artık burada setFullscreen(false) YOK
-        // Sistem barları hep açık, kontrol tamamen theme.xml'de
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // İçerik hazır olana kadar NavHost'u gizle (ufak flicker'ı azaltır)
+        // İstersen kalsın, istersen kaldır; crash ile alakası yok
         binding.navHost.visibility = View.INVISIBLE
 
         val navHost =
             supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
         val navController = navHost.navController
 
+        // 🧩 Alt menüyü navController'a bağla (her durumda)
+        binding.bottomNav.setupWithNavController(navController)
+
         if (savedInstanceState == null) {
-            // Grafiği ilk açılışta oturum durumuna göre belirle
+            // ⬅ Uygulama ilk kez açılıyor → login durumuna göre startDest seç
             lifecycleScope.launch {
                 val prefs = userPrefs.userPrefsFlow.first()
                 val loggedIn = prefs.isLoggedIn && prefs.idToken.isNotEmpty()
@@ -47,22 +47,10 @@ class MainActivity : BaseActivity() {
                 }
                 navController.graph = graph
 
-                // (İsteğe bağlı) Deep link varsa işle
-                navController.handleDeepLink(intent)
-
-                // Bottom bar ↔ nav setup
-                binding.bottomNav.setupWithNavController(navController)
-                binding.bottomNav.visibility = View.VISIBLE
-
-                // Artık graph hazır, içeriği göster
                 binding.navHost.visibility = View.VISIBLE
             }
         } else {
-            // Navigation kendi state'ini restore etti; sadece bottom bar'ı bağla
-            binding.bottomNav.setupWithNavController(navController)
-            binding.bottomNav.visibility = View.VISIBLE
-
-            // Zaten restore edilmiş, direkt gösterilebilir
+            // 🔁 Tema değişimi / rotate vb → Navigation kendi backstack'ini restore ediyor
             binding.navHost.visibility = View.VISIBLE
         }
     }
