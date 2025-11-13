@@ -36,6 +36,18 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
+    <!-- 🔹 SplashScreen API için tema (Launcher'da kullanılacak) -->
+    <style name="AppTheme.Splash" parent="Theme.SplashScreen">
+        <!-- Arka plan: şimdilik yüzey rengi, sonra istersek drawable yaparız -->
+        <item name="windowSplashScreenBackground">@color/md_theme_light_surface</item>
+
+        <!-- Ortadaki ikon: senin logon -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_login</item>
+
+        <!-- Splash bittikten sonra kullanılacak asıl tema -->
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
+    </style>
+
     <!-- 🌊 Splash ekran yazı stilleri -->
     <style name="SplashTitleText">
         <item name="android:textColor">@color/md_theme_light_onPrimary</item>
