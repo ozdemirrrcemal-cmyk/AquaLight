@@ -85,13 +85,14 @@ class ResetPasswordFragment : Fragment() {
                     binding.btnSend.text = getString(R.string.reset_password_button)
 
                     if (task.isSuccessful) {
+                        // ✅ Başarılı: butonsuz, otomatik kapanan bilgi diyaloğu
                         DialogManager.showInfoDialog(
                             requireContext(),
                             DialogType.SUCCESS,
                             title = getString(R.string.reset_success_title),
                             message = getString(R.string.reset_success_message),
-                            // 🔹 Navigation Component ile geri dön
-                            onDismiss = { findNavController().popBackStack() }
+                            onDismiss = { findNavController().popBackStack() },
+                            autoDismissMillis = 1200L    // ⏱️ 1.2 saniye sonra kapan + geri dön
                         )
                     } else {
                         val errorMsg = task.exception?.localizedMessage

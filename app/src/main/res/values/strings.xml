@@ -41,6 +41,7 @@
     <string name="signin_login_button_desc">Sign in to your AquaLight account</string>
     <string name="signin_back_button">Back</string>
     <string name="signin_back_button_desc">Return to previous screen</string>
+	<string name="session_save_error_fallback">Session could not be saved</string>
     <string name="signin_loading">Signing in...</string>
 
     <!-- ♿️ Sign-In Content Description -->
@@ -96,19 +97,43 @@
     <string name="register_failed_title">Registration Failed</string>
     <string name="register_failed_message">An error occurred while creating your account. Please try again later.</string>
 
-    <!-- 🟦 Login Ana Ekranı -->
-    <string name="login_google">Sign in with Google</string>
-    <string name="login_google_desc">Sign in using your Google account</string>
-    <string name="login_sign_in">Sign In</string>
-    <string name="login_sign_in_desc">Go to email sign-in screen</string>
-    <string name="login_register">Create Account</string>
-    <string name="login_register_desc">Go to registration screen</string>
-    <string name="login_screen_desc">Login options screen</string>
-    <string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
+   <!-- 🟦 Login Ana Ekranı -->
+<string name="login_google">Sign in with Google</string>
+<string name="login_google_desc">Sign in using your Google account</string>
+<string name="login_sign_in">Sign In</string>
+<string name="login_sign_in_desc">Go to email sign-in screen</string>
+<string name="login_register">Create Account</string>
+<string name="login_register_desc">Go to registration screen</string>
+<string name="login_screen_desc">Login options screen</string>
+<string name="default_web_client_id">660201044993-1k6q4dfl4q128h7463et4v05s7edksus.apps.googleusercontent.com</string>
 
-    <!-- 🔄 Login Durum Mesajları -->
-    <string name="login_google_success">Signed in with Google successfully</string>
-    <string name="login_google_failed">Google sign-in failed</string>
-    <string name="login_firebase_failed">Firebase authentication failed</string>
+<!-- 🔄 Login Durum Mesajları (başlık) -->
+<string name="login_google_success">Signed in with Google successfully</string>
+<string name="login_google_failed">Google sign-in failed</string>
+<string name="login_firebase_failed">Firebase authentication failed</string>
+<!-- 🔄 Login Detay Mesajları (body) -->
+<string name="login_google_account_not_selected">
+    Google account could not be selected. Please try again.
+</string>
+<string name="login_google_failed_with_reason">
+    Google sign-in failed: %1$s
+</string>
+<string name="login_google_success_message">
+    You have successfully signed in with your Google account.
+</string>
+<string name="login_user_info_unavailable">
+    User information could not be retrieved. Please try again.
+</string>
+<string name="login_auth_failed_with_reason">
+    Authentication failed. %1$s
+</string>
+
+<string name="auth_login_title">Login</string>
+<string name="auth_register_title">Register</string>
+<string name="auth_signin_title">Sign In</string>
+<string name="auth_reset_password_title">Reset Password</string>
+
+
+
 
 </resources>

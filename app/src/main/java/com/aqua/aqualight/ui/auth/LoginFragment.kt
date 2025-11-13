@@ -53,7 +53,7 @@ class LoginFragment : Fragment() {
                     requireContext(),
                     DialogType.WARNING,
                     title = getString(R.string.login_google_failed),
-                    message = "Google hesabı seçilemedi. Lütfen tekrar deneyin."
+                    message = getString(R.string.login_google_account_not_selected)
                 )
             }
         } catch (e: Exception) {
@@ -63,7 +63,10 @@ class LoginFragment : Fragment() {
                 requireContext(),
                 DialogType.ERROR,
                 title = getString(R.string.login_google_failed),
-                message = "Google girişi başarısız: ${e.localizedMessage}"
+                message = getString(
+                    R.string.login_google_failed_with_reason,
+                    e.localizedMessage ?: ""
+                )
             )
         }
     }
@@ -103,52 +106,55 @@ class LoginFragment : Fragment() {
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
-    val credential = GoogleAuthProvider.getCredential(idToken, null)
-    auth.signInWithCredential(credential)
-        .addOnCompleteListener(requireActivity()) { task ->
-            baseActivity?.showLoading(false)
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener(requireActivity()) { task ->
+                baseActivity?.showLoading(false)
 
-            if (task.isSuccessful) {
-                val user = auth.currentUser
-                if (user != null) {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        userPrefs.saveUserSession(user.uid, true)
-                        userPrefs.saveProfile(
-                            email = user.email ?: "",
-                            username = user.displayName ?: "",
-                            photoUrl = user.photoUrl?.toString() ?: ""
-                        )
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    if (user != null) {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            userPrefs.saveUserSession(user.uid, true)
+                            userPrefs.saveProfile(
+                                email = user.email ?: "",
+                                username = user.displayName ?: "",
+                                photoUrl = user.photoUrl?.toString() ?: ""
+                            )
 
-                        // ✅ Success: butonsuz, otomatik kapanan dialog
+                            // ✅ Success: butonsuz, otomatik kapanan dialog
+                            DialogManager.showInfoDialog(
+                                requireContext(),
+                                DialogType.SUCCESS,
+                                title = getString(R.string.login_google_success),
+                                message = getString(R.string.login_google_success_message),
+                                onDismiss = { navigateToAppGraph() },
+                                autoDismissMillis = 1200L
+                            )
+                        }
+                    } else {
                         DialogManager.showInfoDialog(
                             requireContext(),
-                            DialogType.SUCCESS,
-                            title = getString(R.string.login_google_success),
-                            message = "Google hesabınızla başarıyla giriş yaptınız.",
-                            onDismiss = { navigateToAppGraph() },
-                            autoDismissMillis = 1200L
+                            DialogType.WARNING,
+                            title = getString(R.string.login_firebase_failed),
+                            message = getString(R.string.login_user_info_unavailable)
                         )
                     }
                 } else {
+                    Log.e("LoginFragment", "❌ Firebase auth failed", task.exception)
                     DialogManager.showInfoDialog(
                         requireContext(),
-                        DialogType.WARNING,
+                        DialogType.ERROR,
                         title = getString(R.string.login_firebase_failed),
-                        message = "Kullanıcı bilgisi alınamadı, lütfen tekrar deneyin."
+                        message = getString(
+                            R.string.login_auth_failed_with_reason,
+                            task.exception?.localizedMessage ?: ""
+                        )
                     )
                 }
-            } else {
-                Log.e("LoginFragment", "❌ Firebase auth failed", task.exception)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.ERROR,
-                    title = getString(R.string.login_firebase_failed),
-                    message = "Kimlik doğrulama başarısız. ${task.exception?.localizedMessage ?: ""}"
-                )
             }
-        }
     }
-     
+
     private fun navigateToAppGraph() {
         // MainActivity'deki kök NavHost'u hedef al
         val rootNav = (requireActivity().supportFragmentManager

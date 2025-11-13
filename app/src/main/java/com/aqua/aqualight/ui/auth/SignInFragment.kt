@@ -98,7 +98,7 @@ class SignInFragment : Fragment() {
                                         requireContext(),
                                         DialogType.ERROR,
                                         title = getString(R.string.session_save_error_title),
-                                        message = e.localizedMessage ?: "Session kaydedilemedi"
+                                        message = e.localizedMessage?: getString(R.string.session_save_error_fallback)
                                     )
                                 }
                             }
