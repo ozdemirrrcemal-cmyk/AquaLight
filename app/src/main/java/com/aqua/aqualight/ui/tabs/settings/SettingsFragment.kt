@@ -7,6 +7,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import coil3.load
+import coil3.request.placeholder
+import coil3.request.error
+import coil3.request.crossfade
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
