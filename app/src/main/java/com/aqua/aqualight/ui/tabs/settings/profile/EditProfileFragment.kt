@@ -28,6 +28,7 @@ import java.io.FileOutputStream
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView   // 👈 EKLENDİ
 
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
@@ -245,13 +246,13 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     // 🔁 Foto seçildiğinde ilk adım: crop ekranını başlat
     private fun onPhotoSelected(sourceUri: Uri) {
         val options = CropImageOptions().apply {
-            // 1:1 kare oran (istersen değiştir)
+            // 1:1 kare oran
             aspectRatioX = 1
             aspectRatioY = 1
             fixAspectRatio = true
 
-            // Dairesel görünüm (ekran görüntüsündeki gibi)
-            circleCrop = true
+            // Dairesel görünüm için oval crop
+            cropShape = CropImageView.CropShape.OVAL
         }
 
         val contractOptions = CropImageContractOptions(
