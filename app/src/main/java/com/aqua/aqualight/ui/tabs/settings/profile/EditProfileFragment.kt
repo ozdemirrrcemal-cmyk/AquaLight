@@ -178,13 +178,19 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         takePictureLauncher.launch(uri)
     }
 
-    // 📂 FileProvider ile cache altında geçici dosya oluştur (kamera için)
+    // 📂 Profil foto klasörü (filesDir/profile_photos)
+    private fun getProfilePhotosDir(): File {
+        val context = requireContext()
+        return File(context.filesDir, "profile_photos").apply {
+            if (!exists()) mkdirs()
+        }
+    }
+
+    // 📂 FileProvider ile filesDir altında profil foto dosyası oluştur (kamera için)
     private fun createImageUri(): Uri? {
         return try {
-            val cacheDir = File(requireContext().cacheDir, "images").apply {
-                if (!exists()) mkdirs()
-            }
-            val file = File.createTempFile("profile_", ".jpg", cacheDir)
+            val dir = getProfilePhotosDir()
+            val file = File.createTempFile("profile_", ".jpg", dir)
             FileProvider.getUriForFile(
                 requireContext(),
                 "${requireContext().packageName}.fileprovider",
@@ -218,16 +224,15 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     }
 
     /**
-     * Seçilen resmi (kamera veya galeri) app'in kendi cache klasörüne kopyalar
+     * Seçilen resmi (kamera veya galeri) app'in kendi
+     * filesDir/profile_photos klasörüne kopyalar
      * ve FileProvider URI'si döner.
      */
     private fun copyImageToAppStorage(sourceUri: Uri): Uri? {
         return try {
             val context = requireContext()
-            val cacheDir = File(context.cacheDir, "images").apply {
-                if (!exists()) mkdirs()
-            }
-            val file = File.createTempFile("profile_", ".jpg", cacheDir)
+            val dir = getProfilePhotosDir()
+            val file = File.createTempFile("profile_", ".jpg", dir)
 
             context.contentResolver.openInputStream(sourceUri)?.use { input ->
                 FileOutputStream(file).use { output ->
@@ -242,7 +247,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            null
+            return null
         }
     }
 
