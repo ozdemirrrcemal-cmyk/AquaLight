@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_bottom_sheet"
+    android:padding="16dp"
+    android:contentDescription="@string/photo_bottom_sheet_desc">
+
+    <!-- 📷 Kamera Butonu -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCamera"
+        style="@style/RedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/photo_bottom_sheet_camera"
+        android:textAllCaps="false"
+        android:layout_marginBottom="8dp"
+        android:contentDescription="@string/photo_bottom_sheet_camera_desc" />
+
+    <!-- 🖼️ Galeri Butonu -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGallery"
+        style="@style/RedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/photo_bottom_sheet_gallery"
+        android:textAllCaps="false"
+        android:contentDescription="@string/photo_bottom_sheet_gallery_desc" />
+
+</LinearLayout>

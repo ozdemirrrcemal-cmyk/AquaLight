@@ -69,6 +69,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         _binding = FragmentEditProfileBinding.bind(view)
 
         observeCurrentPhoto()
+        setupResultListener()
         setupClickListeners()
     }
 
@@ -90,6 +91,19 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         }
     }
 
+    // ⬇️ BottomSheet’ten gelen sonucu dinle
+    private fun setupResultListener() {
+        parentFragmentManager.setFragmentResultListener(
+            PhotoSourceBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
+            when (bundle.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
+                PhotoSourceBottomSheet.RESULT_GALLERY -> openGallery()
+                PhotoSourceBottomSheet.RESULT_CAMERA -> checkCameraPermissionAndOpen()
+            }
+        }
+    }
+
     private fun setupClickListeners() = with(binding) {
 
         // Geri butonu
@@ -97,9 +111,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             findNavController().popBackStack()
         }
 
-        // Profil fotoğrafına veya kamera ikonuna tıklayınca seçim dialogu aç
+        // Profil foto veya kamera ikonuna tıklayınca bottom sheet aç
         val openChooser: (View) -> Unit = {
-            showPhotoSourceDialog()
+            PhotoSourceBottomSheet.newInstance()
+                .show(parentFragmentManager, PhotoSourceBottomSheet.TAG)
         }
         ivEditProfilePhoto.setOnClickListener(openChooser)
         ivCameraIcon.setOnClickListener(openChooser)
@@ -111,24 +126,6 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                 message = getString(R.string.edit_profile_save_info_message)
             )
         }
-    }
-
-    // 📌 Foto kaynağı seçimi (Galeriden seç / Kamera ile çek)
-    private fun showPhotoSourceDialog() {
-        val items = arrayOf(
-            getString(R.string.edit_profile_choose_gallery),
-            getString(R.string.edit_profile_choose_camera)
-        )
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.edit_profile_choose_source_title)
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> openGallery()
-                    1 -> checkCameraPermissionAndOpen()
-                }
-            }
-            .show()
     }
 
     // 🖼️ Galeriden fotoğraf seç (Android Photo Picker)

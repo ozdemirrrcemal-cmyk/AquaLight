@@ -207,6 +207,19 @@
     Your profile photo has been updated.
 </string>
 
+<resources>
+    <!-- Bottom sheet genel açıklama -->
+    <string name="photo_bottom_sheet_desc">Choose how to update your profile photo</string>
+
+    <!-- Kamera -->
+    <string name="photo_bottom_sheet_camera">Take a photo</string>
+    <string name="photo_bottom_sheet_camera_desc">Open camera to take a new profile photo</string>
+
+    <!-- Galeri -->
+    <string name="photo_bottom_sheet_gallery">Choose from gallery</string>
+    <string name="photo_bottom_sheet_gallery_desc">Pick an existing photo from your gallery</string>
+</resources>
+
     <!-- Logout dialog -->
     <string name="settings_logout_confirm_message">Are you sure you want to log out?</string>
     <string name="common_yes">Yes</string>
