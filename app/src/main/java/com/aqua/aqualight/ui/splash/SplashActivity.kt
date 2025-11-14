@@ -2,26 +2,20 @@ package com.aqua.aqualight.ui.splash
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
+import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.ui.main.MainActivity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class SplashActivity : BaseActivity() {
 
-    private val handler = Handler(Looper.getMainLooper())
-
-    private val navigateRunnable = Runnable {
-        startActivity(
-            Intent(this@SplashActivity, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-        )
-        overridePendingTransition(0, 0)
-        finish()
-    }
+    private val userPrefs by lazy { UserPreferencesManager.create(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,12 +26,29 @@ class SplashActivity : BaseActivity() {
         val anim = AnimationUtils.loadAnimation(this, R.anim.logo_fade_scale)
         logo.startAnimation(anim)
 
-        // 2.4 sn sonra MainActivity'ye geç
-        handler.postDelayed(navigateRunnable, 2400)
-    }
+        // 🔹 Hem login durumunu oku, hem de 2.4 sn splash beklet
+        lifecycleScope.launch {
+            val prefs = try {
+                userPrefs.userPrefsFlow.first()
+            } catch (_: Exception) {
+                null
+            }
 
-    override fun onDestroy() {
-        handler.removeCallbacks(navigateRunnable)
-        super.onDestroy()
+            val loggedIn = prefs?.let {
+                it.isLoggedIn && it.idToken.isNotEmpty()
+            } ?: false
+
+            // Splash süresi
+            delay(2400L)
+
+            // MainActivity'yi login durumuna göre bilgilendir
+            val intent = Intent(this@SplashActivity, MainActivity::class.java).apply {
+                putExtra(MainActivity.EXTRA_START_IN_APP, loggedIn)
+                addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            }
+            startActivity(intent)
+            overridePendingTransition(0, 0)
+            finish()
+        }
     }
 }
