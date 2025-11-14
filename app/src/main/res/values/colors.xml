@@ -55,5 +55,57 @@
     <color name="bottom_nav_background">#1C3252</color>               <!-- Kartla aynı -->
     <color name="bottom_nav_item_active">#FFFFFF</color>
     <color name="bottom_nav_item_inactive">#80E0E6ED</color>
+	
+	
+
+
+    <!-- 🌙 Material 3 Dark Color Scheme -->
+    <color name="md_theme_dark_primary">#2196F3</color>
+    <color name="md_theme_dark_onPrimary">#FFFFFF</color>
+    <color name="md_theme_dark_primaryContainer">#0A192F</color>
+    <color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
+
+    <color name="md_theme_dark_secondary">#4A6363</color>
+    <color name="md_theme_dark_onSecondary">#FFFFFF</color>
+    <color name="md_theme_dark_secondaryContainer">#0A192F</color>
+    <color name="md_theme_dark_onSecondaryContainer">#FFFFFF</color>
+
+    <color name="md_theme_dark_background">#0A192F</color>
+    <color name="md_theme_dark_onBackground">#FFFFFF</color>
+    <color name="md_theme_dark_surface">#0A192F</color>
+    <color name="md_theme_dark_onSurface">#E0E6ED</color>
+
+    <!-- ✳️ Koyu kontrast & outline renkleri -->
+    <color name="md_theme_dark_surfaceVariant">#121A24</color>
+    <color name="md_theme_dark_onSurfaceVariant">#5C6B75</color>
+    <color name="md_theme_dark_outline">#455A64</color>
+    <color name="md_theme_dark_outlineVariant">#37474F</color>
+    <color name="md_theme_dark_error">#B3261E</color>
+    <color name="md_theme_dark_onError">#FFFFFF</color>
+
+    <!-- 🪟 Yarı saydam yüzey -->
+    <color name="colorSurfaceTransparent">#CC0A192F</color>
+
+    <!-- 🌙 Dialog Icon Colors (Dark Mode tonları) -->
+    <color name="dialog_icon_success">#81C784</color>
+    <color name="dialog_icon_warning">#FFD54F</color>
+    <color name="dialog_icon_error">#EF5350</color>
+    <color name="dialog_icon_info">#64B5F6</color>
+
+    <!-- 🔤 Auth metin & border renkleri -->
+    <color name="auth_text_color">#000000</color>
+    <color name="auth_unfocused_color">#333333</color>
+    <color name="auth_focus_color">#2196F3</color>
+
+    <!-- 🧾 Settings ekranı -->
+    <color name="background_color">#0A192F</color>              <!-- Ana arka plan -->
+    <color name="settings_card_background">#112240</color>      <!-- Kart arka planı -->
+    <color name="settings_text_secondary">#A0A0A0</color>       <!-- İkincil metin -->
+    <color name="settings_divider">#223355</color>              <!-- Divider çizgisi -->
+
+    <!-- ⬇️ Bottom Navigation -->
+    <color name="bottom_nav_background">#112240</color>
+    <color name="bottom_nav_item_active">#FFFFFF</color>
+    <color name="bottom_nav_item_inactive">#80E0E6ED</color>
 
 </resources>
