@@ -207,6 +207,8 @@
     Your profile photo has been updated.
 </string>
 
+	<string name="edit_profile_crop_title">Crop İmage</string>
+
     <!-- Bottom sheet genel açıklama -->
     <string name="photo_bottom_sheet_desc">Choose how to update your profile photo</string>
 
@@ -223,6 +225,5 @@
     <string name="common_yes">Yes</string>
     <string name="common_cancel">Cancel</string>
 	
-	<string name="edit_profile_crop_title">Fotoğrafı kırp</string>
 
 </resources>

@@ -21,6 +21,8 @@ import com.aqua.aqualight.databinding.FragmentEditProfileBinding
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
+import android.graphics.Color
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -230,6 +232,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     // 🔁 Foto seçildiğinde: uCrop ekranını başlat
     private fun onPhotoSelected(sourceUri: Uri) {
+        val context = requireContext()
+
         // uCrop çıktı dosyası: app'in kendi klasöründe
         val destFile = File(
             getProfilePhotosDir(),
@@ -238,22 +242,34 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         val destUri = Uri.fromFile(destFile)
 
         val options = UCrop.Options().apply {
-            // 1:1 kare + dairesel avatar
-            setCircleDimmedLayer(true)
-            withAspectRatio(1f, 1f)
+    // 1:1 kare + dairesel avatar
+    setCircleDimmedLayer(true)
+    withAspectRatio(1f, 1f)
 
-            // Grid vs istersen aç/kapat
-            setShowCropGrid(true)
-            setShowCropFrame(false)
+    setShowCropGrid(true)
+    setShowCropFrame(false)
 
-            // Tema renkleri (istersen özelleştir)
-            setToolbarTitle(getString(R.string.edit_profile_crop_title))
-        }
+    // 🔽 ALT KONTROLLERİ GİZLE
+    setHideBottomControls(true)
+
+    // 🔹 Üst bar başlığı
+    setToolbarTitle(getString(R.string.edit_profile_crop_title))
+
+    // 🔹 Üst bar renkleri
+    val toolbarColor = ContextCompat.getColor(context, R.color.crop_toolbar_bg)
+    setToolbarColor(toolbarColor)
+    setStatusBarColor(toolbarColor)
+    setToolbarWidgetColor(Color.WHITE)
+
+    // 🔹 İkonlar
+    setToolbarCancelDrawable(R.drawable.ic_back)
+    setToolbarCropDrawable(R.drawable.ic_check)
+}
 
         UCrop.of(sourceUri, destUri)
             .withAspectRatio(1f, 1f)
             .withOptions(options)
-            .start(requireContext(), uCropLauncher)
+            .start(context, uCropLauncher)
     }
 
     // ✅ uCrop'tan gelen sonucu işler: ImageView'de göster + URI'yi sakla

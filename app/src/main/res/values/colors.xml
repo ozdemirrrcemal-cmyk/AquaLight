@@ -72,4 +72,5 @@
     <color name="bottom_nav_item_active">#FFFFFF</color>
     <color name="bottom_nav_item_inactive">#A0A0A0</color>
 	
+	<color name="crop_toolbar_bg">#0A192F</color>
 </resources>
