@@ -232,45 +232,48 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     // 🔁 Foto seçildiğinde: uCrop ekranını başlat
     private fun onPhotoSelected(sourceUri: Uri) {
-        val context = requireContext()
+    val context = requireContext()
 
-        // uCrop çıktı dosyası: app'in kendi klasöründe
-        val destFile = File(
-            getProfilePhotosDir(),
-            "profile_cropped_${System.currentTimeMillis()}.jpg"
-        )
-        val destUri = Uri.fromFile(destFile)
+    // uCrop çıktı dosyası: app'in kendi klasöründe
+    val destFile = File(
+        getProfilePhotosDir(),
+        "profile_cropped_${System.currentTimeMillis()}.jpg"
+    )
+    val destUri = Uri.fromFile(destFile)
 
-        val options = UCrop.Options().apply {
-    // 1:1 kare + dairesel avatar
-    setCircleDimmedLayer(true)
-    withAspectRatio(1f, 1f)
+    val options = UCrop.Options().apply {
+        // 1:1 kare + dairesel avatar
+        setCircleDimmedLayer(true)
+        withAspectRatio(1f, 1f)
 
-    setShowCropGrid(true)
-    setShowCropFrame(false)
+        // Grid açık, dış kare çerçeve kapalı
+        setShowCropGrid(true)
+        setShowCropFrame(false)
 
-    // 🔽 ALT KONTROLLERİ GİZLE
-    setHideBottomControls(true)
+        // 🔻 Alt bardaki Ölçek/Döndür kontrollerini gizle
+        setHideBottomControls(true)
 
-    // 🔹 Üst bar başlığı
-    setToolbarTitle(getString(R.string.edit_profile_crop_title))
+        // 🔹 Üst bar başlığı
+        setToolbarTitle(getString(R.string.edit_profile_crop_title))
 
-    // 🔹 Üst bar renkleri
-    val toolbarColor = ContextCompat.getColor(context, R.color.crop_toolbar_bg)
-    setToolbarColor(toolbarColor)
-    setStatusBarColor(toolbarColor)
-    setToolbarWidgetColor(Color.WHITE)
+        // 🔹 Üst bar & status bar rengi (#0A192F -> colors.xml: crop_toolbar_bg)
+        val toolbarColor = ContextCompat.getColor(context, R.color.crop_toolbar_bg)
+        setToolbarColor(toolbarColor)
+        setStatusBarColor(toolbarColor)
 
-    // 🔹 İkonlar
-    setToolbarCancelDrawable(R.drawable.ic_back)
-    setToolbarCropDrawable(R.drawable.ic_check)
-}
+        // 🔹 Üst bardaki text + ikon rengi (beyaz)
+        setToolbarWidgetColor(Color.WHITE)
 
-        UCrop.of(sourceUri, destUri)
-            .withAspectRatio(1f, 1f)
-            .withOptions(options)
-            .start(context, uCropLauncher)
+        // 🔹 Soldaki cancel ikonunu geri butonu yap
+        setToolbarCancelDrawable(R.drawable.ic_back)
+        // ✅ Sağdaki check ikonunu DEĞİŞTİRMİYORUZ (orijinal kalsın)
     }
+
+    UCrop.of(sourceUri, destUri)
+        .withAspectRatio(1f, 1f)
+        .withOptions(options)
+        .start(context, uCropLauncher)
+}
 
     // ✅ uCrop'tan gelen sonucu işler: ImageView'de göster + URI'yi sakla
     private fun handleCroppedImage(croppedFileUri: Uri) {
