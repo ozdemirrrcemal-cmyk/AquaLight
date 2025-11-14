@@ -259,8 +259,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         // 🔹 Üst bar & status bar rengi (#0A192F -> colors.xml: crop_toolbar_bg)
         val toolbarColor = ContextCompat.getColor(context, R.color.crop_toolbar_bg)
         setToolbarColor(toolbarColor)
-        setStatusBarColor(toolbarColor)
-
+        
         // 🔹 Üst bardaki text + ikon rengi (beyaz)
         setToolbarWidgetColor(Color.WHITE)
 
