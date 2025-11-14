@@ -18,13 +18,14 @@
   <com.google.android.material.bottomnavigation.BottomNavigationView
     android:id="@+id/bottomNav"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="56dp" 
     android:layout_gravity="bottom"
     android:background="@color/bottom_nav_background"
+    android:paddingTop="0dp"
+    android:paddingBottom="0dp"
     app:itemIconTint="@color/bottom_nav_item_tint"
     app:itemTextColor="@color/bottom_nav_item_tint"
     app:itemActiveIndicatorStyle="@style/Widget.Aqua.BottomNav.NoActiveIndicator"
-    app:menu="@menu/menu_bottom"
-    android:visibility="gone" />
+    app:menu="@menu/menu_bottom"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
