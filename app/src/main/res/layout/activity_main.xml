@@ -16,11 +16,14 @@
         android:visibility="gone" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        app:menu="@menu/menu_bottom"
-        android:visibility="gone" />
+    android:id="@+id/bottomNav"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:background="@color/bottom_nav_background"
+    app:itemIconTint="@color/bottom_nav_item_tint"
+    app:itemTextColor="@color/bottom_nav_item_tint"
+    app:menu="@menu/menu_bottom"
+    android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

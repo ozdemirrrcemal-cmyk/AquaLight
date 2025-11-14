@@ -135,7 +135,7 @@
 
     <!-- 🔹 Profile card -->
     <string name="settings_profile_photo_desc">Profile photo</string>
-    <string name="settings_default_username">Username</string>
+    <string name="settings_default_username">AquaLight User</string>
     <string name="settings_default_email">Email address</string>
     <string name="active_devices">Active devices</string>
 

@@ -1,81 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- 🌙 Material 3 Dark Color Scheme -->
-    <color name="md_theme_dark_primary">#2196F3</color>
-    <color name="md_theme_dark_onPrimary">#FFFFFF</color>
-    <color name="md_theme_dark_primaryContainer">#0A192F</color>
-    <color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
-
-    <color name="md_theme_dark_secondary">#4A6363</color>
-    <color name="md_theme_dark_onSecondary">#FFFFFF</color>
-    <color name="md_theme_dark_secondaryContainer">#0A192F</color>
-    <color name="md_theme_dark_onSecondaryContainer">#FFFFFF</color>
-
-    <color name="md_theme_dark_background">#0A192F</color>
-    <color name="md_theme_dark_onBackground">#FFFFFF</color>
-    <color name="md_theme_dark_surface">#0A192F</color>
-    <color name="md_theme_dark_onSurface">#E0E6ED</color>
-
-    <!-- ✳️ Koyu kontrast & outline renkleri -->
-    <color name="md_theme_dark_surfaceVariant">#121A24</color>
-    <color name="md_theme_dark_onSurfaceVariant">#5C6B75</color>
-    <color name="md_theme_dark_outline">#455A64</color>
-    <color name="md_theme_dark_outlineVariant">#37474F</color>
-    <color name="md_theme_dark_error">#CF6679</color>
-    <color name="md_theme_dark_onError">#000000</color>
-
     <!-- ☀️ Material 3 Light Color Scheme -->
-    <color name="md_theme_light_primary">#2196F3</color>
-    <color name="md_theme_light_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_primaryContainer">#E3F2FD</color>
+    <color name="md_theme_light_primary">#2196F3</color>              <!-- Aynı -->
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>            <!-- Aynı -->
+    <color name="md_theme_light_primaryContainer">#E3F2FD</color>     <!-- Biraz açık mavi -->
     <color name="md_theme_light_onPrimaryContainer">#0D47A1</color>
 
-    <color name="md_theme_light_secondary">#4A6363</color>
-    <color name="md_theme_light_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_secondaryContainer">#CCE8E7</color>
+    <color name="md_theme_light_secondary">#4A6363</color>            <!-- Aynı -->
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>          <!-- Aynı -->
+    <color name="md_theme_light_secondaryContainer">#CCE8E7</color>   <!-- Açık ton -->
     <color name="md_theme_light_onSecondaryContainer">#041F1F</color>
 
-    <color name="md_theme_light_background">#152B45</color>
+    <!-- Arka plan & yüzey: koyu temaya göre bir tık daha açık -->
+    <color name="md_theme_light_background">#152B45</color>           <!-- #0A192F → #152B45 -->
     <color name="md_theme_light_onBackground">#FFFFFF</color>
     <color name="md_theme_light_surface">#152B45</color>
     <color name="md_theme_light_onSurface">#E0E6ED</color>
 
-    <!-- ✳️ Koyu kontrast & outline renkleri -->
-    <color name="md_theme_light_surfaceVariant">#233042</color>
-    <color name="md_theme_light_onSurfaceVariant">#5C6B75</color> <!-- koyu gri, hint için -->
-    <color name="md_theme_light_outline">#455A64</color> <!-- koyu gri border -->
-    <color name="md_theme_light_outlineVariant">#37474F</color>
-    <color name="md_theme_light_error">#D32F2F</color>
+    <!-- ✳️ Varyant & outline -->
+    <color name="md_theme_light_surfaceVariant">#233042</color>       <!-- #121A24 → biraz açık -->
+    <color name="md_theme_light_onSurfaceVariant">#5C6B75</color>     <!-- Aynı -->
+    <color name="md_theme_light_outline">#455A64</color>              <!-- Aynı -->
+    <color name="md_theme_light_outlineVariant">#37474F</color>       <!-- Aynı -->
+    <color name="md_theme_light_error">#D32F2F</color>                <!-- Klasik MD3 kırmızı -->
     <color name="md_theme_light_onError">#FFFFFF</color>
-	
-	<color name="colorSurfaceTransparent">#CC0A192F</color>
-	
-	<!-- 🎨 Dialog Icon Colors (Global temadan bağımsız) -->
-<color name="dialog_icon_success">#4CAF50</color>   <!-- Yeşil -->
-<color name="dialog_icon_warning">#FFC107</color>   <!-- Sarı -->
-<color name="dialog_icon_error">#F44336</color>     <!-- Kırmızı -->
-<color name="dialog_icon_info">#2196F3</color>      <!-- Mavi -->
 
-<!-- 🖤 İç metin rengi -->
-<color name="auth_text_color">#000000</color>
+    <!-- Yarı saydam yüzey (light versiyon) -->
+    <color name="colorSurfaceTransparent">#CC152B45</color>           <!-- Dark’taki #CC0A192F’in açığı -->
 
-<!-- 🌑 Border & hint rengi (unfocused) -->
-<color name="auth_unfocused_color">#333333</color>
+    <!-- 🌤 Dialog Icon Colors (Light Mode tonları) -->
+    <color name="dialog_icon_success">#4CAF50</color>
+    <color name="dialog_icon_warning">#FFC107</color>
+    <color name="dialog_icon_error">#F44336</color>
+    <color name="dialog_icon_info">#2196F3</color>
 
-<!-- 🔵 Focus rengi -->
-<color name="auth_focus_color">#2196F3</color>
+    <!-- Auth metin & border – bunları iki temada da aynı bırakıyoruz -->
+    <color name="auth_text_color">#000000</color>
+    <color name="auth_unfocused_color">#333333</color>
+    <color name="auth_focus_color">#2196F3</color>
 
-<!-- Ana arka plan (ScrollView) -->
-    <color name="background_color">#0A192F</color>
+    <!-- 🧾 Settings ekranı (light versiyon) -->
+    <!-- Dark: #0A192F → Light: #152B45 -->
+    <color name="background_color">#152B45</color>
 
-    <!-- Card arka planı (settings kartları) -->
-    <color name="settings_card_background">#112240</color>
+    <!-- Dark: #112240 → Light: biraz daha açık lacivert -->
+    <color name="settings_card_background">#1C3252</color>
 
-    <!-- İkincil metin rengi (gri yazılar) -->
+    <!-- Metin ve divider aynı kalabilir -->
     <color name="settings_text_secondary">#A0A0A0</color>
+    <color name="settings_divider">#2D3F66</color>                    <!-- Dark #223355’in hafif açığı -->
 
-    <!-- Divider çizgileri -->
-    <color name="settings_divider">#223355</color>
+    <!-- ⬇️ Bottom Navigation (card ile uyumlu) -->
+    <color name="bottom_nav_background">#1C3252</color>               <!-- Kartla aynı -->
+    <color name="bottom_nav_item_active">#FFFFFF</color>
+    <color name="bottom_nav_item_inactive">#80E0E6ED</color>
 
 </resources>

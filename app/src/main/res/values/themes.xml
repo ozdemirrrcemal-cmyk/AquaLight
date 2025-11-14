@@ -15,7 +15,7 @@
         <item name="colorSurface">@color/md_theme_light_surface</item>
         <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
 
-        <!-- ✳️ Eklenen renkler -->
+        <!-- Varyant & outline & error -->
         <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
         <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
         <item name="colorOutline">@color/md_theme_light_outline</item>
@@ -24,13 +24,10 @@
         <item name="colorOnError">@color/md_theme_light_onError</item>
 
         <!-- Sistem bar renkleri -->
-        <!-- Üst bar tamamen transparan (ikonlar koyu) -->
         <item name="android:statusBarColor">@android:color/transparent</item>
-
-        <!-- Alt sistem barı düz siyah -->
         <item name="android:navigationBarColor">@android:color/black</item>
 
-        <!-- Açık modda koyu ikonlar -->
+        <!-- Light temada koyu ikonlar -->
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
 
@@ -39,7 +36,7 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <!-- 🌊 Splash ekran yazı stilleri -->
+    <!-- ☀️ Splash metin stilleri (light versiyon) -->
     <style name="SplashTitleText">
         <item name="android:textColor">@color/md_theme_light_onPrimary</item>
         <item name="android:textSize">32sp</item>
