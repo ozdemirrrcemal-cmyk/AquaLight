@@ -82,17 +82,11 @@
     <item name="colorControlActivated">@color/auth_focus_color</item> <!-- ✅ Güvenli -->
 </style>
 
-<!-- 🔹 Bottom nav aktif indicator köşe şekli -->
-<style name="ShapeAppearance.Aqua.BottomNav.ActiveIndicator"
-    parent="ShapeAppearance.Material3.Corner.Full">
-    <item name="cornerSize">18dp</item> <!-- güzel yuvarlak pill -->
+<!-- 🔹 Bottom nav: active indicator tamamen kapalı -->
+<style name="Widget.Aqua.BottomNav.NoActiveIndicator" parent="">
+    <item name="android:width">0dp</item>
+    <item name="android:height">0dp</item>
+    <item name="android:color">@android:color/transparent</item>
 </style>
 
-<!-- 🔹 Bottom nav aktif indicator stili -->
-<style name="Widget.Aqua.BottomNav.ActiveIndicator" parent="">
-    <!-- Arka plan rengi -->
-    <item name="android:color">@color/bottom_nav_active_indicator</item>
-    <!-- Şekil -->
-    <item name="shapeAppearance">@style/ShapeAppearance.Aqua.BottomNav.ActiveIndicator</item>
-</style>
 </resources>

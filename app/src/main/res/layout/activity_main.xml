@@ -23,8 +23,8 @@
     android:background="@color/bottom_nav_background"
     app:itemIconTint="@color/bottom_nav_item_tint"
     app:itemTextColor="@color/bottom_nav_item_tint"
+    app:itemActiveIndicatorStyle="@style/Widget.Aqua.BottomNav.NoActiveIndicator"
     app:menu="@menu/menu_bottom"
-    app:itemActiveIndicatorStyle="@style/Widget.Aqua.BottomNav.ActiveIndicator"
     android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
