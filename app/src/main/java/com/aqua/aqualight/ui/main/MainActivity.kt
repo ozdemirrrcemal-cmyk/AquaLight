@@ -24,12 +24,12 @@ class MainActivity : BaseActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val navHost =
-            supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
-        val navController = navHost.navController
+        // Daha önce oluşturulmuş bir NavHost var mı? (tema değişimi vb.)
+        val existingHost =
+            supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment?
 
-        if (savedInstanceState == null) {
-            // 🔹 Uygulama ilk açılış: login durumuna göre grafiği *bir kez* ayarla
+        if (existingHost == null) {
+            // 🔹 Uygulama ilk açılış (Splash'tan gelinen an)
             binding.navHost.isVisible = false
             binding.bottomNav.isVisible = false
 
@@ -38,11 +38,18 @@ class MainActivity : BaseActivity() {
                     val prefs = userPrefs.userPrefsFlow.first()
                     prefs.isLoggedIn && prefs.idToken.isNotEmpty()
                 } catch (_: Exception) {
-                    // prefs okunamazsa fail-safe: login ekranına gönder
-                    false
+                    false // prefs okunamazsa login ekranı
                 }
 
-                // nav_root'u inflate edip startDestination'ı override et
+                // 1) Boş bir NavHostFragment oluştur
+                val navHost = NavHostFragment()
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.nav_host, navHost)
+                    .setPrimaryNavigationFragment(navHost) // defaultNavHost = true
+                    .commitNow()
+
+                // 2) Graph'i login durumuna göre hazırla
+                val navController = navHost.navController
                 val graph = navController.navInflater.inflate(R.navigation.nav_root).apply {
                     setStartDestination(
                         if (loggedIn) R.id.nav_app
@@ -51,22 +58,24 @@ class MainActivity : BaseActivity() {
                 }
                 navController.graph = graph
 
+                // 3) Bottom bar'ı bağla
                 setupBottomBar(navController)
 
-                // 🔹 Şu anki destination'a göre alt bar görünürlüğünü ayarla
+                // 4) İlk destination'a göre bottom bar görünürlüğü
                 navController.currentDestination?.let { dest ->
                     binding.bottomNav.isVisible = isInAppDest(dest.id)
                 }
 
-                // Her şey hazır, artık kullanıcıya göster
+                // 5) Artık her şey hazır, kullanıcıya göster
                 binding.navHost.isVisible = true
             }
         } else {
             // 🔹 Tema değişimi / rotate sonrası:
-            // Navigation kendi graph + backstack'ini restore ediyor, biz elle dokunmuyoruz
+            // NavHostFragment ve graph zaten restore edildi, sadece yeniden bağlan
+            val navController = existingHost.navController
+
             setupBottomBar(navController)
 
-            // Mevcut destination'a göre alt bar'ı ayarla
             navController.currentDestination?.let { dest ->
                 binding.bottomNav.isVisible = isInAppDest(dest.id)
             }
@@ -75,7 +84,7 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    // 🔹 Bu ID'ler app içindeki tab'leri temsil ediyor
+    // App içi tab ekranlarını temsil eden id'ler
     private fun isInAppDest(destinationId: Int): Boolean {
         return when (destinationId) {
             R.id.nav_app,              // nested graph
@@ -90,7 +99,7 @@ class MainActivity : BaseActivity() {
         // Bottom bar ↔ nav bağla
         binding.bottomNav.setupWithNavController(navController)
 
-        // Her destination değiştiğinde görünürlüğü güncelle
+        // Destination değişince alt bar görünürlüğünü güncelle
         navController.addOnDestinationChangedListener { _, destination, _ ->
             binding.bottomNav.isVisible = isInAppDest(destination.id)
         }
