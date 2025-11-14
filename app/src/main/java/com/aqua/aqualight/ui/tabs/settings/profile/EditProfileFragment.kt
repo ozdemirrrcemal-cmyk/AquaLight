@@ -17,8 +17,8 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentEditProfileBinding
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
