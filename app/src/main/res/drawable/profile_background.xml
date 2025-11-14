@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Degrade dairesel arka plan -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#1E3A8A"
+                android:centerColor="#0A192F"
+                android:endColor="#112240" />
+            <stroke
+                android:width="2dp"
+                android:color="#33FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Hafif iç parlama -->
+    <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
+        <shape android:shape="oval">
+            <solid android:color="#10FFFFFF" />
+        </shape>
+    </item>
+</layer-list>

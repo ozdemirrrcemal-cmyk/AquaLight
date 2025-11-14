@@ -133,7 +133,52 @@
 <string name="auth_signin_title">Sign In</string>
 <string name="auth_reset_password_title">Reset Password</string>
 
+    <!-- 🔹 Profile card -->
+    <string name="settings_profile_photo_desc">Profile photo</string>
+    <string name="settings_default_username">Username</string>
+    <string name="settings_default_email">Email address</string>
+    <string name="active_devices">Active devices</string>
 
+    <!-- General arrow icon description -->
+    <string name="settings_arrow_desc">Go to details</string>
+
+    <!-- 1️⃣ User Info -->
+    <string name="settings_user_info">User information</string>
+    <string name="settings_user_info_desc">View and edit user information</string>
+
+    <!-- 2️⃣ Device Status -->
+    <string name="settings_device_status">Device status</string>
+    <string name="settings_device_status_desc">View the status of connected devices</string>
+
+    <!-- 3️⃣ Network -->
+    <string name="settings_network">Network / Wi-Fi</string>
+    <string name="settings_network_desc">Configure network and connection settings</string>
+
+    <!-- 4️⃣ App Settings -->
+    <string name="settings_app">App settings</string>
+    <string name="settings_app_desc">Manage theme, language and general settings</string>
+
+    <!-- 5️⃣ Usage Statistics -->
+    <string name="settings_usage">Usage statistics</string>
+    <string name="settings_usage_desc">View app usage statistics</string>
+
+    <!-- 6️⃣ Privacy -->
+    <string name="settings_privacy">Privacy & terms</string>
+    <string name="settings_privacy_desc">View privacy policy and terms of use</string>
+
+    <!-- 7️⃣ Feedback / Support -->
+    <string name="settings_feedback">Feedback & support</string>
+    <string name="settings_feedback_desc">Send feedback or get support</string>
+
+    <!-- 8️⃣ Logout -->
+    <string name="settings_logout">Log out</string>
+    <string name="settings_logout_desc">Sign out of your account</string>
+
+    <!-- Logout dialog -->
+    <string name="settings_logout_confirm_message">Are you sure you want to log out?</string>
+    <string name="common_yes">Yes</string>
+    <string name="common_cancel">Cancel</string>
+	
 
 
 </resources>

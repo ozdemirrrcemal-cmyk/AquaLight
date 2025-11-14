@@ -78,7 +78,7 @@ dependencies {
     implementation "com.google.android.material:material:1.13.0"
     implementation "androidx.constraintlayout:constraintlayout:2.2.1"
     implementation "androidx.recyclerview:recyclerview:1.4.0"
-	implementation "androidx.core:core-splashscreen:1.0.1"
+    implementation "androidx.core:core-splashscreen:1.0.1"
 
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:2.9.5"
@@ -90,6 +90,9 @@ dependencies {
 
     // BlurView
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
+
+    // Image loading - Coil 3
+    implementation "io.coil-kt.coil3:coil-android:3.3.0"
 
     // Google Sign-In
     implementation "com.google.android.gms:play-services-auth:21.4.0"
