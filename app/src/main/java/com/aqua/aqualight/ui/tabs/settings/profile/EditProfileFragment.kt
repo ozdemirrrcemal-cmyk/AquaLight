@@ -2,9 +2,9 @@ package com.aqua.aqualight.ui.tabs.settings.profile
 
 import android.Manifest
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
@@ -55,7 +55,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         }
     }
 
-    // 🖼️ Android Photo Picker: yalnızca resim (izin gereksiz, modern ve temiz)
+    // 🖼️ Android Photo Picker: yalnızca resim
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
@@ -104,10 +104,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         ivEditProfilePhoto.setOnClickListener(openChooser)
         ivCameraIcon.setOnClickListener(openChooser)
 
-        // Şimdilik Kaydet butonu ekstra bir şey yapmıyor,
-        // fotoğraf seçildiği anda zaten DataStore'a yazıyoruz.
+        // Şimdilik kaydet ekstra iş yapmıyor
         btnSave.setOnClickListener {
-            // İlerde full name vs. eklersen burada da form kaydedersin
             showInfoDialog(
                 title = getString(R.string.edit_profile_save_info_title),
                 message = getString(R.string.edit_profile_save_info_message)
@@ -136,13 +134,14 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     // 🖼️ Galeriden fotoğraf seç (Android Photo Picker)
     private fun openGallery() {
         pickImageLauncher.launch(
-            ActivityResultContracts.PickVisualMedia.ImageOnly
+            PickVisualMediaRequest(
+                ActivityResultContracts.PickVisualMedia.ImageOnly
+            )
         )
     }
 
     // 📸 Kamera iznini kontrol et
     private fun checkCameraPermissionAndOpen() {
-        // Android 13+ için de hala CAMERA izni gerekiyor
         requestCameraPermission.launch(Manifest.permission.CAMERA)
     }
 
