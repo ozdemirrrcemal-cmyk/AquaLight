@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.settings.profile
 
 import android.Manifest
+import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -19,16 +20,10 @@ import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentEditProfileBinding
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileOutputStream
-
-// CanHub Image Cropper importları
-import com.canhub.cropper.CropImageContract
-import com.canhub.cropper.CropImageContractOptions
-import com.canhub.cropper.CropImageOptions
-import com.canhub.cropper.CropImageView   // 👈 EKLENDİ
 
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
@@ -77,36 +72,26 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         }
     }
 
-    // ✂️ Crop sonucu için launcher
-    private val cropImageLauncher = registerForActivityResult(
-        CropImageContract()
+    // ✂️ uCrop sonucu için launcher
+    private val uCropLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.isSuccessful) {
-            val croppedUri = result.uriContent ?: return@registerForActivityResult
+        val data = result.data
+        when {
+            result.resultCode == Activity.RESULT_OK && data != null -> {
+                val croppedUri = UCrop.getOutput(data) ?: return@registerForActivityResult
+                handleCroppedImage(croppedUri)
+            }
 
-            // Kırpılmış resmi kendi klasörümüze kopyala
-            val finalUri = copyImageToAppStorage(croppedUri) ?: run {
+            result.resultCode == UCrop.RESULT_ERROR && data != null -> {
+                val error = UCrop.getError(data)
+                error?.printStackTrace()
                 showInfoDialog(
                     title = getString(R.string.edit_profile_error_title),
-                    message = getString(R.string.edit_profile_save_photo_error)
+                    message = error?.localizedMessage
+                        ?: getString(R.string.edit_profile_save_photo_error)
                 )
-                return@registerForActivityResult
             }
-
-            // UI'da göster
-            binding.ivEditProfilePhoto.load(finalUri) {
-                placeholder(R.drawable.ic_profile_placeholder)
-                error(R.drawable.ic_profile_placeholder)
-                crossfade(true)
-            }
-
-            // Henüz DataStore'a yazmayacağız, Save tuşunda yazacağız
-            selectedPhotoUri = finalUri
-
-        } else {
-            // Kullanıcı iptal etmiş olabilir, hata da olabilir
-            val error = result.error
-            error?.printStackTrace()
         }
     }
 
@@ -243,52 +228,55 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         }
     }
 
-    // 🔁 Foto seçildiğinde ilk adım: crop ekranını başlat
+    // 🔁 Foto seçildiğinde: uCrop ekranını başlat
     private fun onPhotoSelected(sourceUri: Uri) {
-        val options = CropImageOptions().apply {
-            // 1:1 kare oran
-            aspectRatioX = 1
-            aspectRatioY = 1
-            fixAspectRatio = true
+        // uCrop çıktı dosyası: app'in kendi klasöründe
+        val destFile = File(
+            getProfilePhotosDir(),
+            "profile_cropped_${System.currentTimeMillis()}.jpg"
+        )
+        val destUri = Uri.fromFile(destFile)
 
-            // Dairesel görünüm için oval crop
-            cropShape = CropImageView.CropShape.OVAL
+        val options = UCrop.Options().apply {
+            // 1:1 kare + dairesel avatar
+            setCircleDimmedLayer(true)
+            withAspectRatio(1f, 1f)
+
+            // Grid vs istersen aç/kapat
+            setShowCropGrid(true)
+            setShowCropFrame(false)
+
+            // Tema renkleri (istersen özelleştir)
+            setToolbarTitle(getString(R.string.edit_profile_crop_title))
         }
 
-        val contractOptions = CropImageContractOptions(
-            uri = sourceUri,
-            cropImageOptions = options
-        )
-
-        cropImageLauncher.launch(contractOptions)
+        UCrop.of(sourceUri, destUri)
+            .withAspectRatio(1f, 1f)
+            .withOptions(options)
+            .start(requireContext(), uCropLauncher)
     }
 
-    /**
-     * Kırpılmış resmi app'in kendi
-     * filesDir/profile_photos klasörüne kopyalar
-     * ve FileProvider URI'si döner.
-     */
-    private fun copyImageToAppStorage(sourceUri: Uri): Uri? {
-        return try {
-            val context = requireContext()
-            val dir = getProfilePhotosDir()
-            val file = File.createTempFile("profile_", ".jpg", dir)
+    // ✅ uCrop'tan gelen sonucu işler: ImageView'de göster + URI'yi sakla
+    private fun handleCroppedImage(croppedFileUri: Uri) {
+        val context = requireContext()
 
-            context.contentResolver.openInputStream(sourceUri)?.use { input ->
-                FileOutputStream(file).use { output ->
-                    input.copyTo(output)
-                }
-            } ?: return null
+        // UCrop bize file:// Uri döner; FileProvider ile content:// yapıp saklayalım
+        val file = File(croppedFileUri.path ?: return)
 
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        val contentUri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+
+        binding.ivEditProfilePhoto.load(contentUri) {
+            placeholder(R.drawable.ic_profile_placeholder)
+            error(R.drawable.ic_profile_placeholder)
+            crossfade(true)
         }
+
+        // Save butonuna basınca DataStore'a yazılacak olan URI
+        selectedPhotoUri = contentUri
     }
 
     private fun showInfoDialog(title: String, message: String) {
