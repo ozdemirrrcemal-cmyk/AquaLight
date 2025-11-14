@@ -26,22 +26,15 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // ❌ Artık burada edge-to-edge / fullscreen yok
         // Tema ve sistem bar renklerini tamamen theme.xml’den yöneteceğiz
     }
 
-    override fun setContentView(layoutResID: Int) {
-        super.setContentView(layoutResID)
-        ensureLoadingOverlay()
-    }
-
-    override fun setContentView(view: View) {
-        super.setContentView(view)
-        ensureLoadingOverlay()
-    }
-
-    override fun setContentView(view: View, params: ViewGroup.LayoutParams) {
-        super.setContentView(view, params)
+    /**
+     * setContentView her çağrıldığında Android otomatik olarak
+     * burayı tetikler. Böylece tüm override karmaşasından kurtuluyoruz.
+     */
+    override fun onContentChanged() {
+        super.onContentChanged()
         ensureLoadingOverlay()
     }
 
@@ -50,7 +43,7 @@ open class BaseActivity : AppCompatActivity() {
      */
     private fun ensureLoadingOverlay() {
         val rootView = findViewById<ViewGroup>(android.R.id.content)
-        if (loadingOverlay == null) {
+        if (loadingOverlay == null && rootView != null) {
             val overlay = LayoutInflater.from(this)
                 .inflate(R.layout.loading_overlay, rootView, false) as FrameLayout
             rootView.addView(overlay)
