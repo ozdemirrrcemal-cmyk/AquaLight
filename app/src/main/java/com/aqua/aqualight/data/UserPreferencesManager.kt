@@ -24,7 +24,6 @@ class UserPreferencesManager private constructor(
             }
         }
 
-        // 🔒 Tekil (singleton) DataStore oluşturucu
         private fun buildDataStore(context: Context): UserPreferencesManager {
             val delegate = UserPreferencesSerializer
             val encryptedSerializer = EncryptedUserPreferencesSerializer(context, delegate)
@@ -39,7 +38,6 @@ class UserPreferencesManager private constructor(
             return UserPreferencesManager(ds)
         }
 
-        // 🔄 Eski format varsa yeni formata taşı
         private fun migrateLegacyIfNeeded(
             context: Context,
             legacySerializer: androidx.datastore.core.Serializer<UserPreferences>,
@@ -50,7 +48,7 @@ class UserPreferencesManager private constructor(
                 try {
                     runBlocking {
                         val legacyData = legacySerializer.readFrom(legacyFile.inputStream())
-                        encryptedStore.updateData { _ -> legacyData }
+                        encryptedStore.updateData { legacyData }
                     }
                     legacyFile.delete()
                 } catch (e: Exception) {
@@ -60,7 +58,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Veri akışları
+    // 🔹 Flow'lar
     val userPrefsFlow: Flow<UserPreferences> = dataStore.data
         .catch { emit(UserPreferences.getDefaultInstance()) }
 
@@ -69,7 +67,7 @@ class UserPreferencesManager private constructor(
     val email: Flow<String> = userPrefsFlow.map { it.email }
     val username: Flow<String> = userPrefsFlow.map { it.username }
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
-    val fullName: Flow<String> = userPrefsFlow.map { it.fullName }   // 🔹 proto’daki fullName = 6
+    val fullName: Flow<String> = userPrefsFlow.map { it.fullName }   // 🆕
 
     // 🔹 Oturum kaydet
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
@@ -81,34 +79,38 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    /**
-     * 🔹 Profil bilgilerini kaydet
-     *
-     * - username: app içi kullanıcı adı (ileride kullanıcı seçecek)
-     * - fullName: gerçek ad soyad (Google / register’dan gelir)
-     * - null gelen alanları DEĞİŞTİRMİYORUZ, sadece dolu olanları update ediyoruz.
-     */
+    // 🔹 Profil bilgilerini kaydet (toplu)
     suspend fun saveProfile(
         email: String,
         username: String?,
-        fullName: String?,
-        photoUrl: String?
+        photoUrl: String?,
+        fullName: String? = null           // 🆕 opsiyonel
     ) {
         dataStore.updateData { prefs ->
-            val builder = prefs.toBuilder()
+            prefs.toBuilder()
                 .setEmail(email)
+                .setUsername(username ?: "")
+                .setProfilePhotoUrl(photoUrl ?: "")
+                .setFullName(fullName ?: prefs.fullName)  // varsa güncelle, yoksa eskiyi koru
+                .build()
+        }
+    }
 
-            if (username != null) {
-                builder.setUsername(username)
-            }
-            if (fullName != null) {
-                builder.setFullName(fullName)
-            }
-            if (photoUrl != null) {
-                builder.setProfilePhotoUrl(photoUrl)
-            }
+    // 🔹 Sadece profil foto'yu güncelle (EditProfile ekranında kullanmak için ideal)
+    suspend fun updateProfilePhoto(photoUrl: String) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setProfilePhotoUrl(photoUrl)
+                .build()
+        }
+    }
 
-            builder.build()
+    // 🔹 Sadece full name güncelle (ileride kullanmak için)
+    suspend fun updateFullName(fullName: String) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setFullName(fullName)
+                .build()
         }
     }
 
@@ -119,8 +121,8 @@ class UserPreferencesManager private constructor(
                 .clearIdToken()
                 .clearEmail()
                 .clearUsername()
-                .clearFullName()
                 .clearProfilePhotoUrl()
+                .clearFullName()
                 .setIsLoggedIn(false)
                 .build()
         }

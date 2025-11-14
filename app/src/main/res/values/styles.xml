@@ -97,5 +97,22 @@
         <item name="cardElevation">8dp</item>
         <item name="cardUseCompatPadding">true</item>
     </style>
+	
+	
+	<!-- 🔹 Edit profile başlık textAppearance -->
+<style name="TextAppearance.Aqua.EditProfileTitle" parent="TextAppearance.Material3.TitleLarge">
+    <item name="android:textColor">@android:color/white</item>
+    <item name="android:textStyle">bold</item>
+</style>
+
+<!-- 🔹 Primary (mavi) buton – eski inline görünüme uygun -->
+<style name="Widget.Aqua.PrimaryButton" parent="Widget.Material3.Button">
+    <item name="android:textColor">@android:color/white</item>
+    <item name="cornerRadius">12dp</item>
+    <item name="android:insetTop">0dp</item>
+    <item name="android:insetBottom">0dp</item>
+    <item name="android:paddingTop">12dp</item>
+    <item name="android:paddingBottom">12dp</item>
+</style>
 
 </resources>

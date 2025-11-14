@@ -173,6 +173,39 @@
     <!-- 8️⃣ Logout -->
     <string name="settings_logout">Log out</string>
     <string name="settings_logout_desc">Sign out of your account</string>
+	
+	<!-- Edit Profile -->
+<string name="edit_profile_title">Edit profile</string>
+<string name="edit_profile_back_button_desc">Go back to settings</string>
+<string name="edit_profile_photo_desc">Profile photo</string>
+<string name="edit_profile_camera_icon_desc">Change profile photo</string>
+
+<!-- Fotoğraf kaynağı seçimi -->
+<string name="edit_profile_choose_source_title">Select photo source</string>
+<string name="edit_profile_choose_gallery">Choose from gallery</string>
+<string name="edit_profile_choose_camera">Take a photo</string>
+
+<!-- İzin / hata mesajları -->
+<string name="edit_profile_permission_denied_title">Permission required</string>
+<string name="edit_profile_camera_permission_denied_message">
+    Camera permission is required to take a photo.
+</string>
+
+<string name="edit_profile_error_title">Error</string>
+<string name="edit_profile_temp_file_error">
+    Could not create temporary file for camera image.
+</string>
+<string name="edit_profile_save_photo_error">
+    Profile photo could not be saved.
+</string>
+
+<!-- Save button info -->
+<string name="edit_profile_save_button">Save changes</string>
+<string name="edit_profile_save_button_desc">Save profile changes</string>
+<string name="edit_profile_save_info_title">Profile</string>
+<string name="edit_profile_save_info_message">
+    Your profile photo has been updated.
+</string>
 
     <!-- Logout dialog -->
     <string name="settings_logout_confirm_message">Are you sure you want to log out?</string>
