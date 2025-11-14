@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
@@ -32,6 +31,9 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     // Kamera ile çekilecek fotoğraf için geçici URI
     private var cameraImageUri: Uri? = null
+
+    // Bu ekranda seçilmiş ama henüz kaydedilmemiş fotoğraf
+    private var selectedPhotoUri: Uri? = null
 
     // 📸 Kamera izni isteyici
     private val requestCameraPermission = registerForActivityResult(
@@ -70,7 +72,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         _binding = FragmentEditProfileBinding.bind(view)
 
         observeCurrentPhoto()
-        setupResultListener()   // ⬅️ bottom sheet sonuçlarını dinle
+        setupResultListener()
         setupClickListeners()
     }
 
@@ -78,6 +80,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private fun observeCurrentPhoto() {
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.userPrefsFlow.collectLatest { prefs ->
+                // Eğer kullanıcı bu ekranda yeni bir foto seçtiyse,
+                // DataStore akışı ile eski fotoyla üstüne yazma.
+                if (selectedPhotoUri != null) return@collectLatest
+
                 val url = prefs.profilePhotoUrl
                 if (url.isNotBlank()) {
                     binding.ivEditProfilePhoto.load(url) {
@@ -120,12 +126,30 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         ivEditProfilePhoto.setOnClickListener(openChooser)
         ivCameraIcon.setOnClickListener(openChooser)
 
-        // Şimdilik kaydet ekstra iş yapmıyor
+        // ✅ Kaydet: sadece seçilmiş fotoğrafı DataStore'a yaz ve geri dön
         btnSave.setOnClickListener {
-            showInfoDialog(
-                title = getString(R.string.edit_profile_save_info_title),
-                message = getString(R.string.edit_profile_save_info_message)
-            )
+            val uriToSave = selectedPhotoUri
+
+            // Hiç yeni foto seçilmemişse sadece geri dön veya istersen uyarı gösterebilirsin
+            if (uriToSave == null) {
+                findNavController().popBackStack()
+                return@setOnClickListener
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    userPrefs.updateProfilePhoto(uriToSave.toString())
+                    // Başarılıysa bir önceki ekrana dön
+                    findNavController().popBackStack()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    showInfoDialog(
+                        title = getString(R.string.edit_profile_error_title),
+                        message = e.localizedMessage
+                            ?: getString(R.string.edit_profile_save_photo_error)
+                    )
+                }
+            }
         }
     }
 
@@ -174,28 +198,17 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         }
     }
 
-    // ✅ Fotoğraf seçildiğinde: ekranda göster + DataStore'a kaydet
+    // ✅ Fotoğraf seçildiğinde: sadece ekranda göster + seçilen URI'yı değişkende tut
     private fun onPhotoSelected(uri: Uri) {
-        // Önce UI'da göster
+        // Önce ekranda göster
         binding.ivEditProfilePhoto.load(uri) {
             placeholder(R.drawable.ic_profile_placeholder)
             error(R.drawable.ic_profile_placeholder)
             crossfade(true)
         }
 
-        // Sonra DataStore'a yaz
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                userPrefs.updateProfilePhoto(uri.toString())
-            } catch (e: Exception) {
-                e.printStackTrace()
-                showInfoDialog(
-                    title = getString(R.string.edit_profile_error_title),
-                    message = e.localizedMessage
-                        ?: getString(R.string.edit_profile_save_photo_error)
-                )
-            }
-        }
+        // Henüz DataStore'a yazmıyoruz, sadece hafızada tutuyoruz
+        selectedPhotoUri = uri
     }
 
     private fun showInfoDialog(title: String, message: String) {

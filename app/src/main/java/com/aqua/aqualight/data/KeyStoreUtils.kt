@@ -1,9 +1,9 @@
 package com.aqua.aqualight.data
 
-import android.content.Context
 import androidx.security.crypto.EncryptedFile
 import androidx.security.crypto.MasterKey
 import java.io.File
+import java.io.IOException
 import java.security.SecureRandom
 
 /**
@@ -15,9 +15,11 @@ object KeyStoreUtils {
     private const val KEY_FILE_NAME = "data_key.bin"
     private const val KEY_SIZE = 32 // 256 bits
 
+    @Throws(IOException::class)
     fun getOrCreateDataKey(context: Context, masterKey: MasterKey): ByteArray {
         val keyFile = File(context.filesDir, KEY_FILE_NAME)
 
+        // Mevcut key'i okumayı dene
         if (keyFile.exists()) {
             try {
                 val encryptedFile = EncryptedFile.Builder(
@@ -26,17 +28,26 @@ object KeyStoreUtils {
                     masterKey,
                     EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
                 ).build()
+
                 encryptedFile.openFileInput().use { fis ->
                     val bytes = fis.readBytes()
-                    if (bytes.size == KEY_SIZE) return bytes
+                    if (bytes.size == KEY_SIZE) {
+                        return bytes
+                    } else {
+                        // yanlış boyut -> bozuk say, dosyayı sil ve yeniden oluştur
+                        keyFile.delete()
+                    }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                // Fallthrough to recreate
+                // okuma veya decrypt hatası: dosyayı sil ve aşağıda yeni key oluştur
+                keyFile.delete()
             }
         }
 
+        // Yeni key üret
         val newKey = ByteArray(KEY_SIZE).also { SecureRandom().nextBytes(it) }
+
+        // Yeni key'i güvenli şekilde persist et
         try {
             val encryptedFile = EncryptedFile.Builder(
                 context,
@@ -44,15 +55,17 @@ object KeyStoreUtils {
                 masterKey,
                 EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
             ).build()
+
             encryptedFile.openFileOutput().use { fos ->
                 fos.write(newKey)
                 fos.flush()
             }
-            return newKey
         } catch (e: Exception) {
-            e.printStackTrace()
-            // If persistence fails, return generated key (not persisted) — unlikely
-            return newKey
+            // Eğer persist edemiyorsak, app için bu ciddi bir durum:
+            // Key'i RAM'de kullanıp sonra kaybetmek yerine, hata fırlatıyoruz.
+            throw IOException("Failed to persist data encryption key", e)
         }
+
+        return newKey
     }
 }
