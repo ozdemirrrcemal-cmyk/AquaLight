@@ -36,8 +36,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun observeUserInfo() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             userPrefs.userPrefsFlow.collectLatest { prefs ->
-                val username = prefs.username.ifBlank { getString(R.string.settings_default_username) }
-                val email = prefs.email.ifBlank { getString(R.string.settings_default_email) }
+                val username =
+                    prefs.username.ifBlank { getString(R.string.settings_default_username) }
+                val email =
+                    prefs.email.ifBlank { getString(R.string.settings_default_email) }
 
                 binding.tvUsername.text = username
                 binding.tvEmail.text = email
@@ -52,33 +54,28 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 } else {
                     binding.ivProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder)
                 }
-
-                // Aktif cihaz sayısını ileride gerçek dataya bağlayabilirsin
-                // şimdilik string resource üzerinden gidiyor.
             }
         }
     }
 
     // 🔹 Satır click'lerini ayarla
     private fun setupClickListeners() = with(binding) {
-           // Profil foto tıklaması – ileride "foto değiştir" ekranına gidebilir
-            ivProfilePhoto.setOnClickListener {
-            // Profil fotoğrafına tıklayınca tam ekran EditProfileFragment aç
+
+        // Profil foto tıklaması – EditProfileFragment'e git
+        ivProfilePhoto.setOnClickListener {
             findNavController().navigate(R.id.editProfileFragment)
         }
 
         rowUserInfo.setOnClickListener {
             // TODO: Kullanıcı bilgilerinin düzenlendiği ekrana navigate et
-            // findNavController().navigate(R.id.action_settings_to_userInfo)
         }
 
         rowDeviceStatus.setOnClickListener {
-            // Zaten bottom nav'de Devices tab'in var, istersen direk oraya gidebilirsin:
-            // findNavController().navigate(R.id.devicesFragment)
+            // TODO: Cihaz listesi ekranı
         }
 
         rowNetwork.setOnClickListener {
-            // TODO: Network / WiFi ayarları ekranın olunca buraya bağla
+            // TODO: Network / WiFi ayarları ekranı
         }
 
         rowSettings.setOnClickListener {
@@ -114,14 +111,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             .show()
     }
 
-    // 🔹 Gerçek logout işlemi: DataStore temizle + auth ekranına dön
+    // 🔹 Gerçek logout işlemi: sadece oturumu kapat + auth ekranına dön
     private fun performLogout() {
         viewLifecycleOwner.lifecycleScope.launch {
-            // 1) DataStore'daki user bilgilerini temizle
-            userPrefs.clearUserData()
+            // 1) Oturumu kapat (idToken temizlenir, isLoggedIn = false olur)
+            userPrefs.logout()
 
             // 2) Root nav graph'te authContainerFragment'e dön
-            //    nav_app backstack'ini temizle ki back ile app'e dönemesin
             val navController = findNavController()
             navController.navigate(
                 R.id.authContainerFragment,

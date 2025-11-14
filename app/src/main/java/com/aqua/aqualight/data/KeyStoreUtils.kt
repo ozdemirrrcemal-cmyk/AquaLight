@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data
 
+import android.content.Context        // 👈 BUNU EKLE
 import androidx.security.crypto.EncryptedFile
 import androidx.security.crypto.MasterKey
 import java.io.File
