@@ -23,138 +23,143 @@ import kotlinx.coroutines.launch
 
 class SignInFragment : Fragment() {
 
-    private var _binding: FragmentSigninBinding? = null
-    private val binding get() = _binding!!
+private var _binding: FragmentSigninBinding? = null  
+private val binding get() = _binding!!  
 
-    private val auth = Firebase.auth
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
-    private val baseActivity get() = activity as? BaseActivity
+private val auth = Firebase.auth  
+private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }  
+private val baseActivity get() = activity as? BaseActivity  
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentSigninBinding.inflate(inflater, container, false)
-        setupUI()
-        return binding.root
-    }
+override fun onCreateView(  
+    inflater: LayoutInflater,  
+    container: ViewGroup?,  
+    savedInstanceState: Bundle?  
+): View {  
+    _binding = FragmentSigninBinding.inflate(inflater, container, false)  
+    setupUI()  
+    return binding.root  
+}  
 
-    private fun setupUI() = with(binding) {
-        btnLogin.setOnClickListener { handleSignIn() }
-        tvForgotPassword.setOnClickListener {
-            findNavController().navigate(R.id.action_signInFragment_to_resetPasswordFragment)
-        }
-        btnBack.setOnClickListener { findNavController().popBackStack() }
-    }
+private fun setupUI() = with(binding) {  
+    btnLogin.setOnClickListener { handleSignIn() }  
+    tvForgotPassword.setOnClickListener {  
+        findNavController().navigate(R.id.action_signInFragment_to_resetPasswordFragment)  
+    }  
+    btnBack.setOnClickListener { findNavController().popBackStack() }  
+}  
 
-    private fun handleSignIn() {
-        val email = binding.emailEditText.text?.toString()?.trim().orEmpty()
-        val password = binding.passwordEditText.text?.toString()?.trim().orEmpty()
+private fun handleSignIn() {  
+    val email = binding.emailEditText.text?.toString()?.trim().orEmpty()  
+    val password = binding.passwordEditText.text?.toString()?.trim().orEmpty()  
 
-        baseActivity?.showLoading(true)
+    baseActivity?.showLoading(true)  
 
-        lifecycleScope.launch {
-            if (email.isEmpty() || password.isEmpty()) {
-                baseActivity?.showLoading(false)
-                showWarning(R.string.signin_empty_fields_title, R.string.signin_empty_fields_message)
-                return@launch
-            }
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                baseActivity?.showLoading(false)
-                showWarning(R.string.invalid_email_title, R.string.invalid_email)
-                return@launch
-            }
-            if (password.length < 6) {
-                baseActivity?.showLoading(false)
-                showWarning(R.string.invalid_password_title, R.string.invalid_password)
-                return@launch
-            }
+    lifecycleScope.launch {  
+        if (email.isEmpty() || password.isEmpty()) {  
+            baseActivity?.showLoading(false)  
+            showWarning(R.string.signin_empty_fields_title, R.string.signin_empty_fields_message)  
+            return@launch  
+        }  
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {  
+            baseActivity?.showLoading(false)  
+            showWarning(R.string.invalid_email_title, R.string.invalid_email)  
+            return@launch  
+        }  
+        if (password.length < 6) {  
+            baseActivity?.showLoading(false)  
+            showWarning(R.string.invalid_password_title, R.string.invalid_password)  
+            return@launch  
+        }  
 
-            binding.btnLogin.isEnabled = false
-            binding.btnLogin.text = getString(R.string.signin_loading)
+        binding.btnLogin.isEnabled = false  
+        binding.btnLogin.text = getString(R.string.signin_loading)  
 
-            auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(requireActivity()) { task ->
-                    baseActivity?.showLoading(false)
-                    binding.btnLogin.isEnabled = true
-                    binding.btnLogin.text = getString(R.string.signin_login_button)
+        auth.signInWithEmailAndPassword(email, password)  
+            .addOnCompleteListener(requireActivity()) { task ->  
+                baseActivity?.showLoading(false)  
+                binding.btnLogin.isEnabled = true  
+                binding.btnLogin.text = getString(R.string.signin_login_button)  
 
-                    if (task.isSuccessful) {
-                        val user = task.result?.user
-                        if (user != null) {
-                            lifecycleScope.launch {
-                                try {
-                                    saveSession(user)
-                                    DialogManager.showInfoDialog(
-                                        requireContext(),
-                                        DialogType.SUCCESS,
-                                        title = getString(R.string.login_success_title),
-                                        message = getString(R.string.login_success_message),
-                                        onDismiss = { navigateToAppGraph() }
-                                    )
-                                } catch (e: Exception) {
-                                    DialogManager.showInfoDialog(
-                                        requireContext(),
-                                        DialogType.ERROR,
-                                        title = getString(R.string.session_save_error_title),
-                                        message = e.localizedMessage
-                                            ?: getString(R.string.session_save_error_fallback)
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        val errorMsg = task.exception?.localizedMessage
-                            ?: getString(R.string.signin_failed_default)
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.ERROR,
-                            title = getString(R.string.signin_failed_title),
-                            message = errorMsg
-                        )
-                    }
-                }
-        }
-    }
+                if (task.isSuccessful) {  
+                    val user = task.result?.user  
+                    if (user != null) {  
+                        lifecycleScope.launch {  
+                            try {  
+                                saveSession(user)  
+                                DialogManager.showInfoDialog(  
+                                    requireContext(),  
+                                    DialogType.SUCCESS,  
+                                    title = getString(R.string.login_success_title),  
+                                    message = getString(R.string.login_success_message),  
+                                    onDismiss = { navigateToAppGraph() }  
+                                )  
+                            } catch (e: Exception) {  
+                                DialogManager.showInfoDialog(  
+                                    requireContext(),  
+                                    DialogType.ERROR,  
+                                    title = getString(R.string.session_save_error_title),  
+                                    message = e.localizedMessage  
+                                        ?: getString(R.string.session_save_error_fallback)  
+                                )  
+                            }  
+                        }  
+                    }  
+                } else {  
+                    val errorMsg = task.exception?.localizedMessage  
+                        ?: getString(R.string.signin_failed_default)  
+                    DialogManager.showInfoDialog(  
+                        requireContext(),  
+                        DialogType.ERROR,  
+                        title = getString(R.string.signin_failed_title),  
+                        message = errorMsg  
+                    )  
+                }  
+            }  
+    }  
+}  
 
-    private fun showWarning(titleRes: Int, msgRes: Int) {
-        DialogManager.showInfoDialog(
-            requireContext(),
-            DialogType.WARNING,
-            title = getString(titleRes),
-            message = getString(msgRes)
-        )
-    }
+private fun showWarning(titleRes: Int, msgRes: Int) {  
+    DialogManager.showInfoDialog(  
+        requireContext(),  
+        DialogType.WARNING,  
+        title = getString(titleRes),  
+        message = getString(msgRes)  
+    )  
+}  
 
-    private suspend fun saveSession(user: FirebaseUser) {
-        // 🔐 Oturum bilgisi
-        userPrefs.saveUserSession(
-            idToken = user.uid,
-            isLoggedIn = true
-        )
+private suspend fun saveSession(user: FirebaseUser) {  
+    // 🔐 Oturum bilgisini kaydet  
+    userPrefs.saveUserSession(  
+        idToken = user.uid,  
+        isLoggedIn = true  
+    )  
 
-        // 🔹 Bu ekranda SADECE email güncelliyoruz.
-        // Diğer profil alanlarına (foto, username, fullName) DOKUNMUYORUZ.
-        userPrefs.saveProfile(
-            email = user.email ?: ""
-        )
-    }
+    // 🧾 Profil bilgisi:  
+    // E-mail login ekranında username/fullName almıyoruz.  
+    // Sadece email'i güncelliyoruz, diğer alanlara DOKUNMUYORUZ (null gönderiyoruz).  
+    userPrefs.saveProfile(  
+        email = user.email ?: "",  
+        username = null,   // username aynen kalsın  
+        fullName = null,   // fullName aynen kalsın  
+        photoUrl = null    // photoUrl aynen kalsın  
+    )  
+}  
 
-    // 🔁 Activity açmak yerine kök nav graph'ta nav_app'e geç
-    private fun navigateToAppGraph() {
-        val rootNav = (requireActivity().supportFragmentManager
-            .findFragmentById(R.id.nav_host) as NavHostFragment).navController
+// 🔁 Activity açmak yerine kök nav graph'ta nav_app'e geç  
+private fun navigateToAppGraph() {  
+    val rootNav = (requireActivity().supportFragmentManager  
+        .findFragmentById(R.id.nav_host) as NavHostFragment).navController  
 
-        val opts = navOptions {
-            popUpTo(R.id.authContainerFragment) { inclusive = true } // auth stack'i temizle
-            launchSingleTop = true
-        }
-        rootNav.navigate(R.id.nav_app, null, opts)
-    }
+    val opts = navOptions {  
+        popUpTo(R.id.authContainerFragment) { inclusive = true } // auth stack'i temizle  
+        launchSingleTop = true  
+    }  
+    rootNav.navigate(R.id.nav_app, null, opts)  
+}  
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+override fun onDestroyView() {  
+    super.onDestroyView()  
+    _binding = null  
+}
+
 }

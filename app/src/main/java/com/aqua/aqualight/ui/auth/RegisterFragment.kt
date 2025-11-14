@@ -23,134 +23,139 @@ import kotlinx.coroutines.launch
 
 class RegisterFragment : Fragment() {
 
-    private var _binding: FragmentRegisterBinding? = null
-    private val binding get() = _binding!!
+private var _binding: FragmentRegisterBinding? = null  
+private val binding get() = _binding!!  
 
-    private val auth = Firebase.auth
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
-    private val baseActivity get() = activity as? BaseActivity
+private val auth = Firebase.auth  
+private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }  
+private val baseActivity get() = activity as? BaseActivity  
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentRegisterBinding.inflate(inflater, container, false)
-        setupUI()
-        return binding.root
-    }
+override fun onCreateView(  
+    inflater: LayoutInflater,  
+    container: ViewGroup?,  
+    savedInstanceState: Bundle?  
+): View {  
+    _binding = FragmentRegisterBinding.inflate(inflater, container, false)  
+    setupUI()  
+    return binding.root  
+}  
 
-    private fun setupUI() = with(binding) {
-        btnRegister.setOnClickListener { handleRegister() }
-        btnBack.setOnClickListener { findNavController().popBackStack() }
-    }
+private fun setupUI() = with(binding) {  
+    btnRegister.setOnClickListener { handleRegister() }  
+    btnBack.setOnClickListener { findNavController().popBackStack() }  
+}  
 
-    private fun handleRegister() {
-        val email = binding.emailEditText.text?.toString()?.trim().orEmpty()
-        val password = binding.passwordEditText.text?.toString()?.trim().orEmpty()
-        val repeatPassword = binding.etPasswordRepeat.text?.toString()?.trim().orEmpty()
+private fun handleRegister() {  
+    val email = binding.emailEditText.text?.toString()?.trim().orEmpty()  
+    val password = binding.passwordEditText.text?.toString()?.trim().orEmpty()  
+    val repeatPassword = binding.etPasswordRepeat.text?.toString()?.trim().orEmpty()  
 
-        baseActivity?.showLoading(true)
+    baseActivity?.showLoading(true)  
 
-        lifecycleScope.launch {
-            val warning = when {
-                email.isEmpty() || password.isEmpty() || repeatPassword.isEmpty() ->
-                    R.string.register_empty_fields_message to R.string.register_empty_fields_title
-                !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
-                    R.string.invalid_email to R.string.invalid_email_title
-                password.length < 6 ->
-                    R.string.invalid_password to R.string.invalid_password_title
-                password != repeatPassword ->
-                    R.string.passwords_do_not_match to R.string.passwords_do_not_match_title
-                else -> null
-            }
+    lifecycleScope.launch {  
+        val warning = when {  
+            email.isEmpty() || password.isEmpty() || repeatPassword.isEmpty() ->  
+                R.string.register_empty_fields_message to R.string.register_empty_fields_title  
+            !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->  
+                R.string.invalid_email to R.string.invalid_email_title  
+            password.length < 6 ->  
+                R.string.invalid_password to R.string.invalid_password_title  
+            password != repeatPassword ->  
+                R.string.passwords_do_not_match to R.string.passwords_do_not_match_title  
+            else -> null  
+        }  
 
-            if (warning != null) {
-                baseActivity?.showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(warning.second),
-                    message = getString(warning.first)
-                )
-                return@launch
-            }
+        if (warning != null) {  
+            baseActivity?.showLoading(false)  
+            DialogManager.showInfoDialog(  
+                requireContext(),  
+                DialogType.WARNING,  
+                title = getString(warning.second),  
+                message = getString(warning.first)  
+            )  
+            return@launch  
+        }  
 
-            binding.btnRegister.isEnabled = false
-            binding.btnRegister.text = getString(R.string.register_loading)
+        binding.btnRegister.isEnabled = false  
+        binding.btnRegister.text = getString(R.string.register_loading)  
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(requireActivity()) { task ->
-                    baseActivity?.showLoading(false)
-                    binding.btnRegister.isEnabled = true
-                    binding.btnRegister.text = getString(R.string.register_button)
+        auth.createUserWithEmailAndPassword(email, password)  
+            .addOnCompleteListener(requireActivity()) { task ->  
+                baseActivity?.showLoading(false)  
+                binding.btnRegister.isEnabled = true  
+                binding.btnRegister.text = getString(R.string.register_button)  
 
-                    if (task.isSuccessful) {
-                        val user = task.result?.user
-                        if (user != null) {
-                            lifecycleScope.launch {
-                                try {
-                                    saveSession(user)
-                                    DialogManager.showInfoDialog(
-                                        requireContext(),
-                                        DialogType.SUCCESS,
-                                        title = getString(R.string.register_success_title),
-                                        message = getString(R.string.register_success_message),
-                                        onDismiss = { navigateToAppGraph() }
-                                    )
-                                } catch (e: Exception) {
-                                    DialogManager.showInfoDialog(
-                                        requireContext(),
-                                        DialogType.ERROR,
-                                        title = getString(R.string.session_save_error_title),
-                                        message = e.localizedMessage
-                                            ?: getString(R.string.register_failed_message)
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        val errorMsg = task.exception?.localizedMessage
-                            ?: getString(R.string.register_failed_message)
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.ERROR,
-                            title = getString(R.string.register_failed_title),
-                            message = errorMsg
-                        )
-                    }
-                }
-        }
-    }
+                if (task.isSuccessful) {  
+                    val user = task.result?.user  
+                    if (user != null) {  
+                        lifecycleScope.launch {  
+                            try {  
+                                saveSession(user)  
+                                DialogManager.showInfoDialog(  
+                                    requireContext(),  
+                                    DialogType.SUCCESS,  
+                                    title = getString(R.string.register_success_title),  
+                                    message = getString(R.string.register_success_message),  
+                                    onDismiss = { navigateToAppGraph() }  
+                                )  
+                            } catch (e: Exception) {  
+                                DialogManager.showInfoDialog(  
+                                    requireContext(),  
+                                    DialogType.ERROR,  
+                                    title = getString(R.string.session_save_error_title),  
+                                    message = e.localizedMessage  
+                                        ?: getString(R.string.register_failed_message)  
+                                )  
+                            }  
+                        }  
+                    }  
+                } else {  
+                    val errorMsg = task.exception?.localizedMessage  
+                        ?: getString(R.string.register_failed_message)  
+                    DialogManager.showInfoDialog(  
+                        requireContext(),  
+                        DialogType.ERROR,  
+                        title = getString(R.string.register_failed_title),  
+                        message = errorMsg  
+                    )  
+                }  
+            }  
+    }  
+}  
 
-    private suspend fun saveSession(user: FirebaseUser) {
-    // 🔐 Oturum bilgisi
-    userPrefs.saveUserSession(
-        idToken = user.uid,
-        isLoggedIn = true
-    )
+private suspend fun saveSession(user: FirebaseUser) {  
+    // 🔐 Oturum bilgisi  
+    userPrefs.saveUserSession(  
+        idToken = user.uid,  
+        isLoggedIn = true  
+    )  
 
-    // 🧾 Profil bilgisi – bu ekranda sadece E-MAIL’i güncelliyoruz
-    userPrefs.saveProfile(
-    email = user.email ?: "",
-    photoUrl = user.photoUrl?.toString()
-    )
-  }
+    // 🧾 Profil bilgisi  
+    // Bu ekranda username / fullName ALMIYORUZ → ikisini de şimdilik boş bırakıyoruz.  
+    // İleride profil / ayarlar ekranında kullanıcı username & fullName girebilir.  
+    userPrefs.saveProfile(  
+        email = user.email ?: "",  
+        username = null,          // username: ileride uygulama içinde tanımlanacak  
+        fullName = null,          // full name: şu an bu ekranda sorulmuyor  
+        photoUrl = user.photoUrl?.toString()  
+    )  
+}  
 
-    // 🔁 Activity açmak yerine kök nav graph'ta nav_app'e geç
-    private fun navigateToAppGraph() {
-        val rootNav = (requireActivity().supportFragmentManager
-            .findFragmentById(R.id.nav_host) as NavHostFragment).navController
+// 🔁 Activity açmak yerine kök nav graph'ta nav_app'e geç  
+private fun navigateToAppGraph() {  
+    val rootNav = (requireActivity().supportFragmentManager  
+        .findFragmentById(R.id.nav_host) as NavHostFragment).navController  
 
-        val opts = navOptions {
-            popUpTo(R.id.authContainerFragment) { inclusive = true } // auth stack'i temizle
-            launchSingleTop = true
-        }
-        rootNav.navigate(R.id.nav_app, null, opts)
-    }
+    val opts = navOptions {  
+        popUpTo(R.id.authContainerFragment) { inclusive = true } // auth stack'i temizle  
+        launchSingleTop = true  
+    }  
+    rootNav.navigate(R.id.nav_app, null, opts)  
+}  
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+override fun onDestroyView() {  
+    super.onDestroyView()  
+    _binding = null  
+}
+
 }
