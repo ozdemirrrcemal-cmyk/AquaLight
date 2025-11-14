@@ -61,10 +61,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     // 🔹 Satır click'lerini ayarla
     private fun setupClickListeners() = with(binding) {
-
-        // Profil foto tıklaması – ileride "foto değiştir" ekranına gidebilir
-        ivProfilePhoto.setOnClickListener {
-            // TODO: Profil fotoğrafı değiştirme ekranı / bottom sheet
+           // Profil foto tıklaması – ileride "foto değiştir" ekranına gidebilir
+            ivProfilePhoto.setOnClickListener {
+            // Profil fotoğrafına tıklayınca tam ekran EditProfileFragment aç
+            findNavController().navigate(R.id.editProfileFragment)
         }
 
         rowUserInfo.setOnClickListener {

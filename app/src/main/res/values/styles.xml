@@ -89,4 +89,12 @@
     <item name="android:color">@android:color/transparent</item>
 </style>
 
+<!-- Settings ekranındaki tüm kartlar için ortak stil -->
+<style name="Widget.Aqua.CardStyles" parent="Widget.Material3.MaterialCardView">
+    <item name="cardBackgroundColor">@color/settings_card_background</item>
+    <item name="cardCornerRadius">16dp</item>
+    <item name="cardElevation">8dp</item>
+    <item name="cardUseCompatPadding">true</item>
+</style>
+
 </resources>
