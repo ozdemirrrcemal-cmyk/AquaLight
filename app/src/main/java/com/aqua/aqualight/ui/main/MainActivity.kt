@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.main
 import android.os.Bundle
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
@@ -24,12 +23,12 @@ class MainActivity : BaseActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Daha önce oluşturulmuş bir NavHost var mı? (tema değişimi vb.)
+        // Tema değişimi vb. durumlarda daha önce oluşturulmuş NavHost var mı?
         val existingHost =
             supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment?
 
         if (existingHost == null) {
-            // 🔹 Uygulama ilk açılış (Splash'tan gelinen an)
+            // 🔹 Uygulama ilk açılış (Splash'tan sonrası)
             binding.navHost.isVisible = false
             binding.bottomNav.isVisible = false
 
@@ -38,70 +37,55 @@ class MainActivity : BaseActivity() {
                     val prefs = userPrefs.userPrefsFlow.first()
                     prefs.isLoggedIn && prefs.idToken.isNotEmpty()
                 } catch (_: Exception) {
-                    false // prefs okunamazsa login ekranı
+                    false // prefs okunamazsa login'e gönder
                 }
 
-                // 1) Boş bir NavHostFragment oluştur
-                val navHost = NavHostFragment()
+                // 1) NavHostFragment'i oluştur ve container'a ekle
+                val navHost = NavHostFragment.create(R.navigation.nav_root)
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.nav_host, navHost)
                     .setPrimaryNavigationFragment(navHost) // defaultNavHost = true
                     .commitNow()
 
-                // 2) Graph'i login durumuna göre hazırla
                 val navController = navHost.navController
-                val graph = navController.navInflater.inflate(R.navigation.nav_root).apply {
-                    setStartDestination(
-                        if (loggedIn) R.id.nav_app
-                        else R.id.authContainerFragment
-                    )
-                }
-                navController.graph = graph
 
-                // 3) Bottom bar'ı bağla
-                setupBottomBar(navController)
-
-                // 4) İlk destination'a göre bottom bar görünürlüğü
-                navController.currentDestination?.let { dest ->
-                    binding.bottomNav.isVisible = isInAppDest(dest.id)
+                // 2) Login olmuşsa startDestination'ı nav_app'e çek
+                if (loggedIn) {
+                    val graph = navController.navInflater.inflate(R.navigation.nav_root).apply {
+                        setStartDestination(R.id.nav_app)
+                    }
+                    navController.graph = graph
                 }
 
-                // 5) Artık her şey hazır, kullanıcıya göster
+                // 3) Bottom bar ↔ nav bağla
+                binding.bottomNav.setupWithNavController(navController)
+
+                // 4) Login ise alt barı göster, değilse gizli kalsın
+                binding.bottomNav.isVisible = loggedIn
+
+                // 5) Artık her şey hazır, host'u göster
                 binding.navHost.isVisible = true
             }
         } else {
             // 🔹 Tema değişimi / rotate sonrası:
-            // NavHostFragment ve graph zaten restore edildi, sadece yeniden bağlan
+            // NavHost + graph zaten restore edildi, sadece tekrar bağlan
             val navController = existingHost.navController
 
-            setupBottomBar(navController)
+            // Bottom bar ↔ nav bağla (selection vs. için)
+            binding.bottomNav.setupWithNavController(navController)
 
-            navController.currentDestination?.let { dest ->
-                binding.bottomNav.isVisible = isInAppDest(dest.id)
+            // Login durumuna göre alt bar görünürlüğünü tekrar ayarla
+            lifecycleScope.launch {
+                val loggedIn = try {
+                    val prefs = userPrefs.userPrefsFlow.first()
+                    prefs.isLoggedIn && prefs.idToken.isNotEmpty()
+                } catch (_: Exception) {
+                    false
+                }
+                binding.bottomNav.isVisible = loggedIn
             }
 
             binding.navHost.isVisible = true
-        }
-    }
-
-    // App içi tab ekranlarını temsil eden id'ler
-    private fun isInAppDest(destinationId: Int): Boolean {
-        return when (destinationId) {
-            R.id.nav_app,              // nested graph
-            R.id.aquariumFragment,
-            R.id.devicesFragment,
-            R.id.settingsFragment -> true
-            else -> false
-        }
-    }
-
-    private fun setupBottomBar(navController: NavController) {
-        // Bottom bar ↔ nav bağla
-        binding.bottomNav.setupWithNavController(navController)
-
-        // Destination değişince alt bar görünürlüğünü güncelle
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.bottomNav.isVisible = isInAppDest(destination.id)
         }
     }
 }
