@@ -24,6 +24,11 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 
+// CanHub Image Cropper importları
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     private var _binding: FragmentEditProfileBinding? = null
@@ -56,6 +61,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && cameraImageUri != null) {
+            // Kamera’dan gelen resmi kırpmaya gönder
             onPhotoSelected(cameraImageUri!!)
         }
     }
@@ -65,7 +71,41 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
+            // Galeri’den gelen resmi kırpmaya gönder
             onPhotoSelected(uri)
+        }
+    }
+
+    // ✂️ Crop sonucu için launcher
+    private val cropImageLauncher = registerForActivityResult(
+        CropImageContract()
+    ) { result ->
+        if (result.isSuccessful) {
+            val croppedUri = result.uriContent ?: return@registerForActivityResult
+
+            // Kırpılmış resmi kendi klasörümüze kopyala
+            val finalUri = copyImageToAppStorage(croppedUri) ?: run {
+                showInfoDialog(
+                    title = getString(R.string.edit_profile_error_title),
+                    message = getString(R.string.edit_profile_save_photo_error)
+                )
+                return@registerForActivityResult
+            }
+
+            // UI'da göster
+            binding.ivEditProfilePhoto.load(finalUri) {
+                placeholder(R.drawable.ic_profile_placeholder)
+                error(R.drawable.ic_profile_placeholder)
+                crossfade(true)
+            }
+
+            // Henüz DataStore'a yazmayacağız, Save tuşunda yazacağız
+            selectedPhotoUri = finalUri
+
+        } else {
+            // Kullanıcı iptal etmiş olabilir, hata da olabilir
+            val error = result.error
+            error?.printStackTrace()
         }
     }
 
@@ -130,7 +170,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             val uriToSave = selectedPhotoUri
 
             if (uriToSave == null) {
-                // İstersen burada "Değişiklik yok" uyarısı gösterebilirsin
+                // Değişiklik yoksa direkt geri dön
                 findNavController().popBackStack()
                 return@setOnClickListener
             }
@@ -202,29 +242,28 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         }
     }
 
-    // ✅ Fotoğraf seçildiğinde: önce kendi klasörümüze kopyala, sonra ekranda göster
+    // 🔁 Foto seçildiğinde ilk adım: crop ekranını başlat
     private fun onPhotoSelected(sourceUri: Uri) {
-        val finalUri = copyImageToAppStorage(sourceUri) ?: run {
-            showInfoDialog(
-                title = getString(R.string.edit_profile_error_title),
-                message = getString(R.string.edit_profile_save_photo_error)
-            )
-            return
+        val options = CropImageOptions().apply {
+            // 1:1 kare oran (istersen değiştir)
+            aspectRatioX = 1
+            aspectRatioY = 1
+            fixAspectRatio = true
+
+            // Dairesel görünüm (ekran görüntüsündeki gibi)
+            circleCrop = true
         }
 
-        // Ekranda göster
-        binding.ivEditProfilePhoto.load(finalUri) {
-            placeholder(R.drawable.ic_profile_placeholder)
-            error(R.drawable.ic_profile_placeholder)
-            crossfade(true)
-        }
+        val contractOptions = CropImageContractOptions(
+            uri = sourceUri,
+            cropImageOptions = options
+        )
 
-        // Henüz DataStore'a yazmıyoruz, sadece hafızada tutuyoruz
-        selectedPhotoUri = finalUri
+        cropImageLauncher.launch(contractOptions)
     }
 
     /**
-     * Seçilen resmi (kamera veya galeri) app'in kendi
+     * Kırpılmış resmi app'in kendi
      * filesDir/profile_photos klasörüne kopyalar
      * ve FileProvider URI'si döner.
      */
@@ -247,7 +286,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            return null
+            null
         }
     }
 
