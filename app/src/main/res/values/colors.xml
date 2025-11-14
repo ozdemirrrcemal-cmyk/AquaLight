@@ -83,9 +83,6 @@
     <color name="md_theme_dark_error">#B3261E</color>
     <color name="md_theme_dark_onError">#FFFFFF</color>
 
-    <!-- 🪟 Yarı saydam yüzey -->
-    <color name="colorSurfaceTransparent">#CC0A192F</color>
-
     <!-- 🌙 Dialog Icon Colors (Dark Mode tonları) -->
     <color name="dialog_icon_success">#81C784</color>
     <color name="dialog_icon_warning">#FFD54F</color>
