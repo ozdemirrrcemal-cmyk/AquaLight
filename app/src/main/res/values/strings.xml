@@ -163,11 +163,11 @@
     <string name="settings_usage_desc">View app usage statistics</string>
 
     <!-- 6️⃣ Privacy -->
-    <string name="settings_privacy">Privacy & terms</string>
+    <string name="settings_privacy">Privacy &amp; terms</string>
     <string name="settings_privacy_desc">View privacy policy and terms of use</string>
 
     <!-- 7️⃣ Feedback / Support -->
-    <string name="settings_feedback">Feedback & support</string>
+    <string name="settings_feedback">Feedback &amp; support</string>
     <string name="settings_feedback_desc">Send feedback or get support</string>
 
     <!-- 8️⃣ Logout -->
