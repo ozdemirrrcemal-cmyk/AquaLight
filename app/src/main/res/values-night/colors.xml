@@ -48,6 +48,7 @@
     <!-- ⬇️ Bottom Navigation -->
     <color name="bottom_nav_background">#112240</color>
     <color name="bottom_nav_item_active">#FFFFFF</color>
-    <color name="bottom_nav_item_inactive">#80E0E6ED</color>
+    <color name="bottom_nav_item_inactive">#A0A0A0</color>
+	<color name="bottom_nav_active_indicator">#1E304D</color> <!-- gece için biraz daha koyu -->
 
 </resources>
