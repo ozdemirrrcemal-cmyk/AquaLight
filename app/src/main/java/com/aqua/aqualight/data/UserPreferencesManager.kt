@@ -78,25 +78,20 @@ class UserPreferencesManager private constructor(
     // email ve fullName login ekranından,
     // username ve photoUrl uygulama içi ekranlardan gelebilir
     suspend fun saveProfile(
-    email: String,
-    username: String?,
-    fullName: String?,
-    photoUrl: String?
-) {
-    dataStore.updateData { prefs ->
-        val builder = prefs.toBuilder()
-            .setEmail(email)
-            .setUsername(username.orEmpty())
-            .setFullName(fullName.orEmpty())
-
-        // 👇 Sadece gerçekten foto geldiyse değiştir
-        if (!photoUrl.isNullOrBlank()) {
-            builder.setProfilePhotoUrl(photoUrl)
+        email: String,
+        username: String?,
+        fullName: String?,
+        photoUrl: String?
+    ) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setEmail(email)
+                .setUsername(username.orEmpty())
+                .setFullName(fullName.orEmpty())           // 👈 fullName kaydı
+                .setProfilePhotoUrl(photoUrl.orEmpty())
+                .build()
         }
-
-        builder.build()
     }
-}
 
     // 🔹 Sadece profil fotoğrafını güncelle (EditProfileFragment burayı kullanıyor)
     suspend fun updateProfilePhoto(photoUrl: String) {

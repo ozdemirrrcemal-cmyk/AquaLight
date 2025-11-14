@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
@@ -19,9 +20,9 @@ import com.aqua.aqualight.databinding.FragmentEditProfileBinding
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
-import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileOutputStream
 
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
@@ -33,7 +34,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     // Kamera ile çekilecek fotoğraf için geçici URI
     private var cameraImageUri: Uri? = null
 
-    // Bu ekranda seçilmiş ama henüz kaydedilmemiş fotoğraf
+    // Bu ekranda seçilmiş ama henüz kaydedilmemiş foto
     private var selectedPhotoUri: Uri? = null
 
     // 📸 Kamera izni isteyici
@@ -81,8 +82,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private fun observeCurrentPhoto() {
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.userPrefsFlow.collectLatest { prefs ->
-                // Eğer kullanıcı bu ekranda yeni bir foto seçtiyse,
-                // DataStore akışı ile eski fotoyla üstüne yazma.
+                // Ekranda yeni bir foto seçtiysek, eski veriye göre görüntüyü değiştirme
                 if (selectedPhotoUri != null) return@collectLatest
 
                 val url = prefs.profilePhotoUrl
@@ -114,12 +114,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     private fun setupClickListeners() = with(binding) {
 
-        // Geri butonu
         btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
-        // Profil fotoğrafı veya kamera ikonuna tıklayınca bottom sheet aç
         val openChooser: (View) -> Unit = {
             PhotoSourceBottomSheet.newInstance()
                 .show(parentFragmentManager, PhotoSourceBottomSheet.TAG)
@@ -127,12 +125,12 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         ivEditProfilePhoto.setOnClickListener(openChooser)
         ivCameraIcon.setOnClickListener(openChooser)
 
-        // ✅ Kaydet: sadece seçilmiş fotoğrafı DataStore'a yaz ve geri dön
+        // 💾 Kaydet: sadece seçilmiş fotoğrafı DataStore'a yaz ve geri dön
         btnSave.setOnClickListener {
             val uriToSave = selectedPhotoUri
 
-            // Hiç yeni foto seçilmemişse sadece geri dön veya istersen uyarı gösterebilirsin
             if (uriToSave == null) {
+                // İstersen burada "Değişiklik yok" uyarısı gösterebilirsin
                 findNavController().popBackStack()
                 return@setOnClickListener
             }
@@ -140,7 +138,6 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     userPrefs.updateProfilePhoto(uriToSave.toString())
-                    // Başarılıysa bir önceki ekrana dön
                     findNavController().popBackStack()
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -181,7 +178,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         takePictureLauncher.launch(uri)
     }
 
-    // 📂 FileProvider ile cache altında geçici dosya oluştur
+    // 📂 FileProvider ile cache altında geçici dosya oluştur (kamera için)
     private fun createImageUri(): Uri? {
         return try {
             val cacheDir = File(requireContext().cacheDir, "images").apply {
@@ -199,17 +196,54 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         }
     }
 
-    // ✅ Fotoğraf seçildiğinde: sadece ekranda göster + seçilen URI'yı değişkende tut
-    private fun onPhotoSelected(uri: Uri) {
-        // Önce ekranda göster
-        binding.ivEditProfilePhoto.load(uri) {
+    // ✅ Fotoğraf seçildiğinde: önce kendi klasörümüze kopyala, sonra ekranda göster
+    private fun onPhotoSelected(sourceUri: Uri) {
+        val finalUri = copyImageToAppStorage(sourceUri) ?: run {
+            showInfoDialog(
+                title = getString(R.string.edit_profile_error_title),
+                message = getString(R.string.edit_profile_save_photo_error)
+            )
+            return
+        }
+
+        // Ekranda göster
+        binding.ivEditProfilePhoto.load(finalUri) {
             placeholder(R.drawable.ic_profile_placeholder)
             error(R.drawable.ic_profile_placeholder)
             crossfade(true)
         }
 
         // Henüz DataStore'a yazmıyoruz, sadece hafızada tutuyoruz
-        selectedPhotoUri = uri
+        selectedPhotoUri = finalUri
+    }
+
+    /**
+     * Seçilen resmi (kamera veya galeri) app'in kendi cache klasörüne kopyalar
+     * ve FileProvider URI'si döner.
+     */
+    private fun copyImageToAppStorage(sourceUri: Uri): Uri? {
+        return try {
+            val context = requireContext()
+            val cacheDir = File(context.cacheDir, "images").apply {
+                if (!exists()) mkdirs()
+            }
+            val file = File.createTempFile("profile_", ".jpg", cacheDir)
+
+            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                FileOutputStream(file).use { output ->
+                    input.copyTo(output)
+                }
+            } ?: return null
+
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     private fun showInfoDialog(title: String, message: String) {
