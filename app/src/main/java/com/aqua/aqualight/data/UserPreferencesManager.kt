@@ -48,7 +48,7 @@ class UserPreferencesManager private constructor(
                 try {
                     runBlocking {
                         val legacyData = legacySerializer.readFrom(legacyFile.inputStream())
-                        encryptedStore.updateData { _ -> legacyData }
+                        encryptedStore.updateData { legacyData }
                     }
                     legacyFile.delete()
                 } catch (e: Exception) {
@@ -58,7 +58,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Akışlar
+    // 🔹 Flow'lar
     val userPrefsFlow: Flow<UserPreferences> = dataStore.data
         .catch { emit(UserPreferences.getDefaultInstance()) }
 
@@ -66,10 +66,10 @@ class UserPreferencesManager private constructor(
     val idToken: Flow<String> = userPrefsFlow.map { it.idToken }
     val email: Flow<String> = userPrefsFlow.map { it.email }
     val username: Flow<String> = userPrefsFlow.map { it.username }
-    val fullName: Flow<String> = userPrefsFlow.map { it.fullName }
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
+    val fullName: Flow<String> = userPrefsFlow.map { it.fullName }   // 🆕
 
-    // 🔹 Oturum kaydet (sadece token + login state)
+    // 🔹 Oturum kaydet
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -79,41 +79,43 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    /**
-     * 🔹 Profil bilgilerini kaydet
-     *
-     * Burada ÖNEMLİ nokta:
-     *  - Boş / null gelen username, fullName, photoUrl varsa ESKİ değeri koruyoruz.
-     *  - Böylece başka bir yerde saveProfile çağrıldığında
-     *    yanlışlıkla profil fotoğrafını "" ile SİLMEMİŞ oluyoruz.
-     */
+    // 🔹 Profil bilgilerini kaydet (toplu)
     suspend fun saveProfile(
-        email: String?,
-        username: String?,
-        fullName: String?,
-        photoUrl: String?
-    ) {
-        dataStore.updateData { prefs ->
-            prefs.toBuilder()
-                .setEmail(email ?: prefs.email)
-                .setUsername(username ?: prefs.username)
-                .setFullName(fullName ?: prefs.fullName)
-                .setProfilePhotoUrl(
-                    if (!photoUrl.isNullOrBlank()) {
-                        photoUrl
-                    } else {
-                        prefs.profilePhotoUrl   // eski değeri koru
-                    }
-                )
-                .build()
-        }
+    email: String,
+    username: String?,
+    photoUrl: String?,
+    fullName: String? = null
+) {
+    dataStore.updateData { prefs ->
+        prefs.toBuilder()
+            .setEmail(email)
+            .setUsername(username ?: "")
+            .setProfilePhotoUrl(
+                if (!photoUrl.isNullOrBlank()) {
+                    photoUrl
+                } else {
+                    prefs.profilePhotoUrl
+                }
+            )
+            .setFullName(fullName ?: prefs.fullName)
+            .build()
     }
+}
 
-    // 🔹 Sadece profil fotoğrafını güncelle (EditProfile ekranı için)
+    // 🔹 Sadece profil foto'yu güncelle (EditProfile ekranında kullanmak için ideal)
     suspend fun updateProfilePhoto(photoUrl: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
                 .setProfilePhotoUrl(photoUrl)
+                .build()
+        }
+    }
+
+    // 🔹 Sadece full name güncelle (ileride kullanmak için)
+    suspend fun updateFullName(fullName: String) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setFullName(fullName)
                 .build()
         }
     }
@@ -125,8 +127,8 @@ class UserPreferencesManager private constructor(
                 .clearIdToken()
                 .clearEmail()
                 .clearUsername()
-                .clearFullName()
                 .clearProfilePhotoUrl()
+                .clearFullName()
                 .setIsLoggedIn(false)
                 .build()
         }

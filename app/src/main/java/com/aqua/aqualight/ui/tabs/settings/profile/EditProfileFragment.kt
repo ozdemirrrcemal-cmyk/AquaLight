@@ -70,7 +70,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         _binding = FragmentEditProfileBinding.bind(view)
 
         observeCurrentPhoto()
-        setupResultListener()
+        setupResultListener()   // ⬅️ bottom sheet sonuçlarını dinle
         setupClickListeners()
     }
 
@@ -112,7 +112,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             findNavController().popBackStack()
         }
 
-        // Profil foto veya kamera ikonuna tıklayınca bottom sheet aç
+        // Profil fotoğrafı veya kamera ikonuna tıklayınca bottom sheet aç
         val openChooser: (View) -> Unit = {
             PhotoSourceBottomSheet.newInstance()
                 .show(parentFragmentManager, PhotoSourceBottomSheet.TAG)
