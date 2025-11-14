@@ -6,15 +6,11 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
-class UserPreferencesManager private constructor(
-    private val dataStore: DataStore<UserPreferences>
-) {
+class UserPreferencesManager private constructor(private val dataStore: DataStore<UserPreferences>) {
 
     companion object {
         @Volatile
@@ -26,6 +22,7 @@ class UserPreferencesManager private constructor(
             }
         }
 
+        // 🔒 Tekil (singleton) DataStore oluşturucu
         private fun buildDataStore(context: Context): UserPreferencesManager {
             val delegate = UserPreferencesSerializer
             val encryptedSerializer = EncryptedUserPreferencesSerializer(context, delegate)
@@ -40,6 +37,7 @@ class UserPreferencesManager private constructor(
             return UserPreferencesManager(ds)
         }
 
+        // 🔄 Eski format varsa yeni formata taşı
         private fun migrateLegacyIfNeeded(
             context: Context,
             legacySerializer: androidx.datastore.core.Serializer<UserPreferences>,
@@ -50,7 +48,7 @@ class UserPreferencesManager private constructor(
                 try {
                     runBlocking {
                         val legacyData = legacySerializer.readFrom(legacyFile.inputStream())
-                        encryptedStore.updateData { legacyData }
+                        encryptedStore.updateData { _ -> legacyData }
                     }
                     legacyFile.delete()
                 } catch (e: Exception) {
@@ -60,7 +58,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Flow'lar
+    // 🔹 Veri akışları
     val userPrefsFlow: Flow<UserPreferences> = dataStore.data
         .catch { emit(UserPreferences.getDefaultInstance()) }
 
@@ -69,7 +67,6 @@ class UserPreferencesManager private constructor(
     val email: Flow<String> = userPrefsFlow.map { it.email }
     val username: Flow<String> = userPrefsFlow.map { it.username }
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
-    val fullName: Flow<String> = userPrefsFlow.map { it.fullName }
 
     // 🔹 Oturum kaydet
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
@@ -81,46 +78,13 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Profil bilgilerini kaydet (toplu)
-    //  - username null → eski username korunur
-    //  - fullName null → eski fullName korunur
-    //  - photoUrl null/boş → eski profilePhotoUrl korunur
-    suspend fun saveProfile(
-        email: String,
-        username: String?,
-        photoUrl: String?,
-        fullName: String? = null
-    ) {
+    // 🔹 Profil bilgilerini kaydet
+    suspend fun saveProfile(email: String, username: String?, photoUrl: String?) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
                 .setEmail(email)
-                .setUsername(username ?: prefs.username)
-                .setFullName(fullName ?: prefs.fullName)
-                .setProfilePhotoUrl(
-                    if (!photoUrl.isNullOrBlank()) {
-                        photoUrl
-                    } else {
-                        prefs.profilePhotoUrl
-                    }
-                )
-                .build()
-        }
-    }
-
-    // 🔹 Sadece profil foto'yu güncelle (EditProfile ekranı)
-    suspend fun updateProfilePhoto(photoUrl: String) {
-        dataStore.updateData { prefs ->
-            prefs.toBuilder()
-                .setProfilePhotoUrl(photoUrl)
-                .build()
-        }
-    }
-
-    // 🔹 Sadece full name güncelle
-    suspend fun updateFullName(fullName: String) {
-        dataStore.updateData { prefs ->
-            prefs.toBuilder()
-                .setFullName(fullName)
+                .setUsername(username ?: "")
+                .setProfilePhotoUrl(photoUrl ?: "")
                 .build()
         }
     }
@@ -133,7 +97,6 @@ class UserPreferencesManager private constructor(
                 .clearEmail()
                 .clearUsername()
                 .clearProfilePhotoUrl()
-                .clearFullName()
                 .setIsLoggedIn(false)
                 .build()
         }
