@@ -2,64 +2,29 @@
 <resources>
 
     <!-- ☀️ Material 3 Light Color Scheme -->
-    <color name="md_theme_light_primary">#2196F3</color>              <!-- Aynı -->
-    <color name="md_theme_light_onPrimary">#FFFFFF</color>            <!-- Aynı -->
-    <color name="md_theme_light_primaryContainer">#E3F2FD</color>     <!-- Biraz açık mavi -->
+    <color name="md_theme_light_primary">#2196F3</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#E3F2FD</color>
     <color name="md_theme_light_onPrimaryContainer">#0D47A1</color>
 
-    <color name="md_theme_light_secondary">#4A6363</color>            <!-- Aynı -->
-    <color name="md_theme_light_onSecondary">#FFFFFF</color>          <!-- Aynı -->
-    <color name="md_theme_light_secondaryContainer">#CCE8E7</color>   <!-- Açık ton -->
+    <color name="md_theme_light_secondary">#4A6363</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#CCE8E7</color>
     <color name="md_theme_light_onSecondaryContainer">#041F1F</color>
 
-    <!-- Arka plan & yüzey: koyu temaya göre bir tık daha açık -->
-    <color name="md_theme_light_background">#152B45</color>           <!-- #0A192F → #152B45 -->
+    <color name="md_theme_light_background">#152B45</color>
     <color name="md_theme_light_onBackground">#FFFFFF</color>
     <color name="md_theme_light_surface">#152B45</color>
     <color name="md_theme_light_onSurface">#E0E6ED</color>
 
-    <!-- ✳️ Varyant & outline -->
-    <color name="md_theme_light_surfaceVariant">#233042</color>       <!-- #121A24 → biraz açık -->
-    <color name="md_theme_light_onSurfaceVariant">#5C6B75</color>     <!-- Aynı -->
-    <color name="md_theme_light_outline">#455A64</color>              <!-- Aynı -->
-    <color name="md_theme_light_outlineVariant">#37474F</color>       <!-- Aynı -->
-    <color name="md_theme_light_error">#D32F2F</color>                <!-- Klasik MD3 kırmızı -->
+    <color name="md_theme_light_surfaceVariant">#233042</color>
+    <color name="md_theme_light_onSurfaceVariant">#5C6B75</color>
+    <color name="md_theme_light_outline">#455A64</color>
+    <color name="md_theme_light_outlineVariant">#37474F</color>
+    <color name="md_theme_light_error">#D32F2F</color>
     <color name="md_theme_light_onError">#FFFFFF</color>
 
-    <!-- Yarı saydam yüzey (light versiyon) -->
-    <color name="colorSurfaceTransparent">#CC152B45</color>           <!-- Dark’taki #CC0A192F’in açığı -->
-
-    <!-- 🌤 Dialog Icon Colors (Light Mode tonları) -->
-    <color name="dialog_icon_success">#4CAF50</color>
-    <color name="dialog_icon_warning">#FFC107</color>
-    <color name="dialog_icon_error">#F44336</color>
-    <color name="dialog_icon_info">#2196F3</color>
-
-    <!-- Auth metin & border – bunları iki temada da aynı bırakıyoruz -->
-    <color name="auth_text_color">#000000</color>
-    <color name="auth_unfocused_color">#333333</color>
-    <color name="auth_focus_color">#2196F3</color>
-
-    <!-- 🧾 Settings ekranı (light versiyon) -->
-    <!-- Dark: #0A192F → Light: #152B45 -->
-    <color name="background_color">#152B45</color>
-
-    <!-- Dark: #112240 → Light: biraz daha açık lacivert -->
-    <color name="settings_card_background">#1C3252</color>
-
-    <!-- Metin ve divider aynı kalabilir -->
-    <color name="settings_text_secondary">#A0A0A0</color>
-    <color name="settings_divider">#2D3F66</color>                    <!-- Dark #223355’in hafif açığı -->
-
-    <!-- ⬇️ Bottom Navigation (card ile uyumlu) -->
-    <color name="bottom_nav_background">#1C3252</color>               <!-- Kartla aynı -->
-    <color name="bottom_nav_item_active">#FFFFFF</color>
-    <color name="bottom_nav_item_inactive">#80E0E6ED</color>
-	
-	
-
-
-    <!-- 🌙 Material 3 Dark Color Scheme -->
+    <!-- 🌙 Dark palette isimleri (Lint için base’te de tanımlı) -->
     <color name="md_theme_dark_primary">#2196F3</color>
     <color name="md_theme_dark_onPrimary">#FFFFFF</color>
     <color name="md_theme_dark_primaryContainer">#0A192F</color>
@@ -75,7 +40,6 @@
     <color name="md_theme_dark_surface">#0A192F</color>
     <color name="md_theme_dark_onSurface">#E0E6ED</color>
 
-    <!-- ✳️ Koyu kontrast & outline renkleri -->
     <color name="md_theme_dark_surfaceVariant">#121A24</color>
     <color name="md_theme_dark_onSurfaceVariant">#5C6B75</color>
     <color name="md_theme_dark_outline">#455A64</color>
@@ -83,25 +47,28 @@
     <color name="md_theme_dark_error">#B3261E</color>
     <color name="md_theme_dark_onError">#FFFFFF</color>
 
-    <!-- 🌙 Dialog Icon Colors (Dark Mode tonları) -->
-    <color name="dialog_icon_success">#81C784</color>
-    <color name="dialog_icon_warning">#FFD54F</color>
-    <color name="dialog_icon_error">#EF5350</color>
-    <color name="dialog_icon_info">#64B5F6</color>
+    <!-- 🪟 Yarı saydam yüzey (LIGHT) -->
+    <color name="colorSurfaceTransparent">#CC152B45</color>
 
-    <!-- 🔤 Auth metin & border renkleri -->
+    <!-- 🌤 Dialog Icon Colors (LIGHT) -->
+    <color name="dialog_icon_success">#4CAF50</color>
+    <color name="dialog_icon_warning">#FFC107</color>
+    <color name="dialog_icon_error">#F44336</color>
+    <color name="dialog_icon_info">#2196F3</color>
+
+    <!-- Auth metin & border (base) -->
     <color name="auth_text_color">#000000</color>
     <color name="auth_unfocused_color">#333333</color>
     <color name="auth_focus_color">#2196F3</color>
 
-    <!-- 🧾 Settings ekranı -->
-    <color name="background_color">#0A192F</color>              <!-- Ana arka plan -->
-    <color name="settings_card_background">#112240</color>      <!-- Kart arka planı -->
-    <color name="settings_text_secondary">#A0A0A0</color>       <!-- İkincil metin -->
-    <color name="settings_divider">#223355</color>              <!-- Divider çizgisi -->
+    <!-- 🧾 Settings ekranı (LIGHT) -->
+    <color name="background_color">#152B45</color>
+    <color name="settings_card_background">#1C3252</color>
+    <color name="settings_text_secondary">#A0A0A0</color>
+    <color name="settings_divider">#2D3F66</color>
 
-    <!-- ⬇️ Bottom Navigation -->
-    <color name="bottom_nav_background">#112240</color>
+    <!-- ⬇️ Bottom Navigation (LIGHT) -->
+    <color name="bottom_nav_background">#1C3252</color>
     <color name="bottom_nav_item_active">#FFFFFF</color>
     <color name="bottom_nav_item_inactive">#80E0E6ED</color>
 
