@@ -17,11 +17,11 @@
         android:paddingBottom="16dp">
 
         <!-- 🔹 Profile card -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
-            android:backgroundTint="@color/settings_card_background"
+            app:cardBackgroundColor="@color/settings_card_background"
             app:cardCornerRadius="16dp"
             app:cardElevation="8dp"
             app:cardUseCompatPadding="true">
@@ -77,13 +77,13 @@
                         android:textSize="12sp"/>
                 </LinearLayout>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- 🔸 Menu card -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/settings_card_background"
+            app:cardBackgroundColor="@color/settings_card_background"
             app:cardCornerRadius="16dp"
             app:cardElevation="8dp"
             app:cardUseCompatPadding="true">
@@ -117,7 +117,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
@@ -150,7 +150,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
@@ -183,7 +183,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
@@ -216,7 +216,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
@@ -249,7 +249,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
@@ -282,7 +282,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
@@ -315,7 +315,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
 
@@ -348,10 +348,10 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/settings_arrow_desc"/>
                 </LinearLayout>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </ScrollView>
