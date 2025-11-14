@@ -223,6 +223,6 @@
     <string name="common_yes">Yes</string>
     <string name="common_cancel">Cancel</string>
 	
-
+	<string name="edit_profile_crop_title">Fotoğrafı kırp</string>
 
 </resources>
