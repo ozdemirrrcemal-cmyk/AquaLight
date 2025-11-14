@@ -36,7 +36,7 @@
                     android:layout_height="64dp"
                     android:src="@drawable/ic_profile_placeholder"
                     android:scaleType="fitCenter"
-                    android:background="@drawable/profile_background"
+                    
                     android:clipToOutline="true"
                     android:clickable="true"
                     android:focusable="true"
