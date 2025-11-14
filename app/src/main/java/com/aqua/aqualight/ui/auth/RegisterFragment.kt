@@ -124,14 +124,20 @@ class RegisterFragment : Fragment() {
     }
 
     private suspend fun saveSession(user: FirebaseUser) {
+        // 🔐 Oturum bilgisi
         userPrefs.saveUserSession(
             idToken = user.uid,
             isLoggedIn = true
         )
+
+        // 🧾 Profil bilgisi
+        // Bu ekranda username / fullName ALMIYORUZ → ikisini de şimdilik boş bırakıyoruz.
+        // İleride profil / ayarlar ekranında kullanıcı username & fullName girebilir.
         userPrefs.saveProfile(
             email = user.email ?: "",
-            username = user.displayName ?: "",
-            photoUrl = user.photoUrl?.toString() ?: ""
+            username = null,          // username: ileride uygulama içinde tanımlanacak
+            fullName = null,          // full name: şu an bu ekranda sorulmuyor
+            photoUrl = user.photoUrl?.toString()
         )
     }
 

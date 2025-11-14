@@ -115,11 +115,19 @@ class LoginFragment : Fragment() {
                     val user = auth.currentUser
                     if (user != null) {
                         viewLifecycleOwner.lifecycleScope.launch {
+                            // 🔐 Oturum
                             userPrefs.saveUserSession(user.uid, true)
+
+                            // 🔹 Profili kaydet: username ŞİMDİLİK YOK, fullName = displayName
+                            val email = user.email ?: ""
+                            val displayName = user.displayName ?: ""
+                            val photoUrl = user.photoUrl?.toString()
+
                             userPrefs.saveProfile(
-                                email = user.email ?: "",
-                                username = user.displayName ?: "",
-                                photoUrl = user.photoUrl?.toString() ?: ""
+                                email = email,
+                                username = null,                  // username ileride ayrı belirlenecek
+                                fullName = if (displayName.isNotBlank()) displayName else null,
+                                photoUrl = photoUrl
                             )
 
                             // ✅ Success: butonsuz, otomatik kapanan dialog

@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import java.io.File
 
-class UserPreferencesManager private constructor(private val dataStore: DataStore<UserPreferences>) {
+class UserPreferencesManager private constructor(
+    private val dataStore: DataStore<UserPreferences>
+) {
 
     companion object {
         @Volatile
@@ -67,6 +69,7 @@ class UserPreferencesManager private constructor(private val dataStore: DataStor
     val email: Flow<String> = userPrefsFlow.map { it.email }
     val username: Flow<String> = userPrefsFlow.map { it.username }
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
+    val fullName: Flow<String> = userPrefsFlow.map { it.fullName }   // 🔹 proto’daki fullName = 6
 
     // 🔹 Oturum kaydet
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
@@ -78,14 +81,34 @@ class UserPreferencesManager private constructor(private val dataStore: DataStor
         }
     }
 
-    // 🔹 Profil bilgilerini kaydet
-    suspend fun saveProfile(email: String, username: String?, photoUrl: String?) {
+    /**
+     * 🔹 Profil bilgilerini kaydet
+     *
+     * - username: app içi kullanıcı adı (ileride kullanıcı seçecek)
+     * - fullName: gerçek ad soyad (Google / register’dan gelir)
+     * - null gelen alanları DEĞİŞTİRMİYORUZ, sadece dolu olanları update ediyoruz.
+     */
+    suspend fun saveProfile(
+        email: String,
+        username: String?,
+        fullName: String?,
+        photoUrl: String?
+    ) {
         dataStore.updateData { prefs ->
-            prefs.toBuilder()
+            val builder = prefs.toBuilder()
                 .setEmail(email)
-                .setUsername(username ?: "")
-                .setProfilePhotoUrl(photoUrl ?: "")
-                .build()
+
+            if (username != null) {
+                builder.setUsername(username)
+            }
+            if (fullName != null) {
+                builder.setFullName(fullName)
+            }
+            if (photoUrl != null) {
+                builder.setProfilePhotoUrl(photoUrl)
+            }
+
+            builder.build()
         }
     }
 
@@ -96,6 +119,7 @@ class UserPreferencesManager private constructor(private val dataStore: DataStor
                 .clearIdToken()
                 .clearEmail()
                 .clearUsername()
+                .clearFullName()
                 .clearProfilePhotoUrl()
                 .setIsLoggedIn(false)
                 .build()

@@ -8,4 +8,6 @@ message UserPreferences {
   string username = 3;
   string profilePhotoUrl = 4;
   bool isLoggedIn = 5;
+
+  string fullName = 6; 
 }

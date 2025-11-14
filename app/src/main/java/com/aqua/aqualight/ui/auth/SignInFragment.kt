@@ -98,7 +98,8 @@ class SignInFragment : Fragment() {
                                         requireContext(),
                                         DialogType.ERROR,
                                         title = getString(R.string.session_save_error_title),
-                                        message = e.localizedMessage?: getString(R.string.session_save_error_fallback)
+                                        message = e.localizedMessage
+                                            ?: getString(R.string.session_save_error_fallback)
                                     )
                                 }
                             }
@@ -127,14 +128,20 @@ class SignInFragment : Fragment() {
     }
 
     private suspend fun saveSession(user: FirebaseUser) {
+        // 🔐 Oturum bilgisini kaydet
         userPrefs.saveUserSession(
             idToken = user.uid,
             isLoggedIn = true
         )
+
+        // 🧾 Profil bilgisi:
+        // E-mail login ekranında username/fullName almıyoruz.
+        // Sadece email'i güncelliyoruz, diğer alanlara DOKUNMUYORUZ (null gönderiyoruz).
         userPrefs.saveProfile(
             email = user.email ?: "",
-            username = user.displayName ?: "",
-            photoUrl = user.photoUrl?.toString() ?: ""
+            username = null,   // username aynen kalsın
+            fullName = null,   // fullName aynen kalsın
+            photoUrl = null    // photoUrl aynen kalsın
         )
     }
 
