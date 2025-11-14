@@ -66,4 +66,16 @@
 <!-- 🔵 Focus rengi -->
 <color name="auth_focus_color">#2196F3</color>
 
+<!-- Ana arka plan (ScrollView) -->
+    <color name="background_color">#0A192F</color>
+
+    <!-- Card arka planı (settings kartları) -->
+    <color name="settings_card_background">#112240</color>
+
+    <!-- İkincil metin rengi (gri yazılar) -->
+    <color name="settings_text_secondary">#A0A0A0</color>
+
+    <!-- Divider çizgileri -->
+    <color name="settings_divider">#223355</color>
+
 </resources>
