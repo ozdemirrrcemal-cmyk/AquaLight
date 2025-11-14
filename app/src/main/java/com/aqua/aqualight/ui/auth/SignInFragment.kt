@@ -128,20 +128,16 @@ class SignInFragment : Fragment() {
     }
 
     private suspend fun saveSession(user: FirebaseUser) {
-        // 🔐 Oturum bilgisini kaydet
+        // 🔐 Oturum bilgisi
         userPrefs.saveUserSession(
             idToken = user.uid,
             isLoggedIn = true
         )
 
-        // 🧾 Profil bilgisi:
-        // E-mail login ekranında username/fullName almıyoruz.
-        // Sadece email'i güncelliyoruz, diğer alanlara DOKUNMUYORUZ (null gönderiyoruz).
+        // 🔹 Bu ekranda SADECE email güncelliyoruz.
+        // Diğer profil alanlarına (foto, username, fullName) DOKUNMUYORUZ.
         userPrefs.saveProfile(
-            email = user.email ?: "",
-            username = null,   // username aynen kalsın
-            fullName = null,   // fullName aynen kalsın
-            photoUrl = null    // photoUrl aynen kalsın
+            email = user.email ?: ""
         )
     }
 
