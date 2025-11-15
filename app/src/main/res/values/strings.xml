@@ -276,7 +276,69 @@
     <string name="app_settings_back_button_desc">
         Go back from app settings screen
     </string>
+    <string name="settings_notifications_section_description">
+        Notifications settings card: enable or disable app notifications.
+    </string>
+    <string name="settings_notifications_title">
+        Notifications
+    </string>
+    <string name="settings_notifications_subtitle">
+        Receive alerts, tips and important notices.
+    </string>
 
+    <!-- 🌐 Auto Updates -->
+    <string name="settings_autoupdate_section_description">
+        Auto update settings card: control automatic update checks.
+    </string>
+    <string name="settings_autoupdate_title">
+        Auto updates
+    </string>
+    <string name="settings_autoupdate_subtitle">
+        Automatically check for updates in the background.
+    </string>
+
+    <!-- 🌙 Theme Mode -->
+    <string name="settings_theme_section_description">
+        Theme mode settings card: change the appearance of the app.
+    </string>
+    <string name="settings_theme_title">
+        Theme
+    </string>
+    <string name="settings_theme_summary_light">
+        Light theme
+    </string>
+    <string name="settings_theme_arrow_description">
+        Open theme selection screen
+    </string>
+
+    <!-- 🌍 Language -->
+    <string name="settings_language_section_description">
+        Language settings card: choose the display language.
+    </string>
+    <string name="settings_language_title">
+        Language
+    </string>
+    <string name="settings_language_subtitle">
+        Change the app language.
+    </string>
+    <string name="settings_language_arrow_description">
+        Open language selection screen
+    </string>
+
+    <!-- ℹ️ About -->
+    <string name="settings_about_section_description">
+        About section card: view app version and legal information.
+    </string>
+    <string name="settings_about_title">
+        About
+    </string>
+    <string name="settings_about_subtitle">
+        Version, developer and legal information.
+    </string>
+    <string name="settings_about_arrow_description">
+        Open about screen
+    </string>
+	
     <!-- 🧩 Settings detail screens: Usage Statistics -->
     <string name="usage_title">Usage statistics</string>
     <string name="usage_back_button_desc">

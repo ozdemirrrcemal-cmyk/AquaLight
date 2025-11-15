@@ -56,6 +56,7 @@
         android:layout_height="0dp"
         android:fillViewport="true"
         android:clipToPadding="false"
+		android:scrollbars="none"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
