@@ -22,27 +22,28 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 findNavController().popBackStack()
             }
 
-            // 🔔 Notifications
-            cardNotifications.setOnClickListener {
-                findNavController().navigate(R.id.notificationsSettingsFragment)
+            // 🔔 Notifications – SAYFA AÇMIYOR
+            // Burayı sonradan DataStore / ViewModel ile bağlayacaksın
+            switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+                // TODO: notifications ayarını kaydet
             }
 
-            // 🌐 Auto Update
-            cardAutoUpdate.setOnClickListener {
-                findNavController().navigate(R.id.autoUpdateSettingsFragment)
+            // 🌐 Auto Update – SAYFA AÇMIYOR
+            switchAutoUpdate.setOnCheckedChangeListener { _, isChecked ->
+                // TODO: auto update ayarını kaydet
             }
 
-            // 🌙 Theme Mode
+            // 🌙 Theme Mode – ayrı ekrana gider
             cardThemeMode.setOnClickListener {
                 findNavController().navigate(R.id.themeModeFragment)
             }
 
-            // 🌍 Language
+            // 🌍 Language – ayrı ekrana gider
             cardLanguage.setOnClickListener {
                 findNavController().navigate(R.id.languageSettingsFragment)
             }
 
-            // ℹ️ About
+            // ℹ️ About – ayrı ekrana gider
             cardAbout.setOnClickListener {
                 findNavController().navigate(R.id.aboutAppFragment)
             }

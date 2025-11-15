@@ -20,6 +20,11 @@ class UserInfoFragment : Fragment(R.layout.fragment_user_info) {
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
+
+        // 📍 Adres kartı – yeni sayfaya git
+        binding.rowAddress.setOnClickListener {
+            findNavController().navigate(R.id.userAddressFragment)
+        }
     }
 
     override fun onDestroyView() {

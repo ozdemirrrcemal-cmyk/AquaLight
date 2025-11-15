@@ -40,6 +40,13 @@
         android:label="User info"
         tools:layout="@layout/fragment_user_info" />
 
+    <!-- 🏠 User Address -->
+    <fragment
+        android:id="@+id/userAddressFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.userinfo.UserAddressFragment"
+        android:label="User address"
+        tools:layout="@layout/fragment_user_address" />
+
     <!-- 📡 Device Status -->
     <fragment
         android:id="@+id/deviceStatusFragment"
