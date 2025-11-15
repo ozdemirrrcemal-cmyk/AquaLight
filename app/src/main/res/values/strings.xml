@@ -316,6 +316,71 @@
     <string name="network_back_button_desc">
         Go back from network settings screen
     </string>
+	
+	    <!-- Üst açıklama -->
+    <string name="network_subinfo">
+        Check your current connection status and adjust network-related preferences for Aqua.
+    </string>
+    <string name="network_subinfo_desc">
+        Short description explaining that this screen shows network status and preferences.
+    </string>
+
+    <!-- 📡 Bağlantı durumu kartı -->
+    <string name="network_status_card_desc">
+        Card showing current network status, connection type and IP address.
+    </string>
+    <string name="network_status_title">
+        Connection status
+    </string>
+    <string name="network_status_label">
+        Status
+    </string>
+    <string name="network_type_label">
+        Connection type
+    </string>
+    <string name="network_ip_label">
+        IP address
+    </string>
+
+    <!-- ⚙️ Ağ tercihleri kartı -->
+    <string name="network_preferences_card_desc">
+        Card showing network preferences such as Wi-Fi only and data saver.
+    </string>
+    <string name="network_wifi_only_title">
+        Wi-Fi only mode
+    </string>
+    <string name="network_wifi_only_subtitle">
+        Use the network only when connected to Wi-Fi.
+    </string>
+    <string name="network_data_saver_title">
+        Data saver
+    </string>
+    <string name="network_data_saver_subtitle">
+        Reduce background network usage when possible.
+    </string>
+
+    <!-- 🧪 Tanılama kartı -->
+    <string name="network_diagnostics_card_desc">
+        Card showing last network check time and recent connection errors if any.
+    </string>
+    <string name="network_diagnostics_title">
+        Diagnostics
+    </string>
+    <string name="network_last_check_label">
+        Last check
+    </string>
+    <string name="network_last_error_label">
+        Last error
+    </string>
+
+    <!-- 🔘 Bağlantı testi butonu -->
+    <string name="network_test_button">
+        Test connection
+    </string>
+    <string name="network_test_button_desc">
+        Button that starts a quick test of your network connection.
+    </string>
+	
 
     <!-- 🧩 Settings detail screens: App Settings -->
     <string name="app_settings_title">App settings</string>
