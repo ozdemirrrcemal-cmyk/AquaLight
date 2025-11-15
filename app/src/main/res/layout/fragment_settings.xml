@@ -30,7 +30,7 @@
                 android:gravity="center_vertical"
                 android:padding="12dp">
 
-                <FrameLayout
+              <FrameLayout
     android:layout_width="64dp"
     android:layout_height="64dp"
     android:background="@drawable/profile_background">
@@ -39,7 +39,7 @@
         android:id="@+id/ivProfilePhoto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="3dp
+        android:layout_margin="3dp"
         android:background="@drawable/profile_clip_circle"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_profile_placeholder"
@@ -48,7 +48,6 @@
         android:focusable="true"
         android:contentDescription="@string/settings_profile_photo_desc" />
 </FrameLayout>
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
