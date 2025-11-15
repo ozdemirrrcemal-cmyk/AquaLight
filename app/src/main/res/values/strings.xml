@@ -288,6 +288,58 @@
     <string name="privacy_back_button_desc">
         Go back from privacy and terms screen
     </string>
+	    <!-- Feedback üst açıklama -->
+    <string name="feedback_subinfo">
+        Help us improve Aqua by sharing your thoughts, ideas or problems you’ve noticed.
+    </string>
+    <string name="feedback_subinfo_desc">
+        Short description explaining that user can send feedback about the app.
+    </string>
+
+    <!-- Form genel açıklama -->
+    <string name="feedback_form_desc">
+        Feedback form container including category, email and message fields.
+    </string>
+
+    <!-- Kategori -->
+    <string name="feedback_hint_category">Select a category</string>
+    <string name="feedback_category_desc">
+        Dropdown input to choose the feedback category.
+    </string>
+
+    <!-- E-posta -->
+    <string name="feedback_hint_email">Email address (optional)</string>
+    <string name="feedback_email_desc">
+        Optional email field used to contact the user about their feedback.
+    </string>
+
+    <!-- Mesaj -->
+    <string name="feedback_hint_message">Describe your feedback in detail</string>
+    <string name="feedback_message_area_desc">
+        Multiline text field where the user types their feedback message.
+    </string>
+
+    <!-- Başarılı mesaj -->
+    <string name="feedback_success">
+        Thank you! Your feedback has been sent successfully.
+    </string>
+    <string name="feedback_success_desc">
+        Message shown after the feedback form is submitted successfully.
+    </string>
+
+    <!-- Gönder butonu -->
+    <string name="feedback_send">Send feedback</string>
+    <string name="feedback_send_desc">
+        Button that submits the feedback form.
+    </string>
+
+    <!-- Alt bilgilendirme -->
+    <string name="feedback_footer">
+        We read every message, but we may not be able to respond to each one individually.
+    </string>
+    <string name="feedback_footer_desc">
+        Additional note explaining how feedback messages are handled.
+    </string>
 
     <!-- 🧩 Settings detail screens: Feedback & Support -->
     <string name="feedback_title">Feedback &amp; support</string>
