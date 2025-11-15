@@ -390,6 +390,68 @@
     <string name="usage_back_button_desc">
         Go back from usage statistics screen
     </string>
+	
+	    <!-- Üst açıklama -->
+    <string name="usage_subinfo">
+        See how often you use Aqua and how we handle basic usage statistics.
+    </string>
+    <string name="usage_subinfo_desc">
+        Short description explaining that this screen shows app usage statistics.
+    </string>
+
+    <!-- 📊 Genel kullanım özeti -->
+    <string name="usage_summary_card_desc">
+        Card showing total sessions and total time spent in the app.
+    </string>
+    <string name="usage_summary_title">
+        Overall usage
+    </string>
+    <string name="usage_total_sessions_label">
+        Total sessions
+    </string>
+    <string name="usage_total_time_label">
+        Total time spent
+    </string>
+
+    <!-- 📅 Bugünkü kullanım -->
+    <string name="usage_today_card_desc">
+        Card showing how much you used the app today.
+    </string>
+    <string name="usage_today_title">
+        Today
+    </string>
+    <string name="usage_today_sessions_label">
+        Sessions today
+    </string>
+    <string name="usage_today_time_label">
+        Time today
+    </string>
+
+    <!-- 🕒 Son etkinlik -->
+    <string name="usage_last_activity_card_desc">
+        Card showing your last activity and most used device.
+    </string>
+    <string name="usage_last_activity_title">
+        Last activity
+    </string>
+    <string name="usage_last_open_label">
+        Last opened
+    </string>
+    <string name="usage_most_used_device_label">
+        Most used device
+    </string>
+
+    <!-- ℹ️ Veri & gizlilik açıklaması -->
+    <string name="usage_privacy_card_desc">
+        Card explaining how usage data is stored and used.
+    </string>
+    <string name="usage_privacy_title">
+        How we use this data
+    </string>
+    <string name="usage_privacy_body">
+        We only collect basic, anonymised usage statistics such as session counts and total time spent in the app. This helps us understand performance and improve Aqua over time. Your personal content and private data are not inspected or sold.
+    </string>
+	
 
     <!-- 🧩 Settings detail screens: Privacy & Terms -->
     <string name="privacy_title">Privacy &amp; terms</string>
