@@ -83,9 +83,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="8dp">
+                    android:orientation="vertical">
 
                     <!-- Change password -->
                     <LinearLayout
@@ -96,8 +94,7 @@
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:background="@android:color/transparent"
+                        android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/account_settings_change_password_desc">
 
                         <TextView
@@ -117,9 +114,9 @@
                     </LinearLayout>
 
                     <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/settings_divider"/>
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/settings_divider"/>
 
                     <!-- Change email -->
                     <LinearLayout
@@ -130,8 +127,7 @@
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:background="@android:color/transparent"
+                        android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/account_settings_change_email_desc">
 
                         <TextView
@@ -164,8 +160,7 @@
                         android:gravity="center_vertical"
                         android:clickable="true"
                         android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:background="@android:color/transparent"
+                        android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/account_settings_security_settings_desc">
 
                         <TextView
@@ -193,24 +188,24 @@
                 android:layout_height="24dp" />
 
             <!-- 🚪 LOG OUT butonu -->
-<com.google.android.material.button.MaterialButton
-    android:id="@+id/btnLogout"
-    style="@style/Widget.Aqua.PrimaryButton"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="0dp"
-    android:text="@string/account_settings_logout"
-    android:contentDescription="@string/account_settings_logout_desc" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLogout"
+                style="@style/Widget.Aqua.PrimaryButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:text="@string/account_settings_logout"
+                android:contentDescription="@string/account_settings_logout_desc" />
 
-<!-- 🗑 DELETE ACCOUNT butonu -->
-<com.google.android.material.button.MaterialButton
-    android:id="@+id/btnDeleteAccount"
-    style="@style/Widget.Aqua.DangerButton"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:text="@string/account_settings_delete_account"
-    android:contentDescription="@string/account_settings_delete_account_desc" />
+            <!-- 🗑 DELETE ACCOUNT butonu -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeleteAccount"
+                style="@style/Widget.Aqua.DangerButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/account_settings_delete_account"
+                android:contentDescription="@string/account_settings_delete_account_desc" />
 
         </LinearLayout>
     </ScrollView>
