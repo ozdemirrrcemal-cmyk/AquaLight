@@ -30,6 +30,7 @@
             android:clickable="true"
             android:focusable="true"
             android:contentDescription="@string/edit_profile_back_button_desc"
+			app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
