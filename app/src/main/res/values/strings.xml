@@ -592,6 +592,52 @@
     <string name="change_password_back_button_desc">
         Go back from the change password screen
     </string>
+	
+	    <!-- 🔐 Change Password – üst açıklama -->
+    <string name="change_password_subinfo">
+        For your account security, please enter your current password and choose a strong new one.
+    </string>
+    <string name="change_password_subinfo_desc">
+        Short description explaining why the user should update their password.
+    </string>
+
+    <!-- 🧾 Form genel açıklama (accessibility) -->
+    <string name="change_password_form_desc">
+        Form containing fields for current password, new password and confirmation.
+    </string>
+
+    <!-- 🔑 Mevcut şifre -->
+    <string name="change_password_current_hint">Current password</string>
+    <string name="change_password_current_desc">
+        Field where you enter your existing password.
+    </string>
+
+    <!-- ✨ Yeni şifre -->
+    <string name="change_password_new_hint">New password</string>
+    <string name="change_password_new_desc">
+        Field where you choose a new password for your account.
+    </string>
+
+    <!-- ✅ Yeni şifre tekrar -->
+    <string name="change_password_confirm_hint">Confirm new password</string>
+    <string name="change_password_confirm_desc">
+        Field where you re-enter the new password to confirm it.
+    </string>
+
+    <!-- ✅ Başarılı mesaj -->
+    <string name="change_password_success">
+        Your password has been updated successfully.
+    </string>
+    <string name="change_password_success_desc">
+        Message shown after the password is changed successfully.
+    </string>
+
+    <!-- 💾 Kaydet butonu -->
+    <string name="change_password_save">Save password</string>
+    <string name="change_password_save_desc">
+        Button that validates the form and updates your password.
+    </string>
+	
 
     <!-- 📧 Change Email        -->
     <!-- Header title -->
@@ -603,6 +649,26 @@
     <string name="change_email_back_button_desc">
         Go back from the change email screen
     </string>
+	
+	    <!-- 🔐 Change Email – form açıklaması -->
+    <string name="change_email_form_desc">
+        Form to update the email address for the current user account.
+    </string>
+
+    <!-- Eski e-posta -->
+    <string name="change_email_current_hint">Current email address</string>
+
+    <!-- Yeni e-posta -->
+    <string name="change_email_new_hint">New email address</string>
+
+    <!-- Şifre doğrulama -->
+    <string name="change_email_password_hint">Password (for verification)</string>
+
+    <!-- Kaydet butonu -->
+    <string name="change_email_save_button">Save email</string>
+    <string name="change_email_save_button_desc">
+        Button that saves the new email address after validation.
+    </string>
 
     <!-- 🛡 Security Settings    -->
     <!-- Header title -->
@@ -613,6 +679,18 @@
     <!-- Back button contentDescription -->
     <string name="security_settings_back_button_desc">
         Go back from the security settings screen
+    </string>
+	
+	    <!-- 🧩 Two-Factor Authentication -->
+    <string name="security_2fa_label">Two-factor authentication</string>
+    <string name="security_2fa_desc">
+        Enable an extra security step when signing in to your account.
+    </string>
+
+    <!-- 🔔 Login alerts -->
+    <string name="security_login_alerts_label">Login alerts</string>
+    <string name="security_login_alerts_desc">
+        Get notified when your account is accessed from a new device or location.
     </string>
 	
 	<!-- 👤 User info – address screen -->
