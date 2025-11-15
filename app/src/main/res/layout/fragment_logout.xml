@@ -50,7 +50,6 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 🔹 İçerik -->
-   <!-- 🔹 İçerik -->
     <ScrollView
         android:id="@+id/scrollContent"
         android:layout_width="0dp"
@@ -69,7 +68,7 @@
             android:paddingTop="16dp"
             android:paddingBottom="16dp">
 
-            <!-- 🟦 Kart: Change password / email / security -->
+            <!-- 🟦 Hesap ayarları – Settings menü stili -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAccountActions"
                 android:layout_width="match_parent"
@@ -78,16 +77,114 @@
                 android:layout_marginEnd="10dp"
                 style="@style/Widget.Aqua.CardStyles">
 
-                <!-- ... satırlar aynı kalıyor ... -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
+                    <!-- Change password -->
+                    <LinearLayout
+                        android:id="@+id/rowChangePassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:paddingHorizontal="16dp"
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/account_settings_change_password_desc">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/account_settings_change_password"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="14sp"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/settings_text_secondary"
+                            android:contentDescription="@string/settings_arrow_desc"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/settings_divider"/>
+
+                    <!-- Change email -->
+                    <LinearLayout
+                        android:id="@+id/rowChangeEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:paddingHorizontal="16dp"
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/account_settings_change_email_desc">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/account_settings_change_email"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="14sp"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/settings_text_secondary"
+                            android:contentDescription="@string/settings_arrow_desc"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/settings_divider"/>
+
+                    <!-- Security settings -->
+                    <LinearLayout
+                        android:id="@+id/rowSecuritySettings"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:paddingHorizontal="16dp"
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/account_settings_security_settings_desc">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/account_settings_security_settings"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="14sp"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/settings_text_secondary"
+                            android:contentDescription="@string/settings_arrow_desc"/>
+                    </LinearLayout>
+
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Kart ile butonlar arasında boşluk -->
+            <!-- 🔻 Card ile butonlar arasına biraz boşluk -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="24dp" />
 
-            <!-- 🚪 LOG OUT butonu -->
+            <!-- 🚪 LOG OUT butonu (ESKİ STİL) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogout"
                 style="@style/Widget.MaterialComponents.Button"
@@ -95,6 +192,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
+                android:layout_marginTop="0dp"
                 android:paddingVertical="12dp"
                 android:text="@string/account_settings_logout"
                 android:contentDescription="@string/account_settings_logout_desc"
@@ -102,17 +200,21 @@
                 app:backgroundTint="#1E90FF"
                 app:cornerRadius="12dp"/>
 
-            <!-- 🗑 DELETE ACCOUNT butonu -->
+            <!-- 🗑 DELETE ACCOUNT butonu (ESKİ STİL) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDeleteAccount"
-                style="@style/RedButton"   <!-- istersen inline yerine stilini kullan -->
+                style="@style/Widget.MaterialComponents.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginTop="12dp"
+                android:paddingVertical="12dp"
                 android:text="@string/account_settings_delete_account"
-                android:contentDescription="@string/account_settings_delete_account_desc" />
+                android:contentDescription="@string/account_settings_delete_account_desc"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#FF3B30"
+                app:cornerRadius="12dp"/>
 
         </LinearLayout>
     </ScrollView>
