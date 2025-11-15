@@ -5,7 +5,6 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import coil3.load
 import coil3.request.placeholder
 import coil3.request.error
@@ -13,9 +12,7 @@ import coil3.request.crossfade
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
@@ -61,73 +58,49 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     // 🔹 Satır click'lerini ayarla
     private fun setupClickListeners() = with(binding) {
 
-        // Profil foto tıklaması – EditProfileFragment'e git
+        // Profil foto tıklaması – EditProfileFragment'e git (zaten hazır)
         ivProfilePhoto.setOnClickListener {
             findNavController().navigate(R.id.editProfileFragment)
         }
 
+        // 1️⃣ User Info
         rowUserInfo.setOnClickListener {
-            // TODO: Kullanıcı bilgilerinin düzenlendiği ekrana navigate et
+            findNavController().navigate(R.id.userInfoFragment)
         }
 
+        // 2️⃣ Device Status
         rowDeviceStatus.setOnClickListener {
-            // TODO: Cihaz listesi ekranı
+            findNavController().navigate(R.id.deviceStatusFragment)
         }
 
+        // 3️⃣ Network
         rowNetwork.setOnClickListener {
-            // TODO: Network / WiFi ayarları ekranı
+            findNavController().navigate(R.id.networkFragment)
         }
 
+        // 4️⃣ App Settings
         rowSettings.setOnClickListener {
-            // TODO: Uygulama ayarları (tema, dil vs.) ekranına gidiş
+            findNavController().navigate(R.id.appSettingsFragment)
         }
 
+        // 5️⃣ Usage Statistics
         rowUsage.setOnClickListener {
-            // TODO: Kullanım istatistikleri ekranı
+            findNavController().navigate(R.id.usageFragment)
         }
 
+        // 6️⃣ Privacy Policy
         rowPrivacy.setOnClickListener {
-            // TODO: Gizlilik politikası sayfasını aç (WebView veya browser Intent)
+            findNavController().navigate(R.id.privacyFragment)
         }
 
+        // 7️⃣ Feedback / Support
         rowFeedback.setOnClickListener {
-            // TODO: Feedback ekranı veya mail intent
+            findNavController().navigate(R.id.feedbackFragment)
         }
 
+        // 8️⃣ Logout – artık dialog yok, direkt logout fragment'ine gidiyoruz
         rowLogout.setOnClickListener {
-            showLogoutDialog()
-        }
-    }
-
-    // 🔹 Çıkış yap diyaloğu
-    private fun showLogoutDialog() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.settings_logout)
-            .setMessage(R.string.settings_logout_confirm_message)
-            .setPositiveButton(R.string.common_yes) { _, _ ->
-                performLogout()
-            }
-            .setNegativeButton(R.string.common_cancel, null)
-            .show()
-    }
-
-    // 🔹 Gerçek logout işlemi: sadece oturumu kapat + auth ekranına dön
-    private fun performLogout() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            // 1) Oturumu kapat (idToken temizlenir, isLoggedIn = false olur)
-            userPrefs.logout()
-
-            // 2) Root nav graph'te authContainerFragment'e dön
-            val navController = findNavController()
-            navController.navigate(
-                R.id.authContainerFragment,
-                null,
-                navOptions {
-                    popUpTo(R.id.nav_app) {
-                        inclusive = true
-                    }
-                }
-            )
+            findNavController().navigate(R.id.logoutFragment)
         }
     }
 
