@@ -90,13 +90,13 @@
 </style>
 
     <!-- Settings ekranındaki tüm kartlar için ortak stil -->
-    <style name="Widget.Aqua.CardStyles"
-        parent="Widget.MaterialComponents.CardView">
-        <item name="cardBackgroundColor">@color/settings_card_background</item>
-        <item name="cardCornerRadius">16dp</item>
-        <item name="cardElevation">8dp</item>
-        <item name="cardUseCompatPadding">true</item>
-    </style>
+  <style name="Widget.Aqua.CardStyles"
+    parent="Widget.MaterialComponents.CardView">
+    <item name="cardBackgroundColor">@color/settings_card_background</item>
+    <item name="cardCornerRadius">16dp</item>
+    <item name="cardElevation">8dp</item>
+    <item name="cardUseCompatPadding">false</item>
+</style>
 	
 	
 	<!-- 🔹 Edit profile başlık textAppearance -->
