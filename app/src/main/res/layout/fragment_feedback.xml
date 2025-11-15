@@ -118,8 +118,7 @@
                             android:inputType="none"
                             android:focusable="true"
                             android:clickable="true"
-                            android:cursorVisible="false"
-                            android:hint="@string/feedback_hint_category" />
+                            android:cursorVisible="false"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- E-posta (opsiyonel) -->
@@ -139,8 +138,7 @@
                             style="@style/AuthEditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textEmailAddress"
-                            android:hint="@string/feedback_hint_email" />
+                            android:inputType="textEmailAddress" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Mesaj -->
@@ -165,8 +163,7 @@
                             android:minLines="4"
                             android:gravity="top"
                             android:inputType="textMultiLine"
-                            android:overScrollMode="never"
-                            android:hint="@string/feedback_hint_message" />
+                            android:overScrollMode="never" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Başarılı mesaj -->
