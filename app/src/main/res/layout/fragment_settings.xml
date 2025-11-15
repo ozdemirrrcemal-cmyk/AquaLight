@@ -34,6 +34,7 @@
                     android:id="@+id/ivProfilePhoto"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
+					android:padding="2dp"
 					android:background="@drawable/profile_background"
                     android:src="@drawable/ic_profile_placeholder"
                     android:scaleType="fitCenter"
