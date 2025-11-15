@@ -145,7 +145,7 @@
                         android:layout_marginTop="16dp"
                         app:boxBackgroundMode="outline"
                         app:boxBackgroundColor="@color/background_color"
-                        app:boxStrokeColor="@color/text_input_stroke_color"
+                        
                         app:boxStrokeWidth="1dp"
                         app:boxStrokeWidthFocused="1dp"
                         app:startIconDrawable="@drawable/ic_email"
@@ -175,7 +175,7 @@
                         android:layout_marginTop="16dp"
                         app:boxBackgroundMode="outline"
                         app:boxBackgroundColor="@color/background_color"
-                        app:boxStrokeColor="@color/text_input_stroke_color"
+                        
                         app:boxStrokeWidth="1dp"
                         app:boxStrokeWidthFocused="1dp"
                         app:startIconDrawable="@drawable/ic_message"
