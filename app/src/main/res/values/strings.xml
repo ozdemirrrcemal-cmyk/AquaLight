@@ -582,5 +582,39 @@
         Additional note explaining how feedback messages are handled.
     </string>
 	
+	    <!-- 🔐 Change Password     -->
+    <!-- Header title -->
+    <string name="change_password_title">
+        Change password
+    </string>
+
+    <!-- Back button contentDescription -->
+    <string name="change_password_back_button_desc">
+        Go back from the change password screen
+    </string>
+
+    <!-- 📧 Change Email        -->
+    <!-- Header title -->
+    <string name="change_email_title">
+        Change email
+    </string>
+
+    <!-- Back button contentDescription -->
+    <string name="change_email_back_button_desc">
+        Go back from the change email screen
+    </string>
+
+    <!-- 🛡 Security Settings    -->
+    <!-- Header title -->
+    <string name="security_settings_title">
+        Security settings
+    </string>
+
+    <!-- Back button contentDescription -->
+    <string name="security_settings_back_button_desc">
+        Go back from the security settings screen
+    </string>
+	
+	
 
 </resources>

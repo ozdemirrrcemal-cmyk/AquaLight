@@ -87,6 +87,41 @@
         android:id="@+id/logoutFragment"
         android:name="com.aqua.aqualight.ui.tabs.settings.logout.LogoutFragment"
         android:label="Logout"
-        tools:layout="@layout/fragment_logout" />
+        tools:layout="@layout/fragment_logout">
+
+        <!-- 🔀 Logout ekranından alt ekrana geçişler -->
+        <action
+            android:id="@+id/action_logoutFragment_to_changePasswordFragment"
+            app:destination="@id/changePasswordFragment" />
+
+        <action
+            android:id="@+id/action_logoutFragment_to_changeEmailFragment"
+            app:destination="@id/changeEmailFragment" />
+
+        <action
+            android:id="@+id/action_logoutFragment_to_securitySettingsFragment"
+            app:destination="@id/securitySettingsFragment" />
+    </fragment>
+
+    <!-- 🔐 Change Password -->
+    <fragment
+        android:id="@+id/changePasswordFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.logout.ChangePasswordFragment"
+        android:label="Change password"
+        tools:layout="@layout/fragment_change_password" />
+
+    <!-- 📧 Change Email -->
+    <fragment
+        android:id="@+id/changeEmailFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.logout.ChangeEmailFragment"
+        android:label="Change email"
+        tools:layout="@layout/fragment_change_email" />
+
+    <!-- 🛡 Security Settings -->
+    <fragment
+        android:id="@+id/securitySettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.logout.SecuritySettingsFragment"
+        android:label="Security settings"
+        tools:layout="@layout/fragment_security_settings" />
 
 </navigation>
