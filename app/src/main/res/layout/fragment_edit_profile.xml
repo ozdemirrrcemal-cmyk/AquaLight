@@ -57,16 +57,17 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <ImageView
-            android:id="@+id/ivEditProfilePhoto"
-            android:layout_width="180dp"
-            android:layout_height="180dp"
-			android:background="@drawable/profile_background"
-            android:src="@drawable/ic_profile_placeholder"
-            android:scaleType="fitCenter"
-            android:clipToOutline="true"
-            android:clickable="true"
-            android:focusable="true"
-            android:contentDescription="@string/edit_profile_photo_desc" />
+    android:id="@+id/ivEditProfilePhoto"
+    android:layout_width="180dp"
+    android:layout_height="180dp"
+    android:background="@drawable/profile_background"
+    android:padding="2dp"
+    android:src="@drawable/ic_profile_placeholder"
+    android:scaleType="centerCrop"
+    android:clipToOutline="true"
+    android:clickable="true"
+    android:focusable="true"
+    android:contentDescription="@string/edit_profile_photo_desc" />
 
         <ImageView
             android:id="@+id/ivCameraIcon"
