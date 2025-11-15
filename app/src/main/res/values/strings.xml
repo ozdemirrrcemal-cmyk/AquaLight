@@ -288,6 +288,12 @@
     <string name="privacy_back_button_desc">
         Go back from privacy and terms screen
     </string>
+
+    <!-- 🧩 Settings detail screens: Feedback & Support -->
+    <string name="feedback_title">Feedback &amp; support</string>
+    <string name="feedback_back_button_desc">
+        Go back from feedback and support screen
+    </string>
 	    <!-- Feedback üst açıklama -->
     <string name="feedback_subinfo">
         Help us improve Aqua by sharing your thoughts, ideas or problems you’ve noticed.
@@ -340,11 +346,6 @@
     <string name="feedback_footer_desc">
         Additional note explaining how feedback messages are handled.
     </string>
-
-    <!-- 🧩 Settings detail screens: Feedback & Support -->
-    <string name="feedback_title">Feedback &amp; support</string>
-    <string name="feedback_back_button_desc">
-        Go back from feedback and support screen
-    </string>
+	
 
 </resources>

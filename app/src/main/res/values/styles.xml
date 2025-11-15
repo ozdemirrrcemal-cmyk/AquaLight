@@ -121,4 +121,32 @@
 <style name="Widget.Aqua.DangerButton" parent="@style/Widget.Aqua.PrimaryButton">
     <item name="backgroundTint">@color/aqua_button_red</item>
 </style>
+
+<!-- Feedback üst açıklama -->
+<style name="TextAppearance.Aqua.Feedback.SubInfo"
+    parent="TextAppearance.Material3.BodyMedium">
+    <item name="fontFamily">@font/inter_regular</item>
+    <item name="android:fontFamily">@font/inter_regular</item>
+    <item name="android:textColor">@color/settings_text_secondary</item>
+    <item name="android:textSize">14sp</item>
+</style>
+
+<!-- Feedback alt bilgi -->
+<style name="TextAppearance.Aqua.Feedback.Footer"
+    parent="TextAppearance.Material3.BodySmall">
+    <item name="fontFamily">@font/inter_regular</item>
+    <item name="android:fontFamily">@font/inter_regular</item>
+    <item name="android:textColor">@color/settings_text_secondary</item>
+    <item name="android:textSize">13sp</item>
+</style>
+
+<!-- Feedback success mesajı -->
+<style name="TextAppearance.Aqua.Feedback.Success"
+    parent="TextAppearance.Material3.BodyMedium">
+    <item name="fontFamily">@font/inter_medium</item>
+    <item name="android:fontFamily">@font/inter_medium</item>
+    <item name="android:textColor">#64FFDA</item>
+    <item name="android:textSize">15sp</item>
+</style>
+
 </resources>

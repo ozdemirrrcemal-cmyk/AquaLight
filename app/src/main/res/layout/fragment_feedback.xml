@@ -74,12 +74,9 @@
             <!-- Üst açıklama -->
             <TextView
                 android:id="@+id/tvSubInfo"
+                style="@style/TextAppearance.Aqua.Feedback.SubInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/feedback_subinfo"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="14sp"
-                android:fontFamily="@font/inter_regular"
                 android:gravity="center"
                 android:lineSpacingExtra="4dp"
                 android:layout_marginBottom="16dp"
@@ -103,36 +100,26 @@
                     <!-- Kategori seçimi -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutCategory"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        style="@style/AuthTextInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/feedback_hint_category"
-                        app:boxBackgroundMode="outline"
-                        app:boxBackgroundColor="@color/background_color"
-                        
-                        app:boxStrokeWidth="1dp"
-                        app:boxStrokeWidthFocused="1dp"
+                        android:contentDescription="@string/feedback_category_desc"
                         app:startIconDrawable="@drawable/ic_category"
                         app:startIconTint="#64FFDA"
                         app:endIconMode="dropdown_menu"
-                        app:endIconTint="#7A8CA3"
-                        android:contentDescription="@string/feedback_category_desc">
+                        app:endIconTint="#7A8CA3">
 
-                    <AutoCompleteTextView
-                        android:id="@+id/autoCategory"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="none"
-                        android:focusable="true"
-                        android:clickable="true"
-                        android:cursorVisible="false"
-                        android:hint="@string/feedback_hint_category"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#7A8CA3"
-                        android:fontFamily="@font/inter_regular"
-                        android:paddingVertical="8dp"
-                        android:paddingHorizontal="4dp"
-                        android:background="@android:color/transparent" />
+                        <AutoCompleteTextView
+                            android:id="@+id/autoCategory"
+                            style="@style/AuthEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:focusable="true"
+                            android:clickable="true"
+                            android:cursorVisible="false"
+                            android:hint="@string/feedback_hint_category" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- E-posta (opsiyonel) -->
@@ -143,26 +130,17 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/feedback_hint_email"
                         android:layout_marginTop="16dp"
-                        app:boxBackgroundMode="outline"
-                        app:boxBackgroundColor="@color/background_color"
-                        
-                        app:boxStrokeWidth="1dp"
-                        app:boxStrokeWidthFocused="1dp"
+                        android:contentDescription="@string/feedback_email_desc"
                         app:startIconDrawable="@drawable/ic_email"
-                        app:startIconTint="#64FFDA"
-                        android:contentDescription="@string/feedback_email_desc">
+                        app:startIconTint="#64FFDA">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etEmail"
+                            style="@style/AuthEditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="textEmailAddress"
-                            android:hint="@string/feedback_hint_email"
-                            android:textColor="#FFFFFF"
-                            android:textColorHint="#7A8CA3"
-                            android:textSize="14sp"
-                            android:fontFamily="@font/inter_regular"
-                            android:background="@android:color/transparent" />
+                            android:hint="@string/feedback_hint_email" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Mesaj -->
@@ -173,44 +151,32 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/feedback_hint_message"
                         android:layout_marginTop="16dp"
-                        app:boxBackgroundMode="outline"
-                        app:boxBackgroundColor="@color/background_color"
-                        
-                        app:boxStrokeWidth="1dp"
-                        app:boxStrokeWidthFocused="1dp"
+                        android:contentDescription="@string/feedback_message_area_desc"
                         app:startIconDrawable="@drawable/ic_message"
                         app:startIconTint="#64FFDA"
                         app:counterEnabled="true"
-                        app:counterMaxLength="500"
-                        android:contentDescription="@string/feedback_message_area_desc">
+                        app:counterMaxLength="500">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etMessage"
+                            style="@style/AuthEditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:minLines="4"
                             android:gravity="top"
                             android:inputType="textMultiLine"
                             android:overScrollMode="never"
-                            android:hint="@string/feedback_hint_message"
-                            android:textColor="#FFFFFF"
-                            android:textColorHint="#7A8CA3"
-                            android:textSize="14sp"
-                            android:fontFamily="@font/inter_regular"
-                            android:background="@android:color/transparent" />
+                            android:hint="@string/feedback_hint_message" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Başarılı mesaj (isteğe göre visibility ile yönetirsin) -->
+                    <!-- Başarılı mesaj -->
                     <TextView
                         android:id="@+id/tvSuccessMessage"
+                        style="@style/TextAppearance.Aqua.Feedback.Success"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:gravity="center"
-                        android:text="@string/feedback_success"
-                        android:textColor="#64FFDA"
-                        android:textSize="15sp"
-                        android:fontFamily="@font/inter_medium"
                         android:visibility="gone"
                         android:alpha="0"
                         android:contentDescription="@string/feedback_success_desc" />
@@ -227,8 +193,6 @@
                 android:layout_marginTop="24dp"
                 android:text="@string/feedback_send"
                 android:textAllCaps="false"
-                android:textSize="15sp"
-                android:fontFamily="@font/inter_medium"
                 app:icon="@drawable/ic_send"
                 app:iconTint="#64FFDA"
                 app:iconSize="18dp"
@@ -239,14 +203,11 @@
             <!-- Alt bilgi -->
             <TextView
                 android:id="@+id/tvFooter"
+                style="@style/TextAppearance.Aqua.Feedback.Footer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="16dp"
-                android:text="@string/feedback_footer"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="13sp"
-                android:fontFamily="@font/inter_regular"
                 android:gravity="center"
                 android:lineSpacingExtra="3dp"
                 android:contentDescription="@string/feedback_footer_desc" />
