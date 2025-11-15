@@ -615,6 +615,22 @@
         Go back from the security settings screen
     </string>
 	
+	<!-- 👤 User info – address screen -->
+    <string name="user_address_title">Address details</string>
+    <string name="user_address_back_button_desc">Go back from address screen</string>
+
+    <string name="user_address_form_desc">
+        Form that lets the user edit their country, city and address.
+    </string>
+
+    <string name="user_address_country_hint">Country</string>
+    <string name="user_address_city_hint">City</string>
+    <string name="user_address_line_hint">Street, building, apartment</string>
+
+    <string name="user_address_save_button">Save address</string>
+    <string name="user_address_save_button_desc">
+        Button that saves the updated address information.
+    </string>
 	
 
 </resources>
