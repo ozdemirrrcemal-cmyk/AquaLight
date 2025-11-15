@@ -16,25 +16,37 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAppSettingsBinding.bind(view)
 
-        // 🔙 Geri
-        binding.btnBack.setOnClickListener {
-            findNavController().popBackStack()
+        with(binding) {
+            // 🔙 Geri
+            btnBack.setOnClickListener {
+                findNavController().popBackStack()
+            }
+
+            // 🔔 Notifications
+            cardNotifications.setOnClickListener {
+                findNavController().navigate(R.id.notificationsSettingsFragment)
+            }
+
+            // 🌐 Auto Update
+            cardAutoUpdate.setOnClickListener {
+                findNavController().navigate(R.id.autoUpdateSettingsFragment)
+            }
+
+            // 🌙 Theme Mode
+            cardThemeMode.setOnClickListener {
+                findNavController().navigate(R.id.themeModeFragment)
+            }
+
+            // 🌍 Language
+            cardLanguage.setOnClickListener {
+                findNavController().navigate(R.id.languageSettingsFragment)
+            }
+
+            // ℹ️ About
+            cardAbout.setOnClickListener {
+                findNavController().navigate(R.id.aboutAppFragment)
+            }
         }
-
-        // 🔔 Notifications
-        // binding.switchNotifications.setOnCheckedChangeListener { _, isChecked -> ... }
-
-        // 🌐 Auto update
-        // binding.switchAutoUpdate.setOnCheckedChangeListener { _, isChecked -> ... }
-
-        // 🌙 Theme card
-        // binding.cardThemeMode.setOnClickListener { ... }
-
-        // 🌍 Language card
-        // binding.cardLanguage.setOnClickListener { ... }
-
-        // ℹ️ About card
-        // binding.cardAbout.setOnClickListener { ... }
     }
 
     override fun onDestroyView() {

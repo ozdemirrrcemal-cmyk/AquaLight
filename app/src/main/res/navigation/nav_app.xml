@@ -124,4 +124,40 @@
         android:label="Security settings"
         tools:layout="@layout/fragment_security_settings" />
 
+
+    <!-- 🔔 Notifications Settings -->
+    <fragment
+        android:id="@+id/notificationsSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.app.NotificationsSettingsFragment"
+        android:label="Notifications"
+        tools:layout="@layout/fragment_notifications_settings" />
+
+    <!-- 🌐 Auto Update Settings -->
+    <fragment
+        android:id="@+id/autoUpdateSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.app.AutoUpdateSettingsFragment"
+        android:label="Auto update"
+        tools:layout="@layout/fragment_auto_update_settings" />
+
+    <!-- 🌙 Theme Mode -->
+    <fragment
+        android:id="@+id/themeModeFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.app.ThemeModeFragment"
+        android:label="Theme mode"
+        tools:layout="@layout/fragment_theme_mode" />
+
+    <!-- 🌍 Language Settings -->
+    <fragment
+        android:id="@+id/languageSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.app.LanguageSettingsFragment"
+        android:label="Language"
+        tools:layout="@layout/fragment_language_settings" />
+
+    <!-- ℹ️ About App -->
+    <fragment
+        android:id="@+id/aboutAppFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.app.AboutAppFragment"
+        android:label="About"
+        tools:layout="@layout/fragment_about_app" />
+
 </navigation>
