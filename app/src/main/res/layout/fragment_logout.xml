@@ -187,18 +187,11 @@
             <!-- 🚪 LOG OUT butonu (ESKİ STİL) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogout"
-                style="@style/Widget.MaterialComponents.Button"
-                android:layout_width="match_parent"
+                style="@style/Widget.Aqua.PrimaryButton"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginTop="0dp"
-                android:paddingVertical="12dp"
                 android:text="@string/account_settings_logout"
-                android:contentDescription="@string/account_settings_logout_desc"
-                android:textColor="#FFFFFF"
-                app:backgroundTint="#1E90FF"
-                app:cornerRadius="12dp"/>
+                android:contentDescription="@string/account_settings_logout_desc"/>
 
             <!-- 🗑 DELETE ACCOUNT butonu (ESKİ STİL) -->
             <com.google.android.material.button.MaterialButton
