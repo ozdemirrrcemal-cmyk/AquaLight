@@ -88,6 +88,11 @@
                     android:padding="16dp"
                     android:gravity="center_horizontal"
                     android:contentDescription="@string/user_info_profile_summary_desc">
+					
+					  <FrameLayout
+    android:layout_width="64dp"
+    android:layout_height="64dp"
+    android:background="@drawable/profile_background">
 
                     <ImageView
                         android:id="@+id/ivUserPhoto"
@@ -102,7 +107,7 @@
                         android:focusable="true"
                         android:layout_marginBottom="12dp"
                         android:contentDescription="@string/user_info_photo_desc" />
-
+</FrameLayout>
                     <TextView
                         android:id="@+id/tvName"
                         android:layout_width="wrap_content"

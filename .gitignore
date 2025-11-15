@@ -63,4 +63,4 @@ test-results/
 reports/
 
 # --- (Opsiyonel) Firebase dosyası ---
-# app/google-services.json
+**/google-services.json
