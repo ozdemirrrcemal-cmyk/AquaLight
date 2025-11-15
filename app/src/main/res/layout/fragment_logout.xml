@@ -47,108 +47,158 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
-
-        <!-- ─ Header Divider -->
-        <View
-            android:id="@+id/headerDivider"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:background="@color/settings_divider"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 🔹 İçerik (scroll edilebilir) -->
+    <!-- 🔹 İçerik -->
     <ScrollView
         android:id="@+id/scrollContent"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
-        android:paddingHorizontal="20dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="24dp"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
-            android:id="@+id/contentContainer"
+            android:id="@+id/contentRoot"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
 
-            <!-- 🔐 Change Password -->
+            <!-- 🟦 Hesap ayarları – Settings menü stili -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/rowChangePassword"
+                android:id="@+id/cardAccountActions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles"
-                android:contentDescription="@string/account_settings_change_password_desc">
+                style="@style/Widget.Aqua.CardStyles">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:text="@string/account_settings_change_password"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="16sp" />
+                    android:orientation="vertical">
+
+                    <!-- Change password -->
+                    <LinearLayout
+                        android:id="@+id/rowChangePassword"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:paddingHorizontal="16dp"
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/account_settings_change_password_desc">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/account_settings_change_password"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="14sp"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/settings_text_secondary"
+                            android:contentDescription="@string/settings_arrow_desc"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/settings_divider"/>
+
+                    <!-- Change email -->
+                    <LinearLayout
+                        android:id="@+id/rowChangeEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:paddingHorizontal="16dp"
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/account_settings_change_email_desc">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/account_settings_change_email"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="14sp"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/settings_text_secondary"
+                            android:contentDescription="@string/settings_arrow_desc"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/settings_divider"/>
+
+                    <!-- Security settings -->
+                    <LinearLayout
+                        android:id="@+id/rowSecuritySettings"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:paddingHorizontal="16dp"
+                        android:gravity="center_vertical"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/account_settings_security_settings_desc">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/account_settings_security_settings"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="14sp"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="@color/settings_text_secondary"
+                            android:contentDescription="@string/settings_arrow_desc"/>
+                    </LinearLayout>
+
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 📧 Change Email -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/rowChangeEmail"
+            <!-- 🔻 Card ile butonlar arasına biraz boşluk -->
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles"
-                android:contentDescription="@string/account_settings_change_email_desc">
+                android:layout_height="24dp" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:text="@string/account_settings_change_email"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="16sp" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- 🛡 Security Settings -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/rowSecuritySettings"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles"
-                android:contentDescription="@string/account_settings_security_settings_desc">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:text="@string/account_settings_security_settings"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="16sp" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- 🚪 Logout Button -->
+            <!-- 🚪 LOG OUT butonu (ESKİ STİL) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogout"
                 style="@style/Widget.MaterialComponents.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="0dp"
                 android:paddingVertical="12dp"
                 android:text="@string/account_settings_logout"
                 android:contentDescription="@string/account_settings_logout_desc"
-                app:backgroundTint="?attr/colorPrimary"
-                android:textColor="?attr/colorOnPrimary"
-                app:cornerRadius="12dp" />
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#1E90FF"
+                app:cornerRadius="12dp"/>
 
-            <!-- 🗑 Delete Account Button -->
+            <!-- 🗑 DELETE ACCOUNT butonu (ESKİ STİL) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDeleteAccount"
                 style="@style/Widget.MaterialComponents.Button"
@@ -158,9 +208,9 @@
                 android:paddingVertical="12dp"
                 android:text="@string/account_settings_delete_account"
                 android:contentDescription="@string/account_settings_delete_account_desc"
-                app:backgroundTint="?attr/colorError"
-                android:textColor="?attr/colorOnError"
-                app:cornerRadius="12dp" />
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#FF3B30"
+                app:cornerRadius="12dp"/>
 
         </LinearLayout>
     </ScrollView>
