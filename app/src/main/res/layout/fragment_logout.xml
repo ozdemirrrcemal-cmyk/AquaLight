@@ -117,9 +117,9 @@
                     </LinearLayout>
 
                     <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@color/settings_divider"/>
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/settings_divider"/>
 
                     <!-- Change email -->
                     <LinearLayout
@@ -193,32 +193,24 @@
                 android:layout_height="24dp" />
 
             <!-- 🚪 LOG OUT butonu -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnLogout"
-                style="@style/Widget.MaterialComponents.Button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                android:paddingVertical="12dp"
-                android:text="@string/account_settings_logout"
-                android:contentDescription="@string/account_settings_logout_desc"
-                android:textColor="#FFFFFF"
-                app:backgroundTint="#1E90FF"
-                app:cornerRadius="12dp"/>
+<com.google.android.material.button.MaterialButton
+    android:id="@+id/btnLogout"
+    style="@style/Widget.Aqua.PrimaryButton"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="0dp"
+    android:text="@string/account_settings_logout"
+    android:contentDescription="@string/account_settings_logout_desc" />
 
-            <!-- 🗑 DELETE ACCOUNT butonu -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDeleteAccount"
-                style="@style/Widget.MaterialComponents.Button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:paddingVertical="12dp"
-                android:text="@string/account_settings_delete_account"
-                android:contentDescription="@string/account_settings_delete_account_desc"
-                android:textColor="#FFFFFF"
-                app:backgroundTint="#FF3B30"
-                app:cornerRadius="12dp"/>
+<!-- 🗑 DELETE ACCOUNT butonu -->
+<com.google.android.material.button.MaterialButton
+    android:id="@+id/btnDeleteAccount"
+    style="@style/Widget.Aqua.DangerButton"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:text="@string/account_settings_delete_account"
+    android:contentDescription="@string/account_settings_delete_account_desc" />
 
         </LinearLayout>
     </ScrollView>

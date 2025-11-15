@@ -73,4 +73,6 @@
     <color name="bottom_nav_item_inactive">#A0A0A0</color>
 	
 	<color name="crop_toolbar_bg">#0A192F</color>
+	<color name="aqua_button_blue">#1E90FF</color>
+    <color name="aqua_button_red">#FF3B30</color>
 </resources>

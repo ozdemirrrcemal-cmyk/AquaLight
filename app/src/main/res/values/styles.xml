@@ -100,9 +100,12 @@
 	
 	
 	<!-- 🔹 Edit profile başlık textAppearance -->
-<style name="TextAppearance.Aqua.EditProfileTitle" parent="TextAppearance.Material3.TitleLarge">
+<style name="TextAppearance.Aqua.EditProfileTitle"
+    parent="TextAppearance.Material3.TitleLarge">
+    <item name="fontFamily">@font/inter_semibold</item>
+    <item name="android:fontFamily">@font/inter_semibold</item>
     <item name="android:textColor">@android:color/white</item>
-    <item name="android:textStyle">bold</item>
+    <item name="android:textSize">20sp</item>
 </style>
 
 <!-- 🔹 Primary (mavi) buton – eski inline görünüme uygun -->
@@ -113,5 +116,9 @@
     <item name="android:insetBottom">0dp</item>
     <item name="android:paddingTop">12dp</item>
     <item name="android:paddingBottom">12dp</item>
+    <item name="backgroundTint">@color/aqua_button_blue</item>
+</style>
+<style name="Widget.Aqua.DangerButton" parent="@style/Widget.Aqua.PrimaryButton">
+    <item name="backgroundTint">@color/aqua_button_red</item>
 </style>
 </resources>
