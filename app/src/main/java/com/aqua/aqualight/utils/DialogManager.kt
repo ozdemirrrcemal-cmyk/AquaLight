@@ -4,11 +4,10 @@ import android.app.AlertDialog
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.view.LayoutInflater
-import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
+import androidx.annotation.StringRes
 import com.aqua.aqualight.R
+import com.aqua.aqualight.databinding.DialogAppBinding
+import com.aqua.aqualight.databinding.DialogAppConfirmBinding
 import com.google.android.material.button.MaterialButton
 
 enum class DialogType { INFO, ERROR, SUCCESS, WARNING }
@@ -20,53 +19,52 @@ object DialogManager {
         type: DialogType,
         title: String,
         message: String,
-        buttonText: String = "OK",
+        @StringRes buttonTextResId: Int = R.string.ok,
         onDismiss: (() -> Unit)? = null,
-        autoDismissMillis: Long = 0L   // ✅ yeni: 0 = eski davranış, >0 = auto dismiss
+        autoDismissMillis: Long = 0L   // 0 = butonlu, >0 = auto-dismiss
     ) {
-        val view = LayoutInflater.from(context).inflate(R.layout.dialog_app, null)
-        val icon = view.findViewById<ImageView>(R.id.dialogIcon)
-        val titleView = view.findViewById<TextView>(R.id.dialogTitle)
-        val messageView = view.findViewById<TextView>(R.id.dialogMessage)
-        val button = view.findViewById<MaterialButton>(R.id.dialogButton)
+        val binding = DialogAppBinding.inflate(
+            android.view.LayoutInflater.from(context)
+        )
 
-        // 🔹 4 farklı tip için ikon ataması
+        // 🔹 İkon
         val iconRes = when (type) {
             DialogType.ERROR -> R.drawable.ic_error
             DialogType.SUCCESS -> R.drawable.ic_success
             DialogType.WARNING -> R.drawable.ic_warning
             DialogType.INFO -> R.drawable.ic_info
         }
+        binding.dialogIcon.apply {
+            imageTintList = null
+            setImageResource(iconRes)
+            contentDescription = context.getString(R.string.dialog_icon_desc)
+        }
 
-        // 🔸 Tint sorununu sıfırla, ikon kendi fillColor rengini kullansın
-        icon.imageTintList = null
-        icon.setImageResource(iconRes)
+        // 🔹 Metinler
+        binding.dialogTitle.text = title
+        binding.dialogMessage.text = message
 
-        titleView.text = title
-        messageView.text = message
-        button.text = buttonText
-
+        // 🔹 Dialog oluştur
         val dialog = AlertDialog.Builder(context, R.style.AppDialogTheme)
-            .setView(view)
+            .setView(binding.root)
             .setCancelable(false)
             .create()
 
-        // ✔ DİKKAT: Artık onDismiss DİYALOG NASIL KAPANIRSA KAPANSIN burada çalışıyor
         dialog.setOnDismissListener {
             onDismiss?.invoke()
         }
 
         if (autoDismissMillis <= 0L) {
-            // 🔹 ESKİ DAVRANIŞ: butonlu, kullanıcı kapatır
-            button.visibility = View.VISIBLE
-            button.setOnClickListener {
+            // 👉 Butonlu klasik davranış
+            binding.dialogButton.visibility = android.view.View.VISIBLE
+            binding.dialogButton.text = context.getString(buttonTextResId)
+            binding.dialogButton.setOnClickListener {
                 dialog.dismiss()
             }
         } else {
-            // 🔹 OTOMATİK KAPANAN MOD: buton yok, sadece mesaj göster
-            button.visibility = View.GONE
+            // 👉 Otomatik kapanan info (toast vari)
+            binding.dialogButton.visibility = android.view.View.GONE
 
-            // Belirtilen süre sonra otomatik olarak kapat
             Handler(Looper.getMainLooper()).postDelayed({
                 if (dialog.isShowing) {
                     dialog.dismiss()
@@ -74,7 +72,6 @@ object DialogManager {
             }, autoDismissMillis)
         }
 
-        // 🔸 Arka planı tamamen saydam yap
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.show()
     }
@@ -84,45 +81,45 @@ object DialogManager {
         type: DialogType,
         title: String,
         message: String,
-        confirmText: String = "Confirm",
-        cancelText: String = "Cancel",
+        @StringRes confirmTextResId: Int = R.string.confirm,
+        @StringRes cancelTextResId: Int = R.string.cancel,
         onConfirm: (() -> Unit)? = null,
         onCancel: (() -> Unit)? = null
     ) {
-        val view = LayoutInflater.from(context).inflate(R.layout.dialog_app_confirm, null)
-        val icon = view.findViewById<ImageView>(R.id.dialogIcon)
-        val titleView = view.findViewById<TextView>(R.id.dialogTitle)
-        val messageView = view.findViewById<TextView>(R.id.dialogMessage)
-        val btnCancel = view.findViewById<MaterialButton>(R.id.btnCancel)
-        val btnConfirm = view.findViewById<MaterialButton>(R.id.btnConfirm)
+        val binding = DialogAppConfirmBinding.inflate(
+            android.view.LayoutInflater.from(context)
+        )
 
+        // 🔹 İkon
         val iconRes = when (type) {
             DialogType.ERROR -> R.drawable.ic_error
             DialogType.WARNING -> R.drawable.ic_warning
             DialogType.SUCCESS -> R.drawable.ic_success
             DialogType.INFO -> R.drawable.ic_info
         }
+        binding.dialogIcon.apply {
+            imageTintList = null
+            setImageResource(iconRes)
+            contentDescription = context.getString(R.string.dialog_icon_desc)
+        }
 
-        // 🔸 Tint’i sıfırla, fillColor aktif kalsın
-        icon.imageTintList = null
-        icon.setImageResource(iconRes)
-
-        titleView.text = title
-        messageView.text = message
-        btnCancel.text = cancelText
-        btnConfirm.text = confirmText
+        // 🔹 Metinler
+        binding.dialogTitle.text = title
+        binding.dialogMessage.text = message
+        binding.btnCancel.text = context.getString(cancelTextResId)
+        binding.btnConfirm.text = context.getString(confirmTextResId)
 
         val dialog = AlertDialog.Builder(context, R.style.AppDialogTheme)
-            .setView(view)
+            .setView(binding.root)
             .setCancelable(false)
             .create()
 
-        btnCancel.setOnClickListener {
+        binding.btnCancel.setOnClickListener {
             dialog.dismiss()
             onCancel?.invoke()
         }
 
-        btnConfirm.setOnClickListener {
+        binding.btnConfirm.setOnClickListener {
             dialog.dismiss()
             onConfirm?.invoke()
         }
