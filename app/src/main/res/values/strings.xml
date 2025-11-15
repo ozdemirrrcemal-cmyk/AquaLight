@@ -258,6 +258,52 @@
     <string name="user_info_back_button_desc">
         Go back from user information screen
     </string>
+    <string name="user_info_profile_summary_desc">
+        Profile summary card showing your photo, name and email.
+    </string>
+    <string name="user_info_photo_desc">
+        Your profile photo.
+    </string>
+    <string name="user_info_name_default">
+        Your name
+    </string>
+    <string name="user_info_email_default">
+        your.email@example.com
+    </string>
+
+    <!-- 📝 Kullanıcı adı -->
+    <string name="user_info_username_label">
+        USERNAME
+    </string>
+    <string name="user_info_username_hint">
+        Enter your username
+    </string>
+    <string name="user_info_username_desc">
+        Editable field for your username.
+    </string>
+
+    <!-- 📍 Adres satırı -->
+    <string name="user_info_address_desc">
+        Opens the address details screen.
+    </string>
+    <string name="user_info_location_icon_desc">
+        Location icon.
+    </string>
+    <string name="user_info_address_label">
+        Address
+    </string>
+    <string name="user_info_arrow_desc">
+        Open address details.
+    </string>
+
+    <!-- 💾 Kaydet butonu -->
+    <string name="user_info_save_button">
+        Save changes
+    </string>
+    <string name="user_info_save_button_desc">
+        Button that saves your user information changes.
+    </string>
+	
 
     <!-- 🧩 Settings detail screens: Device Status -->
     <string name="device_status_title">Device status</string>
