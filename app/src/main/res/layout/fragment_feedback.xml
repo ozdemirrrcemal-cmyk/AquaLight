@@ -138,7 +138,7 @@
                     <!-- E-posta (opsiyonel) -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutEmail"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        style="@style/AuthTextInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/feedback_hint_email"
@@ -168,7 +168,7 @@
                     <!-- Mesaj -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutMessage"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        style="@style/AuthTextInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/feedback_hint_message"
