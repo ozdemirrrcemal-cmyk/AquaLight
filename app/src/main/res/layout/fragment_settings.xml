@@ -30,19 +30,24 @@
                 android:gravity="center_vertical"
                 android:padding="12dp">
 
-                <ImageView
-                    android:id="@+id/ivProfilePhoto"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-					android:padding="2dp"
-					android:background="@drawable/profile_background"
-                    android:src="@drawable/ic_profile_placeholder"
-                    android:scaleType="fitCenter"
-                    
-                    android:clipToOutline="true"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:contentDescription="@string/settings_profile_photo_desc" />
+                <FrameLayout
+    android:layout_width="64dp"
+    android:layout_height="64dp"
+    android:background="@drawable/profile_background">
+
+    <ImageView
+        android:id="@+id/ivProfilePhoto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="3dp
+        android:background="@drawable/profile_clip_circle"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_profile_placeholder"
+        android:clipToOutline="true"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/settings_profile_photo_desc" />
+</FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
