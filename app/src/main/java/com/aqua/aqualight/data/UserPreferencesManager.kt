@@ -1,3 +1,17 @@
+package com.aqua.aqualight.data
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
+import androidx.datastore.dataStoreFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import java.io.IOException
+
 class UserPreferencesManager private constructor(
     private val dataStore: DataStore<UserPreferences>
 ) {
@@ -6,9 +20,9 @@ class UserPreferencesManager private constructor(
         @Volatile
         private var INSTANCE: UserPreferencesManager? = null
 
-        // 🔹 Global default’lar
-        const val DEFAULT_THEME_MODE = "dark"
-        const val DEFAULT_LANGUAGE_CODE = "en"
+        // 🔹 Tüm projede sabit kullanacağın default değerler
+        const val DEFAULT_THEME_MODE = "dark"  // istersen "light"
+        const val DEFAULT_LANGUAGE_CODE = "en" // istersen "tr"
         const val DEFAULT_NOTIFICATIONS_ENABLED = false
         const val DEFAULT_AUTO_UPDATE_ENABLED = false
 
@@ -50,18 +64,19 @@ class UserPreferencesManager private constructor(
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
     val fullName: Flow<String> = userPrefsFlow.map { it.fullName }
 
-    // Tema
+    // 🔹 Tema modu ("light" / "dark" / "system")
     val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
         prefs.themeMode.ifBlank { DEFAULT_THEME_MODE }
     }
 
-    // Dil
+    // 🔹 Dil kodu ("tr", "en", "de" vs.)
     val languageCode: Flow<String> = userPrefsFlow.map { prefs ->
         prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
     }
 
-    // 🔔 Bildirim tercihi (proto default=false → ilk açılışta false)
+    // 🔹 Bildirim tercihi
     val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
+        // İlk kez açılışta hepsi defaultInstance ise varsayılanı kullan
         if (prefs == UserPreferences.getDefaultInstance()) {
             DEFAULT_NOTIFICATIONS_ENABLED
         } else {
@@ -69,7 +84,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🌐 Auto-update tercihi
+    // 🔹 Auto-update tercihi
     val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
         if (prefs == UserPreferences.getDefaultInstance()) {
             DEFAULT_AUTO_UPDATE_ENABLED
@@ -78,12 +93,12 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // ------- UPDATE METODLARI -------
-
+    // 🔹 Genel amaçlı update helper
     suspend fun update(transform: (UserPreferences) -> UserPreferences) {
         dataStore.updateData { current -> transform(current) }
     }
 
+    // 🔹 Oturum kaydet
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -93,6 +108,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // 🔹 Profil kaydet
     suspend fun saveProfile(
         email: String,
         username: String?,
@@ -109,6 +125,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // 🔹 Sadece profil fotoğrafını güncelle
     suspend fun updateProfilePhoto(photoUrl: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -117,6 +134,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // 🔹 Logout
     suspend fun logout() {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -126,6 +144,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // 🔹 Tema modunu güncelle
     suspend fun updateThemeMode(mode: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -134,6 +153,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // 🔹 Dil güncelle
     suspend fun updateLanguage(code: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -142,6 +162,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // 🔹 Bildirim ayarını güncelle
     suspend fun updateNotificationsEnabled(enabled: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -150,6 +171,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // 🔹 Auto-update ayarını güncelle
     suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -158,6 +180,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // 🔹 Tüm user verisini sil
     suspend fun clearAllUserData() {
         dataStore.updateData {
             UserPreferences.getDefaultInstance()
