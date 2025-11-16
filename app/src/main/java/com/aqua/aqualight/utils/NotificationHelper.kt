@@ -1,7 +1,6 @@
 package com.aqua.aqualight.utils
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -77,22 +76,19 @@ object NotificationHelper {
     }
 
     // 🔹 Local bildirim gönder
-    @SuppressLint("MissingPermission") // Lint: izni üstte kendimiz kontrol ediyoruz
     fun showLocalNotification(
         context: Context,
         title: String,
         message: String
     ) {
-        // 1) Sistem-level kontroller
+        // Sistem-level kontroller
         if (!hasSystemPermission(context)) return
         if (!areSystemNotificationsEnabled(context)) return
 
-        // 2) Kanal (Android 8+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel(context)
         }
 
-        // 3) Bildirime tıklanınca açılacak intent
         val launchIntent = context.packageManager
             .getLaunchIntentForPackage(context.packageName)
             ?.apply {
@@ -106,10 +102,8 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // 4) Güvenli notificationId
         val notificationId = (System.currentTimeMillis() % 10000).toInt()
 
-        // 5) Bildirim
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_aqualight_soft)
             .setContentTitle(title)

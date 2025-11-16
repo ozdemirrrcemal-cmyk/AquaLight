@@ -58,7 +58,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_wifi"
-            android:tint="@android:color/white"
+            app:tint="@android:color/white"
             android:contentDescription="@string/notifications_permission_wifi_icon_description" />
 
         <TextView
@@ -86,7 +86,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_aquarium_notifications"
-            android:tint="@android:color/white"
+            app:tint="@android:color/white"
             android:contentDescription="@string/notifications_permission_aquarium_icon_description" />
 
         <TextView
@@ -100,7 +100,7 @@
             android:layout_marginStart="12dp" />
     </LinearLayout>
 
-    <!-- Ayarlara git -->
+    <!-- Sabit Settings butonu -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSettings"
         style="@style/Widget.MaterialComponents.Button"
