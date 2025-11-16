@@ -22,6 +22,7 @@ class NotificationsBottomSheet(
     private var _binding: DialogNotificationPermissionBinding? = null
     private val binding get() = _binding!!
 
+    // AppSettingsFragment'in bize vereceği callback
     var onSettingsOpened: (() -> Unit)? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -29,7 +30,9 @@ class NotificationsBottomSheet(
         _binding = DialogNotificationPermissionBinding.bind(view)
 
         with(binding) {
+
             when (type) {
+
                 PermissionType.NOTIFICATION -> {
                     imgNotificationIcon.setImageResource(R.drawable.ic_notification)
                     tvDialogTitle.setText(R.string.notifications_permission_title)
@@ -76,7 +79,10 @@ class NotificationsBottomSheet(
                     PermissionType.WIFI,
                     PermissionType.LOCATION -> openAppSettings()
                 }
+
+                // 🔥 FINAL: Settings açıldığı ANDA callback’i tetikle
                 onSettingsOpened?.invoke()
+
                 dismiss()
             }
         }
@@ -85,6 +91,7 @@ class NotificationsBottomSheet(
     private fun openNotificationSettings() {
         val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
             putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
     }
@@ -93,7 +100,9 @@ class NotificationsBottomSheet(
         val intent = Intent(
             Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
             Uri.fromParts("package", requireContext().packageName, null)
-        )
+        ).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
         startActivity(intent)
     }
 
