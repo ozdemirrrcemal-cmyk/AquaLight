@@ -74,23 +74,14 @@ class UserPreferencesManager private constructor(
         prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
     }
 
-    // 🔹 Bildirim tercihi
+    // 🔹 Bildirim tercihi (proto3 bool default = false)
     val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
-        // İlk kez açılışta hepsi defaultInstance ise varsayılanı kullan
-        if (prefs == UserPreferences.getDefaultInstance()) {
-            DEFAULT_NOTIFICATIONS_ENABLED
-        } else {
-            prefs.notificationsEnabled
-        }
+        prefs.notificationsEnabled
     }
 
     // 🔹 Auto-update tercihi
     val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
-        if (prefs == UserPreferences.getDefaultInstance()) {
-            DEFAULT_AUTO_UPDATE_ENABLED
-        } else {
-            prefs.autoUpdateEnabled
-        }
+        prefs.autoUpdateEnabled
     }
 
     // 🔹 Genel amaçlı update helper
