@@ -11,4 +11,7 @@ message UserPreferences {
   string fullName        = 6;
   string themeMode       = 7;  // "light" / "dark" / "system"
   string languageCode    = 8;  // "tr" / "en" / "de" ...
+
+  bool   notificationsEnabled = 9;  // app içi bildirim tercihi
+  bool   autoUpdateEnabled    = 10; // app içi auto-update tercihi
 }

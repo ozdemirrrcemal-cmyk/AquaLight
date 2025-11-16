@@ -819,5 +819,36 @@
         Chinese language selection radio button
     </string>
 	
+	<!-- 🔔 Notification Channel -->
+    <string name="notification_channel_name">AquaLight Notifications</string>
+    <string name="notification_channel_description">Alerts about Wi-Fi, aquarium status and important events.</string>
+
+    <!-- 🔔 Notifications bottom sheet -->
+    <string name="notifications_permission_icon_description">Notifications permission info icon</string>
+    <string name="notifications_permission_title">Stay informed with smart alerts</string>
+    <string name="notifications_permission_message_info">
+        To keep your aquarium safe, AquaLight needs permission to send important alerts.
+    </string>
+
+    <string name="notifications_permission_message_wifi">Notify me when Wi-Fi connection is lost.</string>
+    <string name="notifications_permission_message_aquarium">Notify me when aquarium status requires attention.</string>
+
+    <string name="notifications_permission_wifi_icon_description">Wi-Fi notifications icon</string>
+    <string name="notifications_permission_aquarium_icon_description">Aquarium notifications icon</string>
+
+    <string name="notifications_permission_button_open_settings">Open notification settings</string>
+
+    <!-- (Opsiyonel) Wifi / Location tipi için -->
+    <string name="wifi_permission_title">Wi-Fi access required</string>
+    <string name="wifi_permission_message_info">
+        To monitor your aquarium remotely, please enable Wi-Fi permissions in settings.
+    </string>
+    <string name="wifi_permission_button_open_settings">Open Wi-Fi settings</string>
+
+    <string name="location_permission_title">Location access required</string>
+    <string name="location_permission_message_info">
+        To detect nearby Wi-Fi and devices, please allow location access in settings.
+    </string>
+    <string name="location_permission_button_open_settings">Open location settings</string>
 
 </resources>

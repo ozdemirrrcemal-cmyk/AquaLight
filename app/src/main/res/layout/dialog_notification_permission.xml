@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottomsheet"
+    android:padding="24dp"
+    android:gravity="center_horizontal">
+
+    <!-- 🔔 Bildirim ikonu -->
+    <ImageView
+        android:id="@+id/imgNotificationIcon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@drawable/ic_notification"
+        android:layout_gravity="center"
+        android:contentDescription="@string/notifications_permission_icon_description" />
+
+    <!-- Başlık -->
+    <TextView
+        android:id="@+id/tvDialogTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/notifications_permission_title"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:fontFamily="@font/poppins_bold"
+        android:gravity="center"
+        android:layout_marginTop="16dp"
+        android:labelFor="@id/tvDialogMessage" />
+
+    <!-- Açıklama -->
+    <TextView
+        android:id="@+id/tvDialogMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/notifications_permission_message_info"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
+        android:fontFamily="@font/inter_regular"
+        android:gravity="center"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Wi-Fi bildirimi -->
+    <LinearLayout
+        android:id="@+id/layoutWifiBlock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="start|center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:id="@+id/imgWifi"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_wifi"
+            android:tint="@android:color/white"
+            android:contentDescription="@string/notifications_permission_wifi_icon_description" />
+
+        <TextView
+            android:id="@+id/tvWifiMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/notifications_permission_message_wifi"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:fontFamily="@font/inter_medium"
+            android:layout_marginStart="12dp" />
+    </LinearLayout>
+
+    <!-- Akvaryum durumu bildirimi -->
+    <LinearLayout
+        android:id="@+id/layoutAquariumBlock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="start|center_vertical"
+        android:layout_marginBottom="12dp">
+
+        <ImageView
+            android:id="@+id/imgAquarium"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_aquarium_notifications"
+            android:tint="@android:color/white"
+            android:contentDescription="@string/notifications_permission_aquarium_icon_description" />
+
+        <TextView
+            android:id="@+id/tvAquariumMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/notifications_permission_message_aquarium"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:fontFamily="@font/inter_medium"
+            android:layout_marginStart="12dp" />
+    </LinearLayout>
+
+    <!-- Ayarlara git -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSettings"
+        style="@style/Widget.MaterialComponents.Button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:paddingVertical="12dp"
+        android:text="@string/notifications_permission_button_open_settings"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        app:backgroundTint="#1E90FF"
+        app:cornerRadius="12dp" />
+</LinearLayout>

@@ -243,7 +243,7 @@
                         android:layout_height="wrap_content">
 
                         <TextView
-                            android:id="@+id/tvLanguageTitle"
+                            android:id="@+id/tvLanguageSummary"
                             android:text="@string/settings_language_title"
                             android:textSize="14sp"
                             android:textColor="@android:color/white"

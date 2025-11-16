@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -14,15 +15,17 @@ class AquaApp : Application() {
 
         val userPrefs = UserPreferencesManager.create(this)
 
-        // Uygulama açılır açılmaz DataStore’dan oku
         val (themeMode, languageCode) = runBlocking {
-            val mode = userPrefs.themeMode.first()        // "light" / "dark" / "system"
-            val lang = userPrefs.languageCode.first()     // "tr" / "en" / "de" / ...
+            val mode = userPrefs.themeMode.first()
+            val lang = userPrefs.languageCode.first()
             mode to lang
         }
 
         applyTheme(themeMode)
         applyLanguage(languageCode)
+
+        // 🔔 Notification channel
+        NotificationHelper.createNotificationChannel(this)
     }
 
     private fun applyTheme(mode: String) {
@@ -34,9 +37,7 @@ class AquaApp : Application() {
     }
 
     private fun applyLanguage(code: String) {
-        // Boşsa UserPreferencesManager içindeki global default’u kullan
         val safeCode = code.ifBlank { UserPreferencesManager.DEFAULT_LANGUAGE_CODE }
-
         val localeList = LocaleListCompat.forLanguageTags(safeCode)
         AppCompatDelegate.setApplicationLocales(localeList)
     }

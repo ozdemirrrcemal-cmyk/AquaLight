@@ -20,9 +20,11 @@ class UserPreferencesManager private constructor(
         @Volatile
         private var INSTANCE: UserPreferencesManager? = null
 
-        // 🔹 Tüm projede kullanacağın default değerler
-        const val DEFAULT_THEME_MODE = "dark"      // "light" istersen burayı değiştir
-        const val DEFAULT_LANGUAGE_CODE = "en"     // istersen "tr" yaparsın
+        // 🔹 Tüm projede sabit kullanacağın default değerler
+        const val DEFAULT_THEME_MODE = "dark"  // istersen "light"
+        const val DEFAULT_LANGUAGE_CODE = "en" // istersen "tr"
+        const val DEFAULT_NOTIFICATIONS_ENABLED = false
+        const val DEFAULT_AUTO_UPDATE_ENABLED = false
 
         fun create(context: Context): UserPreferencesManager {
             return INSTANCE ?: synchronized(this) {
@@ -47,7 +49,6 @@ class UserPreferencesManager private constructor(
     // 🔹 Tüm user prefs akışı
     val userPrefsFlow: Flow<UserPreferences> = dataStore.data
         .catch { e ->
-            // Eğer IO veya serialize hatası olursa default dön
             if (e is IOException) {
                 emit(UserPreferences.getDefaultInstance())
             } else {
@@ -73,12 +74,23 @@ class UserPreferencesManager private constructor(
         prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
     }
 
+    // 🔹 Bildirim tercihi
+    val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
+        // proto3 bool default = false
+        prefs.notificationsEnabled || DEFAULT_NOTIFICATIONS_ENABLED
+    }
+
+    // 🔹 Auto-update tercihi
+    val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
+        prefs.autoUpdateEnabled || DEFAULT_AUTO_UPDATE_ENABLED
+    }
+
     // 🔹 Genel amaçlı update helper
     suspend fun update(transform: (UserPreferences) -> UserPreferences) {
         dataStore.updateData { current -> transform(current) }
     }
 
-    // 🔹 Oturum kaydet (login sonucu gelen token + login durumu)
+    // 🔹 Oturum kaydet
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -88,7 +100,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Kullanıcının kimlik/profil bilgilerini kaydet
+    // 🔹 Profil kaydet
     suspend fun saveProfile(
         email: String,
         username: String?,
@@ -114,7 +126,7 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Logout: sadece oturumu kapat, kullanıcı bilgilerini silme
+    // 🔹 Logout
     suspend fun logout() {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -138,6 +150,24 @@ class UserPreferencesManager private constructor(
         dataStore.updateData { prefs ->
             prefs.toBuilder()
                 .setLanguageCode(code)
+                .build()
+        }
+    }
+
+    // 🔹 Bildirim ayarını güncelle
+    suspend fun updateNotificationsEnabled(enabled: Boolean) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setNotificationsEnabled(enabled)
+                .build()
+        }
+    }
+
+    // 🔹 Auto-update ayarını güncelle
+    suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setAutoUpdateEnabled(enabled)
                 .build()
         }
     }
