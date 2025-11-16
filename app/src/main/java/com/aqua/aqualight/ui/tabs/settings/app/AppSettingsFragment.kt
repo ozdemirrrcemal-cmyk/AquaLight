@@ -23,8 +23,8 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // Programatik set sırasında listener tetiklenmesin diye
-    private var updatingNotificationSwitch = false
+    // Switch'i programatik değiştirirken listener tetiklenmesin diye
+    private var changingNotificationSwitchProgrammatically = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -35,7 +35,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         observeAutoUpdateState()
         setupClicks()
 
-        // ilk açılışta bildirim switch’ini sistem + DataStore’a göre ayarla
+        // ilk açılışta: DataStore + sistem durumuna göre switch’i ayarla
         refreshNotificationSwitchState()
     }
 
@@ -90,7 +90,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
         // 🔔 Notifications toggle
         switchNotifications.setOnCheckedChangeListener { _, isChecked ->
-            if (updatingNotificationSwitch) return@setOnCheckedChangeListener
+            if (changingNotificationSwitchProgrammatically) return@setOnCheckedChangeListener
             handleNotificationToggle(isChecked)
         }
 
@@ -130,20 +130,27 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
 
             val effectiveChecked = appEnabled && hasPermission && systemEnabled
-
-            updatingNotificationSwitch = true
-            binding.switchNotifications.isChecked = effectiveChecked
-            updatingNotificationSwitch = false
+            setNotificationSwitchChecked(effectiveChecked)
         }
     }
 
+    // Switch’i programatik değiştirirken listener'ın tekrar tetiklenmesini önleyen helper
+    private fun setNotificationSwitchChecked(checked: Boolean) {
+        changingNotificationSwitchProgrammatically = true
+        binding.switchNotifications.isChecked = checked
+        changingNotificationSwitchProgrammatically = false
+    }
+
     /**
-     * Eski mantığa benzer davranış:
-     * - Kullanıcı switch'i AÇ derse:
-     *   - İzin yoksa → izin iste / bottom sheet göster ama tercih anında false'a çekme
-     *   - Sistem bildirimi kapalıysa → ayarlara yönlendir ama tercih anında false'a çekme
-     *   - Her şey yolundaysa → notificationsEnabled = true
-     * - Kullanıcı switch'i KAPATIRSA → notificationsEnabled = false
+     * Eski mantığa uygun, sade akış:
+     *
+     * - Kullanıcı switch'i AÇARSA:
+     *   - İzin yok → izin iste / bottom sheet göster, switch tekrar OFF'a dönsün.
+     *   - Sistem bildirimi kapalı → bottom sheet, switch tekrar OFF.
+     *   - Her şey yolundaysa → DataStore = true, switch ON.
+     *
+     * - Kullanıcı switch'i KAPATIRSA:
+     *   → DataStore = false, switch OFF.
      */
     private fun handleNotificationToggle(enable: Boolean) {
         val context = requireContext()
@@ -159,18 +166,15 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                     } else {
                         NotificationHelper.requestPermission(requireActivity())
                     }
-                    // ❗ Burada kullanıcı tercihini DataStore'da değiştirmiyoruz.
-                    // İzin sonucu onRequestPermissionsResult içinde işlenecek.
-                    refreshNotificationSwitchState()
+                    // Kullanıcı sistemsel olarak izin vermeden switch açık KALMASIN:
+                    setNotificationSwitchChecked(false)
                 }
 
                 // Sistem bildirimi kapalı (ama izin var)
                 hasPermission && !systemEnabled -> {
                     showNotificationsBottomSheet()
-                    // ❗ Burada da DataStore'a false yazmıyoruz.
-                    // Kullanıcı sistemden açarsa onResume -> refreshNotificationSwitchState
-                    // ile appEnabled(true) + systemEnabled(true) → switch açılacak.
-                    refreshNotificationSwitchState()
+                    // Yine → sistem kapalıyken switch ON görünmesin
+                    setNotificationSwitchChecked(false)
                 }
 
                 // Her şey yolunda → kullanıcı gerçekten açtı
@@ -178,15 +182,15 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                     viewLifecycleOwner.lifecycleScope.launch {
                         userPrefs.updateNotificationsEnabled(true)
                     }
-                    refreshNotificationSwitchState()
+                    setNotificationSwitchChecked(true)
                 }
             }
         } else {
-            // Kullanıcı app içinden KAPATTI → bu net bir tercih
+            // Kullanıcı app içinden KAPATTI → net tercih
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateNotificationsEnabled(false)
             }
-            refreshNotificationSwitchState()
+            setNotificationSwitchChecked(false)
         }
     }
 
@@ -210,6 +214,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateNotificationsEnabled(granted)
             }
+            // Sistem + DataStore'a göre switch’i tekrar senkronla
             refreshNotificationSwitchState()
         }
     }
