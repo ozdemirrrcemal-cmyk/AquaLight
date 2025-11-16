@@ -149,4 +149,19 @@
     <item name="android:textSize">15sp</item>
 </style>
 
+<!-- ⚙️ Ayarlar ekranı RadioButton stili -->
+<style name="Widget.Aqua.SettingsRadio"
+    parent="Widget.Material3.CompoundButton.RadioButton">
+
+    <!-- Seçili/boş renkler: mevcut tema rengini kullanıyoruz -->
+    <item name="android:buttonTint">?attr/colorPrimary</item>
+
+    <!-- Arkaplanı şeffaf tut -->
+    <item name="android:background">@android:color/transparent</item>
+
+    <!-- Fazla boşluk olmasın diye min boyutları küçült -->
+    <item name="android:minWidth">0dp</item>
+    <item name="android:minHeight">0dp</item>
+</style>
+
 </resources>

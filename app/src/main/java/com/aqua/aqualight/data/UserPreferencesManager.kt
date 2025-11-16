@@ -20,6 +20,10 @@ class UserPreferencesManager private constructor(
         @Volatile
         private var INSTANCE: UserPreferencesManager? = null
 
+        // 🔹 Tüm projede kullanacağın default değerler
+        const val DEFAULT_THEME_MODE = "dark"      // "light" istersen burayı değiştir
+        const val DEFAULT_LANGUAGE_CODE = "en"     // istersen "tr" yaparsın
+
         fun create(context: Context): UserPreferencesManager {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDataStore(context.applicationContext).also { INSTANCE = it }
@@ -57,16 +61,19 @@ class UserPreferencesManager private constructor(
     val email: Flow<String> = userPrefsFlow.map { it.email }
     val username: Flow<String> = userPrefsFlow.map { it.username }
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
-    val fullName: Flow<String> = userPrefsFlow.map { it.fullName }   // 👈 yeni alan
-		// 🔹 Kolay erişim için alt akışlar
-val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
-    prefs.themeMode.ifBlank { "dark" }   // default: light
-		    // 🔹 Dil kodu ("tr", "en" vs.)
-    val languageCode: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.languageCode.ifBlank { "en" }  // istersen "tr" yap
-}
+    val fullName: Flow<String> = userPrefsFlow.map { it.fullName }
 
-    // 🔹 Genel amaçlı update helper (gerekirse kullanırsın)
+    // 🔹 Tema modu ("light" / "dark" / "system")
+    val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
+        prefs.themeMode.ifBlank { DEFAULT_THEME_MODE }
+    }
+
+    // 🔹 Dil kodu ("tr", "en", "de" vs.)
+    val languageCode: Flow<String> = userPrefsFlow.map { prefs ->
+        prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
+    }
+
+    // 🔹 Genel amaçlı update helper
     suspend fun update(transform: (UserPreferences) -> UserPreferences) {
         dataStore.updateData { current -> transform(current) }
     }
@@ -82,8 +89,6 @@ val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
     }
 
     // 🔹 Kullanıcının kimlik/profil bilgilerini kaydet
-    // email ve fullName login ekranından,
-    // username ve photoUrl uygulama içi ekranlardan gelebilir
     suspend fun saveProfile(
         email: String,
         username: String?,
@@ -94,13 +99,13 @@ val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
             prefs.toBuilder()
                 .setEmail(email)
                 .setUsername(username.orEmpty())
-                .setFullName(fullName.orEmpty())           // 👈 fullName kaydı
+                .setFullName(fullName.orEmpty())
                 .setProfilePhotoUrl(photoUrl.orEmpty())
                 .build()
         }
     }
 
-    // 🔹 Sadece profil fotoğrafını güncelle (EditProfileFragment burayı kullanıyor)
+    // 🔹 Sadece profil fotoğrafını güncelle
     suspend fun updateProfilePhoto(photoUrl: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -118,17 +123,17 @@ val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
                 .build()
         }
     }
-	
-	// 🔹 Tema modunu güncelle
-suspend fun updateThemeMode(mode: String) {
-    dataStore.updateData { prefs ->
-        prefs.toBuilder()
-            .setThemeMode(mode)
-            .build()
-    }
-}
 
-// 🔹 Dil güncelle
+    // 🔹 Tema modunu güncelle
+    suspend fun updateThemeMode(mode: String) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setThemeMode(mode)
+                .build()
+        }
+    }
+
+    // 🔹 Dil güncelle
     suspend fun updateLanguage(code: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -137,7 +142,7 @@ suspend fun updateThemeMode(mode: String) {
         }
     }
 
-    // 🔹 Tüm user verisini sil (cihazdan hesabı tamamen kaldırmak istersen)
+    // 🔹 Tüm user verisini sil
     suspend fun clearAllUserData() {
         dataStore.updateData {
             UserPreferences.getDefaultInstance()

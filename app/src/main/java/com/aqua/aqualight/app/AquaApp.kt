@@ -34,10 +34,9 @@ class AquaApp : Application() {
     }
 
     private fun applyLanguage(code: String) {
-        // Boşsa default dil (ör: "en" ya da istersen "tr")
-        val safeCode = code.ifBlank { "en" }
+        // Boşsa UserPreferencesManager içindeki global default’u kullan
+        val safeCode = code.ifBlank { UserPreferencesManager.DEFAULT_LANGUAGE_CODE }
 
-        // Gerekirse burada map’leyebilirsin, şimdilik direkt languageTag kullanıyoruz
         val localeList = LocaleListCompat.forLanguageTags(safeCode)
         AppCompatDelegate.setApplicationLocales(localeList)
     }
