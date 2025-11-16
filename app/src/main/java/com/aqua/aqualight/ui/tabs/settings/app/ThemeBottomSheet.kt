@@ -4,7 +4,6 @@ import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
@@ -18,15 +17,17 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     private var _binding: DialogThemeSelectionBinding? = null
     private val binding get() = _binding!!
 
+    // DataStore tabanlı UserPreferences
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
+    // Kapatıldığında AppSettingsFragment'in özet text'ini güncellemesi için callback
     var onThemeChanged: (() -> Unit)? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = DialogThemeSelectionBinding.bind(view)
 
-        // Mevcut modu okuyup tikleri ayarla
+        // İlk açıldığında mevcut seçili modu tiklerle göster
         refreshChecks()
 
         with(binding) {
@@ -37,43 +38,49 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     }
 
     private fun selectTheme(mode: String) {
-        // 1) DataStore’a kaydet
+        // DataStore yazma + animasyon aynı coroutine içinde
         viewLifecycleOwner.lifecycleScope.launch {
+            // 1) DataStore’a kaydet
             userPrefs.updateThemeMode(mode)
+
+            // 2) Tik ikonlarını güncelle (sheet kapanmadan da doğru görünsün)
+            updateChecks(mode)
+
+            // 3) Root view üzerinde fade animasyonu + tema uygulama
+            val root = requireActivity()
+                .window
+                .decorView
+                .findViewById<View>(android.R.id.content)
+
+            root.animate()
+                .alpha(0f)
+                .setDuration(150)
+                .withEndAction {
+                    applyTheme(mode)
+                    root.animate()
+                        .alpha(1f)
+                        .setDuration(150)
+                        .start()
+                }
+                .start()
+
+            // 4) BottomSheet’i kapat
+            dismiss()
         }
-
-        // 2) Fade animasyonu + temayı uygula
-        val activity = requireActivity() as FragmentActivity
-        val root = activity.window
-            .decorView
-            .findViewById<View>(android.R.id.content)
-
-        root.animate()
-            .alpha(0f)
-            .setDuration(150)
-            .withEndAction {
-                applyTheme(mode)
-                root.animate()
-                    .alpha(1f)
-                    .setDuration(150)
-                    .start()
-            }
-            .start()
-
-        // 3) Sheet’i kapat
-        dismiss()
     }
 
     private fun refreshChecks() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val mode = userPrefs.themeMode.first() // Flow<String> -> "light"/"dark"/"system"
-
-            with(binding) {
-                checkLight.visibility = if (mode == "light") View.VISIBLE else View.GONE
-                checkDark.visibility = if (mode == "dark") View.VISIBLE else View.GONE
-                checkSystem.visibility = if (mode == "system") View.VISIBLE else View.GONE
-            }
+            // DataStore’daki themeMode değerini oku ("light" / "dark" / "system")
+            val mode = userPrefs.themeMode.first()
+            updateChecks(mode)
         }
+    }
+
+    private fun updateChecks(mode: String) = with(binding) {
+        checkLight.visibility = if (mode == "light") View.VISIBLE else View.GONE
+        checkDark.visibility = if (mode == "dark") View.VISIBLE else View.GONE
+        checkSystem.visibility = if (mode == "system") View.VISIBLE else View.GONE
     }
 
     private fun applyTheme(mode: String) {
@@ -86,7 +93,7 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        // AppSettingsFragment özet text’i yenilesin
+        // AppSettingsFragment içinde tvThemeSummary’yi güncellemek için
         onThemeChanged?.invoke()
     }
 
