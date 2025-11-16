@@ -75,8 +75,8 @@
 
         <!-- Sol ikon -->
         <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_marginEnd="12dp"
             android:src="@drawable/ic_theme_dark" />
 
@@ -113,8 +113,8 @@
 
         <!-- Sol ikon -->
         <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_marginEnd="12dp"
             android:src="@drawable/ic_theme_system" />
 

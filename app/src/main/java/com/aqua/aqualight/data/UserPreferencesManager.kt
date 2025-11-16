@@ -61,6 +61,9 @@ class UserPreferencesManager private constructor(
 		// 🔹 Kolay erişim için alt akışlar
 val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
     prefs.themeMode.ifBlank { "dark" }   // default: light
+		    // 🔹 Dil kodu ("tr", "en" vs.)
+    val languageCode: Flow<String> = userPrefsFlow.map { prefs ->
+        prefs.languageCode.ifBlank { "en" }  // istersen "tr" yap
 }
 
     // 🔹 Genel amaçlı update helper (gerekirse kullanırsın)
@@ -124,6 +127,15 @@ suspend fun updateThemeMode(mode: String) {
             .build()
     }
 }
+
+// 🔹 Dil güncelle
+    suspend fun updateLanguage(code: String) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setLanguageCode(code)
+                .build()
+        }
+    }
 
     // 🔹 Tüm user verisini sil (cihazdan hesabı tamamen kaldırmak istersen)
     suspend fun clearAllUserData() {

@@ -93,6 +93,9 @@ dependencies {
 
     // BlurView
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
+	
+	// Country Code
+	implementation "com.github.hbb20:CountryCodePickerProject:v2.3.4"
 
     // Image loading - Coil 3
     implementation "io.coil-kt.coil3:coil-android:3.3.0"

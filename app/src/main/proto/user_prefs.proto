@@ -3,11 +3,12 @@ option java_package = "com.aqua.aqualight.data";
 option java_multiple_files = true;
 
 message UserPreferences {
-  string idToken = 1;
-  string email = 2;
-  string username = 3;
+  string idToken         = 1;
+  string email           = 2;
+  string username        = 3;
   string profilePhotoUrl = 4;
-  bool isLoggedIn = 5;
-  string fullName = 6;
-  string themeMode = 7; // "light", "dark", "system"
+  bool   isLoggedIn      = 5;
+  string fullName        = 6;
+  string themeMode       = 7;  // "light" / "dark" / "system"
+  string languageCode    = 8;  // "tr" / "en" / "de" ...
 }
