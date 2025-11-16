@@ -118,7 +118,6 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     }
 
     /**
-     * Eski `updateNotificationSwitchState`'in DataStore versiyonu:
      * switch = appEnabled && hasPermission && systemEnabled
      */
     private fun refreshNotificationSwitchState() {
@@ -148,16 +147,14 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
      * Eski mantığa bire bir yakın akış:
      *
      * - Kullanıcı switch'i AÇARSA:
-     *   1) İzin yoksa (Android 13+):
-     *      - İlk defa → direkt runtime permission iste
+     *   1) Android 13+ ve POST_NOTIFICATIONS izni yoksa:
+     *      - İlk defa → Fragment'ten runtime permission iste
      *      - Rationale gerekiyorsa → bottom sheet göster (sen ayarlardan aç)
-     *      → Bu adımda DataStore'a dokunmuyoruz, switch anlık kullanıcı tıklamasıyla ON kalabilir;
-     *        izin sonucu onRequestPermissionsResult ile senkronlanır.
+     *      → Bu adımda switch izin netleşene kadar OFF'a geri alınır.
      *
      *   2) İzin var ama sistem bildirimi kapalıysa:
      *      - BottomSheet → bildirim ayarlarına yönlendir
-     *      - DataStore’a dokunmuyoruz. Dönüşte onResume + refresh ile
-     *        systemEnabled’e göre switch güncellenecek.
+     *      - Switch hemen OFF'a geri alınır.
      *
      *   3) Her şey yolundaysa (izin + sistem açık):
      *      - notificationsEnabled = true
@@ -173,37 +170,38 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(context)
 
         if (enable) {
-            when {
-                // Android 13+ ve POST_NOTIFICATIONS izni yok
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPermission -> {
-                    if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                        // Kullanıcı daha önce reddetmiş, açıklama göster
-                        showNotificationsBottomSheet()
-                    } else {
-                        // İlk kez izin iste
-                        NotificationHelper.requestPermission(requireActivity())
-                    }
-                    // ❗ Burada DataStore’a dokunmuyoruz, switch'i de elle geri almıyoruz.
-                    // İzin sonucu onRequestPermissionsResult + refreshNotificationSwitchState ile
-                    // gerçek duruma göre senkronlanacak.
-                }
-
-                // İzin var ama sistem bildirimi kapalı
-                hasPermission && !systemEnabled -> {
-                    // Eski kodda olduğu gibi sadece bottom sheet aç
+            // 1) Android 13+ ve POST_NOTIFICATIONS izni yok
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPermission) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                    // Kullanıcı daha önce reddetmiş, açıklama göster → ayarlara yönlendir
                     showNotificationsBottomSheet()
-                    // DataStore’a dokunma, switch de kullanıcı tıklamasıyla şimdilik ON kalabilir.
-                    // Kullanıcı ayarlardan açmazsa, geri dönünce onResume + refresh ile OFF yapılacak.
+                } else {
+                    // İlk kez izin iste → DİKKAT: Fragment üzerinden iste
+                    requestPermissions(
+                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                        NotificationHelper.REQUEST_CODE_NOTIFICATIONS
+                    )
                 }
 
-                // Her şey yolunda → kullanıcı gerçekten açtı
-                else -> {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        userPrefs.updateNotificationsEnabled(true)
-                    }
-                    setNotificationSwitchChecked(true)
-                }
+                // İzin sonucu netleşene kadar switch'i eski haline (OFF) döndür
+                setNotificationSwitchChecked(false)
+                return
             }
+
+            // 2) İzin var ama sistem bildirimleri kapalı
+            if (hasPermission && !systemEnabled) {
+                // Eski davranışa benzer şekilde, kullanıcı gerçekten açana kadar OFF kalsın
+                setNotificationSwitchChecked(false)
+                showNotificationsBottomSheet()
+                return
+            }
+
+            // 3) Her şey yolunda → kullanıcı gerçekten açtı
+            viewLifecycleOwner.lifecycleScope.launch {
+                userPrefs.updateNotificationsEnabled(true)
+            }
+            setNotificationSwitchChecked(true)
+
         } else {
             // Kullanıcı app içinden KAPATTI → bu net tercih
             viewLifecycleOwner.lifecycleScope.launch {
@@ -218,7 +216,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             .show(parentFragmentManager, "notifications_bottom_sheet")
     }
 
-    // Android 13 izin sonucu (NotificationHelper.requestPermission sonrası)
+    // Android 13 izin sonucu (Fragment.requestPermissions sonrası)
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
