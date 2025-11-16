@@ -190,19 +190,19 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     }
 
     private fun observeLanguageSummary() {
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.languageCode.collectLatest { code ->
-                binding.tvLanguageSubtitle.text = when (code) {
-                    "tr" -> getString(R.string.language_turkish)
-                    "de" -> getString(R.string.language_german)
-                    "fr" -> getString(R.string.language_french)
-                    "ru" -> getString(Rstring.language_russian)
-                    "zh" -> getString(R.string.language_chinese)
-                    else -> getString(R.string.language_english)
-                }
+    viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+        userPrefs.languageCode.collectLatest { code ->
+            binding.tvLanguageSubtitle.text = when (code) {
+                "tr" -> getString(R.string.language_turkish)
+                "de" -> getString(R.string.language_german)
+                "fr" -> getString(R.string.language_french)
+                "ru" -> getString(R.string.language_russian)
+                "zh" -> getString(R.string.language_chinese)
+                else -> getString(R.string.language_english)
             }
         }
     }
+}
 
     private fun observeAutoUpdateState() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
