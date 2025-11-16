@@ -22,7 +22,7 @@
         android:layout_marginBottom="16dp"
         android:labelFor="@id/layoutLight" />
 
-    <!-- Light Tema -->
+    <!-- 🌞 Light Tema -->
     <LinearLayout
         android:id="@+id/layoutLight"
         android:layout_width="match_parent"
@@ -34,6 +34,14 @@
         android:layout_marginBottom="12dp"
         android:contentDescription="@string/theme_selection_light_option_description">
 
+        <!-- Sol ikon -->
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_theme_light" />
+
+        <!-- Metin -->
         <TextView
             android:id="@+id/tvLight"
             android:layout_width="0dp"
@@ -44,16 +52,16 @@
             android:textSize="14sp"
             android:fontFamily="@font/inter_medium" />
 
-        <ImageView
-            android:id="@+id/checkLight"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_check"
-            android:visibility="gone"
-            android:contentDescription="@string/theme_selection_check_icon_description" />
+        <!-- Sağda radio -->
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/radioLight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:clickable="false" />
     </LinearLayout>
 
-    <!-- Dark Tema -->
+    <!-- 🌚 Dark Tema -->
     <LinearLayout
         android:id="@+id/layoutDark"
         android:layout_width="match_parent"
@@ -65,6 +73,14 @@
         android:layout_marginBottom="12dp"
         android:contentDescription="@string/theme_selection_dark_option_description">
 
+        <!-- Sol ikon -->
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_theme_dark" />
+
+        <!-- Metin -->
         <TextView
             android:id="@+id/tvDark"
             android:layout_width="0dp"
@@ -75,16 +91,16 @@
             android:textSize="14sp"
             android:fontFamily="@font/inter_medium" />
 
-        <ImageView
-            android:id="@+id/checkDark"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_check"
-            android:visibility="gone"
-            android:contentDescription="@string/theme_selection_check_icon_description" />
+        <!-- Sağda radio -->
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/radioDark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:clickable="false" />
     </LinearLayout>
 
-    <!-- System Default -->
+    <!-- ⚙️ System Default -->
     <LinearLayout
         android:id="@+id/layoutSystem"
         android:layout_width="match_parent"
@@ -95,6 +111,14 @@
         android:gravity="center_vertical"
         android:contentDescription="@string/theme_selection_system_option_description">
 
+        <!-- Sol ikon -->
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_theme_system" />
+
+        <!-- Metin -->
         <TextView
             android:id="@+id/tvSystem"
             android:layout_width="0dp"
@@ -105,12 +129,12 @@
             android:textSize="14sp"
             android:fontFamily="@font/inter_medium" />
 
-        <ImageView
-            android:id="@+id/checkSystem"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_check"
-            android:visibility="gone"
-            android:contentDescription="@string/theme_selection_check_icon_description" />
+        <!-- Sağda radio -->
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/radioSystem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:clickable="false" />
     </LinearLayout>
 </LinearLayout>

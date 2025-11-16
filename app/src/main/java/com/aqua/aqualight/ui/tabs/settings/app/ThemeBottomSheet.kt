@@ -20,15 +20,15 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     // DataStore tabanlı UserPreferences
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // Kapatıldığında AppSettingsFragment'in özet text'ini güncellemesi için callback
+    // Sheet kapandığında AppSettingsFragment isterse ekstra bir iş yapsın diye callback
     var onThemeChanged: (() -> Unit)? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = DialogThemeSelectionBinding.bind(view)
 
-        // İlk açıldığında mevcut seçili modu tiklerle göster
-        refreshChecks()
+        // İlk açıldığında seçili modu radio'lara yansıt
+        refreshRadios()
 
         with(binding) {
             layoutLight.setOnClickListener { selectTheme("light") }
@@ -38,15 +38,14 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
     }
 
     private fun selectTheme(mode: String) {
-        // DataStore yazma + animasyon aynı coroutine içinde
         viewLifecycleOwner.lifecycleScope.launch {
-            // 1) DataStore’a kaydet
+            // 1) DataStore’a yaz
             userPrefs.updateThemeMode(mode)
 
-            // 2) Tik ikonlarını güncelle (sheet kapanmadan da doğru görünsün)
-            updateChecks(mode)
+            // 2) Radio’yu güncelle (sheet kapanmadan da doğru görünsün)
+            updateRadios(mode)
 
-            // 3) Root view üzerinde fade animasyonu + tema uygulama
+            // 3) Küçük fade animasyonu ile temayı uygula
             val root = requireActivity()
                 .window
                 .decorView
@@ -64,23 +63,23 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
                 }
                 .start()
 
-            // 4) BottomSheet’i kapat
+            // 4) Sheet’i kapat
             dismiss()
         }
     }
 
-    private fun refreshChecks() {
+    private fun refreshRadios() {
         viewLifecycleOwner.lifecycleScope.launch {
             // DataStore’daki themeMode değerini oku ("light" / "dark" / "system")
             val mode = userPrefs.themeMode.first()
-            updateChecks(mode)
+            updateRadios(mode)
         }
     }
 
-    private fun updateChecks(mode: String) = with(binding) {
-        checkLight.visibility = if (mode == "light") View.VISIBLE else View.GONE
-        checkDark.visibility = if (mode == "dark") View.VISIBLE else View.GONE
-        checkSystem.visibility = if (mode == "system") View.VISIBLE else View.GONE
+    private fun updateRadios(mode: String) = with(binding) {
+        radioLight.isChecked = mode == "light"
+        radioDark.isChecked = mode == "dark"
+        radioSystem.isChecked = mode == "system"
     }
 
     private fun applyTheme(mode: String) {
@@ -93,7 +92,6 @@ class ThemeBottomSheet : BottomSheetDialogFragment(R.layout.dialog_theme_selecti
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        // AppSettingsFragment içinde tvThemeSummary’yi güncellemek için
         onThemeChanged?.invoke()
     }
 
