@@ -12,6 +12,9 @@
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="false" />
+		
+		<!-- Android 13+ için bildirim izni -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".app.AquaApp"
