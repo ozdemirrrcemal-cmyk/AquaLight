@@ -54,7 +54,19 @@ object NotificationHelper {
         return NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-    // 🔹 Uygulamanın ayarlarını aç
+    // 🔹 Doğrudan bildirim ayarlarına git
+    fun openNotificationSettings(context: Context) {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            // Bazı eski cihazlar için ekstra key’ler
+            putExtra("app_package", context.packageName)
+            putExtra("app_uid", context.applicationInfo.uid)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    }
+
+    // 🔹 Uygulamanın genel ayarlarını aç (app details)
     fun openAppSettings(context: Context) {
         val intent = Intent(
             Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
