@@ -421,6 +421,24 @@
     <string name="settings_theme_arrow_description">
         Open theme selection screen
     </string>
+	
+	<!-- 🌙 App Settings – Theme summary text (kartın altındaki yazı) -->
+<string name="app_settings_theme_light">Light theme</string>
+<string name="app_settings_theme_dark">Dark theme</string>
+<string name="app_settings_theme_system">Follow system theme</string>
+
+<!-- 🌙 Theme seçimi bottom sheet -->
+<string name="theme_selection_title">Choose theme</string>
+
+<string name="theme_selection_light">Light</string>
+<string name="theme_selection_dark">Dark</string>
+<string name="theme_selection_system_default">System default</string>
+
+<!-- ♿ Açıklamalar (contentDescription) -->
+<string name="theme_selection_light_option_description">Select light theme</string>
+<string name="theme_selection_dark_option_description">Select dark theme</string>
+<string name="theme_selection_system_option_description">Select system default theme</string>
+<string name="theme_selection_check_icon_description">Selected theme indicator icon</string>
 
     <!-- 🌍 Language -->
     <string name="settings_language_section_description">

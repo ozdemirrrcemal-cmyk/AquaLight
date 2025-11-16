@@ -58,6 +58,10 @@ class UserPreferencesManager private constructor(
     val username: Flow<String> = userPrefsFlow.map { it.username }
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
     val fullName: Flow<String> = userPrefsFlow.map { it.fullName }   // 👈 yeni alan
+		// 🔹 Kolay erişim için alt akışlar
+val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
+    prefs.themeMode.ifBlank { "dark" }   // default: light
+}
 
     // 🔹 Genel amaçlı update helper (gerekirse kullanırsın)
     suspend fun update(transform: (UserPreferences) -> UserPreferences) {
@@ -111,6 +115,15 @@ class UserPreferencesManager private constructor(
                 .build()
         }
     }
+	
+	// 🔹 Tema modunu güncelle
+suspend fun updateThemeMode(mode: String) {
+    dataStore.updateData { prefs ->
+        prefs.toBuilder()
+            .setThemeMode(mode)
+            .build()
+    }
+}
 
     // 🔹 Tüm user verisini sil (cihazdan hesabı tamamen kaldırmak istersen)
     suspend fun clearAllUserData() {

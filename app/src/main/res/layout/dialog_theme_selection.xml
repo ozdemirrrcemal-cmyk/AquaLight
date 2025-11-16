@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottomsheet"
+    android:padding="24dp"
+    android:gravity="center_horizontal">
+
+    <!-- 🌙 Tema Başlığı -->
+    <TextView
+        android:id="@+id/tvDialogTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/theme_selection_title"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:fontFamily="@font/poppins_bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        android:labelFor="@id/layoutLight" />
+
+    <!-- Light Tema -->
+    <LinearLayout
+        android:id="@+id/layoutLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="@drawable/bg_bottomsheet_item"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp"
+        android:contentDescription="@string/theme_selection_light_option_description">
+
+        <TextView
+            android:id="@+id/tvLight"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/theme_selection_light"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:fontFamily="@font/inter_medium" />
+
+        <ImageView
+            android:id="@+id/checkLight"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_check"
+            android:visibility="gone"
+            android:contentDescription="@string/theme_selection_check_icon_description" />
+    </LinearLayout>
+
+    <!-- Dark Tema -->
+    <LinearLayout
+        android:id="@+id/layoutDark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="@drawable/bg_bottomsheet_item"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp"
+        android:contentDescription="@string/theme_selection_dark_option_description">
+
+        <TextView
+            android:id="@+id/tvDark"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/theme_selection_dark"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:fontFamily="@font/inter_medium" />
+
+        <ImageView
+            android:id="@+id/checkDark"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_check"
+            android:visibility="gone"
+            android:contentDescription="@string/theme_selection_check_icon_description" />
+    </LinearLayout>
+
+    <!-- System Default -->
+    <LinearLayout
+        android:id="@+id/layoutSystem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="@drawable/bg_bottomsheet_item"
+        android:gravity="center_vertical"
+        android:contentDescription="@string/theme_selection_system_option_description">
+
+        <TextView
+            android:id="@+id/tvSystem"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/theme_selection_system_default"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:fontFamily="@font/inter_medium" />
+
+        <ImageView
+            android:id="@+id/checkSystem"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_check"
+            android:visibility="gone"
+            android:contentDescription="@string/theme_selection_check_icon_description" />
+    </LinearLayout>
+</LinearLayout>

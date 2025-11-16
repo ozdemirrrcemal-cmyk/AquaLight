@@ -352,12 +352,14 @@
                 <!-- Save -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSave"
-                    style="@style/Widget.Aqua.PrimaryButton"
+                    style="@style/Widget.MaterialComponents.Button"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
                     android:text="@string/address_info_save_button"
-                    android:contentDescription="@string/address_info_save_button_desc" />
+                    android:textColor="#FFFFFF"
+                    app:backgroundTint="#1E90FF"
+                    app:cornerRadius="12dp" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
