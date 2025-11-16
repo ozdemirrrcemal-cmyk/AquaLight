@@ -13,6 +13,7 @@ import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
@@ -22,7 +23,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // Bildirim switch’ini programatik set ederken listener tetiklenmesin diye
+    // Programatik set sırasında listener tetiklenmesin diye
     private var updatingNotificationSwitch = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -31,9 +32,17 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
         observeThemeSummary()
         observeLanguageSummary()
-        observeNotificationState()
         observeAutoUpdateState()
         setupClicks()
+
+        // ilk açılışta bildirim switch’ini sistem + DataStore’a göre ayarla
+        refreshNotificationSwitchState()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Ayarlardan geri dönünce sistem durumuna göre switch’i güncelle
+        refreshNotificationSwitchState()
     }
 
     // 🌙 Tema yazısı
@@ -65,17 +74,6 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    // 🔔 Bildirim switch’i
-    private fun observeNotificationState() {
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.notificationsEnabled.collectLatest { enabled ->
-                updatingNotificationSwitch = true
-                binding.switchNotifications.isChecked = enabled
-                updatingNotificationSwitch = false
-            }
-        }
-    }
-
     // 🌐 Auto-update switch’i
     private fun observeAutoUpdateState() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
@@ -96,7 +94,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             handleNotificationToggle(isChecked)
         }
 
-        // 🌐 Auto Update toggle
+        // 🌐 Auto Update toggle (tamamen bağımsız)
         switchAutoUpdate.setOnCheckedChangeListener { _, isChecked ->
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateAutoUpdateEnabled(isChecked)
@@ -119,7 +117,26 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    // Bildirim aç/kapat işlemi
+    /**
+     * Eski `updateNotificationSwitchState`'in DataStore versiyonu:
+     * switch = userPref && hasPermission && systemEnabled
+     */
+    private fun refreshNotificationSwitchState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val ctx = requireContext()
+
+            val appEnabled = userPrefs.notificationsEnabled.first()
+            val hasPermission = NotificationHelper.hasSystemPermission(ctx)
+            val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
+
+            val effectiveChecked = appEnabled && hasPermission && systemEnabled
+
+            updatingNotificationSwitch = true
+            binding.switchNotifications.isChecked = effectiveChecked
+            updatingNotificationSwitch = false
+        }
+    }
+
     private fun handleNotificationToggle(enable: Boolean) {
         val context = requireContext()
         val hasPermission = NotificationHelper.hasSystemPermission(context)
@@ -134,18 +151,28 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                     } else {
                         NotificationHelper.requestPermission(requireActivity())
                     }
+                    // Kullanıcı gerçekten izin verene kadar app tercih = false
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        userPrefs.updateNotificationsEnabled(false)
+                    }
+                    refreshNotificationSwitchState()
                 }
 
-                // Sistem bildirimleri kapalı
+                // Sistem bildirimi kapalı
                 hasPermission && !systemEnabled -> {
                     showNotificationsBottomSheet()
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        userPrefs.updateNotificationsEnabled(false)
+                    }
+                    refreshNotificationSwitchState()
                 }
 
-                // Her şey yolunda → DataStore’a kaydet
+                // Her şey yolunda → kullanıcı gerçekten açtı
                 else -> {
                     viewLifecycleOwner.lifecycleScope.launch {
                         userPrefs.updateNotificationsEnabled(true)
                     }
+                    refreshNotificationSwitchState()
                 }
             }
         } else {
@@ -153,6 +180,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateNotificationsEnabled(false)
             }
+            refreshNotificationSwitchState()
         }
     }
 
@@ -173,16 +201,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             val granted = grantResults.isNotEmpty() &&
                 grantResults[0] == PackageManager.PERMISSION_GRANTED
 
-            if (granted) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    userPrefs.updateNotificationsEnabled(true)
-                }
-            } else {
-                updatingNotificationSwitch = true
-                binding.switchNotifications.isChecked = false
-                updatingNotificationSwitch = false
-                showNotificationsBottomSheet()
+            viewLifecycleOwner.lifecycleScope.launch {
+                userPrefs.updateNotificationsEnabled(granted)
             }
+            refreshNotificationSwitchState()
         }
     }
 

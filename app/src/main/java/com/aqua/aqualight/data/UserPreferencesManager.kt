@@ -20,11 +20,8 @@ class UserPreferencesManager private constructor(
         @Volatile
         private var INSTANCE: UserPreferencesManager? = null
 
-        // 🔹 Tüm projede sabit kullanacağın default değerler
-        const val DEFAULT_THEME_MODE = "dark"  // istersen "light"
-        const val DEFAULT_LANGUAGE_CODE = "en" // istersen "tr"
-        const val DEFAULT_NOTIFICATIONS_ENABLED = false
-        const val DEFAULT_AUTO_UPDATE_ENABLED = false
+        const val DEFAULT_THEME_MODE = "dark"
+        const val DEFAULT_LANGUAGE_CODE = "en"
 
         fun create(context: Context): UserPreferencesManager {
             return INSTANCE ?: synchronized(this) {
@@ -46,7 +43,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Tüm user prefs akışı
     val userPrefsFlow: Flow<UserPreferences> = dataStore.data
         .catch { e ->
             if (e is IOException) {
@@ -56,7 +52,6 @@ class UserPreferencesManager private constructor(
             }
         }
 
-    // 🔹 Kolay erişim için alt akışlar
     val isLoggedIn: Flow<Boolean> = userPrefsFlow.map { it.isLoggedIn }
     val idToken: Flow<String> = userPrefsFlow.map { it.idToken }
     val email: Flow<String> = userPrefsFlow.map { it.email }
@@ -64,32 +59,22 @@ class UserPreferencesManager private constructor(
     val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
     val fullName: Flow<String> = userPrefsFlow.map { it.fullName }
 
-    // 🔹 Tema modu ("light" / "dark" / "system")
     val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
         prefs.themeMode.ifBlank { DEFAULT_THEME_MODE }
     }
 
-    // 🔹 Dil kodu ("tr", "en", "de" vs.)
     val languageCode: Flow<String> = userPrefsFlow.map { prefs ->
         prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
     }
 
-    // 🔹 Bildirim tercihi (proto3 bool default = false)
-    val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
-        prefs.notificationsEnabled
-    }
+    // bool alanlar – proto default: false
+    val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { it.notificationsEnabled }
+    val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { it.autoUpdateEnabled }
 
-    // 🔹 Auto-update tercihi
-    val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
-        prefs.autoUpdateEnabled
-    }
-
-    // 🔹 Genel amaçlı update helper
     suspend fun update(transform: (UserPreferences) -> UserPreferences) {
         dataStore.updateData { current -> transform(current) }
     }
 
-    // 🔹 Oturum kaydet
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -99,7 +84,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Profil kaydet
     suspend fun saveProfile(
         email: String,
         username: String?,
@@ -116,7 +100,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Sadece profil fotoğrafını güncelle
     suspend fun updateProfilePhoto(photoUrl: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -125,7 +108,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Logout
     suspend fun logout() {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -135,7 +117,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Tema modunu güncelle
     suspend fun updateThemeMode(mode: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -144,7 +125,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Dil güncelle
     suspend fun updateLanguage(code: String) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -153,7 +133,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Bildirim ayarını güncelle
     suspend fun updateNotificationsEnabled(enabled: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -162,7 +141,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Auto-update ayarını güncelle
     suspend fun updateAutoUpdateEnabled(enabled: Boolean) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
@@ -171,7 +149,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // 🔹 Tüm user verisini sil
     suspend fun clearAllUserData() {
         dataStore.updateData {
             UserPreferences.getDefaultInstance()
