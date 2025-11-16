@@ -8,7 +8,7 @@
     android:background="@color/background_color"
     tools:context=".ui.tabs.settings.userinfo.UserAddressFragment">
 
-    <!-- 🔹 Üst Bar -->
+    <!-- 🔹 Üst Bar (AYNEN KALDI) -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerContainer"
         android:layout_width="match_parent"
@@ -49,7 +49,7 @@
             app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 🔹 İçerik -->
+    <!-- 🔹 İçerik (ESKİ ADRES FORMU, YENİ STİLLERLE) -->
     <ScrollView
         android:id="@+id/scrollContent"
         android:layout_width="0dp"
@@ -69,86 +69,296 @@
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:paddingTop="16dp"
-            android:paddingBottom="16dp">
+            android:paddingBottom="16dp"
+            android:gravity="center_horizontal">
 
-            <!-- 📝 Adres formu kartı -->
+            <!-- First Name -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardAddressForm"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
                 style="@style/Widget.Aqua.CardStyles">
 
                 <LinearLayout
-                    android:id="@+id/formContainer"
+                    android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:contentDescription="@string/user_address_form_desc">
+                    android:padding="12dp">
 
-                    <!-- Ülke -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/inputLayoutCountry"
-                        style="@style/AuthTextInputLayout"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/address_info_first_name_label"
+                        android:textSize="11sp"
+                        android:textColor="@color/settings_text_secondary"
+                        android:labelFor="@id/etFirstName" />
+
+                    <EditText
+                        android:id="@+id/etFirstName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/user_address_country_hint">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etCountry"
-                            style="@style/AuthEditText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Şehir -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/inputLayoutCity"
-                        style="@style/AuthTextInputLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:hint="@string/user_address_city_hint">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etCity"
-                            style="@style/AuthEditText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Adres satırı -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/inputLayoutAddressLine"
-                        style="@style/AuthTextInputLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:hint="@string/user_address_line_hint">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etAddressLine"
-                            style="@style/AuthEditText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minLines="2"
-                            android:gravity="top"
-                            android:inputType="textMultiLine" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
+                        android:textSize="14sp"
+                        android:textColor="@android:color/white"
+                        android:hint="@string/address_info_first_name_hint"
+                        android:textStyle="bold"
+                        android:background="@null"
+                        android:padding="0dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 💾 Kaydet Butonu -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSaveAddress"
-                style="@style/Widget.Aqua.PrimaryButton"
+            <!-- Last Name -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/user_address_save_button"
-                android:contentDescription="@string/user_address_save_button_desc" />
+                android:layout_marginBottom="2dp"
+                style="@style/Widget.Aqua.CardStyles">
 
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/address_info_last_name_label"
+                        android:textSize="11sp"
+                        android:textColor="@color/settings_text_secondary"
+                        android:labelFor="@id/etLastName" />
+
+                    <EditText
+                        android:id="@+id/etLastName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/white"
+                        android:hint="@string/address_info_last_name_hint"
+                        android:textStyle="bold"
+                        android:background="@null"
+                        android:padding="0dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Country -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
+                style="@style/Widget.Aqua.CardStyles">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/address_info_country_label"
+                        android:textSize="11sp"
+                        android:textColor="@color/settings_text_secondary"
+                        android:labelFor="@id/etCountry" />
+
+                    <AutoCompleteTextView
+                        android:id="@+id/etCountry"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/white"
+                        android:hint="@string/address_info_country_hint"
+                        android:focusable="false"
+                        android:cursorVisible="false"
+                        android:inputType="none"
+                        android:background="@null"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:gravity="start"
+                        android:textAlignment="viewStart"
+                        android:padding="0dp"
+                        android:paddingStart="12dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- City -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
+                style="@style/Widget.Aqua.CardStyles">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/address_info_city_label"
+                        android:textSize="11sp"
+                        android:textColor="@color/settings_text_secondary"
+                        android:labelFor="@id/etCity" />
+
+                    <EditText
+                        android:id="@+id/etCity"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/white"
+                        android:hint="@string/address_info_city_hint"
+                        android:textStyle="bold"
+                        android:background="@null"
+                        android:padding="0dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Address -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
+                style="@style/Widget.Aqua.CardStyles">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/address_info_address_label"
+                        android:textSize="11sp"
+                        android:textColor="@color/settings_text_secondary"
+                        android:labelFor="@id/etAddress" />
+
+                    <EditText
+                        android:id="@+id/etAddress"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/white"
+                        android:hint="@string/address_info_address_hint"
+                        android:textStyle="bold"
+                        android:background="@null"
+                        android:padding="0dp"
+                        android:inputType="textMultiLine"
+                        android:singleLine="false"
+                        android:lines="3"
+                        android:ellipsize="none"
+                        android:scrollHorizontally="false" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Post Code -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
+                style="@style/Widget.Aqua.CardStyles">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/address_info_postcode_label"
+                        android:textSize="11sp"
+                        android:textColor="@color/settings_text_secondary"
+                        android:labelFor="@id/etPostCode" />
+
+                    <EditText
+                        android:id="@+id/etPostCode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/white"
+                        android:hint="@string/address_info_postcode_hint"
+                        android:textStyle="bold"
+                        android:background="@null"
+                        android:padding="0dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Phone Number -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                style="@style/Widget.Aqua.CardStyles">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/address_info_phone_label"
+                        android:textSize="11sp"
+                        android:textColor="@color/settings_text_secondary"
+                        android:labelFor="@id/etPhoneNumber" />
+
+                    <EditText
+                        android:id="@+id/etPhoneNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="phone"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/white"
+                        android:hint="@string/address_info_phone_hint"
+                        android:textStyle="bold"
+                        android:background="@null"
+                        android:padding="0dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:weightSum="2">
+
+                <!-- Cancel -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancel"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/address_info_cancel_button"
+                    android:textColor="@color/settings_text_secondary"
+                    app:strokeColor="@color/settings_text_secondary"
+                    app:strokeWidth="1dp"
+                    app:cornerRadius="12dp"
+                    app:backgroundTint="@android:color/transparent" />
+
+                <!-- Save -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSave"
+                    style="@style/Widget.Aqua.PrimaryButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="@string/address_info_save_button"
+                    android:contentDescription="@string/address_info_save_button_desc" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 

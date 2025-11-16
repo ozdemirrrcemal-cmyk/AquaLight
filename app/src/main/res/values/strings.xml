@@ -701,14 +701,31 @@
         Form that lets the user edit their country, city and address.
     </string>
 
-    <string name="user_address_country_hint">Country</string>
-    <string name="user_address_city_hint">City</string>
-    <string name="user_address_line_hint">Street, building, apartment</string>
+   <!-- 📍 User Address – form labels & hints -->
+<string name="address_info_first_name_label">First name</string>
+<string name="address_info_first_name_hint">Enter your first name</string>
 
-    <string name="user_address_save_button">Save address</string>
-    <string name="user_address_save_button_desc">
-        Button that saves the updated address information.
-    </string>
+<string name="address_info_last_name_label">Last name</string>
+<string name="address_info_last_name_hint">Enter your last name</string>
+
+<string name="address_info_country_label">Country</string>
+<string name="address_info_country_hint">Select your country</string>
+
+<string name="address_info_city_label">City</string>
+<string name="address_info_city_hint">Enter your city</string>
+
+<string name="address_info_address_label">Address</string>
+<string name="address_info_address_hint">Street, building, apartment…</string>
+
+<string name="address_info_postcode_label">Post code</string>
+<string name="address_info_postcode_hint">Enter your post code</string>
+
+<string name="address_info_phone_label">Phone number</string>
+<string name="address_info_phone_hint">Enter your phone number</string>
+
+<string name="address_info_cancel_button">Cancel</string>
+<string name="address_info_save_button">Save address</string>
+<string name="address_info_save_button_desc">Save your address information</string>
 	
 
 </resources>
