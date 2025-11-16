@@ -23,7 +23,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // Switch'i programatik değiştirirken listener tetiklenmesin diye
+    // Programatik set sırasında listener tetiklenmesin diye
     private var changingNotificationSwitchProgrammatically = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -35,13 +35,13 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         observeAutoUpdateState()
         setupClicks()
 
-        // ilk açılışta: DataStore + sistem durumuna göre switch’i ayarla
+        // İlk açılışta: DataStore + sistem durumuna göre switch’i ayarla
         refreshNotificationSwitchState()
     }
 
     override fun onResume() {
         super.onResume()
-        // Ayarlardan geri dönünce sistem durumuna göre switch’i güncelle
+        // Sistem bildirim ayarından dönünce duruma göre switch’i senkronla
         refreshNotificationSwitchState()
     }
 
@@ -119,13 +119,16 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     /**
      * Eski `updateNotificationSwitchState`'in DataStore versiyonu:
-     * switch = userPref && hasPermission && systemEnabled
+     * switch = appEnabled && hasPermission && systemEnabled
      */
     private fun refreshNotificationSwitchState() {
         viewLifecycleOwner.lifecycleScope.launch {
             val ctx = requireContext()
 
+            // DataStore’daki app içi tercih
             val appEnabled = userPrefs.notificationsEnabled.first()
+
+            // Sistem durumu
             val hasPermission = NotificationHelper.hasSystemPermission(ctx)
             val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
 
@@ -134,7 +137,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    // Switch’i programatik değiştirirken listener'ın tekrar tetiklenmesini önleyen helper
+    // Switch’i programatik değiştirirken listener tetiklenmesin diye helper
     private fun setNotificationSwitchChecked(checked: Boolean) {
         changingNotificationSwitchProgrammatically = true
         binding.switchNotifications.isChecked = checked
@@ -142,15 +145,27 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     }
 
     /**
-     * Eski mantığa uygun, sade akış:
+     * Eski mantığa bire bir yakın akış:
      *
      * - Kullanıcı switch'i AÇARSA:
-     *   - İzin yok → izin iste / bottom sheet göster, switch tekrar OFF'a dönsün.
-     *   - Sistem bildirimi kapalı → bottom sheet, switch tekrar OFF.
-     *   - Her şey yolundaysa → DataStore = true, switch ON.
+     *   1) İzin yoksa (Android 13+):
+     *      - İlk defa → direkt runtime permission iste
+     *      - Rationale gerekiyorsa → bottom sheet göster (sen ayarlardan aç)
+     *      → Bu adımda DataStore'a dokunmuyoruz, switch anlık kullanıcı tıklamasıyla ON kalabilir;
+     *        izin sonucu onRequestPermissionsResult ile senkronlanır.
+     *
+     *   2) İzin var ama sistem bildirimi kapalıysa:
+     *      - BottomSheet → bildirim ayarlarına yönlendir
+     *      - DataStore’a dokunmuyoruz. Dönüşte onResume + refresh ile
+     *        systemEnabled’e göre switch güncellenecek.
+     *
+     *   3) Her şey yolundaysa (izin + sistem açık):
+     *      - notificationsEnabled = true
+     *      - switch = ON
      *
      * - Kullanıcı switch'i KAPATIRSA:
-     *   → DataStore = false, switch OFF.
+     *   - notificationsEnabled = false
+     *   - switch = OFF
      */
     private fun handleNotificationToggle(enable: Boolean) {
         val context = requireContext()
@@ -162,19 +177,23 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 // Android 13+ ve POST_NOTIFICATIONS izni yok
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPermission -> {
                     if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                        // Kullanıcı daha önce reddetmiş, açıklama göster
                         showNotificationsBottomSheet()
                     } else {
+                        // İlk kez izin iste
                         NotificationHelper.requestPermission(requireActivity())
                     }
-                    // Kullanıcı sistemsel olarak izin vermeden switch açık KALMASIN:
-                    setNotificationSwitchChecked(false)
+                    // ❗ Burada DataStore’a dokunmuyoruz, switch'i de elle geri almıyoruz.
+                    // İzin sonucu onRequestPermissionsResult + refreshNotificationSwitchState ile
+                    // gerçek duruma göre senkronlanacak.
                 }
 
-                // Sistem bildirimi kapalı (ama izin var)
+                // İzin var ama sistem bildirimi kapalı
                 hasPermission && !systemEnabled -> {
+                    // Eski kodda olduğu gibi sadece bottom sheet aç
                     showNotificationsBottomSheet()
-                    // Yine → sistem kapalıyken switch ON görünmesin
-                    setNotificationSwitchChecked(false)
+                    // DataStore’a dokunma, switch de kullanıcı tıklamasıyla şimdilik ON kalabilir.
+                    // Kullanıcı ayarlardan açmazsa, geri dönünce onResume + refresh ile OFF yapılacak.
                 }
 
                 // Her şey yolunda → kullanıcı gerçekten açtı
@@ -186,7 +205,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 }
             }
         } else {
-            // Kullanıcı app içinden KAPATTI → net tercih
+            // Kullanıcı app içinden KAPATTI → bu net tercih
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateNotificationsEnabled(false)
             }
@@ -212,9 +231,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 grantResults[0] == PackageManager.PERMISSION_GRANTED
 
             viewLifecycleOwner.lifecycleScope.launch {
+                // Eski mantık: izin verildiyse otomatik aç kabul et
                 userPrefs.updateNotificationsEnabled(granted)
             }
-            // Sistem + DataStore'a göre switch’i tekrar senkronla
+            // Sistem + DataStore’a göre switch’i tekrar senkronla
             refreshNotificationSwitchState()
         }
     }
