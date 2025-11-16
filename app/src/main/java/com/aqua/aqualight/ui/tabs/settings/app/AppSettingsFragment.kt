@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -23,8 +24,27 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // Switch programatik değişirken listener tetiklenmesin
     private var changingNotificationSwitchProgrammatically = false
+
+    /**
+     * ✔ Android 13+ izin akışı için garantili launcher
+     * ✔ Tüm cihazlarda çalışır
+     * ✔ Fragment'a döner (onRequestPermissionsResult kullanılmaz)
+     */
+    private val notificationPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+
+            // Kullanıcı izin verdi/vermedi → net sonuç burada
+            viewLifecycleOwner.lifecycleScope.launch {
+                userPrefs.updateNotificationsEnabled(granted)
+            }
+
+            // Switch'i anında doğru duruma getir
+            refreshNotificationSwitchState()
+        }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -40,10 +60,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     override fun onResume() {
         super.onResume()
-        refreshNotificationSwitchState()   // Settings ekranından dönünce tetiklenir
+        refreshNotificationSwitchState()
     }
 
-    // 🔥 FINAL: Switch’in gerçek sistem + user pref değerine göre ayarlanması
+    // 🔥 Sistem + DataStore → switch durumu
     private fun refreshNotificationSwitchState() {
         viewLifecycleOwner.lifecycleScope.launch {
             val ctx = requireContext()
@@ -58,16 +78,17 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    // Switch programatik değişimi helper
-    private fun setNotificationSwitchChecked(checked: Boolean) {
+    private fun setNotificationSwitchChecked(value: Boolean) {
         changingNotificationSwitchProgrammatically = true
-        binding.switchNotifications.isChecked = checked
+        binding.switchNotifications.isChecked = value
         changingNotificationSwitchProgrammatically = false
     }
 
     private fun setupClicks() = with(binding) {
 
-        btnBack.setOnClickListener { findNavController().popBackStack() }
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
 
         switchNotifications.setOnCheckedChangeListener { _, isChecked ->
             if (!changingNotificationSwitchProgrammatically) {
@@ -75,9 +96,9 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             }
         }
 
-        switchAutoUpdate.setOnCheckedChangeListener { _, isChecked ->
+        switchAutoUpdate.setOnCheckedChangeListener { _, enabled ->
             viewLifecycleOwner.lifecycleScope.launch {
-                userPrefs.updateAutoUpdateEnabled(isChecked)
+                userPrefs.updateAutoUpdateEnabled(enabled)
             }
         }
 
@@ -95,12 +116,14 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     }
 
     /**
-     * 🔥 FINAL – Eski davranış ile %100 aynı çalışan akış:
+     * ✔ Android 13+ izin akışı
+     * ✔ Sistem bildirimleri kapalı → bottomsheet + switch geri OFF
+     * ✔ Eski davranışla birebir aynı
      */
     private fun handleNotificationToggle(enable: Boolean) {
-        val ctx = requireContext()
-        val hasPermission = NotificationHelper.hasSystemPermission(ctx)
-        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
+        val context = requireContext()
+        val hasPermission = NotificationHelper.hasSystemPermission(context)
+        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(context)
 
         if (enable) {
 
@@ -108,17 +131,13 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPermission) {
 
                 if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                    // Daha önce reddedilmiş → bottomsheet
                     openNotificationSheet()
                 } else {
-                    // İlk kez izin iste
-                    requestPermissions(
-                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                        NotificationHelper.REQUEST_CODE_NOTIFICATIONS
-                    )
+                    // 🔥 Guaranteed: izin sonucu launcher ile net döner
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
 
-                // İzin sonucu netleşene kadar switch OFF kalsın
+                // İzin netleşene kadar kullanıcıya switch on gösterme
                 setNotificationSwitchChecked(false)
                 return
             }
@@ -130,7 +149,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 return
             }
 
-            // 3) Her şey tamam → switch gerçekten AÇIK
+            // 3) Her şey tamam → gerçekten aç
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateNotificationsEnabled(true)
             }
@@ -138,54 +157,34 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             return
         }
 
-        // Kullanıcı kapattı
+        // Kullanıcı kapatıyor
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.updateNotificationsEnabled(false)
         }
         setNotificationSwitchChecked(false)
     }
 
-    // 🔥 FINAL – Settings’den dönünce switch'i ANINDA güncelleyen sistem
+    // 🔥 Settings'e gidildiği anda switch güncelleniyor (lifecycle beklenmez)
     private fun openNotificationSheet() {
         val sheet = NotificationsBottomSheet(NotificationsBottomSheet.PermissionType.NOTIFICATION)
 
         sheet.onSettingsOpened = {
-            // Kullanıcı ayarlara gider gitmez → switch senkronlanır
+            // Kullanıcı ayarlara gider gitmez switch senkron
             refreshNotificationSwitchState()
         }
 
         sheet.show(parentFragmentManager, "notifications_bottom_sheet")
     }
 
-    // Android 13 izin sonucu
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if (requestCode == NotificationHelper.REQUEST_CODE_NOTIFICATIONS) {
-            val granted = grantResults.isNotEmpty() &&
-                    grantResults[0] == PackageManager.PERMISSION_GRANTED
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                userPrefs.updateNotificationsEnabled(granted)
-            }
-
-            refreshNotificationSwitchState()
-        }
-    }
 
     private fun observeThemeSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             userPrefs.themeMode.collectLatest { mode ->
-                binding.tvThemeSummary.text =
-                    when (mode) {
-                        "dark" -> getString(R.string.app_settings_theme_dark)
-                        "system" -> getString(R.string.app_settings_theme_system)
-                        else -> getString(R.string.app_settings_theme_light)
-                    }
+                binding.tvThemeSummary.text = when (mode) {
+                    "dark" -> getString(R.string.app_settings_theme_dark)
+                    "system" -> getString(R.string.app_settings_theme_system)
+                    else -> getString(R.string.app_settings_theme_light)
+                }
             }
         }
     }
@@ -193,15 +192,14 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     private fun observeLanguageSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             userPrefs.languageCode.collectLatest { code ->
-                binding.tvLanguageSubtitle.text =
-                    when (code) {
-                        "tr" -> getString(R.string.language_turkish)
-                        "de" -> getString(R.string.language_german)
-                        "fr" -> getString(R.string.language_french)
-                        "ru" -> getString(R.string.language_russian)
-                        "zh" -> getString(R.string.language_chinese)
-                        else -> getString(R.string.language_english)
-                    }
+                binding.tvLanguageSubtitle.text = when (code) {
+                    "tr" -> getString(R.string.language_turkish)
+                    "de" -> getString(R.string.language_german)
+                    "fr" -> getString(R.string.language_french)
+                    "ru" -> getString(Rstring.language_russian)
+                    "zh" -> getString(R.string.language_chinese)
+                    else -> getString(R.string.language_english)
+                }
             }
         }
     }
