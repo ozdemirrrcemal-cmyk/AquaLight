@@ -14,6 +14,7 @@ import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
@@ -22,7 +23,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    // Switch’i programatik set ederken listener’ın tetiklenmemesi için
+    // Notification switch'i programatik set ederken listener tetiklenmesin diye
     private var updatingNotificationSwitch = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -31,12 +32,11 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
         observeThemeSummary()
         observeLanguageSummary()
-        observeNotificationState()
-        observeAutoUpdateState()
+        initSwitchStatesOnce()
         setupClicks()
     }
 
-    // 🌙 Tema yazısı
+    // 🌙 Tema yazısı (Flow ile)
     private fun observeThemeSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             userPrefs.themeMode.collectLatest { mode ->
@@ -49,7 +49,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    // 🌍 Dil yazısı
+    // 🌍 Dil yazısı (Flow ile)
     private fun observeLanguageSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             userPrefs.languageCode.collectLatest { code ->
@@ -65,23 +65,21 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    // 🔔 Bildirim switch’i
-    private fun observeNotificationState() {
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.notificationsEnabled.collectLatest { enabled ->
-                updatingNotificationSwitch = true
-                binding.switchNotifications.isChecked = enabled
-                updatingNotificationSwitch = false
-            }
-        }
-    }
+    /**
+     * 🔹 Notification & Auto-update switch’lerini sadece AÇILIŞTA
+     * bir kere DataStore’dan okuyup set ediyoruz.
+     * Sonra akışı dinlemiyoruz; bu ekran için yeterli.
+     */
+    private fun initSwitchStatesOnce() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val notifEnabled = userPrefs.notificationsEnabled.first()
+            val autoEnabled = userPrefs.autoUpdateEnabled.first()
 
-    // 🌐 Auto-update switch’i
-    private fun observeAutoUpdateState() {
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.autoUpdateEnabled.collectLatest { enabled ->
-                binding.switchAutoUpdate.isChecked = enabled
-            }
+            updatingNotificationSwitch = true
+            binding.switchNotifications.isChecked = notifEnabled
+            updatingNotificationSwitch = false
+
+            binding.switchAutoUpdate.isChecked = autoEnabled
         }
     }
 
@@ -96,7 +94,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             handleNotificationToggle(isChecked)
         }
 
-        // 🌐 Auto Update toggle
+        // 🌐 Auto Update toggle — sadece DataStore’a yaz
         switchAutoUpdate.setOnCheckedChangeListener { _, isChecked ->
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateAutoUpdateEnabled(isChecked)
@@ -119,7 +117,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    // Eski handleNotificationToggle’ın DataStore + yeni helper’a uyarlanmış hali
+    // 🔔 Notification toggle mantığı
     private fun handleNotificationToggle(enable: Boolean) {
         val context = requireContext()
         val hasPermission = NotificationHelper.hasSystemPermission(context)
@@ -136,7 +134,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                     }
                 }
 
-                // Sistem bildirimi kapalı
+                // Sistem bildirimleri kapalı
                 hasPermission && !systemEnabled -> {
                     showNotificationsBottomSheet()
                 }
@@ -161,7 +159,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             .show(parentFragmentManager, "notifications_bottom_sheet")
     }
 
-    // Android 13 izin sonucu (NotificationHelper.requestPermission sonrası)
+    // Android 13 izin sonucu
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
