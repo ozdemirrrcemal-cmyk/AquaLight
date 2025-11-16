@@ -137,6 +137,14 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
+    /**
+     * Eski mantığa benzer davranış:
+     * - Kullanıcı switch'i AÇ derse:
+     *   - İzin yoksa → izin iste / bottom sheet göster ama tercih anında false'a çekme
+     *   - Sistem bildirimi kapalıysa → ayarlara yönlendir ama tercih anında false'a çekme
+     *   - Her şey yolundaysa → notificationsEnabled = true
+     * - Kullanıcı switch'i KAPATIRSA → notificationsEnabled = false
+     */
     private fun handleNotificationToggle(enable: Boolean) {
         val context = requireContext()
         val hasPermission = NotificationHelper.hasSystemPermission(context)
@@ -144,26 +152,24 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
         if (enable) {
             when {
-                // Android 13+ ve izin yok
+                // Android 13+ ve POST_NOTIFICATIONS izni yok
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPermission -> {
                     if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
                         showNotificationsBottomSheet()
                     } else {
                         NotificationHelper.requestPermission(requireActivity())
                     }
-                    // Kullanıcı gerçekten izin verene kadar app tercih = false
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        userPrefs.updateNotificationsEnabled(false)
-                    }
+                    // ❗ Burada kullanıcı tercihini DataStore'da değiştirmiyoruz.
+                    // İzin sonucu onRequestPermissionsResult içinde işlenecek.
                     refreshNotificationSwitchState()
                 }
 
-                // Sistem bildirimi kapalı
+                // Sistem bildirimi kapalı (ama izin var)
                 hasPermission && !systemEnabled -> {
                     showNotificationsBottomSheet()
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        userPrefs.updateNotificationsEnabled(false)
-                    }
+                    // ❗ Burada da DataStore'a false yazmıyoruz.
+                    // Kullanıcı sistemden açarsa onResume -> refreshNotificationSwitchState
+                    // ile appEnabled(true) + systemEnabled(true) → switch açılacak.
                     refreshNotificationSwitchState()
                 }
 
@@ -176,7 +182,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
                 }
             }
         } else {
-            // Kullanıcı app içinden kapattı
+            // Kullanıcı app içinden KAPATTI → bu net bir tercih
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateNotificationsEnabled(false)
             }
