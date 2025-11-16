@@ -76,13 +76,21 @@ class UserPreferencesManager private constructor(
 
     // 🔹 Bildirim tercihi
     val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
-        // proto3 bool default = false
-        prefs.notificationsEnabled || DEFAULT_NOTIFICATIONS_ENABLED
+        // İlk kez açılışta hepsi defaultInstance ise varsayılanı kullan
+        if (prefs == UserPreferences.getDefaultInstance()) {
+            DEFAULT_NOTIFICATIONS_ENABLED
+        } else {
+            prefs.notificationsEnabled
+        }
     }
 
     // 🔹 Auto-update tercihi
     val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { prefs ->
-        prefs.autoUpdateEnabled || DEFAULT_AUTO_UPDATE_ENABLED
+        if (prefs == UserPreferences.getDefaultInstance()) {
+            DEFAULT_AUTO_UPDATE_ENABLED
+        } else {
+            prefs.autoUpdateEnabled
+        }
     }
 
     // 🔹 Genel amaçlı update helper
