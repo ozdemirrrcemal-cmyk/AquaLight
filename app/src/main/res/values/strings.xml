@@ -241,25 +241,17 @@
         Manage security options for your account
     </string>
 
-        <!-- Logout -->
-    <string name="logout_title">Logout</string>
-    <string name="logout_message">Are you sure you want to log out of your account?</string>
+    <!-- Logout -->
+    <string name="account_settings_logout">Log out</string>
+    <string name="account_settings_logout_desc">
+        Sign out of your AquaLight account
+    </string>
 
-    <!-- Delete Account -->
-    <string name="delete_account_title">Delete Account</string>
-    <string name="delete_account_message">Are you sure you want to permanently delete your account? This action cannot be undone.</string>
-
-    <!-- Delete Account Fail -->
-    <string name="account_delete_failed">Account deletion failed</string>
-
-    <!-- Dialog Buttons -->
-    <string name="confirm">Confirm</string>
-    <string name="cancel">Cancel</string>
-    <string name="ok">OK</string>
-
-    <!-- Accessibility -->
-    <string name="dialog_icon_desc">Dialog icon</string>
-
+    <!-- Delete account -->
+    <string name="account_settings_delete_account">Delete account</string>
+    <string name="account_settings_delete_account_desc">
+        Permanently delete your account and all related data
+    </string>
 	
 	<!-- 🧩 Settings detail screens: User Info -->
     <string name="user_info_title">User information</string>
