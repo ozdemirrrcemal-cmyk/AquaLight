@@ -38,10 +38,10 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 🔙 Geri
+        // 🔙 Back
         binding.btnBack.setOnClickListener { findNavController().popBackStack() }
 
-        // 🟦 Ayar satırları
+        // 🟦 Settings rows
         binding.rowChangePassword.setOnClickListener {
             findNavController().navigate(R.id.action_logoutFragment_to_changePasswordFragment)
         }
@@ -54,28 +54,26 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
             findNavController().navigate(R.id.action_logoutFragment_to_securitySettingsFragment)
         }
 
-        // 🚪 Çıkış Yap
+        // 🚪 Logout
         binding.btnLogout.setOnClickListener {
             showLogoutDialog()
         }
 
-        // 🗑 Hesabı Sil
+        // 🗑 Delete Account
         binding.btnDeleteAccount.setOnClickListener {
             showDeleteAccountDialog()
         }
     }
 
-    /** -----------------------------
-     *  🔹 LOGOUT
-     *  Sadece oturum kapatır
-     *  Tema/dil ayarları silinmez
-     *  ----------------------------- */
+    /** ---------------------------------------------------------
+     *  🔹 LOGOUT — confirmation dialog (WARNING icon)
+     * --------------------------------------------------------- */
     private fun showLogoutDialog() {
         DialogManager.showConfirmDialog(
-            requireContext(),
-            DialogType.WARNING,
-            title = getString(R.string.logout_title),
-            message = getString(R.string.logout_message),
+            context = requireContext(),
+            type = DialogType.WARNING, // ⚠️ Yellow warning icon
+            title = "Logout",
+            message = "Are you sure you want to log out of your account?",
             onConfirm = { performLogout() }
         )
     }
@@ -84,23 +82,21 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
         auth.signOut()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.logout() // ⬅ sadece oturum verisini siler
+            userPrefs.logout() // Only session data is cleared
 
             navigateToLogin()
         }
     }
 
-    /** -----------------------------
-     *  🔥 HESABI TAMAMEN SİL
-     *  Firebase hesabı silinir
-     *  Tüm DataStore sıfırlanır
-     *  ----------------------------- */
+    /** ---------------------------------------------------------
+     *  🔥 DELETE ACCOUNT — confirmation dialog (ERROR icon)
+     * --------------------------------------------------------- */
     private fun showDeleteAccountDialog() {
         DialogManager.showConfirmDialog(
-            requireContext(),
-            DialogType.ERROR,
-            title = getString(R.string.delete_account_title),
-            message = getString(R.string.delete_account_message),
+            context = requireContext(),
+            type = DialogType.ERROR, // ❌ Red danger icon
+            title = "Delete Account",
+            message = "Are you sure you want to permanently delete your account?\nThis action cannot be undone.",
             onConfirm = { performDeleteAccount() }
         )
     }
@@ -115,23 +111,23 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
 
             if (task.isSuccessful) {
                 viewLifecycleOwner.lifecycleScope.launch {
-                    userPrefs.clearAllUserData() // ⬅ TÜM pref sıfırlanır
+                    userPrefs.clearAllUserData() // Fully reset all DataStore values
                     navigateToLogin()
                 }
             } else {
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
-                    title = getString(R.string.account_delete_failed),
-                    message = task.exception?.localizedMessage ?: ""
+                    title = "Account Deletion Failed",
+                    message = task.exception?.localizedMessage ?: "Unknown error occurred."
                 )
             }
         }
     }
 
-    /** -----------------------------
-     *  🔄 Giriş ekranına yönlendirme
-     *  ----------------------------- */
+    /** ---------------------------------------------------------
+     *  🔄 Navigation to Login Screen
+     * --------------------------------------------------------- */
     private fun navigateToLogin() {
         findNavController().navigate(
             R.id.action_logoutFragment_to_loginFragment,
