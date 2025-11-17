@@ -16,6 +16,7 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.NavHostFragment
 
 class LogoutFragment : Fragment(R.layout.fragment_logout) {
 
@@ -128,14 +129,19 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
     /** ---------------------------------------------------------
      *  🔄 Navigation to Login Screen
      * --------------------------------------------------------- */
-    private fun navigateToLogin() {
-        findNavController().navigate(
-            R.id.action_logoutFragment_to_loginFragment,
-            null,
-            navOptions {
-                popUpTo(R.id.nav_app) { inclusive = true }
-            }
-        )
+        private fun navigateToLogin() {
+        // MainActivity'deki root NavHost (R.id.nav_host) üzerinden git
+        val rootNav = (requireActivity().supportFragmentManager
+            .findFragmentById(R.id.nav_host) as NavHostFragment).navController
+
+        val opts = navOptions {
+            // app graph'i temizle
+            popUpTo(R.id.nav_app) { inclusive = true }
+            launchSingleTop = true
+        }
+
+        // Auth container'a dön → bunun startDestination'ı zaten loginFragment
+        rootNav.navigate(R.id.authContainerFragment, null, opts)
     }
 
     override fun onDestroyView() {
