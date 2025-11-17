@@ -50,10 +50,11 @@
             android:layout_height="wrap_content" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnConfirm"
-            style="@style/Widget.Material3.Button"
-            android:text="@string/confirm"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+    android:id="@+id/btnConfirm"
+    style="@style/Widget.Material3.Button"
+    android:text="@string/confirm"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:backgroundTint="@color/aqua_button_red"/>
     </LinearLayout>
 </LinearLayout>
