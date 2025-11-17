@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.settings.logout
 
 import android.os.Bundle
+import android.util.Patterns
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -29,31 +30,20 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
         _binding = FragmentChangeEmailBinding.bind(view)
 
         binding.btnBack.setOnClickListener { findNavController().popBackStack() }
-
-        binding.btnSaveEmail.setOnClickListener {
-            attemptEmailChange()
-        }
+        binding.btnSaveEmail.setOnClickListener { attemptEmailChange() }
     }
 
-    /** -------------------------------
-     *  EMAIL CHANGE FLOW
-     * ------------------------------- */
+    /** ---------------------------------------------------------
+     *        STEP 0 — VALIDATION + GOOGLE LOGIN BLOCK
+     * --------------------------------------------------------- */
     private fun attemptEmailChange() {
         val currentEmail = binding.etCurrentEmail.text.toString().trim()
         val newEmail = binding.etNewEmail.text.toString().trim()
         val password = binding.etPassword.text.toString().trim()
 
-        if (currentEmail.isEmpty() || newEmail.isEmpty() || password.isEmpty()) {
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.WARNING,
-                title = "Missing Information",
-                message = "Please fill in all fields."
-            )
-            return
-        }
-
         val user = auth.currentUser
+
+        // Safety
         if (user == null) {
             DialogManager.showInfoDialog(
                 requireContext(),
@@ -64,25 +54,56 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
             return
         }
 
-        if (currentEmail != user.email) {
+        // ❌ GOOGLE LOGIN BLOCK
+        val providerId = user.providerData.firstOrNull()?.providerId
+        if (providerId == "google.com") {
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.WARNING,
-                title = "Old Email Incorrect",
-                message = "The email you entered does not match your current email."
+                title = "Cannot Change Email",
+                message = "Email addresses of Google accounts cannot be changed inside the app."
             )
             return
         }
 
-        reauthenticateAndUpdateEmail(user.email!!, password, newEmail)
+        // Inline input errors reset
+        binding.inputLayoutCurrentEmail.error = null
+        binding.inputLayoutNewEmail.error = null
+        binding.inputLayoutPassword.error = null
+
+        // Empty fields?
+        if (currentEmail.isEmpty()) {
+            binding.inputLayoutCurrentEmail.error = "Enter your current email."
+            return
+        }
+        if (newEmail.isEmpty()) {
+            binding.inputLayoutNewEmail.error = "Enter your new email."
+            return
+        }
+        if (password.isEmpty()) {
+            binding.inputLayoutPassword.error = "Enter your password."
+            return
+        }
+
+        // Email format check
+        if (!Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
+            binding.inputLayoutNewEmail.error = "Invalid email format."
+            return
+        }
+
+        // Current email mismatch
+        if (currentEmail != user.email) {
+            binding.inputLayoutCurrentEmail.error = "Current email does not match your account."
+            return
+        }
+
+        reauthenticateAndUpdateEmail(currentEmail, password, newEmail)
     }
 
-    /** STEP 1 — Reauthenticate */
-    private fun reauthenticateAndUpdateEmail(
-        oldEmail: String,
-        password: String,
-        newEmail: String
-    ) {
+    /** ---------------------------------------------------------
+     *              STEP 1 — REAUTHENTICATION
+     * --------------------------------------------------------- */
+    private fun reauthenticateAndUpdateEmail(oldEmail: String, password: String, newEmail: String) {
         val user = auth.currentUser ?: return
 
         baseActivity?.showLoading(true)
@@ -95,22 +116,19 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
             }
             .addOnFailureListener {
                 baseActivity?.showLoading(false)
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.ERROR,
-                    title = "Authentication Failed",
-                    message = it.localizedMessage ?: "Reauthentication failed."
-                )
+                binding.inputLayoutPassword.error = "Incorrect password."
             }
     }
 
-    /** STEP 2 — Update Email */
+    /** ---------------------------------------------------------
+     *              STEP 2 — FIREBASE EMAIL UPDATE
+     * --------------------------------------------------------- */
     private fun updateEmail(newEmail: String) {
         val user = auth.currentUser ?: return
 
         user.updateEmail(newEmail)
             .addOnSuccessListener {
-                updateLocalProfile(newEmail)
+                sendVerificationEmail(newEmail)
             }
             .addOnFailureListener {
                 baseActivity?.showLoading(false)
@@ -118,12 +136,26 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
                     requireContext(),
                     DialogType.ERROR,
                     title = "Email Update Failed",
-                    message = it.localizedMessage ?: ""
+                    message = it.localizedMessage ?: "Unknown error."
                 )
             }
     }
 
-    /** STEP 3 — Update Local DataStore */
+    /** ---------------------------------------------------------
+     *      STEP 3 — SEND VERIFICATION TO NEW EMAIL
+     * --------------------------------------------------------- */
+    private fun sendVerificationEmail(newEmail: String) {
+        val user = auth.currentUser ?: return
+
+        user.sendEmailVerification()
+            .addOnCompleteListener {
+                updateLocalProfile(newEmail)
+            }
+    }
+
+    /** ---------------------------------------------------------
+     *      STEP 4 — UPDATE LOCAL DATASTORE & FINISH
+     * --------------------------------------------------------- */
     private fun updateLocalProfile(newEmail: String) {
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.saveProfile(
@@ -139,9 +171,9 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
                 requireContext(),
                 DialogType.SUCCESS,
                 title = "Email Updated",
-                message = "Your email has been successfully updated.",
+                message = "Your email has been updated.\nA verification link has been sent.",
                 onDismiss = { findNavController().popBackStack() },
-                autoDismissMillis = 1200L
+                autoDismissMillis = 1400L
             )
         }
     }
