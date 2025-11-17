@@ -8,7 +8,7 @@
     android:background="@color/background_color"
     tools:context=".ui.tabs.settings.logout.ChangeEmailFragment">
 
-    <!-- 🔹 Üst Bar -->
+    <!--Üst Bar-->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerContainer"
         android:layout_width="0dp"
