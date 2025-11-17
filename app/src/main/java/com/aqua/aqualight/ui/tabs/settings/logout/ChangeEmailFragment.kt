@@ -37,68 +37,65 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
      *        STEP 0 — VALIDATION + GOOGLE LOGIN BLOCK
      * --------------------------------------------------------- */
     private fun attemptEmailChange() {
-        val currentEmail = binding.etCurrentEmail.text.toString().trim()
-        val newEmail = binding.etNewEmail.text.toString().trim()
-        val password = binding.etPassword.text.toString().trim()
+    val currentEmail = binding.etCurrentEmail.text.toString().trim()
+    val newEmail = binding.etNewEmail.text.toString().trim()
+    val password = binding.etPassword.text.toString().trim()
 
-        val user = auth.currentUser
-
-        // Safety
-        if (user == null) {
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.ERROR,
-                title = "User Not Found",
-                message = "Please log in again."
-            )
-            return
-        }
-
-        // ❌ GOOGLE LOGIN BLOCK
-        val providerId = user.providerData.firstOrNull()?.providerId
-        if (providerId == "google.com") {
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.WARNING,
-                title = "Cannot Change Email",
-                message = "Email addresses of Google accounts cannot be changed inside the app."
-            )
-            return
-        }
-
-        // Inline input errors reset
-        binding.inputLayoutCurrentEmail.error = null
-        binding.inputLayoutNewEmail.error = null
-        binding.inputLayoutPassword.error = null
-
-        // Empty fields?
-        if (currentEmail.isEmpty()) {
-            binding.inputLayoutCurrentEmail.error = "Enter your current email."
-            return
-        }
-        if (newEmail.isEmpty()) {
-            binding.inputLayoutNewEmail.error = "Enter your new email."
-            return
-        }
-        if (password.isEmpty()) {
-            binding.inputLayoutPassword.error = "Enter your password."
-            return
-        }
-
-        // Email format check
-        if (!Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
-            binding.inputLayoutNewEmail.error = "Invalid email format."
-            return
-        }
-
-        // Current email mismatch
-        if (currentEmail != user.email) {
-            binding.inputLayoutCurrentEmail.error = "Current email does not match your account."
-            return
-        }
-
-        reauthenticateAndUpdateEmail(currentEmail, password, newEmail)
+    val user = auth.currentUser ?: run {
+        DialogManager.showInfoDialog(
+            requireContext(),
+            DialogType.ERROR,
+            title = "User Not Found",
+            message = "Please log in again."
+        )
+        return
     }
+
+    // -----------------------------
+    //   GOOGLE ACCOUNT BLOCK
+    // -----------------------------
+    val isGoogleUser = user.providerData.any { it.providerId == "google.com" }
+
+    if (isGoogleUser) {
+        DialogManager.showInfoDialog(
+            requireContext(),
+            DialogType.WARNING,
+            title = "Cannot Change Email",
+            message = "This account was created with Google Sign-In.\nEmail cannot be changed."
+        )
+        return
+    }
+
+    // -----------------------------
+    //   VALIDATION
+    // -----------------------------
+    binding.inputLayoutCurrentEmail.error = null
+    binding.inputLayoutNewEmail.error = null
+    binding.inputLayoutPassword.error = null
+
+    if (currentEmail.isEmpty()) {
+        binding.inputLayoutCurrentEmail.error = "Enter your current email."
+        return
+    }
+    if (newEmail.isEmpty()) {
+        binding.inputLayoutNewEmail.error = "Enter your new email."
+        return
+    }
+    if (password.isEmpty()) {
+        binding.inputLayoutPassword.error = "Enter your password."
+        return
+    }
+    if (!Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
+        binding.inputLayoutNewEmail.error = "Invalid email format."
+        return
+    }
+    if (currentEmail != user.email) {
+        binding.inputLayoutCurrentEmail.error = "This does not match your current email."
+        return
+    }
+
+    reauthenticateAndUpdateEmail(currentEmail, password, newEmail)
+}
 
     /** ---------------------------------------------------------
      *              STEP 1 — REAUTHENTICATION
