@@ -80,14 +80,17 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
     }
 
     private fun performLogout() {
-        auth.signOut()
+    baseActivity?.showLoading(true)  // ⭐ Loading start
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.logout() // Only session data is cleared
+    auth.signOut()
 
-            navigateToLogin()
-        }
+    viewLifecycleOwner.lifecycleScope.launch {
+        userPrefs.logout()
+
+        baseActivity?.showLoading(false)  // ⭐ Loading stop
+        navigateToLogin()
     }
+}
 
     /** ---------------------------------------------------------
      *  🔥 DELETE ACCOUNT — confirmation dialog (ERROR icon)
