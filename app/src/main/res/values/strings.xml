@@ -687,6 +687,12 @@
     <string name="change_email_save_button_desc">
         Button that saves the new email address after validation.
     </string>
+	
+	<string name="change_email_missing_info">Please fill in all fields.</string>
+<string name="change_email_old_incorrect">The current email does not match your account.</string>
+<string name="change_email_auth_failed">Authentication failed.</string>
+<string name="change_email_update_failed">Failed to update email.</string>
+<string name="change_email_success">Your email has been successfully updated.</string>
 
     <!-- 🛡 Security Settings    -->
     <!-- Header title -->
