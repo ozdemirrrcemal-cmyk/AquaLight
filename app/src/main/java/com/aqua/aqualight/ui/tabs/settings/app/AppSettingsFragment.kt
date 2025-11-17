@@ -26,23 +26,27 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
     private var changingNotificationSwitchProgrammatically = false
 
-    /**
-     * 🔥 Android 13+ izin akışı için garanti eden launcher
-     */
+
+    // ---------------------------------------------------------
+    // 🔥 ANDROID 13+ RUNTIME PERMISSION – %100 ÇALIŞAN FINAL
+    // ---------------------------------------------------------
     private val notificationPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { granted ->
 
-            // Kullanıcının evet/hayır cevabı burada %100 garantili
+            // 1) DataStore güncelle
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateNotificationsEnabled(granted)
             }
 
-            // 🔥 UI'nın next-frame'inde switch'i güncelle (Samsung/Xiaomi fix)
-            binding?.root?.post {
+            // 2) Switch'i ANINDA güncelle (GECİKME YOK!)
+            setNotificationSwitchChecked(granted)
+
+            // 3) Samsung/Xiaomi "permission dismiss delay" fix
+            binding?.root?.postDelayed({
                 refreshNotificationSwitchState()
-            }
+            }, 150)
         }
 
 
@@ -50,11 +54,12 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAppSettingsBinding.bind(view)
 
+        setupClicks()
         observeThemeSummary()
         observeLanguageSummary()
         observeAutoUpdateState()
-        setupClicks()
 
+        // İlk yüklemede switch'i göster
         refreshNotificationSwitchState()
     }
 
@@ -63,7 +68,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         refreshNotificationSwitchState()
     }
 
-    // 🔥 Sistem + DataStore → switch durumu
+
+    // ---------------------------------------------------------
+    // 🔥 Sistem + Kullanıcı tercihi birleşimi
+    // ---------------------------------------------------------
     private fun refreshNotificationSwitchState() {
         viewLifecycleOwner.lifecycleScope.launch {
             val ctx = requireContext()
@@ -73,6 +81,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
 
             val finalState = appEnabled && hasPermission && systemEnabled
+
             setNotificationSwitchChecked(finalState)
         }
     }
@@ -83,6 +92,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         changingNotificationSwitchProgrammatically = false
     }
 
+
+    // ---------------------------------------------------------
+    // 🔥 Tüm tıklama işlemleri
+    // ---------------------------------------------------------
     private fun setupClicks() = with(binding) {
 
         btnBack.setOnClickListener { findNavController().popBackStack() }
@@ -100,7 +113,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
 
         cardThemeMode.setOnClickListener {
-            ThemeBottomSheet().show(parentFragmentManager, "theme_bottom_sheet")
+            ThemeBottomSheet().show(parentFragmentManager, "theme_sheet")
         }
 
         cardLanguage.setOnClickListener {
@@ -112,12 +125,10 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         }
     }
 
-    /**
-     * 🔥 FINAL – Eski davranış ile birebir aynı modern akış:
-     * - Android 13 permission → launcher ile
-     * - System notification OFF → bottomsheet + switch OFF
-     * - Switch anında güncellenir (next-frame trick)
-     */
+
+    // ---------------------------------------------------------
+    // 🔥 Modern Notification Permission Akışı – %100 Final
+    // ---------------------------------------------------------
     private fun handleNotificationToggle(enable: Boolean) {
         val ctx = requireContext()
         val hasPermission = NotificationHelper.hasSystemPermission(ctx)
@@ -125,29 +136,28 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
         if (enable) {
 
-            // 1) Android 13+ ve runtime permission YOK
+            // 1) Android 13+ runtime izin yoksa
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPermission) {
 
                 if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
                     openNotificationSheet()
                 } else {
-                    // 🔥 Yeni modern yöntem
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
 
-                // Kullanıcı izin verene kadar switch açma
+                // Kullanıcı izin verene kadar switch kapalı kalsın
                 setNotificationSwitchChecked(false)
                 return
             }
 
-            // 2) Sistem bildirimleri kapalı
+            // 2) Sistem bildirimleri kapalıysa
             if (hasPermission && !systemEnabled) {
                 setNotificationSwitchChecked(false)
                 openNotificationSheet()
                 return
             }
 
-            // 3) Her şey tamam → gerçekten aç
+            // 3) Gerçekten aç
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.updateNotificationsEnabled(true)
             }
@@ -155,14 +165,17 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             return
         }
 
-        // OFF durumu → kullanıcı tercihi
+        // Kapatma
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.updateNotificationsEnabled(false)
         }
         setNotificationSwitchChecked(false)
     }
 
-    // 🔥 Settings'e gidildiği anda switch güncelleniyor (UI next-frame + manuel refresh)
+
+    // ---------------------------------------------------------
+    // 🔥 BottomSheet açıldığında ANINDA güncelleme fix
+    // ---------------------------------------------------------
     private fun openNotificationSheet() {
         val sheet = NotificationsBottomSheet(NotificationsBottomSheet.PermissionType.NOTIFICATION)
 
@@ -172,10 +185,13 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             }
         }
 
-        sheet.show(parentFragmentManager, "notifications_bottom_sheet")
+        sheet.show(parentFragmentManager, "notifications_sheet")
     }
 
 
+    // ---------------------------------------------------------
+    // Özetler
+    // ---------------------------------------------------------
     private fun observeThemeSummary() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             userPrefs.themeMode.collectLatest { mode ->
@@ -210,6 +226,7 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
             }
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
