@@ -85,20 +85,29 @@ class UserPreferencesManager private constructor(
     }
 
     suspend fun saveProfile(
-        email: String,
-        username: String?,
-        fullName: String?,
-        photoUrl: String?
-    ) {
-        dataStore.updateData { prefs ->
-            prefs.toBuilder()
-                .setEmail(email)
-                .setUsername(username.orEmpty())
-                .setFullName(fullName.orEmpty())
-                .setProfilePhotoUrl(photoUrl.orEmpty())
-                .build()
-        }
+    email: String?,
+    username: String?,
+    fullName: String?,
+    photoUrl: String?
+) {
+    dataStore.updateData { prefs ->
+        val builder = prefs.toBuilder()
+
+        // Email: parametre null değilse güncelle, null ise eski kalsın
+        email?.let { builder.setEmail(it) }
+
+        // username: null gönderirsen ESKİ username kalsın
+        username?.let { builder.setUsername(it) }
+
+        // fullName: null ise eski fullName kalsın
+        fullName?.let { builder.setFullName(it) }
+
+        // photoUrl: null ise eski foto kalsın
+        photoUrl?.let { builder.setProfilePhotoUrl(it) }
+
+        builder.build()
     }
+}
 
     suspend fun updateProfilePhoto(photoUrl: String) {
         dataStore.updateData { prefs ->
