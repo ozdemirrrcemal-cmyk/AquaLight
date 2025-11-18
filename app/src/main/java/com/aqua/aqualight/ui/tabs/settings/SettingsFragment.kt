@@ -12,137 +12,104 @@ import coil3.request.crossfade
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
-    private var _binding: FragmentSettingsBinding? = null
-    private val binding get() = _binding!!
+private var _binding: FragmentSettingsBinding? = null
+private val binding get() = _binding!!
 
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentSettingsBinding.bind(view)
+override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+super.onViewCreated(view, savedInstanceState)
+_binding = FragmentSettingsBinding.bind(view)
 
-        observeUserInfo()
-        setupClickListeners()
-    }
+observeUserInfo()    
+setupClickListeners()
 
-    // 🔁 Ekrana her döndüğümüzde Firebase'den email'i tazele
-    override fun onResume() {
-        super.onResume()
-        syncEmailFromFirebase()
-    }
+}
 
-    /**
-     *  🔹 Firebase → DataStore email senkronu
-     *  - Kullanıcı maildeki linkten doğrulama yaptıysa
-     *    burada güncel email'i alıp DataStore'a yazıyoruz.
-     */
-    private fun syncEmailFromFirebase() {
-        val user = FirebaseAuth.getInstance().currentUser ?: return
+// 🔹 DataStore'dan kullanıcı bilgilerini oku ve UI'ya bas
+private fun observeUserInfo() {
+viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+userPrefs.userPrefsFlow.collectLatest { prefs ->
+val username =
+prefs.username.ifBlank { getString(R.string.settings_default_username) }
+val email =
+prefs.email.ifBlank { getString(R.string.settings_default_email) }
 
-        user.reload()
-            .addOnSuccessListener {
-                val newEmail = user.email ?: return@addOnSuccessListener
+binding.tvUsername.text = username    
+        binding.tvEmail.text = email    
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    userPrefs.update { prefs ->
-                        if (prefs.email == newEmail) {
-                            prefs               // zaten aynı, dokunma
-                        } else {
-                            prefs.toBuilder()
-                                .setEmail(newEmail)
-                                .build()
-                        }
-                    }
-                }
-            }
-            .addOnFailureListener {
-                // Burada hata göstermezsek de olur; sessizce geçiyoruz.
-            }
-    }
+        // Profil fotoğrafı URL'i varsa Coil ile yükle    
+        if (prefs.profilePhotoUrl.isNotBlank()) {    
+            binding.ivProfilePhoto.load(prefs.profilePhotoUrl) {    
+                placeholder(R.drawable.ic_profile_placeholder)    
+                error(R.drawable.ic_profile_placeholder)    
+                crossfade(true)    
+            }    
+        } else {    
+            binding.ivProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder)    
+        }    
+    }    
+}
 
-    // 🔹 DataStore'dan kullanıcı bilgilerini oku ve UI'ya bas
-    private fun observeUserInfo() {
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.userPrefsFlow.collectLatest { prefs ->
-                val username =
-                    prefs.username.ifBlank { getString(R.string.settings_default_username) }
-                val email =
-                    prefs.email.ifBlank { getString(R.string.settings_default_email) }
+}
 
-                binding.tvUsername.text = username
-                binding.tvEmail.text = email
+// 🔹 Satır click'lerini ayarla
+private fun setupClickListeners() = with(binding) {
 
-                // Profil fotoğrafı URL'i varsa Coil ile yükle
-                if (prefs.profilePhotoUrl.isNotBlank()) {
-                    binding.ivProfilePhoto.load(prefs.profilePhotoUrl) {
-                        placeholder(R.drawable.ic_profile_placeholder)
-                        error(R.drawable.ic_profile_placeholder)
-                        crossfade(true)
-                    }
-                } else {
-                    binding.ivProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder)
-                }
-            }
-        }
-    }
+// Profil foto tıklaması – EditProfileFragment'e git (zaten hazır)    
+ivProfilePhoto.setOnClickListener {    
+    findNavController().navigate(R.id.editProfileFragment)    
+}    
 
-    // 🔹 Satır click'lerini ayarla
-    private fun setupClickListeners() = with(binding) {
+// 1️⃣ User Info    
+rowUserInfo.setOnClickListener {    
+    findNavController().navigate(R.id.userInfoFragment)    
+}    
 
-        // Profil foto tıklaması – EditProfileFragment'e git
-        ivProfilePhoto.setOnClickListener {
-            findNavController().navigate(R.id.editProfileFragment)
-        }
+// 2️⃣ Device Status    
+rowDeviceStatus.setOnClickListener {    
+    findNavController().navigate(R.id.deviceStatusFragment)    
+}    
 
-        // 1️⃣ User Info
-        rowUserInfo.setOnClickListener {
-            findNavController().navigate(R.id.userInfoFragment)
-        }
+// 3️⃣ Network    
+rowNetwork.setOnClickListener {    
+    findNavController().navigate(R.id.networkFragment)    
+}    
 
-        // 2️⃣ Device Status
-        rowDeviceStatus.setOnClickListener {
-            findNavController().navigate(R.id.deviceStatusFragment)
-        }
+// 4️⃣ App Settings    
+rowSettings.setOnClickListener {    
+    findNavController().navigate(R.id.appSettingsFragment)    
+}    
 
-        // 3️⃣ Network
-        rowNetwork.setOnClickListener {
-            findNavController().navigate(R.id.networkFragment)
-        }
+// 5️⃣ Usage Statistics    
+rowUsage.setOnClickListener {    
+    findNavController().navigate(R.id.usageFragment)    
+}    
 
-        // 4️⃣ App Settings
-        rowSettings.setOnClickListener {
-            findNavController().navigate(R.id.appSettingsFragment)
-        }
+// 6️⃣ Privacy Policy    
+rowPrivacy.setOnClickListener {    
+    findNavController().navigate(R.id.privacyFragment)    
+}    
 
-        // 5️⃣ Usage Statistics
-        rowUsage.setOnClickListener {
-            findNavController().navigate(R.id.usageFragment)
-        }
+// 7️⃣ Feedback / Support    
+rowFeedback.setOnClickListener {    
+    findNavController().navigate(R.id.feedbackFragment)    
+}    
 
-        // 6️⃣ Privacy Policy
-        rowPrivacy.setOnClickListener {
-            findNavController().navigate(R.id.privacyFragment)
-        }
+// 8️⃣ Logout – artık dialog yok, direkt logout fragment'ine gidiyoruz    
+rowLogout.setOnClickListener {    
+    findNavController().navigate(R.id.logoutFragment)    
+}
 
-        // 7️⃣ Feedback / Support
-        rowFeedback.setOnClickListener {
-            findNavController().navigate(R.id.feedbackFragment)
-        }
+}
 
-        // 8️⃣ Logout
-        rowLogout.setOnClickListener {
-            findNavController().navigate(R.id.logoutFragment)
-        }
-    }
+override fun onDestroyView() {
+super.onDestroyView()
+_binding = null
+}
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
 }

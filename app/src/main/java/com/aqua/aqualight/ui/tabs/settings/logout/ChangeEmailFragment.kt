@@ -6,6 +6,8 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
@@ -47,8 +49,8 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.ERROR,
-                title = "User Not Found",
-                message = "Please log in again."
+                title = getString(R.string.change_email_user_not_found_title),
+                message = getString(R.string.change_email_user_not_found_message)
             )
             return
         }
@@ -59,8 +61,8 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.WARNING,
-                title = "Cannot Change Email",
-                message = "This account was created with Google Sign-In.\nEmail cannot be changed inside the app."
+                title = getString(R.string.change_email_google_block_title),
+                message = getString(R.string.change_email_google_block_message)
             )
             return
         }
@@ -72,27 +74,32 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
 
         // Boş alan kontrolleri
         if (currentEmail.isEmpty()) {
-            binding.inputLayoutCurrentEmail.error = "Enter your current email."
+            binding.inputLayoutCurrentEmail.error =
+                getString(R.string.change_email_error_current_required)
             return
         }
         if (newEmail.isEmpty()) {
-            binding.inputLayoutNewEmail.error = "Enter your new email."
+            binding.inputLayoutNewEmail.error =
+                getString(R.string.change_email_error_new_required)
             return
         }
         if (password.isEmpty()) {
-            binding.inputLayoutPassword.error = "Enter your password."
+            binding.inputLayoutPassword.error =
+                getString(R.string.change_email_error_password_required)
             return
         }
 
         // Email formatı
         if (!Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
-            binding.inputLayoutNewEmail.error = "Invalid email format."
+            binding.inputLayoutNewEmail.error =
+                getString(R.string.change_email_error_invalid_format)
             return
         }
 
         // Mevcut email ile hesabın email'i eşleşiyor mu?
         if (currentEmail != user.email) {
-            binding.inputLayoutCurrentEmail.error = "Current email does not match your account."
+            binding.inputLayoutCurrentEmail.error =
+                getString(R.string.change_email_old_incorrect)
             return
         }
 
@@ -120,12 +127,13 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
             }
             .addOnFailureListener {
                 baseActivity?.showLoading(false)
-                binding.inputLayoutPassword.error = "Incorrect password."
+                binding.inputLayoutPassword.error =
+                    getString(R.string.change_email_error_incorrect_password)
             }
     }
 
     /** ---------------------------------------------------------
-     *   2️⃣ EMAIL CHANGE (verifyBeforeUpdateEmail)
+     *   2️⃣ EMAIL CHANGE (verifyBeforeUpdateEmail + FORCE LOGOUT)
      * --------------------------------------------------------- */
     private fun verifyBeforeUpdateEmail(newEmail: String) {
         val user = auth.currentUser ?: return
@@ -137,12 +145,20 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.SUCCESS,
-                    title = "Verification Sent",
-                    message = "We have sent a verification link to $newEmail.\n" +
-                              "Please confirm it from your inbox. Your email will be updated after verification.",
+                    title = getString(R.string.change_email_verification_title),
+                    message = getString(
+                        R.string.change_email_verification_message,
+                        newEmail
+                    ),
                     onDismiss = {
-                        // ✅ Kullanıcı OK'e bastığında bir önceki ekrana dön
-                        findNavController().popBackStack()
+                        // ✅ 1) Oturumu kapat
+                        auth.signOut()
+
+                        // ✅ 2) Local session'ı sıfırla ve login graph'e dön
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            userPrefs.logout()
+                            navigateToLoginRoot()
+                        }
                     }
                 )
             }
@@ -151,10 +167,27 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
-                    title = "Email Update Failed",
-                    message = e.localizedMessage ?: "Unknown error."
+                    title = getString(R.string.change_email_update_failed_title),
+                    message = e.localizedMessage
+                        ?: getString(R.string.change_email_update_failed)
                 )
             }
+    }
+
+    /** ---------------------------------------------------------
+     *   3️⃣ Root nav üzerinden Login graph'e dön
+     * --------------------------------------------------------- */
+    private fun navigateToLoginRoot() {
+        val rootNav = (requireActivity().supportFragmentManager
+            .findFragmentById(R.id.nav_host) as NavHostFragment).navController
+
+        val opts = navOptions {
+            popUpTo(R.id.nav_app) { inclusive = true } // app graph'i temizle
+            launchSingleTop = true
+        }
+
+        // Auth container'a dön → startDestination zaten loginFragment
+        rootNav.navigate(R.id.authContainerFragment, null, opts)
     }
 
     override fun onDestroyView() {
