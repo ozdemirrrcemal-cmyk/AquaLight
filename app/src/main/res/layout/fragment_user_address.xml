@@ -140,7 +140,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-       <!-- Country -->
+      <!-- Country -->
 <com.google.android.material.card.MaterialCardView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -161,7 +161,8 @@
             android:textColor="@color/settings_text_secondary"
             android:labelFor="@id/ccpCountry" />
 
-        <com.hbb20.ccp.CountryCodePicker
+        <!-- ❗ DİKKAT: com.hbb20.CountryCodePicker -->
+        <com.hbb20.CountryCodePicker
             android:id="@+id/ccpCountry"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

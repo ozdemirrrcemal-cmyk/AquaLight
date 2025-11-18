@@ -9,7 +9,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserAddressBinding
 import kotlinx.coroutines.flow.first
-import com.hbb20.CountryCodePicker
 import kotlinx.coroutines.launch
 
 class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
@@ -23,7 +22,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentUserAddressBinding.bind(view)
 
-        // 📞 Telefon editText’i CCP’ye bağla → formatlama + fullNumber desteği
+        // 📞 CCP → phone editText bağla (format + full number)
         binding.ccpCountry.registerCarrierNumberEditText(binding.etPhoneNumber)
 
         loadAddressFromPrefs()
@@ -41,32 +40,25 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             binding.etAddress.setText(prefs.addressLine)
             binding.etPostCode.setText(prefs.postCode)
 
-            // 📍 Ülke – sadece kayıtlıysa set et, yoksa DEFAULT kalsın
+            // 📍 Ülke: sadece kayıtlıysa set et, yoksa CCP'nin default'u kalsın
             if (prefs.country.isNotBlank()) {
                 binding.ccpCountry.setCountryForNameCode(prefs.country.uppercase())
             }
 
-            // 📞 Telefon – eğer full number kaydettiysek, CCP üzerinden yükle
+            // 📞 Telefon: kayıtlıysa full numara olarak yükle
             if (prefs.phoneNumber.isNotBlank()) {
-                // "+905551112233" gibi full number ver → CCP ülkeyi + editText'i doldurur
-                binding.ccpCountry.setFullNumber(prefs.phoneNumber)
+                binding.ccpCountry.setFullNumber(prefs.phoneNumber) // "+90555..."
+            } else {
+                binding.etPhoneNumber.setText("") // ilk girişte boş
             }
         }
     }
 
     /** 🔹 Listener'lar */
     private fun setupListeners() = with(binding) {
-        btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
-
-        btnCancel.setOnClickListener {
-            findNavController().popBackStack()
-        }
-
-        btnSave.setOnClickListener {
-            saveAddress()
-        }
+        btnBack.setOnClickListener { findNavController().popBackStack() }
+        btnCancel.setOnClickListener { findNavController().popBackStack() }
+        btnSave.setOnClickListener { saveAddress() }
     }
 
     /** 🔹 Kaydet — TÜM alanlar için boşluk kontrolü, inline error */
@@ -78,10 +70,9 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         val postCode = binding.etPostCode.text?.toString()?.trim().orEmpty()
         val phoneRaw = binding.etPhoneNumber.text?.toString()?.trim().orEmpty()
 
-        // ISO ülke kodu (TR, US vs.)
-        val countryIso = binding.ccpCountry.selectedCountryNameCode  // ör: "TR"
-        // + ülke kodu + numara, E.164 tarzında
-        val fullPhone = binding.ccpCountry.fullNumberWithPlus        // ör: "+905551112233"
+        // ISO ülke kodu (TR, US vs.) ve full phone
+        val countryIso = binding.ccpCountry.selectedCountryNameCode   // "TR"
+        val fullPhone  = binding.ccpCountry.fullNumberWithPlus       // "+90555..."
 
         // Eski error’ları temizle
         binding.etFirstName.error = null
@@ -98,31 +89,26 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                 getString(R.string.address_error_first_name_required)
             hasError = true
         }
-
         if (lastName.isEmpty()) {
             binding.etLastName.error =
                 getString(R.string.address_error_last_name_required)
             hasError = true
         }
-
         if (city.isEmpty()) {
             binding.etCity.error =
                 getString(R.string.address_error_city_required)
             hasError = true
         }
-
         if (address.isEmpty()) {
             binding.etAddress.error =
                 getString(R.string.address_error_address_required)
             hasError = true
         }
-
         if (postCode.isEmpty()) {
             binding.etPostCode.error =
                 getString(R.string.address_error_postcode_required)
             hasError = true
         }
-
         if (phoneRaw.isEmpty()) {
             binding.etPhoneNumber.error =
                 getString(R.string.address_error_phone_required)
@@ -131,7 +117,6 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
         if (hasError) return
 
-        // fullName’i de güncelle
         val fullName = "$firstName $lastName"
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -147,8 +132,6 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                     .setPhoneNumber(fullPhone) // "+90555..."
                     .build()
             }
-
-            // ✅ Hata yoksa sessizce geri dön
             findNavController().popBackStack()
         }
     }
