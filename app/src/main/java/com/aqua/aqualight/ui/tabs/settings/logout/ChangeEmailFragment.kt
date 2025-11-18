@@ -34,73 +34,79 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
     }
 
     /** ---------------------------------------------------------
-     *        STEP 0 — VALIDATION + GOOGLE LOGIN BLOCK
+     *   0️⃣ VALIDATION + GOOGLE ACCOUNT BLOCK
      * --------------------------------------------------------- */
     private fun attemptEmailChange() {
-    val currentEmail = binding.etCurrentEmail.text.toString().trim()
-    val newEmail = binding.etNewEmail.text.toString().trim()
-    val password = binding.etPassword.text.toString().trim()
+        val currentEmail = binding.etCurrentEmail.text.toString().trim()
+        val newEmail = binding.etNewEmail.text.toString().trim()
+        val password = binding.etPassword.text.toString().trim()
 
-    val user = auth.currentUser ?: run {
-        DialogManager.showInfoDialog(
-            requireContext(),
-            DialogType.ERROR,
-            title = "User Not Found",
-            message = "Please log in again."
-        )
-        return
-    }
+        val user = auth.currentUser
 
-    // -----------------------------
-    //   GOOGLE ACCOUNT BLOCK
-    // -----------------------------
-    val isGoogleUser = user.providerData.any { it.providerId == "google.com" }
+        if (user == null) {
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.ERROR,
+                title = "User Not Found",
+                message = "Please log in again."
+            )
+            return
+        }
 
-    if (isGoogleUser) {
-        DialogManager.showInfoDialog(
-            requireContext(),
-            DialogType.WARNING,
-            title = "Cannot Change Email",
-            message = "This account was created with Google Sign-In.\nEmail cannot be changed."
-        )
-        return
-    }
+        // Google hesabı ise: uygulama içinden email değiştirilmez
+        val isGoogleUser = user.providerData.any { it.providerId == "google.com" }
+        if (isGoogleUser) {
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.WARNING,
+                title = "Cannot Change Email",
+                message = "This account was created with Google Sign-In.\nEmail cannot be changed inside the app."
+            )
+            return
+        }
 
-    // -----------------------------
-    //   VALIDATION
-    // -----------------------------
-    binding.inputLayoutCurrentEmail.error = null
-    binding.inputLayoutNewEmail.error = null
-    binding.inputLayoutPassword.error = null
+        // Inline error reset
+        binding.inputLayoutCurrentEmail.error = null
+        binding.inputLayoutNewEmail.error = null
+        binding.inputLayoutPassword.error = null
 
-    if (currentEmail.isEmpty()) {
-        binding.inputLayoutCurrentEmail.error = "Enter your current email."
-        return
-    }
-    if (newEmail.isEmpty()) {
-        binding.inputLayoutNewEmail.error = "Enter your new email."
-        return
-    }
-    if (password.isEmpty()) {
-        binding.inputLayoutPassword.error = "Enter your password."
-        return
-    }
-    if (!Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
-        binding.inputLayoutNewEmail.error = "Invalid email format."
-        return
-    }
-    if (currentEmail != user.email) {
-        binding.inputLayoutCurrentEmail.error = "This does not match your current email."
-        return
-    }
+        // Boş alan kontrolleri
+        if (currentEmail.isEmpty()) {
+            binding.inputLayoutCurrentEmail.error = "Enter your current email."
+            return
+        }
+        if (newEmail.isEmpty()) {
+            binding.inputLayoutNewEmail.error = "Enter your new email."
+            return
+        }
+        if (password.isEmpty()) {
+            binding.inputLayoutPassword.error = "Enter your password."
+            return
+        }
 
-    reauthenticateAndUpdateEmail(currentEmail, password, newEmail)
-}
+        // Email formatı
+        if (!Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
+            binding.inputLayoutNewEmail.error = "Invalid email format."
+            return
+        }
+
+        // Mevcut email ile hesabın email'i eşleşiyor mu?
+        if (currentEmail != user.email) {
+            binding.inputLayoutCurrentEmail.error = "Current email does not match your account."
+            return
+        }
+
+        reauthenticateAndVerifyBeforeUpdate(currentEmail, password, newEmail)
+    }
 
     /** ---------------------------------------------------------
-     *              STEP 1 — REAUTHENTICATION
+     *   1️⃣ REAUTHENTICATE
      * --------------------------------------------------------- */
-    private fun reauthenticateAndUpdateEmail(oldEmail: String, password: String, newEmail: String) {
+    private fun reauthenticateAndVerifyBeforeUpdate(
+        oldEmail: String,
+        password: String,
+        newEmail: String
+    ) {
         val user = auth.currentUser ?: return
 
         baseActivity?.showLoading(true)
@@ -109,7 +115,8 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
 
         user.reauthenticate(credential)
             .addOnSuccessListener {
-                updateEmail(newEmail)
+                // Reauth OK → yeni email için verify linki yolla
+                verifyBeforeUpdateEmail(newEmail)
             }
             .addOnFailureListener {
                 baseActivity?.showLoading(false)
@@ -118,61 +125,36 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
     }
 
     /** ---------------------------------------------------------
-     *              STEP 2 — FIREBASE EMAIL UPDATE
+     *   2️⃣ IDENTITY PLATFORM UYUMLU EMAIL DEĞİŞİMİ
+     *       user.updateEmail() YERİNE
+     *       user.verifyBeforeUpdateEmail() KULLANIYORUZ
      * --------------------------------------------------------- */
-    private fun updateEmail(newEmail: String) {
+    private fun verifyBeforeUpdateEmail(newEmail: String) {
         val user = auth.currentUser ?: return
 
-        user.updateEmail(newEmail)
+        user.verifyBeforeUpdateEmail(newEmail)
             .addOnSuccessListener {
-                sendVerificationEmail(newEmail)
+                // Burada email HEMEN değişmez; kullanıcıya mail gider,
+                // linke tıklayınca backend'de güncellenir.
+                baseActivity?.showLoading(false)
+
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.SUCCESS,
+                    title = "Verification Sent",
+                    message = "We have sent a verification link to $newEmail.\n" +
+                              "Please confirm it from your inbox. Your email will be updated after verification."
+                )
             }
-            .addOnFailureListener {
+            .addOnFailureListener { e ->
                 baseActivity?.showLoading(false)
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
                     title = "Email Update Failed",
-                    message = it.localizedMessage ?: "Unknown error."
+                    message = e.localizedMessage ?: "Unknown error."
                 )
             }
-    }
-
-    /** ---------------------------------------------------------
-     *      STEP 3 — SEND VERIFICATION TO NEW EMAIL
-     * --------------------------------------------------------- */
-    private fun sendVerificationEmail(newEmail: String) {
-        val user = auth.currentUser ?: return
-
-        user.sendEmailVerification()
-            .addOnCompleteListener {
-                updateLocalProfile(newEmail)
-            }
-    }
-
-    /** ---------------------------------------------------------
-     *      STEP 4 — UPDATE LOCAL DATASTORE & FINISH
-     * --------------------------------------------------------- */
-    private fun updateLocalProfile(newEmail: String) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.saveProfile(
-                email = newEmail,
-                username = null,
-                fullName = null,
-                photoUrl = null
-            )
-
-            baseActivity?.showLoading(false)
-
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.SUCCESS,
-                title = "Email Updated",
-                message = "Your email has been updated.\nA verification link has been sent.",
-                onDismiss = { findNavController().popBackStack() },
-                autoDismissMillis = 1400L
-            )
-        }
     }
 
     override fun onDestroyView() {
