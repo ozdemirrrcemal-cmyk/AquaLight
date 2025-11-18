@@ -774,6 +774,7 @@
 
 <string name="address_info_country_label">Country</string>
 <string name="address_info_country_hint">Select your country</string>
+<string name="address_info_country_picker_desc">Open country picker</string>
 
 <string name="address_info_city_label">City</string>
 <string name="address_info_city_hint">Enter your city</string>
@@ -900,11 +901,7 @@
 
 
 
-<!-- Country selection title -->
-
-<!-- Country selection subtitle -->
-<string name="address_info_country_hint">Please select your country</string>
 <!-- Country picker icon content description -->
-<string name="address_info_country_picker_desc">Open country picker</string>
+
 
 </resources>
