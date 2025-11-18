@@ -43,6 +43,10 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    // --------------------------------------------------------
+    //  FLOW ALANLAR
+    // --------------------------------------------------------
+
     val userPrefsFlow: Flow<UserPreferences> = dataStore.data
         .catch { e ->
             if (e is IOException) {
@@ -67,13 +71,32 @@ class UserPreferencesManager private constructor(
         prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
     }
 
-    // bool alanlar – proto default: false
-    val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { it.notificationsEnabled }
-    val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { it.autoUpdateEnabled }
+    val notificationsEnabled: Flow<Boolean> =
+        userPrefsFlow.map { it.notificationsEnabled }
+
+    val autoUpdateEnabled: Flow<Boolean> =
+        userPrefsFlow.map { it.autoUpdateEnabled }
+
+    // 🆕 Adres alanları için Flow'lar
+    val firstName: Flow<String> = userPrefsFlow.map { it.firstName }
+    val lastName: Flow<String> = userPrefsFlow.map { it.lastName }
+    val city: Flow<String> = userPrefsFlow.map { it.city }
+    val addressLine: Flow<String> = userPrefsFlow.map { it.addressLine }
+    val postCode: Flow<String> = userPrefsFlow.map { it.postCode }
+    val phoneNumber: Flow<String> = userPrefsFlow.map { it.phoneNumber }
+    val country: Flow<String> = userPrefsFlow.map { it.country }
+
+    // --------------------------------------------------------
+    //  GENEL UPDATE
+    // --------------------------------------------------------
 
     suspend fun update(transform: (UserPreferences) -> UserPreferences) {
         dataStore.updateData { current -> transform(current) }
     }
+
+    // --------------------------------------------------------
+    //  OTURUM & PROFIL
+    // --------------------------------------------------------
 
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
         dataStore.updateData { prefs ->
@@ -84,30 +107,29 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    /**
+     *  email / username / fullName / photoUrl:
+     *  - parametre NULL ise: o alanı DEĞİŞTİRME
+     *  - parametre değer gelirse: yeni değeri yaz
+     */
     suspend fun saveProfile(
-    email: String?,
-    username: String?,
-    fullName: String?,
-    photoUrl: String?
-) {
-    dataStore.updateData { prefs ->
-        val builder = prefs.toBuilder()
+        email: String?,
+        username: String?,
+        fullName: String?,
+        photoUrl: String?
+    ) {
+        dataStore.updateData { prefs ->
+            val builder = prefs.toBuilder()
 
-        // Email: parametre null değilse güncelle, null ise eski kalsın
-        email?.let { builder.setEmail(it) }
+            email?.let { builder.setEmail(it) }
+            username?.let { builder.setUsername(it) }
+            this@UserPreferencesManager
+            fullName?.let { builder.setFullName(it) }
+            photoUrl?.let { builder.setProfilePhotoUrl(it) }
 
-        // username: null gönderirsen ESKİ username kalsın
-        username?.let { builder.setUsername(it) }
-
-        // fullName: null ise eski fullName kalsın
-        fullName?.let { builder.setFullName(it) }
-
-        // photoUrl: null ise eski foto kalsın
-        photoUrl?.let { builder.setProfilePhotoUrl(it) }
-
-        builder.build()
+            builder.build()
+        }
     }
-}
 
     suspend fun updateProfilePhoto(photoUrl: String) {
         dataStore.updateData { prefs ->
@@ -125,6 +147,10 @@ class UserPreferencesManager private constructor(
                 .build()
         }
     }
+
+    // --------------------------------------------------------
+    //  TEMA / DIL / BILDIRIM
+    // --------------------------------------------------------
 
     suspend fun updateThemeMode(mode: String) {
         dataStore.updateData { prefs ->
@@ -157,6 +183,46 @@ class UserPreferencesManager private constructor(
                 .build()
         }
     }
+
+    // --------------------------------------------------------
+    //  🆕 ADRES KAYDI
+    // --------------------------------------------------------
+
+    /**
+     *  Adres ekranında girdiğin alanlar:
+     *  - firstName, lastName → fullName otomatik set edilir
+     *  - city, addressLine, postCode, phoneNumber, country
+     */
+    suspend fun saveAddress(
+        firstName: String,
+        lastName: String,
+        city: String,
+        addressLine: String,
+        postCode: String,
+        phoneNumber: String,
+        country: String
+    ) {
+        val fullName = listOf(firstName, lastName)
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setFirstName(firstName)
+                .setLastName(lastName)
+                .setCity(city)
+                .setAddressLine(addressLine)
+                .setPostCode(postCode)
+                .setPhoneNumber(phoneNumber)
+                .setCountry(country)
+                .setFullName(fullName) // 🔥 FULL NAME BURADA OLUŞUYOR
+                .build()
+        }
+    }
+
+    // --------------------------------------------------------
+    //  TAM SIFIRLAMA
+    // --------------------------------------------------------
 
     suspend fun clearAllUserData() {
         dataStore.updateData {

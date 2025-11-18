@@ -304,6 +304,14 @@
         Button that saves your user information changes.
     </string>
 	
+	<string name="address_error_first_name_required">Please enter your first name.</string>
+<string name="address_error_last_name_required">Please enter your last name.</string>
+<string name="address_error_country_required">Please select your country.</string>
+<string name="address_error_city_required">Please enter your city.</string>
+<string name="address_error_address_required">Please enter your address.</string>
+<string name="address_error_postcode_required">Please enter your postal code.</string>
+<string name="address_error_phone_required">Please enter your phone number.</string>
+	
 
     <!-- 🧩 Settings detail screens: Device Status -->
     <string name="device_status_title">Device status</string>
