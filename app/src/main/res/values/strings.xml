@@ -755,6 +755,7 @@
 	<string name="user_info_save_error_message">
     Failed to save username. Please try again.
 </string>
+<string name="user_info_username_empty_message">Please enter a username before saving.</string>
 
    <!-- 📍 User Address – form labels & hints -->
 <string name="address_info_first_name_label">First name</string>
@@ -888,5 +889,6 @@
     </string>
     <string name="location_permission_button_open_settings">Open location settings</string>
 	
+
 
 </resources>
