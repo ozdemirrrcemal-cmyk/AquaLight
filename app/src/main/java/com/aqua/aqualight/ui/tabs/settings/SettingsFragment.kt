@@ -10,9 +10,12 @@ import coil3.request.placeholder
 import coil3.request.error
 import coil3.request.crossfade
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
@@ -20,6 +23,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private val binding get() = _binding!!
 
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val auth get() = FirebaseAuth.getInstance()
+    private val baseActivity get() = activity as? BaseActivity
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -27,6 +32,40 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         observeUserInfo()
         setupClickListeners()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        syncEmailFromFirebase()
+    }
+
+    /**
+     *  🔄 Firebase'teki güncel email'i çek ve DataStore'a yaz
+     */
+    private fun syncEmailFromFirebase() {
+        val user = auth.currentUser ?: return
+
+        baseActivity?.showLoading(true)
+
+        user.reload()
+            .addOnCompleteListener { task ->
+                baseActivity?.showLoading(false)
+
+                if (task.isSuccessful) {
+                    val updatedEmail = user.email ?: ""
+
+                    // Sadece email alanını güncelle
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        userPrefs.update { prefs ->
+                            prefs.toBuilder()
+                                .setEmail(updatedEmail)
+                                .build()
+                        }
+                    }
+                }
+                // task başarısız olursa şimdilik sessiz geçiyoruz;
+                // istersen burada dialog ile hata gösterebilirsin.
+            }
     }
 
     // 🔹 DataStore'dan kullanıcı bilgilerini oku ve UI'ya bas
@@ -58,47 +97,38 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     // 🔹 Satır click'lerini ayarla
     private fun setupClickListeners() = with(binding) {
 
-        // Profil foto tıklaması – EditProfileFragment'e git (zaten hazır)
         ivProfilePhoto.setOnClickListener {
             findNavController().navigate(R.id.editProfileFragment)
         }
 
-        // 1️⃣ User Info
         rowUserInfo.setOnClickListener {
             findNavController().navigate(R.id.userInfoFragment)
         }
 
-        // 2️⃣ Device Status
         rowDeviceStatus.setOnClickListener {
             findNavController().navigate(R.id.deviceStatusFragment)
         }
 
-        // 3️⃣ Network
         rowNetwork.setOnClickListener {
             findNavController().navigate(R.id.networkFragment)
         }
 
-        // 4️⃣ App Settings
         rowSettings.setOnClickListener {
             findNavController().navigate(R.id.appSettingsFragment)
         }
 
-        // 5️⃣ Usage Statistics
         rowUsage.setOnClickListener {
             findNavController().navigate(R.id.usageFragment)
         }
 
-        // 6️⃣ Privacy Policy
         rowPrivacy.setOnClickListener {
             findNavController().navigate(R.id.privacyFragment)
         }
 
-        // 7️⃣ Feedback / Support
         rowFeedback.setOnClickListener {
             findNavController().navigate(R.id.feedbackFragment)
         }
 
-        // 8️⃣ Logout – artık dialog yok, direkt logout fragment'ine gidiyoruz
         rowLogout.setOnClickListener {
             findNavController().navigate(R.id.logoutFragment)
         }

@@ -125,17 +125,13 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
     }
 
     /** ---------------------------------------------------------
-     *   2️⃣ IDENTITY PLATFORM UYUMLU EMAIL DEĞİŞİMİ
-     *       user.updateEmail() YERİNE
-     *       user.verifyBeforeUpdateEmail() KULLANIYORUZ
+     *   2️⃣ EMAIL CHANGE (verifyBeforeUpdateEmail)
      * --------------------------------------------------------- */
     private fun verifyBeforeUpdateEmail(newEmail: String) {
         val user = auth.currentUser ?: return
 
         user.verifyBeforeUpdateEmail(newEmail)
             .addOnSuccessListener {
-                // Burada email HEMEN değişmez; kullanıcıya mail gider,
-                // linke tıklayınca backend'de güncellenir.
                 baseActivity?.showLoading(false)
 
                 DialogManager.showInfoDialog(
@@ -143,7 +139,11 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
                     DialogType.SUCCESS,
                     title = "Verification Sent",
                     message = "We have sent a verification link to $newEmail.\n" +
-                              "Please confirm it from your inbox. Your email will be updated after verification."
+                              "Please confirm it from your inbox. Your email will be updated after verification.",
+                    onDismiss = {
+                        // ✅ Kullanıcı OK'e bastığında bir önceki ekrana dön
+                        findNavController().popBackStack()
+                    }
                 )
             }
             .addOnFailureListener { e ->
