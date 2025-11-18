@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.settings.userinfo
 
 import android.os.Bundle
+import android.telephony.PhoneNumberUtils
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -18,14 +19,15 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
     private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
+    // Son kullanılan ülke kodu, telefon alanından eski kodu sökebilmek için
+    private var lastDialCode: String? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentUserAddressBinding.bind(view)
 
-        // 📞 CCP → phone editText bağla (format + full number)
-        binding.ccpCountry.registerCarrierNumberEditText(binding.etPhoneNumber)
-
         loadAddressFromPrefs()
+        setupCountryPhoneLink()
         setupListeners()
     }
 
@@ -40,17 +42,51 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             binding.etAddress.setText(prefs.addressLine)
             binding.etPostCode.setText(prefs.postCode)
 
-            // 📍 Ülke: sadece kayıtlıysa set et, yoksa CCP'nin default'u kalsın
+            // 📍 Ülke – sadece kayıtlıysa set et, yoksa CCP'nin default'u kalsın
             if (prefs.country.isNotBlank()) {
                 binding.ccpCountry.setCountryForNameCode(prefs.country.uppercase())
             }
+            // Şu an seçili ülkenin kodunu sakla
+            lastDialCode = binding.ccpCountry.selectedCountryCodeWithPlus
 
-            // 📞 Telefon: kayıtlıysa full numara olarak yükle
+            // 📞 Telefon – kayıtlıysa aynen göster, yoksa boş
             if (prefs.phoneNumber.isNotBlank()) {
-                binding.ccpCountry.setFullNumber(prefs.phoneNumber) // "+90555..."
+                binding.etPhoneNumber.setText(prefs.phoneNumber)
+                binding.etPhoneNumber.setSelection(prefs.phoneNumber.length)
             } else {
-                binding.etPhoneNumber.setText("") // ilk girişte boş
+                binding.etPhoneNumber.setText("")
             }
+        }
+    }
+
+    /** 🔹 Ülke değişince telefon alanına kodu yaz */
+    private fun setupCountryPhoneLink() = with(binding) {
+        // İlk değer
+        lastDialCode = ccpCountry.selectedCountryCodeWithPlus
+
+        ccpCountry.setOnCountryChangeListener {
+            val newDialCode = ccpCountry.selectedCountryCodeWithPlus  // ör: +90
+            val current = etPhoneNumber.text?.toString().orEmpty()
+
+            // Eski ülke kodunu baştan sök
+            val withoutOld = if (!lastDialCode.isNullOrBlank() && current.startsWith(lastDialCode!!)) {
+                current.removePrefix(lastDialCode!!).trimStart()
+            } else {
+                current
+            }
+
+            // Yeni metni kur: "+90 " + kalan numara (varsa)
+            val newText = if (withoutOld.isBlank()) {
+                "$newDialCode "
+            } else {
+                "$newDialCode $withoutOld"
+            }
+
+            etPhoneNumber.setText(newText)
+            etPhoneNumber.setSelection(newText.length)
+
+            // Son kodu güncelle
+            lastDialCode = newDialCode
         }
     }
 
@@ -64,15 +100,13 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
     /** 🔹 Kaydet — TÜM alanlar için boşluk kontrolü, inline error */
     private fun saveAddress() {
         val firstName = binding.etFirstName.text?.toString()?.trim().orEmpty()
-        val lastName = binding.etLastName.text?.toString()?.trim().orEmpty()
-        val city = binding.etCity.text?.toString()?.trim().orEmpty()
-        val address = binding.etAddress.text?.toString()?.trim().orEmpty()
-        val postCode = binding.etPostCode.text?.toString()?.trim().orEmpty()
-        val phoneRaw = binding.etPhoneNumber.text?.toString()?.trim().orEmpty()
+        val lastName  = binding.etLastName.text?.toString()?.trim().orEmpty()
+        val city      = binding.etCity.text?.toString()?.trim().orEmpty()
+        val address   = binding.etAddress.text?.toString()?.trim().orEmpty()
+        val postCode  = binding.etPostCode.text?.toString()?.trim().orEmpty()
+        val phoneRaw  = binding.etPhoneNumber.text?.toString()?.trim().orEmpty()
 
-        // ISO ülke kodu (TR, US vs.) ve full phone
         val countryIso = binding.ccpCountry.selectedCountryNameCode   // "TR"
-        val fullPhone  = binding.ccpCountry.fullNumberWithPlus       // "+90555..."
 
         // Eski error’ları temizle
         binding.etFirstName.error = null
@@ -117,6 +151,10 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
         if (hasError) return
 
+        // Telefonu ülke koduna göre formatla (mümkünse)
+        val formattedPhone =
+            PhoneNumberUtils.formatNumber(phoneRaw, countryIso) ?: phoneRaw
+
         val fullName = "$firstName $lastName"
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -128,8 +166,8 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                     .setCity(city)
                     .setAddressLine(address)
                     .setPostCode(postCode)
-                    .setCountry(countryIso)   // "TR"
-                    .setPhoneNumber(fullPhone) // "+90555..."
+                    .setCountry(countryIso)          // "TR"
+                    .setPhoneNumber(formattedPhone)   // "+90 5xx ..." formatlı
                     .build()
             }
             findNavController().popBackStack()
