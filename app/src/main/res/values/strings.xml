@@ -856,5 +856,11 @@
         To detect nearby Wi-Fi and devices, please allow location access in settings.
     </string>
     <string name="location_permission_button_open_settings">Open location settings</string>
+	
+	<string name="user_info_username_empty_title">Missing Username</string>
+<string name="user_info_username_empty_message">Please enter a username before saving.</string>
+
+<string name="user_info_save_success_title">Saved</string>
+<string name="user_info_save_success_message">Your information has been updated successfully.</string>
 
 </resources>
