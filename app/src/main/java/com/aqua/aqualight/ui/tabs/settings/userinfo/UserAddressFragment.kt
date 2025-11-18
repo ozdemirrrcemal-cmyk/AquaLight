@@ -23,6 +23,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         _binding = FragmentUserAddressBinding.bind(view)
 
         loadAddressFromPrefs()
+        setupCountryPhoneLink()
         setupListeners()
     }
 
@@ -31,16 +32,43 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         viewLifecycleOwner.lifecycleScope.launch {
             val prefs = userPrefs.userPrefsFlow.first()
 
-            // Zorunlu / bağlanacak alanlar
+            // Text alanları
             binding.etFirstName.setText(prefs.firstName)
             binding.etLastName.setText(prefs.lastName)
             binding.etCity.setText(prefs.city)
             binding.etAddress.setText(prefs.addressLine)
             binding.etPostCode.setText(prefs.postCode)
+            binding.etPhoneNumber.setText(prefs.phoneNumber)
 
-            // Country & phone şimdilik DataStore’a bağlı değil (sadece UI’de duruyor)
-            // binding.etCountry.setText(...)
-            // binding.etPhoneNumber.setText(...)
+            // Country ISO code (ör: "TR") kaydettiğimizi varsayıyoruz
+            if (prefs.country.isNotBlank()) {
+                // CountryCodePicker case'e çok takılmıyor ama garanti olsun diye upper yapıyoruz
+                binding.ccpCountry.setCountryForNameCode(prefs.country.uppercase())
+            }
+        }
+    }
+
+    /** 🔹 Ülke değişince telefon kodunu otomatik güncelle */
+    private fun setupCountryPhoneLink() = with(binding) {
+        ccpCountry.setOnCountryChangeListener {
+            val dialCode = ccpCountry.selectedCountryCodeWithPlus  // ör: +90
+            val currentPhone = etPhoneNumber.text?.toString().orEmpty()
+
+            val newValue = if (currentPhone.startsWith("+")) {
+                // Eski kodu yenisiyle değiştir: "+90 555..." gibi format
+                val rest = currentPhone.substringAfter(' ', "")
+                if (rest.isNotEmpty()) "$dialCode $rest" else "$dialCode "
+            } else {
+                // Daha önce kod yoksa başa ekle
+                if (currentPhone.isNotEmpty()) {
+                    "$dialCode $currentPhone"
+                } else {
+                    "$dialCode "
+                }
+            }
+
+            etPhoneNumber.setText(newValue)
+            etPhoneNumber.setSelection(newValue.length)
         }
     }
 
@@ -63,20 +91,23 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
     private fun saveAddress() {
         val firstName = binding.etFirstName.text?.toString()?.trim().orEmpty()
         val lastName = binding.etLastName.text?.toString()?.trim().orEmpty()
-        val country = binding.etCountry.text?.toString()?.trim().orEmpty()
         val city = binding.etCity.text?.toString()?.trim().orEmpty()
         val address = binding.etAddress.text?.toString()?.trim().orEmpty()
         val postCode = binding.etPostCode.text?.toString()?.trim().orEmpty()
         val phone = binding.etPhoneNumber.text?.toString()?.trim().orEmpty()
 
+        // CountryCodePicker her zaman bir ülke seçili tutar,
+        // yine de ISO code'u alıyoruz:
+        val countryIso = binding.ccpCountry.selectedCountryNameCode  // ör: "TR"
+
         // Eski error’ları temizle
         binding.etFirstName.error = null
         binding.etLastName.error = null
-        binding.etCountry.error = null
         binding.etCity.error = null
         binding.etAddress.error = null
         binding.etPostCode.error = null
         binding.etPhoneNumber.error = null
+        // ccpCountry için ayrı bir error UI yok, o yüzden dokunmuyoruz
 
         var hasError = false
 
@@ -92,11 +123,9 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             hasError = true
         }
 
-        if (country.isEmpty()) {
-            binding.etCountry.error =
-                getString(R.string.address_error_country_required)
-            hasError = true
-        }
+        // Country picker default bir ülke seçiyor, o yüzden ekstra boş kontrol
+        // gerekmez; ama istersen ISO boşsa hata verebilirsin.
+        // (Genelde burası hiçbir zaman boş olmayacak.)
 
         if (city.isEmpty()) {
             binding.etCity.error =
@@ -124,7 +153,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
         if (hasError) return
 
-        // fullName’i de güncelleyelim
+        // fullName’i de güncelle
         val fullName = "$firstName $lastName"
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -136,9 +165,8 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                     .setCity(city)
                     .setAddressLine(address)
                     .setPostCode(postCode)
-                    // Country & phone şimdilik persist edilmiyor:
-                    // .setCountry(country)
-                    // .setPhoneNumber(phone)
+                    .setCountry(countryIso)     // ISO: "TR" gibi
+                    .setPhoneNumber(phone)      // "+90 5xx ..." gibi
                     .build()
             }
 
