@@ -12,8 +12,7 @@ import coil3.request.crossfade
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserInfoBinding
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -32,27 +31,19 @@ class UserInfoFragment : Fragment(R.layout.fragment_user_info) {
         setupClickListeners()
     }
 
-    /**
-     *  🔹 DataStore'dan kullanıcı bilgilerini oku ve UI'a bas
-     */
+    /** 🔹 DataStore’daki bilgileri UI’a yaz */
     private fun observeUserInfo() {
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.userPrefsFlow.collectLatest { prefs ->
-                // Full name
-                val fullName =
+
+                binding.tvName.text =
                     prefs.fullName.ifBlank { getString(R.string.user_info_name_default) }
 
-                // Email
-                val email =
+                binding.tvUserEmail.text =
                     prefs.email.ifBlank { getString(R.string.user_info_email_default) }
 
                 // Username
                 val username = prefs.username
-
-                binding.tvName.text = fullName
-                binding.tvUserEmail.text = email
-
-                // Username alanı: prefs doluysa text'e set et, boşsa editText'i boş bırak (hint görünsün)
                 if (username.isNotBlank()) {
                     if (binding.etUsername.text?.toString() != username) {
                         binding.etUsername.setText(username)
@@ -75,35 +66,28 @@ class UserInfoFragment : Fragment(R.layout.fragment_user_info) {
         }
     }
 
-    /**
-     *  🔹 Click listener'lar
-     */
+    /** 🔹 Click Listener’lar */
     private fun setupClickListeners() = with(binding) {
-        // 🔙 Geri
-        btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
 
-        // 📍 Adres kartı – yeni sayfaya git
+        btnBack.setOnClickListener { findNavController().popBackStack() }
+
         rowAddress.setOnClickListener {
             findNavController().navigate(R.id.userAddressFragment)
         }
 
-        // 💾 Username kaydet → DataStore'a yaz
+        /** 💾 Kaydet */
         btnSave.setOnClickListener {
             val newUsername = etUsername.text?.toString()?.trim().orEmpty()
 
             if (newUsername.isEmpty()) {
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(R.string.user_info_username_empty_title),
-                    message = getString(R.string.user_info_username_empty_message)
-                )
+                Snackbar.make(
+                    binding.root,
+                    getString(R.string.user_info_username_empty_message),
+                    Snackbar.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
-            // DataStore'a sadece username yazıyoruz, diğer alanlara dokunmuyoruz
             viewLifecycleOwner.lifecycleScope.launch {
                 userPrefs.update { prefs ->
                     prefs.toBuilder()
@@ -111,13 +95,11 @@ class UserInfoFragment : Fragment(R.layout.fragment_user_info) {
                         .build()
                 }
 
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.SUCCESS,
-                    title = getString(R.string.user_info_save_success_title),
-                    message = getString(R.string.user_info_save_success_message),
-                    autoDismissMillis = 1000L
-                )
+                Snackbar.make(
+                    binding.root,
+                    getString(R.string.user_info_save_success_message),
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
         }
     }
