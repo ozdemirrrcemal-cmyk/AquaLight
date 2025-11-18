@@ -8,7 +8,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserAddressBinding
-import com.hbb20.ccp.CountryCodePicker
+import com.hbb20.CountryCodePicker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
