@@ -169,7 +169,6 @@
             app:ccp_showFullName="true"
             app:ccp_showNameCode="false"
             app:ccp_showPhoneCode="false"
-            app:ccp_autoDetectLanguageEnabled="true"
             app:ccp_contentColor="@android:color/white" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
