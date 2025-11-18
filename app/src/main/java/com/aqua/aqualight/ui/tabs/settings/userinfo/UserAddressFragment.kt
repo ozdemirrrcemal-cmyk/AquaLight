@@ -8,7 +8,6 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserAddressBinding
-import com.hbb20.CountryCodePicker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -23,8 +22,10 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentUserAddressBinding.bind(view)
 
+        // 📞 Telefon editText’i CCP’ye bağla → formatlama + fullNumber desteği
+        binding.ccpCountry.registerCarrierNumberEditText(binding.etPhoneNumber)
+
         loadAddressFromPrefs()
-        setupCountryPhoneLink()
         setupListeners()
     }
 
@@ -33,43 +34,22 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         viewLifecycleOwner.lifecycleScope.launch {
             val prefs = userPrefs.userPrefsFlow.first()
 
-            // Text alanları
             binding.etFirstName.setText(prefs.firstName)
             binding.etLastName.setText(prefs.lastName)
             binding.etCity.setText(prefs.city)
             binding.etAddress.setText(prefs.addressLine)
             binding.etPostCode.setText(prefs.postCode)
-            binding.etPhoneNumber.setText(prefs.phoneNumber)
 
-            // Country ISO code (ör: "TR") kaydettiğimizi varsayıyoruz
+            // 📍 Ülke – sadece kayıtlıysa set et, yoksa DEFAULT kalsın
             if (prefs.country.isNotBlank()) {
-                // CountryCodePicker case'e çok takılmıyor ama garanti olsun diye upper yapıyoruz
                 binding.ccpCountry.setCountryForNameCode(prefs.country.uppercase())
             }
-        }
-    }
 
-    /** 🔹 Ülke değişince telefon kodunu otomatik güncelle */
-    private fun setupCountryPhoneLink() = with(binding) {
-        ccpCountry.setOnCountryChangeListener {
-            val dialCode = ccpCountry.selectedCountryCodeWithPlus  // ör: +90
-            val currentPhone = etPhoneNumber.text?.toString().orEmpty()
-
-            val newValue = if (currentPhone.startsWith("+")) {
-                // Eski kodu yenisiyle değiştir: "+90 555..." gibi format
-                val rest = currentPhone.substringAfter(' ', "")
-                if (rest.isNotEmpty()) "$dialCode $rest" else "$dialCode "
-            } else {
-                // Daha önce kod yoksa başa ekle
-                if (currentPhone.isNotEmpty()) {
-                    "$dialCode $currentPhone"
-                } else {
-                    "$dialCode "
-                }
+            // 📞 Telefon – eğer full number kaydettiysek, CCP üzerinden yükle
+            if (prefs.phoneNumber.isNotBlank()) {
+                // "+905551112233" gibi full number ver → CCP ülkeyi + editText'i doldurur
+                binding.ccpCountry.setFullNumber(prefs.phoneNumber)
             }
-
-            etPhoneNumber.setText(newValue)
-            etPhoneNumber.setSelection(newValue.length)
         }
     }
 
@@ -95,11 +75,12 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         val city = binding.etCity.text?.toString()?.trim().orEmpty()
         val address = binding.etAddress.text?.toString()?.trim().orEmpty()
         val postCode = binding.etPostCode.text?.toString()?.trim().orEmpty()
-        val phone = binding.etPhoneNumber.text?.toString()?.trim().orEmpty()
+        val phoneRaw = binding.etPhoneNumber.text?.toString()?.trim().orEmpty()
 
-        // CountryCodePicker her zaman bir ülke seçili tutar,
-        // yine de ISO code'u alıyoruz:
+        // ISO ülke kodu (TR, US vs.)
         val countryIso = binding.ccpCountry.selectedCountryNameCode  // ör: "TR"
+        // + ülke kodu + numara, E.164 tarzında
+        val fullPhone = binding.ccpCountry.fullNumberWithPlus        // ör: "+905551112233"
 
         // Eski error’ları temizle
         binding.etFirstName.error = null
@@ -108,7 +89,6 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         binding.etAddress.error = null
         binding.etPostCode.error = null
         binding.etPhoneNumber.error = null
-        // ccpCountry için ayrı bir error UI yok, o yüzden dokunmuyoruz
 
         var hasError = false
 
@@ -123,10 +103,6 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                 getString(R.string.address_error_last_name_required)
             hasError = true
         }
-
-        // Country picker default bir ülke seçiyor, o yüzden ekstra boş kontrol
-        // gerekmez; ama istersen ISO boşsa hata verebilirsin.
-        // (Genelde burası hiçbir zaman boş olmayacak.)
 
         if (city.isEmpty()) {
             binding.etCity.error =
@@ -146,7 +122,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             hasError = true
         }
 
-        if (phone.isEmpty()) {
+        if (phoneRaw.isEmpty()) {
             binding.etPhoneNumber.error =
                 getString(R.string.address_error_phone_required)
             hasError = true
@@ -166,8 +142,8 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                     .setCity(city)
                     .setAddressLine(address)
                     .setPostCode(postCode)
-                    .setCountry(countryIso)     // ISO: "TR" gibi
-                    .setPhoneNumber(phone)      // "+90 5xx ..." gibi
+                    .setCountry(countryIso)   // "TR"
+                    .setPhoneNumber(fullPhone) // "+90555..."
                     .build()
             }
 
