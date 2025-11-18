@@ -79,6 +79,7 @@ class UserInfoFragment : Fragment(R.layout.fragment_user_info) {
         btnSave.setOnClickListener {
             val newUsername = etUsername.text?.toString()?.trim().orEmpty()
 
+            // 1️⃣ Boş username → uyarı göster, hiçbir şey kaydetme
             if (newUsername.isEmpty()) {
                 Snackbar.make(
                     binding.root,
@@ -88,18 +89,26 @@ class UserInfoFragment : Fragment(R.layout.fragment_user_info) {
                 return@setOnClickListener
             }
 
+            // 2️⃣ Kayıt dene
             viewLifecycleOwner.lifecycleScope.launch {
-                userPrefs.update { prefs ->
-                    prefs.toBuilder()
-                        .setUsername(newUsername)
-                        .build()
-                }
+                try {
+                    userPrefs.update { prefs ->
+                        prefs.toBuilder()
+                            .setUsername(newUsername)
+                            .build()
+                    }
 
-                Snackbar.make(
-                    binding.root,
-                    getString(R.string.user_info_save_success_message),
-                    Snackbar.LENGTH_SHORT
-                ).show()
+                    // 3️⃣ Hata yok → Sessizce bir önceki ekrana dön
+                    findNavController().popBackStack()
+
+                } catch (e: Exception) {
+                    // 4️⃣ Hata varsa Snackbar ile bildir
+                    Snackbar.make(
+                        binding.root,
+                        getString(R.string.user_info_save_error_message),
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
