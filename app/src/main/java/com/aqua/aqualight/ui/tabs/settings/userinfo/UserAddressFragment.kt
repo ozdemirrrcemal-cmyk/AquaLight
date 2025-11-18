@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserAddressBinding
+import com.aqua.aqualight.databinding.BottomsheetCountryPickerBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -43,7 +44,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         loadAddressFromPrefs()
         setupCountryPhoneLink()       // mevcut telefon–ülke senkronu
         setupListeners()
-        setupCountryPickerClick()     // CCP'ye tıklayınca bottom sheet aç
+        setupCountryPickerClick()     // kart'a tıklayınca bottom sheet aç
     }
 
     /** 🔹 DataStore'dan adres bilgilerini yükle */
@@ -63,6 +64,11 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             }
             // Şu an seçili ülkenin kodunu sakla
             lastDialCode = binding.ccpCountry.selectedCountryCodeWithPlus
+
+            // Kartın text'ini de güncelle
+            val dial = binding.ccpCountry.selectedCountryCodeWithPlus
+            val name = binding.ccpCountry.selectedCountryName
+            binding.tvCountryValue.text = "$name ($dial)"
 
             // 📞 Telefon – kayıtlıysa aynen göster, yoksa boş
             if (prefs.phoneNumber.isNotBlank()) {
@@ -102,12 +108,16 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
             // Son kodu güncelle
             lastDialCode = newDialCode
+
+            // Kart text'ini de güncelle
+            val name = ccpCountry.selectedCountryName
+            tvCountryValue.text = "$name ($newDialCode)"
         }
     }
 
-    /** 🔹 CCP'ye tıklayınca kendi bottom sheet’imizi aç */
+    /** 🔹 Ülke kartına tıklayınca kendi bottom sheet’imizi aç */
     private fun setupCountryPickerClick() = with(binding) {
-        ccpCountry.setOnClickListener {
+        cardCountry.setOnClickListener {
             showCountryBottomSheet()
         }
     }
@@ -199,25 +209,31 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
     /** 🔹 BottomSheet’i aç — tüm ülkeleri custom listede göster */
     private fun showCountryBottomSheet() {
         val dialog = BottomSheetDialog(requireContext(), R.style.AppBottomSheetDialogTheme)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_country_picker, null)
-        dialog.setContentView(view)
 
-        val tvTitle = view.findViewById<TextView>(R.id.tvBottomTitle)
-        val tvSubtitle = view.findViewById<TextView>(R.id.tvBottomSubtitle)
-        val recycler = view.findViewById<RecyclerView>(R.id.recyclerCountries)
+        // Bottom sheet için binding
+        val sheetBinding = BottomsheetCountryPickerBinding.inflate(layoutInflater)
+        dialog.setContentView(sheetBinding.root)
 
         val currentIso = binding.ccpCountry.selectedCountryNameCode  // "TR"
 
-        tvTitle.text = getString(R.string.address_info_country_label)
-        tvSubtitle.text = binding.ccpCountry.selectedCountryName     // ör: Türkiye
+        sheetBinding.tvBottomTitle.text =
+            getString(R.string.address_info_country_label)
+        sheetBinding.tvBottomSubtitle.text =
+            binding.ccpCountry.selectedCountryName   // ör: Türkiye
 
-        recycler.layoutManager = LinearLayoutManager(requireContext())
-        recycler.adapter = CountryAdapter(
+        sheetBinding.recyclerCountries.layoutManager =
+            LinearLayoutManager(requireContext())
+        sheetBinding.recyclerCountries.adapter = CountryAdapter(
             countries = countries,
             selectedIso = currentIso
         ) { selected ->
             // Seçilen ülkeyi CCP'ye set et
             binding.ccpCountry.setCountryForNameCode(selected.iso)
+            // Kart text'i güncelle
+            val newDial = binding.ccpCountry.selectedCountryCodeWithPlus
+            val newName = binding.ccpCountry.selectedCountryName
+            binding.tvCountryValue.text = "$newName ($newDial)"
+
             // setCountryForNameCode -> OnCountryChangeListener tetiklenir, telefon kodu zaten güncellenir
             dialog.dismiss()
         }
