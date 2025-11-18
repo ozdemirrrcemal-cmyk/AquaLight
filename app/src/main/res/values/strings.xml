@@ -899,4 +899,12 @@
 	
 
 
+
+<!-- Country selection title -->
+<string name="address_info_country_label">Country</string>
+
+<!-- Country selection subtitle -->
+<string name="address_info_country_hint">Please select your country</string>
+```0
+
 </resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/background_color"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="16dp"
+    tools:ignore="UseCompoundDrawables">
+
+    <!-- Küçük handle bar -->
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_bottomsheet_handle"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/tvBottomTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/address_info_country_label"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvBottomSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/address_info_country_label"
+        android:textColor="@color/settings_text_secondary"
+        android:textSize="13sp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp"
+        android:text="@string/address_info_country_hint" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerCountries"
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:overScrollMode="never"
+        android:paddingBottom="4dp" />
+
+</LinearLayout>
