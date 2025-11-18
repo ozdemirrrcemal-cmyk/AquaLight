@@ -901,10 +901,10 @@
 
 
 <!-- Country selection title -->
-<string name="address_info_country_label">Country</string>
 
 <!-- Country selection subtitle -->
 <string name="address_info_country_hint">Please select your country</string>
-```0
+<!-- Country picker icon content description -->
+<string name="address_info_country_picker_desc">Open country picker</string>
 
 </resources>
