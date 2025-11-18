@@ -183,7 +183,7 @@ tools:context=".ui.tabs.settings.userinfo.UserAddressFragment">
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="@color/settings_text_secondary"
+                        app:tint="@color/settings_text_secondary"
                         android:contentDescription="@string/address_info_country_picker_desc" />
                 </LinearLayout>
 
