@@ -2,4 +2,5 @@
     android:shape="rectangle">
     <solid android:color="#112240" /> <!-- Arka plan rengi -->
     <corners android:topLeftRadius="20dp" android:topRightRadius="20dp" />
+	<solid android:color="@color/settings_divider" />
 </shape>
