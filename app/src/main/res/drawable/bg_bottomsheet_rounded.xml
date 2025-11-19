@@ -7,6 +7,5 @@
         android:topRightRadius="24dp"
         android:bottomLeftRadius="0dp"
         android:bottomRightRadius="0dp" />
-
-    <solid android:color="@color/background_color" />
+   <solid android:color="@color/settings_card_background" />
 </shape>
