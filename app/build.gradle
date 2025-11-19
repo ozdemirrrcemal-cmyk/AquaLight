@@ -94,6 +94,9 @@ dependencies {
     // BlurView
     implementation "com.github.Dimezis:BlurView:version-2.0.6"
 	
+	// libphonenumber
+	implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
+	
 	// Country Code
 	implementation "com.hbb20:ccp:2.7.3"
 

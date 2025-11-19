@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.settings.userinfo
 
 import android.os.Bundle
-import android.telephony.PhoneNumberUtils
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -9,6 +8,8 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserAddressBinding
+import com.google.i18n.phonenumbers.NumberParseException
+import com.google.i18n.phonenumbers.PhoneNumberUtil
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -50,10 +51,9 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             // Şu an seçili ülkenin kodunu sakla
             lastDialCode = binding.ccpCountry.selectedCountryCodeWithPlus
 
-            // Kartın text'ini de güncelle
-            val dial = binding.ccpCountry.selectedCountryCodeWithPlus
+            // Kartın text'ini de güncelle (SADECE ülke adı)
             val name = binding.ccpCountry.selectedCountryName
-            binding.tvCountryValue.text = "$name ($dial)"
+            binding.tvCountryValue.text = name
 
             // 📞 Telefon – kayıtlıysa aynen göster, yoksa boş
             if (prefs.phoneNumber.isNotBlank()) {
@@ -94,9 +94,9 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             // Son kodu güncelle
             lastDialCode = newDialCode
 
-            // Kart text'ini de güncelle
+            // Kart text'ini de güncelle (tek ülke adı)
             val name = ccpCountry.selectedCountryName
-            tvCountryValue.text = "$name ($newDialCode)"
+            tvCountryValue.text = name
         }
     }
 
@@ -114,7 +114,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         btnSave.setOnClickListener { saveAddress() }
     }
 
-    /** 🔹 Kaydet — TÜM alanlar için boşluk kontrolü, inline error */
+    /** 🔹 Kaydet — TÜM alanlar için boşluk kontrolü, inline error + telefon validasyonu */
     private fun saveAddress() {
         val firstName = binding.etFirstName.text?.toString()?.trim().orEmpty()
         val lastName  = binding.etLastName.text?.toString()?.trim().orEmpty()
@@ -168,9 +168,27 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
         if (hasError) return
 
-        // Telefonu ülke koduna göre formatla (mümkünse)
-        val formattedPhone =
-            PhoneNumberUtils.formatNumber(phoneRaw, countryIso) ?: phoneRaw
+        // ✅ libphonenumber ile telefon validasyonu + format
+        val phoneUtil = PhoneNumberUtil.getInstance()
+        val numberProto = try {
+            phoneUtil.parse(phoneRaw, countryIso)   // "+90 5xx ..." + "TR"
+        } catch (e: NumberParseException) {
+            binding.etPhoneNumber.error =
+                getString(R.string.address_error_phone_invalid)
+            return
+        }
+
+        if (!phoneUtil.isValidNumberForRegion(numberProto, countryIso)) {
+            binding.etPhoneNumber.error =
+                getString(R.string.address_error_phone_invalid)
+            return
+        }
+
+        // International format: +90 5xx xxx xx xx
+        val formattedPhone = phoneUtil.format(
+            numberProto,
+            PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL
+        )
 
         val fullName = "$firstName $lastName"
 
@@ -202,10 +220,9 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             // Seçilen ülkeyi CCP'ye set et
             binding.ccpCountry.setCountryForNameCode(selected.iso)
 
-            // Kart text'i güncelle
-            val newDial = binding.ccpCountry.selectedCountryCodeWithPlus
+            // Kart text'i güncelle (sadece ülke adı)
             val newName = binding.ccpCountry.selectedCountryName
-            binding.tvCountryValue.text = "$newName ($newDial)"
+            binding.tvCountryValue.text = newName
             // OnCountryChangeListener zaten telefon kodunu güncelliyor
         }
     }

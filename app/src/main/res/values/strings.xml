@@ -903,5 +903,5 @@
 
 <!-- Country picker icon content description -->
 <string name="address_info_country_search_hint">Search country</string>
-
+<string name="address_error_phone_invalid">Please enter a valid phone number</string>
 </resources>
