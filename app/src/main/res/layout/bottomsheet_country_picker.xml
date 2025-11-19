@@ -35,7 +35,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        style="@style/Widget.Aqua.CardStyles">
+        style="@style/Widget.Aqua.CardStyles"
+        app:cardElevation="0dp"
+        app:cardUseCompatPadding="false">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -68,13 +70,13 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-  <androidx.recyclerview.widget.RecyclerView
-    android:id="@+id/recyclerCountries"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:overScrollMode="never"
-    android:clipToPadding="false"
-    android:paddingBottom="16dp" />
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerCountries"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:overScrollMode="never"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
 
 </LinearLayout>
