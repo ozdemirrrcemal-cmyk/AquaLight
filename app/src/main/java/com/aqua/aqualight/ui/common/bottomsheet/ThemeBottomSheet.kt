@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.settings.app
+package com.aqua.aqualight.ui.common.bottomsheet
 
 import android.content.DialogInterface
 import android.os.Bundle

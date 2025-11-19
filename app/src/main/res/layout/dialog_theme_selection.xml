@@ -48,7 +48,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp"
+            android:padding="8dp"
             android:gravity="center_vertical">
 
             <!-- Sol ikon -->
@@ -94,7 +94,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp"
+            android:padding="8dp"
             android:gravity="center_vertical">
 
             <!-- Sol ikon -->
@@ -139,7 +139,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp"
+            android:padding="8dp"
             android:gravity="center_vertical">
 
             <!-- Sol ikon -->
