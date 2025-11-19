@@ -197,6 +197,27 @@
                 app:iconGravity="textStart"
                 app:iconPadding="8dp"
                 android:contentDescription="@string/feedback_send_desc" />
+				<!-- Sending progress -->
+<ProgressBar
+    android:id="@+id/progressBarSending"
+    style="?android:attr/progressBarStyleSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginTop="8dp"
+    android:visibility="gone" />
+
+<!-- Lottie başarı animasyonu -->
+<com.airbnb.lottie.LottieAnimationView
+    android:id="@+id/lottieSuccess"
+    android:layout_width="80dp"
+    android:layout_height="80dp"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginTop="16dp"
+    android:visibility="gone"
+    app:lottie_rawRes="@raw/success_feedback"
+    app:lottie_autoPlay="false"
+    app:lottie_loop="false" />
 
             <!-- Alt bilgi -->
             <TextView

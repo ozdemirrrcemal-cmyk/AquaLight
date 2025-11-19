@@ -1,177 +1,189 @@
 package com.aqua.aqualight.ui.tabs.settings.feedback
 
 import android.os.Bundle
+import android.util.Patterns
 import android.view.View
-import android.view.inputmethod.InputMethodManager
-import android.content.Context
-import android.widget.ArrayAdapter
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.core.widget.doOnTextChanged
-import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentFeedbackBinding
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Locale
 
 class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
     private var _binding: FragmentFeedbackBinding? = null
     private val binding get() = _binding!!
 
-    // Butonun orijinal metnini saklayalım (ör: "Send feedback")
-    private var sendButtonOriginalText: String? = null
+    private val db: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
+    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
+    private var originalButtonText: CharSequence? = null
+    private var isSending = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentFeedbackBinding.bind(view)
 
-        sendButtonOriginalText = getString(R.string.feedback_send)
+        originalButtonText = binding.btnSend.text
 
         setupHeader()
         setupCategoryDropdown()
-        setupTextChangeListeners()
-        setupListeners()
+        setupSendButton()
     }
 
-    /** 🔹 Üst bar: back */
     private fun setupHeader() = with(binding) {
-        btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
+        btnBack.setOnClickListener { findNavController().popBackStack() }
+
+        tvSubInfo.text = getString(R.string.feedback_subinfo_text)
+        tvFooter.text = getString(R.string.feedback_footer_text)
     }
 
-    /** 🔹 Kategori dropdown (AutoCompleteTextView) */
     private fun setupCategoryDropdown() = with(binding) {
-        val categories = resources.getStringArray(R.array.feedback_categories)
-        val adapter = ArrayAdapter(
+        val categories = resources.getStringArray(R.array.feedback_categories).toList()
+
+        val adapter = android.widget.ArrayAdapter(
             requireContext(),
-            android.R.layout.simple_list_item_1, // istersen custom layout yapabiliriz
+            android.R.layout.simple_list_item_1,
             categories
         )
         autoCategory.setAdapter(adapter)
 
-        // Tıklanınca direkt dropdown açılsın
         autoCategory.setOnClickListener {
             autoCategory.showDropDown()
         }
     }
 
-    /** 🔹 Kullanıcı yazarken hata mesajlarını anında temizle */
-    private fun setupTextChangeListeners() = with(binding) {
-        autoCategory.doOnTextChanged { _, _, _, _ ->
-            inputLayoutCategory.error = null
-        }
-        etEmail.doOnTextChanged { _, _, _, _ ->
-            inputLayoutEmail.error = null
-        }
-        etMessage.doOnTextChanged { _, _, _, _ ->
-            inputLayoutMessage.error = null
-        }
-    }
-
-    /** 🔹 Click listener’lar */
-    private fun setupListeners() = with(binding) {
+    private fun setupSendButton() = with(binding) {
         btnSend.setOnClickListener {
-            hideKeyboard()
-            if (!validateForm()) return@setOnClickListener
-            sendFeedback()
-        }
-    }
-
-    /** 🔹 Form validasyonu (kategori zorunlu, mesaj zorunlu, email opsiyonel ama formatlı) */
-    private fun validateForm(): Boolean = with(binding) {
-        var hasError = false
-
-        inputLayoutCategory.error = null
-        inputLayoutEmail.error = null
-        inputLayoutMessage.error = null
-
-        val category = autoCategory.text?.toString()?.trim().orEmpty()
-        val email    = etEmail.text?.toString()?.trim().orEmpty()
-        val message  = etMessage.text?.toString()?.trim().orEmpty()
-
-        if (category.isEmpty()) {
-            inputLayoutCategory.error =
-                getString(R.string.feedback_error_category_required)
-            hasError = true
-        }
-
-        if (email.isNotEmpty() &&
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-        ) {
-            inputLayoutEmail.error =
-                getString(R.string.feedback_error_email_invalid)
-            hasError = true
-        }
-
-        if (message.length < 10) {
-            inputLayoutMessage.error =
-                getString(R.string.feedback_error_message_too_short)
-            hasError = true
-        }
-
-        !hasError
-    }
-
-    /** 🔹 Feedback gönderme akışı (şimdilik sahte delay + success animasyonu) */
-    private fun sendFeedback() = with(binding) {
-        val category = autoCategory.text?.toString()?.trim().orEmpty()
-        val email    = etEmail.text?.toString()?.trim().orEmpty()
-        val message  = etMessage.text?.toString()?.trim().orEmpty()
-
-        // Butonu kilitle, "Sending..." göster
-        btnSend.isEnabled = false
-        btnSend.text = getString(R.string.feedback_sending) // strings.xml'e ekle
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                // TODO: Buraya gerçek gönderim (API / Firebase vb.) gelecek
-                // Örn: feedbackRepository.sendFeedback(category, email, message)
-                delay(1200) // sadece görsel amaçlı
-
-                showSuccessMessage()
-
-                // Mesaj alanını temizle (email'i istersen tut)
-                etMessage.setText("")
-            } catch (e: Exception) {
-                Snackbar.make(
-                    root,
-                    R.string.feedback_error_generic,
-                    Snackbar.LENGTH_LONG
-                ).show()
-            } finally {
-                // Butonu eski haline getir
-                btnSend.isEnabled = true
-                btnSend.text = sendButtonOriginalText
+            if (!isSending) {
+                sendFeedback()
             }
         }
     }
 
-    /** 🔹 Başarılı gönderim UI’si (fade-in success text + scroll) */
-    private fun showSuccessMessage() = with(binding) {
-        tvSuccessMessage.apply {
-            text = getString(R.string.feedback_success_text)
-            alpha = 0f
-            visibility = View.VISIBLE
-            animate()
-                .alpha(1f)
-                .setDuration(250)
-                .start()
+    private fun sendFeedback() {
+        val user = auth.currentUser
+        if (user == null) {
+            // Kullanıcı login değilse – güvenlik gereği göndermiyoruz
+            Snackbar.make(
+                binding.root,
+                getString(R.string.feedback_error_not_logged_in),
+                Snackbar.LENGTH_LONG
+            ).show()
+            return
         }
 
-        // Success mesajı kartın altında ise oraya doğru hafifçe scroll et
-        scrollContent.post {
-            scrollContent.smoothScrollTo(0, tvSuccessMessage.bottom)
+        // Eski hataları temizle
+        binding.inputLayoutCategory.error = null
+        binding.inputLayoutEmail.error = null
+        binding.inputLayoutMessage.error = null
+        binding.tvSuccessMessage.isGone = true
+        binding.lottieSuccess.isGone = true
+
+        val category = binding.autoCategory.text?.toString()?.trim().orEmpty()
+        val email = binding.etEmail.text?.toString()?.trim().orEmpty()
+        val message = binding.etMessage.text?.toString()?.trim().orEmpty()
+
+        var hasError = false
+
+        if (category.isEmpty()) {
+            binding.inputLayoutCategory.error =
+                getString(R.string.feedback_error_category_required)
+            hasError = true
+        }
+
+        if (message.length < 5) {
+            binding.inputLayoutMessage.error =
+                getString(R.string.feedback_error_message_min)
+            hasError = true
+        } else if (message.length > 500) {
+            binding.inputLayoutMessage.error =
+                getString(R.string.feedback_error_message_max)
+            hasError = true
+        }
+
+        if (email.isNotEmpty() &&
+            !Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        ) {
+            binding.inputLayoutEmail.error =
+                getString(R.string.feedback_error_email_invalid)
+            hasError = true
+        }
+
+        if (hasError) return
+
+        setSendingState(true)
+
+        val uid = user.uid
+        val docRef = db.collection("feedback")
+            .document(uid)
+            .collection("items")
+            .document()  // auto ID
+
+        val data = hashMapOf(
+            "category" to category,
+            "email" to email.ifBlank { null },
+            "message" to message,
+            "platform" to "android",
+            "appVersion" to getAppVersion(),
+            "locale" to Locale.getDefault().toLanguageTag(),
+            "status" to "new",
+            "userId" to uid,
+            "createdAt" to FieldValue.serverTimestamp()
+        )
+
+        docRef.set(data)
+            .addOnSuccessListener {
+                setSendingState(false)
+                showSuccessUI()
+
+                // Formu temizle (e-posta opsiyonel olduğu için onu istersen bırakabilirsin)
+                binding.autoCategory.setText("")
+                binding.etMessage.setText("")
+            }
+            .addOnFailureListener { e ->
+                setSendingState(false)
+                Snackbar.make(
+                    binding.root,
+                    getString(R.string.feedback_error_generic),
+                    Snackbar.LENGTH_LONG
+                ).show()
+            }
+    }
+
+    private fun setSendingState(sending: Boolean) = with(binding) {
+        isSending = sending
+        btnSend.isEnabled = !sending
+        btnSend.text = if (sending) {
+            getString(R.string.feedback_sending) // "Sending..."
+        } else {
+            originalButtonText
         }
     }
 
-    /** 🔹 Klavyeyi kapatmak için küçük yardımcı */
-    private fun hideKeyboard() {
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-        val view = requireActivity().currentFocus ?: View(requireContext())
-        imm?.hideSoftInputFromWindow(view.windowToken, 0)
+    private fun showSuccessUI() = with(binding) {
+        tvSuccessMessage.text = getString(R.string.feedback_success_text)
+        tvSuccessMessage.isVisible = true
+
+        lottieSuccess.isVisible = true
+        lottieSuccess.playAnimation()
+    }
+
+    private fun getAppVersion(): String {
+        return try {
+            val pInfo = requireContext()
+                .packageManager
+                .getPackageInfo(requireContext().packageName, 0)
+            pInfo.versionName ?: "unknown"
+        } catch (e: Exception) {
+            "unknown"
+        }
     }
 
     override fun onDestroyView() {
