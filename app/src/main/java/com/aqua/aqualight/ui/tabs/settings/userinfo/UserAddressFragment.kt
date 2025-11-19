@@ -208,7 +208,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
     }
 
     /** 🔹 BottomSheet’i aç — tüm ülkeleri custom listede göster */
-    private fun showCountryBottomSheet() {
+private fun showCountryBottomSheet() {
     val dialog = BottomSheetDialog(requireContext(), R.style.AppBottomSheetDialogTheme)
 
     // Bottom sheet için binding
@@ -241,6 +241,13 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
     }
 
     sheetBinding.recyclerCountries.adapter = adapter
+
+    // 🔹 RecyclerView yüksekliğini ekranın yarısı ile sınırla
+    val maxHeight = (resources.displayMetrics.heightPixels * 0.5f).toInt()
+    sheetBinding.recyclerCountries.layoutParams =
+        sheetBinding.recyclerCountries.layoutParams.apply {
+            height = maxHeight
+        }
 
     // 🔍 Arama filtresi
     sheetBinding.etSearchCountry.addTextChangedListener { text ->

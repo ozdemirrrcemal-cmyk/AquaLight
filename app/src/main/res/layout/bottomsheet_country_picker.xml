@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/background_color"
+    android:background="@drawable/bg_bottomsheet_rounded"
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
     android:paddingTop="12dp"
@@ -68,11 +68,11 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerCountries"
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:overScrollMode="never"
-        android:paddingBottom="4dp" />
+   <androidx.recyclerview.widget.RecyclerView
+    android:id="@+id/recyclerCountries"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:overScrollMode="never"
+    android:paddingBottom="4dp" />
 
 </LinearLayout>
