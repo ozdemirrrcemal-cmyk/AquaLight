@@ -48,7 +48,7 @@
                 android:id="@+id/ivSearch"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_search"   <!-- kendi ikonun -->
+                android:src="@drawable/ic_search"
                 app:tint="@color/settings_text_secondary"
                 android:contentDescription="@string/address_info_country_search_hint" />
 
