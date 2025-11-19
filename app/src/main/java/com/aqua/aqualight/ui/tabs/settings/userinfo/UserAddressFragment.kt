@@ -62,16 +62,17 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             binding.tvCountryValue.text = name
 
             // 📞 Telefon
+            isFormattingPhone = true
             if (prefs.phoneNumber.isNotBlank()) {
                 binding.etPhoneNumber.setText(prefs.phoneNumber)
-                binding.etPhoneNumber.setSelection(prefs.phoneNumber.length)
             } else {
-                // Varsayılan olarak sadece ülke kodu
                 val dial = binding.ccpCountry.selectedCountryCodeWithPlus
-                val initial = "$dial "
-                binding.etPhoneNumber.setText(initial)
-                binding.etPhoneNumber.setSelection(initial.length)
+                binding.etPhoneNumber.setText("$dial ")
             }
+            // Seçimi HER ZAMAN mevcut text uzunluğuna göre yap
+            val len = binding.etPhoneNumber.text?.length ?: 0
+            binding.etPhoneNumber.setSelection(len)
+            isFormattingPhone = false
         }
     }
 
@@ -100,7 +101,8 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
             isFormattingPhone = true
             etPhoneNumber.setText(newText)
-            etPhoneNumber.setSelection(newText.length)
+            val len = etPhoneNumber.text?.length ?: newText.length
+            etPhoneNumber.setSelection(len)
             isFormattingPhone = false
 
             // Son kodu güncelle
@@ -141,7 +143,8 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                     val onlyDial = "$dialCode "
                     isFormattingPhone = true
                     binding.etPhoneNumber.setText(onlyDial)
-                    binding.etPhoneNumber.setSelection(onlyDial.length)
+                    val len = binding.etPhoneNumber.text?.length ?: onlyDial.length
+                    binding.etPhoneNumber.setSelection(len)
                     isFormattingPhone = false
                     return
                 }
@@ -170,7 +173,8 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
                 isFormattingPhone = true
                 binding.etPhoneNumber.setText(finalText)
-                binding.etPhoneNumber.setSelection(finalText.length)
+                val len = binding.etPhoneNumber.text?.length ?: finalText.length
+                binding.etPhoneNumber.setSelection(len)
                 isFormattingPhone = false
             }
         })
