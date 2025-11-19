@@ -61,15 +61,16 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             val name = binding.ccpCountry.selectedCountryName
             binding.tvCountryValue.text = name
 
-            // 📞 Telefon – kayıtlıysa aynen göster, yoksa boş
+            // 📞 Telefon
             if (prefs.phoneNumber.isNotBlank()) {
                 binding.etPhoneNumber.setText(prefs.phoneNumber)
                 binding.etPhoneNumber.setSelection(prefs.phoneNumber.length)
             } else {
-                // Varsayılan olarak sadece ülke kodunu bas
+                // Varsayılan olarak sadece ülke kodu
                 val dial = binding.ccpCountry.selectedCountryCodeWithPlus
-                binding.etPhoneNumber.setText("$dial ")
-                binding.etPhoneNumber.setSelection(binding.etPhoneNumber.text?.length ?: 0)
+                val initial = "$dial "
+                binding.etPhoneNumber.setText(initial)
+                binding.etPhoneNumber.setSelection(initial.length)
             }
         }
     }
@@ -111,7 +112,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         }
     }
 
-    /** 🔹 Telefon alanına yazarken ülkeye göre format + max uzunluk */
+    /** 🔹 Telefon alanına yazarken ülkeye göre format + yaklaşık max uzunluk */
     private fun setupPhoneFormatting() {
         val phoneUtil = PhoneNumberUtil.getInstance()
 
@@ -145,11 +146,14 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                     return
                 }
 
-                // Bölgeye göre max uzunluk (libphonenumber metadata)
-                val metadata = phoneUtil.getMetadataForRegion(countryIso)
-                val maxLen = metadata?.possibleLengthList?.maxOrNull() ?: 15
-
-                val limitedDigits = digits.take(maxLen)
+                // ✅ Public API: örnek numaradan yaklaşık uzunluk çıkar
+                val example = try {
+                    phoneUtil.getExampleNumber(countryIso)
+                } catch (e: Exception) {
+                    null
+                }
+                val exampleLen = example?.nationalNumber?.toString()?.length ?: 15
+                val limitedDigits = digits.take(exampleLen)
 
                 // AsYouTypeFormatter ile ulusal kısmı formatla
                 val formatter = phoneUtil.getAsYouTypeFormatter(countryIso)
@@ -186,57 +190,7 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         btnSave.setOnClickListener { saveAddress() }
     }
 
-    /** 🔹 Zorunlu alanları tek yerden kontrol et, ilk hatalıya odaklan */
-    private fun validateRequiredFields(
-        firstName: String,
-        lastName: String,
-        city: String,
-        address: String,
-        postCode: String,
-        phoneRaw: String
-    ): Boolean {
-
-        // Eski error’ları temizle
-        binding.etFirstName.error = null
-        binding.etLastName.error = null
-        binding.etCity.error = null
-        binding.etAddress.error = null
-        binding.etPostCode.error = null
-        binding.etPhoneNumber.error = null
-
-        var firstInvalidView: View? = null
-
-        fun markErrorIfEmpty(value: String, errorResId: Int, view: View) {
-            if (value.isBlank()) {
-                if (view is android.widget.EditText) {
-                    view.error = getString(errorResId)
-                }
-                if (firstInvalidView == null) {
-                    firstInvalidView = view
-                }
-            }
-        }
-
-        markErrorIfEmpty(firstName, R.string.address_error_first_name_required, binding.etFirstName)
-        markErrorIfEmpty(lastName,  R.string.address_error_last_name_required,  binding.etLastName)
-        markErrorIfEmpty(city,      R.string.address_error_city_required,      binding.etCity)
-        markErrorIfEmpty(address,   R.string.address_error_address_required,   binding.etAddress)
-        markErrorIfEmpty(postCode,  R.string.address_error_postcode_required,  binding.etPostCode)
-        markErrorIfEmpty(phoneRaw,  R.string.address_error_phone_required,     binding.etPhoneNumber)
-
-        if (firstInvalidView != null) {
-            firstInvalidView?.requestFocus()
-            // ScrollView varsa oraya kaydır
-            binding.scrollContent.post {
-                binding.scrollContent.smoothScrollTo(0, firstInvalidView!!.top)
-            }
-            return false
-        }
-
-        return true
-    }
-
-    /** 🔹 Kaydet — validasyon + telefon validasyonu */
+    /** 🔹 Kaydet — TÜM alanlar için boşluk kontrolü + telefon validasyonu */
     private fun saveAddress() {
         val firstName = binding.etFirstName.text?.toString()?.trim().orEmpty()
         val lastName  = binding.etLastName.text?.toString()?.trim().orEmpty()
@@ -247,10 +201,48 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
         val countryIso = binding.ccpCountry.selectedCountryNameCode   // "TR"
 
-        // Zorunlu alanları ortak fonksiyonla kontrol et
-        if (!validateRequiredFields(firstName, lastName, city, address, postCode, phoneRaw)) {
-            return
+        // Eski error’ları temizle
+        binding.etFirstName.error = null
+        binding.etLastName.error = null
+        binding.etCity.error = null
+        binding.etAddress.error = null
+        binding.etPostCode.error = null
+        binding.etPhoneNumber.error = null
+
+        var hasError = false
+
+        if (firstName.isEmpty()) {
+            binding.etFirstName.error =
+                getString(R.string.address_error_first_name_required)
+            hasError = true
         }
+        if (lastName.isEmpty()) {
+            binding.etLastName.error =
+                getString(R.string.address_error_last_name_required)
+            hasError = true
+        }
+        if (city.isEmpty()) {
+            binding.etCity.error =
+                getString(R.string.address_error_city_required)
+            hasError = true
+        }
+        if (address.isEmpty()) {
+            binding.etAddress.error =
+                getString(R.string.address_error_address_required)
+            hasError = true
+        }
+        if (postCode.isEmpty()) {
+            binding.etPostCode.error =
+                getString(R.string.address_error_postcode_required)
+            hasError = true
+        }
+        if (phoneRaw.isEmpty()) {
+            binding.etPhoneNumber.error =
+                getString(R.string.address_error_phone_required)
+            hasError = true
+        }
+
+        if (hasError) return
 
         // ✅ libphonenumber ile telefon validasyonu + format
         val phoneUtil = PhoneNumberUtil.getInstance()
