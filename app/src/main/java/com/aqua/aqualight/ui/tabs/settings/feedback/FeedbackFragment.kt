@@ -40,8 +40,9 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     private fun setupHeader() = with(binding) {
         btnBack.setOnClickListener { findNavController().popBackStack() }
 
-        tvSubInfo.text = getString(R.string.feedback_subinfo_text)
-        tvFooter.text = getString(R.string.feedback_footer_text)
+        // ✔️ strings.xml’deki mevcut id’ler
+        tvSubInfo.text = getString(R.string.feedback_subinfo)
+        tvFooter.text = getString(R.string.feedback_footer)
     }
 
     private fun setupCategoryDropdown() = with(binding) {
@@ -68,17 +69,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     }
 
     private fun sendFeedback() {
-        val user = auth.currentUser
-        if (user == null) {
-            // Kullanıcı login değilse – güvenlik gereği göndermiyoruz
-            Snackbar.make(
-                binding.root,
-                getString(R.string.feedback_error_not_logged_in),
-                Snackbar.LENGTH_LONG
-            ).show()
-            return
-        }
-
         // Eski hataları temizle
         binding.inputLayoutCategory.error = null
         binding.inputLayoutEmail.error = null
@@ -92,22 +82,21 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
         var hasError = false
 
+        // Kategori zorunlu
         if (category.isEmpty()) {
             binding.inputLayoutCategory.error =
                 getString(R.string.feedback_error_category_required)
             hasError = true
         }
 
-        if (message.length < 5) {
+        // Mesaj min 10 karakter (tek string: feedback_error_message_too_short)
+        if (message.length < 10) {
             binding.inputLayoutMessage.error =
-                getString(R.string.feedback_error_message_min)
-            hasError = true
-        } else if (message.length > 500) {
-            binding.inputLayoutMessage.error =
-                getString(R.string.feedback_error_message_max)
+                getString(R.string.feedback_error_message_too_short)
             hasError = true
         }
 
+        // Email opsiyonel, ama doluysa valid olmalı
         if (email.isNotEmpty() &&
             !Patterns.EMAIL_ADDRESS.matcher(email).matches()
         ) {
@@ -120,7 +109,11 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
         setSendingState(true)
 
-        val uid = user.uid
+        // Kullanıcı id'si – login değilse anonim
+        val user = auth.currentUser
+        val uid = user?.uid ?: "anonymous"
+
+        // Senin ilk yapına sadık kalıyorum: feedback/{uid}/items/{autoId}
         val docRef = db.collection("feedback")
             .document(uid)
             .collection("items")
@@ -143,11 +136,11 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 setSendingState(false)
                 showSuccessUI()
 
-                // Formu temizle (e-posta opsiyonel olduğu için onu istersen bırakabilirsin)
+                // Formu temizle (email opsiyonel, istersen silmeyebilirsin)
                 binding.autoCategory.setText("")
                 binding.etMessage.setText("")
             }
-            .addOnFailureListener { e ->
+            .addOnFailureListener {
                 setSendingState(false)
                 Snackbar.make(
                     binding.root,
@@ -161,16 +154,19 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         isSending = sending
         btnSend.isEnabled = !sending
         btnSend.text = if (sending) {
-            getString(R.string.feedback_sending) // "Sending..."
+            // ✔️ strings.xml’de var: feedback_sending = "Sending..."
+            getString(R.string.feedback_sending)
         } else {
             originalButtonText
         }
     }
 
     private fun showSuccessUI() = with(binding) {
+        // ✔️ strings.xml’de var: feedback_success_text
         tvSuccessMessage.text = getString(R.string.feedback_success_text)
         tvSuccessMessage.isVisible = true
 
+        // Lottie view eklediysen çalışır, yoksa bu kısmı ve importu kaldırabilirsin
         lottieSuccess.isVisible = true
         lottieSuccess.playAnimation()
     }

@@ -532,7 +532,14 @@
         Most used device
     </string>
 
-    <!-- ℹ️ Veri & gizlilik açıklaması -->
+   
+
+    <!-- 🧩 Settings detail screens: Privacy & Terms -->
+    <string name="privacy_title">Privacy &amp; terms</string>
+    <string name="privacy_back_button_desc">
+        Go back from privacy and terms screen
+    </string>
+	 <!-- ℹ️ Veri & gizlilik açıklaması -->
     <string name="usage_privacy_card_desc">
         Card explaining how usage data is stored and used.
     </string>
@@ -543,12 +550,6 @@
         We only collect basic, anonymised usage statistics such as session counts and total time spent in the app. This helps us understand performance and improve Aqua over time. Your personal content and private data are not inspected or sold.
     </string>
 	
-
-    <!-- 🧩 Settings detail screens: Privacy & Terms -->
-    <string name="privacy_title">Privacy &amp; terms</string>
-    <string name="privacy_back_button_desc">
-        Go back from privacy and terms screen
-    </string>
 
     <!-- 🧩 Settings detail screens: Feedback & Support -->
     <string name="feedback_title">Feedback &amp; support</string>
@@ -800,6 +801,8 @@
 <string name="address_info_cancel_button">Cancel</string>
 <string name="address_info_save_button">Save address</string>
 <string name="address_info_save_button_desc">Save your address information</string>
+<string name="address_info_country_search_hint">Search country</string>
+<string name="address_error_phone_invalid">Please enter a valid phone number</string>
 
 <!-- 🌍 Language options -->
 
@@ -911,6 +914,5 @@
 
 
 <!-- Country picker icon content description -->
-<string name="address_info_country_search_hint">Search country</string>
-<string name="address_error_phone_invalid">Please enter a valid phone number</string>
+
 </resources>
