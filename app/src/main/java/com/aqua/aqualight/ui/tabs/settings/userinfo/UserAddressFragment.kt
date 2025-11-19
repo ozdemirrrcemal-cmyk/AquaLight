@@ -16,6 +16,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserAddressBinding
 import com.aqua.aqualight.databinding.BottomsheetCountryPickerBinding
+import androidx.core.widget.addTextChangedListener
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -208,39 +209,46 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
     /** 🔹 BottomSheet’i aç — tüm ülkeleri custom listede göster */
     private fun showCountryBottomSheet() {
-        val dialog = BottomSheetDialog(requireContext(), R.style.AppBottomSheetDialogTheme)
+    val dialog = BottomSheetDialog(requireContext(), R.style.AppBottomSheetDialogTheme)
 
-        // Bottom sheet için binding
-        val sheetBinding = BottomsheetCountryPickerBinding.inflate(layoutInflater)
-        dialog.setContentView(sheetBinding.root)
+    // Bottom sheet için binding
+    val sheetBinding = BottomsheetCountryPickerBinding.inflate(layoutInflater)
+    dialog.setContentView(sheetBinding.root)
 
-        val currentIso = binding.ccpCountry.selectedCountryNameCode  // "TR"
+    val currentIso = binding.ccpCountry.selectedCountryNameCode  // "TR"
 
-        sheetBinding.tvBottomTitle.text =
-            getString(R.string.address_info_country_label)
-        sheetBinding.tvBottomSubtitle.text =
-            binding.ccpCountry.selectedCountryName   // ör: Türkiye
+    // Başlık zaten XML'de Country, istersen override edebilirsin:
+    sheetBinding.tvBottomTitle.text =
+        getString(R.string.address_info_country_label)
 
-        sheetBinding.recyclerCountries.layoutManager =
-            LinearLayoutManager(requireContext())
-        sheetBinding.recyclerCountries.adapter = CountryAdapter(
-            countries = countries,
-            selectedIso = currentIso
-        ) { selected ->
-            // Seçilen ülkeyi CCP'ye set et
-            binding.ccpCountry.setCountryForNameCode(selected.iso)
-            // Kart text'i güncelle
-            val newDial = binding.ccpCountry.selectedCountryCodeWithPlus
-            val newName = binding.ccpCountry.selectedCountryName
-            binding.tvCountryValue.text = "$newName ($newDial)"
+    sheetBinding.recyclerCountries.layoutManager =
+        LinearLayoutManager(requireContext())
 
-            // setCountryForNameCode -> OnCountryChangeListener tetiklenir, telefon kodu zaten güncellenir
-            dialog.dismiss()
-        }
+    val adapter = CountryAdapter(
+        countries = countries,
+        selectedIso = currentIso
+    ) { selected ->
+        // Seçilen ülkeyi CCP'ye set et
+        binding.ccpCountry.setCountryForNameCode(selected.iso)
 
-        dialog.show()
+        // Kart text'i güncelle
+        val newDial = binding.ccpCountry.selectedCountryCodeWithPlus
+        val newName = binding.ccpCountry.selectedCountryName
+        binding.tvCountryValue.text = "$newName ($newDial)"
+
+        // OnCountryChangeListener zaten telefon kodunu güncelliyor
+        dialog.dismiss()
     }
 
+    sheetBinding.recyclerCountries.adapter = adapter
+
+    // 🔍 Arama filtresi
+    sheetBinding.etSearchCountry.addTextChangedListener { text ->
+        adapter.filter(text?.toString().orEmpty())
+    }
+
+    dialog.show()
+}
     /** 🔹 Locale'den ülke listesi üret (ISO + display name) */
     private fun buildCountryList(): List<Country> {
         return Locale.getISOCountries()
@@ -265,44 +273,58 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
     /** 🔹 BottomSheet içindeki ülke listesi adapter’i */
     private inner class CountryAdapter(
-        private val countries: List<Country>,
-        private var selectedIso: String?,
-        private val onItemClick: (Country) -> Unit
-    ) : RecyclerView.Adapter<CountryAdapter.CountryVH>() {
+    private val countries: List<Country>,
+    private var selectedIso: String?,
+    private val onItemClick: (Country) -> Unit
+) : RecyclerView.Adapter<CountryAdapter.CountryVH>() {
 
-        inner class CountryVH(view: View) : RecyclerView.ViewHolder(view) {
-            val tvFlag: TextView = view.findViewById(R.id.tvFlag)
-            val tvCountryName: TextView = view.findViewById(R.id.tvCountryName)
-            val tvCountryIso: TextView = view.findViewById(R.id.tvCountryIso)
-            val radio: RadioButton = view.findViewById(R.id.radioCountry)
-        }
+    private var filtered: List<Country> = countries
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CountryVH {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_country_radio, parent, false)
-            return CountryVH(view)
-        }
-
-        override fun onBindViewHolder(holder: CountryVH, position: Int) {
-            val item = countries[position]
-
-            holder.tvFlag.text = isoToFlag(item.iso)
-            holder.tvCountryName.text = item.name
-            holder.tvCountryIso.text = item.iso
-            holder.radio.isChecked = item.iso.equals(selectedIso, ignoreCase = true)
-
-            val clickListener = View.OnClickListener {
-                selectedIso = item.iso
-                notifyDataSetChanged()
-                onItemClick(item)
-            }
-
-            holder.itemView.setOnClickListener(clickListener)
-            holder.radio.setOnClickListener(clickListener)
-        }
-
-        override fun getItemCount(): Int = countries.size
+    inner class CountryVH(view: View) : RecyclerView.ViewHolder(view) {
+        val tvFlag: TextView = view.findViewById(R.id.tvFlag)
+        val tvCountryName: TextView = view.findViewById(R.id.tvCountryName)
+        val tvCountryIso: TextView = view.findViewById(R.id.tvCountryIso)
+        val radio: RadioButton = view.findViewById(R.id.radioCountry)
     }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CountryVH {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_country_radio, parent, false)
+        return CountryVH(view)
+    }
+
+    override fun onBindViewHolder(holder: CountryVH, position: Int) {
+        val item = filtered[position]
+
+        holder.tvFlag.text = isoToFlag(item.iso)
+        holder.tvCountryName.text = item.name
+        holder.tvCountryIso.text = item.iso
+        holder.radio.isChecked = item.iso.equals(selectedIso, ignoreCase = true)
+
+        val clickListener = View.OnClickListener {
+            selectedIso = item.iso
+            notifyDataSetChanged()
+            onItemClick(item)
+        }
+
+        holder.itemView.setOnClickListener(clickListener)
+        holder.radio.setOnClickListener(clickListener)
+    }
+
+    override fun getItemCount(): Int = filtered.size
+
+    fun filter(query: String) {
+        filtered = if (query.isBlank()) {
+            countries
+        } else {
+            countries.filter {
+                it.name.contains(query, ignoreCase = true) ||
+                        it.iso.contains(query, ignoreCase = true)
+            }
+        }
+        notifyDataSetChanged()
+    }
+}
 
     override fun onDestroyView() {
         super.onDestroyView()

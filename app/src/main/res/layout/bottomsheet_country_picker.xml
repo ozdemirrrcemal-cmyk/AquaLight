@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -8,8 +8,7 @@
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
     android:paddingTop="12dp"
-    android:paddingBottom="16dp"
-    tools:ignore="UseCompoundDrawables">
+    android:paddingBottom="16dp">
 
     <!-- Küçük handle bar -->
     <View
@@ -19,24 +18,55 @@
         android:background="@drawable/bg_bottomsheet_handle"
         android:layout_marginBottom="12dp" />
 
+    <!-- Sadece başlık, ortada -->
     <TextView
         android:id="@+id/tvBottomTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/address_info_country_label"
         android:textColor="@android:color/white"
         android:textSize="16sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:gravity="center_horizontal"
+        android:paddingBottom="8dp" />
 
- <TextView
-    android:id="@+id/tvBottomSubtitle"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="@string/address_info_country_hint"
-    android:textColor="@color/settings_text_secondary"
-    android:textSize="13sp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="12dp" />
+    <!-- Arama kutusu -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        style="@style/Widget.Aqua.CardStyles">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="8dp">
+
+            <ImageView
+                android:id="@+id/ivSearch"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_search"   <!-- kendi ikonun -->
+                app:tint="@color/settings_text_secondary"
+                android:contentDescription="@string/address_info_country_search_hint" />
+
+            <EditText
+                android:id="@+id/etSearchCountry"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:hint="@string/address_info_country_search_hint"
+                android:singleLine="true"
+                android:imeOptions="actionDone"
+                android:textColor="@android:color/white"
+                android:textColorHint="@color/settings_text_secondary"
+                android:background="@null"
+                android:padding="0dp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerCountries"

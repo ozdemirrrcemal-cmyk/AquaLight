@@ -902,6 +902,6 @@
 
 
 <!-- Country picker icon content description -->
-
+<string name="address_info_country_search_hint">Search country</string>
 
 </resources>
