@@ -1,0 +1,8 @@
+<!-- res/values/arrays.xml -->
+<string-array name="feedback_categories">
+    <item>Bug report</item>
+    <item>Feature request</item>
+    <item>Design / UI</item>
+    <item>Performance</item>
+    <item>Other</item>
+</string-array>
