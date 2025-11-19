@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:text="@string/feedback_title"
             android:importantForAccessibility="yes"
-            app:layout_constra{intTop_toTopOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
