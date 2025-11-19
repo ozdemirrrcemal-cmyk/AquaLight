@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.tabs.settings.userinfo
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -23,12 +25,16 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
     // Son kullanılan ülke kodu, telefon alanından eski kodu sökebilmek için
     private var lastDialCode: String? = null
 
+    // Yazarken recursive TextWatcher tetiklenmesini engellemek için flag
+    private var isFormattingPhone = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentUserAddressBinding.bind(view)
 
         loadAddressFromPrefs()
         setupCountryPhoneLink()       // mevcut telefon–ülke senkronu
+        setupPhoneFormatting()        // yazarken format
         setupListeners()
         setupCountryPickerClick()     // kart'a tıklayınca bottom sheet aç
     }
@@ -60,7 +66,10 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                 binding.etPhoneNumber.setText(prefs.phoneNumber)
                 binding.etPhoneNumber.setSelection(prefs.phoneNumber.length)
             } else {
-                binding.etPhoneNumber.setText("")
+                // Varsayılan olarak sadece ülke kodunu bas
+                val dial = binding.ccpCountry.selectedCountryCodeWithPlus
+                binding.etPhoneNumber.setText("$dial ")
+                binding.etPhoneNumber.setSelection(binding.etPhoneNumber.text?.length ?: 0)
             }
         }
     }
@@ -88,8 +97,10 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                 "$newDialCode $withoutOld"
             }
 
+            isFormattingPhone = true
             etPhoneNumber.setText(newText)
             etPhoneNumber.setSelection(newText.length)
+            isFormattingPhone = false
 
             // Son kodu güncelle
             lastDialCode = newDialCode
@@ -98,6 +109,67 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
             val name = ccpCountry.selectedCountryName
             tvCountryValue.text = name
         }
+    }
+
+    /** 🔹 Telefon alanına yazarken ülkeye göre format + max uzunluk */
+    private fun setupPhoneFormatting() {
+        val phoneUtil = PhoneNumberUtil.getInstance()
+
+        binding.etPhoneNumber.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                if (isFormattingPhone) return
+                val text = s?.toString() ?: return
+                if (text.isBlank()) return
+
+                val countryIso = binding.ccpCountry.selectedCountryNameCode // "TR"
+                val dialCode = lastDialCode ?: binding.ccpCountry.selectedCountryCodeWithPlus
+
+                // Text'ten eski dialCode'u sök
+                var raw = text
+                if (raw.startsWith(dialCode)) {
+                    raw = raw.removePrefix(dialCode).trimStart()
+                }
+
+                // Sadece rakamları al (kullanıcının yazdığı ulusal numara)
+                val digits = raw.filter { it.isDigit() }
+                if (digits.isEmpty()) {
+                    // Sadece kodu göster
+                    val onlyDial = "$dialCode "
+                    isFormattingPhone = true
+                    binding.etPhoneNumber.setText(onlyDial)
+                    binding.etPhoneNumber.setSelection(onlyDial.length)
+                    isFormattingPhone = false
+                    return
+                }
+
+                // Bölgeye göre max uzunluk (libphonenumber metadata)
+                val metadata = phoneUtil.getMetadataForRegion(countryIso)
+                val maxLen = metadata?.possibleLengthList?.maxOrNull() ?: 15
+
+                val limitedDigits = digits.take(maxLen)
+
+                // AsYouTypeFormatter ile ulusal kısmı formatla
+                val formatter = phoneUtil.getAsYouTypeFormatter(countryIso)
+                var nationalFormatted = ""
+                for (ch in limitedDigits) {
+                    nationalFormatted = formatter.inputDigit(ch)
+                }
+
+                val finalText = if (nationalFormatted.isBlank()) {
+                    "$dialCode "
+                } else {
+                    "$dialCode $nationalFormatted"
+                }
+
+                isFormattingPhone = true
+                binding.etPhoneNumber.setText(finalText)
+                binding.etPhoneNumber.setSelection(finalText.length)
+                isFormattingPhone = false
+            }
+        })
     }
 
     /** 🔹 Ülke kartına tıklayınca country bottomsheet’i aç */
@@ -114,7 +186,57 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
         btnSave.setOnClickListener { saveAddress() }
     }
 
-    /** 🔹 Kaydet — TÜM alanlar için boşluk kontrolü, inline error + telefon validasyonu */
+    /** 🔹 Zorunlu alanları tek yerden kontrol et, ilk hatalıya odaklan */
+    private fun validateRequiredFields(
+        firstName: String,
+        lastName: String,
+        city: String,
+        address: String,
+        postCode: String,
+        phoneRaw: String
+    ): Boolean {
+
+        // Eski error’ları temizle
+        binding.etFirstName.error = null
+        binding.etLastName.error = null
+        binding.etCity.error = null
+        binding.etAddress.error = null
+        binding.etPostCode.error = null
+        binding.etPhoneNumber.error = null
+
+        var firstInvalidView: View? = null
+
+        fun markErrorIfEmpty(value: String, errorResId: Int, view: View) {
+            if (value.isBlank()) {
+                if (view is android.widget.EditText) {
+                    view.error = getString(errorResId)
+                }
+                if (firstInvalidView == null) {
+                    firstInvalidView = view
+                }
+            }
+        }
+
+        markErrorIfEmpty(firstName, R.string.address_error_first_name_required, binding.etFirstName)
+        markErrorIfEmpty(lastName,  R.string.address_error_last_name_required,  binding.etLastName)
+        markErrorIfEmpty(city,      R.string.address_error_city_required,      binding.etCity)
+        markErrorIfEmpty(address,   R.string.address_error_address_required,   binding.etAddress)
+        markErrorIfEmpty(postCode,  R.string.address_error_postcode_required,  binding.etPostCode)
+        markErrorIfEmpty(phoneRaw,  R.string.address_error_phone_required,     binding.etPhoneNumber)
+
+        if (firstInvalidView != null) {
+            firstInvalidView?.requestFocus()
+            // ScrollView varsa oraya kaydır
+            binding.scrollContent.post {
+                binding.scrollContent.smoothScrollTo(0, firstInvalidView!!.top)
+            }
+            return false
+        }
+
+        return true
+    }
+
+    /** 🔹 Kaydet — validasyon + telefon validasyonu */
     private fun saveAddress() {
         val firstName = binding.etFirstName.text?.toString()?.trim().orEmpty()
         val lastName  = binding.etLastName.text?.toString()?.trim().orEmpty()
@@ -125,48 +247,10 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
 
         val countryIso = binding.ccpCountry.selectedCountryNameCode   // "TR"
 
-        // Eski error’ları temizle
-        binding.etFirstName.error = null
-        binding.etLastName.error = null
-        binding.etCity.error = null
-        binding.etAddress.error = null
-        binding.etPostCode.error = null
-        binding.etPhoneNumber.error = null
-
-        var hasError = false
-
-        if (firstName.isEmpty()) {
-            binding.etFirstName.error =
-                getString(R.string.address_error_first_name_required)
-            hasError = true
+        // Zorunlu alanları ortak fonksiyonla kontrol et
+        if (!validateRequiredFields(firstName, lastName, city, address, postCode, phoneRaw)) {
+            return
         }
-        if (lastName.isEmpty()) {
-            binding.etLastName.error =
-                getString(R.string.address_error_last_name_required)
-            hasError = true
-        }
-        if (city.isEmpty()) {
-            binding.etCity.error =
-                getString(R.string.address_error_city_required)
-            hasError = true
-        }
-        if (address.isEmpty()) {
-            binding.etAddress.error =
-                getString(R.string.address_error_address_required)
-            hasError = true
-        }
-        if (postCode.isEmpty()) {
-            binding.etPostCode.error =
-                getString(R.string.address_error_postcode_required)
-            hasError = true
-        }
-        if (phoneRaw.isEmpty()) {
-            binding.etPhoneNumber.error =
-                getString(R.string.address_error_phone_required)
-            hasError = true
-        }
-
-        if (hasError) return
 
         // ✅ libphonenumber ile telefon validasyonu + format
         val phoneUtil = PhoneNumberUtil.getInstance()
