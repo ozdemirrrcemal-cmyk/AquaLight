@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.settings.feedback
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
@@ -35,12 +37,12 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         setupHeader()
         setupCategoryDropdown()
         setupSendButton()
+        setupLottie()
     }
 
     private fun setupHeader() = with(binding) {
         btnBack.setOnClickListener { findNavController().popBackStack() }
 
-        // ✔️ strings.xml’deki mevcut id’ler
         tvSubInfo.text = getString(R.string.feedback_subinfo)
         tvFooter.text = getString(R.string.feedback_footer)
     }
@@ -68,8 +70,17 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         }
     }
 
+    /** Lottie animasyonu bittiğinde görünümü gizle */
+    private fun setupLottie() = with(binding) {
+        lottieSuccess.addAnimatorListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                lottieSuccess.isVisible = false
+            }
+        })
+    }
+
     private fun sendFeedback() {
-        // Eski hataları temizle
+        // Eski hataları + mesajları temizle
         binding.inputLayoutCategory.error = null
         binding.inputLayoutEmail.error = null
         binding.inputLayoutMessage.error = null
@@ -89,7 +100,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
             hasError = true
         }
 
-        // Mesaj min 10 karakter (tek string: feedback_error_message_too_short)
+        // Mesaj min 10 karakter
         if (message.length < 10) {
             binding.inputLayoutMessage.error =
                 getString(R.string.feedback_error_message_too_short)
@@ -113,7 +124,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         val user = auth.currentUser
         val uid = user?.uid ?: "anonymous"
 
-        // Senin ilk yapına sadık kalıyorum: feedback/{uid}/items/{autoId}
+        // feedback/{uid}/items/{autoId}
         val docRef = db.collection("feedback")
             .document(uid)
             .collection("items")
@@ -134,11 +145,12 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         docRef.set(data)
             .addOnSuccessListener {
                 setSendingState(false)
-                showSuccessUI()
 
-                // Formu temizle (email opsiyonel, istersen silmeyebilirsin)
+                // Formu temizle (email opsiyonel, istersen bırak)
                 binding.autoCategory.setText("")
                 binding.etMessage.setText("")
+
+                showSuccessUI()
             }
             .addOnFailureListener {
                 setSendingState(false)
@@ -154,20 +166,19 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         isSending = sending
         btnSend.isEnabled = !sending
         btnSend.text = if (sending) {
-            // ✔️ strings.xml’de var: feedback_sending = "Sending..."
-            getString(R.string.feedback_sending)
+            getString(R.string.feedback_sending) // "Sending..."
         } else {
             originalButtonText
         }
+        progressBarSending.isVisible = sending
     }
 
     private fun showSuccessUI() = with(binding) {
-        // ✔️ strings.xml’de var: feedback_success_text
         tvSuccessMessage.text = getString(R.string.feedback_success_text)
         tvSuccessMessage.isVisible = true
 
-        // Lottie view eklediysen çalışır, yoksa bu kısmı ve importu kaldırabilirsin
         lottieSuccess.isVisible = true
+        lottieSuccess.progress = 0f
         lottieSuccess.playAnimation()
     }
 

@@ -8,7 +8,7 @@
     android:background="@color/background_color"
     tools:context=".ui.tabs.settings.feedback.FeedbackFragment">
 
-    <!-- 🔹 Üst Bar (DEĞİŞMEYECEK) -->
+    <!-- 🔹 Üst Bar -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerContainer"
         android:layout_width="match_parent"
@@ -20,7 +20,6 @@
         android:elevation="8dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- 🔙 Geri Butonu -->
         <ImageView
             android:id="@+id/btnBack"
             android:layout_width="32dp"
@@ -35,7 +34,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- 🏷️ Başlık -->
         <TextView
             android:id="@+id/tvTitle"
             style="@style/TextAppearance.Aqua.EditProfileTitle"
@@ -56,7 +54,7 @@
         android:layout_height="0dp"
         android:fillViewport="true"
         android:clipToPadding="false"
-		android:scrollbars="none"
+        android:scrollbars="none"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -83,7 +81,7 @@
                 android:layout_marginBottom="16dp"
                 android:contentDescription="@string/feedback_subinfo_desc" />
 
-            <!-- 🟦 Feedback formu (card) -->
+            <!-- 🟦 Feedback formu -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardFeedbackForm"
                 android:layout_width="match_parent"
@@ -98,7 +96,7 @@
                     android:padding="16dp"
                     android:contentDescription="@string/feedback_form_desc">
 
-                    <!-- Kategori seçimi -->
+                    <!-- Kategori -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutCategory"
                         style="@style/AuthTextInputLayout"
@@ -119,7 +117,7 @@
                             android:inputType="none"
                             android:focusable="true"
                             android:clickable="true"
-                            android:cursorVisible="false"/>
+                            android:cursorVisible="false" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- E-posta (opsiyonel) -->
@@ -142,30 +140,47 @@
                             android:inputType="textEmailAddress" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Mesaj -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/inputLayoutMessage"
-                        style="@style/AuthTextInputLayout"
+                    <!-- Mesaj + Lottie overlay -->
+                    <FrameLayout
+                        android:id="@+id/messageContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/feedback_hint_message"
-                        android:layout_marginTop="16dp"
-                        android:contentDescription="@string/feedback_message_area_desc"
-                        app:startIconDrawable="@drawable/ic_message"
-                        app:startIconTint="#64FFDA"
-                        app:counterEnabled="true"
-                        app:counterMaxLength="500">
+                        android:layout_marginTop="16dp">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etMessage"
-                            style="@style/AuthEditText"
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/inputLayoutMessage"
+                            style="@style/AuthTextInputLayout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:minLines="4"
-                            android:gravity="top"
-                            android:inputType="textMultiLine"
-                            android:overScrollMode="never" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:hint="@string/feedback_hint_message"
+                            android:contentDescription="@string/feedback_message_area_desc"
+                            app:startIconDrawable="@drawable/ic_message"
+                            app:startIconTint="#64FFDA"
+                            app:counterEnabled="true"
+                            app:counterMaxLength="500">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etMessage"
+                                style="@style/AuthEditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minLines="4"
+                                android:gravity="top"
+                                android:inputType="textMultiLine"
+                                android:overScrollMode="never" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Lottie başarı animasyonu (mesaj kutusunun ortasında) -->
+                        <com.airbnb.lottie.LottieAnimationView
+                            android:id="@+id/lottieSuccess"
+                            android:layout_width="60dp"
+                            android:layout_height="60dp"
+                            android:layout_gravity="center"
+                            android:visibility="gone"
+                            app:lottie_rawRes="@raw/success_feedback"
+                            app:lottie_autoPlay="false"
+                            app:lottie_loop="false" />
+                    </FrameLayout>
 
                     <!-- Başarılı mesaj -->
                     <TextView
@@ -197,27 +212,16 @@
                 app:iconGravity="textStart"
                 app:iconPadding="8dp"
                 android:contentDescription="@string/feedback_send_desc" />
-				<!-- Sending progress -->
-<ProgressBar
-    android:id="@+id/progressBarSending"
-    style="?android:attr/progressBarStyleSmall"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center_horizontal"
-    android:layout_marginTop="8dp"
-    android:visibility="gone" />
 
-<!-- Lottie başarı animasyonu -->
-<com.airbnb.lottie.LottieAnimationView
-    android:id="@+id/lottieSuccess"
-    android:layout_width="80dp"
-    android:layout_height="80dp"
-    android:layout_gravity="center_horizontal"
-    android:layout_marginTop="16dp"
-    android:visibility="gone"
-    app:lottie_rawRes="@raw/success_feedback"
-    app:lottie_autoPlay="false"
-    app:lottie_loop="false" />
+            <!-- Sending progress -->
+            <ProgressBar
+                android:id="@+id/progressBarSending"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
 
             <!-- Alt bilgi -->
             <TextView
