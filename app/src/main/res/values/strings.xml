@@ -938,6 +938,14 @@
     This account uses Google sign-in. Email changes must be made from your Google account.
 </string>
 
+<string name="usage_last_event_none">
+    No recorded events yet.
+</string>
+
+<string name="usage_last_open_never">
+    No activity has been logged yet.
+</string>
+
 <!-- Country picker icon content description -->
 
 </resources>

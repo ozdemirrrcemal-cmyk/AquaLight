@@ -25,5 +25,19 @@ message UserPreferences {
 
   // 🆕 Login uyarıları (giriş alert)
   bool   loginAlertsEnabled = 18;
- 
+
+  // 🆕 İki faktörlü kimlik doğrulama
+  bool   twoFactorEnabled   = 19;
+
+  // 🆕 Usage / Analytics alanları
+  int32  weeklyAutomationCount   = 20; // Son hafta tetiklenen otomasyon sayısı
+  int32  weeklyAlertCount        = 21; // Son hafta oluşan uyarı/alarm sayısı
+  int32  todayAutomationCount    = 22; // Bugün çalışan otomasyon
+  int32  todayManualActionCount  = 23; // Bugün yapılan manuel müdahale
+
+  int64  lastEventTimeMillis     = 24; // Son önemli olay zamanı
+  string lastEventDescription    = 25; // "Lighting • Evening schedule turned ON"
+
+  string lastUsageDayKey         = 26; // "2025-11-20" gibi
+  string lastUsageWeekKey        = 27; // "2025-W47" gibi
 }

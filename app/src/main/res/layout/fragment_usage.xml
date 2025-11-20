@@ -84,7 +84,7 @@
                 android:layout_marginBottom="16dp"
                 android:contentDescription="@string/usage_subinfo_desc" />
 
-            <!-- 📊 Genel kullanım özeti -->
+            <!-- 📊 Son 7 gün sistem aktivitesi -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardUsageSummary"
                 android:layout_width="match_parent"
@@ -114,7 +114,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
-                        <!-- Toplam oturum -->
+                        <!-- Otomasyon çalışmaları (son 7 gün) -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -125,7 +125,7 @@
                                 android:id="@+id/tvTotalSessionsLabel"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/usage_total_sessions_label"
+                                android:text="@string/usage_7d_automation_label"
                                 android:textColor="@color/settings_text_secondary"
                                 android:textSize="12sp" />
 
@@ -134,13 +134,13 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text=""
-                                tools:text="128"
+                                tools:text="42"
                                 android:textColor="@android:color/white"
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
-                        <!-- Toplam süre -->
+                        <!-- Uyarı / alarm sayısı (son 7 gün) -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -151,7 +151,7 @@
                                 android:id="@+id/tvTotalTimeLabel"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/usage_total_time_label"
+                                android:text="@string/usage_7d_alerts_label"
                                 android:textColor="@color/settings_text_secondary"
                                 android:textSize="12sp" />
 
@@ -160,7 +160,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text=""
-                                tools:text="12 h 45 min"
+                                tools:text="3"
                                 android:textColor="@android:color/white"
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
@@ -169,7 +169,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 📅 Bugünkü kullanım -->
+            <!-- 📅 Bugünkü aktivite -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardTodayUsage"
                 android:layout_width="match_parent"
@@ -199,7 +199,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
-                        <!-- Bugünkü oturumlar -->
+                        <!-- Bugün çalışan otomasyonlar -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -210,7 +210,7 @@
                                 android:id="@+id/tvTodaySessionsLabel"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/usage_today_sessions_label"
+                                android:text="@string/usage_today_automation_label"
                                 android:textColor="@color/settings_text_secondary"
                                 android:textSize="12sp" />
 
@@ -219,13 +219,13 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text=""
-                                tools:text="5"
+                                tools:text="6"
                                 android:textColor="@android:color/white"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
-                        <!-- Bugünkü süre -->
+                        <!-- Bugünkü manuel müdahaleler -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -236,7 +236,7 @@
                                 android:id="@+id/tvTodayTimeLabel"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/usage_today_time_label"
+                                android:text="@string/usage_today_manual_label"
                                 android:textColor="@color/settings_text_secondary"
                                 android:textSize="12sp" />
 
@@ -245,7 +245,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text=""
-                                tools:text="42 min"
+                                tools:text="2"
                                 android:textColor="@android:color/white"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -254,7 +254,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 🕒 Son etkinlik -->
+            <!-- 🕒 Son önemli olay -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardLastActivity"
                 android:layout_width="match_parent"
@@ -283,7 +283,7 @@
                         android:id="@+id/tvLastOpenLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/usage_last_open_label"
+                        android:text="@string/usage_last_event_time_label"
                         android:textColor="@color/settings_text_secondary"
                         android:textSize="12sp" />
 
@@ -301,16 +301,16 @@
                         android:id="@+id/tvMostUsedDeviceLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/usage_most_used_device_label"
+                        android:text="@string/usage_last_event_label"
                         android:textColor="@color/settings_text_secondary"
                         android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/tvMostUsedDeviceValue"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text=""
-                        tools:text="This device"
+                        tools:text="Lighting • Evening schedule turned ON"
                         android:textColor="@android:color/white"
                         android:textSize="14sp" />
                 </LinearLayout>
