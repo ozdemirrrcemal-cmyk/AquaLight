@@ -81,15 +81,25 @@
     <item name="android:textColor">@color/auth_text_color</item>
     <item name="colorControlActivated">@color/auth_focus_color</item> <!-- ✅ Güvenli -->
 </style>
-
-<!-- 🔹 Bottom nav: active indicator tamamen kapalı --> 
-<style name="Widget.Aqua.BottomNav.ActiveIndicator" parent="">  
-       <!-- Boyut -->
-    <item name="android:width">64dp</item>
+<!-- 🔹 Bottom nav: aktif indicator -->
+<style name="Widget.Aqua.BottomNav.ActiveIndicator">
+    <!-- Boyut -->
+    <item name="android:width">60dp</item>
     <item name="android:height">32dp</item>
-    <!-- Renk: temadan gelsin, kartlarla uyumlu -->
+
+    <!-- Arka plan rengi -->
     <item name="android:color">?attr/colorSecondaryContainer</item>
-</style> 
+
+    <!-- Köşeleri yuvarla (pill) -->
+    <item name="shapeAppearance">@style/ShapeAppearance.Aqua.BottomNavIndicator</item>
+</style>
+
+<!-- 🔹 Bottom nav indicator'ın şekli (oval/pill) -->
+<style name="ShapeAppearance.Aqua.BottomNavIndicator"
+    parent="@style/ShapeAppearance.Material3.Corner.None">
+    <item name="cornerFamily">rounded</item>
+    <item name="cornerSize">16dp</item> <!-- 32dp yüksekliğin yarısı -->
+</style>
 
     <!-- Settings ekranındaki tüm kartlar için ortak stil -->
   <style name="Widget.Aqua.CardStyles"
