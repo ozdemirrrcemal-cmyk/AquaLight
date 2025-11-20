@@ -32,11 +32,57 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
         _binding = FragmentChangeEmailBinding.bind(view)
 
         binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+
+        val user = auth.currentUser
+
+        if (user == null) {
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.ERROR,
+                title = getString(R.string.change_email_user_not_found_title),
+                message = getString(R.string.change_email_user_not_found_message),
+                onDismiss = { findNavController().popBackStack() }
+            )
+            return
+        }
+
+        // Google kullanıcı mı?
+        val isGoogleUser = user.providerData.any { it.providerId == "google.com" }
+        if (isGoogleUser) {
+            showGoogleOnlyInfo()
+            return
+        }
+
+        // Normal email/şifre kullanıcı → form çalışsın
         binding.btnSaveEmail.setOnClickListener { attemptEmailChange() }
     }
 
+    /**
+     * Google ile login olmuş kullanıcı için:
+     * - Inputları pasif yap
+     * - Yeni email + şifre inputlarını ve butonu gizle
+     * - Mevcut email'i readonly göster
+     * - helperText ile info yaz
+     */
+    private fun showGoogleOnlyInfo() {
+        val user = auth.currentUser ?: return
+
+        // mevcut email'i göster, düzenlenemesin
+        binding.etCurrentEmail.setText(user.email ?: "")
+        binding.inputLayoutCurrentEmail.isEnabled = false
+
+        // Diğer alanları gizle
+        binding.inputLayoutNewEmail.visibility = View.GONE
+        binding.inputLayoutPassword.visibility = View.GONE
+        binding.btnSaveEmail.visibility = View.GONE
+
+        // Uyarı mesajını helperText olarak göster
+        binding.inputLayoutCurrentEmail.helperText =
+            getString(R.string.change_email_google_only_info)
+    }
+
     /** ---------------------------------------------------------
-     *   0️⃣ VALIDATION + GOOGLE ACCOUNT BLOCK
+     *   0️⃣ VALIDATION
      * --------------------------------------------------------- */
     private fun attemptEmailChange() {
         val currentEmail = binding.etCurrentEmail.text.toString().trim()
@@ -55,22 +101,11 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
             return
         }
 
-        // Google hesabı ise: uygulama içinden email değiştirilmez
-        val isGoogleUser = user.providerData.any { it.providerId == "google.com" }
-        if (isGoogleUser) {
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.WARNING,
-                title = getString(R.string.change_email_google_block_title),
-                message = getString(R.string.change_email_google_block_message)
-            )
-            return
-        }
-
-        // Inline error reset
+        // Inline error reset + helperText gizle
         binding.inputLayoutCurrentEmail.error = null
         binding.inputLayoutNewEmail.error = null
         binding.inputLayoutPassword.error = null
+        binding.inputLayoutCurrentEmail.helperText = null
 
         // Boş alan kontrolleri
         if (currentEmail.isEmpty()) {
@@ -186,7 +221,6 @@ class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
             launchSingleTop = true
         }
 
-        // Auth container'a dön → startDestination zaten loginFragment
         rootNav.navigate(R.id.authContainerFragment, null, opts)
     }
 

@@ -934,8 +934,9 @@
 <string name="change_password_google_only_info">
     This account uses Google sign-in. Password changes must be made from your Google account.
 </string>
-
-
+<string name="change_email_google_only_info">
+    This account uses Google sign-in. Email changes must be made from your Google account.
+</string>
 
 <!-- Country picker icon content description -->
 
