@@ -919,7 +919,7 @@
 <string name="settings_social_facebook">Facebook</string>
 <string name="settings_social_instagram">Instagram</string>
 <string name="settings_social_youtube">YouTube</string>
-
+<string name="settings_footer_info">© 2024 AquaLight • Version %1$s</string>
 
 
 <!-- Country picker icon content description -->

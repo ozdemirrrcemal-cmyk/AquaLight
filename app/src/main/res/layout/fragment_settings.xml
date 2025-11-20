@@ -357,12 +357,14 @@
 
         <!-- 🔻 Sosyal medya ikonları (logout satırının ALTINDA) -->
         <LinearLayout
-            android:id="@+id/rowSocialLinks"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="25dp">
+    android:id="@+id/rowSocialLinks"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:layout_marginTop="25dp"
+    android:layout_marginStart="10dp"
+    android:layout_marginEnd="10dp">
 
             <ImageView
                 android:id="@+id/ivSocialWebsite"
@@ -399,6 +401,16 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_youtube"/>
         </LinearLayout>
-
+		
+		<!-- 🔻 Footer bilgi satırı -->
+<TextView
+    android:id="@+id/tvFooterInfo"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:gravity="center"
+    android:textSize="11sp"
+    android:textColor="@color/settings_text_secondary"
+    android:text="@string/settings_footer_info" />
     </LinearLayout>
 </ScrollView>
