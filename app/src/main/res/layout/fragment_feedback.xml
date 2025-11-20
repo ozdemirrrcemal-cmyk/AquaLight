@@ -212,7 +212,7 @@
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:src="@drawable/ic_image"
-        android:tint="@color/settings_text_secondary" />
+        app:tint="@color/settings_text_secondary" />
 
     <TextView
         android:id="@+id/tvScreenshotInfo"
@@ -229,7 +229,7 @@
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:src="@drawable/ic_close"
-        android:tint="@color/settings_text_secondary"
+        app:tint="@color/settings_text_secondary"
         android:visibility="gone" />
 </LinearLayout>
 
