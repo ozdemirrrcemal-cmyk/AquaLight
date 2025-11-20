@@ -17,8 +17,8 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
+import com.google.firebase.Firebase
+import com.google.firebase.storage.storage
 import java.util.Locale
 
 class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
