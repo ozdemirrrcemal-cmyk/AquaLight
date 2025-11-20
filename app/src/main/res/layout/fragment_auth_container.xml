@@ -5,20 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 🎬 Arka plan video (AspectRatioFrameLayout ile) -->
-    <androidx.media3.ui.AspectRatioFrameLayout
-        android:id="@+id/videoContainer"
+    <!-- 🎬 Arka plan video -->
+    <androidx.media3.ui.StyledPlayerView
+        android:id="@+id/videoBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:resize_mode="zoom">
-
-        <TextureView
-            android:id="@+id/videoBackground"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:keepScreenOn="true"
-            android:contentDescription="@string/main_login_video_background_description" />
-    </androidx.media3.ui.AspectRatioFrameLayout>
+        app:resize_mode="zoom"
+        app:use_controller="false"
+        android:background="@android:color/black" />
 
     <!-- 🐟 Poster (video hazır olana kadar görünen görsel) -->
     <ImageView
