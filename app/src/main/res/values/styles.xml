@@ -85,7 +85,7 @@
 <!-- 🔹 Bottom nav: aktif indicator -->
 <style name="Widget.Aqua.BottomNav.ActiveIndicator" parent="">  
     <!-- Boyut -->
-    <item name="android:width">64dp</item>
+    <item name="android:width">60dp</item>
     <item name="android:height">32dp</item>
 
     <!-- Arka plan rengi -->
