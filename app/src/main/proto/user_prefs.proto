@@ -22,4 +22,7 @@ message UserPreferences {
   string postCode        = 15;
   string phoneNumber     = 16;
   string country         = 17;
+
+  // 🆕 Login uyarıları (giriş alert)
+  bool   loginAlertsEnabled = 18;
 }

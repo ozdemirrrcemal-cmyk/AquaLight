@@ -1,136 +1,106 @@
-package com.aqua.aqualight.utils
+package com.aqua.aqualight.ui.tabs.settings.logout
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
-import android.provider.Settings
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
+import android.os.Bundle
+import android.view.View
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.databinding.FragmentSecuritySettingsBinding
+import com.aqua.aqualight.utils.NotificationHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 
-object NotificationHelper {
+class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
 
-    const val REQUEST_CODE_NOTIFICATIONS = 1001
-    private const val CHANNEL_ID = "aqualight_channel"
+    private var _binding: FragmentSecuritySettingsBinding? = null
+    private val binding get() = _binding!!
 
-    // 🔹 Bildirim kanalı (Android 8+)
-    fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                context.getString(R.string.notification_channel_name),
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = context.getString(R.string.notification_channel_description)
+    private lateinit var userPrefs: UserPreferencesManager
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentSecuritySettingsBinding.bind(view)
+
+        userPrefs = UserPreferencesManager.create(requireContext())
+
+        setupHeader()
+        observeLoginAlertsSwitch()
+        setupSwitchListeners()
+    }
+
+    private fun setupHeader() = with(binding) {
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
+    }
+
+    /** DataStore’daki loginAlertsEnabled değerini switch’e yansıt */
+    private fun observeLoginAlertsSwitch() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                userPrefs.loginAlertsEnabled.collect { enabled ->
+                    // setOnCheckedChangeListener içinde loop olmaması için
+                    if (binding.switchLoginAlerts.isChecked != enabled) {
+                        binding.switchLoginAlerts.isChecked = enabled
+                    }
+                }
             }
-            val manager = context.getSystemService(NotificationManager::class.java)
-            manager?.createNotificationChannel(channel)
         }
     }
 
-    // 🔹 Android 13+ POST_NOTIFICATIONS izni var mı?
-    fun hasSystemPermission(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
-    }
+    private fun setupSwitchListeners() = with(binding) {
 
-    // 🔹 Sistem bildirimleri açık mı?
-    fun areSystemNotificationsEnabled(context: Context): Boolean {
-        return NotificationManagerCompat.from(context).areNotificationsEnabled()
-    }
+        // 🔔 Giriş uyarıları
+        switchLoginAlerts.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                val ctx = requireContext()
 
-    // 🔹 Doğrudan bildirim ayarlarına git
-    fun openNotificationSettings(context: Context) {
-        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-            // Bazı eski cihazlar için ekstra key’ler
-            putExtra("app_package", context.packageName)
-            putExtra("app_uid", context.applicationInfo.uid)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-    }
+                val hasPermission = NotificationHelper.hasSystemPermission(ctx)
+                val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
 
-    // 🔹 Uygulamanın genel ayarlarını aç (app details)
-    fun openAppSettings(context: Context) {
-        val intent = Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.fromParts("package", context.packageName, null)
-        ).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-    }
+                if (!hasPermission || !systemEnabled) {
+                    // Switch’i geri kapat
+                    switchLoginAlerts.isChecked = false
 
-    // 🔹 Android 13+ izin iste
-    fun requestPermission(activity: Activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                REQUEST_CODE_NOTIFICATIONS
-            )
-        }
-    }
-
-    // 🔹 Local bildirim gönder
-    @SuppressLint("MissingPermission") // Lint: izni üstte kendimiz kontrol ediyoruz
-    fun showLocalNotification(
-        context: Context,
-        title: String,
-        message: String
-    ) {
-        // 1) Sistem-level kontroller
-        if (!hasSystemPermission(context)) return
-        if (!areSystemNotificationsEnabled(context)) return
-
-        // 2) Kanal (Android 8+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createNotificationChannel(context)
-        }
-
-        // 3) Bildirime tıklanınca açılacak intent
-        val launchIntent = context.packageManager
-            .getLaunchIntentForPackage(context.packageName)
-            ?.apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    // Kullanıcıya diyalog göster
+                    MaterialAlertDialogBuilder(ctx)
+                        .setTitle(R.string.security_login_alerts_dialog_title)
+                        .setMessage(R.string.security_login_alerts_dialog_message)
+                        .setPositiveButton(R.string.security_login_alerts_dialog_open_settings) { _, _ ->
+                            NotificationHelper.openNotificationSettings(ctx)
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                } else {
+                    // Her şey yolunda → DataStore’a kaydet
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        userPrefs.updateLoginAlertsEnabled(true)
+                    }
+                }
+            } else {
+                // Kullanıcı kapattı
+                viewLifecycleOwner.lifecycleScope.launch {
+                    userPrefs.updateLoginAlertsEnabled(false)
+                }
             }
+        }
 
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            launchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        // 🧩 2FA switch (şimdilik sadece "yakında" mesajı gösterebilir)
+        switch2FA.setOnCheckedChangeListener { _, isChecked ->
+            // Şimdilik sadece UI; backend yoksa isChecked durumunu kalıcı yapma istersen
+            if (isChecked) {
+                // İstersen buraya "Yakında" Snackbar vs. koyarsın
+                // switch2FA.isChecked = false
+            }
+        }
+    }
 
-        // 4) Güvenli notificationId
-        val notificationId = (System.currentTimeMillis() % 10000).toInt()
-
-        // 5) Bildirim
-        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_aqualight_soft)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-
-        NotificationManagerCompat.from(context).notify(notificationId, builder.build())
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

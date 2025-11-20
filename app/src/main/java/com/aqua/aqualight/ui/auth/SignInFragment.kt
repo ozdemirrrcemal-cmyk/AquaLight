@@ -16,6 +16,7 @@ import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentSigninBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import com.aqua.aqualight.utils.maybeShowLoginAlert   // ✅ BUNU EKLE
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.Firebase
@@ -94,10 +95,13 @@ class SignInFragment : Fragment() {
                         if (user != null) {
                             viewLifecycleOwner.lifecycleScope.launch {
                                 try {
+                                    // 1) Oturumu kaydet
                                     saveSession(user)
 
-                                    // ✅ Google login ile AYNI MANTIK:
-                                    // Auto dismiss + dismiss'te app graph'e geç
+                                    // 2) Giriş uyarısı (kullanıcı izin verdiyse bildirim gösterir)
+                                    maybeShowLoginAlert(requireContext())
+
+                                    // 3) Başarılı login dialog + app graph’e geçiş
                                     DialogManager.showInfoDialog(
                                         requireContext(),
                                         DialogType.SUCCESS,
@@ -143,15 +147,11 @@ class SignInFragment : Fragment() {
     }
 
     private suspend fun saveSession(user: FirebaseUser) {
-        // 🔐 Oturum bilgisi
         userPrefs.saveUserSession(
             idToken = user.uid,
             isLoggedIn = true
         )
 
-        // 🧾 Profil bilgisi:
-        // Burada sadece email'i güncelliyoruz,
-        // username/fullName/photoUrl'e null vererek dokunmamış oluyoruz
         userPrefs.saveProfile(
             email = user.email ?: "",
             username = null,

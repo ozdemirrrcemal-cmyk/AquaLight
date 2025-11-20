@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLoginBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import com.aqua.aqualight.utils.maybeShowLoginAlert   // ✅ EKLENDİ
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -115,10 +116,10 @@ class LoginFragment : Fragment() {
                     val user = auth.currentUser
                     if (user != null) {
                         viewLifecycleOwner.lifecycleScope.launch {
-                            // 🔐 Oturum
+                            // 🔐 Oturum kaydı
                             userPrefs.saveUserSession(user.uid, true)
 
-                            // 🔹 Profili kaydet: username ŞİMDİLİK YOK, fullName = displayName
+                            // 🔹 Profili kaydet
                             val email = user.email ?: ""
                             val displayName = user.displayName ?: ""
                             val photoUrl = user.photoUrl?.toString()
@@ -129,6 +130,9 @@ class LoginFragment : Fragment() {
                                 fullName = if (displayName.isNotBlank()) displayName else null,
                                 photoUrl = photoUrl
                             )
+
+                            // ✅ Login alert (ayarlar açıksa local bildirim)
+                            maybeShowLoginAlert(requireContext())
 
                             // ✅ Success: butonsuz, otomatik kapanan dialog
                             DialogManager.showInfoDialog(
@@ -164,7 +168,6 @@ class LoginFragment : Fragment() {
     }
 
     private fun navigateToAppGraph() {
-        // MainActivity'deki kök NavHost'u hedef al
         val rootNav = (requireActivity().supportFragmentManager
             .findFragmentById(R.id.nav_host) as NavHostFragment).navController
 

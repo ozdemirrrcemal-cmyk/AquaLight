@@ -76,6 +76,9 @@ class UserPreferencesManager private constructor(
 
     val autoUpdateEnabled: Flow<Boolean> =
         userPrefsFlow.map { it.autoUpdateEnabled }
+			
+	val loginAlertsEnabled: Flow<Boolean> =
+        userPrefsFlow.map { it.loginAlertsEnabled }
 
     // 🆕 Adres alanları için Flow'lar
     val firstName: Flow<String> = userPrefsFlow.map { it.firstName }
@@ -180,6 +183,14 @@ class UserPreferencesManager private constructor(
         dataStore.updateData { prefs ->
             prefs.toBuilder()
                 .setAutoUpdateEnabled(enabled)
+                .build()
+        }
+    }
+	
+	suspend fun updateLoginAlertsEnabled(enabled: Boolean) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setLoginAlertsEnabled(enabled)
                 .build()
         }
     }
