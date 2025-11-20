@@ -46,19 +46,28 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     }
 
     private fun setupCategoryDropdown() = with(binding) {
-        val categories = resources.getStringArray(R.array.feedback_categories).toList()
+    val categories = resources.getStringArray(R.array.feedback_categories).toList()
 
-        val adapter = android.widget.ArrayAdapter(
+    // Kendi satır layout’umuzu kullan
+    val adapter = android.widget.ArrayAdapter(
+        requireContext(),
+        R.layout.item_feedback_category,
+        categories
+    )
+    autoCategory.setAdapter(adapter)
+
+    // Popup arkaplanını temaya uygun yap
+    autoCategory.setDropDownBackgroundDrawable(
+        androidx.core.content.ContextCompat.getDrawable(
             requireContext(),
-            android.R.layout.simple_list_item_1,
-            categories
+            R.drawable.bg_dropdown_popup
         )
-        autoCategory.setAdapter(adapter)
+    )
 
-        autoCategory.setOnClickListener {
-            autoCategory.showDropDown()
-        }
+    autoCategory.setOnClickListener {
+        autoCategory.showDropDown()
     }
+}
 
     private fun setupSendButton() = with(binding) {
         btnSend.setOnClickListener {
