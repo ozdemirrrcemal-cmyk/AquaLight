@@ -923,6 +923,19 @@
     &#169; 2025 AquaLight. All rights reserved.\nVersion %1$s
 </string>
 
+<string name="change_password_error_current_empty">Current password is required.</string>
+<string name="change_password_error_new_short">New password must be at least 6 characters.</string>
+<string name="change_password_error_not_match">Passwords do not match.</string>
+<string name="change_password_error_not_logged_in">You are not logged in.</string>
+<string name="change_password_error_no_email">This account does not have a password to change.</string>
+<string name="change_password_error_current_wrong">Current password is incorrect.</string>
+<string name="change_password_error_generic">Password could not be changed. Please try again.</string>
+
+<string name="change_password_google_only_info">
+    This account uses Google sign-in. Password changes must be made from your Google account.
+</string>
+
+
 
 <!-- Country picker icon content description -->
 
