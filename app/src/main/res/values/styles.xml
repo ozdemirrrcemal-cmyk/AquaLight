@@ -81,8 +81,9 @@
     <item name="android:textColor">@color/auth_text_color</item>
     <item name="colorControlActivated">@color/auth_focus_color</item> <!-- ✅ Güvenli -->
 </style>
+
 <!-- 🔹 Bottom nav: aktif indicator -->
-<style name="Widget.Aqua.BottomNav.ActiveIndicator">
+<style name="Widget.Aqua.BottomNav.ActiveIndicator" parent="">  
     <!-- Boyut -->
     <item name="android:width">64dp</item>
     <item name="android:height">32dp</item>
