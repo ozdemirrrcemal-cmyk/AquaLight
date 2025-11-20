@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -24,7 +25,7 @@ import java.util.Locale
 class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
     // 🔒 Blaze’e geçene kadar screenshot özelliğini buradan kontrol et
-    private val SCREENSHOT_ENABLED = true   // Spark’ta false yapacaksın
+    private val SCREENSHOT_ENABLED = true   // Spark’ta istersen false yaparsın
 
     private var _binding: FragmentFeedbackBinding? = null
     private val binding get() = _binding!!
@@ -56,16 +57,20 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         originalButtonText = binding.btnSend.text
 
         // 🔧 Screenshot satırını flag’e göre göster/gizle
-        binding.rowAddScreenshot.isVisible = SCREENSHOT_ENABLED
+        if (SCREENSHOT_ENABLED) {
+            binding.tvScreenshotLabel.isVisible = true
+            binding.cardScreenshot.isVisible = true
+            setupScreenshotRow()
+        } else {
+            binding.tvScreenshotLabel.isVisible = false
+            binding.cardScreenshot.isVisible = false
+        }
 
         setupHeader()
         setupCategoryDropdown()
         setupSendButton()
         setupLottie()
         setupValidationWatchers()
-        if (SCREENSHOT_ENABLED) {
-            setupScreenshotRow()
-        }
     }
 
     private fun setupHeader() = with(binding) {
@@ -85,7 +90,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         autoCategory.setAdapter(adapter)
 
         autoCategory.setDropDownBackgroundDrawable(
-            androidx.core.content.ContextCompat.getDrawable(
+            ContextCompat.getDrawable(
                 requireContext(),
                 R.drawable.bg_dropdown_popup
             )
@@ -106,12 +111,14 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
     /** Kullanıcı yazdıkça hata mesajlarını otomatik temizle */
     private fun setupValidationWatchers() = with(binding) {
+        // Kategori
         autoCategory.addTextChangedListener { text ->
             if (!text.isNullOrBlank()) {
                 inputLayoutCategory.error = null
             }
         }
 
+        // Mesaj (10+ karakter olunca hata kalksın)
         etMessage.addTextChangedListener { text ->
             val value = text?.toString()?.trim().orEmpty()
             if (value.length >= 10) {
@@ -119,6 +126,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
             }
         }
 
+        // Email: boşsa veya valid ise hata kalksın
         etEmail.addTextChangedListener { text ->
             val value = text?.toString()?.trim().orEmpty()
             if (value.isEmpty() ||
@@ -159,6 +167,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
     private fun sendFeedback() {
         with(binding) {
+            // Eski hataları temizle
             inputLayoutCategory.error = null
             inputLayoutEmail.error = null
             inputLayoutMessage.error = null

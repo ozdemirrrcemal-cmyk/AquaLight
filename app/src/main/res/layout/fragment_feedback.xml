@@ -182,56 +182,67 @@
                             app:lottie_loop="false" />
                     </FrameLayout>
 
+                    <!-- Attachment başlığı -->
+                    <TextView
+                        android:id="@+id/tvScreenshotLabel"
+                        style="@style/TextAppearance.Aqua.Feedback.SubInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/feedback_attachment_title"
+                        android:gravity="start" />
+
+                    <!-- Attachment için küçük kart -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardScreenshot"
+                        style="@style/Widget.Aqua.CardStyles"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:cardElevation="0dp"
+                        app:cardUseCompatPadding="false">
+
+                        <LinearLayout
+                            android:id="@+id/rowAddScreenshot"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="10dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackgroundBorderless">
+
+                            <ImageView
+                                android:id="@+id/ivScreenshotIcon"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_image"
+                                app:tint="@color/settings_text_secondary" />
+
+                            <TextView
+                                android:id="@+id/tvScreenshotInfo"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:layout_weight="1"
+                                android:text="@string/feedback_screenshot_add"
+                                android:textSize="14sp"
+                                android:textColor="@color/settings_text_secondary" />
+
+                            <ImageView
+                                android:id="@+id/ivScreenshotClear"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_close"
+                                app:tint="@color/settings_text_secondary"
+                                android:visibility="gone" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-			
-			<!-- Mesaj alanından SONRA, başarı mesajından ÖNCE YA DA SONRA koyabilirsin -->
-<TextView
-    android:id="@+id/tvScreenshotLabel"
-    style="@style/TextAppearance.Aqua.Feedback.SubInfo"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="16dp"
-    android:text="@string/feedback_screenshot_label"
-    android:gravity="start" />
-
-<LinearLayout
-    android:id="@+id/rowAddScreenshot"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
-    android:clickable="true"
-    android:focusable="true"
-    android:background="?attr/selectableItemBackgroundBorderless">
-
-    <ImageView
-        android:id="@+id/ivScreenshotIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@drawable/ic_image"
-        app:tint="@color/settings_text_secondary" />
-
-    <TextView
-        android:id="@+id/tvScreenshotInfo"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_weight="1"
-        android:text="@string/feedback_screenshot_add"
-        android:textSize="14sp"
-        android:textColor="@color/settings_text_secondary" />
-
-    <ImageView
-        android:id="@+id/ivScreenshotClear"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@drawable/ic_close"
-        app:tint="@color/settings_text_secondary"
-        android:visibility="gone" />
-</LinearLayout>
 
             <!-- Gönder butonu -->
             <com.google.android.material.button.MaterialButton
