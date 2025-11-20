@@ -408,9 +408,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
-    android:layout_marginBottom="12dp"
     android:gravity="center"
+    android:textSize="11sp"
     android:textColor="@color/settings_text_secondary"
-    android:textSize="12sp" />
+    android:text="@string/settings_footer_info" />
     </LinearLayout>
 </ScrollView>

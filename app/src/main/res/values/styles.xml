@@ -82,15 +82,14 @@
     <item name="colorControlActivated">@color/auth_focus_color</item> <!-- ✅ Güvenli -->
 </style>
 
-<!-- 🔹 BottomNav aktif indicator – tema rengine uygun -->
-<style name="Widget.Aqua.BottomNav.ActiveIndicator">
-    <!-- Boyut -->
+<!-- 🔹 Bottom nav: active indicator tamamen kapalı --> 
+<style name="Widget.Aqua.BottomNav.ActiveIndicator" parent="">  
+       <!-- Boyut -->
     <item name="android:width">64dp</item>
     <item name="android:height">32dp</item>
-
     <!-- Renk: temadan gelsin, kartlarla uyumlu -->
     <item name="android:color">?attr/colorSecondaryContainer</item>
-</style>
+</style> 
 
     <!-- Settings ekranındaki tüm kartlar için ortak stil -->
   <style name="Widget.Aqua.CardStyles"
