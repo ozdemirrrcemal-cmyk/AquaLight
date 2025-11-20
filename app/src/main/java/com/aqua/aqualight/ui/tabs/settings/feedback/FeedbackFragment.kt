@@ -81,86 +81,89 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         })
     }
 
-    private fun sendFeedback() = with(binding) {
-        // Eski hataları temizle
-        inputLayoutCategory.error = null
-        inputLayoutEmail.error = null
-        inputLayoutMessage.error = null
+    /** ARTIK BLOK GÖVDELİ, HİÇBİR ŞEY DÖNDÜRMÜYOR (Unit) */
+    private fun sendFeedback() {
+        with(binding) {
+            // Eski hataları temizle
+            inputLayoutCategory.error = null
+            inputLayoutEmail.error = null
+            inputLayoutMessage.error = null
 
-        val category = autoCategory.text?.toString()?.trim().orEmpty()
-        val email = etEmail.text?.toString()?.trim().orEmpty()
-        val message = etMessage.text?.toString()?.trim().orEmpty()
+            val category = autoCategory.text?.toString()?.trim().orEmpty()
+            val email = etEmail.text?.toString()?.trim().orEmpty()
+            val message = etMessage.text?.toString()?.trim().orEmpty()
 
-        var hasError = false
+            var hasError = false
 
-        // Kategori zorunlu
-        if (category.isEmpty()) {
-            inputLayoutCategory.error =
-                getString(R.string.feedback_error_category_required)
-            hasError = true
-        }
-
-        // Mesaj min 10 karakter
-        if (message.length < 10) {
-            inputLayoutMessage.error =
-                getString(R.string.feedback_error_message_too_short)
-            hasError = true
-        }
-
-        // Email opsiyonel, ama doluysa valid olmalı
-        if (email.isNotEmpty() &&
-            !Patterns.EMAIL_ADDRESS.matcher(email).matches()
-        ) {
-            inputLayoutEmail.error =
-                getString(R.string.feedback_error_email_invalid)
-            hasError = true
-        }
-
-        if (hasError) return
-
-        setSendingState(true)
-
-        // Kullanıcı id'si – login değilse anonim
-        val user = auth.currentUser
-        val uid = user?.uid ?: "anonymous"
-
-        // feedback/{uid}/items/{autoId}
-        val docRef = db.collection("feedback")
-            .document(uid)
-            .collection("items")
-            .document()  // auto ID
-
-        val data = hashMapOf(
-            "category" to category,
-            "email" to email.ifBlank { null },
-            "message" to message,
-            "platform" to "android",
-            "appVersion" to getAppVersion(),
-            "locale" to Locale.getDefault().toLanguageTag(),
-            "status" to "new",
-            "userId" to uid,
-            "createdAt" to FieldValue.serverTimestamp()
-        )
-
-        docRef.set(data)
-            .addOnSuccessListener {
-                setSendingState(false)
-
-                // Kategori + mesajı temizle, email kalsın
-                binding.autoCategory.setText("")
-				binding.etEmail.setText("")
-                binding.etMessage.setText("")
-
-                showSuccessUI()
+            // Kategori zorunlu
+            if (category.isEmpty()) {
+                inputLayoutCategory.error =
+                    getString(R.string.feedback_error_category_required)
+                hasError = true
             }
-            .addOnFailureListener {
-                setSendingState(false)
-                Snackbar.make(
-                    root,
-                    getString(R.string.feedback_error_generic),
-                    Snackbar.LENGTH_LONG
-                ).show()
+
+            // Mesaj min 10 karakter
+            if (message.length < 10) {
+                inputLayoutMessage.error =
+                    getString(R.string.feedback_error_message_too_short)
+                hasError = true
             }
+
+            // Email opsiyonel, ama doluysa valid olmalı
+            if (email.isNotEmpty() &&
+                !Patterns.EMAIL_ADDRESS.matcher(email).matches()
+            ) {
+                inputLayoutEmail.error =
+                    getString(R.string.feedback_error_email_invalid)
+                hasError = true
+            }
+
+            if (hasError) return
+
+            setSendingState(true)
+
+            // Kullanıcı id'si – login değilse anonim
+            val user = auth.currentUser
+            val uid = user?.uid ?: "anonymous"
+
+            // feedback/{uid}/items/{autoId}
+            val docRef = db.collection("feedback")
+                .document(uid)
+                .collection("items")
+                .document()  // auto ID
+
+            val data = hashMapOf(
+                "category" to category,
+                "email" to email.ifBlank { null },
+                "message" to message,
+                "platform" to "android",
+                "appVersion" to getAppVersion(),
+                "locale" to Locale.getDefault().toLanguageTag(),
+                "status" to "new",
+                "userId" to uid,
+                "createdAt" to FieldValue.serverTimestamp()
+            )
+
+            docRef.set(data)
+                .addOnSuccessListener {
+                    setSendingState(false)
+
+                    // Kategori + mesaj + email TEMİZLENSİN
+                    autoCategory.setText("")
+                    etEmail.setText("")
+                    etMessage.setText("")
+
+                    showSuccessUI()
+                }
+                .addOnFailureListener {
+                    setSendingState(false)
+                    Snackbar.make(
+                        root,
+                        getString(R.string.feedback_error_generic),
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                }
+        }
     }
 
     private fun setSendingState(sending: Boolean) = with(binding) {
@@ -176,12 +179,10 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
     /** Teşekkür mesajını mesaj kutusunun içine yaz + Lottie oynat */
     private fun showSuccessUI() = with(binding) {
-        // Hint'i boşalt, içine teşekkür metnini yaz
         inputLayoutMessage.hint = ""
         etMessage.isEnabled = false
         etMessage.setText(getString(R.string.feedback_success_text))
 
-        // Lottie oynat
         lottieSuccess.isVisible = true
         lottieSuccess.progress = 0f
         lottieSuccess.playAnimation()
