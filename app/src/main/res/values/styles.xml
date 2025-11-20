@@ -102,6 +102,23 @@
     <item name="cornerSize">16dp</item> <!-- 32dp yüksekliğin yarısı -->
 </style>
 
+<style name="TextAppearance.Aqua.BottomNav" parent="TextAppearance.MaterialComponents.Body2">
+    <item name="android:textSize">10sp</item>
+</style>
+
+<style name="Widget.Aqua.BottomNav"
+    parent="Widget.MaterialComponents.BottomNavigationView">
+
+    <!-- 🔹 Toplam yüksekliği aşağı çeken kısım -->
+    <item name="android:minHeight">52dp</item>   <!-- 48–56 arası mantıklı -->
+    <item name="android:paddingTop">2dp</item>
+    <item name="android:paddingBottom">2dp</item>
+
+    <!-- Yazıları da biraz küçültelim -->
+    <item name="itemTextAppearanceActive">@style/TextAppearance.Aqua.BottomNav</item>
+    <item name="itemTextAppearanceInactive">@style/TextAppearance.Aqua.BottomNav</item>
+</style>
+
     <!-- Settings ekranındaki tüm kartlar için ortak stil -->
   <style name="Widget.Aqua.CardStyles"
     parent="Widget.MaterialComponents.CardView">
