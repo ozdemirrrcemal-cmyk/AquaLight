@@ -362,45 +362,44 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp">
+            android:layout_marginTop="25dp">
 
             <ImageView
                 android:id="@+id/ivSocialWebsite"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:src="@drawable/web"
-                android:padding="8dp"
+                android:padding="1dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_website"/>
 
             <ImageView
                 android:id="@+id/ivSocialFacebook"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_marginStart="24dp"
                 android:src="@drawable/facebook"
-                android:padding="8dp"
+                android:padding="1dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_facebook"/>
 
             <ImageView
                 android:id="@+id/ivSocialInstagram"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_marginStart="24dp"
                 android:src="@drawable/instagram"
-                android:padding="8dp"
+                android:padding="1dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_instagram"/>
 
             <ImageView
                 android:id="@+id/ivSocialYoutube"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_marginStart="24dp"
                 android:src="@drawable/youtube"
-                android:padding="8dp"
+                android:padding="1dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/settings_social_youtube"/>
         </LinearLayout>
