@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Arka plan (şeffaf bırakıyoruz) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <!-- Altta ince çizgi (divider) -->
+    <item android:gravity="bottom">
+        <shape android:shape="rectangle">
+            <size android:height="1dp" />
+            <!-- Divider rengi: istersen değiştir -->
+            <solid android:color="#3348556B" />
+        </shape>
+    </item>
+
+</layer-list>

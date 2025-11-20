@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -37,6 +38,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         setupCategoryDropdown()
         setupSendButton()
         setupLottie()
+        setupValidationWatchers()
     }
 
     private fun setupHeader() = with(binding) {
@@ -46,33 +48,61 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     }
 
     private fun setupCategoryDropdown() = with(binding) {
-    val categories = resources.getStringArray(R.array.feedback_categories).toList()
+        val categories = resources.getStringArray(R.array.feedback_categories).toList()
 
-    // Kendi satır layout’umuzu kullan
-    val adapter = android.widget.ArrayAdapter(
-        requireContext(),
-        R.layout.item_feedback_category,
-        categories
-    )
-    autoCategory.setAdapter(adapter)
-
-    // Popup arkaplanını temaya uygun yap
-    autoCategory.setDropDownBackgroundDrawable(
-        androidx.core.content.ContextCompat.getDrawable(
+        // Özel satır layout’u
+        val adapter = android.widget.ArrayAdapter(
             requireContext(),
-            R.drawable.bg_dropdown_popup
+            R.layout.item_feedback_category,
+            categories
         )
-    )
+        autoCategory.setAdapter(adapter)
 
-    autoCategory.setOnClickListener {
-        autoCategory.showDropDown()
+        // Popup arka planı
+        autoCategory.setDropDownBackgroundDrawable(
+            androidx.core.content.ContextCompat.getDrawable(
+                requireContext(),
+                R.drawable.bg_dropdown_popup
+            )
+        )
+
+        autoCategory.setOnClickListener {
+            autoCategory.showDropDown()
+        }
     }
-}
 
     private fun setupSendButton() = with(binding) {
         btnSend.setOnClickListener {
             if (!isSending) {
                 sendFeedback()
+            }
+        }
+    }
+
+    /** Kullanıcı yazdıkça hata mesajlarını otomatik temizle */
+    private fun setupValidationWatchers() = with(binding) {
+        // Kategori
+        autoCategory.addTextChangedListener { text ->
+            if (!text.isNullOrBlank()) {
+                inputLayoutCategory.error = null
+            }
+        }
+
+        // Mesaj (10+ karakter olunca hata kalksın)
+        etMessage.addTextChangedListener { text ->
+            val value = text?.toString()?.trim().orEmpty()
+            if (value.length >= 10) {
+                inputLayoutMessage.error = null
+            }
+        }
+
+        // Email: boşsa veya valid ise hata kalksın
+        etEmail.addTextChangedListener { text ->
+            val value = text?.toString()?.trim().orEmpty()
+            if (value.isEmpty() ||
+                Patterns.EMAIL_ADDRESS.matcher(value).matches()
+            ) {
+                inputLayoutEmail.error = null
             }
         }
     }
@@ -90,7 +120,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         })
     }
 
-    /** ARTIK BLOK GÖVDELİ, HİÇBİR ŞEY DÖNDÜRMÜYOR (Unit) */
+    /** Artık Unit döndürüyor, Task vs yok */
     private fun sendFeedback() {
         with(binding) {
             // Eski hataları temizle
@@ -127,7 +157,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 hasError = true
             }
 
-            if (hasError) return
+            if (hasError) return  // with inline olduğu için sendFeedback'ten çıkar
 
             setSendingState(true)
 
@@ -157,7 +187,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 .addOnSuccessListener {
                     setSendingState(false)
 
-                    // Kategori + mesaj + email TEMİZLENSİN
+                    // Tüm alanları temizle
                     autoCategory.setText("")
                     etEmail.setText("")
                     etMessage.setText("")

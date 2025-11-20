@@ -8,6 +8,6 @@
     android:paddingEnd="16dp"
     android:textSize="15sp"
     android:textColor="?attr/colorOnSurface"
-    android:background="?attr/selectableItemBackground"
     android:maxLines="1"
-    android:ellipsize="end" />
+    android:ellipsize="end"
+    android:background="@drawable/bg_dropdown_item_divider" />
