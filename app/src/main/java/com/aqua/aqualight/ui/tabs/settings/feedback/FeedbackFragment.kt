@@ -2,9 +2,11 @@ package com.aqua.aqualight.ui.tabs.settings.feedback
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.net.Uri
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -15,6 +17,8 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import java.util.Locale
 
 class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
@@ -28,6 +32,20 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     private var originalButtonText: CharSequence? = null
     private var isSending = false
 
+    // 📎 Seçilen ekran görüntüsü Uri'si (opsiyonel)
+    private var screenshotUri: Uri? = null
+
+    // 📂 Galeriden görüntü seçmek için launcher
+    private val pickScreenshot =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                screenshotUri = uri
+                binding.tvScreenshotInfo.text =
+                    binding.root.context.getString(R.string.feedback_screenshot_selected)
+                binding.ivScreenshotClear.isVisible = true
+            }
+        }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentFeedbackBinding.bind(view)
@@ -39,6 +57,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         setupSendButton()
         setupLottie()
         setupValidationWatchers()
+        setupScreenshotRow()   // ✅ yeni satır
     }
 
     private fun setupHeader() = with(binding) {
@@ -107,6 +126,21 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         }
     }
 
+    /** Ekran görüntüsü satırı: seçme + temizleme */
+    private fun setupScreenshotRow() = with(binding) {
+        // Satıra tıklayınca galeri aç
+        rowAddScreenshot.setOnClickListener {
+            pickScreenshot.launch("image/*")
+        }
+
+        // Çarpı ikonuna basınca screenshot'ı sıfırla
+        ivScreenshotClear.setOnClickListener {
+            screenshotUri = null
+            tvScreenshotInfo.text = getString(R.string.feedback_screenshot_add)
+            ivScreenshotClear.isVisible = false
+        }
+    }
+
     /** Lottie bitince mesaj alanını normale döndür */
     private fun setupLottie() = with(binding) {
         lottieSuccess.addAnimatorListener(object : AnimatorListenerAdapter() {
@@ -171,7 +205,8 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 .collection("items")
                 .document()  // auto ID
 
-            val data = hashMapOf(
+            // Ortak alanlar
+            val baseData = hashMapOf(
                 "category" to category,
                 "email" to email.ifBlank { null },
                 "message" to message,
@@ -183,26 +218,76 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 "createdAt" to FieldValue.serverTimestamp()
             )
 
-            docRef.set(data)
-                .addOnSuccessListener {
-                    setSendingState(false)
+            val currentScreenshot = screenshotUri
 
-                    // Tüm alanları temizle
-                    autoCategory.setText("")
-                    etEmail.setText("")
-                    etMessage.setText("")
+            // 📌 Ekran görüntüsü yoksa sadece Firestore'a kaydet
+            if (currentScreenshot == null) {
+                docRef.set(baseData)
+                    .addOnSuccessListener {
+                        setSendingState(false)
+                        resetForm()
+                        showSuccessUI()
+                    }
+                    .addOnFailureListener {
+                        setSendingState(false)
+                        Snackbar.make(
+                            root,
+                            getString(R.string.feedback_error_generic),
+                            Snackbar.LENGTH_LONG
+                        ).show()
+                    }
+            } else {
+                // 📸 Önce Storage'a upload et, sonra Firestore'a URL ile kaydet
+                val storageRef = Firebase.storage.reference
+                    .child("feedback_screenshots/$uid/${docRef.id}.jpg")
 
-                    showSuccessUI()
-                }
-                .addOnFailureListener {
-                    setSendingState(false)
-                    Snackbar.make(
-                        root,
-                        getString(R.string.feedback_error_generic),
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                }
+                storageRef.putFile(currentScreenshot)
+                    .continueWithTask { task ->
+                        if (!task.isSuccessful) {
+                            throw task.exception ?: Exception("Upload failed")
+                        }
+                        storageRef.downloadUrl
+                    }
+                    .addOnSuccessListener { downloadUri ->
+                        val dataWithScreenshot = baseData.toMutableMap()
+                        dataWithScreenshot["screenshotUrl"] = downloadUri.toString()
+
+                        docRef.set(dataWithScreenshot)
+                            .addOnSuccessListener {
+                                setSendingState(false)
+                                resetForm()
+                                showSuccessUI()
+                            }
+                            .addOnFailureListener {
+                                setSendingState(false)
+                                Snackbar.make(
+                                    root,
+                                    getString(R.string.feedback_error_generic),
+                                    Snackbar.LENGTH_LONG
+                                ).show()
+                            }
+                    }
+                    .addOnFailureListener {
+                        setSendingState(false)
+                        Snackbar.make(
+                            root,
+                            getString(R.string.feedback_error_generic),
+                            Snackbar.LENGTH_LONG
+                        ).show()
+                    }
+            }
         }
+    }
+
+    /** Form alanlarını ve screenshot durumunu sıfırla */
+    private fun resetForm() = with(binding) {
+        autoCategory.setText("")
+        etEmail.setText("")
+        etMessage.setText("")
+
+        screenshotUri = null
+        tvScreenshotInfo.text = getString(R.string.feedback_screenshot_add)
+        ivScreenshotClear.isVisible = false
     }
 
     private fun setSendingState(sending: Boolean) = with(binding) {

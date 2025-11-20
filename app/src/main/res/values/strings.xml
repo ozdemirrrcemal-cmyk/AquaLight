@@ -617,6 +617,10 @@
 <string name="feedback_sending">Sending...</string>
 <string name="feedback_error_generic">Something went wrong. Please try again.</string>
 <string name="feedback_success_text">Thank you! Your feedback has been sent.</string>
+
+<string name="feedback_screenshot_label">Attachment</string>
+<string name="feedback_screenshot_add">Add screenshot (optional)</string>
+<string name="feedback_screenshot_selected">Screenshot selected</string>
 	
 	    <!-- 🔐 Change Password     -->
     <!-- Header title -->
