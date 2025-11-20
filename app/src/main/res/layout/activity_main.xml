@@ -24,7 +24,7 @@
     app:itemIconTint="@color/bottom_nav_item_tint"
     app:itemTextColor="@color/bottom_nav_item_tint"
     app:itemActiveIndicatorStyle="@style/Widget.Aqua.BottomNav.ActiveIndicator"
-    app:itemIconSize="24dp"
+    app:itemIconSize="32dp"
     app:menu="@menu/menu_bottom"
     android:visibility="gone" />
 

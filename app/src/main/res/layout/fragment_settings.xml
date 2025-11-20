@@ -98,7 +98,8 @@
                 <LinearLayout
                     android:id="@+id/rowUserInfo"
                     android:layout_width="match_parent"
-                    android:minHeight="56dp"
+					android:layout_height="wrap_content"
+                    android:minHeight="52dp"
                     android:paddingHorizontal="16dp"
                     android:gravity="center_vertical"
                     android:clickable="true"
@@ -131,7 +132,8 @@
                 <LinearLayout
                     android:id="@+id/rowDeviceStatus"
                     android:layout_width="match_parent"
-                    android:minHeight="56dp"
+					android:layout_height="wrap_content"
+                    android:minHeight="52dp"
                     android:paddingHorizontal="16dp"
                     android:gravity="center_vertical"
                     android:clickable="true"
@@ -164,7 +166,8 @@
                 <LinearLayout
                     android:id="@+id/rowNetwork"
                     android:layout_width="match_parent"
-                    android:minHeight="56dp"
+					android:layout_height="wrap_content"
+                    android:minHeight="52dp"
                     android:paddingHorizontal="16dp"
                     android:gravity="center_vertical"
                     android:clickable="true"
@@ -197,7 +200,8 @@
                 <LinearLayout
                     android:id="@+id/rowSettings"
                     android:layout_width="match_parent"
-                    android:minHeight="56dp"
+					android:layout_height="wrap_content"
+                    android:minHeight="52dp"
                     android:paddingHorizontal="16dp"
                     android:gravity="center_vertical"
                     android:clickable="true"
@@ -230,7 +234,8 @@
                 <LinearLayout
                     android:id="@+id/rowUsage"
                     android:layout_width="match_parent"
-                    android:minHeight="56dp"
+					android:layout_height="wrap_content"
+                    android:minHeight="52dp"
                     android:paddingHorizontal="16dp"
                     android:gravity="center_vertical"
                     android:clickable="true"
@@ -263,7 +268,8 @@
                 <LinearLayout
                     android:id="@+id/rowPrivacy"
                     android:layout_width="match_parent"
-                    android:minHeight="56dp"
+					android:layout_height="wrap_content"
+                    android:minHeight="52dp"
                     android:paddingHorizontal="16dp"
                     android:gravity="center_vertical"
                     android:clickable="true"
@@ -296,7 +302,8 @@
                 <LinearLayout
                     android:id="@+id/rowFeedback"
                     android:layout_width="match_parent"
-                    android:minHeight="56dp"
+					android:layout_height="wrap_content"
+                    android:minHeight="52dp"
                     android:paddingHorizontal="16dp"
                     android:gravity="center_vertical"
                     android:clickable="true"
@@ -329,7 +336,8 @@
                 <LinearLayout
                     android:id="@+id/rowLogout"
                     android:layout_width="match_parent"
-                    android:minHeight="56dp"
+					android:layout_height="wrap_content"
+                    android:minHeight="52dp"
                     android:paddingHorizontal="16dp"
                     android:gravity="center_vertical"
                     android:clickable="true"

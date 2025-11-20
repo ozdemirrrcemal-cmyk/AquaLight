@@ -110,9 +110,9 @@
     parent="Widget.MaterialComponents.BottomNavigationView">
 
     <!-- 🔹 Toplam yüksekliği aşağı çeken kısım -->
-    <item name="android:minHeight">52dp</item>   <!-- 48–56 arası mantıklı -->
+    <item name="android:minHeight">56dp</item>   <!-- 48–56 arası mantıklı -->
     <item name="android:paddingTop">2dp</item>
-    <item name="android:paddingBottom">2dp</item>
+    <item name="android:paddingBottom">5dp</item>
 
     <!-- Yazıları da biraz küçültelim -->
     <item name="itemTextAppearanceActive">@style/TextAppearance.Aqua.BottomNav</item>
