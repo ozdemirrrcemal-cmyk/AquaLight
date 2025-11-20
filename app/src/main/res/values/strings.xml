@@ -914,7 +914,11 @@
         To detect nearby Wi-Fi and devices, please allow location access in settings.
     </string>
     <string name="location_permission_button_open_settings">Open location settings</string>
-	
+	<!-- Settings – social links -->
+<string name="settings_social_website">Website</string>
+<string name="settings_social_facebook">Facebook</string>
+<string name="settings_social_instagram">Instagram</string>
+<string name="settings_social_youtube">YouTube</string>
 
 
 

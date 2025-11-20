@@ -25,4 +25,5 @@ message UserPreferences {
 
   // 🆕 Login uyarıları (giriş alert)
   bool   loginAlertsEnabled = 18;
+ 
 }

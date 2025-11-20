@@ -20,7 +20,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-			style="@style/Widget.Aqua.CardStyles"
+            style="@style/Widget.Aqua.CardStyles"
             android:layout_marginBottom="5dp">
 
             <LinearLayout
@@ -30,24 +30,25 @@
                 android:gravity="center_vertical"
                 android:padding="12dp">
 
-              <FrameLayout
-    android:layout_width="64dp"
-    android:layout_height="64dp"
-    android:background="@drawable/profile_background">
+                <FrameLayout
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/profile_background">
 
-    <ImageView
-        android:id="@+id/ivProfilePhoto"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="2dp"
-        android:background="@drawable/profile_clip_circle"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ic_profile_placeholder"
-        android:clipToOutline="true"
-        android:clickable="true"
-        android:focusable="true"
-        android:contentDescription="@string/settings_profile_photo_desc" />
-</FrameLayout>
+                    <ImageView
+                        android:id="@+id/ivProfilePhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="2dp"
+                        android:background="@drawable/profile_clip_circle"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_profile_placeholder"
+                        android:clipToOutline="true"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:contentDescription="@string/settings_profile_photo_desc" />
+                </FrameLayout>
+
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -353,5 +354,56 @@
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <!-- 🔻 Sosyal medya ikonları (logout satırının ALTINDA) -->
+        <LinearLayout
+            android:id="@+id/rowSocialLinks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp">
+
+            <ImageView
+                android:id="@+id/ivSocialWebsite"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/web"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/settings_social_website"/>
+
+            <ImageView
+                android:id="@+id/ivSocialFacebook"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="24dp"
+                android:src="@drawable/facebook"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/settings_social_facebook"/>
+
+            <ImageView
+                android:id="@+id/ivSocialInstagram"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="24dp"
+                android:src="@drawable/instagram"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/settings_social_instagram"/>
+
+            <ImageView
+                android:id="@+id/ivSocialYoutube"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="24dp"
+                android:src="@drawable/youtube"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/settings_social_youtube"/>
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>
