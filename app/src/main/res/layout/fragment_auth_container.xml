@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <!-- 🎬 Arka plan video -->
-    <androidx.media3.ui.StyledPlayerView
+    <androidx.media3.ui.PlayerView
         android:id="@+id/videoBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

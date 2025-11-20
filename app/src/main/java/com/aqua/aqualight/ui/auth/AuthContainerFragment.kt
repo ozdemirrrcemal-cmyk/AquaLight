@@ -19,13 +19,13 @@ import com.aqua.aqualight.R
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.StyledPlayerView
+import androidx.media3.ui.PlayerView
 import eightbitlab.com.blurview.BlurView
 import eightbitlab.com.blurview.RenderEffectBlur
 
 class AuthContainerFragment : Fragment() {
 
-    private var playerView: StyledPlayerView? = null
+    private var playerView: PlayerView? = null
     private var blurView: BlurView? = null
     private var posterImage: ImageView? = null
 
@@ -100,7 +100,7 @@ class AuthContainerFragment : Fragment() {
                 exo.repeatMode = Player.REPEAT_MODE_ONE
                 exo.addListener(object : Player.Listener {
                     override fun onRenderedFirstFrame() {
-                        // video hazır olduğunda posteri gizle
+                        // video ilk çerçeveyi çizince posteri gizle
                         posterImage?.visibility = View.GONE
                     }
                 })
@@ -124,7 +124,6 @@ class AuthContainerFragment : Fragment() {
         playerView?.player = null
         player?.release()
         player = null
-        // fragment yeniden açılırsa posteri tekrar göster
         posterImage?.visibility = View.VISIBLE
     }
 
