@@ -81,16 +81,14 @@
     <item name="android:textColor">@color/auth_text_color</item>
     <item name="colorControlActivated">@color/auth_focus_color</item> <!-- ✅ Güvenli -->
 </style>
-<!-- 🔹 BottomNav aktif indicator – Material3 uyumlu -->
-<style name="Widget.Aqua.BottomNav.ActiveIndicator"
-    parent="Widget.Material3.NavigationBar.ActiveIndicator">
 
-    <!-- Boyut / oval görünüm -->
+<!-- 🔹 BottomNav aktif indicator – tema rengine uygun -->
+<style name="Widget.Aqua.BottomNav.ActiveIndicator">
+    <!-- Boyut -->
     <item name="android:width">64dp</item>
     <item name="android:height">32dp</item>
-    <item name="shapeAppearance">?attr/shapeAppearanceSmallComponent</item>
 
-    <!-- Renk: temadaki container rengi, kartlara yakın -->
+    <!-- Renk: temadan gelsin, kartlarla uyumlu -->
     <item name="android:color">?attr/colorSecondaryContainer</item>
 </style>
 
