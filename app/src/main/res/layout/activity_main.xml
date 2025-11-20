@@ -15,7 +15,7 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
- <com.google.android.material.bottomnavigation.BottomNavigationView
+<com.google.android.material.bottomnavigation.BottomNavigationView
     android:id="@+id/bottomNav"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -23,7 +23,7 @@
     android:background="@color/bottom_nav_background"
     app:itemIconTint="@color/bottom_nav_item_tint"
     app:itemTextColor="@color/bottom_nav_item_tint"
-    app:itemActiveIndicatorStyle="@style/Widget.Aqua.BottomNav.NoActiveIndicator"
+    app:itemActiveIndicatorStyle="@style/Widget.Aqua.BottomNav.ActiveIndicator"
     app:menu="@menu/menu_bottom"
     android:visibility="gone" />
 

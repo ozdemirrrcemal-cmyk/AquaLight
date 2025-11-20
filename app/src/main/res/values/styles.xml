@@ -81,12 +81,17 @@
     <item name="android:textColor">@color/auth_text_color</item>
     <item name="colorControlActivated">@color/auth_focus_color</item> <!-- ✅ Güvenli -->
 </style>
+<!-- 🔹 BottomNav aktif indicator – Material3 uyumlu -->
+<style name="Widget.Aqua.BottomNav.ActiveIndicator"
+    parent="Widget.Material3.NavigationBar.ActiveIndicator">
 
-<!-- 🔹 Bottom nav: active indicator tamamen kapalı -->
-<style name="Widget.Aqua.BottomNav.NoActiveIndicator" parent="">
-    <item name="android:width">0dp</item>
-    <item name="android:height">0dp</item>
-    <item name="android:color">@android:color/transparent</item>
+    <!-- Boyut / oval görünüm -->
+    <item name="android:width">64dp</item>
+    <item name="android:height">32dp</item>
+    <item name="shapeAppearance">?attr/shapeAppearanceSmallComponent</item>
+
+    <!-- Renk: temadaki container rengi, kartlara yakın -->
+    <item name="android:color">?attr/colorSecondaryContainer</item>
 </style>
 
     <!-- Settings ekranındaki tüm kartlar için ortak stil -->
