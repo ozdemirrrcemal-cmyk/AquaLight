@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
-import android.graphics.Matrix
 import android.graphics.RenderEffect
 import android.net.Uri
 import android.os.Build
@@ -18,29 +17,33 @@ import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
 import com.aqua.aqualight.R
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
 import eightbitlab.com.blurview.BlurView
 import eightbitlab.com.blurview.RenderEffectBlur
 
 @OptIn(UnstableApi::class) // setVideoTextureView / clearVideoTextureView için
 class AuthContainerFragment : Fragment() {
 
+    private var videoContainer: AspectRatioFrameLayout? = null
     private var textureView: TextureView? = null
     private var blurView: BlurView? = null
     private var posterImage: ImageView? = null   // 🐟 Poster overlay
 
     private var player: ExoPlayer? = null
-    private var videoWidth = 0
-    private var videoHeight = 0
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         val v = inflater.inflate(R.layout.fragment_auth_container, container, false)
+
+        videoContainer = v.findViewById(R.id.videoContainer)
         textureView = v.findViewById(R.id.videoBackground)
         blurView = v.findViewById(R.id.blurView)
         posterImage = v.findViewById(R.id.posterImage)
@@ -79,19 +82,20 @@ class AuthContainerFragment : Fragment() {
 
     override fun onPause() {
         super.onPause()
-        // 🔹 Artık burada release yok; sadece pause
+        // sadece durdur
         player?.playWhenReady = false
     }
 
     override fun onStop() {
         super.onStop()
-        // 🔹 Ekrandan tamamen çıkarken player'ı bırak
+        // ekran kapandığında player'ı bırak
         if (Build.VERSION.SDK_INT >= 24) releasePlayer()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         releasePlayer()
+        videoContainer = null
         textureView = null
         blurView = null
         posterImage = null
@@ -106,11 +110,13 @@ class AuthContainerFragment : Fragment() {
 
                 exo.addListener(object : Player.Listener {
                     override fun onVideoSizeChanged(videoSize: VideoSize) {
-                        videoWidth = videoSize.width
-                        videoHeight = videoSize.height
-                        val w = textureView?.width ?: 0
-                        val h = textureView?.height ?: 0
-                        if (w > 0 && h > 0) scaleVideoToFillScreen(w, h)
+                        // Videonun gerçek en-boy oranı
+                        val aspect = if (videoSize.height == 0) {
+                            1f
+                        } else {
+                            (videoSize.width * videoSize.pixelWidthHeightRatio) / videoSize.height
+                        }
+                        videoContainer?.setAspectRatio(aspect)
                     }
 
                     override fun onRenderedFirstFrame() {
@@ -128,14 +134,6 @@ class AuthContainerFragment : Fragment() {
                 exo.playWhenReady = true
             }
             player = exo
-
-            textureView?.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
-                val w = v.width
-                val h = v.height
-                if (w > 0 && h > 0 && videoWidth > 0 && videoHeight > 0) {
-                    scaleVideoToFillScreen(w, h)
-                }
-            }
         } catch (_: Exception) {
             releasePlayer() // sessiz düş
         }
@@ -151,8 +149,6 @@ class AuthContainerFragment : Fragment() {
             }
         } finally {
             player = null
-            videoWidth = 0
-            videoHeight = 0
             // Fragment tekrar açılırsa poster başta tekrar görünsün
             posterImage?.visibility = View.VISIBLE
         }
@@ -188,19 +184,5 @@ class AuthContainerFragment : Fragment() {
                 // cihaz desteklemiyorsa yoksay
             }
         }
-    }
-
-    private fun scaleVideoToFillScreen(viewWidth: Int, viewHeight: Int) {
-        if (videoWidth <= 0 || videoHeight <= 0 || viewWidth <= 0 || viewHeight <= 0) return
-        val scaleX = viewWidth.toFloat() / videoWidth
-        val scaleY = viewHeight.toFloat() / videoHeight
-        val scale = maxOf(scaleX, scaleY)
-        val dx = (viewWidth - scale * videoWidth) / 2f
-        val dy = (viewHeight - scale * videoHeight) / 2f
-        val m = Matrix().apply {
-            setScale(scale, scale)
-            postTranslate(dx, dy)
-        }
-        textureView?.setTransform(m)
     }
 }
