@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
-import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -42,7 +41,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
     private fun setupHeader() = with(binding) {
         btnBack.setOnClickListener { findNavController().popBackStack() }
-
         tvSubInfo.text = getString(R.string.feedback_subinfo)
         tvFooter.text = getString(R.string.feedback_footer)
     }
@@ -70,39 +68,41 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         }
     }
 
-    /** Lottie animasyonu bittiğinde görünümü gizle */
+    /** Lottie bitince mesaj alanını normale döndür */
     private fun setupLottie() = with(binding) {
         lottieSuccess.addAnimatorListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
+                // animasyon bittikten sonra mesaj kutusunu tekrar yazılabilir yap
+                etMessage.isEnabled = true
+                etMessage.setText("")
+                inputLayoutMessage.hint = getString(R.string.feedback_hint_message)
                 lottieSuccess.isVisible = false
             }
         })
     }
 
-    private fun sendFeedback() {
-        // Eski hataları + mesajları temizle
-        binding.inputLayoutCategory.error = null
-        binding.inputLayoutEmail.error = null
-        binding.inputLayoutMessage.error = null
-        binding.tvSuccessMessage.isGone = true
-        binding.lottieSuccess.isGone = true
+    private fun sendFeedback() = with(binding) {
+        // Eski hataları temizle
+        inputLayoutCategory.error = null
+        inputLayoutEmail.error = null
+        inputLayoutMessage.error = null
 
-        val category = binding.autoCategory.text?.toString()?.trim().orEmpty()
-        val email = binding.etEmail.text?.toString()?.trim().orEmpty()
-        val message = binding.etMessage.text?.toString()?.trim().orEmpty()
+        val category = autoCategory.text?.toString()?.trim().orEmpty()
+        val email = etEmail.text?.toString()?.trim().orEmpty()
+        val message = etMessage.text?.toString()?.trim().orEmpty()
 
         var hasError = false
 
         // Kategori zorunlu
         if (category.isEmpty()) {
-            binding.inputLayoutCategory.error =
+            inputLayoutCategory.error =
                 getString(R.string.feedback_error_category_required)
             hasError = true
         }
 
         // Mesaj min 10 karakter
         if (message.length < 10) {
-            binding.inputLayoutMessage.error =
+            inputLayoutMessage.error =
                 getString(R.string.feedback_error_message_too_short)
             hasError = true
         }
@@ -111,7 +111,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         if (email.isNotEmpty() &&
             !Patterns.EMAIL_ADDRESS.matcher(email).matches()
         ) {
-            binding.inputLayoutEmail.error =
+            inputLayoutEmail.error =
                 getString(R.string.feedback_error_email_invalid)
             hasError = true
         }
@@ -146,8 +146,9 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
             .addOnSuccessListener {
                 setSendingState(false)
 
-                // Formu temizle (email opsiyonel, istersen bırak)
+                // Kategori + mesajı temizle, email kalsın
                 binding.autoCategory.setText("")
+				binding.etEmail.setText("")
                 binding.etMessage.setText("")
 
                 showSuccessUI()
@@ -155,7 +156,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
             .addOnFailureListener {
                 setSendingState(false)
                 Snackbar.make(
-                    binding.root,
+                    root,
                     getString(R.string.feedback_error_generic),
                     Snackbar.LENGTH_LONG
                 ).show()
@@ -173,10 +174,14 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         progressBarSending.isVisible = sending
     }
 
+    /** Teşekkür mesajını mesaj kutusunun içine yaz + Lottie oynat */
     private fun showSuccessUI() = with(binding) {
-        tvSuccessMessage.text = getString(R.string.feedback_success_text)
-        tvSuccessMessage.isVisible = true
+        // Hint'i boşalt, içine teşekkür metnini yaz
+        inputLayoutMessage.hint = ""
+        etMessage.isEnabled = false
+        etMessage.setText(getString(R.string.feedback_success_text))
 
+        // Lottie oynat
         lottieSuccess.isVisible = true
         lottieSuccess.progress = 0f
         lottieSuccess.playAnimation()

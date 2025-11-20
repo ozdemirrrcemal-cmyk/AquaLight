@@ -182,18 +182,6 @@
                             app:lottie_loop="false" />
                     </FrameLayout>
 
-                    <!-- Başarılı mesaj -->
-                    <TextView
-                        android:id="@+id/tvSuccessMessage"
-                        style="@style/TextAppearance.Aqua.Feedback.Success"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:gravity="center"
-                        android:visibility="gone"
-                        android:alpha="0"
-                        android:contentDescription="@string/feedback_success_desc" />
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
