@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.tabs.settings
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -26,10 +28,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     companion object {
         // 🔗 Sosyal linkler – kendi linklerini buraya yaz
-        private const val URL_WEBSITE  = "https://aqualight.example.com"
-        private const val URL_FACEBOOK = "https://www.facebook.com/aqualight"
+        private const val URL_WEBSITE   = "https://aqualight.example.com"
+        private const val URL_FACEBOOK  = "https://www.facebook.com/aqualight"
         private const val URL_INSTAGRAM = "https://www.instagram.com/aqualight"
-        private const val URL_YOUTUBE  = "https://www.youtube.com/@aqualight"
+        private const val URL_YOUTUBE   = "https://www.youtube.com/@aqualight"
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -119,29 +121,89 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     // 🔹 Sosyal medya ikonlarını bağla
     private fun setupSocialLinks() = with(binding) {
-        ivSocialWebsite.setOnClickListener { openUrl(URL_WEBSITE) }
-        ivSocialFacebook.setOnClickListener { openUrl(URL_FACEBOOK) }
-        ivSocialInstagram.setOnClickListener { openUrl(URL_INSTAGRAM) }
-        ivSocialYoutube.setOnClickListener { openUrl(URL_YOUTUBE) }
+        ivSocialWebsite.setOnClickListener { openWebsite() }
+        ivSocialFacebook.setOnClickListener { openFacebook() }
+        ivSocialInstagram.setOnClickListener { openInstagram() }
+        ivSocialYoutube.setOnClickListener { openYouTube() }
     }
 
     // 🔹 Footer’da versiyonu otomatik yaz
     private fun setupFooterVersion() {
-        // strings.xml: "© 2024 AquaLight • Version %1$s"
+        // Örn: "Copyright © 2025\nAquaLight All rights reserved.\nVersion %1$s"
         binding.tvFooterInfo.text = getString(
             R.string.settings_footer_info,
             BuildConfig.VERSION_NAME
         )
     }
 
-    // 🔹 Ortak URL açma fonksiyonu
-    private fun openUrl(url: String) {
-        if (url.isBlank()) return
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        // browser yoksa crash olmasın diye try/catch
+    // -------------------------------------------------------------------
+    // 🔻 Sosyal link helper’ları
+    // -------------------------------------------------------------------
+
+    private fun openWebsite() {
+        openUrlGeneric(URL_WEBSITE)
+    }
+
+    private fun openFacebook() {
+        val context = requireContext()
+        val pm: PackageManager = context.packageManager
+        val fbPackage = "com.facebook.katana"
+
+        val intent = try {
+            pm.getPackageInfo(fbPackage, 0)
+            // Facebook app yüklü → aynı URL'yi app ile açmayı dene
+            Intent(Intent.ACTION_VIEW, Uri.parse(URL_FACEBOOK)).apply {
+                setPackage(fbPackage)
+            }
+        } catch (_: PackageManager.NameNotFoundException) {
+            // Yüklü değil → tarayıcıya düş
+            Intent(Intent.ACTION_VIEW, Uri.parse(URL_FACEBOOK))
+        }
+
         try {
             startActivity(intent)
         } catch (_: Exception) {
+            // En son çare
+            openUrlGeneric(URL_FACEBOOK)
+        }
+    }
+
+    private fun openInstagram() {
+        val username = "aqualight" // URL’de kullandığın kullanıcı adıyla aynı olsun
+        val appUri = Uri.parse("http://instagram.com/_u/$username")
+        val webUri = Uri.parse(URL_INSTAGRAM)
+
+        val appIntent = Intent(Intent.ACTION_VIEW, appUri).apply {
+            setPackage("com.instagram.android")
+        }
+
+        try {
+            startActivity(appIntent)
+        } catch (_: ActivityNotFoundException) {
+            openUrlGeneric(webUri.toString())
+        }
+    }
+
+    private fun openYouTube() {
+        val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse(URL_YOUTUBE)).apply {
+            setPackage("com.google.android.youtube")
+        }
+
+        try {
+            startActivity(appIntent)
+        } catch (_: ActivityNotFoundException) {
+            openUrlGeneric(URL_YOUTUBE)
+        }
+    }
+
+    // En genel fallback – tarayıcıyla aç
+    private fun openUrlGeneric(url: String) {
+        if (url.isBlank()) return
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        try {
+            startActivity(intent)
+        } catch (_: Exception) {
+            // Browser bile yoksa yapacak bir şey yok, sessiz geçiyoruz
         }
     }
 
