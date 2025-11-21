@@ -946,5 +946,11 @@
     No activity has been logged yet.
 </string>
 
+<string name="usage_7d_automation_label">Automations</string>
+<string name="usage_7d_alerts_label">Alerts</string>
+<string name="usage_today_automation_label">Automations</string>
+<string name="usage_today_manual_label">Manual actions</string>
+<string name="usage_last_event_time_label">Time</string>
+<string name="usage_last_event_label">Event</string>
 
 </resources>
