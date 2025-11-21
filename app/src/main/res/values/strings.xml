@@ -971,4 +971,39 @@
 <string name="network_devices_empty">
     No Aqua devices were found on this network.
 </string>
+
+<!-- About app / header -->
+<string name="about_app_header_card_desc">Application header and basic information.</string>
+<string name="about_app_logo_desc">AquaLight application logo.</string>
+<string name="about_app_header_tagline">Smart aquarium monitoring and control.</string>
+<string name="about_app_header_version_format">Version %1$s (%2$s)</string>
+
+<!-- Overview card -->
+<string name="about_app_overview_card_desc">High level description of the AquaLight application.</string>
+<string name="about_app_overview_title">About AquaLight</string>
+<string name="about_app_overview_body">
+    AquaLight helps you monitor and control your aquarium from anywhere. 
+    You can track water parameters, manage lighting and feeding schedules, 
+    and receive alerts when something requires your attention.
+</string>
+
+<!-- System info card -->
+<string name="about_app_system_card_desc">Technical information about the app and device.</string>
+<string name="about_app_system_info_title">System information</string>
+<string name="about_app_version_label">App version</string>
+<string name="about_app_build_label">Build number</string>
+<string name="about_app_device_label">Device</string>
+<string name="about_app_android_label">Android version</string>
+
+<!-- Legal card -->
+<string name="about_app_legal_card_desc">Legal documents and policies.</string>
+<string name="about_app_legal_title">Legal</string>
+<string name="about_app_privacy_policy">Privacy policy</string>
+<string name="about_app_terms">Terms of use</string>
+<string name="about_app_licenses">Open\u2011source licenses</string>
+<string name="about_app_row_arrow_desc">Open details</string>
+
+<!-- Footer -->
+<string name="about_app_footer">© 2025 AquaLight. All rights reserved.</string>
+
 </resources>
