@@ -947,8 +947,7 @@
 </string>
 
 <!-- Usage / Statistics screen -->
-<string name="usage_title">Usage statistics</string>
-<string name="usage_back_button_desc">Go back to the previous screen</string>
+
 
 <string name="usage_subinfo">
     Here you can see how often your aquarium automations run and when the latest important events occurred.
