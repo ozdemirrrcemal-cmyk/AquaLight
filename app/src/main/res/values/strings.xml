@@ -948,10 +948,6 @@
 
 <!-- Usage / Statistics screen -->
 
-
-<string name="usage_subinfo">
-    Here you can see how often your aquarium automations run and when the latest important events occurred.
-</string>
 <string name="usage_subinfo_desc">Usage statistics information text</string>
 
 <!-- 7-day summary card -->
