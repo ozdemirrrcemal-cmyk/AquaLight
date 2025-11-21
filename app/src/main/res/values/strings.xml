@@ -952,5 +952,10 @@
 <string name="usage_today_manual_label">Manual actions</string>
 <string name="usage_last_event_time_label">Time</string>
 <string name="usage_last_event_label">Event</string>
-
+<string name="network_devices_title">Devices on this network</string>
+<string name="network_devices_subtitle">
+    Aqua controllers that responded on your local network in the last few minutes.
+</string>
+<string name="network_devices_scanning">Scanning for devices on this network…</string>
+<string name="network_device_default_name">Aqua device</string>
 </resources>
