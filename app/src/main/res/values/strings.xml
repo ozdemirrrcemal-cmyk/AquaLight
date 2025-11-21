@@ -949,7 +949,7 @@
 <!-- Usage / Statistics screen -->
 
 <!-- 7-day summary card -->
-<string name="usage_summary_title">Last 7 days</string>
+
 <string name="usage_summary_card_desc">Summary of automations and alerts for the last 7 days</string>
 <string name="usage_7d_automation_label">Automations</string>
 <string name="usage_7d_alerts_label">Alerts</string>
