@@ -945,3 +945,39 @@
 <string name="usage_last_open_never">
     No activity has been logged yet.
 </string>
+
+<!-- Usage / Statistics screen -->
+
+<!-- 7-day summary card -->
+<string name="usage_summary_title">Last 7 days</string>
+<string name="usage_summary_card_desc">Summary of automations and alerts for the last 7 days</string>
+<string name="usage_7d_automation_label">Automations</string>
+<string name="usage_7d_alerts_label">Alerts</string>
+
+<!-- Today card -->
+<string name="usage_today_title">Today</string>
+<string name="usage_today_card_desc">Today&apos;s automations and manual actions</string>
+<string name="usage_today_automation_label">Automations</string>
+<string name="usage_today_manual_label">Manual actions</string>
+
+<!-- Last activity card -->
+<string name="usage_last_activity_title">Last important event</string>
+<string name="usage_last_activity_card_desc">Time and description of the last important system event</string>
+<string name="usage_last_event_time_label">Time</string>
+<string name="usage_last_event_label">Event</string>
+
+<!-- Privacy / info card -->
+<string name="usage_privacy_title">How these statistics are used</string>
+<string name="usage_privacy_body">
+    Usage statistics are stored only on this device and help you understand how often your automations run and when alerts are triggered.
+</string>
+<string name="usage_privacy_card_desc">Information about how usage data is stored</string>
+
+<!-- Kotlin tarafında kullandıklarımız -->
+<string name="usage_last_event_none">No recorded events yet.</string>
+<string name="usage_last_open_never">No activity has been logged yet.</string>
+<string name="usage_last_event_example">Lighting • Evening schedule turned ON</string>
+
+<!-- Country picker icon content description -->
+
+</resources>
