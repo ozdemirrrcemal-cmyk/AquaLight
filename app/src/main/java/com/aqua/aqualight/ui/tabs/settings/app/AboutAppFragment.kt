@@ -56,17 +56,20 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
     }
 
     private fun setupLegalClicks() {
-        // Burada sadece boş click listener bırakıyorum ki sonradan nav / web açma ekleyebilesin
+        // 🔐 Privacy Policy (şimdilik TODO bırakıyorum)
         binding.rowPrivacy.setOnClickListener {
-            // TODO: Privacy Policy ekranına veya web sayfasına git
+            // Buraya ileride PrivacyPolicyFragment veya web url navigate edersin
+            // findNavController().navigate(R.id.privacyPolicyFragment)
         }
 
+        // 📜 Terms of Use
         binding.rowTerms.setOnClickListener {
-            // TODO: Terms of Use ekranına veya web sayfasına git
+            findNavController().navigate(R.id.termsOfUseFragment)
         }
 
+        // 🧩 Open Source Licenses
         binding.rowLicenses.setOnClickListener {
-            // TODO: Açık kaynak lisansları ekranına git
+            findNavController().navigate(R.id.openSourceLicensesFragment)
         }
     }
 

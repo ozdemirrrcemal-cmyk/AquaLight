@@ -144,5 +144,15 @@
         android:name="com.aqua.aqualight.ui.tabs.settings.app.AboutAppFragment"
         android:label="About"
         tools:layout="@layout/fragment_about_app" />
+		
+		<fragment
+    android:id="@+id/termsOfUseFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.app.TermsOfUseFragment"
+    android:label="@string/terms_title" />
+
+<fragment
+    android:id="@+id/openSourceLicensesFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment"
+    android:label="@string/open_source_title" />
 
 </navigation>

@@ -1006,4 +1006,75 @@
 <!-- Footer -->
 <string name="about_app_footer">© 2025 AquaLight. All rights reserved.</string>
 
+<!-- Open source licenses -->
+<string name="open_source_title">Open source licenses</string>
+<string name="open_source_back_button_desc">Go back from open source licenses</string>
+
+<string name="open_source_intro">
+    AquaLight is built on top of several open source libraries. We are grateful to the developers of these projects and list the main components and their licenses below.
+</string>
+
+<string name="open_source_libraries_title">Included libraries</string>
+
+<string name="open_source_media3">
+    AndroidX Media3 (ExoPlayer, UI components) – Apache License 2.0.
+</string>
+
+<string name="open_source_material">
+    Material Components for Android – Apache License 2.0.
+</string>
+
+<string name="open_source_firebase">
+    Firebase SDK for Android – Firebase and Apache-style licenses.
+</string>
+
+<string name="open_source_blurview">
+    BlurView by eightbitlab.com – Apache License 2.0.
+</string>
+
+<string name="open_source_datastore">
+    Jetpack DataStore and Protocol Buffers runtime – Apache License 2.0 and BSD-style licenses.
+</string>
+
+<string name="open_source_androidx">
+    AndroidX core libraries (Navigation, AppCompat, ConstraintLayout and others) – Apache License 2.0.
+</string>
+
+<string name="open_source_full_text_note">
+    Full license texts are provided with the app or on our website as required by each license. “AquaLight” is a trademark of its respective owner.
+</string>
+
+
+<!-- Terms of use -->
+<string name="terms_title">Terms of use</string>
+<string name="terms_back_button_desc">Go back from terms of use</string>
+
+<string name="terms_intro">
+    These Terms of Use govern how you may access and use the AquaLight application and connected devices. By creating an account or using the app, you agree to these terms.
+</string>
+
+<string name="terms_section_acceptance_title">1. Acceptance of the terms</string>
+<string name="terms_section_acceptance_body">
+    You must be at least 18 years old, or have the consent of a legal guardian, to use AquaLight. If you do not agree with these terms, you must stop using the app and disconnect your devices.
+</string>
+
+<string name="terms_section_devices_title">2. Device control and automation</string>
+<string name="terms_section_devices_body">
+    AquaLight sends commands to aquariums and related equipment based on your settings. You are responsible for choosing appropriate schedules and limits, and for regularly checking the condition of your animals and hardware.
+</string>
+
+<string name="terms_section_privacy_title">3. Data and privacy</string>
+<string name="terms_section_privacy_body">
+    AquaLight processes basic account data and technical telemetry to operate the service and improve reliability. We do not sell your personal data. For details, please see the separate Privacy Policy.
+</string>
+
+<string name="terms_section_liability_title">4. Liability and safety</string>
+<string name="terms_section_liability_body">
+    We provide the app on an “as is” and “as available” basis. We cannot guarantee uninterrupted operation or that automations will always execute as configured. You remain responsible for safe operation of your equipment and livestock. To the extent permitted by law, AquaLight is not liable for indirect, incidental, or consequential damages.
+</string>
+
+<string name="terms_section_changes_title">5. Changes and contact</string>
+<string name="terms_section_changes_body">
+    We may update these terms from time to time to reflect technical or legal changes. Material changes will be communicated in the app or on our website. If you have questions about these terms, please contact AquaLight support.
+</string>
 </resources>
