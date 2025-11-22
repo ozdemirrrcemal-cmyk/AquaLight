@@ -1045,36 +1045,63 @@
 </string>
 
 
+
+
 <!-- Terms of use -->
 <string name="terms_title">Terms of use</string>
 <string name="terms_back_button_desc">Go back from terms of use</string>
 
 <string name="terms_intro">
-    These Terms of Use govern how you may access and use the AquaLight application and connected devices. By creating an account or using the app, you agree to these terms.
+    These Terms of Use explain the conditions under which you may access and use the AquaLight mobile application and any connected devices, services, or content. By installing the app, creating an account, connecting a device, or using AquaLight in any way, you acknowledge that you have read, understood, and agree to be bound by these terms. If you do not agree, you must immediately stop using the app and, if applicable, disconnect and reset any devices configured with AquaLight.
 </string>
 
-<string name="terms_section_acceptance_title">1. Acceptance of the terms</string>
+<string name="terms_section_acceptance_title">1. Acceptance and eligibility</string>
 <string name="terms_section_acceptance_body">
-    You must be at least 18 years old, or have the consent of a legal guardian, to use AquaLight. If you do not agree with these terms, you must stop using the app and disconnect your devices.
+    • You must be at least 18 years old and have the legal capacity to enter into a binding agreement in your country of residence.\n\n
+    • By creating an account or continuing to use AquaLight, you confirm that the information you provide (such as email address and profile information) is accurate, up to date, and complete, and that you will keep it updated.\n\n
+    • You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account. If you suspect any unauthorized access, you must change your password and inform AquaLight support as soon as possible.\n\n
+    • Your use of AquaLight may also be subject to the terms and policies of third-party platforms (such as Google Play, the App Store, or device manufacturers). You are responsible for complying with those additional terms.\n\n
+    • AquaLight may update these Terms of Use from time to time, for example when we introduce new features, change technical requirements, or respond to legal or regulatory changes. When the terms are updated, we will indicate the effective date and may show an in-app notice. Your continued use of the app after the effective date means you accept the updated terms.
 </string>
 
 <string name="terms_section_devices_title">2. Device control and automation</string>
 <string name="terms_section_devices_body">
-    AquaLight sends commands to aquariums and related equipment based on your settings. You are responsible for choosing appropriate schedules and limits, and for regularly checking the condition of your animals and hardware.
+    • AquaLight allows you to send commands to aquariums and related equipment (such as lights, pumps, or dosing systems) based on schedules, automations, or manual actions that you configure in the app.\n\n
+    • You are solely responsible for choosing safe schedules, limits, and configuration values. Before relying on any automation, you should carefully test the behaviour of your devices and verify that the settings are appropriate for your animals, plants, and hardware.\n\n
+    • AquaLight does not physically inspect your installation and cannot monitor all conditions in your environment. Network interruptions, power failures, hardware defects, firmware bugs, or incorrect setup may cause commands to be delayed, skipped, or executed differently than expected.\n\n
+    • You remain responsible for regularly checking your aquarium, livestock, and equipment in person. The app is a supporting tool and is not a substitute for your own judgement, supervision, or safety measures (such as overload protection, timers, or emergency cut-offs).\n\n
+    • You must follow all safety instructions provided by the manufacturer of your devices and comply with local electrical and safety regulations. Do not use AquaLight to control equipment beyond its intended use or in any way that could reasonably cause fire, electrical shock, flooding, or other damage.\n\n
+    • If you sell, give away, or dispose of any device that was previously connected to AquaLight, you are responsible for performing a factory reset or otherwise removing your account and settings from that device.
 </string>
 
 <string name="terms_section_privacy_title">3. Data and privacy</string>
 <string name="terms_section_privacy_body">
-    AquaLight processes basic account data and technical telemetry to operate the service and improve reliability. We do not sell your personal data. For details, please see the separate Privacy Policy.
+    • AquaLight processes personal data such as your email address, account identifiers, basic device information, and usage telemetry in order to operate the service, secure your account, back up your data, and improve reliability and performance.\n\n
+    • Aquarium-related information that you choose to store in the app (such as tank details, measurements, photos, and notes) may be synced and stored on remote servers so that you can access it from your devices.\n\n
+    • We do not sell your personal data to third parties. However, we may share data with trusted service providers (for example, cloud hosting, analytics, crash reporting, and email delivery services) strictly for operating and improving AquaLight, and with authorities where required by law.\n\n
+    • Some of our service providers may be located outside of your country. Where this involves cross-border data transfers, we aim to take appropriate measures to protect your information in line with applicable data protection laws.\n\n
+    • The details of what data we collect, how we use it, how long we keep it, and what rights you have over your data are described in our separate Privacy Policy and, where applicable, our data protection notice under local law. By using AquaLight, you acknowledge that you have read and understood those documents.
 </string>
 
-<string name="terms_section_liability_title">4. Liability and safety</string>
+<string name="terms_section_liability_title">4. Liability, risks, and disclaimers</string>
 <string name="terms_section_liability_body">
-    We provide the app on an “as is” and “as available” basis. We cannot guarantee uninterrupted operation or that automations will always execute as configured. You remain responsible for safe operation of your equipment and livestock. To the extent permitted by law, AquaLight is not liable for indirect, incidental, or consequential damages.
+    • AquaLight is provided on an "as is" and "as available" basis. We make no guarantees that the app or any automation will be uninterrupted, error-free, or permanently available, or that every command will always execute exactly as configured.\n\n
+    • Aquariums, animals, and electrical equipment are inherently sensitive and can be damaged by incorrect settings, sudden changes, or equipment failures. You are responsible for choosing safe settings and for monitoring the actual condition of your setup. AquaLight cannot guarantee the health, survival, or wellbeing of any animals, plants, or corals in your care.\n\n
+    • To the maximum extent permitted by applicable law, AquaLight and its operators are not liable for:\n
+    \u2022 loss of fish, corals, or other livestock,\n
+    \u2022 damage to tanks, stands, or surrounding property (including water damage),\n
+    \u2022 electrical issues, fire, or equipment failure,\n
+    \u2022 loss of data, loss of profits, or any indirect, incidental, special, or consequential damages arising from the use of or inability to use the app or connected devices.\n\n
+    • If liability cannot be fully excluded under local law, any remaining liability of AquaLight will be limited to the smallest amount permitted by such law. Because the app is currently offered free of charge, in many cases this may result in no monetary compensation being available.\n\n
+    • Nothing in these terms is intended to exclude or limit any rights or remedies that you may have under mandatory consumer protection laws in your country.
 </string>
 
-<string name="terms_section_changes_title">5. Changes and contact</string>
+<string name="terms_section_changes_title">5. Changes, termination, and contact</string>
 <string name="terms_section_changes_body">
-    We may update these terms from time to time to reflect technical or legal changes. Material changes will be communicated in the app or on our website. If you have questions about these terms, please contact AquaLight support.
+    • We may modify or discontinue parts of the AquaLight app, introduce new features, or remove existing ones at any time, for example due to technical reasons, security concerns, or changes in the services or platforms we depend on.\n\n
+    • We may also change these Terms of Use. When we make material changes, we will update the date of the last revision and may provide an in-app notice or request that you review and accept the updated terms.\n\n
+    • You are free to stop using AquaLight at any time. You can delete your account from within the app where this option is available, and you can disconnect or reset any devices that were linked to your account.\n\n
+    • If you have questions about these terms, believe your account has been used without your permission, or wish to exercise any rights you may have under applicable law, please contact AquaLight support using the contact details provided in the app or on our website.
 </string>
+
 </resources>
