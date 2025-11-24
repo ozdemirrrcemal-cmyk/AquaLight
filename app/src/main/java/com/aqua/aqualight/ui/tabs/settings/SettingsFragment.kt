@@ -31,7 +31,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         private const val URL_WEBSITE   = "https://aqualight.example.com"
         private const val URL_FACEBOOK  = "https://www.facebook.com/aqualight"
         private const val URL_INSTAGRAM = "https://www.instagram.com/aqualight"
-        private const val URL_YOUTUBE   = "https://www.youtube.com/@aqualight"
+        private const val URL_YOUTUBE   = "https://youtube.com/@aqualight"
 
         private const val PKG_FACEBOOK  = "com.facebook.katana"
         private const val PKG_INSTAGRAM = "com.instagram.android"
