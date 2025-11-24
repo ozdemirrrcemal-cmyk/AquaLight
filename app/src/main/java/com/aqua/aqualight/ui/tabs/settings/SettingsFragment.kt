@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.settings
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -130,9 +131,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             openUrlPreferApp(URL_INSTAGRAM, PKG_INSTAGRAM)
         }
 
-        // YouTube
+        // YouTube -> sadece uygulama (gerekirse Play Store), TARAYICI YOK
         ivSocialYoutube.setOnClickListener {
-            openUrlPreferApp(URL_YOUTUBE, PKG_YOUTUBE)
+            openYoutubeChannel()
         }
     }
 
@@ -160,8 +161,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     /**
      * Önce ilgili uygulamayı dene, yüklü değilse tarayıcıya düş
-     * 👉 Burada ÖNEMLİ NOKTA: app açılırsa return ile çıkıyoruz,
-     * yoksa ikinci intent (tarayıcı) da çalışır ve ikisi birden açılırdı.
      */
     private fun openUrlPreferApp(url: String, appPackage: String) {
         if (url.isBlank()) return
@@ -178,7 +177,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             // App VAR → direkt onu aç ve FONKSİYONDAN ÇIK
             try {
                 startActivity(appIntent)
-                return   // 🔴 BUNU UNUTURSAN hem app hem browser açılır
+                return
             } catch (_: Exception) {
                 // yine de açamazsa aşağıdaki browser'a düşer
             }
@@ -189,6 +188,38 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         try {
             startActivity(webIntent)
         } catch (_: Exception) {
+        }
+    }
+
+    /**
+     * YouTube ikonu için: sadece YouTube app + Play Store fallback
+     * Tarayıcı kesinlikle açılmaz.
+     */
+    private fun openYoutubeChannel() {
+        val url = URL_YOUTUBE
+        if (url.isBlank()) return
+
+        // 1) YouTube uygulamasını dene
+        val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+            setPackage(PKG_YOUTUBE)
+        }
+
+        try {
+            startActivity(appIntent)
+            return
+        } catch (e: ActivityNotFoundException) {
+            // YouTube app yok → Play Store'a yönlendir
+            try {
+                val storeIntent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("market://details?id=$PKG_YOUTUBE")
+                )
+                startActivity(storeIntent)
+            } catch (_: Exception) {
+                // Play Store da yoksa tamamen sessiz kal
+            }
+        } catch (_: Exception) {
+            // başka bir hata olursa da sessiz geç
         }
     }
 
