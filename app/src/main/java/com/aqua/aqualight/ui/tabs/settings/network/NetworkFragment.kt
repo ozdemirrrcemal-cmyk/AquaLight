@@ -23,10 +23,9 @@ import org.json.JSONObject
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.Inet4Address
+import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.SocketTimeoutException
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class NetworkFragment : Fragment(R.layout.fragment_network) {
@@ -36,6 +35,8 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
 
     // Sürekli UDP dinleme için job
     private var udpListenJob: Job? = null
+
+    private val tag = "NetworkFragment"
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -114,11 +115,20 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
             // IP bazlı cache, son görülen cihazlar
             val devicesMap = LinkedHashMap<String, UdpDeviceUi>()
 
-            val port = 10888              // ESP32 UDPlocalPort
-            val listenTimeoutMs = 5000    // her turda max 5 sn bekle
+            val port = 10888                // ESP32 UDPlocalPort
+            val listenTimeoutMs = 1000      // her turda max 1 sn bekle
             val staleTimeoutMs = 3 * 60_000L // 3 dk görmediysek listeden düş
+            var lastRefreshSend = 0L
 
             while (isActive) {
+                val nowLoop = System.currentTimeMillis()
+
+                // Her 5 saniyede bir ESP32'lere "RefreshUDP" isteği gönder
+                if (nowLoop - lastRefreshSend > 5000) {
+                    sendUdpRefreshBroadcast(port)
+                    lastRefreshSend = nowLoop
+                }
+
                 // Bir tur UDP dinle
                 val newDevices = listenForUdpBroadcasts(
                     port = port,
@@ -145,6 +155,28 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
     }
 
     /**
+     * ESP32'lere UDP üzerinden "RefreshUDP" komutu gönder.
+     * MNetUdp.UDPRead içinde Command == "RefreshUDP" görünce cihaz hemen broadcast yapıyor.
+     */
+    private fun sendUdpRefreshBroadcast(port: Int) {
+        try {
+            DatagramSocket().use { socket ->
+                socket.broadcast = true
+                val data = """{"Command":"RefreshUDP"}""".toByteArray(Charsets.UTF_8)
+                val packet = DatagramPacket(
+                    data,
+                    data.size,
+                    InetAddress.getByName("255.255.255.255"),
+                    port
+                )
+                socket.send(packet)
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "UDP RefreshUDP gönderme hatası", e)
+        }
+    }
+
+    /**
      * Bir tur UDP dinler, o sürede gelen cihazları döner.
      */
     private fun listenForUdpBroadcasts(
@@ -152,7 +184,6 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         timeoutMillis: Int
     ): List<UdpDeviceUi> {
         val result = LinkedHashMap<String, UdpDeviceUi>() // IP bazlı uniq
-        val tag = "NetworkFragment"
 
         try {
             DatagramSocket(port).use { socket ->
