@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import com.aqua.aqualight.databinding.FragmentNetworkBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.Inet4Address
@@ -42,7 +44,7 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         // 📡 Bağlantı bilgisi
         bindConnectionStatus()
 
-        // 🧩 UDP cihaz taraması (port 10880)
+        // 🧩 UDP cihaz taraması (ESP32 uyumlu: port 10888)
         scanUdpDevices()
     }
 
@@ -77,16 +79,22 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
     }
 
     // ----------------------------------------------------
-    // 🧩 UDP cihaz modeli
+    // 🧩 UDP cihaz modeli (JSON’dan ayrıştırılmış)
     // ----------------------------------------------------
     data class UdpDeviceUi(
         val ip: String,
-        val payload: String,
+        val name: String,
+        val aquaName: String?,
+        val cloneName: String?,
+        val firmware: String?,
+        val hasLight: Boolean,
+        val hasTimer: Boolean,
+        val hasTemperature: Boolean,
         val lastSeenMillis: Long
     )
 
     // ----------------------------------------------------
-    // 🧩 UDP tarama (port 10880)
+    // 🧩 UDP tarama (ESP32: port 10888)
     // ----------------------------------------------------
     private fun scanUdpDevices() {
         // UI: önce "Scanning..." yazsın
@@ -97,8 +105,8 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         viewLifecycleOwner.lifecycleScope.launch {
             val devices = withContext(Dispatchers.IO) {
                 listenForUdpBroadcasts(
-                    port = 10880,
-                    timeoutMillis = 3000 // 3 sn dinle
+                    port = 10888,      // 🔴 ESP32 MNetUdp.UDPlocalPort = 10888
+                    timeoutMillis = 10000 // Biraz daha uzun dinle (10 sn)
                 )
             }
             bindDevicesToUi(devices)
@@ -106,23 +114,43 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
     }
 
     /**
-     * Port 10880 üzerinde gelen UDP paketlerini kısa bir süre dinler.
-     * Cihazlar bu porta yayın yapıyorsa, gönderici IP + payload metnini toplar.
+     * Verilen port üzerinde gelen UDP paketlerini kısa bir süre dinler.
+     * ESP32, JSON formatında şu tip paketler gönderiyor:
+     *
+     * {
+     *   "Data": {
+     *     "0": {
+     *       "ID": ...,
+     *       "IndexNet": ...,
+     *       "Name": "Aqua_123456",
+     *       "AquaName": "Salon Akvaryumu",
+     *       "CloneName": "",
+     *       "FirmwareBuild": "v5.1.4 (08.09.2024)",
+     *       "IP": "192.168.1.50",
+     *       "TabLight": 1,
+     *       "TabTimer": 1,
+     *       "TabTemperature": 0
+     *     }
+     *   },
+     *   "VerUdp": 20240813
+     * }
      */
     private fun listenForUdpBroadcasts(
         port: Int,
         timeoutMillis: Int
     ): List<UdpDeviceUi> {
         val result = LinkedHashMap<String, UdpDeviceUi>() // IP bazlı uniq
+        val tag = "NetworkFragment"
 
         try {
             DatagramSocket(port).use { socket ->
                 socket.soTimeout = timeoutMillis
 
-                val buffer = ByteArray(2048)
+                val buffer = ByteArray(4096)
 
                 while (true) {
                     val packet = DatagramPacket(buffer, buffer.size)
+
                     try {
                         socket.receive(packet)
                     } catch (e: SocketTimeoutException) {
@@ -130,22 +158,83 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
                         break
                     }
 
-                    val ip = packet.address.hostAddress ?: continue
+                    val senderIp = packet.address?.hostAddress ?: continue
                     val length = packet.length
                     val payload = buffer.copyOf(length).toString(Charsets.UTF_8).trim()
 
-                    result[ip] = UdpDeviceUi(
-                        ip = ip,
-                        payload = payload.ifBlank { "Aqua device" },
-                        lastSeenMillis = System.currentTimeMillis()
-                    )
+                    try {
+                        val device = parseEsp32UdpJson(senderIp, payload)
+                        if (device != null) {
+                            // Aynı IP'den birden fazla paket gelse bile son görüleni yaz
+                            result[senderIp] = device
+                        } else {
+                            // JSON değilse / beklenen formatta değilse fallback
+                            result[senderIp] = UdpDeviceUi(
+                                ip = senderIp,
+                                name = "Aqua device",
+                                aquaName = null,
+                                cloneName = null,
+                                firmware = null,
+                                hasLight = false,
+                                hasTimer = false,
+                                hasTemperature = false,
+                                lastSeenMillis = System.currentTimeMillis()
+                            )
+                        }
+                    } catch (e: Exception) {
+                        Log.e(tag, "UDP JSON parse hatası: $payload", e)
+                    }
                 }
             }
-        } catch (_: Exception) {
-            // Bu aşamada hata gösterme, ekranda "no devices" göstermek yeterli
+        } catch (e: Exception) {
+            Log.e(tag, "UDP dinleme hatası", e)
         }
 
         return result.values.toList()
+    }
+
+    /**
+     * ESP32'nin gönderdiği JSON'u parse edip UdpDeviceUi nesnesine çevirir.
+     */
+    private fun parseEsp32UdpJson(
+        senderIp: String,
+        payload: String
+    ): UdpDeviceUi? {
+        val root = try {
+            JSONObject(payload)
+        } catch (e: Exception) {
+            return null
+        }
+
+        val dataObj = root.optJSONObject("Data") ?: return null
+        val dev0 = dataObj.optJSONObject("0") ?: return null
+
+        val name = dev0.optString("Name", "")
+        val aquaName = dev0.optString("AquaName", null)
+        val cloneName = dev0.optString("CloneName", null)
+        val firmware = dev0.optString("FirmwareBuild", null)
+
+        // IP hem JSON içinden hem de gönderen soketten gelebilir;
+        // JSON'da yoksa senderIp'yi kullan
+        val ipFromJson = dev0.optString("IP", null)
+        val finalIp = if (!ipFromJson.isNullOrBlank()) ipFromJson else senderIp
+
+        // TabLight / TabTimer / TabTemperature ESP32 tarafında int olarak gönderiliyor (0/1)
+        val hasLight = dev0.optInt("TabLight", 0) != 0
+        val hasTimer = dev0.optInt("TabTimer", 0) != 0
+        val hasTemp = dev0.optInt("TabTemperature", 0) != 0
+
+        return UdpDeviceUi(
+            ip = finalIp,
+            name = name.ifBlank { "Aqua device" },
+            aquaName = aquaName,
+            cloneName = cloneName,
+            firmware = firmware,
+            hasLight = hasLight,
+            hasTimer = hasTimer,
+            hasTemperature = hasTemp,
+            lastSeenMillis = System.currentTimeMillis()
+        )
     }
 
     // ----------------------------------------------------
@@ -176,10 +265,46 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
             val tvName = row.findViewById<TextView>(R.id.tvDeviceName)
             val tvInfo = row.findViewById<TextView>(R.id.tvDeviceInfo)
 
-            tvName.text = device.payload
+            // Birincil başlık: mümkünse AquaName, yoksa Name
+            val mainName = when {
+                !device.aquaName.isNullOrBlank() -> device.aquaName
+                device.name.isNotBlank() -> device.name
+                else -> getString(R.string.network_device_default_name) // "Aqua device" gibi bir string tanımlarsın
+            }
+
+            // Alt başlığa CloneName ve özellik etiketlerini ekleyebiliriz
+            val tags = buildList {
+                if (device.hasLight) add(getString(R.string.network_tag_light))         // "Light"
+                if (device.hasTimer) add(getString(R.string.network_tag_timer))         // "Timer"
+                if (device.hasTemperature) add(getString(R.string.network_tag_temp))    // "Temp"
+            }.joinToString(separator = " · ")
+
             val timeText = timeFormatter.format(Date(device.lastSeenMillis))
-            // Örn: "192.168.1.20 • 21:35"
-            tvInfo.text = "${device.ip} • $timeText"
+
+            tvName.text = buildString {
+                append(mainName)
+                if (!device.cloneName.isNullOrBlank()) {
+                    append(" • ")
+                    append(device.cloneName)
+                }
+            }
+
+            // Örn: "192.168.1.20 • 21:35 • v5.1.4 (08.09.2024) • Light · Timer"
+            tvInfo.text = buildString {
+                append(device.ip)
+                append(" • ")
+                append(timeText)
+
+                if (!device.firmware.isNullOrBlank()) {
+                    append(" • ")
+                    append(device.firmware)
+                }
+
+                if (tags.isNotBlank()) {
+                    append(" • ")
+                    append(tags)
+                }
+            }
 
             container.addView(row)
         }

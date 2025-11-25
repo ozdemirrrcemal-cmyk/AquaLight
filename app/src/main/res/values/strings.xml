@@ -1104,4 +1104,12 @@
     • If you have questions about these terms, believe your account has been used without your permission, or wish to exercise any rights you may have under applicable law, please contact AquaLight support using the contact details provided in the app or on our website.
 </string>
 
+    <string name="network_device_default_name">Aqua cihazı</string>
+
+    <!-- Özellik etiketleri (alt satırda görünecek) -->
+    <string name="network_tag_light">Işık</string>
+    <string name="network_tag_timer">Zamanlayıcı</string>
+    <string name="network_tag_temp">Sıcaklık</string>
+	
+
 </resources>
