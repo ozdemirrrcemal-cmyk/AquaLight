@@ -15,6 +15,8 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentNetworkBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -32,6 +34,9 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
     private var _binding: FragmentNetworkBinding? = null
     private val binding get() = _binding!!
 
+    // Sürekli UDP dinleme için job
+    private var udpListenJob: Job? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentNetworkBinding.bind(view)
@@ -44,8 +49,8 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         // 📡 Bağlantı bilgisi
         bindConnectionStatus()
 
-        // 🧩 UDP cihaz taraması (ESP32 uyumlu: port 10888)
-        scanUdpDevices()
+        // 🧩 UDP cihazlarını sürekli dinle
+        startUdpScanLoop()
     }
 
     // ----------------------------------------------------
@@ -94,46 +99,53 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
     )
 
     // ----------------------------------------------------
-    // 🧩 UDP tarama (ESP32: port 10888)
+    // 🧩 Sürekli UDP tarama (ESP32: port 10888)
     // ----------------------------------------------------
-    private fun scanUdpDevices() {
-        // UI: önce "Scanning..." yazsın
+    private fun startUdpScanLoop() {
+        // İlk girişte "tarama" yazsın
         binding.deviceListContainer.removeAllViews()
         binding.tvNoDevices.visibility = View.VISIBLE
         binding.tvNoDevices.text = getString(R.string.network_devices_scanning)
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val devices = withContext(Dispatchers.IO) {
-                listenForUdpBroadcasts(
-                    port = 10888,      // 🔴 ESP32 MNetUdp.UDPlocalPort = 10888
-                    timeoutMillis = 10000 // Biraz daha uzun dinle (10 sn)
+        // Eski job varsa iptal et
+        udpListenJob?.cancel()
+
+        udpListenJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            // IP bazlı cache, son görülen cihazlar
+            val devicesMap = LinkedHashMap<String, UdpDeviceUi>()
+
+            val port = 10888              // ESP32 UDPlocalPort
+            val listenTimeoutMs = 5000    // her turda max 5 sn bekle
+            val staleTimeoutMs = 3 * 60_000L // 3 dk görmediysek listeden düş
+
+            while (isActive) {
+                // Bir tur UDP dinle
+                val newDevices = listenForUdpBroadcasts(
+                    port = port,
+                    timeoutMillis = listenTimeoutMs
                 )
+
+                val now = System.currentTimeMillis()
+
+                // Yeni gelenleri map'e işle
+                newDevices.forEach { dev ->
+                    devicesMap[dev.ip] = dev.copy(lastSeenMillis = now)
+                }
+
+                // Zaman aşımına uğrayanları filtrele
+                val visibleDevices = devicesMap.values
+                    .filter { now - it.lastSeenMillis <= staleTimeoutMs }
+                    .sortedBy { it.aquaName ?: it.name }
+
+                withContext(Dispatchers.Main) {
+                    bindDevicesToUi(visibleDevices)
+                }
             }
-            bindDevicesToUi(devices)
         }
     }
 
     /**
-     * Verilen port üzerinde gelen UDP paketlerini kısa bir süre dinler.
-     * ESP32, JSON formatında şu tip paketler gönderiyor:
-     *
-     * {
-     *   "Data": {
-     *     "0": {
-     *       "ID": ...,
-     *       "IndexNet": ...,
-     *       "Name": "Aqua_123456",
-     *       "AquaName": "Salon Akvaryumu",
-     *       "CloneName": "",
-     *       "FirmwareBuild": "v5.1.4 (08.09.2024)",
-     *       "IP": "192.168.1.50",
-     *       "TabLight": 1,
-     *       "TabTimer": 1,
-     *       "TabTemperature": 0
-     *     }
-     *   },
-     *   "VerUdp": 20240813
-     * }
+     * Bir tur UDP dinler, o sürede gelen cihazları döner.
      */
     private fun listenForUdpBroadcasts(
         port: Int,
@@ -154,7 +166,7 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
                     try {
                         socket.receive(packet)
                     } catch (e: SocketTimeoutException) {
-                        // Süre doldu → dinlemeyi bırak
+                        // Süre doldu → bu tur bitti
                         break
                     }
 
@@ -165,10 +177,9 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
                     try {
                         val device = parseEsp32UdpJson(senderIp, payload)
                         if (device != null) {
-                            // Aynı IP'den birden fazla paket gelse bile son görüleni yaz
                             result[senderIp] = device
                         } else {
-                            // JSON değilse / beklenen formatta değilse fallback
+                            // Beklenmeyen formatta paket gelirse bile en azından IP'yi göster
                             result[senderIp] = UdpDeviceUi(
                                 ip = senderIp,
                                 name = "Aqua device",
@@ -219,7 +230,6 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         val ipFromJson = dev0.optString("IP", null)
         val finalIp = if (!ipFromJson.isNullOrBlank()) ipFromJson else senderIp
 
-        // TabLight / TabTimer / TabTemperature ESP32 tarafında int olarak gönderiliyor (0/1)
         val hasLight = dev0.optInt("TabLight", 0) != 0
         val hasTimer = dev0.optInt("TabTimer", 0) != 0
         val hasTemp = dev0.optInt("TabTemperature", 0) != 0
@@ -253,7 +263,6 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         binding.tvNoDevices.visibility = View.GONE
 
         val inflater = LayoutInflater.from(container.context)
-        val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
 
         devices.forEach { device ->
             val row = inflater.inflate(
@@ -265,44 +274,21 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
             val tvName = row.findViewById<TextView>(R.id.tvDeviceName)
             val tvInfo = row.findViewById<TextView>(R.id.tvDeviceInfo)
 
-            // Birincil başlık: mümkünse AquaName, yoksa Name
+            // 1. satır: AquaName (varsa) yoksa Name
             val mainName = when {
                 !device.aquaName.isNullOrBlank() -> device.aquaName
                 device.name.isNotBlank() -> device.name
-                else -> getString(R.string.network_device_default_name) // "Aqua device" gibi bir string tanımlarsın
+                else -> getString(R.string.network_device_default_name)
             }
 
-            // Alt başlığa CloneName ve özellik etiketlerini ekleyebiliriz
-            val tags = buildList {
-                if (device.hasLight) add(getString(R.string.network_tag_light))         // "Light"
-                if (device.hasTimer) add(getString(R.string.network_tag_timer))         // "Timer"
-                if (device.hasTemperature) add(getString(R.string.network_tag_temp))    // "Temp"
-            }.joinToString(separator = " · ")
+            tvName.text = mainName
 
-            val timeText = timeFormatter.format(Date(device.lastSeenMillis))
-
-            tvName.text = buildString {
-                append(mainName)
-                if (!device.cloneName.isNullOrBlank()) {
-                    append(" • ")
-                    append(device.cloneName)
-                }
-            }
-
-            // Örn: "192.168.1.20 • 21:35 • v5.1.4 (08.09.2024) • Light · Timer"
+            // 2. satır: "IP • Name"
             tvInfo.text = buildString {
                 append(device.ip)
-                append(" • ")
-                append(timeText)
-
-                if (!device.firmware.isNullOrBlank()) {
+                if (device.name.isNotBlank()) {
                     append(" • ")
-                    append(device.firmware)
-                }
-
-                if (tags.isNotBlank()) {
-                    append(" • ")
-                    append(tags)
+                    append(device.name)
                 }
             }
 
@@ -331,6 +317,9 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // UDP dinlemeyi durdur
+        udpListenJob?.cancel()
+        udpListenJob = null
         _binding = null
     }
 }
