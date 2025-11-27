@@ -199,4 +199,12 @@
     <item name="backgroundTint">@android:color/transparent</item>
 </style>
 
+<style name="TextAppearance.Aqua.Body" parent="TextAppearance.Material3.BodyMedium" />
+
+<style name="TextAppearance.Aqua.BodyBold" parent="TextAppearance.Material3.BodyLarge">
+    <item name="android:textStyle">bold</item>
+</style>
+
+<style name="TextAppearance.Aqua.Caption" parent="TextAppearance.Material3.LabelMedium" />
+
 </resources>

@@ -21,8 +21,14 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentScanDevicesBinding.bind(view)
 
+        // Geri
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
+        }
+
+        // Yeniden tara
+        binding.btnRescan.setOnClickListener {
+            startScan()
         }
 
         setupRecyclerView()
@@ -39,20 +45,17 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun startScan() {
-    // header: scanning
     binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
-    // scanning UI
     binding.scanAnimation.visibility = View.VISIBLE
     binding.tvScanning.visibility = View.VISIBLE
     binding.rvDevices.visibility = View.GONE
     binding.tvNoDevices.visibility = View.GONE
 
     lifecycleScope.launch {
-        // TODO: gerçek UDP discovery
-        val devices: List<DiscoveredDevice> = emptyList()
+        // 🔍 ARTIK GERÇEK TARAMA
+        val devices: List<DiscoveredDevice> = discoverDevices(timeoutMs = 2000L)
 
-        // tarama bitti: başlığı değiştir
         binding.tvTitle.text = getString(R.string.device_scan_header_list)
 
         binding.scanAnimation.visibility = View.GONE
@@ -67,14 +70,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             adapter.submitList(devices)
         }
     }
-}
-
-override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    ...
-    binding.btnRescan.setOnClickListener {
-        startScan()
-    }
-    startScan()
 }
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
