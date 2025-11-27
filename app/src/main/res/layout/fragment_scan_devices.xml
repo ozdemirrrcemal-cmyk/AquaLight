@@ -96,7 +96,7 @@
         android:layout_height="wrap_content"
         android:text="@string/device_scan_no_devices"
         android:visibility="gone"
-        android:textAppearance="@style/TextAppearance.Aqua.Body"
+        
         app:layout_constraintTop_toTopOf="@id/rvDevices"
         app:layout_constraintBottom_toBottomOf="@id/rvDevices"
         app:layout_constraintStart_toStartOf="parent"
