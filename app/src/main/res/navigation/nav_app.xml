@@ -12,13 +12,18 @@
         android:label="Aquarium"
         tools:layout="@layout/fragment_aquarium" />
 
-    <!-- 📟 Devices Tab -->
+  <!-- 📟 Devices Tab -->
     <fragment
         android:id="@+id/devicesFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
         android:label="Devices"
-        tools:layout="@layout/fragment_devices" />
+        tools:layout="@layout/fragment_devices">
 
+        <action
+            android:id="@+id/action_devicesFragment_to_scanDevicesFragment"
+            app:destination="@id/scanDevicesFragment" />
+    </fragment>
+	
     <!-- ⚙️ Settings Tab -->
     <fragment
         android:id="@+id/settingsFragment"

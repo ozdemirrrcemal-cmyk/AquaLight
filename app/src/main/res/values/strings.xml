@@ -1111,5 +1111,17 @@
     <string name="network_tag_timer">Zamanlayıcı</string>
     <string name="network_tag_temp">Sıcaklık</string>
 	
+	
+
+    <!-- DevicesFragment -->
+    <string name="devices_title">Cihazlar</string>
+    <string name="devices_scan_button_desc">Cihaz tara veya ekle</string>
+    <string name="devices_no_selected">Herhangi bir cihaz seçilmedi</string>
+
+    <!-- ScanDevicesFragment -->
+    <string name="device_scan_back_button_desc">Cihaz listesine geri dön</string>
+    <string name="device_scan_title">Cihaz Tara</string>
+    <string name="device_scan_searching">Cihazlar taranıyor...</string>
+    <string name="device_scan_no_devices">Yakında cihaz bulunamadı.\nLütfen aynı ağa bağlı olduğunuzdan emin olun.</string>
 
 </resources>
