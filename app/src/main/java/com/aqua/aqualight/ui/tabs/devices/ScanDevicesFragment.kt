@@ -45,32 +45,32 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun startScan() {
-    binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
+        binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
-    binding.scanAnimation.visibility = View.VISIBLE
-    binding.tvScanning.visibility = View.VISIBLE
-    binding.rvDevices.visibility = View.GONE
-    binding.tvNoDevices.visibility = View.GONE
+        binding.scanAnimation.visibility = View.VISIBLE
+        binding.tvScanning.visibility = View.VISIBLE
+        binding.rvDevices.visibility = View.GONE
+        binding.tvNoDevices.visibility = View.GONE
 
-    lifecycleScope.launch {
-        // 🔍 ARTIK GERÇEK TARAMA
-        val devices: List<DiscoveredDevice> = discoverDevices(timeoutMs = 2000L)
+        lifecycleScope.launch {
+            val devices: List<DiscoveredDevice> =
+                discoverDevices(requireContext(), timeoutMs = 3000L)
 
-        binding.tvTitle.text = getString(R.string.device_scan_header_list)
+            binding.tvTitle.text = getString(R.string.device_scan_header_list)
 
-        binding.scanAnimation.visibility = View.GONE
-        binding.tvScanning.visibility = View.GONE
+            binding.scanAnimation.visibility = View.GONE
+            binding.tvScanning.visibility = View.GONE
 
-        if (devices.isEmpty()) {
-            binding.rvDevices.visibility = View.GONE
-            binding.tvNoDevices.visibility = View.VISIBLE
-        } else {
-            binding.rvDevices.visibility = View.VISIBLE
-            binding.tvNoDevices.visibility = View.GONE
-            adapter.submitList(devices)
+            if (devices.isEmpty()) {
+                binding.rvDevices.visibility = View.GONE
+                binding.tvNoDevices.visibility = View.VISIBLE
+            } else {
+                binding.rvDevices.visibility = View.VISIBLE
+                binding.tvNoDevices.visibility = View.GONE
+                adapter.submitList(devices)
+            }
         }
     }
-}
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
         // 🔹 Burada DataStore’a yazacaksın
