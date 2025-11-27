@@ -15,7 +15,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     private var _binding: FragmentScanDevicesBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var adapter: ScanDevicesAdapter   // RV adapter (henüz yazmadık)
+    private lateinit var adapter: ScanDevicesAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -30,7 +30,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun setupRecyclerView() {
-        adapter = ScanDevicesAdapter { device ->
+        adapter = ScanDevicesAdapter { device: DiscoveredDevice ->
             // 🔹 Cihaz seçildiğinde:
             saveSelectedDevice(device)
         }
@@ -39,15 +39,15 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun startScan() {
-        // Animasyon zaten autoPlay
+        // Animasyon zaten XML’de autoPlay
         binding.tvScanning.visibility = View.VISIBLE
         binding.tvNoDevices.visibility = View.GONE
 
         lifecycleScope.launch {
-            // Buraya UDP discovery fonksiyonunu bağlayacağız
-            // val devices = discoverDevices()
+            // TODO: Buraya UDP discovery fonksiyonunu bağlayacağız
+            // val devices: List<DiscoveredDevice> = discoverDevices()
 
-            val devices = emptyList<DiscoveredDevice>() // placeholder
+            val devices: List<DiscoveredDevice> = emptyList() // şimdilik placeholder
 
             if (devices.isEmpty()) {
                 binding.tvNoDevices.visibility = View.VISIBLE
@@ -60,7 +60,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
         // 🔹 Burada DataStore’a yazacaksın
-        // Örn:
         /*
         lifecycleScope.launch {
             requireContext().dataStore.edit { prefs ->
@@ -71,7 +70,8 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
         */
 
-        findNavController().popBackStack() // şimdilik sadece geri dönelim
+        // Şimdilik sadece geri dön
+        findNavController().popBackStack()
     }
 
     override fun onDestroyView() {
