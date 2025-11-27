@@ -3,10 +3,9 @@ package com.aqua.aqualight.ui.tabs.devices
 import android.content.Context
 import android.net.wifi.WifiManager
 import android.util.Log
-import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -16,31 +15,15 @@ import java.nio.charset.StandardCharsets
 private const val VER_UDP = 20240813
 private const val UDP_PORT = 10888
 
-data class UdpPacketDevice(
-    @SerializedName("ID") val id: Long? = null,
-    @SerializedName("IP") val ip: String? = null,
-    @SerializedName("Name") val name: String? = null,
-    @SerializedName("AquaName") val aquaName: String? = null,
-    @SerializedName("CloneName") val cloneName: String? = null,
-    @SerializedName("FirmwareBuild") val firmwareBuild: String? = null,
-    @SerializedName("TabLight") val tabLight: Int? = null,
-    @SerializedName("TabTimer") val tabTimer: Int? = null,
-    @SerializedName("TabTemperature") val tabTemperature: Int? = null
-)
-
-data class UdpPacketRoot(
-    @SerializedName("Data") val data: Map<String, UdpPacketDevice>?,
-    @SerializedName("Command") val command: String?,
-    @SerializedName("VerUdp") val verUdp: Long?
-)
-
+// ---------------------------------------------------------------------
+//  TEK GÖREV: UDP ile cihazları bul, DiscoveredDevice listesi döndür
+// ---------------------------------------------------------------------
 suspend fun discoverDevices(
     context: Context,
     timeoutMs: Long = 2000L
 ): List<DiscoveredDevice> = withContext(Dispatchers.IO) {
 
     val resultMap = linkedMapOf<Long, DiscoveredDevice>()
-    val gson = Gson()
     val buffer = ByteArray(2048)
 
     // 📡 Wi-Fi broadcast adresini DHCP'den hesapla
@@ -78,10 +61,11 @@ suspend fun discoverDevices(
 
     val socket = DatagramSocket().apply {
         broadcast = true
-        soTimeout = 300
+        soTimeout = 300   // her receive için 300 ms
     }
 
     try {
+        // 📤 ESP32'lere RefreshUDP isteği gönder
         val requestJson = """{"Command":"RefreshUDP","VerUdp":$VER_UDP}"""
         val sendData = requestJson.toByteArray(StandardCharsets.UTF_8)
 
@@ -90,6 +74,7 @@ suspend fun discoverDevices(
 
         val start = System.currentTimeMillis()
 
+        // ⏱ timeout süresi boyunca cevapları topla
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
                 val packet = DatagramPacket(buffer, buffer.size)
@@ -98,26 +83,14 @@ suspend fun discoverDevices(
                 val jsonStr = String(packet.data, 0, packet.length, Charsets.UTF_8)
                 Log.d("UDP_RECEIVED", "from ${packet.address.hostAddress}: $jsonStr")
 
-                val root = gson.fromJson(jsonStr, UdpPacketRoot::class.java)
-                val dev = root.data?.values?.firstOrNull() ?: continue
+                val parsed = parseDiscoveredDevice(jsonStr, packet.address.hostAddress)
+                    ?: continue
 
-                val id = dev.id ?: 0L
-                val ip = dev.ip ?: packet.address.hostAddress
+                // Aynı cihaz (ID veya IP) için son geleni tut
+                resultMap[parsed.first] = parsed.second
 
-                val discovered = DiscoveredDevice(
-                    name = dev.name ?: "Aqua_$id",
-                    ip = ip,
-                    aquaName = dev.aquaName,
-                    firmwareBuild = dev.firmwareBuild
-                )
-
-                if (id != 0L) {
-                    resultMap[id] = discovered
-                } else {
-                    resultMap[ip.hashCode().toLong()] = discovered
-                }
             } catch (e: SocketTimeoutException) {
-                // zaman doldu, döngü devam etsin
+                // küçük bekleme süresi doldu, döngü devam etsin
             } catch (e: Exception) {
                 Log.e("UDP_RECEIVED", "parse error", e)
             }
@@ -127,4 +100,55 @@ suspend fun discoverDevices(
     }
 
     return@withContext resultMap.values.toList()
+}
+
+// ---------------------------------------------------------------------
+//  JSON'u elle parse ediyoruz: hem "Data" hem "NetUdp.Data" formatını destekler
+//  return: Pair<uniqueKey, DiscoveredDevice>
+// ---------------------------------------------------------------------
+private fun parseDiscoveredDevice(
+    jsonStr: String,
+    srcIp: String
+): Pair<Long, DiscoveredDevice>? {
+    val root = try {
+        JSONObject(jsonStr)
+    } catch (e: Exception) {
+        return null
+    }
+
+    // 1) {"Data":{"0":{...}}} tipini dene
+    var deviceJson: JSONObject? = null
+    if (root.has("Data")) {
+        val dataObj = root.optJSONObject("Data")
+        deviceJson = dataObj?.optJSONObject("0")
+    }
+
+    // 2) {"NetUdp":{"Data":{"0":{...}}}} tipini dene
+    if (deviceJson == null && root.has("NetUdp")) {
+        val netUdp = root.optJSONObject("NetUdp")
+        val dataObj = netUdp?.optJSONObject("Data")
+        deviceJson = dataObj?.optJSONObject("0")
+    }
+
+    if (deviceJson == null) {
+        return null
+    }
+
+    val id = if (deviceJson.has("ID")) deviceJson.optLong("ID", 0L) else 0L
+    val ip = if (deviceJson.has("IP")) deviceJson.optString("IP", srcIp) else srcIp
+    val name = if (deviceJson.has("Name")) deviceJson.optString("Name") else "Aqua_$id"
+    val aquaName = if (deviceJson.has("AquaName")) deviceJson.optString("AquaName") else null
+    val firmware = if (deviceJson.has("FirmwareBuild")) deviceJson.optString("FirmwareBuild") else null
+
+    val discovered = DiscoveredDevice(
+        name = name,
+        ip = ip,
+        aquaName = aquaName,
+        firmwareBuild = firmware
+    )
+
+    // Map için unique key: ID varsa ID, yoksa IP hash
+    val key = if (id != 0L) id else ip.hashCode().toLong()
+
+    return key to discovered
 }
