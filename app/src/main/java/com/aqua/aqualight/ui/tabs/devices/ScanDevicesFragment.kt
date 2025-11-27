@@ -39,24 +39,43 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun startScan() {
-        // Animasyon zaten XML’de autoPlay
-        binding.tvScanning.visibility = View.VISIBLE
-        binding.tvNoDevices.visibility = View.GONE
+    // header: scanning
+    binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
-        lifecycleScope.launch {
-            // TODO: Buraya UDP discovery fonksiyonunu bağlayacağız
-            // val devices: List<DiscoveredDevice> = discoverDevices()
+    // scanning UI
+    binding.scanAnimation.visibility = View.VISIBLE
+    binding.tvScanning.visibility = View.VISIBLE
+    binding.rvDevices.visibility = View.GONE
+    binding.tvNoDevices.visibility = View.GONE
 
-            val devices: List<DiscoveredDevice> = emptyList() // şimdilik placeholder
+    lifecycleScope.launch {
+        // TODO: gerçek UDP discovery
+        val devices: List<DiscoveredDevice> = emptyList()
 
-            if (devices.isEmpty()) {
-                binding.tvNoDevices.visibility = View.VISIBLE
-            } else {
-                binding.tvNoDevices.visibility = View.GONE
-                adapter.submitList(devices)
-            }
+        // tarama bitti: başlığı değiştir
+        binding.tvTitle.text = getString(R.string.device_scan_header_list)
+
+        binding.scanAnimation.visibility = View.GONE
+        binding.tvScanning.visibility = View.GONE
+
+        if (devices.isEmpty()) {
+            binding.rvDevices.visibility = View.GONE
+            binding.tvNoDevices.visibility = View.VISIBLE
+        } else {
+            binding.rvDevices.visibility = View.VISIBLE
+            binding.tvNoDevices.visibility = View.GONE
+            adapter.submitList(devices)
         }
     }
+}
+
+override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    ...
+    binding.btnRescan.setOnClickListener {
+        startScan()
+    }
+    startScan()
+}
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
         // 🔹 Burada DataStore’a yazacaksın

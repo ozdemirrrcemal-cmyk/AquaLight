@@ -1113,15 +1113,17 @@
 	
 	
 
-    <!-- DevicesFragment -->
-    <string name="devices_title">Cihazlar</string>
-    <string name="devices_scan_button_desc">Cihaz tara veya ekle</string>
-    <string name="devices_no_selected">Herhangi bir cihaz seçilmedi</string>
+   <!-- Devices tab -->
+<string name="devices_title">Devices</string>
+<string name="devices_scan_button_desc">Scan for devices</string>
+<string name="devices_no_selected">No device selected</string>
 
-    <!-- ScanDevicesFragment -->
-    <string name="device_scan_back_button_desc">Cihaz listesine geri dön</string>
-    <string name="device_scan_title">Cihaz Tara</string>
-    <string name="device_scan_searching">Cihazlar taranıyor...</string>
-    <string name="device_scan_no_devices">Yakında cihaz bulunamadı.\nLütfen aynı ağa bağlı olduğunuzdan emin olun.</string>
+<!-- Scan devices screen -->
+<string name="device_scan_back_button_desc">Back to devices</string>
+<string name="device_scan_header_scanning">Scanning devices</string>
+<string name="device_scan_header_list">Device list</string>
+<string name="device_scan_searching">Scanning devices...</string>
+<string name="device_scan_no_devices">No devices found nearby.\nPlease make sure you are connected to the same network.</string>
+<string name="device_scan_scan_again">Scan again</string>
 
 </resources>
