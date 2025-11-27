@@ -91,6 +91,8 @@ dependencies {
 	// İmageCrop
 	implementation 'com.github.yalantis:ucrop:2.2.11'
 	
+	implementation "com.google.code.gson:gson:2.13.2"
+	
 	// Lottie animasyon için
     implementation "com.airbnb.android:lottie:6.7.1"
 
