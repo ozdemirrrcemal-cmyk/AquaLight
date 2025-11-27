@@ -23,6 +23,13 @@
             android:id="@+id/action_devicesFragment_to_scanDevicesFragment"
             app:destination="@id/scanDevicesFragment" />
     </fragment>
+
+    <!-- 📡 Cihaz Tara -->
+    <fragment
+        android:id="@+id/scanDevicesFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.ScanDevicesFragment"
+        android:label="Scan devices"
+        tools:layout="@layout/fragment_scan_devices" />
 	
     <!-- ⚙️ Settings Tab -->
     <fragment
