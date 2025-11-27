@@ -57,12 +57,22 @@ suspend fun discoverDevices(
         )
     }
 
-    val ipBytes = dhcp.ipAddress.toInetBytes()
-    val maskBytes = dhcp.netmask.toInetBytes()
-    val broadcastBytes = ByteArray(4) { i ->
-        ((ipBytes[i].toInt() and maskBytes[i].toInt()) or maskBytes[i].inv().toInt()).toByte()
+    val broadcastAddress: InetAddress = if (dhcp != null && dhcp.ipAddress != 0 && dhcp.netmask != 0) {
+        val ipBytes = dhcp.ipAddress.toInetBytes()
+        val maskBytes = dhcp.netmask.toInetBytes()
+
+        val broadcastBytes = ByteArray(4) { i ->
+            val ip = ipBytes[i].toInt() and 0xFF
+            val mask = maskBytes[i].toInt() and 0xFF
+            val invMask = mask.inv() and 0xFF
+            (ip and mask or invMask).toByte()
+        }
+
+        InetAddress.getByAddress(broadcastBytes)
+    } else {
+        // Fallback: global broadcast
+        InetAddress.getByName("255.255.255.255")
     }
-    val broadcastAddress = InetAddress.getByAddress(broadcastBytes)
 
     Log.d("UDP_DISCOVERY", "Broadcast to: ${broadcastAddress.hostAddress}:$UDP_PORT")
 
