@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginTop="12dp"
+    android:orientation="vertical"
     android:clickable="true"
     android:focusable="true"
-    app:cardCornerRadius="16dp"
-    app:cardUseCompatPadding="true"
-    app:strokeWidth="1dp">
+    android:foreground="?attr/selectableItemBackground">
 
+    <!-- Satır içeriği -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
 
         <!-- Sol: AquaName -->
         <TextView
@@ -23,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Aqua"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -38,8 +37,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:text="Device name"
-            android:textSize="15sp"
-            android:textStyle="bold"
+            android:textSize="12sp"
             android:maxLines="1"
             android:ellipsize="end"
             app:layout_constraintStart_toEndOf="@id/tvAquaName"
@@ -54,7 +52,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="123456789"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:maxLines="1"
             android:ellipsize="end"
             app:layout_constraintEnd_toEndOf="parent"
@@ -63,4 +61,10 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</com.google.android.material.card.MaterialCardView>
+    <!-- Alt çizgi / divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/settings_divider" />
+
+</LinearLayout>
