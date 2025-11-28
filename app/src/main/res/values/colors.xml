@@ -75,7 +75,4 @@
 	<color name="crop_toolbar_bg">#0A192F</color>
 	<color name="aqua_button_blue">#1E90FF</color>
     <color name="aqua_button_red">#FF3B30</color>
-	
-	<color name="card_background">#111827</color> <!-- ya da senin tema rengine yakın -->
-<color name="card_stroke">#1F2933</color>
 </resources>
