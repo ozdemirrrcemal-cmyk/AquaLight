@@ -37,7 +37,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
-        <!-- 🏷️ Title (Device list / Searching...) -->
+        <!-- 🏷️ Title -->
         <TextView
             android:id="@+id/tvTitle"
             style="@style/TextAppearance.Aqua.EditProfileTitle"
@@ -50,7 +50,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- 🔁 Sağ üst: radar / liste toggle -->
+        <!-- 🔁 Tarama başlat / yeniden tara -->
         <ImageView
             android:id="@+id/btnRescan"
             android:layout_width="32dp"
@@ -69,34 +69,22 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 🛰 Radar + cihaz baloncukları için kapsayıcı (EKRANIN ORTASINDA) -->
-    <FrameLayout
-        android:id="@+id/radarContainer"
-        android:layout_width="560dp"
-        android:layout_height="560dp"
+    <!-- 🛰 Radar (sadece tarama sırasında) -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/scanAnimation"
+        android:layout_width="360dp"
+        android:layout_height="360dp"
+        android:layout_marginTop="16dp"
+        app:lottie_autoPlay="false"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/scan_devices"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.4">
+        app:layout_constraintVertical_bias="0.35" />
 
-        <!-- 🔄 Radar animasyonu -->
-        <com.airbnb.lottie.LottieAnimationView
-            android:id="@+id/scanAnimation"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:lottie_autoPlay="true"
-            app:lottie_loop="true"
-            app:lottie_rawRes="@raw/scan_devices" />
-
-        <!-- 🟢 Cihaz baloncuklarını yerleştireceğimiz katman -->
-        <FrameLayout
-            android:id="@+id/deviceMarkers"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </FrameLayout>
-
-    <!-- 📋 Liste görünümü (liste modunda açılacak) -->
+    <!-- 📋 Cihaz listesi -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDevices"
         android:layout_width="0dp"

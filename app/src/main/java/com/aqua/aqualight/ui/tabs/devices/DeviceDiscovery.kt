@@ -24,9 +24,9 @@ suspend fun discoverDevices(
 ): List<DiscoveredDevice> = withContext(Dispatchers.IO) {
 
     val resultMap = linkedMapOf<Long, DiscoveredDevice>()
-    val buffer = ByteArray(2048)
+    val buffer = ByteArray(4096)
 
-    // 📡 Wi-Fi broadcast adresini DHCP'den hesapla
+    // 📡 Broadcast adresini DHCP'den hesapla, hata olursa 255.255.255.255'e düş
     val wifiManager =
         context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
     val dhcp = wifiManager.dhcpInfo
@@ -40,43 +40,38 @@ suspend fun discoverDevices(
         )
     }
 
-    val broadcastAddress: InetAddress = if (dhcp != null && dhcp.ipAddress != 0 && dhcp.netmask != 0) {
-        val ipBytes = dhcp.ipAddress.toInetBytes()
-        val maskBytes = dhcp.netmask.toInetBytes()
-
-        val broadcastBytes = ByteArray(4) { i ->
-            val ip = ipBytes[i].toInt() and 0xFF
-            val mask = maskBytes[i].toInt() and 0xFF
-            val invMask = mask.inv() and 0xFF
-            (ip and mask or invMask).toByte()
+    val broadcastAddress: InetAddress = try {
+        if (dhcp != null) {
+            val ipBytes = dhcp.ipAddress.toInetBytes()
+            val maskBytes = dhcp.netmask.toInetBytes()
+            val broadcastBytes = ByteArray(4) { i ->
+                ((ipBytes[i].toInt() and maskBytes[i].toInt()) or maskBytes[i].inv()
+                    .toInt()).toByte()
+            }
+            InetAddress.getByAddress(broadcastBytes)
+        } else {
+            InetAddress.getByName("255.255.255.255")
         }
-
-        InetAddress.getByAddress(broadcastBytes)
-    } else {
-        // Fallback: global broadcast
+    } catch (e: Exception) {
+        Log.e("UDP_DISCOVERY", "DHCP/broadcast error, fallback 255.255.255.255", e)
         InetAddress.getByName("255.255.255.255")
     }
 
     Log.d("UDP_DISCOVERY", "Broadcast to: ${broadcastAddress.hostAddress}:$UDP_PORT")
 
-    // ⚠️ ÖNEMLİ: 10888 portunu dinliyoruz, yoksa ESP32 cevapları bize düşmez
-    val socket = DatagramSocket(UDP_PORT).apply {
-        reuseAddress = true
-        broadcast = true
-        soTimeout = 300   // her receive için 300 ms
-    }
+    DatagramSocket().use { socket ->
+        socket.broadcast = true
+        socket.soTimeout = 300
 
-    try {
-        // 📤 ESP32'lere RefreshUDP isteği gönder
+        // 🔁 ESP32'lere "RefreshUDP" isteği gönder
         val requestJson = """{"Command":"RefreshUDP","VerUdp":$VER_UDP}"""
         val sendData = requestJson.toByteArray(StandardCharsets.UTF_8)
-
         val sendPacket = DatagramPacket(sendData, sendData.size, broadcastAddress, UDP_PORT)
         socket.send(sendPacket)
 
         val start = System.currentTimeMillis()
 
-        // ⏱ timeout süresi boyunca cevapları topla
+        // ⏱ timeout süresi boyunca paketleri topla
         while (System.currentTimeMillis() - start < timeoutMs) {
             try {
                 val packet = DatagramPacket(buffer, buffer.size)
@@ -85,20 +80,18 @@ suspend fun discoverDevices(
                 val jsonStr = String(packet.data, 0, packet.length, Charsets.UTF_8)
                 Log.d("UDP_RECEIVED", "from ${packet.address.hostAddress}: $jsonStr")
 
-                val parsed = parseDiscoveredDevice(jsonStr, packet.address.hostAddress)
-                    ?: continue
+                val pair = parseDiscoveredDevice(jsonStr, packet.address.hostAddress) ?: continue
+                val (key, device) = pair
 
-                // Aynı cihaz (ID veya IP) için son geleni tut
-                resultMap[parsed.first] = parsed.second
+                // Aynı cihaza ait son gelen paketi yazsın
+                resultMap[key] = device
 
             } catch (e: SocketTimeoutException) {
-                // küçük bekleme süresi doldu, döngü devam etsin
+                // küçük bekleme, döngü devam
             } catch (e: Exception) {
                 Log.e("UDP_RECEIVED", "parse error", e)
             }
         }
-    } finally {
-        socket.close()
     }
 
     return@withContext resultMap.values.toList()
@@ -118,39 +111,44 @@ private fun parseDiscoveredDevice(
         return null
     }
 
-    // 1) {"Data":{"0":{...}}} tipini dene
+    // 1) {"Data":{"0":{...}}}
     var deviceJson: JSONObject? = null
     if (root.has("Data")) {
         val dataObj = root.optJSONObject("Data")
         deviceJson = dataObj?.optJSONObject("0")
     }
 
-    // 2) {"NetUdp":{"Data":{"0":{...}}}} tipini dene
+    // 2) {"NetUdp":{"Data":{"0":{...}}}}
     if (deviceJson == null && root.has("NetUdp")) {
         val netUdp = root.optJSONObject("NetUdp")
         val dataObj = netUdp?.optJSONObject("Data")
         deviceJson = dataObj?.optJSONObject("0")
     }
 
-    if (deviceJson == null) {
-        return null
+    if (deviceJson == null) return null
+
+    val idRaw = deviceJson.optLong("ID", 0L)
+    val ip = if (deviceJson.has("IP")) deviceJson.optString("IP", srcIp) else srcIp
+    val name = deviceJson.optString("Name", "Device")
+    val aquaNameRaw = deviceJson.optString("AquaName", "")
+    val firmware = deviceJson.optString("FirmwareBuild", null)
+
+    val aquaName = if (aquaNameRaw.isNullOrBlank()) {
+        if (idRaw != 0L) "Aqua_$idRaw" else "Aqua"
+    } else {
+        aquaNameRaw.trim()
     }
 
-    val id = if (deviceJson.has("ID")) deviceJson.optLong("ID", 0L) else 0L
-    val ip = if (deviceJson.has("IP")) deviceJson.optString("IP", srcIp) else srcIp
-    val name = if (deviceJson.has("Name")) deviceJson.optString("Name") else "Aqua_$id"
-    val aquaName = if (deviceJson.has("AquaName")) deviceJson.optString("AquaName") else null
-    val firmware = if (deviceJson.has("FirmwareBuild")) deviceJson.optString("FirmwareBuild") else null
+    // ID yoksa IP hash'i kullan (hem DTO id hem map key aynı olsun)
+    val finalId = if (idRaw != 0L) idRaw else ip.hashCode().toLong()
 
-    val discovered = DiscoveredDevice(
+    val device = DiscoveredDevice(
+        id = finalId,
+        aquaName = aquaName,
         name = name,
         ip = ip,
-        aquaName = aquaName,
         firmwareBuild = firmware
     )
 
-    // Map için unique key: ID varsa ID, yoksa IP hash
-    val key = if (id != 0L) id else ip.hashCode().toLong()
-
-    return key to discovered
+    return finalId to device
 }

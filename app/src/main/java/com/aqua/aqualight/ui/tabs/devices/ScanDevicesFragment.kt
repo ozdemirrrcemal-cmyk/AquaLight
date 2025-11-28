@@ -67,7 +67,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         currentDevices = emptyList()
         adapter.submitList(emptyList())
 
-        // beam tekrar görünsün (tarama modunda)
+        // Beam tekrar görünsün (tarama modunda)
         showBeamLayers()
 
         updateUiMode(isScanning = true)
@@ -103,12 +103,17 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             binding.rvDevices.visibility = View.GONE
             binding.tvNoDevices.visibility = View.GONE
 
-            // buton: radar (tara)
-            binding.btnRescan.setImageResource(R.drawable.ic_radar)
+            // 🔒 Tarama sırasında buton gizli / pasif
+            binding.btnRescan.isEnabled = false
+            binding.btnRescan.visibility = View.INVISIBLE
+
             return
         }
 
-        // Tarama bitti
+        // Tarama bitti → buton tekrar aktif/görünür
+        binding.btnRescan.isEnabled = true
+        binding.btnRescan.visibility = View.VISIBLE
+
         if (currentDevices.isEmpty()) {
             // ❌ Cihaz yok
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
@@ -118,7 +123,8 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             binding.tvNoDevices.visibility = View.VISIBLE
             binding.deviceMarkers.removeAllViews()
 
-            binding.btnRescan.setImageResource(R.drawable.ic_radar) // tekrar tara
+            // tekrar tara ikonu
+            binding.btnRescan.setImageResource(R.drawable.ic_radar)
         } else {
             // ✅ Cihaz var
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
