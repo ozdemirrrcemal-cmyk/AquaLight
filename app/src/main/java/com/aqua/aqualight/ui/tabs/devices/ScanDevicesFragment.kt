@@ -100,10 +100,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
             binding.deviceMarkers.removeAllViews()
 
-            // “Searching devices…” yazısını İSTEMİYORDUN,
-            // o yüzden burada tamamen gizliyoruz:
-            binding.tvScanning.visibility = View.GONE
-
             binding.rvDevices.visibility = View.GONE
             binding.tvNoDevices.visibility = View.GONE
 
@@ -112,9 +108,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             return
         }
 
-        // Tarama bitti, “Searching devices…” yazısı yok
-        binding.tvScanning.visibility = View.GONE
-
+        // Tarama bitti
         if (currentDevices.isEmpty()) {
             // ❌ Cihaz yok
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
@@ -141,7 +135,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 binding.rvDevices.visibility = View.GONE
                 binding.btnRescan.setImageResource(R.drawable.ic_list) // listeye geç
 
-                // Animasyon şu an pause + beam gizli,
+                // Animasyon pause + beam gizli,
                 // sadece statik radar + bizim baloncuklar görünüyor
                 showDeviceMarkers(currentDevices)
             }
@@ -157,7 +151,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
         val ctx = requireContext()
 
-        // Lottie boyutu hazır değilse (ilk frame), bir dahaki layout’a bırak
+        // Lottie boyutu hazır değilse, bir dahaki layout’a bırak
         if (binding.scanAnimation.width == 0) {
             container.post { showDeviceMarkers(devices) }
             return
@@ -203,9 +197,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     private fun hideBeamLayers() {
         val view = binding.scanAnimation
 
-        // JSON’daki layer isimleri:
-        //  - "Shape Layer 3"
-        //  - "Shape Layer 1"
         view.addValueCallback(
             KeyPath("Shape Layer 3"),
             LottieProperty.OPACITY,
