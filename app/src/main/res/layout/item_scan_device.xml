@@ -16,20 +16,17 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="12dp">
 
-        <!-- Sol: AquaName -->
+        <!-- Sol: AquaName badge -->
         <TextView
-    android:id="@+id/tvAquaName"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="C"
-    android:textSize="12sp"
-    android:textStyle="bold"
-    android:textColor="@android:color/white"
-    android:background="@drawable/bg_aqua_type_badge"
-    android:gravity="center"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent" />
+            android:id="@+id/tvAquaName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:text="A"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:background="@drawable/bg_aqua_letter" />
 
         <!-- Orta: Name (tüm esnek alanı kullanır) -->
         <TextView
@@ -51,6 +48,7 @@
             android:textSize="12sp"
             android:maxLines="1"
             android:ellipsize="end" />
+
     </LinearLayout>
 
     <!-- Alt çizgi / divider: tam genişlik -->
