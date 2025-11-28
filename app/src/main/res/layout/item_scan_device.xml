@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -10,9 +9,10 @@
     android:foreground="?attr/selectableItemBackground">
 
     <!-- Satır içeriği -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:paddingHorizontal="16dp"
         android:paddingVertical="12dp">
 
@@ -21,12 +21,21 @@
             android:id="@+id/tvAquaName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
             android:text="AquaName"
             android:textSize="12sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            android:textStyle="bold" />
+
+        <!-- Orta: Name (tüm esnek alanı kullanır) -->
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Device name"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <!-- Sağ: ID -->
         <TextView
@@ -36,31 +45,10 @@
             android:text="123456789"
             android:textSize="12sp"
             android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            android:ellipsize="end" />
+    </LinearLayout>
 
-        <!-- Orta: Name (AquaName + ID arasına esnek yerleşir) -->
-        <TextView
-            android:id="@+id/tvName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
-            android:text="Device name"
-            android:textSize="12sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintStart_toEndOf="@id/tvAquaName"
-            app:layout_constraintEnd_toStartOf="@id/tvId"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintHorizontal_chainStyle="packed" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!-- Alt çizgi / divider: EKRAN GENİŞLİĞİ BOYUNCA -->
+    <!-- Alt çizgi / divider: tam genişlik -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
