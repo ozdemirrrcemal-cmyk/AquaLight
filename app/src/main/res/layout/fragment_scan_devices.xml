@@ -37,20 +37,20 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
-        <!-- 🏷️ Title -->
+        <!-- 🏷️ Title (Device list / Searching...) -->
         <TextView
             android:id="@+id/tvTitle"
             style="@style/TextAppearance.Aqua.EditProfileTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/device_scan_header_list" 
+            android:text="@string/device_scan_header_list"
             android:importantForAccessibility="yes"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- 🔁 Scan again button (icon) -->
+        <!-- 🔁 Sağ üst: radar / liste toggle -->
         <ImageView
             android:id="@+id/btnRescan"
             android:layout_width="32dp"
@@ -69,23 +69,45 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 🔄 Lottie animation (ortalanmış) -->
-    <com.airbnb.lottie.LottieAnimationView
-        android:id="@+id/scanAnimation"
-        android:layout_width="360dp"
-        android:layout_height="360dp"
+    <!-- 🛰 Radar + cihaz baloncukları için kapsayıcı -->
+    <FrameLayout
+        android:id="@+id/radarContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        app:lottie_autoPlay="true"
-        app:lottie_loop="true"
-        app:lottie_rawRes="@raw/scan_devices"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.35" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- 📋 Device list -->
+        <!-- 🔄 Radar animasyonu -->
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/scanAnimation"
+            android:layout_width="360dp"
+            android:layout_height="360dp"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/scan_devices" />
+
+        <!-- 🟢 Cihaz baloncuklarını yerleştireceğimiz katman -->
+        <FrameLayout
+            android:id="@+id/deviceMarkers"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <!-- ⏳ Tarama esnasında gösterilen yazı -->
+    <TextView
+        android:id="@+id/tvScanning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/device_scan_searching"
+        android:textAppearance="@style/TextAppearance.Aqua.Body"
+        app:layout_constraintTop_toBottomOf="@id/radarContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 📋 Liste görünümü (liste modunda açılacak) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDevices"
         android:layout_width="0dp"
@@ -94,13 +116,13 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/headerContainer"
+        app:layout_constraintTop_toBottomOf="@id/tvScanning"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_scan_device" />
 
-    <!-- ❌ No devices found (ekranın ortalarına yakın) -->
+    <!-- ❌ Cihaz yok uyarısı -->
     <TextView
         android:id="@+id/tvNoDevices"
         android:layout_width="0dp"
