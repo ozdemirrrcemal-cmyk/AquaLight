@@ -21,30 +21,12 @@
             android:id="@+id/tvAquaName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Aqua"
+            android:text="AquaName"
             android:textSize="12sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/tvName" />
-
-        <!-- Orta: Name -->
-        <TextView
-            android:id="@+id/tvName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:text="Device name"
-            android:textSize="12sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintStart_toEndOf="@id/tvAquaName"
-            app:layout_constraintEnd_toStartOf="@id/tvId"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintHorizontal_chainStyle="spread_inside" />
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <!-- Sağ: ID -->
         <TextView
@@ -59,9 +41,26 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
+        <!-- Orta: Name (AquaName + ID arasına esnek yerleşir) -->
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:text="Device name"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintStart_toEndOf="@id/tvAquaName"
+            app:layout_constraintEnd_toStartOf="@id/tvId"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Alt çizgi / divider -->
+    <!-- Alt çizgi / divider: EKRAN GENİŞLİĞİ BOYUNCA -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
