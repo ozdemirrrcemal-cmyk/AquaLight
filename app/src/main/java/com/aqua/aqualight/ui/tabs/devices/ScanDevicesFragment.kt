@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.airbnb.lottie.LottieDrawable
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
 import kotlinx.coroutines.launch
@@ -83,19 +84,24 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
             binding.radarContainer.visibility = View.VISIBLE
-            binding.scanAnimation.visibility = View.VISIBLE
-            binding.scanAnimation.playAnimation()
-            binding.deviceMarkers.removeAllViews()
-
             binding.rvDevices.visibility = View.GONE
             binding.tvNoDevices.visibility = View.GONE
+
+            // ANİMASYONU BAŞLAT (sonsuz döngü)
+            binding.scanAnimation.visibility = View.VISIBLE
+            binding.scanAnimation.repeatCount = LottieDrawable.INFINITE
+            binding.scanAnimation.playAnimation()
+            binding.deviceMarkers.removeAllViews()
 
             // buton: radar (tara)
             binding.btnRescan.setImageResource(R.drawable.ic_radar)
             return
         }
 
-        // Tarama bitti
+        // Tarama bitti -> animasyonu default olarak durdur
+        binding.scanAnimation.repeatCount = 0
+        binding.scanAnimation.pauseAnimation()
+
         if (currentDevices.isEmpty()) {
             // ❌ Cihaz yok
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
@@ -117,15 +123,13 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 binding.rvDevices.visibility = View.VISIBLE
                 binding.btnRescan.setImageResource(R.drawable.ic_radar) // geri radar
             } else {
-                // 🛰 Radar görünümü + baloncuklar
+                // 🛰 Radar görünümü + baloncuklar (ANİMASYON DURUK)
                 binding.radarContainer.visibility = View.VISIBLE
                 binding.rvDevices.visibility = View.GONE
                 binding.btnRescan.setImageResource(R.drawable.ic_list) // listeye geç
 
                 binding.scanAnimation.visibility = View.VISIBLE
-                if (!binding.scanAnimation.isAnimating) {
-                    binding.scanAnimation.playAnimation()
-                }
+                // burada playAnimation ÇAĞIRMIYORUZ -> son framede donmuş radar
                 showDeviceMarkers(currentDevices)
             }
         }
@@ -139,7 +143,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
         val ctx = requireContext()
 
-        // view ölçülmediyse marker hesaplama yapma (ilk frame’de 0 olabilir)
         val size = binding.scanAnimation.width.coerceAtLeast(binding.scanAnimation.height)
         if (size == 0) return
 
