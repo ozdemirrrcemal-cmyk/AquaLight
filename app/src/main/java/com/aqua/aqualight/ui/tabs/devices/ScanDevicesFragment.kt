@@ -2,15 +2,10 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import android.os.Bundle
 import android.view.View
-import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.airbnb.lottie.LottieProperty
-import com.airbnb.lottie.model.KeyPath
-import com.airbnb.lottie.value.LottieValueCallback
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
 import kotlinx.coroutines.launch
@@ -22,30 +17,20 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
     private lateinit var adapter: ScanDevicesAdapter
 
-    // Son bulunan cihazlar
     private var currentDevices: List<DiscoveredDevice> = emptyList()
-
-    // false = radar görünümü, true = liste görünümü
-    private var isListMode: Boolean = false
+    private var isScanning: Boolean = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentScanDevicesBinding.bind(view)
 
-        // Geri
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
-        // Sağ üst buton:
-        // - hiç cihaz yoksa: tarama başlat
-        // - cihaz varsa: radar <-> liste arasında geçiş
         binding.btnRescan.setOnClickListener {
-            if (currentDevices.isEmpty()) {
+            if (!isScanning) {
                 startScan()
-            } else {
-                isListMode = !isListMode
-                updateUiMode()
             }
         }
 
@@ -61,16 +46,23 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         binding.rvDevices.adapter = adapter
     }
 
-    // 🔄 TARAMA BAŞLAT
     private fun startScan() {
-        isListMode = false
+        isScanning = true
         currentDevices = emptyList()
         adapter.submitList(emptyList())
 
-        // Beam tekrar görünsün (tarama modunda)
-        showBeamLayers()
+        // Başlık
+        binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
-        updateUiMode(isScanning = true)
+        // UI state
+        binding.btnRescan.visibility = View.GONE        // tarama sırasında gizle
+        binding.rvDevices.visibility = View.GONE
+        binding.tvNoDevices.visibility = View.GONE
+
+        // Radar aç
+        binding.scanAnimation.visibility = View.VISIBLE
+        binding.scanAnimation.progress = 0f
+        binding.scanAnimation.playAnimation()
 
         lifecycleScope.launch {
             val devices: List<DiscoveredDevice> =
@@ -79,160 +71,28 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             currentDevices = devices
             adapter.submitList(devices)
 
-            // tarama bitti → animasyon durdur, beam gizle
-            binding.scanAnimation.pauseAnimation()
-            hideBeamLayers()
+            isScanning = false
 
-            updateUiMode()
-        }
-    }
+            // Radar kapat
+            binding.scanAnimation.cancelAnimation()
+            binding.scanAnimation.visibility = View.GONE
 
-    // 🔁 EKRAN MODLARI
-    private fun updateUiMode(isScanning: Boolean = false) {
-
-        if (isScanning) {
-            // Başlık: Searching...
-            binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
-
-            binding.radarContainer.visibility = View.VISIBLE
-            binding.scanAnimation.visibility = View.VISIBLE
-            binding.scanAnimation.playAnimation()
-
-            binding.deviceMarkers.removeAllViews()
-
-            binding.rvDevices.visibility = View.GONE
-            binding.tvNoDevices.visibility = View.GONE
-
-            // 🔒 Tarama sırasında buton gizli / pasif
-            binding.btnRescan.isEnabled = false
-            binding.btnRescan.visibility = View.INVISIBLE
-
-            return
-        }
-
-        // Tarama bitti → buton tekrar aktif/görünür
-        binding.btnRescan.isEnabled = true
-        binding.btnRescan.visibility = View.VISIBLE
-
-        if (currentDevices.isEmpty()) {
-            // ❌ Cihaz yok
+            // Butonu tekrar göster
+            binding.btnRescan.visibility = View.VISIBLE
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
 
-            binding.radarContainer.visibility = View.GONE
-            binding.rvDevices.visibility = View.GONE
-            binding.tvNoDevices.visibility = View.VISIBLE
-            binding.deviceMarkers.removeAllViews()
-
-            // tekrar tara ikonu
-            binding.btnRescan.setImageResource(R.drawable.ic_radar)
-        } else {
-            // ✅ Cihaz var
-            binding.tvTitle.text = getString(R.string.device_scan_header_list)
-            binding.tvNoDevices.visibility = View.GONE
-
-            if (isListMode) {
-                // 📋 Liste görünümü
-                binding.radarContainer.visibility = View.GONE
-                binding.rvDevices.visibility = View.VISIBLE
-                binding.btnRescan.setImageResource(R.drawable.ic_radar) // geri radar
-            } else {
-                // 🛰 Radar görünümü + baloncuklar
-                binding.radarContainer.visibility = View.VISIBLE
+            if (devices.isEmpty()) {
+                binding.tvNoDevices.visibility = View.VISIBLE
                 binding.rvDevices.visibility = View.GONE
-                binding.btnRescan.setImageResource(R.drawable.ic_list) // listeye geç
-
-                // Animasyon pause + beam gizli,
-                // sadece statik radar + bizim baloncuklar görünüyor
-                showDeviceMarkers(currentDevices)
+            } else {
+                binding.tvNoDevices.visibility = View.GONE
+                binding.rvDevices.visibility = View.VISIBLE
             }
         }
-    }
-
-    // Radar üstüne cihaz balonlarını koy
-    private fun showDeviceMarkers(devices: List<DiscoveredDevice>) {
-        val container = binding.deviceMarkers
-        container.removeAllViews()
-
-        if (devices.isEmpty()) return
-
-        val ctx = requireContext()
-
-        // Lottie boyutu hazır değilse, bir dahaki layout’a bırak
-        if (binding.scanAnimation.width == 0) {
-            container.post { showDeviceMarkers(devices) }
-            return
-        }
-
-        val radiusPx = binding.scanAnimation.width / 2f
-        val centerX = radiusPx
-        val centerY = radiusPx
-
-        // En fazla 4 cihazı göster
-        devices.take(4).forEachIndexed { index, dev ->
-            val tv = TextView(ctx).apply {
-                text = dev.aquaName ?: dev.name ?: "Device"
-                setTextAppearance(R.style.TextAppearance_Aqua_Body)
-                setBackgroundResource(R.drawable.bg_device_marker)
-                setPadding(16, 6, 16, 6)
-            }
-
-            val lp = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT
-            )
-
-            // Basit: farklı açılara dağıt (0, 90, 180, 270 derece)
-            val angleDeg = 90f * index
-            val angleRad = Math.toRadians(angleDeg.toDouble())
-            val r = radiusPx * 0.6f
-
-            val dx = (r * Math.cos(angleRad)).toFloat()
-            val dy = (r * Math.sin(angleRad)).toFloat()
-
-            lp.leftMargin = (centerX + dx).toInt()
-            lp.topMargin = (centerY + dy).toInt()
-
-            tv.layoutParams = lp
-            container.addView(tv)
-        }
-    }
-
-    // --------- LOTTIE BEAM GİZLE / GÖSTER ---------
-
-    // Tarama BİTTİKTEN SONRA çağrılıyor → yeşil tarama sektörü gizlenir
-    private fun hideBeamLayers() {
-        val view = binding.scanAnimation
-
-        view.addValueCallback(
-            KeyPath("Shape Layer 3"),
-            LottieProperty.OPACITY,
-            LottieValueCallback(0)
-        )
-        view.addValueCallback(
-            KeyPath("Shape Layer 1"),
-            LottieProperty.OPACITY,
-            LottieValueCallback(0)
-        )
-    }
-
-    // Yeni tarama başlatırken beam’i geri aç
-    private fun showBeamLayers() {
-        val view = binding.scanAnimation
-
-        view.addValueCallback(
-            KeyPath("Shape Layer 3"),
-            LottieProperty.OPACITY,
-            LottieValueCallback(100)
-        )
-        view.addValueCallback(
-            KeyPath("Shape Layer 1"),
-            LottieProperty.OPACITY,
-            LottieValueCallback(100)
-        )
     }
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
-        // Burada DataStore’a yazacaksın (şimdilik sadece geri dön)
+        // Burada DataStore’a kaydedebilirsin, şimdilik sadece geri dönüyoruz
         findNavController().popBackStack()
     }
 

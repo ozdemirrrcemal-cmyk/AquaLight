@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices
 
 data class DiscoveredDevice(
-    val id: Long,                 // Sağda göstereceğimiz ID
-    val aquaName: String,         // Soldaki pill
-    val name: String,             // Ortadaki isim
-    val ip: String,               // İçeride kullanacağız (HTTP vs.)
+    val id: Long,                 // UDP'den gelen ID (0 ise geçersiz)
+    val name: String,             // Name
+    val ip: String,               // Cihazın IP adresi (ekranda göstermiyoruz ama lazım)
+    val aquaName: String? = null, // AquaName
     val firmwareBuild: String? = null
 )

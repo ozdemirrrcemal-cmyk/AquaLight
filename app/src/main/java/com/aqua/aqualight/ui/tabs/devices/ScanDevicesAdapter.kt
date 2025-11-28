@@ -26,14 +26,18 @@ class ScanDevicesAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(device: DiscoveredDevice) {
-            // Sol kutu: AquaName
-            binding.tvAquaName.text = device.aquaName
+            // Sol kutu: AquaName (yoksa "-")
+            val aqua = device.aquaName?.takeIf { it.isNotBlank() } ?: "-"
+            binding.tvAquaName.text = aqua
 
-            // Ortadaki isim: Name
-            binding.tvName.text = device.name
+            // Ortadaki isim: Name (yoksa AquaName, o da yoksa "Device")
+            val mainName = device.name.ifBlank {
+                device.aquaName?.takeIf { it.isNotBlank() } ?: "Device"
+            }
+            binding.tvName.text = mainName
 
-            // Sağ: ID
-            binding.tvId.text = device.id.toString()
+            // Sağ: ID (0 ise boş bırak)
+            binding.tvId.text = if (device.id != 0L) device.id.toString() else ""
 
             binding.root.setOnClickListener { onClick(device) }
         }
@@ -44,7 +48,7 @@ class ScanDevicesAdapter(
             override fun areItemsTheSame(
                 oldItem: DiscoveredDevice,
                 newItem: DiscoveredDevice
-            ): Boolean = oldItem.id == newItem.id
+            ): Boolean = oldItem.id == newItem.id && oldItem.ip == newItem.ip
 
             override fun areContentsTheSame(
                 oldItem: DiscoveredDevice,
