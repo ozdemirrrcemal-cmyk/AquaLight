@@ -1120,9 +1120,8 @@
 
 <!-- Scan devices screen -->
 <string name="device_scan_back_button_desc">Back to devices</string>
-<string name="device_scan_header_scanning">Scanning devices</string>
+<string name="device_scan_header_scanning">Searching...</string>
 <string name="device_scan_header_list">Device list</string>
-<string name="device_scan_searching">Scanning devices...</string>
 <string name="device_scan_no_devices">No devices found nearby.\nPlease make sure you are connected to the same network.</string>
 <string name="device_scan_scan_again">Scan again</string>
 

@@ -16,7 +16,7 @@ private const val VER_UDP = 20240813
 private const val UDP_PORT = 10888
 
 // ---------------------------------------------------------------------
-//  TEK GÖREV: UDP ile cihazları bul, DiscoveredDevice listesi döndür
+//  ESP32 cihazlarını UDP ile bulup DiscoveredDevice listesi döndürür
 // ---------------------------------------------------------------------
 suspend fun discoverDevices(
     context: Context,
@@ -59,7 +59,9 @@ suspend fun discoverDevices(
 
     Log.d("UDP_DISCOVERY", "Broadcast to: ${broadcastAddress.hostAddress}:$UDP_PORT")
 
-    val socket = DatagramSocket().apply {
+    // ⚠️ ÖNEMLİ: 10888 portunu dinliyoruz, yoksa ESP32 cevapları bize düşmez
+    val socket = DatagramSocket(UDP_PORT).apply {
+        reuseAddress = true
         broadcast = true
         soTimeout = 300   // her receive için 300 ms
     }
