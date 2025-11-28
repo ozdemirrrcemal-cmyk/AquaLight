@@ -45,10 +45,11 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun startScan() {
+        // Başlık: Scanning...
         binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
+        // UI state: tarama
         binding.scanAnimation.visibility = View.VISIBLE
-        binding.tvScanning.visibility = View.VISIBLE
         binding.rvDevices.visibility = View.GONE
         binding.tvNoDevices.visibility = View.GONE
 
@@ -56,10 +57,11 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             val devices: List<DiscoveredDevice> =
                 discoverDevices(requireContext(), timeoutMs = 3000L)
 
+            // Tarama bitti → başlık tekrar Device list
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
 
+            // Animasyon kapanır
             binding.scanAnimation.visibility = View.GONE
-            binding.tvScanning.visibility = View.GONE
 
             if (devices.isEmpty()) {
                 binding.rvDevices.visibility = View.GONE
@@ -73,18 +75,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
-        // 🔹 Burada DataStore’a yazacaksın
-        /*
-        lifecycleScope.launch {
-            requireContext().dataStore.edit { prefs ->
-                prefs[KEY_DEVICE_IP] = device.ip
-                prefs[KEY_DEVICE_NAME] = device.name
-            }
-            findNavController().popBackStack()
-        }
-        */
-
-        // Şimdilik sadece geri dön
+        // 🔹 Burada DataStore’a yazacaksın (şimdilik sadece geri dönüyor)
         findNavController().popBackStack()
     }
 
