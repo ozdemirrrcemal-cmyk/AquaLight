@@ -43,7 +43,7 @@
             style="@style/TextAppearance.Aqua.EditProfileTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/device_scan_header_list"      <!-- her zaman default: Device list -->
+            android:text="@string/device_scan_header_list"
             android:importantForAccessibility="yes"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
