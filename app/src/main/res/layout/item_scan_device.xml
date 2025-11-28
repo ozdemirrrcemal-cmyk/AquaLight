@@ -1,59 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp"
-    android:background="@drawable/bg_device_item"
-    android:foreground="?attr/selectableItemBackground">
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginTop="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="16dp"
+    app:cardUseCompatPadding="true"
+    app:strokeWidth="1dp">
 
-    <!-- Sol küçük kutu: AquaName -->
-    <TextView
-        android:id="@+id/tvAquaName"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="4dp"
-        android:text="Aqua"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:background="@drawable/bg_aqua_name_pill"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:padding="16dp">
 
-    <!-- Ortadaki isim: Name -->
-    <TextView
-        android:id="@+id/tvName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:text="Device name"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        android:maxLines="1"
-        android:ellipsize="end"
-        app:layout_constraintStart_toEndOf="@id/tvAquaName"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/tvId" />
+        <!-- Sol: AquaName -->
+        <TextView
+            android:id="@+id/tvAquaName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Aqua"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvName" />
 
-    <!-- Sağ tarafta: ID -->
-    <TextView
-        android:id="@+id/tvId"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="DYRE7E8C7..."
-        android:textSize="13sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <!-- Orta: Name -->
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="Device name"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintStart_toEndOf="@id/tvAquaName"
+            app:layout_constraintEnd_toStartOf="@id/tvId"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="spread_inside" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Sağ: ID -->
+        <TextView
+            android:id="@+id/tvId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="123456789"
+            android:textSize="13sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

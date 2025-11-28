@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -27,32 +26,17 @@ class ScanDevicesAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(device: DiscoveredDevice) {
-            // Başlık: AquaName / Name / AquaName (Name_xxx)
-            val hasAqua = !device.aquaName.isNullOrBlank()
-            val hasName = device.name.isNotBlank()
 
-            val title = when {
-                hasAqua && hasName && device.aquaName != device.name ->
-                    "${device.aquaName} (${device.name})"
-                hasAqua ->
-                    device.aquaName!!
-                hasName ->
-                    device.name
-                else ->
-                    "Aqua device"
-            }
+            // Sol: AquaName (yoksa "-")
+            val aqua = device.aquaName?.takeIf { it.isNotBlank() } ?: "-"
+            binding.tvAquaName.text = aqua
 
-            binding.tvName.text = title
-            binding.tvIp.text = device.ip
+            // Orta: Name (yoksa "Device")
+            val name = device.name.ifBlank { "Device" }
+            binding.tvName.text = name
 
-            // Firmware alt satır (boşsa gizle)
-            val fw = device.firmwareBuild?.trim().orEmpty()
-            if (fw.isNotEmpty()) {
-                binding.tvSubtitle.visibility = View.VISIBLE
-                binding.tvSubtitle.text = fw
-            } else {
-                binding.tvSubtitle.visibility = View.GONE
-            }
+            // Sağ: ID (0 ise boş bırak)
+            binding.tvId.text = if (device.id != 0L) device.id.toString() else ""
 
             binding.root.setOnClickListener { onClick(device) }
         }
@@ -63,7 +47,8 @@ class ScanDevicesAdapter(
             override fun areItemsTheSame(
                 oldItem: DiscoveredDevice,
                 newItem: DiscoveredDevice
-            ): Boolean = oldItem.id == newItem.id
+            ): Boolean =
+                oldItem.id == newItem.id && oldItem.ip == newItem.ip
 
             override fun areContentsTheSame(
                 oldItem: DiscoveredDevice,
