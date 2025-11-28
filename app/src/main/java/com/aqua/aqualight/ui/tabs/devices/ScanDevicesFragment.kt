@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import android.os.Bundle
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -10,8 +11,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
 import kotlinx.coroutines.launch
-import android.widget.FrameLayout
-import kotlin.random.Random
 
 class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
@@ -77,8 +76,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     // 🔁 EKRAN MODLARI
-    // isScanning = true -> "Searching..." + radar açık, liste kapalı
-    // isScanning = false -> cihaz durumuna göre radar/liste/empty
     private fun updateUiMode(isScanning: Boolean = false) {
 
         if (isScanning) {
@@ -90,7 +87,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             binding.scanAnimation.playAnimation()
             binding.deviceMarkers.removeAllViews()
 
-            binding.tvScanning.visibility = View.VISIBLE
             binding.rvDevices.visibility = View.GONE
             binding.tvNoDevices.visibility = View.GONE
 
@@ -100,8 +96,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
 
         // Tarama bitti
-        binding.tvScanning.visibility = View.GONE
-
         if (currentDevices.isEmpty()) {
             // ❌ Cihaz yok
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
@@ -141,15 +135,18 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     private fun showDeviceMarkers(devices: List<DiscoveredDevice>) {
         val container = binding.deviceMarkers
         container.removeAllViews()
-
         if (devices.isEmpty()) return
 
         val ctx = requireContext()
-        val radiusPx = binding.scanAnimation.width / 2f
+
+        // view ölçülmediyse marker hesaplama yapma (ilk frame’de 0 olabilir)
+        val size = binding.scanAnimation.width.coerceAtLeast(binding.scanAnimation.height)
+        if (size == 0) return
+
+        val radiusPx = size / 2f
         val centerX = radiusPx
         val centerY = radiusPx
 
-        // En fazla 4 cihazı göster
         devices.take(4).forEachIndexed { index, dev ->
             val tv = TextView(ctx).apply {
                 text = dev.aquaName ?: dev.name ?: "Device"
@@ -163,7 +160,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 FrameLayout.LayoutParams.WRAP_CONTENT
             )
 
-            // Basit: farklı açılara dağıt (0, 90, 180, 270 derece)
             val angleDeg = 90f * index
             val angleRad = Math.toRadians(angleDeg.toDouble())
             val r = radiusPx * 0.6f
@@ -180,7 +176,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
-        // Burada DataStore’a yazacaksın (şimdilik sadece geri dön)
+        // Şimdilik sadece geri dön
         findNavController().popBackStack()
     }
 
