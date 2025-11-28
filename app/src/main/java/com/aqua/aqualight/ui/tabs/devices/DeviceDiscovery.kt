@@ -7,7 +7,6 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.experimental.inv  // <-- Byte.inv() için
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -18,8 +17,8 @@ private const val VER_UDP = 20240813
 private const val UDP_PORT = 10888
 
 // ---------------------------------------------------------------------
-//  GSON ile JSON map'i okuyacağımız DTO'lar
-//  Örnek JSON: { "Data": { "0": { "ID":..., "IP":..., ... } } }
+//  GELEN JSON İÇİN DTO’LAR  (eski UdpPacketRoot mantığı)
+//  Örnek: { "Data": { "0": { "ID":..., "IP":..., "Name":... } } }
 // ---------------------------------------------------------------------
 data class UdpPacketRoot(
     @SerializedName("Data")
@@ -27,10 +26,10 @@ data class UdpPacketRoot(
 )
 
 data class UdpDeviceDto(
-    @SerializedName("ID")          val id: Long?,
-    @SerializedName("IP")          val ip: String?,
-    @SerializedName("Name")        val name: String?,
-    @SerializedName("AquaName")    val aquaName: String?,
+    @SerializedName("ID")           val id: Long?,
+    @SerializedName("IP")           val ip: String?,
+    @SerializedName("Name")         val name: String?,
+    @SerializedName("AquaName")     val aquaName: String?,
     @SerializedName("FirmwareBuild") val firmwareBuild: String?
 )
 
@@ -61,10 +60,11 @@ suspend fun discoverDevices(
 
     val ipBytes = dhcp.ipAddress.toInetBytes()
     val maskBytes = dhcp.netmask.toInetBytes()
-
-    // maskBytes[i] Byte olduğu için .inv() extension'ı kullanıyoruz (yukarıda import var)
     val broadcastBytes = ByteArray(4) { i ->
-        ((ipBytes[i].toInt() and maskBytes[i].toInt()) or maskBytes[i].inv().toInt()).toByte()
+        val ipPart = ipBytes[i].toInt() and 0xFF
+        val maskPart = maskBytes[i].toInt() and 0xFF
+        val bcastPart = (ipPart and maskPart) or maskPart.inv()
+        bcastPart.toByte()
     }
     val broadcastAddress = InetAddress.getByAddress(broadcastBytes)
 
@@ -92,26 +92,27 @@ suspend fun discoverDevices(
                 val jsonStr = String(packet.data, 0, packet.length, Charsets.UTF_8)
                 Log.d("UDP_RECEIVED", "from ${packet.address.hostAddress}: $jsonStr")
 
-                // JSON -> DTO
                 val root = gson.fromJson(jsonStr, UdpPacketRoot::class.java)
                 val dev = root.data?.values?.firstOrNull() ?: continue
 
-                val id = dev.id ?: 0L
+                val idRaw = dev.id ?: 0L
                 val ip = dev.ip ?: packet.address.hostAddress
 
+                val finalId = if (idRaw != 0L) idRaw else ip.hashCode().toLong()
+
                 val discovered = DiscoveredDevice(
-                    id = if (id != 0L) id else ip.hashCode().toLong(),
-                    name = dev.name ?: "Aqua_$id",
+                    id = finalId,
+                    name = dev.name ?: "Aqua_$finalId",
                     ip = ip,
                     aquaName = dev.aquaName,
                     firmwareBuild = dev.firmwareBuild
                 )
 
-                // Aynı cihaza ait son paketi yazsın
-                resultMap[discovered.id] = discovered
+                // Aynı cihaza ait son paket kalsın
+                resultMap[finalId] = discovered
 
             } catch (e: SocketTimeoutException) {
-                // timeout, döngü devam
+                // timeout → döngü devam
             } catch (e: Exception) {
                 Log.e("UDP_RECEIVED", "parse error", e)
             }

@@ -36,7 +36,7 @@ class ScanDevicesAdapter(
             }
             binding.tvName.text = mainName
 
-            // Sağ: ID (0 ise boş bırak)
+            // Sağ: ID (0 ise boş)
             binding.tvId.text = if (device.id != 0L) device.id.toString() else ""
 
             binding.root.setOnClickListener { onClick(device) }
@@ -48,8 +48,7 @@ class ScanDevicesAdapter(
             override fun areItemsTheSame(
                 oldItem: DiscoveredDevice,
                 newItem: DiscoveredDevice
-            ): Boolean =
-                oldItem.id == newItem.id && oldItem.ip == newItem.ip
+            ): Boolean = oldItem.id == newItem.id && oldItem.ip == newItem.ip
 
             override fun areContentsTheSame(
                 oldItem: DiscoveredDevice,
