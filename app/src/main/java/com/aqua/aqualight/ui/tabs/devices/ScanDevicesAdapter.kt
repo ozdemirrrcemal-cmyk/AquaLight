@@ -48,7 +48,8 @@ class ScanDevicesAdapter(
             override fun areItemsTheSame(
                 oldItem: DiscoveredDevice,
                 newItem: DiscoveredDevice
-            ): Boolean = oldItem.id == newItem.id && oldItem.ip == newItem.ip
+            ): Boolean =
+                oldItem.id == newItem.id && oldItem.ip == newItem.ip
 
             override fun areContentsTheSame(
                 oldItem: DiscoveredDevice,

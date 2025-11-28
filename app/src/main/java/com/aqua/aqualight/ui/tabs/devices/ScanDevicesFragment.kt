@@ -51,33 +51,33 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         currentDevices = emptyList()
         adapter.submitList(emptyList())
 
-        // Başlık
         binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
-        // UI state
-        binding.btnRescan.visibility = View.GONE        // tarama sırasında gizle
+        // tarama sırasında butonu gizle
+        binding.btnRescan.visibility = View.GONE
+
+        // liste / boş mesajı gizle
         binding.rvDevices.visibility = View.GONE
         binding.tvNoDevices.visibility = View.GONE
 
-        // Radar aç
+        // radar göster
         binding.scanAnimation.visibility = View.VISIBLE
         binding.scanAnimation.progress = 0f
         binding.scanAnimation.playAnimation()
 
         lifecycleScope.launch {
-            val devices: List<DiscoveredDevice> =
-                discoverDevices(requireContext(), timeoutMs = 3000L)
+            val devices = discoverDevices(requireContext(), timeoutMs = 3000L)
 
             currentDevices = devices
             adapter.submitList(devices)
 
             isScanning = false
 
-            // Radar kapat
+            // radar kapat
             binding.scanAnimation.cancelAnimation()
             binding.scanAnimation.visibility = View.GONE
 
-            // Butonu tekrar göster
+            // buton tekrar aktif
             binding.btnRescan.visibility = View.VISIBLE
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
 
@@ -92,7 +92,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
-        // Burada DataStore’a kaydedebilirsin, şimdilik sadece geri dönüyoruz
+        // ileride DataStore kaydedersin, şimdilik geri dön
         findNavController().popBackStack()
     }
 
