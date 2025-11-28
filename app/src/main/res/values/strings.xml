@@ -1124,5 +1124,5 @@
 <string name="device_scan_header_list">Device list</string>
 <string name="device_scan_no_devices">No devices found nearby.\nPlease make sure you are connected to the same network.</string>
 <string name="device_scan_scan_again">Scan again</string>
-
+<string name="device_scan_searching">Searching devices...</string>
 </resources>

@@ -75,4 +75,8 @@
 	<color name="crop_toolbar_bg">#0A192F</color>
 	<color name="aqua_button_blue">#1E90FF</color>
     <color name="aqua_button_red">#FF3B30</color>
+	
+	<color name="card_stroke">#1AFFFFFF</color> <!-- hafif beyaz saydam -->
+	<color name="card_background">#102030</color>
+	
 </resources>
