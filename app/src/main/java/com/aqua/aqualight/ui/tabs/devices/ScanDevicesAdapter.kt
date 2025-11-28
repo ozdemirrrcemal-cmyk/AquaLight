@@ -26,7 +26,6 @@ class ScanDevicesAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(device: DiscoveredDevice) {
-
             // Sol: AquaName (yoksa "-")
             val aqua = device.aquaName?.takeIf { it.isNotBlank() } ?: "-"
             binding.tvAquaName.text = aqua
@@ -35,8 +34,17 @@ class ScanDevicesAdapter(
             val name = device.name.ifBlank { "Device" }
             binding.tvName.text = name
 
-            // Sağ: ID (0 ise boş bırak)
-            binding.tvId.text = if (device.id != 0L) device.id.toString() else ""
+            // Prefix harfler (AquaName ve Name ilk harfleri)
+            val firstAqua = aqua.firstOrNull()?.uppercaseChar() ?: 'X'
+            val firstName = name.firstOrNull()?.uppercaseChar() ?: 'X'
+
+            // Sağ: ID → AA-12345678 formunda
+            val formattedId = if (device.id != 0L) {
+                "$firstAqua$firstName-${device.id}"
+            } else {
+                ""
+            }
+            binding.tvId.text = formattedId
 
             binding.root.setOnClickListener { onClick(device) }
         }
