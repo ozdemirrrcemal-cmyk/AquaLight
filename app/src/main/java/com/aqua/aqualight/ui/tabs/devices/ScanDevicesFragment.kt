@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
 import kotlinx.coroutines.launch
+import android.widget.FrameLayout
 import kotlin.random.Random
 
 class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
