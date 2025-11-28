@@ -17,21 +17,18 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
     private lateinit var adapter: ScanDevicesAdapter
 
-    private var currentDevices: List<DiscoveredDevice> = emptyList()
-    private var isScanning: Boolean = false
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentScanDevicesBinding.bind(view)
 
+        // Geri
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
+        // Yeniden tara
         binding.btnRescan.setOnClickListener {
-            if (!isScanning) {
-                startScan()
-            }
+            startScan()
         }
 
         setupRecyclerView()
@@ -39,7 +36,8 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun setupRecyclerView() {
-        adapter = ScanDevicesAdapter { device ->
+        adapter = ScanDevicesAdapter { device: DiscoveredDevice ->
+            // 🔹 Cihaz seçildiğinde:
             saveSelectedDevice(device)
         }
         binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
@@ -47,52 +45,37 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun startScan() {
-        isScanning = true
-        currentDevices = emptyList()
-        adapter.submitList(emptyList())
-
+        // Başlık: Scanning...
         binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
-        // tarama sırasında butonu gizle
-        binding.btnRescan.visibility = View.GONE
-
-        // liste / boş mesajı gizle
+        // UI state: tarama
+        binding.scanAnimation.visibility = View.VISIBLE
         binding.rvDevices.visibility = View.GONE
         binding.tvNoDevices.visibility = View.GONE
 
-        // radar göster
-        binding.scanAnimation.visibility = View.VISIBLE
-        binding.scanAnimation.progress = 0f
-        binding.scanAnimation.playAnimation()
-
         lifecycleScope.launch {
-            val devices = discoverDevices(requireContext(), timeoutMs = 3000L)
+            val devices: List<DiscoveredDevice> =
+                discoverDevices(requireContext(), timeoutMs = 3000L)
 
-            currentDevices = devices
-            adapter.submitList(devices)
-
-            isScanning = false
-
-            // radar kapat
-            binding.scanAnimation.cancelAnimation()
-            binding.scanAnimation.visibility = View.GONE
-
-            // buton tekrar aktif
-            binding.btnRescan.visibility = View.VISIBLE
+            // Tarama bitti → başlık tekrar Device list
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
 
+            // Animasyon kapanır
+            binding.scanAnimation.visibility = View.GONE
+
             if (devices.isEmpty()) {
-                binding.tvNoDevices.visibility = View.VISIBLE
                 binding.rvDevices.visibility = View.GONE
+                binding.tvNoDevices.visibility = View.VISIBLE
             } else {
-                binding.tvNoDevices.visibility = View.GONE
                 binding.rvDevices.visibility = View.VISIBLE
+                binding.tvNoDevices.visibility = View.GONE
+                adapter.submitList(devices)
             }
         }
     }
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
-        // ileride DataStore kaydedersin, şimdilik geri dön
+        // 🔹 Burada DataStore’a yazacaksın (şimdilik sadece geri dönüyor)
         findNavController().popBackStack()
     }
 

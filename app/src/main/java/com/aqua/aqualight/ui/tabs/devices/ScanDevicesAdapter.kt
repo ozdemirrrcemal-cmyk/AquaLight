@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices
 
 import android.view.LayoutInflater
+import android.view.View              // 🔹 BUNU EKLEDİK
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -26,20 +27,33 @@ class ScanDevicesAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(device: DiscoveredDevice) {
-            // Sol kutu: AquaName (yoksa "-")
-            val aqua = device.aquaName?.takeIf { it.isNotBlank() } ?: "-"
-            binding.tvAquaName.text = aqua
-
-            // Ortadaki isim: Name (yoksa AquaName, o da yoksa "Device")
-            val mainName = device.name.ifBlank {
-                device.aquaName?.takeIf { it.isNotBlank() } ?: "Device"
+            // Başlık: AquaName / Name / AquaName (Name_xxx)
+            val title = when {
+                !device.aquaName.isNullOrBlank() &&
+                        !device.name.isNullOrBlank() &&
+                        device.aquaName != device.name -> {
+                    "${device.aquaName} (${device.name})"
+                }
+                !device.aquaName.isNullOrBlank() -> device.aquaName
+                !device.name.isNullOrBlank() -> device.name
+                else -> "Aqua device"
             }
-            binding.tvName.text = mainName
 
-            // Sağ: ID (0 ise boş)
-            binding.tvId.text = if (device.id != 0L) device.id.toString() else ""
+            binding.tvName.text = title
+            binding.tvIp.text = device.ip
 
-            binding.root.setOnClickListener { onClick(device) }
+            // Firmware alt satır (boşsa gizle)
+            val fw = device.firmwareBuild?.trim().orEmpty()
+            if (fw.isNotEmpty()) {
+                binding.tvSubtitle.visibility = View.VISIBLE
+                binding.tvSubtitle.text = fw
+            } else {
+                binding.tvSubtitle.visibility = View.GONE
+            }
+
+            binding.root.setOnClickListener {
+                onClick(device)
+            }
         }
     }
 
@@ -48,7 +62,7 @@ class ScanDevicesAdapter(
             override fun areItemsTheSame(
                 oldItem: DiscoveredDevice,
                 newItem: DiscoveredDevice
-            ): Boolean = oldItem.id == newItem.id && oldItem.ip == newItem.ip
+            ): Boolean = oldItem.ip == newItem.ip
 
             override fun areContentsTheSame(
                 oldItem: DiscoveredDevice,

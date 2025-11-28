@@ -43,14 +43,14 @@
             style="@style/TextAppearance.Aqua.EditProfileTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/device_scan_header_list"
+            android:text="@string/device_scan_header_list"      <!-- her zaman default: Device list -->
             android:importantForAccessibility="yes"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- 🔁 Tarama başlat / yeniden tara -->
+        <!-- 🔁 Scan again button (icon) -->
         <ImageView
             android:id="@+id/btnRescan"
             android:layout_width="32dp"
@@ -69,13 +69,14 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 🛰 Radar (sadece tarama sırasında) -->
+    <!-- 🔄 Lottie animation (ortalanmış) -->
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/scanAnimation"
-        android:layout_width="360dp"
-        android:layout_height="360dp"
+        android:layout_width="260dp"
+        android:layout_height="260dp"
         android:layout_marginTop="16dp"
-        app:lottie_autoPlay="false"
+        android:layout_marginBottom="16dp"
+        app:lottie_autoPlay="true"
         app:lottie_loop="true"
         app:lottie_rawRes="@raw/scan_devices"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
@@ -84,7 +85,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.35" />
 
-    <!-- 📋 Cihaz listesi -->
+    <!-- 📋 Device list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDevices"
         android:layout_width="0dp"
@@ -99,13 +100,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/item_scan_device" />
 
-    <!-- ❌ Cihaz yok uyarısı -->
+    <!-- ❌ No devices found (ekranın ortalarına yakın) -->
     <TextView
         android:id="@+id/tvNoDevices"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="32dp"
         android:text="@string/device_scan_no_devices"
+        android:textAppearance="@style/TextAppearance.Aqua.Body"
         android:textAlignment="center"
         android:gravity="center"
         android:visibility="gone"
