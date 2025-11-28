@@ -72,8 +72,8 @@
     <!-- 🔄 Lottie animation (ortalanmış) -->
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/scanAnimation"
-        android:layout_width="260dp"
-        android:layout_height="260dp"
+        android:layout_width="560dp"
+        android:layout_height="560dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         app:lottie_autoPlay="true"
@@ -107,7 +107,6 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="32dp"
         android:text="@string/device_scan_no_devices"
-        android:textAppearance="@style/TextAppearance.Aqua.Body"
         android:textAlignment="center"
         android:gravity="center"
         android:visibility="gone"

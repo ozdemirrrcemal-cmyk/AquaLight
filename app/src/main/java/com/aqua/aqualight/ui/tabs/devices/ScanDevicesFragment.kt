@@ -37,7 +37,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
     private fun setupRecyclerView() {
         adapter = ScanDevicesAdapter { device: DiscoveredDevice ->
-            // 🔹 Cihaz seçildiğinde:
+            // Cihaz seçildiğinde:
             saveSelectedDevice(device)
         }
         binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
@@ -48,8 +48,14 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         // Başlık: Scanning...
         binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
 
+        // 🔒 Taramadayken butonu kilitle
+        binding.btnRescan.isEnabled = false
+        binding.btnRescan.alpha = 0.4f
+
         // UI state: tarama
         binding.scanAnimation.visibility = View.VISIBLE
+        binding.scanAnimation.playAnimation()
+
         binding.rvDevices.visibility = View.GONE
         binding.tvNoDevices.visibility = View.GONE
 
@@ -60,7 +66,8 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             // Tarama bitti → başlık tekrar Device list
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
 
-            // Animasyon kapanır
+            // Animasyon durdur + gizle
+            binding.scanAnimation.cancelAnimation()
             binding.scanAnimation.visibility = View.GONE
 
             if (devices.isEmpty()) {
@@ -71,11 +78,15 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 binding.tvNoDevices.visibility = View.GONE
                 adapter.submitList(devices)
             }
+
+            // 🔓 Butonu tekrar aç
+            binding.btnRescan.isEnabled = true
+            binding.btnRescan.alpha = 1f
         }
     }
 
     private fun saveSelectedDevice(device: DiscoveredDevice) {
-        // 🔹 Burada DataStore’a yazacaksın (şimdilik sadece geri dönüyor)
+        // Sonra DataStore / Navigation ekleyeceksin, şimdilik geri dönüyor
         findNavController().popBackStack()
     }
 

@@ -132,25 +132,24 @@ private fun parseDiscoveredDevice(
         deviceJson = dataObj?.optJSONObject("0")
     }
 
-    if (deviceJson == null) {
-        return null
-    }
+    if (deviceJson == null) return null
 
-    val id = if (deviceJson.has("ID")) deviceJson.optLong("ID", 0L) else 0L
+    val idRaw = if (deviceJson.has("ID")) deviceJson.optLong("ID", 0L) else 0L
     val ip = if (deviceJson.has("IP")) deviceJson.optString("IP", srcIp) else srcIp
-    val name = if (deviceJson.has("Name")) deviceJson.optString("Name") else "Aqua_$id"
+    val name = if (deviceJson.has("Name")) deviceJson.optString("Name") else "Aqua_$idRaw"
     val aquaName = if (deviceJson.has("AquaName")) deviceJson.optString("AquaName") else null
     val firmware = if (deviceJson.has("FirmwareBuild")) deviceJson.optString("FirmwareBuild") else null
 
+    // ID yoksa IP hash’ini kullan
+    val finalId = if (idRaw != 0L) idRaw else ip.hashCode().toLong()
+
     val discovered = DiscoveredDevice(
+        id = finalId,
         name = name,
         ip = ip,
         aquaName = aquaName,
         firmwareBuild = firmware
     )
 
-    // Map için unique key: ID varsa ID, yoksa IP hash
-    val key = if (id != 0L) id else ip.hashCode().toLong()
-
-    return key to discovered
+    return finalId to discovered
 }

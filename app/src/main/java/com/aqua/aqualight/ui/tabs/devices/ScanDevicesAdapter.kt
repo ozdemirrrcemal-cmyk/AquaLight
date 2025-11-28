@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices
 
 import android.view.LayoutInflater
-import android.view.View              // 🔹 BUNU EKLEDİK
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -28,15 +28,18 @@ class ScanDevicesAdapter(
 
         fun bind(device: DiscoveredDevice) {
             // Başlık: AquaName / Name / AquaName (Name_xxx)
+            val hasAqua = !device.aquaName.isNullOrBlank()
+            val hasName = device.name.isNotBlank()
+
             val title = when {
-                !device.aquaName.isNullOrBlank() &&
-                        !device.name.isNullOrBlank() &&
-                        device.aquaName != device.name -> {
+                hasAqua && hasName && device.aquaName != device.name ->
                     "${device.aquaName} (${device.name})"
-                }
-                !device.aquaName.isNullOrBlank() -> device.aquaName
-                !device.name.isNullOrBlank() -> device.name
-                else -> "Aqua device"
+                hasAqua ->
+                    device.aquaName!!
+                hasName ->
+                    device.name
+                else ->
+                    "Aqua device"
             }
 
             binding.tvName.text = title
@@ -51,9 +54,7 @@ class ScanDevicesAdapter(
                 binding.tvSubtitle.visibility = View.GONE
             }
 
-            binding.root.setOnClickListener {
-                onClick(device)
-            }
+            binding.root.setOnClickListener { onClick(device) }
         }
     }
 
@@ -62,7 +63,7 @@ class ScanDevicesAdapter(
             override fun areItemsTheSame(
                 oldItem: DiscoveredDevice,
                 newItem: DiscoveredDevice
-            ): Boolean = oldItem.ip == newItem.ip
+            ): Boolean = oldItem.id == newItem.id
 
             override fun areContentsTheSame(
                 oldItem: DiscoveredDevice,
