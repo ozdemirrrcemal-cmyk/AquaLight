@@ -4,8 +4,10 @@ import android.content.Context
 import android.net.wifi.WifiManager
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.experimental.inv  // <-- Byte.inv() için
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -15,7 +17,26 @@ import java.nio.charset.StandardCharsets
 private const val VER_UDP = 20240813
 private const val UDP_PORT = 10888
 
-// ESP32 cihazlarını UDP ile bulup DiscoveredDevice listesi döndürür
+// ---------------------------------------------------------------------
+//  GSON ile JSON map'i okuyacağımız DTO'lar
+//  Örnek JSON: { "Data": { "0": { "ID":..., "IP":..., ... } } }
+// ---------------------------------------------------------------------
+data class UdpPacketRoot(
+    @SerializedName("Data")
+    val data: Map<String, UdpDeviceDto>?
+)
+
+data class UdpDeviceDto(
+    @SerializedName("ID")          val id: Long?,
+    @SerializedName("IP")          val ip: String?,
+    @SerializedName("Name")        val name: String?,
+    @SerializedName("AquaName")    val aquaName: String?,
+    @SerializedName("FirmwareBuild") val firmwareBuild: String?
+)
+
+// ---------------------------------------------------------------------
+//  ESP32 cihazlarını UDP ile bulup DiscoveredDevice listesi döndürür
+// ---------------------------------------------------------------------
 suspend fun discoverDevices(
     context: Context,
     timeoutMs: Long = 2000L
@@ -40,6 +61,8 @@ suspend fun discoverDevices(
 
     val ipBytes = dhcp.ipAddress.toInetBytes()
     val maskBytes = dhcp.netmask.toInetBytes()
+
+    // maskBytes[i] Byte olduğu için .inv() extension'ı kullanıyoruz (yukarıda import var)
     val broadcastBytes = ByteArray(4) { i ->
         ((ipBytes[i].toInt() and maskBytes[i].toInt()) or maskBytes[i].inv().toInt()).toByte()
     }
@@ -69,6 +92,7 @@ suspend fun discoverDevices(
                 val jsonStr = String(packet.data, 0, packet.length, Charsets.UTF_8)
                 Log.d("UDP_RECEIVED", "from ${packet.address.hostAddress}: $jsonStr")
 
+                // JSON -> DTO
                 val root = gson.fromJson(jsonStr, UdpPacketRoot::class.java)
                 val dev = root.data?.values?.firstOrNull() ?: continue
 
@@ -83,11 +107,11 @@ suspend fun discoverDevices(
                     firmwareBuild = dev.firmwareBuild
                 )
 
-                val key = discovered.id
-                resultMap[key] = discovered
+                // Aynı cihaza ait son paketi yazsın
+                resultMap[discovered.id] = discovered
 
             } catch (e: SocketTimeoutException) {
-                // timeout, yine döngü devam
+                // timeout, döngü devam
             } catch (e: Exception) {
                 Log.e("UDP_RECEIVED", "parse error", e)
             }
