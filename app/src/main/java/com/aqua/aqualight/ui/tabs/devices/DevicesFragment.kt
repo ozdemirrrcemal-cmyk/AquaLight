@@ -6,11 +6,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class DevicesFragment : Fragment(R.layout.fragment_devices) {
@@ -44,8 +46,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         binding.btnScanDevices.setOnClickListener {
             if (selectionMode) {
-                deleteSelectedDevices()
+                // 🗑 Seçim modundayken: önce confirm dialog
+                showDeleteConfirmDialog()
             } else {
+                // Normal mod: tarama ekranına git
                 findNavController().navigate(
                     R.id.action_devicesFragment_to_scanDevicesFragment
                 )
@@ -73,7 +77,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     binding.rvSelectedDevices.visibility = View.VISIBLE
 
                     val now = System.currentTimeMillis()
-                    val onlineTimeout = 60_000L // 30 sn içinde görüldüyse online say
+                    val onlineTimeout = 60_000L // 60 sn içinde görüldüyse online say
 
                     val uiList = list.map { dev ->
                         val isOnline = dev.lastSeenMillis != 0L &&
@@ -83,8 +87,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                             id = dev.id,
                             aquaName = dev.aquaName,
                             name = dev.name.ifBlank { "Device" },
-                            ip = dev.ip,           // 🔹 eksik parametreyi verdik
-                            serial = dev.serial,   // 🔹 varsa constructor’da bu da var
+                            ip = dev.ip,
+                            serial = dev.serial,
                             isOnline = isOnline
                         )
                     }
@@ -109,11 +113,43 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         binding.btnScanDevices.setImageResource(R.drawable.ic_radar)
     }
 
-    // TOPLU SİLME
-    private fun deleteSelectedDevices() {
+    // ✅ TOPLU SİLME İÇİN CONFIRM DIALOG
+    private fun showDeleteConfirmDialog() {
         val ids = adapter.getSelectedIds()
         if (ids.isEmpty()) return
 
+        val count = ids.size
+        val title = if (count == 1) {
+            getString(R.string.devices_delete_title_single)  // yoksa aşağıdaki hardcode’ları kullanabilirsin
+        } else {
+            getString(R.string.devices_delete_title_multi, count)
+        }
+
+        val message = if (count == 1) {
+            getString(R.string.devices_delete_message_single)
+        } else {
+            getString(R.string.devices_delete_message_multi, count)
+        }
+
+        DialogManager.showConfirmDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = title,
+            message = message,
+            confirmTextResId = R.string.delete,   // buton yazıları için string’in varsa
+            cancelTextResId = R.string.cancel,
+            onConfirm = {
+                // Onaylarsa gerçekten sil
+                deleteSelectedDevices(ids)
+            },
+            onCancel = {
+                // İstersen buraya bir şey yapma, seçim kalsın
+            }
+        )
+    }
+
+    // Asıl silme işi
+    private fun deleteSelectedDevices(ids: Set<Long>) {
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.deleteDevices(ids)
             exitSelectionMode()
