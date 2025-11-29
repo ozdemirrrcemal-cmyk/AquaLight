@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -33,7 +34,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             )
         }
 
-        // Seçili cihazı ekrana bas
+        // Seçili cihazı ekrana bas + online/offline kontrol et
         observeSelectedDevice()
 
         // İleride: seçili cihaza tıklayınca cihaz menüsüne git
@@ -51,10 +52,19 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                         // Hiç cihaz seçilmemiş
                         binding.tvSelectedDevice.text =
                             getString(R.string.devices_no_selected)
+
+                        // renk normal
+                        binding.tvSelectedDevice.setTextColor(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.settings_text_secondary
+                            )
+                        )
                     } else {
-                        // Örn: DS-637128968 • SuperStar Pump (192.168.4.10)
                         val name = device.name.ifBlank { "Device" }
-                        val line = buildString {
+
+                        // Temel satır: DS-637128968 • SuperStar Pump (192.168.4.10)
+                        val baseLine = buildString {
                             append(device.serial)
                             append(" • ")
                             append(name)
@@ -64,7 +74,36 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                                 append(")")
                             }
                         }
-                        binding.tvSelectedDevice.text = line
+
+                        // 🔍 Kısa bir tarama ile online mı diye bak
+                        val isOnline = try {
+                            val devices = discoverDevices(
+                                requireContext(),
+                                timeoutMs = 1500L
+                            )
+                            devices.any { it.id == device.id || it.ip == device.ip }
+                        } catch (e: Exception) {
+                            // Tarama hata verirse offline/unknown say
+                            false
+                        }
+
+                        val lineWithStatus = if (isOnline) {
+                            "$baseLine  • Online"
+                        } else {
+                            "$baseLine  • Offline"
+                        }
+
+                        binding.tvSelectedDevice.text = lineWithStatus
+
+                        val colorRes = if (isOnline) {
+                            R.color.settings_text_primary   // online → normal/parlak
+                        } else {
+                            R.color.settings_text_secondary // offline → biraz soluk
+                        }
+
+                        binding.tvSelectedDevice.setTextColor(
+                            ContextCompat.getColor(requireContext(), colorRes)
+                        )
                     }
                 }
             }
