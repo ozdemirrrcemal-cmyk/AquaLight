@@ -96,9 +96,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                         binding.tvSelectedDevice.text = lineWithStatus
 
                         val colorRes = if (isOnline) {
-                            R.color.settings_text_primary   // online → normal/parlak
+                            R.color.textColorPrimary   // online → normal/parlak
                         } else {
-                            R.color.settings_text_secondary // offline → biraz soluk
+                            R.color.textColorSecondary // offline → biraz soluk
                         }
 
                         binding.tvSelectedDevice.setTextColor(
