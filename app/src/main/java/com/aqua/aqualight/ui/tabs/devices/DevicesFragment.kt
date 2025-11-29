@@ -120,8 +120,10 @@ private fun showDeleteConfirmDialog() {
 
     val count = ids.size
     val title = if (count == 1) {
+        // Tek cihaz
         getString(R.string.devices_delete_title_single)
     } else {
+        // Birden fazla cihaz (örn: "Delete 3 devices?")
         getString(R.string.devices_delete_title_multi, count)
     }
 
@@ -136,14 +138,13 @@ private fun showDeleteConfirmDialog() {
         type = DialogType.WARNING,
         title = title,
         message = message,
-        confirmTextResId = R.string.delete,
-        cancelTextResId = R.string.cancel,
+        // confirm/cancel textlerini layouttaki default (confirm / cancel) kullanacak
         onConfirm = {
             // Onaylarsa gerçekten sil
             deleteSelectedDevices(ids)
         },
         onCancel = {
-            // ❌ Kullanıcı vazgeçti → seçim modundan çık ve seçimleri temizle
+            // ❌ Kullanıcı vazgeçti → seçimleri temizle + ikonu geri çevir
             exitSelectionMode()
         }
     )
