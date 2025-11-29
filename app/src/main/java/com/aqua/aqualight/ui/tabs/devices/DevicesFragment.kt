@@ -114,40 +114,40 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     // ✅ TOPLU SİLME İÇİN CONFIRM DIALOG
-    private fun showDeleteConfirmDialog() {
-        val ids = adapter.getSelectedIds()
-        if (ids.isEmpty()) return
+private fun showDeleteConfirmDialog() {
+    val ids = adapter.getSelectedIds()
+    if (ids.isEmpty()) return
 
-        val count = ids.size
-        val title = if (count == 1) {
-            // Tek cihaz
-            getString(R.string.devices_delete_title_single)
-        } else {
-            // Birden fazla cihaz (örn: "Delete 3 devices?")
-            getString(R.string.devices_delete_title_multi, count)
-        }
-
-        val message = if (count == 1) {
-            getString(R.string.devices_delete_message_single)
-        } else {
-            getString(R.string.devices_delete_message_multi, count)
-        }
-
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
-            title = title,
-            message = message,
-            // confirm/cancel textlerini **KENDİ DEFAULTLARI** (confirm / cancel) kullanacak
-            onConfirm = {
-                // Onaylarsa gerçekten sil
-                deleteSelectedDevices(ids)
-            },
-            onCancel = {
-                // İstersen hiçbir şey yapma, seçim kalsın
-            }
-        )
+    val count = ids.size
+    val title = if (count == 1) {
+        getString(R.string.devices_delete_title_single)
+    } else {
+        getString(R.string.devices_delete_title_multi, count)
     }
+
+    val message = if (count == 1) {
+        getString(R.string.devices_delete_message_single)
+    } else {
+        getString(R.string.devices_delete_message_multi, count)
+    }
+
+    DialogManager.showConfirmDialog(
+        context = requireContext(),
+        type = DialogType.WARNING,
+        title = title,
+        message = message,
+        confirmTextResId = R.string.delete,
+        cancelTextResId = R.string.cancel,
+        onConfirm = {
+            // Onaylarsa gerçekten sil
+            deleteSelectedDevices(ids)
+        },
+        onCancel = {
+            // ❌ Kullanıcı vazgeçti → seçim modundan çık ve seçimleri temizle
+            exitSelectionMode()
+        }
+    )
+}
 
     // Asıl silme işi
     private fun deleteSelectedDevices(ids: Set<Long>) {
