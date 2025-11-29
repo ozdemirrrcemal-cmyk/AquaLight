@@ -53,7 +53,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                         binding.tvSelectedDevice.text =
                             getString(R.string.devices_no_selected)
 
-                        // renk normal
+                        // Gri, secondary renk
                         binding.tvSelectedDevice.setTextColor(
                             ContextCompat.getColor(
                                 requireContext(),
@@ -95,10 +95,13 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
                         binding.tvSelectedDevice.text = lineWithStatus
 
+                        // 🔹 Palette’te var olan renkler:
+                        // online  → md_theme_dark_onSurface (parlak beyaz)
+                        // offline → settings_text_secondary (gri)
                         val colorRes = if (isOnline) {
-                            R.color.textColorPrimary   // online → normal/parlak
+                            R.color.md_theme_dark_onSurface
                         } else {
-                            R.color.textColorSecondary // offline → biraz soluk
+                            R.color.settings_text_secondary
                         }
 
                         binding.tvSelectedDevice.setTextColor(
