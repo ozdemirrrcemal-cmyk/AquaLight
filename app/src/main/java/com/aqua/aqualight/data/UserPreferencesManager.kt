@@ -47,7 +47,7 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  FLOW ALANLAR
+    //  BASE FLOW
     // --------------------------------------------------------
 
     val userPrefsFlow: Flow<UserPreferences> = dataStore.data
@@ -59,12 +59,16 @@ class UserPreferencesManager private constructor(
             }
         }
 
+    // --------------------------------------------------------
+    //  PROFILE & SESSION FLOW
+    // --------------------------------------------------------
+
     val isLoggedIn: Flow<Boolean> = userPrefsFlow.map { it.isLoggedIn }
     val idToken: Flow<String> = userPrefsFlow.map { it.idToken }
     val email: Flow<String> = userPrefsFlow.map { it.email }
     val username: Flow<String> = userPrefsFlow.map { it.username }
-    val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
     val fullName: Flow<String> = userPrefsFlow.map { it.fullName }
+    val profilePhotoUrl: Flow<String> = userPrefsFlow.map { it.profilePhotoUrl }
 
     val themeMode: Flow<String> = userPrefsFlow.map { prefs ->
         prefs.themeMode.ifBlank { DEFAULT_THEME_MODE }
@@ -74,19 +78,11 @@ class UserPreferencesManager private constructor(
         prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
     }
 
-    val notificationsEnabled: Flow<Boolean> =
-        userPrefsFlow.map { it.notificationsEnabled }
+    val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { it.notificationsEnabled }
+    val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { it.autoUpdateEnabled }
+    val loginAlertsEnabled: Flow<Boolean> = userPrefsFlow.map { it.loginAlertsEnabled }
+    val twoFactorEnabled: Flow<Boolean> = userPrefsFlow.map { it.twoFactorEnabled }
 
-    val autoUpdateEnabled: Flow<Boolean> =
-        userPrefsFlow.map { it.autoUpdateEnabled }
-
-    val loginAlertsEnabled: Flow<Boolean> =
-        userPrefsFlow.map { it.loginAlertsEnabled }
-
-    val twoFactorEnabled: Flow<Boolean> =
-        userPrefsFlow.map { it.twoFactorEnabled }
-
-    // Adres alanları için Flow'lar
     val firstName: Flow<String> = userPrefsFlow.map { it.firstName }
     val lastName: Flow<String> = userPrefsFlow.map { it.lastName }
     val city: Flow<String> = userPrefsFlow.map { it.city }
@@ -96,7 +92,7 @@ class UserPreferencesManager private constructor(
     val country: Flow<String> = userPrefsFlow.map { it.country }
 
     // --------------------------------------------------------
-    //  USAGE / ANALYTICS FLOW
+    //  USAGE / ANALYTICS
     // --------------------------------------------------------
 
     data class UsageAnalyticsUi(
@@ -117,10 +113,10 @@ class UserPreferencesManager private constructor(
             lastEventTimeMillis = prefs.lastEventTimeMillis,
             lastEventDescription = prefs.lastEventDescription
         )
-    }
+    )
 
     // --------------------------------------------------------
-    //  GENEL UPDATE
+    //  GENERAL UPDATE
     // --------------------------------------------------------
 
     suspend fun update(transform: (UserPreferences) -> UserPreferences) {
@@ -128,7 +124,7 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  OTURUM & PROFIL
+    //  SESSION & PROFILE OPS
     // --------------------------------------------------------
 
     suspend fun saveUserSession(idToken: String, isLoggedIn: Boolean) {
@@ -140,11 +136,6 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    /**
-     *  email / username / fullName / photoUrl:
-     *  - parametre NULL ise: o alanı DEĞİŞTİRME
-     *  - parametre değer gelirse: yeni değeri yaz
-     */
     suspend fun saveProfile(
         email: String?,
         username: String?,
@@ -181,7 +172,7 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  TEMA / DIL / BILDIRIM
+    //  THEME / LANGUAGE / NOTIFICATIONS
     // --------------------------------------------------------
 
     suspend fun updateThemeMode(mode: String) {
@@ -233,7 +224,7 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  USAGE LOG FONKSIYONU
+    //  USAGE LOG
     // --------------------------------------------------------
 
     suspend fun logUsageEvent(
@@ -243,13 +234,12 @@ class UserPreferencesManager private constructor(
     ) {
         val now = System.currentTimeMillis()
 
-        // Local tarih/hafta key üretimi
         val today = LocalDate.now()
-        val dayKey = today.toString() // 2025-11-20
+        val dayKey = today.toString() // "2025-11-20"
 
         val weekFields = WeekFields.of(Locale.getDefault())
         val weekOfYear = today.get(weekFields.weekOfWeekBasedYear())
-        val weekKey = "${today.year}-W$weekOfYear" // 2025-W47
+        val weekKey = "${today.year}-W$weekOfYear" // "2025-W47"
 
         dataStore.updateData { prefs ->
             val builder = prefs.toBuilder()
@@ -266,7 +256,7 @@ class UserPreferencesManager private constructor(
                 builder.clearWeeklyAlertCount()
             }
 
-            // Sayaçları artır
+            // Sayaçlar
             val updatedWeeklyAutomation = builder.weeklyAutomationCount + 1
             builder.weeklyAutomationCount = updatedWeeklyAutomation
 
@@ -283,11 +273,10 @@ class UserPreferencesManager private constructor(
                 builder.todayAutomationCount = updatedTodayAuto
             }
 
-            // Son olay bilgisi
+            // Son olay
             builder.lastEventTimeMillis = now
             builder.lastEventDescription = description
 
-            // Key'leri güncelle
             builder.lastUsageDayKey = dayKey
             builder.lastUsageWeekKey = weekKey
 
@@ -296,10 +285,10 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  SEÇİLİ CİHAZ BİLGİSİ
+    //  MULTI-DEVICE FLOWS
     // --------------------------------------------------------
 
-    data class SelectedDeviceUi(
+    data class DeviceInfoUi(
         val id: Long,
         val aquaName: String,
         val name: String,
@@ -307,21 +296,23 @@ class UserPreferencesManager private constructor(
         val serial: String
     )
 
-    val selectedDeviceFlow: Flow<SelectedDeviceUi?> = userPrefsFlow.map { prefs ->
-        if (prefs.selectedDeviceId == 0L && prefs.selectedDeviceName.isBlank()) {
-            null
-        } else {
-            SelectedDeviceUi(
-                id = prefs.selectedDeviceId,
-                aquaName = prefs.selectedDeviceAquaName,
-                name = prefs.selectedDeviceName,
-                ip = prefs.selectedDeviceIp,
-                serial = prefs.selectedDeviceSerial
+    val devicesFlow: Flow<List<DeviceInfoUi>> = userPrefsFlow.map { prefs ->
+        prefs.devicesList.map {
+            DeviceInfoUi(
+                id = it.id,
+                aquaName = it.aquaName,
+                name = it.name,
+                ip = it.ip,
+                serial = it.serial
             )
         }
     }
 
-    suspend fun saveSelectedDevice(
+    // --------------------------------------------------------
+    //  MULTI-DEVICE OPERATIONS
+    // --------------------------------------------------------
+
+    suspend fun addDevice(
         id: Long,
         aquaName: String,
         name: String,
@@ -329,30 +320,72 @@ class UserPreferencesManager private constructor(
         serial: String
     ) {
         dataStore.updateData { prefs ->
+            val builder = prefs.toBuilder()
+
+            // Aynı id varsa tekrar ekleme
+            if (builder.devicesList.any { it.id == id }) {
+                return@updateData prefs
+            }
+
+            val device = UserPreferences.DeviceInfo.newBuilder()
+                .setId(id)
+                .setAquaName(aquaName)
+                .setName(name)
+                .setIp(ip)
+                .setSerial(serial)
+                .build()
+
+            builder.addDevices(device)
+            builder.build()
+        }
+    }
+
+    suspend fun updateDevice(
+        id: Long,
+        aquaName: String? = null,
+        name: String? = null,
+        ip: String? = null,
+        serial: String? = null
+    ) {
+        dataStore.updateData { prefs ->
+            val updated = prefs.devicesList.map { dev ->
+                if (dev.id != id) return@map dev
+
+                dev.toBuilder().apply {
+                    aquaName?.let { setAquaName(it) }
+                    name?.let { setName(it) }
+                    ip?.let { setIp(it) }
+                    serial?.let { setSerial(it) }
+                }.build()
+            }
+
             prefs.toBuilder()
-                .setSelectedDeviceId(id)
-                .setSelectedDeviceAquaName(aquaName)
-                .setSelectedDeviceName(name)
-                .setSelectedDeviceIp(ip)
-                .setSelectedDeviceSerial(serial)
+                .clearDevices()
+                .addAllDevices(updated)
                 .build()
         }
     }
 
-    suspend fun clearSelectedDevice() {
+    suspend fun deleteDevices(ids: Set<Long>) {
+        dataStore.updateData { prefs ->
+            val filtered = prefs.devicesList.filter { it.id !in ids }
+            prefs.toBuilder()
+                .clearDevices()
+                .addAllDevices(filtered)
+                .build()
+        }
+    }
+
+    suspend fun clearAllDevices() {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
-                .clearSelectedDeviceId()
-                .clearSelectedDeviceAquaName()
-                .clearSelectedDeviceName()
-                .clearSelectedDeviceIp()
-                .clearSelectedDeviceSerial()
+                .clearDevices()
                 .build()
         }
     }
 
     // --------------------------------------------------------
-    //  ADRES KAYDI
+    //  ADDRESS SAVE
     // --------------------------------------------------------
 
     suspend fun saveAddress(
@@ -383,7 +416,7 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  TAM SIFIRLAMA
+    //  RESET ALL DATA
     // --------------------------------------------------------
 
     suspend fun clearAllUserData() {

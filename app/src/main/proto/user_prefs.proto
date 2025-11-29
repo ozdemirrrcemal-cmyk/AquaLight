@@ -39,10 +39,14 @@ message UserPreferences {
   string lastUsageDayKey         = 26;
   string lastUsageWeekKey        = 27;
 
-  // ⭐️ SEÇİLİ CİHAZ ALANLARI (Eksik olanlar)
-  int64  selectedDeviceId        = 28;
-  string selectedDeviceAquaName  = 29;
-  string selectedDeviceName      = 30;
-  string selectedDeviceIp        = 31;
-  string selectedDeviceSerial    = 32;
+  // ⭐️ Yeni: çoklu cihaz listesi
+  repeated DeviceInfo devices = 100;
+
+  message DeviceInfo {
+    int64 id = 1;
+    string aquaName = 2;
+    string name = 3;
+    string ip = 4;
+    string serial = 5;
+  }
 }

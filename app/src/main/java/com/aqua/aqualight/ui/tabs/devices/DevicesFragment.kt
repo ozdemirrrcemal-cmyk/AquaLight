@@ -21,7 +21,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private lateinit var userPrefs: UserPreferencesManager
     private lateinit var adapter: DevicesListAdapter
 
-    // 🔹 Seçim modu state
+    // 🔹 Seçim modu durumu
     private var selectionMode = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -33,15 +33,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         // RecyclerView + adapter (multi select destekli)
         adapter = DevicesListAdapter(
-            onSelectionModeStart = {
-                enterSelectionMode()
-            },
+            onSelectionModeStart = { enterSelectionMode() },
             onSelectionChanged = { count ->
-                // Şimdilik: hiç seçili kalmadıysa selection mode'dan çık
-                if (count == 0 && selectionMode) {
+                // Hiç seçili kalmadıysa seçim modundan çık
+                if (count == 0) {
                     exitSelectionMode()
                 }
-                // İstersen burada title'a "(3)" falan ekleyebilirsin
             }
         )
 
@@ -61,76 +58,91 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             }
         }
 
-        observeSelectedDevice()
+        observeDevicesList()
     }
 
-    // 🔹 Seçim moduna giriş: radar → çöp kovası
+    // ---------------------------
+    // MULTI DEVICE DESTEK
+    // ---------------------------
+    private fun observeDevicesList() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+
+                userPrefs.devicesFlow.collect { list ->
+
+                    if (list.isEmpty()) {
+                        // Hiç cihaz kayıtlı değil
+                        exitSelectionMode()
+                        binding.tvEmptyState.visibility = View.VISIBLE
+                        binding.rvSelectedDevices.visibility = View.GONE
+                        adapter.submitList(emptyList())
+                        return@collect
+                    }
+
+                    binding.tvEmptyState.visibility = View.GONE
+                    binding.rvSelectedDevices.visibility = View.VISIBLE
+
+                    // 1️⃣ İlk gösterim → hepsi offline
+                    val uiList = list.map {
+                        DeviceCardUi(
+                            id = it.id,
+                            aquaName = it.aquaName,
+                            name = it.name,
+                            isOnline = false
+                        )
+                    }
+
+                    adapter.submitList(uiList)
+
+                    // 2️⃣ Online / offline kontrolünü ARKA PLANDA yap
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        val discovered = try {
+                            discoverDevices(requireContext(), timeoutMs = 1500L)
+                        } catch (_: Exception) {
+                            emptyList()
+                        }
+
+                        val updated = uiList.map { d ->
+                            val isOn = discovered.any { disc ->
+                                disc.id == d.id || disc.ip == d.ip
+                            }
+                            d.copy(isOnline = isOn)
+                        }
+
+                        adapter.submitList(updated)
+                    }
+                }
+            }
+        }
+    }
+
+    // ---------------------------
+    // SEÇİM MODU
+    // ---------------------------
     private fun enterSelectionMode() {
         if (selectionMode) return
         selectionMode = true
-        binding.btnScanDevices.setImageResource(R.drawable.ic_delete) // kendi çöp icon’un
+        binding.btnScanDevices.setImageResource(R.drawable.ic_delete) // çöp icon
     }
 
-    // 🔹 Seçim modundan çıkış: çöp kovası → radar
     private fun exitSelectionMode() {
         if (!selectionMode) return
         selectionMode = false
         adapter.exitSelectionMode()
-        binding.btnScanDevices.setImageResource(R.drawable.ic_radar)
+        binding.btnScanDevices.setImageResource(R.drawable.ic_radar) // radar icon
     }
 
-    // 🔹 Şimdilik DataStore’da tek cihaz tuttuğun için:
-    // delete = seçili cihazı DataStore’dan sil + listeyi boşalt
+    // ---------------------------
+    // TOPLU SİLME
+    // ---------------------------
     private fun deleteSelectedDevices() {
+        val ids = adapter.getSelectedIds()
+        if (ids.isEmpty()) return
+
         viewLifecycleOwner.lifecycleScope.launch {
-            // Şu an DataStore tarafında sadece 1 cihaz saklıyoruz,
-            // o yüzden direkt clearSelectedDevice çağırmak yeterli.
-            userPrefs.clearSelectedDevice()
+            // UserPreferencesManager içinde deleteDevices(ids: Set<Long>) yazdık
+            userPrefs.deleteDevices(ids)
             exitSelectionMode()
-        }
-    }
-
-    private fun observeSelectedDevice() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                userPrefs.selectedDeviceFlow.collect { device ->
-                    if (device == null || device.id == 0L) {
-                        // ❌ Hiç kayıtlı cihaz yok
-                        exitSelectionMode() // güvenlik: iconu da eski haline getir
-                        binding.tvEmptyState.visibility = View.VISIBLE
-                        binding.rvSelectedDevices.visibility = View.GONE
-                        adapter.submitList(emptyList())
-                    } else {
-                        // ✅ Cihaz var → kartı HEMEN göster (status = offline varsayılan)
-                        val baseItem = DeviceCardUi(
-                            id = device.id,
-                            aquaName = device.aquaName,
-                            name = device.name.ifBlank { "Device" },
-                            isOnline = false          // önce offline varsay
-                        )
-
-                        binding.tvEmptyState.visibility = View.GONE
-                        binding.rvSelectedDevices.visibility = View.VISIBLE
-                        adapter.submitList(listOf(baseItem))   // kart ANINDA görünür
-
-                        // 🔄 Online / offline kontrolünü ARKA PLANDA yap
-                        viewLifecycleOwner.lifecycleScope.launch {
-                            val isOnline = try {
-                                val devices = discoverDevices(
-                                    requireContext(),
-                                    timeoutMs = 1500L
-                                )
-                                devices.any { it.id == device.id || it.ip == device.ip }
-                            } catch (_: Exception) {
-                                false
-                            }
-
-                            val updatedItem = baseItem.copy(isOnline = isOnline)
-                            adapter.submitList(listOf(updatedItem))
-                        }
-                    }
-                }
-            }
         }
     }
 
