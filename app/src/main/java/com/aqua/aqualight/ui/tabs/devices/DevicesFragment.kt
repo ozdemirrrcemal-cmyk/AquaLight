@@ -51,32 +51,39 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 userPrefs.selectedDeviceFlow.collect { device ->
                     if (device == null || device.id == 0L) {
-                        // Hiç kayıtlı cihaz yok
+                        // ❌ Hiç kayıtlı cihaz yok
                         binding.tvEmptyState.visibility = View.VISIBLE
                         binding.rvSelectedDevices.visibility = View.GONE
                         adapter.submitList(emptyList())
                     } else {
-                        // Cihaz var → online/offline kontrol et
-                        val isOnline = try {
-                            val devices = discoverDevices(
-                                requireContext(),
-                                timeoutMs = 1500L
-                            )
-                            devices.any { it.id == device.id || it.ip == device.ip }
-                        } catch (e: Exception) {
-                            false
-                        }
-
-                        val uiItem = DeviceCardUi(
+                        // ✅ Cihaz var → kartı HEMEN göster (status = offline varsayılan)
+                        val baseItem = DeviceCardUi(
                             id = device.id,
                             aquaName = device.aquaName,
                             name = device.name.ifBlank { "Device" },
-                            isOnline = isOnline
+                            isOnline = false          // önce offline varsay
                         )
 
                         binding.tvEmptyState.visibility = View.GONE
                         binding.rvSelectedDevices.visibility = View.VISIBLE
-                        adapter.submitList(listOf(uiItem))   // şimdilik tek cihaz
+                        adapter.submitList(listOf(baseItem))   // kart anında görünür
+
+                        // 🔄 Online / offline kontrolünü ARKA PLANDA yap
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            val isOnline = try {
+                                val devices = discoverDevices(
+                                    requireContext(),
+                                    timeoutMs = 1500L
+                                )
+                                devices.any { it.id == device.id || it.ip == device.ip }
+                            } catch (_: Exception) {
+                                false
+                            }
+
+                            // Sadece status alanını güncelle
+                            val updatedItem = baseItem.copy(isOnline = isOnline)
+                            adapter.submitList(listOf(updatedItem))
+                        }
                     }
                 }
             }
