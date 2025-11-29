@@ -332,7 +332,7 @@ class UserPreferencesManager private constructor(
                 .setName(name)
                 .setIp(ip)
                 .setSerial(serial)
-                .setLastSeenMillis(0L) // ilk eklediğinde henüz görmedik
+                .setLastSeenMillis(now) // ilk eklerken şu an görüldü say
                 .build()
 
             builder.addDevices(device)
@@ -385,10 +385,12 @@ class UserPreferencesManager private constructor(
     }
 
     /**
-     * LAN monitör her taramadan sonra çağıracak:
-     * - Bulunan cihazların lastSeenMillis alanını güncelliyoruz.
+     * LAN monitör her tarama sonrası çağıracak:
+     * discovered listesinde olan device'ların lastSeenMillis alanını now ile günceller.
      */
-    suspend fun updateDevicesLastSeen(discovered: List<com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice>) {
+    suspend fun updateDevicesLastSeen(
+        discovered: List<com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice>
+    ) {
         val now = System.currentTimeMillis()
 
         dataStore.updateData { prefs ->
