@@ -67,7 +67,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun observeDevicesList() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
                 userPrefs.devicesFlow.collect { list ->
 
                     if (list.isEmpty()) {
@@ -88,6 +87,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                             id = it.id,
                             aquaName = it.aquaName,
                             name = it.name,
+                            ip = it.ip,          // 🔹 EKLENDİ
                             isOnline = false
                         )
                     }
@@ -140,7 +140,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         if (ids.isEmpty()) return
 
         viewLifecycleOwner.lifecycleScope.launch {
-            // UserPreferencesManager içinde deleteDevices(ids: Set<Long>) yazdık
             userPrefs.deleteDevices(ids)
             exitSelectionMode()
         }
