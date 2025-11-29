@@ -24,88 +24,97 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDevicesBinding.bind(view)
 
-        // 🔹 DataStore manager
         userPrefs = UserPreferencesManager.create(requireContext())
 
-        // Cihaz tara / cihaz ekle
         binding.btnScanDevices.setOnClickListener {
             findNavController().navigate(
                 R.id.action_devicesFragment_to_scanDevicesFragment
             )
         }
 
-        // Seçili cihazı ekrana bas + online/offline kontrol et
         observeSelectedDevice()
 
-        // İleride: seçili cihaza tıklayınca cihaz menüsüne git
         binding.tvSelectedDevice.setOnClickListener {
-            // TODO: device menu fragment / bottom sheet
-            // findNavController().navigate(R.id.action_devicesFragment_to_deviceMenuFragment)
+            // TODO: device menu
         }
     }
 
     private fun observeSelectedDevice() {
-    viewLifecycleOwner.lifecycleScope.launch {
-        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            userPrefs.selectedDeviceFlow.collect { device ->
-                if (device == null) {
-                    // Hiç cihaz seçilmemiş
-                    binding.tvSelectedDevice.text =
-                        getString(R.string.devices_no_selected)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                userPrefs.selectedDeviceFlow.collect { device ->
+                    // İlk valid emit geldiği anda görünür yap
+                    binding.tvSelectedDevice.visibility = View.VISIBLE
 
-                    binding.tvSelectedDevice.setTextColor(
-                        ContextCompat.getColor(
-                            requireContext(),
-                            R.color.settings_text_secondary
+                    if (device == null) {
+                        // Hiç cihaz seçilmemiş
+                        binding.tvSelectedDevice.text =
+                            getString(R.string.devices_no_selected)
+
+                        binding.tvSelectedDevice.setTextColor(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.settings_text_secondary
+                            )
                         )
-                    )
-                } else {
-                    val name = device.name.ifBlank { "Device" }
+                    } else {
+                        val name = device.name.ifBlank { "Device" }
 
-                    // Örn: DS-637128968 • SuperStar Pump (192.168.4.10)
-                    val baseLine = buildString {
-                        append(device.serial)
-                        append(" • ")
-                        append(name)
-                        if (device.ip.isNotBlank()) {
-                            append(" (")
-                            append(device.ip)
-                            append(")")
+                        // 1️⃣ Önce sadece temel satırı hemen göster
+                        val baseLine = buildString {
+                            append(device.serial)
+                            append(" • ")
+                            append(name)
+                            if (device.ip.isNotBlank()) {
+                                append(" (")
+                                append(device.ip)
+                                append(")")
+                            }
+                        }
+
+                        binding.tvSelectedDevice.text = baseLine
+                        binding.tvSelectedDevice.setTextColor(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.md_theme_dark_onSurface
+                            )
+                        )
+
+                        // 2️⃣ Online / offline kontrolünü ayrı coroutine’de yap
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            val isOnline = try {
+                                val devices = discoverDevices(
+                                    requireContext(),
+                                    timeoutMs = 1500L
+                                )
+                                devices.any { it.id == device.id || it.ip == device.ip }
+                            } catch (e: Exception) {
+                                false
+                            }
+
+                            val lineWithStatus = if (isOnline) {
+                                "$baseLine  • Online"
+                            } else {
+                                "$baseLine  • Offline"
+                            }
+
+                            binding.tvSelectedDevice.text = lineWithStatus
+
+                            val colorRes = if (isOnline) {
+                                R.color.md_theme_dark_onSurface   // online → parlak
+                            } else {
+                                R.color.settings_text_secondary    // offline → soluk
+                            }
+
+                            binding.tvSelectedDevice.setTextColor(
+                                ContextCompat.getColor(requireContext(), colorRes)
+                            )
                         }
                     }
-
-                    val isOnline = try {
-                        val devices = discoverDevices(
-                            requireContext(),
-                            timeoutMs = 1500L
-                        )
-                        devices.any { it.id == device.id || it.ip == device.ip }
-                    } catch (e: Exception) {
-                        false
-                    }
-
-                    val lineWithStatus = if (isOnline) {
-                        "$baseLine  • Online"
-                    } else {
-                        "$baseLine  • Offline"
-                    }
-
-                    binding.tvSelectedDevice.text = lineWithStatus
-
-                    val colorRes = if (isOnline) {
-                        R.color.md_theme_dark_onSurface   // online → parlak
-                    } else {
-                        R.color.settings_text_secondary    // offline → soluk
-                    }
-
-                    binding.tvSelectedDevice.setTextColor(
-                        ContextCompat.getColor(requireContext(), colorRes)
-                    )
                 }
             }
         }
     }
-}
 
     override fun onDestroyView() {
         super.onDestroyView()
