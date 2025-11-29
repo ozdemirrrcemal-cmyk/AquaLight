@@ -45,73 +45,67 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun observeSelectedDevice() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                userPrefs.selectedDeviceFlow.collect { device ->
-                    if (device == null || device.id == 0L) {
-                        // Hiç cihaz seçilmemiş
-                        binding.tvSelectedDevice.text =
-                            getString(R.string.devices_no_selected)
+    viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            userPrefs.selectedDeviceFlow.collect { device ->
+                if (device == null) {
+                    // Hiç cihaz seçilmemiş
+                    binding.tvSelectedDevice.text =
+                        getString(R.string.devices_no_selected)
 
-                        // Gri, secondary renk
-                        binding.tvSelectedDevice.setTextColor(
-                            ContextCompat.getColor(
-                                requireContext(),
-                                R.color.settings_text_secondary
-                            )
-                        )
-                    } else {
-                        val name = device.name.ifBlank { "Device" }
-
-                        // Temel satır: DS-637128968 • SuperStar Pump (192.168.4.10)
-                        val baseLine = buildString {
-                            append(device.serial)
-                            append(" • ")
-                            append(name)
-                            if (device.ip.isNotBlank()) {
-                                append(" (")
-                                append(device.ip)
-                                append(")")
-                            }
-                        }
-
-                        // 🔍 Kısa bir tarama ile online mı diye bak
-                        val isOnline = try {
-                            val devices = discoverDevices(
-                                requireContext(),
-                                timeoutMs = 1500L
-                            )
-                            devices.any { it.id == device.id || it.ip == device.ip }
-                        } catch (e: Exception) {
-                            // Tarama hata verirse offline/unknown say
-                            false
-                        }
-
-                        val lineWithStatus = if (isOnline) {
-                            "$baseLine  • Online"
-                        } else {
-                            "$baseLine  • Offline"
-                        }
-
-                        binding.tvSelectedDevice.text = lineWithStatus
-
-                        // 🔹 Palette’te var olan renkler:
-                        // online  → md_theme_dark_onSurface (parlak beyaz)
-                        // offline → settings_text_secondary (gri)
-                        val colorRes = if (isOnline) {
-                            R.color.md_theme_dark_onSurface
-                        } else {
+                    binding.tvSelectedDevice.setTextColor(
+                        ContextCompat.getColor(
+                            requireContext(),
                             R.color.settings_text_secondary
-                        }
-
-                        binding.tvSelectedDevice.setTextColor(
-                            ContextCompat.getColor(requireContext(), colorRes)
                         )
+                    )
+                } else {
+                    val name = device.name.ifBlank { "Device" }
+
+                    // Örn: DS-637128968 • SuperStar Pump (192.168.4.10)
+                    val baseLine = buildString {
+                        append(device.serial)
+                        append(" • ")
+                        append(name)
+                        if (device.ip.isNotBlank()) {
+                            append(" (")
+                            append(device.ip)
+                            append(")")
+                        }
                     }
+
+                    val isOnline = try {
+                        val devices = discoverDevices(
+                            requireContext(),
+                            timeoutMs = 1500L
+                        )
+                        devices.any { it.id == device.id || it.ip == device.ip }
+                    } catch (e: Exception) {
+                        false
+                    }
+
+                    val lineWithStatus = if (isOnline) {
+                        "$baseLine  • Online"
+                    } else {
+                        "$baseLine  • Offline"
+                    }
+
+                    binding.tvSelectedDevice.text = lineWithStatus
+
+                    val colorRes = if (isOnline) {
+                        R.color.md_theme_dark_onSurface   // online → parlak
+                    } else {
+                        R.color.settings_text_secondary    // offline → soluk
+                    }
+
+                    binding.tvSelectedDevice.setTextColor(
+                        ContextCompat.getColor(requireContext(), colorRes)
+                    )
                 }
             }
         }
     }
+}
 
     override fun onDestroyView() {
         super.onDestroyView()
