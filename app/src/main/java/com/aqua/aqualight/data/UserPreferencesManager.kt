@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
-import com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import java.time.LocalDate
+import java.time.temporal.WeekFields
+import java.util.Locale
 
 class UserPreferencesManager private constructor(
     private val dataStore: DataStore<UserPreferences>
@@ -32,7 +34,8 @@ class UserPreferencesManager private constructor(
 
         private fun buildDataStore(appContext: Context): UserPreferencesManager {
             val delegate = UserPreferencesSerializer
-            val encryptedSerializer = EncryptedUserPreferencesSerializer(appContext, delegate)
+            val encryptedSerializer =
+                EncryptedUserPreferencesSerializer(appContext, delegate)
 
             val ds = DataStoreFactory.create(
                 serializer = encryptedSerializer,
@@ -76,10 +79,17 @@ class UserPreferencesManager private constructor(
         prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
     }
 
-    val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { it.notificationsEnabled }
-    val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { it.autoUpdateEnabled }
-    val loginAlertsEnabled: Flow<Boolean> = userPrefsFlow.map { it.loginAlertsEnabled }
-    val twoFactorEnabled: Flow<Boolean> = userPrefsFlow.map { it.twoFactorEnabled }
+    val notificationsEnabled: Flow<Boolean> =
+        userPrefsFlow.map { it.notificationsEnabled }
+
+    val autoUpdateEnabled: Flow<Boolean> =
+        userPrefsFlow.map { it.autoUpdateEnabled }
+
+    val loginAlertsEnabled: Flow<Boolean> =
+        userPrefsFlow.map { it.loginAlertsEnabled }
+
+    val twoFactorEnabled: Flow<Boolean> =
+        userPrefsFlow.map { it.twoFactorEnabled }
 
     val firstName: Flow<String> = userPrefsFlow.map { it.firstName }
     val lastName: Flow<String> = userPrefsFlow.map { it.lastName }
@@ -88,6 +98,31 @@ class UserPreferencesManager private constructor(
     val postCode: Flow<String> = userPrefsFlow.map { it.postCode }
     val phoneNumber: Flow<String> = userPrefsFlow.map { it.phoneNumber }
     val country: Flow<String> = userPrefsFlow.map { it.country }
+
+    // --------------------------------------------------------
+    //  USAGE / ANALYTICS
+    // --------------------------------------------------------
+
+    data class UsageAnalyticsUi(
+        val weeklyAutomationCount: Int,
+        val weeklyAlertCount: Int,
+        val todayAutomationCount: Int,
+        val todayManualActionCount: Int,
+        val lastEventTimeMillis: Long,
+        val lastEventDescription: String
+    )
+
+    val usageAnalyticsFlow: Flow<UsageAnalyticsUi> =
+        userPrefsFlow.map { prefs: UserPreferences ->
+            UsageAnalyticsUi(
+                weeklyAutomationCount = prefs.weeklyAutomationCount,
+                weeklyAlertCount = prefs.weeklyAlertCount,
+                todayAutomationCount = prefs.todayAutomationCount,
+                todayManualActionCount = prefs.todayManualActionCount,
+                lastEventTimeMillis = prefs.lastEventTimeMillis,
+                lastEventDescription = prefs.lastEventDescription
+            )
+        }
 
     // --------------------------------------------------------
     //  GENERAL UPDATE
@@ -198,6 +233,63 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
+    //  USAGE LOG
+    // --------------------------------------------------------
+
+    suspend fun logUsageEvent(
+        isManual: Boolean,
+        isAlert: Boolean,
+        description: String
+    ) {
+        val now = System.currentTimeMillis()
+
+        val today = LocalDate.now()
+        val dayKey = today.toString()
+
+        val weekFields = WeekFields.of(Locale.getDefault())
+        val weekOfYear = today.get(weekFields.weekOfWeekBasedYear())
+        val weekKey = "${today.year}-W$weekOfYear"
+
+        dataStore.updateData { prefs ->
+            val builder = prefs.toBuilder()
+
+            // Gün değişmişse günlük sayaçları sıfırla
+            if (prefs.lastUsageDayKey != dayKey) {
+                builder.clearTodayAutomationCount()
+                builder.clearTodayManualActionCount()
+            }
+
+            // Hafta değişmişse haftalık sayaçları sıfırla
+            if (prefs.lastUsageWeekKey != weekKey) {
+                builder.clearWeeklyAutomationCount()
+                builder.clearWeeklyAlertCount()
+            }
+
+            // Sayaçlar
+            builder.weeklyAutomationCount = builder.weeklyAutomationCount + 1
+
+            if (isAlert) {
+                builder.weeklyAlertCount = builder.weeklyAlertCount + 1
+            }
+
+            if (isManual) {
+                builder.todayManualActionCount = builder.todayManualActionCount + 1
+            } else {
+                builder.todayAutomationCount = builder.todayAutomationCount + 1
+            }
+
+            // Son olay
+            builder.lastEventTimeMillis = now
+            builder.lastEventDescription = description
+
+            builder.lastUsageDayKey = dayKey
+            builder.lastUsageWeekKey = weekKey
+
+            builder.build()
+        }
+    }
+
+    // --------------------------------------------------------
     //  MULTI-DEVICE FLOWS
     // --------------------------------------------------------
 
@@ -210,18 +302,19 @@ class UserPreferencesManager private constructor(
         val lastSeenMillis: Long
     )
 
-    val devicesFlow: Flow<List<DeviceInfoUi>> = userPrefsFlow.map { prefs ->
-        prefs.devicesList.map {
-            DeviceInfoUi(
-                id = it.id,
-                aquaName = it.aquaName,
-                name = it.name,
-                ip = it.ip,
-                serial = it.serial,
-                lastSeenMillis = it.lastSeenMillis
-            )
+    val devicesFlow: Flow<List<DeviceInfoUi>> =
+        userPrefsFlow.map { prefs ->
+            prefs.devicesList.map { dev ->
+                DeviceInfoUi(
+                    id = dev.id,
+                    aquaName = dev.aquaName,
+                    name = dev.name,
+                    ip = dev.ip,
+                    serial = dev.serial,
+                    lastSeenMillis = dev.lastSeenMillis
+                )
+            }
         }
-    }
 
     // --------------------------------------------------------
     //  MULTI-DEVICE OPERATIONS
@@ -237,7 +330,7 @@ class UserPreferencesManager private constructor(
         dataStore.updateData { prefs ->
             val builder = prefs.toBuilder()
 
-            // Aynı id varsa tekrar ekleme
+            // aynı id zaten varsa ekleme
             if (builder.devicesList.any { it.id == id }) {
                 return@updateData prefs
             }
@@ -250,7 +343,7 @@ class UserPreferencesManager private constructor(
                 .setName(name)
                 .setIp(ip)
                 .setSerial(serial)
-                .setLastSeenMillis(now) // ilk eklerken şu an görüldü say
+                .setLastSeenMillis(now) // ilk eklediğimiz an görüldü say
                 .build()
 
             builder.addDevices(device)
@@ -307,7 +400,7 @@ class UserPreferencesManager private constructor(
      * discovered listesinde olan device'ların lastSeenMillis alanını now ile günceller.
      */
     suspend fun updateDevicesLastSeen(
-        discovered: List<DiscoveredDevice>
+        discovered: List<com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice>
     ) {
         val now = System.currentTimeMillis()
 
