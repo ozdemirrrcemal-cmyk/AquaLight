@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
+import com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,32 +15,6 @@ import java.io.IOException
 import java.time.LocalDate
 import java.time.temporal.WeekFields
 import java.util.Locale
-
-// --------------------------------------------------------
-//  Dışarıya verilen UI modelleri
-// --------------------------------------------------------
-
-data class UsageAnalyticsUi(
-    val weeklyAutomationCount: Int,
-    val weeklyAlertCount: Int,
-    val todayAutomationCount: Int,
-    val todayManualActionCount: Int,
-    val lastEventTimeMillis: Long,
-    val lastEventDescription: String
-)
-
-data class DeviceInfoUi(
-    val id: Long,
-    val aquaName: String,
-    val name: String,
-    val ip: String,
-    val serial: String,
-    val lastSeenMillis: Long
-)
-
-// --------------------------------------------------------
-//  UserPreferencesManager
-// --------------------------------------------------------
 
 class UserPreferencesManager private constructor(
     private val dataStore: DataStore<UserPreferences>
@@ -120,6 +95,15 @@ class UserPreferencesManager private constructor(
     // --------------------------------------------------------
     //  USAGE / ANALYTICS
     // --------------------------------------------------------
+
+    data class UsageAnalyticsUi(
+        val weeklyAutomationCount: Int,
+        val weeklyAlertCount: Int,
+        val todayAutomationCount: Int,
+        val todayManualActionCount: Int,
+        val lastEventTimeMillis: Long,
+        val lastEventDescription: String
+    )
 
     val usageAnalyticsFlow: Flow<UsageAnalyticsUi> = userPrefsFlow.map { prefs ->
         UsageAnalyticsUi(
@@ -300,6 +284,15 @@ class UserPreferencesManager private constructor(
     //  MULTI-DEVICE FLOWS
     // --------------------------------------------------------
 
+    data class DeviceInfoUi(
+        val id: Long,
+        val aquaName: String,
+        val name: String,
+        val ip: String,
+        val serial: String,
+        val lastSeenMillis: Long
+    )
+
     val devicesFlow: Flow<List<DeviceInfoUi>> = userPrefsFlow.map { prefs ->
         prefs.devicesList.map {
             DeviceInfoUi(
@@ -397,7 +390,7 @@ class UserPreferencesManager private constructor(
      * discovered listesinde olan device'ların lastSeenMillis alanını now ile günceller.
      */
     suspend fun updateDevicesLastSeen(
-        discovered: List<com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice>
+        discovered: List<DiscoveredDevice>
     ) {
         val now = System.currentTimeMillis()
 
