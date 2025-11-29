@@ -40,4 +40,11 @@ message UserPreferences {
 
   string lastUsageDayKey         = 26; // "2025-11-20" gibi
   string lastUsageWeekKey        = 27; // "2025-W47" gibi
+
+  // 🆕 Seçili cihaz bilgisi
+  int64  selectedDeviceId        = 28; // DiscoveredDevice.id
+  string selectedDeviceAquaName  = 29; // Örn: "Doser", "Light"
+  string selectedDeviceName      = 30; // Örn: "SuperStar Pump"
+  string selectedDeviceIp        = 31; // Cihazın IP adresi
+  string selectedDeviceSerial    = 32; // Örn: "DS-637128968"
 }

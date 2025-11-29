@@ -117,7 +117,7 @@ class UserPreferencesManager private constructor(
             lastEventTimeMillis = prefs.lastEventTimeMillis,
             lastEventDescription = prefs.lastEventDescription
         )
-    }
+    )
 
     // --------------------------------------------------------
     //  GENEL UPDATE
@@ -301,6 +301,62 @@ class UserPreferencesManager private constructor(
             builder.lastUsageWeekKey = weekKey
 
             builder.build()
+        }
+    }
+
+    // --------------------------------------------------------
+    //  🆕 SEÇILI CIHAZ BILGISI
+    // --------------------------------------------------------
+
+    data class SelectedDeviceUi(
+        val id: Long,
+        val aquaName: String,
+        val name: String,
+        val ip: String,
+        val serial: String
+    )
+
+    val selectedDeviceFlow: Flow<SelectedDeviceUi?> = userPrefsFlow.map { prefs ->
+        if (prefs.selectedDeviceId == 0L && prefs.selectedDeviceName.isBlank()) {
+            null
+        } else {
+            SelectedDeviceUi(
+                id = prefs.selectedDeviceId,
+                aquaName = prefs.selectedDeviceAquaName,
+                name = prefs.selectedDeviceName,
+                ip = prefs.selectedDeviceIp,
+                serial = prefs.selectedDeviceSerial
+            )
+        }
+    }
+
+    suspend fun saveSelectedDevice(
+        id: Long,
+        aquaName: String,
+        name: String,
+        ip: String,
+        serial: String
+    ) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setSelectedDeviceId(id)
+                .setSelectedDeviceAquaName(aquaName)
+                .setSelectedDeviceName(name)
+                .setSelectedDeviceIp(ip)
+                .setSelectedDeviceSerial(serial)
+                .build()
+        }
+    }
+
+    suspend fun clearSelectedDevice() {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .clearSelectedDeviceId()
+                .clearSelectedDeviceAquaName()
+                .clearSelectedDeviceName()
+                .clearSelectedDeviceIp()
+                .clearSelectedDeviceSerial()
+                .build()
         }
     }
 

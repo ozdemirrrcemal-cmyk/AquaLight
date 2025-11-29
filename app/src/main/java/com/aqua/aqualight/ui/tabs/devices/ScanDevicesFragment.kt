@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
 import kotlinx.coroutines.launch
 
@@ -16,10 +17,14 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     private val binding get() = _binding!!
 
     private lateinit var adapter: ScanDevicesAdapter
+    private lateinit var userPrefs: UserPreferencesManager   // 🔹 DataStore manager
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentScanDevicesBinding.bind(view)
+
+        // 🔹 UserPreferencesManager oluştur
+        userPrefs = UserPreferencesManager.create(requireContext())
 
         // Geri
         binding.btnBack.setOnClickListener {
@@ -37,7 +42,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
     private fun setupRecyclerView() {
         adapter = ScanDevicesAdapter { device: DiscoveredDevice ->
-            // Cihaz seçildiğinde:
+            // Cihaz seçildiğinde DataStore’a kaydet
             saveSelectedDevice(device)
         }
         binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
@@ -85,9 +90,33 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
     }
 
+    // 🔹 Seçilen cihazı DataStore’a yaz
     private fun saveSelectedDevice(device: DiscoveredDevice) {
-        // Sonra DataStore / Navigation ekleyeceksin, şimdilik geri dönüyor
-        findNavController().popBackStack()
+        val aquaName = device.aquaName?.ifBlank { "-" } ?: "-"
+        val name = device.name.ifBlank { "Device" }
+
+        // DD-5454545 tarzı seri no üret
+        val serial = buildSerial(aquaName, name, device.id)
+
+        lifecycleScope.launch {
+            userPrefs.saveSelectedDevice(
+                id = device.id,
+                aquaName = aquaName,
+                name = name,
+                ip = device.ip,
+                serial = serial
+            )
+            // Şimdilik sadece geri dönüyoruz
+            findNavController().popBackStack()
+        }
+    }
+
+    // 🔹 Seri numara: AN + NN + - + ID  → Örn: DS-637128968
+    private fun buildSerial(aquaName: String, name: String, id: Long): String {
+        val a = aquaName.firstOrNull()?.uppercaseChar() ?: 'X'
+        val n = name.firstOrNull()?.uppercaseChar() ?: 'X'
+        val core = if (id != 0L) id.toString() else ""
+        return if (core.isNotEmpty()) "$a$n-$core" else "$a$n"
     }
 
     override fun onDestroyView() {
