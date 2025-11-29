@@ -17,7 +17,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     private val binding get() = _binding!!
 
     private lateinit var adapter: ScanDevicesAdapter
-    private lateinit var userPrefs: UserPreferencesManager   // DataStore manager
+    private lateinit var userPrefs: UserPreferencesManager
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -39,7 +39,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
     private fun setupRecyclerView() {
         adapter = ScanDevicesAdapter { device: DiscoveredDevice ->
-            addDiscoveredDevice(device)
+            saveSelectedDevice(device)
         }
         binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
         binding.rvDevices.adapter = adapter
@@ -57,8 +57,9 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         binding.rvDevices.visibility = View.GONE
         binding.tvNoDevices.visibility = View.GONE
 
-        lifecycleScope.launch {
-            val devices = discoverDevices(requireContext(), timeoutMs = 3000L)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val devices: List<DiscoveredDevice> =
+                discoverDevices(requireContext(), timeoutMs = 3000L)
 
             binding.tvTitle.text = getString(R.string.device_scan_header_list)
 
@@ -79,15 +80,12 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
     }
 
-    // 🔹 Cihazı DataStore'a EKLE (çoklu liste)
-    private fun addDiscoveredDevice(device: DiscoveredDevice) {
+    private fun saveSelectedDevice(device: DiscoveredDevice) {
         val aquaName = device.aquaName?.ifBlank { "-" } ?: "-"
         val name = device.name.ifBlank { "Device" }
-
-        // Seri numarası üret
         val serial = buildSerial(aquaName, name, device.id)
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.addDevice(
                 id = device.id,
                 aquaName = aquaName,
@@ -95,17 +93,15 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 ip = device.ip,
                 serial = serial
             )
-
             findNavController().popBackStack()
         }
     }
 
-    // AN + NN + - + ID → Örn: DS-637128968
     private fun buildSerial(aquaName: String, name: String, id: Long): String {
         val a = aquaName.firstOrNull()?.uppercaseChar() ?: 'X'
         val n = name.firstOrNull()?.uppercaseChar() ?: 'X'
-        val core = id.toString()
-        return "$a$n-$core"
+        val core = if (id != 0L) id.toString() else ""
+        return if (core.isNotEmpty()) "$a$n-$core" else "$a$n"
     }
 
     override fun onDestroyView() {

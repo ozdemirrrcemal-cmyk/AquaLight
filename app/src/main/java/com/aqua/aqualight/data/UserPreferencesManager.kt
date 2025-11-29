@@ -34,8 +34,7 @@ class UserPreferencesManager private constructor(
 
         private fun buildDataStore(appContext: Context): UserPreferencesManager {
             val delegate = UserPreferencesSerializer
-            val encryptedSerializer =
-                EncryptedUserPreferencesSerializer(appContext, delegate)
+            val encryptedSerializer = EncryptedUserPreferencesSerializer(appContext, delegate)
 
             val ds = DataStoreFactory.create(
                 serializer = encryptedSerializer,
@@ -79,17 +78,10 @@ class UserPreferencesManager private constructor(
         prefs.languageCode.ifBlank { DEFAULT_LANGUAGE_CODE }
     }
 
-    val notificationsEnabled: Flow<Boolean> =
-        userPrefsFlow.map { it.notificationsEnabled }
-
-    val autoUpdateEnabled: Flow<Boolean> =
-        userPrefsFlow.map { it.autoUpdateEnabled }
-
-    val loginAlertsEnabled: Flow<Boolean> =
-        userPrefsFlow.map { it.loginAlertsEnabled }
-
-    val twoFactorEnabled: Flow<Boolean> =
-        userPrefsFlow.map { it.twoFactorEnabled }
+    val notificationsEnabled: Flow<Boolean> = userPrefsFlow.map { it.notificationsEnabled }
+    val autoUpdateEnabled: Flow<Boolean> = userPrefsFlow.map { it.autoUpdateEnabled }
+    val loginAlertsEnabled: Flow<Boolean> = userPrefsFlow.map { it.loginAlertsEnabled }
+    val twoFactorEnabled: Flow<Boolean> = userPrefsFlow.map { it.twoFactorEnabled }
 
     val firstName: Flow<String> = userPrefsFlow.map { it.firstName }
     val lastName: Flow<String> = userPrefsFlow.map { it.lastName }
@@ -112,17 +104,16 @@ class UserPreferencesManager private constructor(
         val lastEventDescription: String
     )
 
-    val usageAnalyticsFlow: Flow<UsageAnalyticsUi> =
-        userPrefsFlow.map { prefs: UserPreferences ->
-            UsageAnalyticsUi(
-                weeklyAutomationCount = prefs.weeklyAutomationCount,
-                weeklyAlertCount = prefs.weeklyAlertCount,
-                todayAutomationCount = prefs.todayAutomationCount,
-                todayManualActionCount = prefs.todayManualActionCount,
-                lastEventTimeMillis = prefs.lastEventTimeMillis,
-                lastEventDescription = prefs.lastEventDescription
-            )
-        }
+    val usageAnalyticsFlow: Flow<UsageAnalyticsUi> = userPrefsFlow.map { prefs ->
+        UsageAnalyticsUi(
+            weeklyAutomationCount = prefs.weeklyAutomationCount,
+            weeklyAlertCount = prefs.weeklyAlertCount,
+            todayAutomationCount = prefs.todayAutomationCount,
+            todayManualActionCount = prefs.todayManualActionCount,
+            lastEventTimeMillis = prefs.lastEventTimeMillis,
+            lastEventDescription = prefs.lastEventDescription
+        )
+    )
 
     // --------------------------------------------------------
     //  GENERAL UPDATE
@@ -244,44 +235,43 @@ class UserPreferencesManager private constructor(
         val now = System.currentTimeMillis()
 
         val today = LocalDate.now()
-        val dayKey = today.toString()
+        val dayKey = today.toString() // "2025-11-20"
 
         val weekFields = WeekFields.of(Locale.getDefault())
         val weekOfYear = today.get(weekFields.weekOfWeekBasedYear())
-        val weekKey = "${today.year}-W$weekOfYear"
+        val weekKey = "${today.year}-W$weekOfYear" // "2025-W47"
 
         dataStore.updateData { prefs ->
             val builder = prefs.toBuilder()
 
-            // Gün değişmişse günlük sayaçları sıfırla
             if (prefs.lastUsageDayKey != dayKey) {
                 builder.clearTodayAutomationCount()
                 builder.clearTodayManualActionCount()
             }
 
-            // Hafta değişmişse haftalık sayaçları sıfırla
             if (prefs.lastUsageWeekKey != weekKey) {
                 builder.clearWeeklyAutomationCount()
                 builder.clearWeeklyAlertCount()
             }
 
-            // Sayaçlar
-            builder.weeklyAutomationCount = builder.weeklyAutomationCount + 1
+            val updatedWeeklyAutomation = builder.weeklyAutomationCount + 1
+            builder.weeklyAutomationCount = updatedWeeklyAutomation
 
             if (isAlert) {
-                builder.weeklyAlertCount = builder.weeklyAlertCount + 1
+                val updatedWeeklyAlerts = builder.weeklyAlertCount + 1
+                builder.weeklyAlertCount = updatedWeeklyAlerts
             }
 
             if (isManual) {
-                builder.todayManualActionCount = builder.todayManualActionCount + 1
+                val updatedTodayManual = builder.todayManualActionCount + 1
+                builder.todayManualActionCount = updatedTodayManual
             } else {
-                builder.todayAutomationCount = builder.todayAutomationCount + 1
+                val updatedTodayAuto = builder.todayAutomationCount + 1
+                builder.todayAutomationCount = updatedTodayAuto
             }
 
-            // Son olay
             builder.lastEventTimeMillis = now
             builder.lastEventDescription = description
-
             builder.lastUsageDayKey = dayKey
             builder.lastUsageWeekKey = weekKey
 
@@ -298,21 +288,22 @@ class UserPreferencesManager private constructor(
         val aquaName: String,
         val name: String,
         val ip: String,
-        val serial: String
+        val serial: String,
+        val lastSeenMillis: Long
     )
 
-    val devicesFlow: Flow<List<DeviceInfoUi>> =
-        userPrefsFlow.map { prefs ->
-            prefs.devicesList.map { dev ->
-                DeviceInfoUi(
-                    id = dev.id,
-                    aquaName = dev.aquaName,
-                    name = dev.name,
-                    ip = dev.ip,
-                    serial = dev.serial
-                )
-            }
+    val devicesFlow: Flow<List<DeviceInfoUi>> = userPrefsFlow.map { prefs ->
+        prefs.devicesList.map {
+            DeviceInfoUi(
+                id = it.id,
+                aquaName = it.aquaName,
+                name = it.name,
+                ip = it.ip,
+                serial = it.serial,
+                lastSeenMillis = it.lastSeenMillis
+            )
         }
+    }
 
     // --------------------------------------------------------
     //  MULTI-DEVICE OPERATIONS
@@ -328,10 +319,12 @@ class UserPreferencesManager private constructor(
         dataStore.updateData { prefs ->
             val builder = prefs.toBuilder()
 
-            // aynı id zaten varsa ekleme
+            // Aynı id varsa tekrar ekleme
             if (builder.devicesList.any { it.id == id }) {
                 return@updateData prefs
             }
+
+            val now = System.currentTimeMillis()
 
             val device = UserPreferences.DeviceInfo.newBuilder()
                 .setId(id)
@@ -339,6 +332,7 @@ class UserPreferencesManager private constructor(
                 .setName(name)
                 .setIp(ip)
                 .setSerial(serial)
+                .setLastSeenMillis(0L) // ilk eklediğinde henüz görmedik
                 .build()
 
             builder.addDevices(device)
@@ -386,6 +380,35 @@ class UserPreferencesManager private constructor(
         dataStore.updateData { prefs ->
             prefs.toBuilder()
                 .clearDevices()
+                .build()
+        }
+    }
+
+    /**
+     * LAN monitör her taramadan sonra çağıracak:
+     * - Bulunan cihazların lastSeenMillis alanını güncelliyoruz.
+     */
+    suspend fun updateDevicesLastSeen(discovered: List<com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice>) {
+        val now = System.currentTimeMillis()
+
+        dataStore.updateData { prefs ->
+            val updated = prefs.devicesList.map { dev ->
+                val match = discovered.firstOrNull { d ->
+                    d.id == dev.id || (!d.ip.isNullOrBlank() && d.ip == dev.ip)
+                }
+
+                if (match != null) {
+                    dev.toBuilder()
+                        .setLastSeenMillis(now)
+                        .build()
+                } else {
+                    dev
+                }
+            }
+
+            prefs.toBuilder()
+                .clearDevices()
+                .addAllDevices(updated)
                 .build()
         }
     }

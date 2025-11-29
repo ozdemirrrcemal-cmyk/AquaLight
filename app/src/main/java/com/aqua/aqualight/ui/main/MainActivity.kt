@@ -7,7 +7,9 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.ActivityMainBinding
+import com.aqua.aqualight.lan.LanMonitor
 
 class MainActivity : BaseActivity() {
 
@@ -22,6 +24,10 @@ class MainActivity : BaseActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // 🔹 Uygulama açılır açılmaz LAN monitörü başlat
+        val userPrefs = UserPreferencesManager.create(applicationContext)
+        LanMonitor.start(applicationContext, userPrefs)
 
         val navHost =
             supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
