@@ -15,7 +15,8 @@ data class DeviceCardUi(
     val id: Long,
     val aquaName: String,
     val name: String,
-    val ip: String,          // burada da var
+    val ip: String,
+    val serial: String,
     val isOnline: Boolean
 )
 

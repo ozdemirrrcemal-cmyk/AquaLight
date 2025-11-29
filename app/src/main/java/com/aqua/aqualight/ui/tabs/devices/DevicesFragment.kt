@@ -83,6 +83,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                             id = dev.id,
                             aquaName = dev.aquaName,
                             name = dev.name.ifBlank { "Device" },
+                            ip = dev.ip,           // 🔹 eksik parametreyi verdik
+                            serial = dev.serial,   // 🔹 varsa constructor’da bu da var
                             isOnline = isOnline
                         )
                     }
