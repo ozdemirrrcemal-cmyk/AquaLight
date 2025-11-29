@@ -73,7 +73,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     binding.rvSelectedDevices.visibility = View.VISIBLE
 
                     val now = System.currentTimeMillis()
-                    val onlineTimeout = 30_000L // 30 sn içinde görüldüyse online say
+                    val onlineTimeout = 60_000L // 30 sn içinde görüldüyse online say
 
                     val uiList = list.map { dev ->
                         val isOnline = dev.lastSeenMillis != 0L &&
