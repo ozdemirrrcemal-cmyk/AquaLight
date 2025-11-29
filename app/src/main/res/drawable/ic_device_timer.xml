@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Dış daire -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.5"
+        android:pathData="M5,8a7,7 0 1,0 14,0a7,7 0 1,0 -14,0" />
+
+    <!-- Üst kulp -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M10.5,4h3v1.5h-3z" />
+
+    <!-- Akrep/yelkovan -->
+    <path
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.5"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:pathData="M12,8v3.5l2.5,1.5" />
+</vector>
