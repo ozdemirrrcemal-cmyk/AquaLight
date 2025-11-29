@@ -19,8 +19,20 @@ data class DeviceCardUi(
 )
 
 class DevicesListAdapter(
-    private val onClick: (DeviceCardUi) -> Unit
+    private val onSelectionModeStart: () -> Unit,
+    private val onSelectionChanged: (Int) -> Unit
 ) : ListAdapter<DeviceCardUi, DevicesListAdapter.DeviceViewHolder>(DiffCallback) {
+
+    private val selectedIds = mutableSetOf<Long>()
+    private var selectionMode = false
+
+    fun exitSelectionMode() {
+        selectionMode = false
+        selectedIds.clear()
+        notifyDataSetChanged()
+    }
+
+    fun getSelectedIds(): List<Long> = selectedIds.toList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -42,50 +54,68 @@ class DevicesListAdapter(
             // Cihaz adı
             binding.tvDeviceName.text = item.name
 
-            // AquaName'den icon seç
+            // Icon
             val iconRes = resolveIconForAquaName(item.aquaName)
             binding.ivDeviceIcon.setImageResource(iconRes)
 
-            // Bağlı / değil rengi
-            val statusColorRes = if (item.isOnline) {
-                R.color.dialog_icon_success      // yeşil (mevcut)
-            } else {
-                R.color.settings_text_secondary  // gri  (mevcut)
-            }
-
-            val statusColor = ContextCompat.getColor(ctx, statusColorRes)
+            // Online/offline rengi
+            val statusColor = ContextCompat.getColor(
+                ctx,
+                if (item.isOnline) R.color.dialog_icon_success else R.color.settings_text_secondary
+            )
             binding.ivStatus.setColorFilter(statusColor, PorterDuff.Mode.SRC_IN)
 
-            // Kart tıklama
+            // --- SEÇİLİ GÖRÜNÜMÜ ---
+            val isSelected = selectedIds.contains(item.id)
+            binding.cardRoot.strokeWidth = if (isSelected) 4 else 0
+            binding.cardRoot.strokeColor =
+                ContextCompat.getColor(ctx, R.color.aqua_button_blue)
+
+            // KISA TIK — sadece selection mode açıkken toggle
             binding.root.setOnClickListener {
-                onClick(item)
+                if (selectionMode) toggleSelection(item.id)
             }
+
+            // UZUN BASMA — selection mode başlatır + toggle yapar
+            binding.root.setOnLongClickListener {
+                if (!selectionMode) {
+                    selectionMode = true
+                    onSelectionModeStart()
+                }
+                toggleSelection(item.id)
+                true
+            }
+        }
+
+        private fun toggleSelection(id: Long) {
+            if (selectedIds.contains(id)) {
+                selectedIds.remove(id)
+            } else {
+                selectedIds.add(id)
+            }
+            onSelectionChanged(selectedIds.size)
+            notifyItemChanged(bindingAdapterPosition)
         }
     }
 
     companion object {
         private val DiffCallback = object : DiffUtil.ItemCallback<DeviceCardUi>() {
-            override fun areItemsTheSame(oldItem: DeviceCardUi, newItem: DeviceCardUi): Boolean =
-                oldItem.id == newItem.id
-
-            override fun areContentsTheSame(oldItem: DeviceCardUi, newItem: DeviceCardUi): Boolean =
-                oldItem == newItem
+            override fun areItemsTheSame(a: DeviceCardUi, b: DeviceCardUi) = a.id == b.id
+            override fun areContentsTheSame(a: DeviceCardUi, b: DeviceCardUi) = a == b
         }
 
-        private fun resolveIconForAquaName(aquaName: String): Int {
+        fun resolveIconForAquaName(aquaName: String): Int {
             val key = aquaName.lowercase(Locale.ROOT)
-
             return when {
-                key.contains("doser") -> R.drawable.ic_device_doser
-                key.contains("light") || key.contains("wrgb") ->
-                    R.drawable.ic_device_light
-                key.contains("hub") -> R.drawable.ic_device_wifi_hub
-                key.contains("timer") -> R.drawable.ic_device_timer
-                key.contains("temp") || key.contains("temperature") ->
-                    R.drawable.ic_device_temperature
-                key.contains("co2") -> R.drawable.ic_device_co2
-                key.contains("dr") -> R.drawable.ic_device_dr_aqua
-                else -> R.drawable.ic_device_dr_aqua  // default
+                key.contains("doser")       -> R.drawable.ic_device_doser
+                key.contains("light")       -> R.drawable.ic_device_light
+                key.contains("wrgb")        -> R.drawable.ic_device_light
+                key.contains("hub")         -> R.drawable.ic_device_wifi_hub
+                key.contains("timer")       -> R.drawable.ic_device_timer
+                key.contains("temp")        -> R.drawable.ic_device_temperature
+                key.contains("co2")         -> R.drawable.ic_device_co2
+                key.contains("dr")          -> R.drawable.ic_device_dr_aqua
+                else                        -> R.drawable.ic_device_dr_aqua
             }
         }
     }

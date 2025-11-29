@@ -21,6 +21,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private lateinit var userPrefs: UserPreferencesManager
     private lateinit var adapter: DevicesListAdapter
 
+    // 🔹 Seçim modu state
+    private var selectionMode = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDevicesBinding.bind(view)
@@ -28,22 +31,63 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         // DataStore
         userPrefs = UserPreferencesManager.create(requireContext())
 
-        // RecyclerView + adapter
-        adapter = DevicesListAdapter { deviceCard ->
-            // TODO: kart tıklanınca cihaz menüsü açılacak
-            // findNavController().navigate(...)
-        }
+        // RecyclerView + adapter (multi select destekli)
+        adapter = DevicesListAdapter(
+            onSelectionModeStart = {
+                enterSelectionMode()
+            },
+            onSelectionChanged = { count ->
+                // Şimdilik: hiç seçili kalmadıysa selection mode'dan çık
+                if (count == 0 && selectionMode) {
+                    exitSelectionMode()
+                }
+                // İstersen burada title'a "(3)" falan ekleyebilirsin
+            }
+        )
+
         binding.rvSelectedDevices.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSelectedDevices.adapter = adapter
 
-        // Tara / cihaz ekle
+        // Tara / cihaz ekle veya seçim modunda sil
         binding.btnScanDevices.setOnClickListener {
-            findNavController().navigate(
-                R.id.action_devicesFragment_to_scanDevicesFragment
-            )
+            if (selectionMode) {
+                // 🗑 Seçim modundayken: seçili cihaz(lar)ı sil
+                deleteSelectedDevices()
+            } else {
+                // Normal mod: tarama ekranına git
+                findNavController().navigate(
+                    R.id.action_devicesFragment_to_scanDevicesFragment
+                )
+            }
         }
 
         observeSelectedDevice()
+    }
+
+    // 🔹 Seçim moduna giriş: radar → çöp kovası
+    private fun enterSelectionMode() {
+        if (selectionMode) return
+        selectionMode = true
+        binding.btnScanDevices.setImageResource(R.drawable.ic_delete) // kendi çöp icon’un
+    }
+
+    // 🔹 Seçim modundan çıkış: çöp kovası → radar
+    private fun exitSelectionMode() {
+        if (!selectionMode) return
+        selectionMode = false
+        adapter.exitSelectionMode()
+        binding.btnScanDevices.setImageResource(R.drawable.ic_radar)
+    }
+
+    // 🔹 Şimdilik DataStore’da tek cihaz tuttuğun için:
+    // delete = seçili cihazı DataStore’dan sil + listeyi boşalt
+    private fun deleteSelectedDevices() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            // Şu an DataStore tarafında sadece 1 cihaz saklıyoruz,
+            // o yüzden direkt clearSelectedDevice çağırmak yeterli.
+            userPrefs.clearSelectedDevice()
+            exitSelectionMode()
+        }
     }
 
     private fun observeSelectedDevice() {
@@ -52,6 +96,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 userPrefs.selectedDeviceFlow.collect { device ->
                     if (device == null || device.id == 0L) {
                         // ❌ Hiç kayıtlı cihaz yok
+                        exitSelectionMode() // güvenlik: iconu da eski haline getir
                         binding.tvEmptyState.visibility = View.VISIBLE
                         binding.rvSelectedDevices.visibility = View.GONE
                         adapter.submitList(emptyList())
@@ -66,7 +111,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
                         binding.tvEmptyState.visibility = View.GONE
                         binding.rvSelectedDevices.visibility = View.VISIBLE
-                        adapter.submitList(listOf(baseItem))   // kart anında görünür
+                        adapter.submitList(listOf(baseItem))   // kart ANINDA görünür
 
                         // 🔄 Online / offline kontrolünü ARKA PLANDA yap
                         viewLifecycleOwner.lifecycleScope.launch {
@@ -80,7 +125,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                                 false
                             }
 
-                            // Sadece status alanını güncelle
                             val updatedItem = baseItem.copy(isOnline = isOnline)
                             adapter.submitList(listOf(updatedItem))
                         }
