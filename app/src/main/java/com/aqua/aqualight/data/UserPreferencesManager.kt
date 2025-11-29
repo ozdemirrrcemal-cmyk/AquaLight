@@ -15,6 +15,32 @@ import java.time.LocalDate
 import java.time.temporal.WeekFields
 import java.util.Locale
 
+// --------------------------------------------------------
+//  Dışarıya verilen UI modelleri
+// --------------------------------------------------------
+
+data class UsageAnalyticsUi(
+    val weeklyAutomationCount: Int,
+    val weeklyAlertCount: Int,
+    val todayAutomationCount: Int,
+    val todayManualActionCount: Int,
+    val lastEventTimeMillis: Long,
+    val lastEventDescription: String
+)
+
+data class DeviceInfoUi(
+    val id: Long,
+    val aquaName: String,
+    val name: String,
+    val ip: String,
+    val serial: String,
+    val lastSeenMillis: Long
+)
+
+// --------------------------------------------------------
+//  UserPreferencesManager
+// --------------------------------------------------------
+
 class UserPreferencesManager private constructor(
     private val dataStore: DataStore<UserPreferences>
 ) {
@@ -94,15 +120,6 @@ class UserPreferencesManager private constructor(
     // --------------------------------------------------------
     //  USAGE / ANALYTICS
     // --------------------------------------------------------
-
-    data class UsageAnalyticsUi(
-        val weeklyAutomationCount: Int,
-        val weeklyAlertCount: Int,
-        val todayAutomationCount: Int,
-        val todayManualActionCount: Int,
-        val lastEventTimeMillis: Long,
-        val lastEventDescription: String
-    )
 
     val usageAnalyticsFlow: Flow<UsageAnalyticsUi> = userPrefsFlow.map { prefs ->
         UsageAnalyticsUi(
@@ -282,15 +299,6 @@ class UserPreferencesManager private constructor(
     // --------------------------------------------------------
     //  MULTI-DEVICE FLOWS
     // --------------------------------------------------------
-
-    data class DeviceInfoUi(
-        val id: Long,
-        val aquaName: String,
-        val name: String,
-        val ip: String,
-        val serial: String,
-        val lastSeenMillis: Long
-    )
 
     val devicesFlow: Flow<List<DeviceInfoUi>> = userPrefsFlow.map { prefs ->
         prefs.devicesList.map {
