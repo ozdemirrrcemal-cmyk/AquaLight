@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices
 
+import android.graphics.PorterDuff
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -48,14 +48,13 @@ class DevicesListAdapter(
 
             // Bağlı / değil rengi
             val statusColorRes = if (item.isOnline) {
-                R.color.dialog_icon_success      // yeşil
+                R.color.dialog_icon_success      // yeşil (mevcut)
             } else {
-                R.color.settings_text_secondary  // gri
+                R.color.settings_text_secondary  // gri  (mevcut)
             }
-            ImageViewCompat.setTint(
-                binding.ivStatus,
-                ContextCompat.getColor(ctx, statusColorRes)
-            )
+
+            val statusColor = ContextCompat.getColor(ctx, statusColorRes)
+            binding.ivStatus.setColorFilter(statusColor, PorterDuff.Mode.SRC_IN)
 
             // Kart tıklama
             binding.root.setOnClickListener {
