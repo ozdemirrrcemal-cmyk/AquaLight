@@ -1125,16 +1125,13 @@
 <string name="device_scan_no_devices">No devices found nearby.\nPlease make sure you are connected to the same network.</string>
 <string name="device_scan_scan_again">Scan again</string>
 <string name="device_scan_searching">Searching devices...</string>
-
-<!-- Devices / delete confirm -->
-<string name="devices_delete_title_single">Remove device</string>
-<string name="devices_delete_title_multi">Remove %1$d devices</string>
+<string name="devices_delete_title_single">Delete device?</string>
+<string name="devices_delete_title_multi">Delete %1$d devices?</string>
 
 <string name="devices_delete_message_single">
-    Are you sure you want to remove the selected device?
+    Are you sure you want to delete this device? This action cannot be undone.
 </string>
 <string name="devices_delete_message_multi">
-    Are you sure you want to remove the selected %1$d devices?
+    Are you sure you want to delete the selected %1$d devices? This action cannot be undone.
 </string>
-
 </resources>

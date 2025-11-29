@@ -6,8 +6,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
@@ -46,7 +46,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         binding.btnScanDevices.setOnClickListener {
             if (selectionMode) {
-                // 🗑 Seçim modundayken: önce confirm dialog
+                // 🗑 Seçim modundayken confirm dialog göster
                 showDeleteConfirmDialog()
             } else {
                 // Normal mod: tarama ekranına git
@@ -120,8 +120,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         val count = ids.size
         val title = if (count == 1) {
-            getString(R.string.devices_delete_title_single)  // yoksa aşağıdaki hardcode’ları kullanabilirsin
+            // Tek cihaz
+            getString(R.string.devices_delete_title_single)
         } else {
+            // Birden fazla cihaz (örn: "Delete 3 devices?")
             getString(R.string.devices_delete_title_multi, count)
         }
 
@@ -136,14 +138,13 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             type = DialogType.WARNING,
             title = title,
             message = message,
-            confirmTextResId = R.string.delete,   // buton yazıları için string’in varsa
-            cancelTextResId = R.string.cancel,
+            // confirm/cancel textlerini **KENDİ DEFAULTLARI** (confirm / cancel) kullanacak
             onConfirm = {
                 // Onaylarsa gerçekten sil
                 deleteSelectedDevices(ids)
             },
             onCancel = {
-                // İstersen buraya bir şey yapma, seçim kalsın
+                // İstersen hiçbir şey yapma, seçim kalsın
             }
         )
     }
