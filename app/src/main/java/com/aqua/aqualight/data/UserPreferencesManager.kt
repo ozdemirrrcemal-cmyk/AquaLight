@@ -12,9 +12,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
-import java.time.LocalDate
-import java.time.temporal.WeekFields
-import java.util.Locale
 
 class UserPreferencesManager private constructor(
     private val dataStore: DataStore<UserPreferences>
@@ -91,30 +88,6 @@ class UserPreferencesManager private constructor(
     val postCode: Flow<String> = userPrefsFlow.map { it.postCode }
     val phoneNumber: Flow<String> = userPrefsFlow.map { it.phoneNumber }
     val country: Flow<String> = userPrefsFlow.map { it.country }
-
-    // --------------------------------------------------------
-    //  USAGE / ANALYTICS
-    // --------------------------------------------------------
-
-    data class UsageAnalyticsUi(
-        val weeklyAutomationCount: Int,
-        val weeklyAlertCount: Int,
-        val todayAutomationCount: Int,
-        val todayManualActionCount: Int,
-        val lastEventTimeMillis: Long,
-        val lastEventDescription: String
-    )
-
-    val usageAnalyticsFlow: Flow<UsageAnalyticsUi> = userPrefsFlow.map { prefs ->
-        UsageAnalyticsUi(
-            weeklyAutomationCount = prefs.weeklyAutomationCount,
-            weeklyAlertCount = prefs.weeklyAlertCount,
-            todayAutomationCount = prefs.todayAutomationCount,
-            todayManualActionCount = prefs.todayManualActionCount,
-            lastEventTimeMillis = prefs.lastEventTimeMillis,
-            lastEventDescription = prefs.lastEventDescription
-        )
-    )
 
     // --------------------------------------------------------
     //  GENERAL UPDATE
@@ -221,62 +194,6 @@ class UserPreferencesManager private constructor(
             prefs.toBuilder()
                 .setTwoFactorEnabled(enabled)
                 .build()
-        }
-    }
-
-    // --------------------------------------------------------
-    //  USAGE LOG
-    // --------------------------------------------------------
-
-    suspend fun logUsageEvent(
-        isManual: Boolean,
-        isAlert: Boolean,
-        description: String
-    ) {
-        val now = System.currentTimeMillis()
-
-        val today = LocalDate.now()
-        val dayKey = today.toString() // "2025-11-20"
-
-        val weekFields = WeekFields.of(Locale.getDefault())
-        val weekOfYear = today.get(weekFields.weekOfWeekBasedYear())
-        val weekKey = "${today.year}-W$weekOfYear" // "2025-W47"
-
-        dataStore.updateData { prefs ->
-            val builder = prefs.toBuilder()
-
-            if (prefs.lastUsageDayKey != dayKey) {
-                builder.clearTodayAutomationCount()
-                builder.clearTodayManualActionCount()
-            }
-
-            if (prefs.lastUsageWeekKey != weekKey) {
-                builder.clearWeeklyAutomationCount()
-                builder.clearWeeklyAlertCount()
-            }
-
-            val updatedWeeklyAutomation = builder.weeklyAutomationCount + 1
-            builder.weeklyAutomationCount = updatedWeeklyAutomation
-
-            if (isAlert) {
-                val updatedWeeklyAlerts = builder.weeklyAlertCount + 1
-                builder.weeklyAlertCount = updatedWeeklyAlerts
-            }
-
-            if (isManual) {
-                val updatedTodayManual = builder.todayManualActionCount + 1
-                builder.todayManualActionCount = updatedTodayManual
-            } else {
-                val updatedTodayAuto = builder.todayAutomationCount + 1
-                builder.todayAutomationCount = updatedTodayAuto
-            }
-
-            builder.lastEventTimeMillis = now
-            builder.lastEventDescription = description
-            builder.lastUsageDayKey = dayKey
-            builder.lastUsageWeekKey = weekKey
-
-            builder.build()
         }
     }
 
