@@ -13,9 +13,9 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp">
+        android:paddingVertical="14dp">
 
-        <!-- Sol: AquaName -->
+        <!-- Sol: AquaName / Type -->
         <TextView
             android:id="@+id/tvAquaName"
             android:layout_width="wrap_content"
@@ -25,7 +25,7 @@
             android:textSize="10sp"
             android:textStyle="bold" />
 
-        <!-- Orta: Name (ortalanmış) -->
+        <!-- Orta: Name (ortalanmış, esnek alan) -->
         <TextView
             android:id="@+id/tvName"
             android:layout_width="0dp"
@@ -45,7 +45,9 @@
             android:text="DS-637128968"
             android:textSize="10sp"
             android:maxLines="1"
-            android:ellipsize="end" />
+            android:ellipsize="end"
+            android:alpha="0.85"
+            android:fontFamily="monospace" />
     </LinearLayout>
 
     <!-- Alt çizgi / divider: tam genişlik -->
