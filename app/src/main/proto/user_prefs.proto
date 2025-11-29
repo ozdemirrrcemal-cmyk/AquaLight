@@ -14,7 +14,7 @@ message UserPreferences {
   bool   notificationsEnabled = 9;
   bool   autoUpdateEnabled     = 10;
 
-  // Adres
+  // Adres bilgileri
   string firstName       = 11;
   string lastName        = 12;
   string city            = 13;
@@ -23,27 +23,26 @@ message UserPreferences {
   string phoneNumber     = 16;
   string country         = 17;
 
-  // Login uyarı
+  // Login alerts
   bool   loginAlertsEnabled = 18;
 
   // 2FA
   bool   twoFactorEnabled   = 19;
 
-  // Analytics
+  // Usage analytics
   int32  weeklyAutomationCount   = 20;
   int32  weeklyAlertCount        = 21;
   int32  todayAutomationCount    = 22;
   int32  todayManualActionCount  = 23;
-
   int64  lastEventTimeMillis     = 24;
   string lastEventDescription    = 25;
-
   string lastUsageDayKey         = 26;
   string lastUsageWeekKey        = 27;
 
-  // ⭐ SEÇİLİ CİHAZ
-  string selectedDeviceIp        = 28;
-  string selectedDeviceName      = 29;
-  string selectedDeviceAquaName  = 30;
-  string selectedDeviceSerial    = 31;
+  // ⭐️ SEÇİLİ CİHAZ ALANLARI (Eksik olanlar)
+  int64  selectedDeviceId        = 28;
+  string selectedDeviceAquaName  = 29;
+  string selectedDeviceName      = 30;
+  string selectedDeviceIp        = 31;
+  string selectedDeviceSerial    = 32;
 }
