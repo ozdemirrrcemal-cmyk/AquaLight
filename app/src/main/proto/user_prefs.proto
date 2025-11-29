@@ -14,7 +14,7 @@ message UserPreferences {
   bool   notificationsEnabled = 9;
   bool   autoUpdateEnabled     = 10;
 
-  // 🆕 Adres bilgileri
+  // Adres
   string firstName       = 11;
   string lastName        = 12;
   string city            = 13;
@@ -23,28 +23,27 @@ message UserPreferences {
   string phoneNumber     = 16;
   string country         = 17;
 
-  // 🆕 Login uyarıları (giriş alert)
+  // Login uyarı
   bool   loginAlertsEnabled = 18;
 
-  // 🆕 İki faktörlü kimlik doğrulama
+  // 2FA
   bool   twoFactorEnabled   = 19;
 
-  // 🆕 Usage / Analytics alanları
-  int32  weeklyAutomationCount   = 20; // Son hafta tetiklenen otomasyon sayısı
-  int32  weeklyAlertCount        = 21; // Son hafta oluşan uyarı/alarm sayısı
-  int32  todayAutomationCount    = 22; // Bugün çalışan otomasyon
-  int32  todayManualActionCount  = 23; // Bugün yapılan manuel müdahale
+  // Analytics
+  int32  weeklyAutomationCount   = 20;
+  int32  weeklyAlertCount        = 21;
+  int32  todayAutomationCount    = 22;
+  int32  todayManualActionCount  = 23;
 
-  int64  lastEventTimeMillis     = 24; // Son önemli olay zamanı
-  string lastEventDescription    = 25; // "Lighting • Evening schedule turned ON"
+  int64  lastEventTimeMillis     = 24;
+  string lastEventDescription    = 25;
 
-  string lastUsageDayKey         = 26; // "2025-11-20" gibi
-  string lastUsageWeekKey        = 27; // "2025-W47" gibi
+  string lastUsageDayKey         = 26;
+  string lastUsageWeekKey        = 27;
 
-  // 🆕 Seçili cihaz bilgisi
-  int64  selectedDeviceId        = 28; // DiscoveredDevice.id
-  string selectedDeviceAquaName  = 29; // Örn: "Doser", "Light"
-  string selectedDeviceName      = 30; // Örn: "SuperStar Pump"
-  string selectedDeviceIp        = 31; // Cihazın IP adresi
-  string selectedDeviceSerial    = 32; // Örn: "DS-637128968"
+  // ⭐ SEÇİLİ CİHAZ
+  string selectedDeviceIp        = 28;
+  string selectedDeviceName      = 29;
+  string selectedDeviceAquaName  = 30;
+  string selectedDeviceSerial    = 31;
 }

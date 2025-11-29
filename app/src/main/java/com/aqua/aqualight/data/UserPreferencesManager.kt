@@ -86,7 +86,7 @@ class UserPreferencesManager private constructor(
     val twoFactorEnabled: Flow<Boolean> =
         userPrefsFlow.map { it.twoFactorEnabled }
 
-    // 🆕 Adres alanları için Flow'lar
+    // Adres alanları için Flow'lar
     val firstName: Flow<String> = userPrefsFlow.map { it.firstName }
     val lastName: Flow<String> = userPrefsFlow.map { it.lastName }
     val city: Flow<String> = userPrefsFlow.map { it.city }
@@ -96,7 +96,7 @@ class UserPreferencesManager private constructor(
     val country: Flow<String> = userPrefsFlow.map { it.country }
 
     // --------------------------------------------------------
-    //  🆕 USAGE / ANALYTICS FLOW
+    //  USAGE / ANALYTICS FLOW
     // --------------------------------------------------------
 
     data class UsageAnalyticsUi(
@@ -117,7 +117,7 @@ class UserPreferencesManager private constructor(
             lastEventTimeMillis = prefs.lastEventTimeMillis,
             lastEventDescription = prefs.lastEventDescription
         )
-    )
+    }
 
     // --------------------------------------------------------
     //  GENEL UPDATE
@@ -156,7 +156,6 @@ class UserPreferencesManager private constructor(
 
             email?.let { builder.setEmail(it) }
             username?.let { builder.setUsername(it) }
-            this@UserPreferencesManager
             fullName?.let { builder.setFullName(it) }
             photoUrl?.let { builder.setProfilePhotoUrl(it) }
 
@@ -234,17 +233,9 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  🆕 USAGE LOG FONKSIYONU
+    //  USAGE LOG FONKSIYONU
     // --------------------------------------------------------
 
-    /**
-     * Kullanım log'u:
-     *
-     * @param isManual   true  → kullanıcı manuel bir şey yaptı (ışık aç/kapa vs.)
-     *                  false → otomasyon / schedule çalıştı
-     * @param isAlert    true → bu olay bir uyarı/alarm olayı
-     * @param description Ekranda göstermek istediğin insan okunur açıklama
-     */
     suspend fun logUsageEvent(
         isManual: Boolean,
         isAlert: Boolean,
@@ -305,7 +296,7 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  🆕 SEÇILI CIHAZ BILGISI
+    //  SEÇİLİ CİHAZ BİLGİSİ
     // --------------------------------------------------------
 
     data class SelectedDeviceUi(
@@ -361,14 +352,9 @@ class UserPreferencesManager private constructor(
     }
 
     // --------------------------------------------------------
-    //  🆕 ADRES KAYDI
+    //  ADRES KAYDI
     // --------------------------------------------------------
 
-    /**
-     *  Adres ekranında girdiğin alanlar:
-     *  - firstName, lastName → fullName otomatik set edilir
-     *  - city, addressLine, postCode, phoneNumber, country
-     */
     suspend fun saveAddress(
         firstName: String,
         lastName: String,
@@ -391,7 +377,7 @@ class UserPreferencesManager private constructor(
                 .setPostCode(postCode)
                 .setPhoneNumber(phoneNumber)
                 .setCountry(country)
-                .setFullName(fullName) // 🔥 FULL NAME BURADA OLUŞUYOR
+                .setFullName(fullName)
                 .build()
         }
     }
