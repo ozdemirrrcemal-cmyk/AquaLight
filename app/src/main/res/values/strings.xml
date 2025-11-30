@@ -1185,4 +1185,5 @@
 <string name="device_menu_about_message">Information about firmware and creator.</string>
 
 <string name="device_menu_title_default">Device</string>
+<string name="device_dashboard_subtitle_format">%1$s • %2$s</string>
 </resources>
