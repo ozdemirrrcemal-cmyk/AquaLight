@@ -175,7 +175,7 @@
     <!-- 🆕 Seçilen cihazın menü ekranı -->
     <fragment
         android:id="@+id/deviceDashboardFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.DeviceDashboardFragment"
+        android:name="com.aqua.aqualight.ui.devices.DeviceDashboardFragment"
         android:label="Device"
         tools:layout="@layout/fragment_device_dashboard">
 
