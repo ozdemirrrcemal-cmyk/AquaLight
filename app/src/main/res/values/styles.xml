@@ -207,15 +207,16 @@
 
 <style name="TextAppearance.Aqua.Caption" parent="TextAppearance.Material3.LabelMedium" />
 
-   <style name="Aqua" />
+  <style name="Aqua" />
 
-    <!-- Senin satırlarının aynısı, sadece parent ekledim -->
-    <style name="Aqua.DeviceMenuRow" parent="Aqua">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:paddingLeft">12dp</item>
-        <item name="android:paddingRight">12dp</item>
-        <item name="android:background">?attr/selectableItemBackground</item>
-    </style>
+<style name="Aqua.DeviceMenuRow" parent="Aqua">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">48dp</item>
+    <item name="android:gravity">center_vertical</item>
+    <item name="android:paddingLeft">12dp</item>
+    <item name="android:paddingRight">12dp</item>
+    <item name="android:background">?attr/selectableItemBackground</item>
+    <!-- 🔹 Lint’in istediği satır -->
+    <item name="android:orientation">horizontal</item>
+</style>
 </resources>
