@@ -4,28 +4,36 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceDashboardBinding
+import com.aqua.aqualight.ui.common.bottomsheet.DeviceMenuBottomSheet
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import com.aqua.aqualight.ui.common.bottomsheet.DeviceMenuBottomSheet
 
 class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
 
     private var _binding: FragmentDeviceDashboardBinding? = null
     private val binding get() = _binding!!
 
-    private val args: DeviceDashboardFragmentArgs by navArgs()
+    // 🔹 Artık SafeArgs yok, verileri direkt Bundle’dan alıyoruz
+    private val deviceId: Long by lazy { requireArguments().getLong("deviceId") }
+    private val deviceName: String by lazy { requireArguments().getString("deviceName").orEmpty() }
+    private val deviceIp: String by lazy { requireArguments().getString("deviceIp").orEmpty() }
+    private val aquaName: String by lazy { requireArguments().getString("aquaName").orEmpty() }
+    private val serial: String by lazy { requireArguments().getString("serial").orEmpty() }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceDashboardBinding.bind(view)
 
-        // Başlık: cihaz adı
-        binding.tvDeviceName.text = args.deviceName.ifBlank { args.aquaName.ifBlank { "Device" } }
+        // Başlık: cihaz adı (boşsa aquaName, o da boşsa "Device")
+        val title = deviceName.ifBlank { aquaName.ifBlank { "Device" } }
+        binding.tvDeviceName.text = title
+
         // Alt başlık: AquaName + IP
         binding.tvDeviceSubtitle.text =
-            getString(R.string.device_dashboard_subtitle_format, args.aquaName, args.deviceIp)
+            getString(R.string.device_dashboard_subtitle_format, aquaName, deviceIp)
 
         // Geri tuşu
         binding.btnBack.setOnClickListener {
@@ -37,7 +45,7 @@ class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
             showDeviceMenu()
         }
 
-        // Örnek: ana içerik kartına tıklayınca da menü aç
+        // İstersen kartın tamamına tıklayınca da menü aç
         binding.cardMain.setOnClickListener {
             showDeviceMenu()
         }
@@ -45,8 +53,8 @@ class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
 
     private fun showDeviceMenu() {
         val sheet = DeviceMenuBottomSheet.newInstance(
-            deviceName = args.deviceName,
-            aquaName = args.aquaName
+            deviceName = deviceName,
+            aquaName = aquaName
         )
         sheet.menuActionListener = { action ->
             handleMenuAction(action)
@@ -63,7 +71,7 @@ class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
                     title = getString(R.string.device_menu_light_title),
                     message = getString(R.string.device_menu_light_message)
                 )
-                // İleride: findNavController().navigate(R.id.deviceLightFragment, ...)
+                // TODO: findNavController().navigate(R.id.deviceLightFragment, ...)
             }
 
             DeviceMenuBottomSheet.ACTION_TIMER -> {
@@ -145,7 +153,7 @@ class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
                     title = getString(R.string.device_menu_reboot_title),
                     message = getString(R.string.device_menu_reboot_message),
                     onConfirm = {
-                        // Buraya ileride ESP32 reboot endpoint çağrısı gelecek
+                        // TODO: Buraya ESP32 reboot endpoint çağrısını koy
                         DialogManager.showInfoDialog(
                             context = requireContext(),
                             type = DialogType.SUCCESS,
@@ -154,7 +162,7 @@ class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
                             autoDismissMillis = 1500L
                         )
                     },
-                    onCancel = { /* boş */ }
+                    onCancel = { /* boş bırakabilirsin */ }
                 )
             }
 
