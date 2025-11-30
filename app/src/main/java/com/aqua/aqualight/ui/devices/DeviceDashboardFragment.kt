@@ -18,7 +18,7 @@ class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
     // 🔹 Artık SafeArgs yok, verileri direkt Bundle’dan alıyoruz
     private val deviceId: Long by lazy { requireArguments().getLong("deviceId") }
     private val deviceName: String by lazy { requireArguments().getString("deviceName").orEmpty() }
-    private val deviceIp: String by lazy { requireArguments().getString("deviceIp").orEmpty() }
+    private val deviceIp: String by lazy { requireArguments().getString("deviceIp").orEmpty() }   // Şimdilik görünmüyor ama elde dursun
     private val aquaName: String by lazy { requireArguments().getString("aquaName").orEmpty() }
     private val serial: String by lazy { requireArguments().getString("serial").orEmpty() }
 
@@ -30,9 +30,7 @@ class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
         val title = deviceName.ifBlank { aquaName.ifBlank { "Device" } }
         binding.tvDeviceName.text = title
 
-        // Alt başlık: AquaName + IP
-        binding.tvDeviceSubtitle.text =
-            getString(R.string.device_dashboard_subtitle_format, aquaName, deviceIp)
+        // 🔻 Alt başlık (AquaName + IP) artık gösterilmiyor, bu yüzden tvDeviceSubtitle kullanılmıyor
 
         // Geri tuşu
         binding.btnBack.setOnClickListener {
@@ -44,7 +42,7 @@ class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
             showDeviceMenu()
         }
 
-        // İstersen kartın tamamına tıklayınca da menü aç
+        // Kartın tamamına tıklayınca da menü aç
         binding.cardMain.setOnClickListener {
             showDeviceMenu()
         }
