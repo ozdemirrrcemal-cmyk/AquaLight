@@ -9,7 +9,6 @@ import com.aqua.aqualight.databinding.FragmentDeviceDashboardBinding
 import com.aqua.aqualight.ui.common.bottomsheet.DeviceMenuBottomSheet
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.aqua.aqualight.ui.common.bottomsheet.DeviceMenuBottomSheet
 
 class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
 
