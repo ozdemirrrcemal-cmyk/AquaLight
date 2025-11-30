@@ -34,7 +34,6 @@
             app:tint="@color/md_theme_dark_onSurface" />
     </LinearLayout>
 
-    <!-- ------------ ANA MENÜ ------------ -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -56,7 +55,6 @@
         android:id="@+id/rowMainTemperature"
         style="@style/Aqua.DeviceMenuRow" />
 
-    <!-- ------------ AYARLAR ------------ -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -85,8 +83,7 @@
     <LinearLayout
         android:id="@+id/rowSettingsNet"
         style="@style/Aqua.DeviceMenuRow" />
-
-    <!-- ------------ ARAÇLAR ------------ -->
+		
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
