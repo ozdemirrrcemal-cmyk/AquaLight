@@ -2,184 +2,187 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceDashboardBinding
-import com.aqua.aqualight.ui.common.bottomsheet.DeviceMenuBottomSheet
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
 
 class DeviceDashboardFragment : Fragment(R.layout.fragment_device_dashboard) {
 
     private var _binding: FragmentDeviceDashboardBinding? = null
     private val binding get() = _binding!!
 
-    // 🔹 Artık SafeArgs yok, verileri direkt Bundle’dan alıyoruz
+    // Cihaz bilgileri
     private val deviceId: Long by lazy { requireArguments().getLong("deviceId") }
     private val deviceName: String by lazy { requireArguments().getString("deviceName").orEmpty() }
-    private val deviceIp: String by lazy { requireArguments().getString("deviceIp").orEmpty() }   // Şimdilik görünmüyor ama elde dursun
+    private val deviceIp: String by lazy { requireArguments().getString("deviceIp").orEmpty() }
     private val aquaName: String by lazy { requireArguments().getString("aquaName").orEmpty() }
     private val serial: String by lazy { requireArguments().getString("serial").orEmpty() }
+
+    // JS: CheckTab("TabLight") / TabTimer / TabTemperature
+    private val hasLight       by lazy { requireArguments().getBoolean("hasLight",       false) }
+    private val hasTimer       by lazy { requireArguments().getBoolean("hasTimer",       false) }
+    private val hasTemperature by lazy { requireArguments().getBoolean("hasTemperature", false) }
+
+    private var initialPageLoaded = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceDashboardBinding.bind(view)
 
-        // Başlık: cihaz adı (boşsa aquaName, o da boşsa "Device")
+        // Başlık
         val title = deviceName.ifBlank { aquaName.ifBlank { "Device" } }
         binding.tvDeviceName.text = title
 
-        // 🔻 Alt başlık (AquaName + IP) artık gösterilmiyor, bu yüzden tvDeviceSubtitle kullanılmıyor
-
-        // Geri tuşu
+        // Geri
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
-        // Menü butonu – bottom sheet aç
+        // Menü butonu → sağ drawer aç/kapat
         binding.btnMenu.setOnClickListener {
-            showDeviceMenu()
+            toggleMenu()
         }
 
-        // Kartın tamamına tıklayınca da menü aç
-        binding.cardMain.setOnClickListener {
-            showDeviceMenu()
+        // Menü item clickleri
+        binding.menuLight.setOnClickListener {
+            openLightPage()
+            closeMenu()
+        }
+
+        binding.menuTimer.setOnClickListener {
+            openTimerPage()
+            closeMenu()
+        }
+
+        binding.menuTemperature.setOnClickListener {
+            openTemperaturePage()
+            closeMenu()
+        }
+
+        binding.menuWifi.setOnClickListener {
+            // WiFi sayfası
+            // openWifiPage()
+            closeMenu()
+        }
+
+        binding.menuTime.setOnClickListener {
+            // Time sayfası
+            // openTimePage()
+            closeMenu()
+        }
+
+        binding.menuGeneral.setOnClickListener {
+            // General sayfası
+            // openGeneralPage()
+            closeMenu()
+        }
+
+        binding.menuPwm.setOnClickListener {
+            // PWM sayfası
+            // openPwmPage()
+            closeMenu()
+        }
+
+        binding.menuNet.setOnClickListener {
+            // Net sayfası
+            // openNetPage()
+            closeMenu()
+        }
+
+        binding.menuFs.setOnClickListener {
+            // Filesystem sayfası
+            // openFsPage()
+            closeMenu()
+        }
+
+        binding.menuReboot.setOnClickListener {
+            // Reboot sayfası
+            // openRebootPage()
+            closeMenu()
+        }
+
+        binding.menuInfo.setOnClickListener {
+            // Info sayfası
+            // openInfoPage()
+            closeMenu()
+        }
+
+        binding.menuAbout.setOnClickListener {
+            // About sayfası
+            // openAboutPage()
+            closeMenu()
+        }
+
+        // Cihaza girince index.htm mantığı ile ilk sayfayı yükle
+        loadInitialPageIfNeeded()
+    }
+
+    private fun toggleMenu() {
+        val drawer = binding.drawerLayout
+        if (drawer.isDrawerOpen(GravityCompat.END)) {
+            drawer.closeDrawer(GravityCompat.END)
+        } else {
+            drawer.openDrawer(GravityCompat.END)
         }
     }
 
-    private fun showDeviceMenu() {
-        val sheet = DeviceMenuBottomSheet.newInstance(
-            deviceName = deviceName,
-            aquaName = aquaName
-        )
-        sheet.menuActionListener = { action ->
-            handleMenuAction(action)
-        }
-        sheet.show(childFragmentManager, "DeviceMenuBottomSheet")
+    private fun closeMenu() {
+        binding.drawerLayout.closeDrawer(GravityCompat.END)
     }
 
-    private fun handleMenuAction(action: String) {
-        when (action) {
-            DeviceMenuBottomSheet.ACTION_LIGHT -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_light_title),
-                    message = getString(R.string.device_menu_light_message)
-                )
-                // TODO: findNavController().navigate(R.id.deviceLightFragment, ...)
-            }
+    private fun loadInitialPageIfNeeded() {
+        if (initialPageLoaded) return
+        initialPageLoaded = true
 
-            DeviceMenuBottomSheet.ACTION_TIMER -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_timer_title),
-                    message = getString(R.string.device_menu_timer_message)
-                )
-            }
+        val fragment: Fragment? = when {
+            hasLight       -> createLightFragment()
+            hasTimer       -> createTimerFragment()
+            hasTemperature -> createTemperatureFragment()
+            else -> null
+        }
 
-            DeviceMenuBottomSheet.ACTION_TEMPERATURE -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_temperature_title),
-                    message = getString(R.string.device_menu_temperature_message)
-                )
+        if (fragment != null) {
+            childFragmentManager.commit {
+                replace(R.id.contentContainer, fragment)
             }
+        }
+    }
 
-            DeviceMenuBottomSheet.ACTION_WIFI -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_wifi_title),
-                    message = getString(R.string.device_menu_wifi_message)
-                )
-            }
+    private fun baseArgsBundle() = Bundle().apply {
+        putLong("deviceId", deviceId)
+        putString("deviceName", deviceName)
+        putString("deviceIp", deviceIp)
+        putString("aquaName", aquaName)
+        putString("serial", serial)
+    }
 
-            DeviceMenuBottomSheet.ACTION_TIME -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_time_title),
-                    message = getString(R.string.device_menu_time_message)
-                )
-            }
+    private fun createLightFragment(): Fragment =
+        DeviceLightFragment().apply { arguments = baseArgsBundle() }
 
-            DeviceMenuBottomSheet.ACTION_GENERAL -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_general_title),
-                    message = getString(R.string.device_menu_general_message)
-                )
-            }
+    private fun createTimerFragment(): Fragment =
+        DeviceTimerFragment().apply { arguments = baseArgsBundle() }
 
-            DeviceMenuBottomSheet.ACTION_PWM -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_pwm_title),
-                    message = getString(R.string.device_menu_pwm_message)
-                )
-            }
+    private fun createTemperatureFragment(): Fragment =
+        DeviceTemperatureFragment().apply { arguments = baseArgsBundle() }
 
-            DeviceMenuBottomSheet.ACTION_NET -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_net_title),
-                    message = getString(R.string.device_menu_net_message)
-                )
-            }
+    private fun openLightPage() {
+        childFragmentManager.commit {
+            replace(R.id.contentContainer, createLightFragment())
+        }
+    }
 
-            DeviceMenuBottomSheet.ACTION_FILESYSTEM -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_filesystem_title),
-                    message = getString(R.string.device_menu_filesystem_message)
-                )
-            }
+    private fun openTimerPage() {
+        childFragmentManager.commit {
+            replace(R.id.contentContainer, createTimerFragment())
+        }
+    }
 
-            DeviceMenuBottomSheet.ACTION_REBOOT -> {
-                DialogManager.showConfirmDialog(
-                    context = requireContext(),
-                    type = DialogType.WARNING,
-                    title = getString(R.string.device_menu_reboot_title),
-                    message = getString(R.string.device_menu_reboot_message),
-                    onConfirm = {
-                        // TODO: Buraya ESP32 reboot endpoint çağrısını koy
-                        DialogManager.showInfoDialog(
-                            context = requireContext(),
-                            type = DialogType.SUCCESS,
-                            title = getString(R.string.device_menu_reboot_done_title),
-                            message = getString(R.string.device_menu_reboot_done_message),
-                            autoDismissMillis = 1500L
-                        )
-                    },
-                    onCancel = { /* boş bırakabilirsin */ }
-                )
-            }
-
-            DeviceMenuBottomSheet.ACTION_INFO -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_info_title),
-                    message = getString(R.string.device_menu_info_message)
-                )
-            }
-
-            DeviceMenuBottomSheet.ACTION_ABOUT -> {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.INFO,
-                    title = getString(R.string.device_menu_about_title),
-                    message = getString(R.string.device_menu_about_message)
-                )
-            }
+    private fun openTemperaturePage() {
+        childFragmentManager.commit {
+            replace(R.id.contentContainer, createTemperatureFragment())
         }
     }
 
