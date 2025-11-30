@@ -38,6 +38,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 if (count == 0) {
                     exitSelectionMode()
                 }
+            },
+            onDeviceClick = { device ->
+                // Seçim modunda değilsek cihaz menüsüne git
+                if (!selectionMode) {
+                    openDeviceDashboard(device)
+                }
             }
         )
 
@@ -114,41 +120,41 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     // ✅ TOPLU SİLME İÇİN CONFIRM DIALOG
-private fun showDeleteConfirmDialog() {
-    val ids = adapter.getSelectedIds()
-    if (ids.isEmpty()) return
+    private fun showDeleteConfirmDialog() {
+        val ids = adapter.getSelectedIds()
+        if (ids.isEmpty()) return
 
-    val count = ids.size
-    val title = if (count == 1) {
-        // Tek cihaz
-        getString(R.string.devices_delete_title_single)
-    } else {
-        // Birden fazla cihaz (örn: "Delete 3 devices?")
-        getString(R.string.devices_delete_title_multi, count)
-    }
-
-    val message = if (count == 1) {
-        getString(R.string.devices_delete_message_single)
-    } else {
-        getString(R.string.devices_delete_message_multi, count)
-    }
-
-    DialogManager.showConfirmDialog(
-        context = requireContext(),
-        type = DialogType.WARNING,
-        title = title,
-        message = message,
-        // confirm/cancel textlerini layouttaki default (confirm / cancel) kullanacak
-        onConfirm = {
-            // Onaylarsa gerçekten sil
-            deleteSelectedDevices(ids)
-        },
-        onCancel = {
-            // ❌ Kullanıcı vazgeçti → seçimleri temizle + ikonu geri çevir
-            exitSelectionMode()
+        val count = ids.size
+        val title = if (count == 1) {
+            // Tek cihaz
+            getString(R.string.devices_delete_title_single)
+        } else {
+            // Birden fazla cihaz (örn: "Delete 3 devices?")
+            getString(R.string.devices_delete_title_multi, count)
         }
-    )
-}
+
+        val message = if (count == 1) {
+            getString(R.string.devices_delete_message_single)
+        } else {
+            getString(R.string.devices_delete_message_multi, count)
+        }
+
+        DialogManager.showConfirmDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = title,
+            message = message,
+            // confirm/cancel textlerini layouttaki default (confirm / cancel) kullanacak
+            onConfirm = {
+                // Onaylarsa gerçekten sil
+                deleteSelectedDevices(ids)
+            },
+            onCancel = {
+                // ❌ Kullanıcı vazgeçti → seçimleri temizle + ikonu geri çevir
+                exitSelectionMode()
+            }
+        )
+    }
 
     // Asıl silme işi
     private fun deleteSelectedDevices(ids: Set<Long>) {
@@ -156,6 +162,22 @@ private fun showDeleteConfirmDialog() {
             userPrefs.deleteDevices(ids)
             exitSelectionMode()
         }
+    }
+
+    // 🔹 Cihaz menüsüne geçiş
+    private fun openDeviceDashboard(device: DeviceCardUi) {
+        val args = Bundle().apply {
+            putLong("deviceId", device.id)
+            putString("deviceName", device.name)
+            putString("deviceIp", device.ip)
+            putString("aquaName", device.aquaName)
+            putString("serial", device.serial)
+        }
+
+        findNavController().navigate(
+            R.id.action_devicesFragment_to_deviceDashboardFragment,
+            args
+        )
     }
 
     override fun onDestroyView() {

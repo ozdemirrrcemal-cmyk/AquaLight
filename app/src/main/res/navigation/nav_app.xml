@@ -12,7 +12,7 @@
         android:label="Aquarium"
         tools:layout="@layout/fragment_aquarium" />
 
-  <!-- 📟 Devices Tab -->
+    <!-- 📟 Devices Tab -->
     <fragment
         android:id="@+id/devicesFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
@@ -22,6 +22,11 @@
         <action
             android:id="@+id/action_devicesFragment_to_scanDevicesFragment"
             app:destination="@id/scanDevicesFragment" />
+
+        <!-- 👇 Seçilen cihazın menüsüne git -->
+        <action
+            android:id="@+id/action_devicesFragment_to_deviceDashboardFragment"
+            app:destination="@id/deviceDashboardFragment" />
     </fragment>
 
     <!-- 📡 Cihaz Tara -->
@@ -30,7 +35,7 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.ScanDevicesFragment"
         android:label="Scan devices"
         tools:layout="@layout/fragment_scan_devices" />
-	
+
     <!-- ⚙️ Settings Tab -->
     <fragment
         android:id="@+id/settingsFragment"
@@ -156,15 +161,39 @@
         android:name="com.aqua.aqualight.ui.tabs.settings.app.AboutAppFragment"
         android:label="About"
         tools:layout="@layout/fragment_about_app" />
-		
-		<fragment
-    android:id="@+id/termsOfUseFragment"
-    android:name="com.aqua.aqualight.ui.tabs.settings.app.TermsOfUseFragment"
-    android:label="@string/terms_title" />
 
-<fragment
-    android:id="@+id/openSourceLicensesFragment"
-    android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment"
-    android:label="@string/open_source_title" />
+    <fragment
+        android:id="@+id/termsOfUseFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.app.TermsOfUseFragment"
+        android:label="@string/terms_title" />
+
+    <fragment
+        android:id="@+id/openSourceLicensesFragment"
+        android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment"
+        android:label="@string/open_source_title" />
+
+    <!-- 🆕 Seçilen cihazın menü ekranı -->
+    <fragment
+        android:id="@+id/deviceDashboardFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.DeviceDashboardFragment"
+        android:label="Device"
+        tools:layout="@layout/fragment_device_dashboard">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long" />
+        <argument
+            android:name="deviceName"
+            app:argType="string" />
+        <argument
+            android:name="deviceIp"
+            app:argType="string" />
+        <argument
+            android:name="aquaName"
+            app:argType="string" />
+        <argument
+            android:name="serial"
+            app:argType="string" />
+    </fragment>
 
 </navigation>

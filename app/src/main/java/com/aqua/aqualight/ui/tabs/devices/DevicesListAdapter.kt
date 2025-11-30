@@ -22,7 +22,8 @@ data class DeviceCardUi(
 
 class DevicesListAdapter(
     private val onSelectionModeStart: () -> Unit,
-    private val onSelectionChanged: (Int) -> Unit
+    private val onSelectionChanged: (Int) -> Unit,
+    private val onDeviceClick: (DeviceCardUi) -> Unit   // 🔹 YENİ
 ) : ListAdapter<DeviceCardUi, DevicesListAdapter.DeviceViewHolder>(DiffCallback) {
 
     // Seçili kartların ID’leri
@@ -71,20 +72,23 @@ class DevicesListAdapter(
             if (isSelected) {
                 binding.root.alpha = 1f
                 binding.card.strokeWidth = 4
-                binding.card.strokeColor = ContextCompat.getColor(ctx, R.color.dialog_icon_success)
+                binding.card.strokeColor =
+                    ContextCompat.getColor(ctx, R.color.dialog_icon_success)
             } else {
                 binding.root.alpha = 0.85f
                 binding.card.strokeWidth = 0
             }
 
             // -----------------------
-            // TEK TIK — seçim modunda toggle
+            // TEK TIK
             // -----------------------
             binding.root.setOnClickListener {
                 if (isSelectionMode) {
+                    // Seçim modundaysa toggle
                     toggleSelection(item)
                 } else {
-                    // Buraya cihaz menüsünü açarsın (ileride)
+                    // Normal modda → cihaz tıklandı bilgisini dışarı gönder
+                    onDeviceClick(item)
                 }
             }
 

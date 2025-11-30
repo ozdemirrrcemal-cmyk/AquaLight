@@ -1134,4 +1134,55 @@
 <string name="devices_delete_message_multi">
     Are you sure you want to delete the selected %1$d devices? This action cannot be undone.
 </string>
+
+<!-- Device Dashboard -->
+<string name="device_dashboard_title_default">Device</string>
+<string name="device_dashboard_subtitle_default">No device info</string>
+<string name="device_dashboard_menu_button_desc">Open device menu</string>
+<string name="device_dashboard_placeholder">
+    Device dashboard will be here. You can control lights, timers and more.
+</string>
+<string name="device_menu_main">Ana Menü</string>
+<string name="device_menu_settings">Ayarlar</string>
+<string name="device_menu_tools">Araçlar</string>
+
+<string name="device_menu_light_title">Lights</string>
+<string name="device_menu_light_message">Light control screen will be here.</string>
+
+<string name="device_menu_timer_title">Timer</string>
+<string name="device_menu_timer_message">Timer screen will be here.</string>
+
+<string name="device_menu_temperature_title">Temperature</string>
+<string name="device_menu_temperature_message">Temperature screen will be here.</string>
+
+<string name="device_menu_wifi_title">WiFi Settings</string>
+<string name="device_menu_wifi_message">WiFi settings will be here.</string>
+
+<string name="device_menu_time_title">Time Settings</string>
+<string name="device_menu_time_message">Time configuration will be here.</string>
+
+<string name="device_menu_general_title">General Settings</string>
+<string name="device_menu_general_message">General device settings will be here.</string>
+
+<string name="device_menu_pwm_title">PWM Channels</string>
+<string name="device_menu_pwm_message">PWM channel settings will be shown.</string>
+
+<string name="device_menu_net_title">Network Settings</string>
+<string name="device_menu_net_message">Network related settings will be here.</string>
+
+<string name="device_menu_filesystem_title">Filesystem</string>
+<string name="device_menu_filesystem_message">Filesystem browser will be added.</string>
+
+<string name="device_menu_reboot_title">Reboot Device</string>
+<string name="device_menu_reboot_message">Do you want to reboot the device?</string>
+<string name="device_menu_reboot_done_title">Rebooting…</string>
+<string name="device_menu_reboot_done_message">Device is rebooting.</string>
+
+<string name="device_menu_info_title">Device Info</string>
+<string name="device_menu_info_message">Full device information will be displayed here.</string>
+
+<string name="device_menu_about_title">About Device</string>
+<string name="device_menu_about_message">Information about firmware and creator.</string>
+
+<string name="device_menu_title_default">Device</string>
 </resources>
