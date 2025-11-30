@@ -6,8 +6,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
@@ -32,18 +32,11 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         userPrefs = UserPreferencesManager.create(requireContext())
 
+        // ❗ onDeviceClick kaldırıldı — artık hiçbir yere yönlendirme YOK
         adapter = DevicesListAdapter(
             onSelectionModeStart = { enterSelectionMode() },
             onSelectionChanged = { count ->
-                if (count == 0) {
-                    exitSelectionMode()
-                }
-            },
-            onDeviceClick = { device ->
-                // Seçim modunda değilsek cihaz menüsüne git
-                if (!selectionMode) {
-                    openDeviceDashboard(device)
-                }
+                if (count == 0) exitSelectionMode()
             }
         )
 
@@ -52,10 +45,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         binding.btnScanDevices.setOnClickListener {
             if (selectionMode) {
-                // 🗑 Seçim modundayken confirm dialog göster
                 showDeleteConfirmDialog()
             } else {
-                // Normal mod: tarama ekranına git
                 findNavController().navigate(
                     R.id.action_devicesFragment_to_scanDevicesFragment
                 )
@@ -83,11 +74,11 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     binding.rvSelectedDevices.visibility = View.VISIBLE
 
                     val now = System.currentTimeMillis()
-                    val onlineTimeout = 60_000L // 60 sn içinde görüldüyse online say
+                    val timeout = 60_000L
 
                     val uiList = list.map { dev ->
-                        val isOnline = dev.lastSeenMillis != 0L &&
-                                (now - dev.lastSeenMillis) <= onlineTimeout
+                        val online = dev.lastSeenMillis != 0L &&
+                                (now - dev.lastSeenMillis) <= timeout
 
                         DeviceCardUi(
                             id = dev.id,
@@ -95,7 +86,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                             name = dev.name.ifBlank { "Device" },
                             ip = dev.ip,
                             serial = dev.serial,
-                            isOnline = isOnline
+                            isOnline = online
                         )
                     }
 
@@ -105,79 +96,51 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
     }
 
-    // SEÇİM MODU
     private fun enterSelectionMode() {
-        if (selectionMode) return
-        selectionMode = true
-        binding.btnScanDevices.setImageResource(R.drawable.ic_delete)
+        if (!selectionMode) {
+            selectionMode = true
+            binding.btnScanDevices.setImageResource(R.drawable.ic_delete)
+        }
     }
 
     private fun exitSelectionMode() {
-        if (!selectionMode) return
-        selectionMode = false
-        adapter.exitSelectionMode()
-        binding.btnScanDevices.setImageResource(R.drawable.ic_radar)
+        if (selectionMode) {
+            selectionMode = false
+            adapter.exitSelectionMode()
+            binding.btnScanDevices.setImageResource(R.drawable.ic_radar)
+        }
     }
 
-    // ✅ TOPLU SİLME İÇİN CONFIRM DIALOG
     private fun showDeleteConfirmDialog() {
         val ids = adapter.getSelectedIds()
         if (ids.isEmpty()) return
 
         val count = ids.size
-        val title = if (count == 1) {
-            // Tek cihaz
+        val title = if (count == 1)
             getString(R.string.devices_delete_title_single)
-        } else {
-            // Birden fazla cihaz (örn: "Delete 3 devices?")
+        else
             getString(R.string.devices_delete_title_multi, count)
-        }
 
-        val message = if (count == 1) {
+        val message = if (count == 1)
             getString(R.string.devices_delete_message_single)
-        } else {
+        else
             getString(R.string.devices_delete_message_multi, count)
-        }
 
         DialogManager.showConfirmDialog(
             context = requireContext(),
             type = DialogType.WARNING,
             title = title,
             message = message,
-            // confirm/cancel textlerini layouttaki default (confirm / cancel) kullanacak
-            onConfirm = {
-                // Onaylarsa gerçekten sil
-                deleteSelectedDevices(ids)
-            },
-            onCancel = {
-                // ❌ Kullanıcı vazgeçti → seçimleri temizle + ikonu geri çevir
-                exitSelectionMode()
-            }
+            onConfirm = { deleteSelectedDevices(ids) },
+            onCancel = { exitSelectionMode() }
         )
     }
 
-    // Asıl silme işi
     private fun deleteSelectedDevices(ids: Set<Long>) {
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.deleteDevices(ids)
             exitSelectionMode()
         }
-    }
-
-    // 🔹 Cihaz menüsüne geçiş
-    private fun openDeviceDashboard(device: DeviceCardUi) {
-        val args = Bundle().apply {
-            putLong("deviceId", device.id)
-            putString("deviceName", device.name)
-            putString("deviceIp", device.ip)
-            putString("aquaName", device.aquaName)
-            putString("serial", device.serial)
-        }
-
-        findNavController().navigate(
-            R.id.action_devicesFragment_to_deviceDashboardFragment,
-            args
-        )
     }
 
     override fun onDestroyView() {

@@ -22,11 +22,6 @@
         <action
             android:id="@+id/action_devicesFragment_to_scanDevicesFragment"
             app:destination="@id/scanDevicesFragment" />
-
-        <!-- 👇 Seçilen cihazın menüsüne git -->
-        <action
-            android:id="@+id/action_devicesFragment_to_deviceDashboardFragment"
-            app:destination="@id/deviceDashboardFragment" />
     </fragment>
 
     <!-- 📡 Cihaz Tara -->
@@ -171,29 +166,5 @@
         android:id="@+id/openSourceLicensesFragment"
         android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment"
         android:label="@string/open_source_title" />
-
-    <!-- 🆕 Seçilen cihazın menü ekranı -->
-    <fragment
-        android:id="@+id/deviceDashboardFragment"
-        android:name="com.aqua.aqualight.ui.devices.DeviceDashboardFragment"
-        android:label="Device"
-        tools:layout="@layout/fragment_device_dashboard">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-        <argument
-            android:name="deviceName"
-            app:argType="string" />
-        <argument
-            android:name="deviceIp"
-            app:argType="string" />
-        <argument
-            android:name="aquaName"
-            app:argType="string" />
-        <argument
-            android:name="serial"
-            app:argType="string" />
-    </fragment>
 
 </navigation>
