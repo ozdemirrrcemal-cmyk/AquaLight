@@ -2,12 +2,13 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
@@ -32,11 +33,24 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         userPrefs = UserPreferencesManager.create(requireContext())
 
-        // ❗ onDeviceClick kaldırıldı — artık hiçbir yere yönlendirme YOK
         adapter = DevicesListAdapter(
             onSelectionModeStart = { enterSelectionMode() },
             onSelectionChanged = { count ->
                 if (count == 0) exitSelectionMode()
+            },
+            onDeviceClick = { device ->
+                // 🔹 ŞİMDİLİK SADECE TOAST
+                Toast.makeText(
+                    requireContext(),
+                    getString(
+                        R.string.devices_selected_device_toast,
+                        device.name.ifBlank { device.aquaName.ifBlank { device.ip } }
+                    ),
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                // ⬇️ İLERİDE BURAYA MENÜ/NAVIGATION GELECEK
+                // findNavController().navigate(...)
             }
         )
 

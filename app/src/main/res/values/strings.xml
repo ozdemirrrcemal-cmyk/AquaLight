@@ -1135,4 +1135,8 @@
     Are you sure you want to delete the selected %1$d devices? This action cannot be undone.
 </string>
 
+<string name="devices_selected_device_toast">
+    Selected device: %1$s
+</string>
+
 </resources>
