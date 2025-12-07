@@ -5,19 +5,35 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
 
-    <!-- Water drop -->
+    <!-- Clipboard gövdesi -->
     <path
         android:fillColor="#FF000000"
-        android:pathData="M12,2 C9.5,6 6,8 6,12 a6,6 0 0 0 12,0 c0,-4 -3.5,-6 -6,-10 z"/>
+        android:pathData="M6,2 h8 a2,2 0 0 1 2,2 v1 h1 a1,1 0 0 1 1,1 v14 a1,1 0 0 1 -1,1 H5 a1,1 0 0 1 -1,-1 V6 a1,1 0 0 1 1,-1 h1 V4 a2,2 0 0 1 2,-2 z"/>
 
-    <!-- Small gear (sağ alt) -->
-    <group android:translateX="14" android:translateY="14" android:scaleX="0.6" android:scaleY="0.6">
-        <path android:fillColor="#FF000000" android:pathData="M4,0 a4,4 0 1,0 0.001,0"/>
-        <path android:fillColor="#FFFFFFFF" android:pathData="M4,2 a2,2 0 1,0 0.001,0"/>
-        <!-- dişler -->
-        <path android:fillColor="#FF000000" android:pathData="M6.2,-0.3 L7.4,-1.6 L8.2,-0.6 L7,0.7 z"/>
-        <path android:fillColor="#FF000000" android:pathData="M1.8,-0.3 L0.6,-1.6 L-0.2,-0.6 L1,0.7 z"/>
-        <path android:fillColor="#FF000000" android:pathData="M6.2,4.3 L7.4,5.6 L8.2,4.6 L7,3.3 z"/>
-        <path android:fillColor="#FF000000" android:pathData="M1.8,4.3 L0.6,5.6 L-0.2,4.6 L1,3.3 z"/>
-    </group>
+    <!-- Clip (üstte) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,3 h4 v2 h-4 z"/>
+
+    <!-- Checklist satırları -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8,9 h8 v1 H8 z"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8,12 h8 v1 H8 z"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8,15 h8 v1 H8 z"/>
+
+    <!-- Onay işareti küçük ikonlar (sol) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6.5,9.2 l1.2,1.2 l2.3,-2.3 l0.9,0.9 l-3.2,3.2 z"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6.5,12.2 l1.2,1.2 l2.3,-2.3 l0.9,0.9 l-3.2,3.2 z"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6.5,15.2 l1.2,1.2 l2.3,-2.3 l0.9,0.9 l-3.2,3.2 z"/>
 </vector>
