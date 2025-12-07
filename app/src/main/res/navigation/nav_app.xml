@@ -11,6 +11,14 @@
         android:name="com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment"
         android:label="Aquarium"
         tools:layout="@layout/fragment_aquarium" />
+		
+	
+ <!-- 📟 Devices Tab -->
+		<fragment
+        android:id="@+id/aquariumMaintenanceFragment"
+		android:name="com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment"
+        android:label="Maintenance"
+        tools:layout="@layout/fragment_aquarium_maintenance" />
 
     <!-- 📟 Devices Tab -->
     <fragment
