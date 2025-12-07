@@ -64,6 +64,7 @@ class MainActivity : BaseActivity() {
     private fun isInAppDest(destinationId: Int): Boolean {
         return when (destinationId) {
             R.id.aquariumFragment,
+			R.id.aquariumMaintenanceFragment,
             R.id.devicesFragment,
             R.id.settingsFragment -> true
             else -> false
