@@ -8,7 +8,6 @@
         android:id="@+id/aquariumMaintenanceFragment"
         android:title="Maintenance"
         android:icon="@drawable/ic_aquarium_maintenance" />
-		
     <item
         android:id="@+id/devicesFragment"
         android:title="Devices"
