@@ -1136,7 +1136,7 @@
 </string>
 
 <string name="devices_selected_device_toast">
-    Selected device: %1$s
+    Selected devices: %1$s
 </string>
 
 </resources>
