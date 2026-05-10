@@ -51,7 +51,11 @@ class DevicesListAdapter(
             val isSelected = selectedIds.contains(item.id)
 
             // Cihaz adı
-            binding.tvDeviceName.text = item.name
+            binding.tvDeviceName.text =
+    if (item.aquaName.isNotBlank())
+        item.aquaName
+    else
+        item.name
 
             // Icon
             val iconRes = resolveIconForAquaName(item.aquaName)
