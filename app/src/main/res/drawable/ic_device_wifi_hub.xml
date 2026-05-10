@@ -1,32 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
 
-    <!-- Alt hub kutusu -->
+    <!-- Hub device (gateway box) -->
     <path
         android:fillColor="@android:color/transparent"
         android:strokeColor="@android:color/white"
-        android:strokeWidth="1.5"
-        android:pathData="M5,11h14v8h-14z" />
+        android:strokeWidth="1.6"
+        android:pathData="M5,10h14v10h-14z" />
 
-    <!-- Wifi yayları -->
+    <!-- Top indicator (device status bar) -->
     <path
         android:fillColor="@android:color/transparent"
         android:strokeColor="@android:color/white"
-        android:strokeWidth="1.2"
-        android:pathData="M7,9c1.6,-1.6 3.4,-2.4 5,-2.4 1.6,0 3.4,0.8 5,2.4" />
+        android:strokeWidth="1.4"
+        android:pathData="M5,10h14v2h-14z" />
 
-    <path
-        android:fillColor="@android:color/transparent"
-        android:strokeColor="@android:color/white"
-        android:strokeWidth="1.2"
-        android:pathData="M9,10.5c1,-1 2.1,-1.5 3,-1.5 0.9,0 2,0.5 3,1.5" />
-
-    <!-- Nokta -->
+    <!-- Central hub node -->
     <path
         android:fillColor="@android:color/white"
-        android:pathData="M11.5,12.5h1v1h-1z" />
+        android:pathData="M12,14.5m-1.2,0a1.2,1.2 0 1,0 2.4,0a1.2,1.2 0 1,0 -2.4,0" />
+
+    <!-- Left connection node -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M7.5,13m-0.9,0a0.9,0.9 0 1,0 1.8,0a0.9,0.9 0 1,0 -1.8,0" />
+
+    <!-- Right connection node -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M16.5,13m-0.9,0a0.9,0.9 0 1,0 1.8,0a0.9,0.9 0 1,0 -1.8,0" />
+
+    <!-- Connection lines -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.2"
+        android:pathData="M12,14.5 L7.5,13" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="1.2"
+        android:pathData="M12,14.5 L16.5,13" />
+
 </vector>
