@@ -9,138 +9,104 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
-    private var _binding: FragmentScanDevicesBinding? = null
-    private val binding get() = _binding!!
+private var _binding: FragmentScanDevicesBinding? = null  
+private val binding get() = _binding!!  
 
-    private lateinit var adapter: ScanDevicesAdapter
-    private lateinit var userPrefs: UserPreferencesManager
+private lateinit var adapter: ScanDevicesAdapter  
+private lateinit var userPrefs: UserPreferencesManager  
 
-    // 🔥 SCAN CONTROL (ASIL FIX)
-    private var scanJob: Job? = null
+override fun onViewCreated(view: View, savedInstanceState: Bundle?) {  
+    super.onViewCreated(view, savedInstanceState)  
+    _binding = FragmentScanDevicesBinding.bind(view)  
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentScanDevicesBinding.bind(view)
+    userPrefs = UserPreferencesManager.create(requireContext())  
 
-        userPrefs = UserPreferencesManager.create(requireContext())
+    binding.btnBack.setOnClickListener {  
+        findNavController().popBackStack()  
+    }  
 
-        setupRecyclerView()
-        setupButtons()
+    binding.btnRescan.setOnClickListener {  
+        startScan()  
+    }  
 
-        startScan()
-    }
+    setupRecyclerView()  
+    startScan()  
+}  
 
-    private fun setupRecyclerView() {
-        adapter = ScanDevicesAdapter { device ->
-            saveSelectedDevice(device)
-        }
+private fun setupRecyclerView() {  
+    adapter = ScanDevicesAdapter { device: DiscoveredDevice ->  
+        saveSelectedDevice(device)  
+    }  
+    binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())  
+    binding.rvDevices.adapter = adapter  
+}  
 
-        binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvDevices.adapter = adapter
-        binding.rvDevices.setHasFixedSize(true)
-    }
+private fun startScan() {  
+    binding.tvTitle.text = getString(R.string.device_scan_header_scanning)  
 
-    private fun setupButtons() {
-        binding.btnBack.setOnClickListener {
-            scanJob?.cancel()
-            findNavController().popBackStack()
-        }
+    binding.btnRescan.isEnabled = false  
+    binding.btnRescan.alpha = 0.4f  
 
-        binding.btnRescan.setOnClickListener {
-            startScan()
-        }
-    }
+    binding.scanAnimation.visibility = View.VISIBLE  
+    binding.scanAnimation.playAnimation()  
 
-    private fun startScan() {
+    binding.rvDevices.visibility = View.GONE  
+    binding.tvNoDevices.visibility = View.GONE  
 
-        // ❌ ÇİFT SCAN ENGELİ
-        if (scanJob?.isActive == true) return
+    viewLifecycleOwner.lifecycleScope.launch {  
+        val devices: List<DiscoveredDevice> =  
+            discoverDevices(requireContext(), timeoutMs = 3000L)  
 
-        scanJob = viewLifecycleOwner.lifecycleScope.launch {
+        binding.tvTitle.text = getString(R.string.device_scan_header_list)  
 
-            binding.tvTitle.text = getString(R.string.device_scan_header_scanning)
+        binding.scanAnimation.cancelAnimation()  
+        binding.scanAnimation.visibility = View.GONE  
 
-            binding.btnRescan.isEnabled = false
-            binding.btnRescan.alpha = 0.4f
+        if (devices.isEmpty()) {  
+            binding.rvDevices.visibility = View.GONE  
+            binding.tvNoDevices.visibility = View.VISIBLE  
+        } else {  
+            binding.rvDevices.visibility = View.VISIBLE  
+            binding.tvNoDevices.visibility = View.GONE  
+            adapter.submitList(devices)  
+        }  
 
-            binding.scanAnimation.visibility = View.VISIBLE
-            binding.scanAnimation.playAnimation()
+        binding.btnRescan.isEnabled = true  
+        binding.btnRescan.alpha = 1f  
+    }  
+}  
 
-            binding.rvDevices.visibility = View.GONE
-            binding.tvNoDevices.visibility = View.GONE
+private fun saveSelectedDevice(device: DiscoveredDevice) {  
+    val aquaName = device.aquaName?.ifBlank { "-" } ?: "-"  
+    val name = device.name.ifBlank { "Device" }  
+    val serial = buildSerial(aquaName, name, device.id)  
 
-            try {
+    viewLifecycleOwner.lifecycleScope.launch {  
+        userPrefs.addDevice(  
+            id = device.id,  
+            aquaName = aquaName,  
+            name = name,  
+            ip = device.ip,  
+            serial = serial  
+        )  
+        findNavController().popBackStack()  
+    }  
+}  
 
-                val devices: List<DiscoveredDevice> =
-                    discoverDevices(requireContext(), timeoutMs = 3000L)
+private fun buildSerial(aquaName: String, name: String, id: Long): String {  
+    val a = aquaName.firstOrNull()?.uppercaseChar() ?: 'X'  
+    val n = name.firstOrNull()?.uppercaseChar() ?: 'X'  
+    val core = if (id != 0L) id.toString() else ""  
+    return if (core.isNotEmpty()) "$a$n-$core" else "$a$n"  
+}  
 
-                binding.tvTitle.text = getString(R.string.device_scan_header_list)
+override fun onDestroyView() {  
+    super.onDestroyView()  
+    _binding = null  
+}
 
-                if (!isAdded) return@launch
-
-                binding.scanAnimation.cancelAnimation()
-                binding.scanAnimation.visibility = View.GONE
-
-                if (devices.isEmpty()) {
-                    binding.rvDevices.visibility = View.GONE
-                    binding.tvNoDevices.visibility = View.VISIBLE
-                } else {
-                    binding.rvDevices.visibility = View.VISIBLE
-                    binding.tvNoDevices.visibility = View.GONE
-                    adapter.submitList(devices)
-                }
-
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-
-                if (!isAdded) return@launch
-
-                binding.btnRescan.isEnabled = true
-                binding.btnRescan.alpha = 1f
-            }
-        }
-    }
-
-    private fun saveSelectedDevice(device: DiscoveredDevice) {
-
-        val aquaName = device.aquaName?.ifBlank { "-" } ?: "-"
-        val name = device.name.ifBlank { "Device" }
-        val serial = buildSerial(aquaName, name, device.id)
-
-        viewLifecycleOwner.lifecycleScope.launch {
-
-            userPrefs.addDevice(
-                id = device.id,
-                aquaName = aquaName,
-                name = name,
-                ip = device.ip,
-                serial = serial
-            )
-
-            findNavController().popBackStack()
-        }
-    }
-
-    private fun buildSerial(aquaName: String, name: String, id: Long): String {
-        val a = aquaName.firstOrNull()?.uppercaseChar() ?: 'X'
-        val n = name.firstOrNull()?.uppercaseChar() ?: 'X'
-        val core = if (id != 0L) id.toString() else ""
-        return if (core.isNotEmpty()) "$a$n-$core" else "$a$n"
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-
-        // 🔥 SCAN TEMİZLİK
-        scanJob?.cancel()
-        scanJob = null
-
-        _binding = null
-    }
 }
