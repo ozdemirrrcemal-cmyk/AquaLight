@@ -151,7 +151,7 @@ class DevicesListAdapter(
 
             return when {
                 key.contains("doser") -> R.drawable.ic_device_doser
-                key.contains("light") || key.contains("wrgb") -> R.drawable.ic_device_lights
+                key.contains("light") || key.contains("wrgb") -> R.drawable.ic_device_light
                 key.contains("hub") -> R.drawable.ic_device_wifi_hub
                 key.contains("timer") -> R.drawable.ic_device_timer
                 key.contains("temp") -> R.drawable.ic_device_temperature
