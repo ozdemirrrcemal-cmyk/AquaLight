@@ -50,7 +50,6 @@
             android:layout_weight="1"
             android:text="Wifi Hub"
             android:textSize="16sp"
-            android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
             android:textColor="@android:color/white"/>
