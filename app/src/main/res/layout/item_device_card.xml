@@ -5,11 +5,11 @@
     android:id="@+id/card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="4dp"
-    app:cardCornerRadius="16dp"
+    android:layout_marginTop="10dp"
+    android:layout_marginBottom="6dp"
+    app:cardCornerRadius="22dp"
     app:cardUseCompatPadding="true"
-    app:cardElevation="2dp"
+    app:cardElevation="6dp"
     app:cardBackgroundColor="@color/settings_card_background"
     app:strokeColor="@android:color/transparent"
     app:strokeWidth="0dp">
@@ -19,40 +19,42 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="10dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp">
 
-        <!-- Cihaz iconu -->
+        <!-- Device Icon -->
         <ImageView
-    android:id="@+id/ivDeviceIcon"
-    android:layout_width="52dp"
-    android:layout_height="28dp"
-    android:scaleType="fitCenter"
-    android:adjustViewBounds="true"
-    android:src="@drawable/ic_device_light"
-    android:background="@android:color/transparent"
-    android:contentDescription="@string/app_name"/>
+            android:id="@+id/ivDeviceIcon"
+            android:layout_width="56dp"
+            android:layout_height="30dp"
+            android:adjustViewBounds="true"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/app_name"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_device_light" />
 
-        <!-- Cihaz adı -->
+        <!-- Device Name -->
         <TextView
             android:id="@+id/tvDeviceName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="16dp"
             android:layout_weight="1"
-            android:text="SuperStar Pump"
-            android:textSize="14sp"
-            android:maxLines="1"
             android:ellipsize="end"
-            android:textColor="@color/md_theme_dark_onSurface" />
+            android:maxLines="1"
+            android:text="SuperStar Pump"
+            android:textColor="@color/md_theme_dark_onSurface"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-        <!-- Bağlantı durumu ikonu (wifi) -->
+        <!-- Wifi Status -->
         <ImageView
             android:id="@+id/ivStatus"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_status_wifi"
-            android:contentDescription="@string/devices_scan_button_desc" />
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:alpha="0.78"
+            android:contentDescription="@string/devices_scan_button_desc"
+            android:src="@drawable/ic_status_wifi" />
 
     </LinearLayout>
 
