@@ -25,8 +25,8 @@
         <!-- Cihaz iconu -->
         <ImageView
             android:id="@+id/ivDeviceIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="120dp"
+            android:layout_height="60dp"
             android:src="@drawable/ic_device_light"
             android:contentDescription="@string/app_name" />
 
