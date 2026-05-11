@@ -24,11 +24,14 @@
 
         <!-- Cihaz iconu -->
         <ImageView
-            android:id="@+id/ivDeviceIcon"
-            android:layout_width="120dp"
-            android:layout_height="60dp"
-            android:src="@drawable/ic_device_light"
-            android:contentDescription="@string/app_name" />
+    android:id="@+id/ivDeviceIcon"
+    android:layout_width="52dp"
+    android:layout_height="28dp"
+    android:scaleType="fitCenter"
+    android:adjustViewBounds="true"
+    android:src="@drawable/ic_device_light"
+    android:background="@android:color/transparent"
+    android:contentDescription="@string/app_name"/>
 
         <!-- Cihaz adı -->
         <TextView
