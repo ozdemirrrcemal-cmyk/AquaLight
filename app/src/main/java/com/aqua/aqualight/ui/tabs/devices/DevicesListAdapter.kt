@@ -150,7 +150,7 @@ class DevicesListAdapter(
             val key = aquaName.lowercase(Locale.ROOT)
 
             return when {
-                key.contains("doser") -> R.drawable.ic_device_doser
+                kkey.contains("doser") || key.contains("dosing") || key.contains("pump") -> R.drawable.ic_device_doser
                 key.contains("light") || key.contains("wrgb") -> R.drawable.ic_device_light
                 key.contains("hub") -> R.drawable.ic_device_wifi_hub
                 key.contains("timer") -> R.drawable.ic_device_timer
