@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.settings.privacy
 
 import android.os.Bundle
 import android.view.View
+import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -14,29 +15,42 @@ class PrivacyFragment : Fragment(R.layout.fragment_privacy) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         _binding = FragmentPrivacyBinding.bind(view)
 
-        // 🔙 Geri butonu
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
-        // 🔹 WebView: local HTML (assets/privacy_policy_en.html) yükle
+        setupPrivacyWebView()
+    }
+
+    private fun setupPrivacyWebView() {
         binding.webViewPrivacy.apply {
-            webViewClient = android.webkit.WebViewClient()
+            webViewClient = WebViewClient()
 
             settings.javaScriptEnabled = false
             settings.domStorageEnabled = false
+            settings.allowFileAccess = true
+            settings.allowContentAccess = false
+            settings.builtInZoomControls = false
+            settings.displayZoomControls = false
 
             loadUrl("file:///android_asset/privacy_policy_en.html")
         }
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
-        // İstersen webView'i de temizleyebilirsin:
-        // binding.webViewPrivacy.loadUrl("about:blank")
-        // binding.webViewPrivacy.stopLoading()
+        binding.webViewPrivacy.apply {
+            stopLoading()
+            loadUrl("about:blank")
+            clearHistory()
+            removeAllViews()
+            destroy()
+        }
+
         _binding = null
+
+        super.onDestroyView()
     }
 }

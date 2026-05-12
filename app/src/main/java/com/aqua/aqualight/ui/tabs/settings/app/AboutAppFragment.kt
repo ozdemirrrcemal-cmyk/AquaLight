@@ -15,9 +15,9 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         _binding = FragmentAboutAppBinding.bind(view)
 
-        // 🔙 Geri
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
@@ -33,6 +33,7 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
         val pkgInfo = pm.getPackageInfo(packageName, 0)
         val versionName = pkgInfo.versionName ?: "-"
+
         val versionCode =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 pkgInfo.longVersionCode.toString()
@@ -44,11 +45,13 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
         val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
         val androidVersion = "Android ${Build.VERSION.RELEASE}"
 
-        // Üst kart
         binding.tvAppVersion.text =
-            getString(R.string.about_app_header_version_format, versionName, versionCode)
+            getString(
+                R.string.about_app_header_version_format,
+                versionName,
+                versionCode
+            )
 
-        // Sistem kartı
         binding.tvVersionValue.text = versionName
         binding.tvBuildValue.text = versionCode
         binding.tvDeviceValue.text = deviceModel
@@ -56,25 +59,21 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
     }
 
     private fun setupLegalClicks() {
-        // 🔐 Privacy Policy (şimdilik TODO bırakıyorum)
         binding.rowPrivacy.setOnClickListener {
-            // Buraya ileride PrivacyPolicyFragment veya web url navigate edersin
-            // findNavController().navigate(R.id.privacyPolicyFragment)
+            findNavController().navigate(R.id.privacyFragment)
         }
 
-        // 📜 Terms of Use
         binding.rowTerms.setOnClickListener {
             findNavController().navigate(R.id.termsOfUseFragment)
         }
 
-        // 🧩 Open Source Licenses
         binding.rowLicenses.setOnClickListener {
             findNavController().navigate(R.id.openSourceLicensesFragment)
         }
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
         _binding = null
+        super.onDestroyView()
     }
 }
