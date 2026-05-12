@@ -9,155 +9,193 @@
     :root {
       --bg: #0A192F;
       --surface: #152B45;
-      --card: #1C3252;
-      --primary: #2196F3;
-      --text: #E0E6ED;
-      --text-strong: #FFFFFF;
-      --text-muted: #9AA8B5;
-      --border: rgba(255, 255, 255, 0.08);
+      --surface-2: #1C3252;
+      --text: #EAF2FF;
+      --text-secondary: #A9B7C9;
+      --accent: #2196F3;
+      --border: rgba(255, 255, 255, 0.05);
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
-      padding: 16px;
-      line-height: 1.65;
+      padding: 0;
+      background: var(--bg);
       color: var(--text);
-      background:
-        radial-gradient(circle at top, rgba(33, 150, 243, 0.16), transparent 32%),
-        var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.7;
     }
 
     main {
-      max-width: 900px;
+      max-width: 920px;
       margin: 0 auto;
+      padding: 24px 16px 48px;
     }
 
-    .content {
-      background: linear-gradient(180deg, var(--surface), var(--card));
+    .hero {
+      background: linear-gradient(180deg, #1C3252 0%, #152B45 100%);
       border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 22px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      border-radius: 24px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
     }
 
     h1 {
-      font-size: 26px;
-      margin: 4px 0 6px;
-      text-align: center;
-      color: var(--text-strong);
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: #FFFFFF;
     }
 
     .last-updated {
-      font-size: 12px;
-      color: var(--text-muted);
-      text-align: center;
-      margin-bottom: 26px;
+      margin-top: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
     }
 
-    h2 {
-      font-size: 18px;
-      margin-top: 28px;
-      margin-bottom: 10px;
-      color: var(--text-strong);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
-
-    h3 {
-      font-size: 16px;
+    .intro {
       margin-top: 18px;
-      margin-bottom: 6px;
-      color: var(--text-strong);
-    }
-
-    h4 {
-      font-size: 14px;
-      margin-top: 14px;
-      margin-bottom: 6px;
-      color: var(--primary);
-    }
-
-    p {
-      font-size: 14px;
-      margin: 6px 0 10px;
+      font-size: 15px;
       color: var(--text);
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    }
+
+    .section h2 {
+      margin-top: 0;
+      margin-bottom: 14px;
+      font-size: 18px;
+      color: #FFFFFF;
+    }
+
+    .section h3 {
+      margin-top: 18px;
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: #FFFFFF;
+    }
+
+    .section h4 {
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #64B5F6;
+    }
+
+    .section p {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
       text-align: left;
     }
 
-    ul {
+    .section ul {
+      margin: 0 0 12px;
       padding-left: 20px;
-      margin-top: 6px;
-      margin-bottom: 12px;
     }
 
-    li {
-      margin-bottom: 6px;
-      color: var(--text);
+    .section li {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
     }
 
     strong {
-      color: var(--text-strong);
+      color: #FFFFFF;
     }
 
-    a {
-      color: var(--primary);
-      text-decoration: none;
-      word-break: break-word;
-    }
-
-    a:visited {
-      color: var(--primary);
-    }
-
-    .contact-section {
-      margin-top: 34px;
-      padding: 18px;
+    .contact {
+      margin-top: 24px;
+      padding: 20px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #152B45 0%, #10243D 100%);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.04);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
     }
 
-    .contact-section h2 {
+    .contact h2 {
       margin-top: 0;
-      border-bottom: none;
-      padding-bottom: 0;
+      margin-bottom: 12px;
+      font-size: 18px;
+      color: #FFFFFF;
+    }
+
+    .contact p {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--text-secondary);
     }
 
     .contact-label {
       font-weight: 700;
-      color: var(--text-strong);
+      color: #FFFFFF;
     }
 
-    .contact-email {
-      margin-top: 6px;
-      word-break: break-all;
+    a {
+      color: #64B5F6;
+      text-decoration: none;
+      word-break: break-word;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 12px;
+      color: #7E8EA3;
     }
 
     @media (max-width: 480px) {
-      body {
-        padding: 12px;
+      main {
+        padding: 20px 14px 42px;
       }
 
-      .content {
+      .hero {
+        padding: 26px 22px;
+        border-radius: 24px;
+      }
+
+      .section,
+      .contact {
         padding: 18px;
-        border-radius: 18px;
+        border-radius: 20px;
       }
 
       h1 {
-        font-size: 23px;
+        font-size: 28px;
       }
 
-      h2 {
-        font-size: 17px;
+      .intro {
+        font-size: 15px;
       }
 
-      p,
-      li {
+      .section h2,
+      .contact h2 {
+        font-size: 18px;
+      }
+
+      .section p,
+      .section li,
+      .contact p {
         font-size: 14px;
       }
     }
@@ -166,22 +204,24 @@
 
 <body>
 <main>
-  <div class="content">
 
+  <div class="hero">
     <h1>Privacy Policy</h1>
 
-    <p class="last-updated">
+    <div class="last-updated">
       Last updated: October 21, 2025
-    </p>
+    </div>
 
-    <p>
+    <div class="intro">
       This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.
-    </p>
+    </div>
 
-    <p>
+    <div class="intro">
       We use Your Personal Data to provide and improve the Service. By using the Service, You agree to the collection and use of information in accordance with this Privacy Policy.
-    </p>
+    </div>
+  </div>
 
+  <div class="section">
     <h2>Interpretation and Definitions</h2>
 
     <h3>Interpretation</h3>
@@ -203,7 +243,9 @@
       <li><strong>Usage Data</strong> refers to data collected automatically when using the Service.</li>
       <li><strong>You</strong> means the individual accessing or using the Service.</li>
     </ul>
+  </div>
 
+  <div class="section">
     <h2>Collecting and Using Your Personal Data</h2>
 
     <h3>Types of Data Collected</h3>
@@ -243,8 +285,11 @@
     <p>
       This information is used to provide features of the Service, improve the Application, and customize Your experience. You can enable or disable access to this information through Your Device settings.
     </p>
+  </div>
 
-    <h3>Use of Your Personal Data</h3>
+  <div class="section">
+    <h2>Use of Your Personal Data</h2>
+
     <p>The Company may use Personal Data for the following purposes:</p>
 
     <ul>
@@ -254,8 +299,11 @@
       <li><strong>To manage Your requests</strong> and provide support.</li>
       <li><strong>To improve the Service</strong> through analysis, diagnostics and feature improvements.</li>
     </ul>
+  </div>
 
-    <h3>Sharing Your Personal Data</h3>
+  <div class="section">
+    <h2>Sharing Your Personal Data</h2>
+
     <p>We may share Your personal information in the following situations:</p>
 
     <ul>
@@ -264,6 +312,10 @@
       <li><strong>With Your consent:</strong> For any other purpose with Your explicit consent.</li>
       <li><strong>For legal reasons:</strong> When required by law or valid legal request.</li>
     </ul>
+  </div>
+
+  <div class="section">
+    <h2>Retention, Transfer and Deletion</h2>
 
     <h3>Retention of Your Personal Data</h3>
     <p>
@@ -283,8 +335,10 @@
     <p>
       You may update, amend or delete Your information through the Application where available, or contact Us directly for assistance.
     </p>
+  </div>
 
-    <h3>Disclosure of Your Personal Data</h3>
+  <div class="section">
+    <h2>Disclosure of Your Personal Data</h2>
 
     <h4>Business Transactions</h4>
     <p>
@@ -306,13 +360,19 @@
       <li>Protect the personal safety of users or the public</li>
       <li>Protect against legal liability</li>
     </ul>
+  </div>
 
-    <h3>Security of Your Personal Data</h3>
+  <div class="section">
+    <h2>Security of Your Personal Data</h2>
+
     <p>
       The security of Your Personal Data is important to Us. However, no method of transmission over the Internet or electronic storage is 100% secure. While We use commercially reasonable means to protect Your Personal Data, We cannot guarantee absolute security.
     </p>
+  </div>
 
+  <div class="section">
     <h2>Children’s Privacy</h2>
+
     <p>
       Our Service does not address anyone under the age of 13. We do not knowingly collect personally identifiable information from anyone under 13.
     </p>
@@ -320,8 +380,11 @@
     <p>
       If You are a parent or guardian and You believe that Your child has provided Us with Personal Data, please contact Us. If We become aware that We have collected Personal Data from a child without parental consent, We will take steps to remove that information.
     </p>
+  </div>
 
+  <div class="section">
     <h2>Links to Other Websites</h2>
+
     <p>
       Our Service may contain links to other websites that are not operated by Us. We strongly advise You to review the Privacy Policy of every site You visit.
     </p>
@@ -329,8 +392,11 @@
     <p>
       We have no control over and assume no responsibility for the content, privacy policies or practices of third-party sites or services.
     </p>
+  </div>
 
+  <div class="section">
     <h2>Changes to this Privacy Policy</h2>
+
     <p>
       We may update Our Privacy Policy from time to time. We will notify You of any changes by posting the new Privacy Policy on this page and updating the “Last updated” date.
     </p>
@@ -338,22 +404,25 @@
     <p>
       You are advised to review this Privacy Policy periodically for any changes.
     </p>
-
-    <div class="contact-section">
-      <h2>Contact Us</h2>
-      <p>
-        If You have any questions about this Privacy Policy, You can contact Us:
-      </p>
-
-      <div class="contact-block">
-        <span class="contact-label">By email:</span>
-        <div class="contact-email">
-          <a href="mailto:support@myaqualight.com">support@myaqualight.com</a>
-        </div>
-      </div>
-    </div>
-
   </div>
+
+  <div class="contact">
+    <h2>Contact Us</h2>
+
+    <p>
+      If You have any questions about this Privacy Policy, You can contact Us:
+    </p>
+
+    <p>
+      <span class="contact-label">By email:</span><br />
+      <a href="mailto:support@myaqualight.com">support@myaqualight.com</a>
+    </p>
+  </div>
+
+  <div class="footer">
+    © AquaLight
+  </div>
+
 </main>
 </body>
 </html>

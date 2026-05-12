@@ -1009,40 +1009,6 @@
 <!-- Open source licenses -->
 <string name="open_source_title">Open source licenses</string>
 <string name="open_source_back_button_desc">Go back from open source licenses</string>
-
-<string name="open_source_intro">
-    AquaLight is built on top of several open source libraries. We are grateful to the developers of these projects and list the main components and their licenses below.
-</string>
-
-<string name="open_source_libraries_title">Included libraries</string>
-
-<string name="open_source_media3">
-    AndroidX Media3 (ExoPlayer, UI components) – Apache License 2.0.
-</string>
-
-<string name="open_source_material">
-    Material Components for Android – Apache License 2.0.
-</string>
-
-<string name="open_source_firebase">
-    Firebase SDK for Android – Firebase and Apache-style licenses.
-</string>
-
-<string name="open_source_blurview">
-    BlurView by eightbitlab.com – Apache License 2.0.
-</string>
-
-<string name="open_source_datastore">
-    Jetpack DataStore and Protocol Buffers runtime – Apache License 2.0 and BSD-style licenses.
-</string>
-
-<string name="open_source_androidx">
-    AndroidX core libraries (Navigation, AppCompat, ConstraintLayout and others) – Apache License 2.0.
-</string>
-
-<string name="open_source_full_text_note">
-    Full license texts are provided with the app or on our website as required by each license. “AquaLight” is a trademark of its respective owner.
-</string>
    
    <!-- Terms of use -->
    <string name="terms_title">Terms of use</string>
