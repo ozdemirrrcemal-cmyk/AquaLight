@@ -9,6 +9,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.utils.DialogManager
@@ -53,7 +54,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             }
         )
 
-        binding.rvSelectedDevices.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvSelectedDevices.layoutManager =
+            LinearLayoutManager(requireContext())
+
         binding.rvSelectedDevices.adapter = adapter
     }
 
@@ -76,8 +79,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
                     if (list.isEmpty()) {
                         exitSelectionMode()
+
                         binding.tvEmptyState.visibility = View.VISIBLE
                         binding.rvSelectedDevices.visibility = View.GONE
+
                         adapter.submitList(emptyList())
                         return@collect
                     }
@@ -88,8 +93,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     val now = System.currentTimeMillis()
 
                     val uiList = list.map { dev ->
-                        val online = dev.lastSeenMillis != 0L &&
-                                (now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS
+                        val online =
+                            dev.lastSeenMillis != 0L &&
+                                    (now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS
 
                         DeviceCardUi(
                             id = dev.id,
@@ -114,16 +120,22 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val isActuallyOnline = withTimeoutOrNull(LIVE_CHECK_TIMEOUT_MS + 500L) {
-                val discovered = discoverDevices(
-                    context = requireContext(),
-                    timeoutMs = LIVE_CHECK_TIMEOUT_MS
-                )
+            (activity as? BaseActivity)?.showLoading(true)
 
-                discovered.any { found ->
-                    found.id == device.id || found.ip == device.ip
-                }
-            } ?: false
+            val isActuallyOnline = try {
+                withTimeoutOrNull(LIVE_CHECK_TIMEOUT_MS + 500L) {
+                    val discovered = discoverDevices(
+                        context = requireContext(),
+                        timeoutMs = LIVE_CHECK_TIMEOUT_MS
+                    )
+
+                    discovered.any { found ->
+                        found.id == device.id || found.ip == device.ip
+                    }
+                } ?: false
+            } finally {
+                (activity as? BaseActivity)?.showLoading(false)
+            }
 
             if (_binding == null) return@launch
 
