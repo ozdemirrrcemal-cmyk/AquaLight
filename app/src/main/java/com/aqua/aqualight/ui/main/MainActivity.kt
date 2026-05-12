@@ -64,7 +64,6 @@ class MainActivity : BaseActivity() {
             R.id.aquariumFragment,
             R.id.aquariumMaintenanceFragment,
             R.id.devicesFragment,
-            R.id.deviceMenuFragment,
             R.id.settingsFragment -> true
             else -> false
         }

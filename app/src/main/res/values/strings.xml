@@ -1074,4 +1074,8 @@
     This device has already been added.
 </string>
 
+<string name="device_offline_title">Device offline</string>
+<string name="device_offline_message">This device is currently offline. Please make sure it is powered on and connected to the same network.</string>
+
+
 </resources>

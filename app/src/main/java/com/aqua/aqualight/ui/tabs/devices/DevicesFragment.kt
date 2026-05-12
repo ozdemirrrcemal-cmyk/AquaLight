@@ -97,20 +97,30 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun openDeviceMenu(device: DeviceCardUi) {
-        val args = Bundle().apply {
-            putLong("deviceId", device.id)
-            putString("deviceName", device.name)
-            putString("deviceAquaName", device.aquaName)
-            putString("deviceIp", device.ip)
-            putString("deviceSerial", device.serial)
-            putBoolean("deviceOnline", device.isOnline)
-        }
-
-        findNavController().navigate(
-            R.id.action_devicesFragment_to_deviceMenuFragment,
-            args
+    if (!device.isOnline) {
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = getString(R.string.device_offline_title),
+            message = getString(R.string.device_offline_message)
         )
+        return
     }
+
+    val args = Bundle().apply {
+        putLong("deviceId", device.id)
+        putString("deviceName", device.name)
+        putString("deviceAquaName", device.aquaName)
+        putString("deviceIp", device.ip)
+        putString("deviceSerial", device.serial)
+        putBoolean("deviceOnline", device.isOnline)
+    }
+
+    findNavController().navigate(
+        R.id.action_devicesFragment_to_deviceMenuFragment,
+        args
+    )
+}
 
     private fun enterSelectionMode() {
         if (!selectionMode) {
