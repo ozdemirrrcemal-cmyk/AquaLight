@@ -79,7 +79,12 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        activityJob.cancel()
-        super.onDestroy()
-    }
+    activityJob.cancel()
+
+    loadingLogo?.clearAnimation()
+    loadingLogo = null
+    loadingOverlay = null
+
+    super.onDestroy()
+   }
 }

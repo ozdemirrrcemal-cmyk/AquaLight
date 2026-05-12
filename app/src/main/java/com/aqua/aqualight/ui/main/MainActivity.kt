@@ -25,18 +25,18 @@ class MainActivity : BaseActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 🔹 Uygulama açılır açılmaz LAN monitörü başlat
-        val userPrefs = UserPreferencesManager.create(applicationContext)
-        LanMonitor.start(applicationContext, userPrefs)
-
         val navHost =
             supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
-        val navController = navHost.navController
 
+        val navController = navHost.navController
         val startInApp = intent.getBooleanExtra(EXTRA_START_IN_APP, false)
 
+        if (startInApp) {
+            val userPrefs = UserPreferencesManager.create(applicationContext)
+            LanMonitor.start(applicationContext, userPrefs)
+        }
+
         if (savedInstanceState == null) {
-            // 🔹 Uygulama ilk açılış: login olmuşsa root graph'in startDestination'ını nav_app yap
             binding.navHost.isVisible = false
             binding.bottomNav.isVisible = false
 
@@ -46,25 +46,23 @@ class MainActivity : BaseActivity() {
                     else R.id.authContainerFragment
                 )
             }
+
             navController.graph = graph
         }
 
         setupBottomBar(navController)
 
-        // İlk görünürlük state'i (recreate dahil)
-        navController.currentDestination?.let { dest ->
-            binding.bottomNav.isVisible = isInAppDest(dest.id)
+        navController.currentDestination?.let { destination ->
+            binding.bottomNav.isVisible = isInAppDest(destination.id)
         }
 
-        // Artık host'u göster
         binding.navHost.isVisible = true
     }
 
-    // App içi tab ekranlarını temsil eden id'ler
     private fun isInAppDest(destinationId: Int): Boolean {
         return when (destinationId) {
             R.id.aquariumFragment,
-			R.id.aquariumMaintenanceFragment,
+            R.id.aquariumMaintenanceFragment,
             R.id.devicesFragment,
             R.id.settingsFragment -> true
             else -> false
@@ -72,10 +70,8 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupBottomBar(navController: NavController) {
-        // Bottom bar ↔ nav bağla
         binding.bottomNav.setupWithNavController(navController)
 
-        // Destination değişince görünürlüğü güncelle
         navController.addOnDestinationChangedListener { _, destination, _ ->
             binding.bottomNav.isVisible = isInAppDest(destination.id)
         }

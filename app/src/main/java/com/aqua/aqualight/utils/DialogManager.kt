@@ -8,9 +8,13 @@ import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.DialogAppBinding
 import com.aqua.aqualight.databinding.DialogAppConfirmBinding
-import com.google.android.material.button.MaterialButton
 
-enum class DialogType { INFO, ERROR, SUCCESS, WARNING }
+enum class DialogType {
+    INFO,
+    ERROR,
+    SUCCESS,
+    WARNING
+}
 
 object DialogManager {
 
@@ -21,55 +25,59 @@ object DialogManager {
         message: String,
         @StringRes buttonTextResId: Int = R.string.ok,
         onDismiss: (() -> Unit)? = null,
-        autoDismissMillis: Long = 0L   // 0 = butonlu, >0 = auto-dismiss
+        autoDismissMillis: Long = 0L
     ) {
         val binding = DialogAppBinding.inflate(
             android.view.LayoutInflater.from(context)
         )
 
-        // 🔹 İkon
         val iconRes = when (type) {
             DialogType.ERROR -> R.drawable.ic_error
             DialogType.SUCCESS -> R.drawable.ic_success
             DialogType.WARNING -> R.drawable.ic_warning
             DialogType.INFO -> R.drawable.ic_info
         }
+
         binding.dialogIcon.apply {
             imageTintList = null
             setImageResource(iconRes)
             contentDescription = context.getString(R.string.dialog_icon_desc)
         }
 
-        // 🔹 Metinler
         binding.dialogTitle.text = title
         binding.dialogMessage.text = message
 
-        // 🔹 Dialog oluştur
         val dialog = AlertDialog.Builder(context, R.style.AppDialogTheme)
             .setView(binding.root)
             .setCancelable(false)
             .create()
 
+        val handler = Handler(Looper.getMainLooper())
+        var dismissRunnable: Runnable? = null
+
         dialog.setOnDismissListener {
+            dismissRunnable?.let { runnable ->
+                handler.removeCallbacks(runnable)
+            }
             onDismiss?.invoke()
         }
 
         if (autoDismissMillis <= 0L) {
-            // 👉 Butonlu klasik davranış
             binding.dialogButton.visibility = android.view.View.VISIBLE
             binding.dialogButton.text = context.getString(buttonTextResId)
             binding.dialogButton.setOnClickListener {
                 dialog.dismiss()
             }
         } else {
-            // 👉 Otomatik kapanan info (toast vari)
             binding.dialogButton.visibility = android.view.View.GONE
 
-            Handler(Looper.getMainLooper()).postDelayed({
+            dismissRunnable = Runnable {
                 if (dialog.isShowing) {
                     dialog.dismiss()
                 }
-            }, autoDismissMillis)
+            }
+
+            handler.postDelayed(dismissRunnable!!, autoDismissMillis)
         }
 
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
@@ -90,20 +98,19 @@ object DialogManager {
             android.view.LayoutInflater.from(context)
         )
 
-        // 🔹 İkon
         val iconRes = when (type) {
             DialogType.ERROR -> R.drawable.ic_error
             DialogType.WARNING -> R.drawable.ic_warning
             DialogType.SUCCESS -> R.drawable.ic_success
             DialogType.INFO -> R.drawable.ic_info
         }
+
         binding.dialogIcon.apply {
             imageTintList = null
             setImageResource(iconRes)
             contentDescription = context.getString(R.string.dialog_icon_desc)
         }
 
-        // 🔹 Metinler
         binding.dialogTitle.text = title
         binding.dialogMessage.text = message
         binding.btnCancel.text = context.getString(cancelTextResId)
