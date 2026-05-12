@@ -19,17 +19,22 @@
         android:label="Maintenance"
         tools:layout="@layout/fragment_aquarium_maintenance" />
 
-    <!-- 📟 Devices Tab -->
-    <fragment
-        android:id="@+id/devicesFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
-        android:label="Devices"
-        tools:layout="@layout/fragment_devices">
+  <!-- 📟 Devices Tab -->
+<fragment
+    android:id="@+id/devicesFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
+    android:label="Devices"
+    tools:layout="@layout/fragment_devices">
 
-        <action
-            android:id="@+id/action_devicesFragment_to_scanDevicesFragment"
-            app:destination="@id/scanDevicesFragment" />
-    </fragment>
+    <action
+        android:id="@+id/action_devicesFragment_to_scanDevicesFragment"
+        app:destination="@id/scanDevicesFragment" />
+
+    <action
+        android:id="@+id/action_devicesFragment_to_deviceMenuFragment"
+        app:destination="@id/deviceMenuFragment" />
+
+</fragment>
 
     <!-- 📡 Cihaz Tara -->
     <fragment
@@ -37,6 +42,12 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.ScanDevicesFragment"
         android:label="Scan devices"
         tools:layout="@layout/fragment_scan_devices" />
+		
+		<fragment
+    android:id="@+id/deviceMenuFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.menu.DeviceMenuFragment"
+    android:label="Device Menu"
+    tools:layout="@layout/fragment_device_menu" />
 
     <!-- ⚙️ Settings Tab -->
     <fragment

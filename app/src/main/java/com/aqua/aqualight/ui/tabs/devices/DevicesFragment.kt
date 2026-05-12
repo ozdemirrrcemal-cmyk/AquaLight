@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -24,13 +23,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private lateinit var userPrefs: UserPreferencesManager
     private lateinit var adapter: DevicesListAdapter
 
-    // Seçim modu durumu
     private var selectionMode = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentDevicesBinding.bind(view)
 
+        _binding = FragmentDevicesBinding.bind(view)
         userPrefs = UserPreferencesManager.create(requireContext())
 
         adapter = DevicesListAdapter(
@@ -39,18 +37,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 if (count == 0) exitSelectionMode()
             },
             onDeviceClick = { device ->
-                // 🔹 ŞİMDİLİK SADECE TOAST
-                Toast.makeText(
-                    requireContext(),
-                    getString(
-                        R.string.devices_selected_device_toast,
-                        device.name.ifBlank { device.aquaName.ifBlank { device.ip } }
-                    ),
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                // ⬇️ İLERİDE BURAYA MENÜ/NAVIGATION GELECEK
-                // findNavController().navigate(...)
+                openDeviceMenu(device)
             }
         )
 
@@ -70,7 +57,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         observeDevicesList()
     }
 
-    // MULTI DEVICE DESTEK
     private fun observeDevicesList() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -110,6 +96,22 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
     }
 
+    private fun openDeviceMenu(device: DeviceCardUi) {
+        val args = Bundle().apply {
+            putLong("deviceId", device.id)
+            putString("deviceName", device.name)
+            putString("deviceAquaName", device.aquaName)
+            putString("deviceIp", device.ip)
+            putString("deviceSerial", device.serial)
+            putBoolean("deviceOnline", device.isOnline)
+        }
+
+        findNavController().navigate(
+            R.id.action_devicesFragment_to_deviceMenuFragment,
+            args
+        )
+    }
+
     private fun enterSelectionMode() {
         if (!selectionMode) {
             selectionMode = true
@@ -130,15 +132,18 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         if (ids.isEmpty()) return
 
         val count = ids.size
-        val title = if (count == 1)
-            getString(R.string.devices_delete_title_single)
-        else
-            getString(R.string.devices_delete_title_multi, count)
 
-        val message = if (count == 1)
+        val title = if (count == 1) {
+            getString(R.string.devices_delete_title_single)
+        } else {
+            getString(R.string.devices_delete_title_multi, count)
+        }
+
+        val message = if (count == 1) {
             getString(R.string.devices_delete_message_single)
-        else
+        } else {
             getString(R.string.devices_delete_message_multi, count)
+        }
 
         DialogManager.showConfirmDialog(
             context = requireContext(),
@@ -158,8 +163,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     override fun onDestroyView() {
-    binding.rvSelectedDevices.adapter = null
-    _binding = null
-    super.onDestroyView()
-}
+        binding.rvSelectedDevices.adapter = null
+        _binding = null
+        super.onDestroyView()
+    }
 }
