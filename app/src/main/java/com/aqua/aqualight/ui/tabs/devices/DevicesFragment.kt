@@ -158,7 +158,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+    binding.rvSelectedDevices.adapter = null
+    _binding = null
+    super.onDestroyView()
+}
 }
