@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import java.io.IOException
 import java.time.LocalDate
 import java.time.temporal.WeekFields
+import kotlinx.coroutines.flow.first
 import java.util.Locale
 
 class UserPreferencesManager private constructor(
@@ -319,6 +320,10 @@ class UserPreferencesManager private constructor(
     // --------------------------------------------------------
     //  MULTI-DEVICE OPERATIONS
     // --------------------------------------------------------
+	
+	suspend fun deviceExists(id: Long): Boolean {
+    return userPrefsFlow.first().devicesList.any { it.id == id }
+}
 
     suspend fun addDevice(
         id: Long,
