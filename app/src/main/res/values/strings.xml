@@ -1044,6 +1044,14 @@
     Full license texts are provided with the app or on our website as required by each license. “AquaLight” is a trademark of its respective owner.
 </string>
    
+   <!-- Terms of use -->
+   <string name="terms_title">Terms of use</string>
+
+<string name="terms_back_button_desc">
+    Go back from terms of use
+</string>
+
+
 
     <!-- Özellik etiketleri (alt satırda görünecek) -->
     <string name="network_tag_light">Işık</string>
