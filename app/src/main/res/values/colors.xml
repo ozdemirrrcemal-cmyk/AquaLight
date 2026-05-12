@@ -75,4 +75,7 @@
 	<color name="crop_toolbar_bg">#0A192F</color>
 	<color name="aqua_button_blue">#1E90FF</color>
     <color name="aqua_button_red">#FF3B30</color>
+	
+	<color name="settings_card_stroke">#14FFFFFF</color>
+<color name="device_status_connected">#57D26A</color>
 </resources>
