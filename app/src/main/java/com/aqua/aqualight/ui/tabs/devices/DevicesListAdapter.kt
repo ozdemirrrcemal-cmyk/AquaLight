@@ -157,7 +157,7 @@ class DevicesListAdapter(
                 key.contains("temp") -> R.drawable.ic_device_temperature
                 key.contains("co2") -> R.drawable.ic_device_co2
                 key.contains("aqua") -> R.drawable.ic_device_aqua_ster
-                else -> R.drawable.ic_device_dr_aqua
+                else -> R.drawable.ic_device_aqua_ster
             }
         }
     }
