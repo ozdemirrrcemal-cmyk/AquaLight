@@ -2,47 +2,48 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:minHeight="48dp"
     android:orientation="vertical"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
 
-    <!-- Satır içeriği -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
         android:paddingVertical="14dp">
 
-        <!-- Sol: AquaName / Type -->
         <TextView
             android:id="@+id/tvAquaName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="12dp"
             android:text="Doser"
+            android:textColor="@android:color/white"
             android:textSize="10sp"
             android:textStyle="bold" />
 
-        <!-- Orta: Name (ortalanmış, esnek alan) -->
         <TextView
             android:id="@+id/tvName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="SuperStar Pump"
+            android:textColor="@color/settings_text_secondary"
             android:textSize="10sp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:gravity="center_vertical|center_horizontal" />
+            android:gravity="center" />
 
-        <!-- Sağ: ID / Serial -->
         <TextView
             android:id="@+id/tvId"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="DS-637128968"
+            android:textColor="@color/settings_text_secondary"
             android:textSize="10sp"
             android:maxLines="1"
             android:ellipsize="end"
@@ -50,7 +51,6 @@
             android:fontFamily="monospace" />
     </LinearLayout>
 
-    <!-- Alt çizgi / divider: tam genişlik -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

@@ -29,7 +29,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private companion object {
         const val ONLINE_TIMEOUT_MS = 60_000L
-        const val LIVE_CHECK_TIMEOUT_MS = 1_200L
+		const val LIVE_CHECK_TIMEOUT_MS = 800L
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
