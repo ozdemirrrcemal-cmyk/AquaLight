@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
@@ -244,6 +245,20 @@ class ReAuthenticateFragment :
         binding.btnContinue.text =
             getString(R.string.re_auth_continue)
 
+        binding.etPassword.requestFocus()
+
+        binding.etPassword.doOnTextChanged { _, _, _, _ ->
+
+            binding.etPassword.error = null
+        }
+
+        binding.etPassword.setOnEditorActionListener { _, _, _ ->
+
+            validatePasswordReAuthentication()
+
+            true
+        }
+
         binding.btnContinue.setOnClickListener {
 
             validatePasswordReAuthentication()
@@ -294,6 +309,8 @@ class ReAuthenticateFragment :
                     R.string.re_auth_password_required
                 )
 
+            shakeView(binding.passwordLayout)
+
             return
         }
 
@@ -328,6 +345,8 @@ class ReAuthenticateFragment :
                     getString(
                         R.string.re_auth_wrong_password
                     )
+
+                shakeView(binding.passwordLayout)
             }
     }
 
@@ -401,6 +420,58 @@ class ReAuthenticateFragment :
 
         binding.btnContinue.alpha =
             if (loading) 0.6f else 1f
+
+        binding.btnContinue.text =
+            if (loading) {
+
+                getString(R.string.loading)
+
+            } else {
+
+                if (binding.ivGoogle.visibility == View.VISIBLE) {
+
+                    getString(
+                        R.string.re_auth_continue_google
+                    )
+
+                } else {
+
+                    getString(
+                        R.string.re_auth_continue
+                    )
+                }
+            }
+    }
+
+    // ---------------------------------------------------
+    // SHAKE ANIMATION
+    // ---------------------------------------------------
+
+    private fun shakeView(
+        view: View
+    ) {
+
+        view.animate()
+            .translationX(20f)
+            .setDuration(50)
+            .withEndAction {
+
+                view.animate()
+                    .translationX(-20f)
+                    .setDuration(50)
+                    .withEndAction {
+
+                        view.animate()
+                            .translationX(10f)
+                            .setDuration(50)
+                            .withEndAction {
+
+                                view.animate()
+                                    .translationX(0f)
+                                    .duration = 50
+                            }
+                    }
+            }
     }
 
     // ---------------------------------------------------

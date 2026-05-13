@@ -316,6 +316,8 @@ Your account has been deleted successfully.
 <string name="re_auth_delete_failed_title">
 Delete Failed
 </string>
+
+<string name="loading">Loading...</string>
 	
 	<!-- 🧩 Settings detail screens: User Info -->
     <string name="user_info_title">User information</string>
