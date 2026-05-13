@@ -1,15 +1,12 @@
 package com.aqua.aqualight.ui.auth.security
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
@@ -52,7 +49,9 @@ class ReAuthenticateFragment :
         ) { result ->
 
             if (result.resultCode != Activity.RESULT_OK) {
+
                 baseActivity?.showLoading(false)
+
                 return@registerForActivityResult
             }
 
@@ -75,7 +74,6 @@ class ReAuthenticateFragment :
                     ?.addOnSuccessListener {
 
                         deleteAccount()
-
                     }
                     ?.addOnFailureListener {
 
@@ -85,8 +83,9 @@ class ReAuthenticateFragment :
                             requireContext(),
                             DialogType.ERROR,
                             title = "Verification Failed",
-                            message = it.localizedMessage
-                                ?: "Google verification failed."
+                            message =
+                                it.localizedMessage
+                                    ?: "Google verification failed."
                         )
                     }
 
@@ -98,8 +97,9 @@ class ReAuthenticateFragment :
                     requireContext(),
                     DialogType.ERROR,
                     title = "Google Error",
-                    message = e.localizedMessage
-                        ?: "Unknown error."
+                    message =
+                        e.localizedMessage
+                            ?: "Unknown error."
                 )
             }
         }
@@ -115,7 +115,8 @@ class ReAuthenticateFragment :
 
         super.onViewCreated(view, savedInstanceState)
 
-        _binding = FragmentReAuthenticateBinding.bind(view)
+        _binding =
+            FragmentReAuthenticateBinding.bind(view)
 
         setupGoogle()
 
@@ -174,13 +175,16 @@ class ReAuthenticateFragment :
 
     private fun setupGoogleUi() {
 
+        binding.ivGoogle.visibility = View.VISIBLE
+
         binding.tvTitle.text =
             "Verify Google Account"
 
         binding.tvDescription.text =
             "For security reasons, please verify your Google account before deleting your account."
 
-        binding.passwordLayout.visibility = View.GONE
+        binding.passwordLayout.visibility =
+            View.GONE
 
         binding.btnContinue.text =
             "Continue with Google"
@@ -197,13 +201,16 @@ class ReAuthenticateFragment :
 
     private fun setupPasswordUi() {
 
+        binding.ivGoogle.visibility = View.GONE
+
         binding.tvTitle.text =
             "Confirm Password"
 
         binding.tvDescription.text =
             "Please enter your password to continue."
 
-        binding.passwordLayout.visibility = View.VISIBLE
+        binding.passwordLayout.visibility =
+            View.VISIBLE
 
         binding.btnContinue.text =
             "Continue"
@@ -222,13 +229,15 @@ class ReAuthenticateFragment :
 
         baseActivity?.showLoading(true)
 
-        googleSignInClient.signOut().addOnCompleteListener {
+        googleSignInClient
+            .signOut()
+            .addOnCompleteListener {
 
-            val signIntent =
-                googleSignInClient.signInIntent
+                val signIntent =
+                    googleSignInClient.signInIntent
 
-            googleLauncher.launch(signIntent)
-        }
+                googleLauncher.launch(signIntent)
+            }
     }
 
     // ---------------------------------------------------
@@ -251,9 +260,11 @@ class ReAuthenticateFragment :
             return
         }
 
-        val user = auth.currentUser ?: return
+        val user =
+            auth.currentUser ?: return
 
-        val email = user.email ?: return
+        val email =
+            user.email ?: return
 
         baseActivity?.showLoading(true)
 
@@ -299,6 +310,7 @@ class ReAuthenticateFragment :
                         title = "Account Deleted",
                         message = "Your account has been deleted successfully.",
                         onDismiss = {
+
                             navigateToLogin()
                         }
                     )
@@ -312,8 +324,9 @@ class ReAuthenticateFragment :
                     requireContext(),
                     DialogType.ERROR,
                     title = "Delete Failed",
-                    message = it.localizedMessage
-                        ?: "Unknown error."
+                    message =
+                        it.localizedMessage
+                            ?: "Unknown error."
                 )
             }
     }
@@ -325,20 +338,22 @@ class ReAuthenticateFragment :
     private fun navigateToLogin() {
 
         val rootNav =
-            (requireActivity()
-                .supportFragmentManager
-                .findFragmentById(R.id.nav_host)
-                    as NavHostFragment)
-                .navController
+            (
+                requireActivity()
+                    .supportFragmentManager
+                    .findFragmentById(R.id.nav_host)
+                        as NavHostFragment
+                ).navController
 
-        val opts = navOptions {
+        val opts =
+            navOptions {
 
-            popUpTo(R.id.nav_app) {
-                inclusive = true
+                popUpTo(R.id.nav_app) {
+                    inclusive = true
+                }
+
+                launchSingleTop = true
             }
-
-            launchSingleTop = true
-        }
 
         rootNav.navigate(
             R.id.authContainerFragment,
