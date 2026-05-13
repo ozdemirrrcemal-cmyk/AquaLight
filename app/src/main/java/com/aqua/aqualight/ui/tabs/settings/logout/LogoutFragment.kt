@@ -6,17 +6,18 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
+import com.aqua.aqualight.ui.auth.security.ReAuthManager
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.NavHostFragment
 
 class LogoutFragment : Fragment(R.layout.fragment_logout) {
 
@@ -24,7 +25,15 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
     private val binding get() = _binding!!
 
     private val auth get() = FirebaseAuth.getInstance()
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+
+    private val userPrefs by lazy {
+        UserPreferencesManager.create(requireContext())
+    }
+
+    private val reAuthManager by lazy {
+        ReAuthManager()
+    }
+
     private val baseActivity get() = activity as? BaseActivity
 
     override fun onCreateView(
@@ -32,123 +41,217 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLogoutBinding.inflate(inflater, container, false)
+
+        _binding = FragmentLogoutBinding.inflate(
+            inflater,
+            container,
+            false
+        )
+
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+
         super.onViewCreated(view, savedInstanceState)
 
-        // 🔙 Back
-        binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+        setupNavigation()
 
-        // 🟦 Settings rows
+        setupButtons()
+    }
+
+    // ---------------------------------------------------------
+    // NAVIGATION
+    // ---------------------------------------------------------
+
+    private fun setupNavigation() {
+
+        binding.btnBack.setOnClickListener {
+
+            findNavController().popBackStack()
+        }
+
         binding.rowChangePassword.setOnClickListener {
-            findNavController().navigate(R.id.action_logoutFragment_to_changePasswordFragment)
+
+            findNavController().navigate(
+                R.id.action_logoutFragment_to_changePasswordFragment
+            )
         }
 
         binding.rowChangeEmail.setOnClickListener {
-            findNavController().navigate(R.id.action_logoutFragment_to_changeEmailFragment)
+
+            findNavController().navigate(
+                R.id.action_logoutFragment_to_changeEmailFragment
+            )
         }
 
         binding.rowSecuritySettings.setOnClickListener {
-            findNavController().navigate(R.id.action_logoutFragment_to_securitySettingsFragment)
-        }
 
-        // 🚪 Logout
+            findNavController().navigate(
+                R.id.action_logoutFragment_to_securitySettingsFragment
+            )
+        }
+    }
+
+    // ---------------------------------------------------------
+    // BUTTONS
+    // ---------------------------------------------------------
+
+    private fun setupButtons() {
+
         binding.btnLogout.setOnClickListener {
+
             showLogoutDialog()
         }
 
-        // 🗑 Delete Account
         binding.btnDeleteAccount.setOnClickListener {
+
             showDeleteAccountDialog()
         }
     }
 
-    /** ---------------------------------------------------------
-     *  🔹 LOGOUT — confirmation dialog (WARNING icon)
-     * --------------------------------------------------------- */
+    // ---------------------------------------------------------
+    // LOGOUT
+    // ---------------------------------------------------------
+
     private fun showLogoutDialog() {
+
         DialogManager.showConfirmDialog(
             context = requireContext(),
-            type = DialogType.WARNING, // ⚠️ Yellow warning icon
+            type = DialogType.WARNING,
             title = "Logout",
             message = "Are you sure you want to log out of your account?",
-            onConfirm = { performLogout() }
+            onConfirm = {
+                performLogout()
+            }
         )
     }
 
     private fun performLogout() {
-    baseActivity?.showLoading(true)  // ⭐ Loading start
 
-    auth.signOut()
+        baseActivity?.showLoading(true)
 
-    viewLifecycleOwner.lifecycleScope.launch {
-        userPrefs.logout()
+        viewLifecycleOwner.lifecycleScope.launch {
 
-        baseActivity?.showLoading(false)  // ⭐ Loading stop
-        navigateToLogin()
+            try {
+
+                auth.signOut()
+
+                userPrefs.logout()
+
+                navigateToLogin()
+
+            } finally {
+
+                baseActivity?.showLoading(false)
+            }
+        }
     }
-}
 
-    /** ---------------------------------------------------------
-     *  🔥 DELETE ACCOUNT — confirmation dialog (ERROR icon)
-     * --------------------------------------------------------- */
+    // ---------------------------------------------------------
+    // DELETE ACCOUNT
+    // ---------------------------------------------------------
+
     private fun showDeleteAccountDialog() {
+
         DialogManager.showConfirmDialog(
             context = requireContext(),
-            type = DialogType.ERROR, // ❌ Red danger icon
+            type = DialogType.ERROR,
             title = "Delete Account",
             message = "Are you sure you want to permanently delete your account?\nThis action cannot be undone.",
-            onConfirm = { performDeleteAccount() }
+            onConfirm = {
+                performDeleteAccount()
+            }
         )
     }
 
     private fun performDeleteAccount() {
-        val user = auth.currentUser ?: return
 
-        baseActivity?.showLoading(true)
+        when {
 
-        user.delete().addOnCompleteListener { task ->
-            baseActivity?.showLoading(false)
+            // -------------------------------------------------
+            // GOOGLE USER
+            // -------------------------------------------------
 
-            if (task.isSuccessful) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    userPrefs.clearAllUserData() // Fully reset all DataStore values
-                    navigateToLogin()
-                }
-            } else {
+            reAuthManager.isGoogleUser() -> {
+
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.SUCCESS,
+                    title = "Google Account",
+                    message = "Google re-authentication flow will start here."
+                )
+            }
+
+            // -------------------------------------------------
+            // EMAIL/PASSWORD USER
+            // -------------------------------------------------
+
+            reAuthManager.isPasswordUser() -> {
+
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.SUCCESS,
+                    title = "Password Account",
+                    message = "Password re-authentication flow will start here."
+                )
+            }
+
+            // -------------------------------------------------
+            // UNKNOWN PROVIDER
+            // -------------------------------------------------
+
+            else -> {
+
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
-                    title = "Account Deletion Failed",
-                    message = task.exception?.localizedMessage ?: "Unknown error occurred."
+                    title = "Authentication Error",
+                    message = "Unsupported authentication provider."
                 )
             }
         }
     }
 
-    /** ---------------------------------------------------------
-     *  🔄 Navigation to Login Screen
-     * --------------------------------------------------------- */
-        private fun navigateToLogin() {
-        // MainActivity'deki root NavHost (R.id.nav_host) üzerinden git
-        val rootNav = (requireActivity().supportFragmentManager
-            .findFragmentById(R.id.nav_host) as NavHostFragment).navController
+    // ---------------------------------------------------------
+    // NAVIGATE LOGIN
+    // ---------------------------------------------------------
+
+    private fun navigateToLogin() {
+
+        val rootNav =
+            (requireActivity()
+                .supportFragmentManager
+                .findFragmentById(R.id.nav_host) as NavHostFragment)
+                .navController
 
         val opts = navOptions {
-            // app graph'i temizle
-            popUpTo(R.id.nav_app) { inclusive = true }
+
+            popUpTo(R.id.nav_app) {
+                inclusive = true
+            }
+
             launchSingleTop = true
         }
 
-        // Auth container'a dön → bunun startDestination'ı zaten loginFragment
-        rootNav.navigate(R.id.authContainerFragment, null, opts)
+        rootNav.navigate(
+            R.id.authContainerFragment,
+            null,
+            opts
+        )
     }
 
+    // ---------------------------------------------------------
+    // CLEANUP
+    // ---------------------------------------------------------
+
     override fun onDestroyView() {
-        super.onDestroyView()
+
         _binding = null
+
+        super.onDestroyView()
     }
 }
