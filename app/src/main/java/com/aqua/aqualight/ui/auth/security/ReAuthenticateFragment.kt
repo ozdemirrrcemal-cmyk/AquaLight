@@ -40,6 +40,8 @@ class ReAuthenticateFragment :
 
     private lateinit var googleSignInClient: GoogleSignInClient
 
+    private var isLoading = false
+
     // ---------------------------------------------------
     // GOOGLE LAUNCHER
     // ---------------------------------------------------
@@ -52,6 +54,8 @@ class ReAuthenticateFragment :
             if (result.resultCode != Activity.RESULT_OK) {
 
                 baseActivity?.showLoading(false)
+
+                setLoadingState(false)
 
                 return@registerForActivityResult
             }
@@ -80,13 +84,17 @@ class ReAuthenticateFragment :
 
                         baseActivity?.showLoading(false)
 
+                        setLoadingState(false)
+
                         DialogManager.showInfoDialog(
                             requireContext(),
                             DialogType.ERROR,
                             title = "Verification Failed",
                             message =
                                 it.localizedMessage
-                                    ?: getString(R.string.re_auth_google_failed)
+                                    ?: getString(
+                                        R.string.re_auth_google_failed
+                                    )
                         )
                     }
 
@@ -94,13 +102,17 @@ class ReAuthenticateFragment :
 
                 baseActivity?.showLoading(false)
 
+                setLoadingState(false)
+
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
                     title = "Google Error",
                     message =
                         e.localizedMessage
-                            ?: getString(R.string.re_auth_unknown_error)
+                            ?: getString(
+                                R.string.re_auth_unknown_error
+                            )
                 )
             }
         }
@@ -244,7 +256,11 @@ class ReAuthenticateFragment :
 
     private fun startGoogleReAuthentication() {
 
+        if (isLoading) return
+
         baseActivity?.showLoading(true)
+
+        setLoadingState(true)
 
         googleSignInClient
             .signOut()
@@ -263,6 +279,8 @@ class ReAuthenticateFragment :
 
     private fun validatePasswordReAuthentication() {
 
+        if (isLoading) return
+
         val password =
             binding.etPassword.text
                 ?.toString()
@@ -272,7 +290,9 @@ class ReAuthenticateFragment :
         if (password.isBlank()) {
 
             binding.etPassword.error =
-                getString(R.string.re_auth_password_required)
+                getString(
+                    R.string.re_auth_password_required
+                )
 
             return
         }
@@ -284,6 +304,8 @@ class ReAuthenticateFragment :
             user.email ?: return
 
         baseActivity?.showLoading(true)
+
+        setLoadingState(true)
 
         val credential =
             EmailAuthProvider.getCredential(
@@ -300,8 +322,12 @@ class ReAuthenticateFragment :
 
                 baseActivity?.showLoading(false)
 
+                setLoadingState(false)
+
                 binding.etPassword.error =
-                    getString(R.string.re_auth_wrong_password)
+                    getString(
+                        R.string.re_auth_wrong_password
+                    )
             }
     }
 
@@ -320,6 +346,8 @@ class ReAuthenticateFragment :
                     userPrefs.clearAllUserData()
 
                     baseActivity?.showLoading(false)
+
+                    setLoadingState(false)
 
                     DialogManager.showInfoDialog(
                         requireContext(),
@@ -341,6 +369,8 @@ class ReAuthenticateFragment :
 
                 baseActivity?.showLoading(false)
 
+                setLoadingState(false)
+
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
@@ -349,9 +379,28 @@ class ReAuthenticateFragment :
                     ),
                     message =
                         it.localizedMessage
-                            ?: getString(R.string.re_auth_unknown_error)
+                            ?: getString(
+                                R.string.re_auth_unknown_error
+                            )
                 )
             }
+    }
+
+    // ---------------------------------------------------
+    // LOADING STATE
+    // ---------------------------------------------------
+
+    private fun setLoadingState(
+        loading: Boolean
+    ) {
+
+        isLoading = loading
+
+        binding.btnContinue.isEnabled =
+            !loading
+
+        binding.btnContinue.alpha =
+            if (loading) 0.6f else 1f
     }
 
     // ---------------------------------------------------
