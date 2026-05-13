@@ -745,6 +745,9 @@ Delete Failed
         Button that validates the form and updates your password.
     </string>
 	
+	<string name="change_password_error_title">
+    Password Change Failed
+</string>
 
    <!-- 📧 Change Email        -->
     <!-- Header title -->
