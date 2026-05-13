@@ -43,10 +43,4 @@
         android:name="com.aqua.aqualight.ui.auth.ResetPasswordFragment"
         android:label="@string/auth_reset_password_title" />
 
-    <!-- Re-Authenticate -->
-    <fragment
-        android:id="@+id/reAuthenticateFragment"
-        android:name="com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment"
-        android:label="ReAuthenticateFragment" />
-
 </navigation>
