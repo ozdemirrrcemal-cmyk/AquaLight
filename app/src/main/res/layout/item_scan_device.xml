@@ -56,4 +56,4 @@ android:foreground="?attr/selectableItemBackground">
     android:layout_height="1dp"  
     android:background="@color/settings_divider" />
 
-</LinearLayout>  (
+</LinearLayout>  
