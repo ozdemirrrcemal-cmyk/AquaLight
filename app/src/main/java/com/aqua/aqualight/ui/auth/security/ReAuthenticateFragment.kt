@@ -1,10 +1,15 @@
 package com.aqua.aqualight.ui.auth.security
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
@@ -12,8 +17,13 @@ import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentReAuthenticateBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
 
 class ReAuthenticateFragment :
@@ -30,6 +40,74 @@ class ReAuthenticateFragment :
 
     private val baseActivity get() = activity as? BaseActivity
 
+    private lateinit var googleSignInClient: GoogleSignInClient
+
+    // ---------------------------------------------------
+    // GOOGLE LAUNCHER
+    // ---------------------------------------------------
+
+    private val googleLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+
+            if (result.resultCode != Activity.RESULT_OK) {
+                baseActivity?.showLoading(false)
+                return@registerForActivityResult
+            }
+
+            try {
+
+                val task =
+                    GoogleSignIn.getSignedInAccountFromIntent(result.data)
+
+                val account =
+                    task.getResult(ApiException::class.java)
+
+                val credential =
+                    GoogleAuthProvider.getCredential(
+                        account.idToken,
+                        null
+                    )
+
+                auth.currentUser
+                    ?.reauthenticate(credential)
+                    ?.addOnSuccessListener {
+
+                        deleteAccount()
+
+                    }
+                    ?.addOnFailureListener {
+
+                        baseActivity?.showLoading(false)
+
+                        DialogManager.showInfoDialog(
+                            requireContext(),
+                            DialogType.ERROR,
+                            title = "Verification Failed",
+                            message = it.localizedMessage
+                                ?: "Google verification failed."
+                        )
+                    }
+
+            } catch (e: Exception) {
+
+                baseActivity?.showLoading(false)
+
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.ERROR,
+                    title = "Google Error",
+                    message = e.localizedMessage
+                        ?: "Unknown error."
+                )
+            }
+        }
+
+    // ---------------------------------------------------
+    // ON VIEW CREATED
+    // ---------------------------------------------------
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -39,125 +117,218 @@ class ReAuthenticateFragment :
 
         _binding = FragmentReAuthenticateBinding.bind(view)
 
-        setupContinueButton()
+        setupGoogle()
+
+        setupUi()
     }
 
-    // ---------------------------------------------------------
-    // CONTINUE BUTTON
-    // ---------------------------------------------------------
+    // ---------------------------------------------------
+    // GOOGLE SETUP
+    // ---------------------------------------------------
 
-    private fun setupContinueButton() {
+    private fun setupGoogle() {
+
+        val gso =
+            GoogleSignInOptions.Builder(
+                GoogleSignInOptions.DEFAULT_SIGN_IN
+            )
+                .requestIdToken(
+                    getString(R.string.default_web_client_id)
+                )
+                .requestEmail()
+                .build()
+
+        googleSignInClient =
+            GoogleSignIn.getClient(
+                requireContext(),
+                gso
+            )
+    }
+
+    // ---------------------------------------------------
+    // UI
+    // ---------------------------------------------------
+
+    private fun setupUi() {
+
+        val user = auth.currentUser ?: return
+
+        val isGoogleUser =
+            user.providerData.any {
+                it.providerId == "google.com"
+            }
+
+        if (isGoogleUser) {
+
+            setupGoogleUi()
+
+        } else {
+
+            setupPasswordUi()
+        }
+    }
+
+    // ---------------------------------------------------
+    // GOOGLE UI
+    // ---------------------------------------------------
+
+    private fun setupGoogleUi() {
+
+        binding.tvTitle.text =
+            "Verify Google Account"
+
+        binding.tvDescription.text =
+            "For security reasons, please verify your Google account before deleting your account."
+
+        binding.passwordLayout.visibility = View.GONE
+
+        binding.btnContinue.text =
+            "Continue with Google"
 
         binding.btnContinue.setOnClickListener {
 
-            val password =
-                binding.etPassword.text?.toString()?.trim().orEmpty()
-
-            if (password.isBlank()) {
-
-                binding.etPassword.error = "Password required"
-                return@setOnClickListener
-            }
-
-            reAuthenticateAndDelete(password)
+            startGoogleReAuthentication()
         }
     }
 
-    // ---------------------------------------------------------
-    // RE-AUTH + DELETE
-    // ---------------------------------------------------------
+    // ---------------------------------------------------
+    // PASSWORD UI
+    // ---------------------------------------------------
 
-    private fun reAuthenticateAndDelete(password: String) {
+    private fun setupPasswordUi() {
 
-        val user = auth.currentUser
+        binding.tvTitle.text =
+            "Confirm Password"
 
-        if (user == null) {
+        binding.tvDescription.text =
+            "Please enter your password to continue."
 
-            showError("User not found")
-            return
+        binding.passwordLayout.visibility = View.VISIBLE
+
+        binding.btnContinue.text =
+            "Continue"
+
+        binding.btnContinue.setOnClickListener {
+
+            validatePasswordReAuthentication()
         }
+    }
 
-        val email = user.email
+    // ---------------------------------------------------
+    // GOOGLE REAUTH
+    // ---------------------------------------------------
 
-        if (email.isNullOrBlank()) {
-
-            showError("Email not found")
-            return
-        }
+    private fun startGoogleReAuthentication() {
 
         baseActivity?.showLoading(true)
 
-        binding.btnContinue.isEnabled = false
+        googleSignInClient.signOut().addOnCompleteListener {
 
-        val credential =
-            EmailAuthProvider.getCredential(email, password)
+            val signIntent =
+                googleSignInClient.signInIntent
 
-        user.reauthenticate(credential)
-            .addOnCompleteListener { reAuthTask ->
-
-                if (!isAdded || _binding == null)
-                    return@addOnCompleteListener
-
-                if (reAuthTask.isSuccessful) {
-
-                    deleteAccount(user)
-
-                } else {
-
-                    baseActivity?.showLoading(false)
-
-                    binding.btnContinue.isEnabled = true
-
-                    binding.etPassword.error = "Wrong password"
-                }
-            }
+            googleLauncher.launch(signIntent)
+        }
     }
 
-    // ---------------------------------------------------------
-    // DELETE ACCOUNT
-    // ---------------------------------------------------------
+    // ---------------------------------------------------
+    // PASSWORD REAUTH
+    // ---------------------------------------------------
 
-    private fun deleteAccount(user: com.google.firebase.auth.FirebaseUser) {
+    private fun validatePasswordReAuthentication() {
 
-        user.delete()
-            .addOnCompleteListener { deleteTask ->
+        val password =
+            binding.etPassword.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
 
-                if (!isAdded || _binding == null)
-                    return@addOnCompleteListener
+        if (password.isBlank()) {
+
+            binding.etPassword.error =
+                "Password required"
+
+            return
+        }
+
+        val user = auth.currentUser ?: return
+
+        val email = user.email ?: return
+
+        baseActivity?.showLoading(true)
+
+        val credential =
+            EmailAuthProvider.getCredential(
+                email,
+                password
+            )
+
+        user.reauthenticate(credential)
+            .addOnSuccessListener {
+
+                deleteAccount()
+            }
+            .addOnFailureListener {
 
                 baseActivity?.showLoading(false)
 
-                binding.btnContinue.isEnabled = true
-
-                if (deleteTask.isSuccessful) {
-
-                    viewLifecycleOwner.lifecycleScope.launch {
-
-                        userPrefs.clearAllUserData()
-
-                        navigateToLogin()
-                    }
-
-                } else {
-
-                    showError(
-                        deleteTask.exception?.localizedMessage
-                            ?: "Account deletion failed"
-                    )
-                }
+                binding.etPassword.error =
+                    "Incorrect password"
             }
     }
 
-    // ---------------------------------------------------------
+    // ---------------------------------------------------
+    // DELETE ACCOUNT
+    // ---------------------------------------------------
+
+    private fun deleteAccount() {
+
+        auth.currentUser
+            ?.delete()
+            ?.addOnSuccessListener {
+
+                lifecycleScope.launch {
+
+                    userPrefs.clearAllUserData()
+
+                    baseActivity?.showLoading(false)
+
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.SUCCESS,
+                        title = "Account Deleted",
+                        message = "Your account has been deleted successfully.",
+                        onDismiss = {
+                            navigateToLogin()
+                        }
+                    )
+                }
+            }
+            ?.addOnFailureListener {
+
+                baseActivity?.showLoading(false)
+
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.ERROR,
+                    title = "Delete Failed",
+                    message = it.localizedMessage
+                        ?: "Unknown error."
+                )
+            }
+    }
+
+    // ---------------------------------------------------
     // NAVIGATE LOGIN
-    // ---------------------------------------------------------
+    // ---------------------------------------------------
 
     private fun navigateToLogin() {
 
         val rootNav =
             (requireActivity()
                 .supportFragmentManager
-                .findFragmentById(R.id.nav_host) as NavHostFragment)
+                .findFragmentById(R.id.nav_host)
+                    as NavHostFragment)
                 .navController
 
         val opts = navOptions {
@@ -176,23 +347,9 @@ class ReAuthenticateFragment :
         )
     }
 
-    // ---------------------------------------------------------
-    // ERROR
-    // ---------------------------------------------------------
-
-    private fun showError(message: String) {
-
-        DialogManager.showInfoDialog(
-            requireContext(),
-            DialogType.ERROR,
-            title = "Error",
-            message = message
-        )
-    }
-
-    // ---------------------------------------------------------
+    // ---------------------------------------------------
     // CLEANUP
-    // ---------------------------------------------------------
+    // ---------------------------------------------------
 
     override fun onDestroyView() {
 
