@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
@@ -15,7 +14,6 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
 import com.aqua.aqualight.ui.auth.security.ReAuthManager
-import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseAuth
@@ -23,242 +21,239 @@ import kotlinx.coroutines.launch
 
 class LogoutFragment : Fragment(R.layout.fragment_logout) {
 
-    private var _binding: FragmentLogoutBinding? = null
-    private val binding get() = _binding!!
+private var _binding: FragmentLogoutBinding? = null  
+private val binding get() = _binding!!  
 
-    private val auth get() = FirebaseAuth.getInstance()
+private val auth get() = FirebaseAuth.getInstance()  
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
-    }
+private val userPrefs by lazy {  
+    UserPreferencesManager.create(requireContext())  
+}  
 
-    private val reAuthManager by lazy {
-        ReAuthManager()
-    }
+private val reAuthManager by lazy {  
+    ReAuthManager()  
+}  
 
-    private val baseActivity get() = activity as? BaseActivity
+private val baseActivity get() = activity as? BaseActivity  
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+override fun onCreateView(  
+    inflater: LayoutInflater,  
+    container: ViewGroup?,  
+    savedInstanceState: Bundle?  
+): View {  
 
-        _binding = FragmentLogoutBinding.inflate(
-            inflater,
-            container,
-            false
-        )
+    _binding = FragmentLogoutBinding.inflate(  
+        inflater,  
+        container,  
+        false  
+    )  
 
-        return binding.root
-    }
+    return binding.root  
+}  
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
+override fun onViewCreated(  
+    view: View,  
+    savedInstanceState: Bundle?  
+) {  
 
-        super.onViewCreated(view, savedInstanceState)
+    super.onViewCreated(view, savedInstanceState)  
 
-        setupNavigation()
+    setupNavigation()  
 
-        setupButtons()
-    }
+    setupButtons()  
+}  
 
-    // ---------------------------------------------------------
-    // NAVIGATION
-    // ---------------------------------------------------------
+// ---------------------------------------------------------  
+// NAVIGATION  
+// ---------------------------------------------------------  
 
-    private fun setupNavigation() {
+private fun setupNavigation() {  
 
-        binding.btnBack.setOnClickListener {
+    binding.btnBack.setOnClickListener {  
 
-            findNavController().popBackStack()
-        }
+        findNavController().popBackStack()  
+    }  
 
-        binding.rowChangePassword.setOnClickListener {
+    binding.rowChangePassword.setOnClickListener {  
 
-            findNavController().navigate(
-                R.id.action_logoutFragment_to_changePasswordFragment
-            )
-        }
+        findNavController().navigate(  
+            R.id.action_logoutFragment_to_changePasswordFragment  
+        )  
+    }  
 
-        binding.rowChangeEmail.setOnClickListener {
+    binding.rowChangeEmail.setOnClickListener {  
 
-            findNavController().navigate(
-                R.id.action_logoutFragment_to_changeEmailFragment
-            )
-        }
+        findNavController().navigate(  
+            R.id.action_logoutFragment_to_changeEmailFragment  
+        )  
+    }  
 
-        binding.rowSecuritySettings.setOnClickListener {
+    binding.rowSecuritySettings.setOnClickListener {  
 
-            findNavController().navigate(
-                R.id.action_logoutFragment_to_securitySettingsFragment
-            )
-        }
-    }
+        findNavController().navigate(  
+            R.id.action_logoutFragment_to_securitySettingsFragment  
+        )  
+    }  
+}  
 
-    // ---------------------------------------------------------
-    // BUTTONS
-    // ---------------------------------------------------------
+// ---------------------------------------------------------  
+// BUTTONS  
+// ---------------------------------------------------------  
 
-    private fun setupButtons() {
+private fun setupButtons() {  
 
-        binding.btnLogout.setOnClickListener {
+    binding.btnLogout.setOnClickListener {  
 
-            showLogoutDialog()
-        }
+        showLogoutDialog()  
+    }  
 
-        binding.btnDeleteAccount.setOnClickListener {
+    binding.btnDeleteAccount.setOnClickListener {  
 
-            showDeleteAccountDialog()
-        }
-    }
+        showDeleteAccountDialog()  
+    }  
+}  
 
-    // ---------------------------------------------------------
-    // LOGOUT
-    // ---------------------------------------------------------
+// ---------------------------------------------------------  
+// LOGOUT  
+// ---------------------------------------------------------  
 
-    private fun showLogoutDialog() {
+private fun showLogoutDialog() {  
 
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
-            title = "Logout",
-            message = "Are you sure you want to log out of your account?",
-            onConfirm = {
-                performLogout()
-            }
-        )
-    }
+    DialogManager.showConfirmDialog(  
+        context = requireContext(),  
+        type = DialogType.WARNING,  
+        title = "Logout",  
+        message = "Are you sure you want to log out of your account?",  
+        onConfirm = {  
+            performLogout()  
+        }  
+    )  
+}  
 
-    private fun performLogout() {
+private fun performLogout() {  
 
-        baseActivity?.showLoading(true)
+    baseActivity?.showLoading(true)  
 
-        viewLifecycleOwner.lifecycleScope.launch {
+    viewLifecycleOwner.lifecycleScope.launch {  
 
-            try {
+        try {  
 
-                auth.signOut()
+            auth.signOut()  
 
-                userPrefs.logout()
+            userPrefs.logout()  
 
-                navigateToLogin()
+            navigateToLogin()  
 
-            } finally {
+        } finally {  
 
-                baseActivity?.showLoading(false)
-            }
-        }
-    }
+            baseActivity?.showLoading(false)  
+        }  
+    }  
+}  
 
-    // ---------------------------------------------------------
-    // DELETE ACCOUNT
-    // ---------------------------------------------------------
+// ---------------------------------------------------------  
+// DELETE ACCOUNT  
+// ---------------------------------------------------------  
 
-    private fun showDeleteAccountDialog() {
+private fun showDeleteAccountDialog() {  
 
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.ERROR,
-            title = "Delete Account",
-            message = "Are you sure you want to permanently delete your account?\nThis action cannot be undone.",
-            onConfirm = {
-                performDeleteAccount()
-            }
-        )
-    }
+    DialogManager.showConfirmDialog(  
+        context = requireContext(),  
+        type = DialogType.ERROR,  
+        title = "Delete Account",  
+        message = "Are you sure you want to permanently delete your account?\nThis action cannot be undone.",  
+        onConfirm = {  
+            performDeleteAccount()  
+        }  
+    )  
+}  
 
-    private fun performDeleteAccount() {
+private fun performDeleteAccount() {  
 
-        when {
+    when {  
 
-            // -------------------------------------------------
-            // GOOGLE USER
-            // -------------------------------------------------
+        // -------------------------------------------------  
+        // GOOGLE USER  
+        // -------------------------------------------------  
 
-            reAuthManager.isGoogleUser() -> {
+        reAuthManager.isGoogleUser() -> {  
 
-                navigateToReAuthentication()
-            }
+findNavController().navigate(  
+    R.id.reAuthenticateFragment  
+)
 
-            // -------------------------------------------------
-            // EMAIL/PASSWORD USER
-            // -------------------------------------------------
+}
 
-            reAuthManager.isPasswordUser() -> {
+// -------------------------------------------------  
+        // EMAIL/PASSWORD USER  
+        // -------------------------------------------------  
 
-                navigateToReAuthentication()
-            }
+        // -------------------------------------------------
 
-            // -------------------------------------------------
-            // UNKNOWN PROVIDER
-            // -------------------------------------------------
+// EMAIL/PASSWORD USER
+// -------------------------------------------------
 
-            else -> {
+reAuthManager.isPasswordUser() -> {
 
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.ERROR,
-                    title = "Authentication Error",
-                    message = "Unsupported authentication provider."
-                )
-            }
-        }
-    }
+findNavController().navigate(  
+    R.id.reAuthenticateFragment  
+)
 
-    // ---------------------------------------------------------
-    // RE-AUTH NAVIGATION
-    // ---------------------------------------------------------
+}
 
-    private fun navigateToReAuthentication() {
+// -------------------------------------------------  
+        // UNKNOWN PROVIDER  
+        // -------------------------------------------------  
 
-        findNavController().navigate(
-            R.id.reAuthenticateFragment,
-            bundleOf(
-                ReAuthenticateFragment.ARG_ACTION to
-                        ReAuthenticateFragment.ACTION_DELETE_ACCOUNT
-            )
-        )
-    }
+        else -> {  
 
-    // ---------------------------------------------------------
-    // NAVIGATE LOGIN
-    // ---------------------------------------------------------
+            DialogManager.showInfoDialog(  
+                requireContext(),  
+                DialogType.ERROR,  
+                title = "Authentication Error",  
+                message = "Unsupported authentication provider."  
+            )  
+        }  
+    }  
+}  
 
-    private fun navigateToLogin() {
+// ---------------------------------------------------------  
+// NAVIGATE LOGIN  
+// ---------------------------------------------------------  
 
-        val rootNav =
-            (requireActivity()
-                .supportFragmentManager
-                .findFragmentById(R.id.nav_host) as NavHostFragment)
-                .navController
+private fun navigateToLogin() {  
 
-        val opts = navOptions {
+    val rootNav =  
+        (requireActivity()  
+            .supportFragmentManager  
+            .findFragmentById(R.id.nav_host) as NavHostFragment)  
+            .navController  
 
-            popUpTo(R.id.nav_app) {
-                inclusive = true
-            }
+    val opts = navOptions {  
 
-            launchSingleTop = true
-        }
+        popUpTo(R.id.nav_app) {  
+            inclusive = true  
+        }  
 
-        rootNav.navigate(
-            R.id.authContainerFragment,
-            null,
-            opts
-        )
-    }
+        launchSingleTop = true  
+    }  
 
-    // ---------------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------------
+    rootNav.navigate(  
+        R.id.authContainerFragment,  
+        null,  
+        opts  
+    )  
+}  
 
-    override fun onDestroyView() {
+// ---------------------------------------------------------  
+// CLEANUP  
+// ---------------------------------------------------------  
 
-        _binding = null
+override fun onDestroyView() {  
 
-        super.onDestroyView()
-    }
+    _binding = null  
+
+    super.onDestroyView()  
+}
+
 }
