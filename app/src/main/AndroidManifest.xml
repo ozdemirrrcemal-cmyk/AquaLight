@@ -8,6 +8,7 @@
 
     <!-- 📸 Kamera izni -->
     <uses-permission android:name="android.permission.CAMERA" />
+	<uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- 📸 Kamera donanımı: zorunlu değil -->
     <uses-feature
