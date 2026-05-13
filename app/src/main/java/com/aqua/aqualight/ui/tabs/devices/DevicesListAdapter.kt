@@ -23,22 +23,35 @@ data class DeviceCardUi(
 class DevicesListAdapter(
     private val onSelectionModeStart: () -> Unit,
     private val onSelectionChanged: (Int) -> Unit,
-    private val onDeviceClick: (DeviceCardUi) -> Unit   // 🔹 YENİ
+    private val onDeviceClick: (DeviceCardUi) -> Unit
 ) : ListAdapter<DeviceCardUi, DevicesListAdapter.DeviceViewHolder>(DiffCallback) {
 
-    // Seçili kartların ID’leri
+    // Seçili cihaz ID listesi
     private val selectedIds = mutableSetOf<Long>()
 
     var isSelectionMode = false
         private set
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): DeviceViewHolder {
+
         val inflater = LayoutInflater.from(parent.context)
-        val binding = ItemDeviceCardBinding.inflate(inflater, parent, false)
+
+        val binding = ItemDeviceCardBinding.inflate(
+            inflater,
+            parent,
+            false
+        )
+
         return DeviceViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: DeviceViewHolder,
+        position: Int
+    ) {
         holder.bind(getItem(position))
     }
 
@@ -47,64 +60,98 @@ class DevicesListAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: DeviceCardUi) {
+
             val ctx = binding.root.context
             val isSelected = selectedIds.contains(item.id)
 
-            // Cihaz adı
-            binding.tvDeviceName.text =
-    if (item.aquaName.isNotBlank())
-        item.aquaName
-    else
-        item.name
+            // -------------------------------------------------
+            // DEVICE NAME
+            // -------------------------------------------------
 
-            // Icon
+            binding.tvDeviceName.text =
+                if (item.aquaName.isNotBlank()) {
+                    item.aquaName
+                } else {
+                    item.name
+                }
+
+            // -------------------------------------------------
+            // DEVICE ICON
+            // -------------------------------------------------
+
             val iconRes = resolveIconForAquaName(item.aquaName)
+
             binding.ivDeviceIcon.setImageResource(iconRes)
 
-            // Online status rengi
-            val statusColorRes = if (item.isOnline)
-                R.color.dialog_icon_success
-            else
-                R.color.settings_text_secondary
+            // -------------------------------------------------
+            // ONLINE STATUS
+            // -------------------------------------------------
+
+            val statusColorRes =
+                if (item.isOnline) {
+                    R.color.dialog_icon_success
+                } else {
+                    R.color.settings_text_secondary
+                }
 
             binding.ivStatus.setColorFilter(
                 ContextCompat.getColor(ctx, statusColorRes),
                 PorterDuff.Mode.SRC_IN
             )
 
-            // SEÇİLİ KART GÖRSELİ
+            // -------------------------------------------------
+            // SELECTION UI
+            // -------------------------------------------------
+
             if (isSelected) {
+
                 binding.root.alpha = 1f
+
                 binding.card.strokeWidth = 4
+
                 binding.card.strokeColor =
-                    ContextCompat.getColor(ctx, R.color.dialog_icon_success)
+                    ContextCompat.getColor(
+                        ctx,
+                        R.color.dialog_icon_success
+                    )
+
             } else {
-                binding.root.alpha = 0.85f
+
+                binding.root.alpha = 0.88f
+
                 binding.card.strokeWidth = 0
+
+                binding.card.strokeColor =
+                    ContextCompat.getColor(
+                        ctx,
+                        android.R.color.transparent
+                    )
             }
 
-            // -----------------------
-            // TEK TIK
-            // -----------------------
+            // -------------------------------------------------
+            // CLICK
+            // -------------------------------------------------
+
             binding.root.setOnClickListener {
+
                 if (isSelectionMode) {
-                    // Seçim modundaysa toggle
                     toggleSelection(item)
                 } else {
-                    // Normal modda → cihaz tıklandı bilgisini dışarı gönder
                     onDeviceClick(item)
                 }
             }
 
-            // -----------------------
-            // UZUN BAS — seçim başlat + toggle
-            // -----------------------
+            // -------------------------------------------------
+            // LONG CLICK
+            // -------------------------------------------------
+
             binding.root.setOnLongClickListener {
-                val firstTime = selectedIds.isEmpty()
+
+                val firstSelection = selectedIds.isEmpty()
 
                 toggleSelection(item)
 
-                if (firstTime) {
+                if (firstSelection) {
                     isSelectionMode = true
                     onSelectionModeStart()
                 }
@@ -114,50 +161,151 @@ class DevicesListAdapter(
         }
     }
 
-    // ---------------------------
-    // Yardımcı Fonksiyonlar
-    // ---------------------------
+    // -------------------------------------------------
+    // SELECTION
+    // -------------------------------------------------
 
     private fun toggleSelection(item: DeviceCardUi) {
-        if (selectedIds.contains(item.id))
+
+        if (selectedIds.contains(item.id)) {
             selectedIds.remove(item.id)
-        else
+        } else {
             selectedIds.add(item.id)
+        }
 
         onSelectionChanged(selectedIds.size)
 
-        notifyItemChanged(currentList.indexOf(item))
+        notifyDataSetChanged()
     }
 
-    fun getSelectedIds(): Set<Long> = selectedIds.toSet()
+    fun getSelectedIds(): Set<Long> {
+        return selectedIds.toSet()
+    }
 
     fun exitSelectionMode() {
+
         selectedIds.clear()
+
         isSelectionMode = false
+
         notifyDataSetChanged()
     }
 
     companion object {
-        private val DiffCallback = object : DiffUtil.ItemCallback<DeviceCardUi>() {
-            override fun areItemsTheSame(oldItem: DeviceCardUi, newItem: DeviceCardUi): Boolean =
-                oldItem.id == newItem.id
 
-            override fun areContentsTheSame(oldItem: DeviceCardUi, newItem: DeviceCardUi): Boolean =
-                oldItem == newItem
-        }
+        private val DiffCallback =
+            object : DiffUtil.ItemCallback<DeviceCardUi>() {
 
-        private fun resolveIconForAquaName(aquaName: String): Int {
-            val key = aquaName.lowercase(Locale.ROOT)
+                override fun areItemsTheSame(
+                    oldItem: DeviceCardUi,
+                    newItem: DeviceCardUi
+                ): Boolean {
+                    return oldItem.id == newItem.id
+                }
+
+                override fun areContentsTheSame(
+                    oldItem: DeviceCardUi,
+                    newItem: DeviceCardUi
+                ): Boolean {
+                    return oldItem == newItem
+                }
+            }
+
+        // -------------------------------------------------
+        // ICON RESOLVER
+        // -------------------------------------------------
+
+        private fun resolveIconForAquaName(
+            aquaName: String
+        ): Int {
+
+            val key = aquaName
+                .trim()
+                .lowercase(Locale.ROOT)
 
             return when {
-                key.contains("doser") || key.contains("dosing") || key.contains("pump") -> R.drawable.ic_device_doser
-                key.contains("light") || key.contains("wrgb") -> R.drawable.ic_device_light
-                key.contains("hub") -> R.drawable.ic_device_wifi_hub
-                key.contains("timer") -> R.drawable.ic_device_timer
-                key.contains("temp") -> R.drawable.ic_device_temperature
-                key.contains("co2") -> R.drawable.ic_device_co2
-                key.contains("aqua") -> R.drawable.ic_device_aqua_ster
-                else -> R.drawable.ic_device_aqua_ster
+
+                // -------------------------------------------------
+                // DOSER / DOSING
+                // -------------------------------------------------
+
+                key.contains("doser") ||
+                key.contains("dosing") ||
+                key.contains("dose") ||
+                key.contains("pump") ||
+                key.contains("liquid") ->
+                    R.drawable.ic_device_doser
+
+                // -------------------------------------------------
+                // WRGB / LIGHT
+                // -------------------------------------------------
+
+                key.contains("light") ||
+                key.contains("wrgb") ||
+                key.contains("rgb") ||
+                key.contains("led") ||
+                key.contains("lamp") ||
+                key.contains("shade") ->
+                    R.drawable.ic_device_light
+
+                // -------------------------------------------------
+                // WIFI HUB / CONTROLLER
+                // -------------------------------------------------
+
+                key.contains("hub") ||
+                key.contains("gateway") ||
+                key.contains("wifi") ||
+                key.contains("bridge") ||
+                key.contains("controller") ->
+                    R.drawable.ic_device_wifi_hub
+
+                // -------------------------------------------------
+                // TIMER / SMART PLUG
+                // -------------------------------------------------
+
+                key.contains("timer") ||
+                key.contains("socket") ||
+                key.contains("plug") ||
+                key.contains("smartplug") ||
+                key.contains("switch") ->
+                    R.drawable.ic_device_timer
+
+                // -------------------------------------------------
+                // TEMPERATURE / COOLING
+                // -------------------------------------------------
+
+                key.contains("temp") ||
+                key.contains("temperature") ||
+                key.contains("fan") ||
+                key.contains("cooler") ||
+                key.contains("heater") ->
+                    R.drawable.ic_device_temperature
+
+                // -------------------------------------------------
+                // CO2
+                // -------------------------------------------------
+
+                key.contains("co2") ||
+                key.contains("regulator") ||
+                key.contains("solenoid") ->
+                    R.drawable.ic_device_co2
+
+                // -------------------------------------------------
+                // MAIN DEVICE / AQUASTER
+                // -------------------------------------------------
+
+                key.contains("aqua") ||
+                key.contains("aquaster") ||
+                key.contains("master") ||
+                key.contains("main") ->
+                    R.drawable.ic_device_aqua_ster
+
+                // -------------------------------------------------
+                // DEFAULT
+                // -------------------------------------------------
+
+                else ->
+                    R.drawable.ic_device_aqua_ster
             }
         }
     }
