@@ -28,6 +28,21 @@ import kotlinx.coroutines.launch
 class ReAuthenticateFragment :
     Fragment(R.layout.fragment_re_authenticate) {
 
+    companion object {
+
+        const val ARG_ACTION =
+            "arg_action"
+
+        const val ACTION_DELETE_ACCOUNT =
+            "delete_account"
+
+        const val ACTION_CHANGE_PASSWORD =
+            "change_password"
+
+        const val ACTION_CHANGE_EMAIL =
+            "change_email"
+    }
+
     private var _binding: FragmentReAuthenticateBinding? = null
     private val binding get() = _binding!!
 
@@ -42,6 +57,9 @@ class ReAuthenticateFragment :
     private lateinit var googleSignInClient: GoogleSignInClient
 
     private var isLoading = false
+
+    private var currentAction =
+        ACTION_DELETE_ACCOUNT
 
     // ---------------------------------------------------
     // GOOGLE LAUNCHER
@@ -79,7 +97,7 @@ class ReAuthenticateFragment :
                     ?.reauthenticate(credential)
                     ?.addOnSuccessListener {
 
-                        deleteAccount()
+                        handleAuthenticatedAction()
                     }
                     ?.addOnFailureListener {
 
@@ -131,6 +149,10 @@ class ReAuthenticateFragment :
 
         _binding =
             FragmentReAuthenticateBinding.bind(view)
+
+        currentAction =
+            arguments?.getString(ARG_ACTION)
+                ?: ACTION_DELETE_ACCOUNT
 
         setupGoogle()
 
@@ -333,9 +355,9 @@ class ReAuthenticateFragment :
         user.reauthenticate(credential)
             .addOnSuccessListener {
 
-                deleteAccount()
+                handleAuthenticatedAction()
             }
-            .addOnFailureListener {
+            ?.addOnFailureListener {
 
                 baseActivity?.showLoading(false)
 
@@ -348,6 +370,47 @@ class ReAuthenticateFragment :
 
                 shakeView(binding.passwordLayout)
             }
+    }
+
+    // ---------------------------------------------------
+    // AUTHENTICATED ACTION
+    // ---------------------------------------------------
+
+    private fun handleAuthenticatedAction() {
+
+        when (currentAction) {
+
+            ACTION_DELETE_ACCOUNT -> {
+
+                deleteAccount()
+            }
+
+            ACTION_CHANGE_PASSWORD -> {
+
+                findNavController()
+                    .previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(
+                        "reauth_success",
+                        true
+                    )
+
+                findNavController().popBackStack()
+            }
+
+            ACTION_CHANGE_EMAIL -> {
+
+                findNavController()
+                    .previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(
+                        "reauth_success",
+                        true
+                    )
+
+                findNavController().popBackStack()
+            }
+        }
     }
 
     // ---------------------------------------------------

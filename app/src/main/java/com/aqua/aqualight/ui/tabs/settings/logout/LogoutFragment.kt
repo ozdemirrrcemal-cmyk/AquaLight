@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
@@ -14,6 +15,7 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
 import com.aqua.aqualight.ui.auth.security.ReAuthManager
+import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseAuth
@@ -178,25 +180,17 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
 
             reAuthManager.isGoogleUser() -> {
 
-    findNavController().navigate(
-        R.id.reAuthenticateFragment
-    )
-}
+                navigateToReAuthentication()
+            }
 
             // -------------------------------------------------
             // EMAIL/PASSWORD USER
             // -------------------------------------------------
 
-            // -------------------------------------------------
-// EMAIL/PASSWORD USER
-// -------------------------------------------------
+            reAuthManager.isPasswordUser() -> {
 
-reAuthManager.isPasswordUser() -> {
-
-    findNavController().navigate(
-        R.id.reAuthenticateFragment
-    )
-}
+                navigateToReAuthentication()
+            }
 
             // -------------------------------------------------
             // UNKNOWN PROVIDER
@@ -212,6 +206,21 @@ reAuthManager.isPasswordUser() -> {
                 )
             }
         }
+    }
+
+    // ---------------------------------------------------------
+    // RE-AUTH NAVIGATION
+    // ---------------------------------------------------------
+
+    private fun navigateToReAuthentication() {
+
+        findNavController().navigate(
+            R.id.reAuthenticateFragment,
+            bundleOf(
+                ReAuthenticateFragment.ARG_ACTION to
+                        ReAuthenticateFragment.ACTION_DELETE_ACCOUNT
+            )
+        )
     }
 
     // ---------------------------------------------------------
