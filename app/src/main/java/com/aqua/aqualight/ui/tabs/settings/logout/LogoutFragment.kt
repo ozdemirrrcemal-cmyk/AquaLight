@@ -190,15 +190,16 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
             // EMAIL/PASSWORD USER
             // -------------------------------------------------
 
-            reAuthManager.isPasswordUser() -> {
+            // -------------------------------------------------
+// EMAIL/PASSWORD USER
+// -------------------------------------------------
 
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.SUCCESS,
-                    title = "Password Account",
-                    message = "Password re-authentication flow will start here."
-                )
-            }
+reAuthManager.isPasswordUser() -> {
+
+    findNavController().navigate(
+        R.id.reAuthenticateFragment
+    )
+}
 
             // -------------------------------------------------
             // UNKNOWN PROVIDER
