@@ -111,6 +111,18 @@
                         android:text="@string/security_login_alerts_label"
                         android:layout_marginTop="8dp"
                         android:contentDescription="@string/security_login_alerts_desc" />
+						
+						<TextView
+    android:id="@+id/tvSaved"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="14dp"
+    android:alpha="0"
+    android:text="Saved"
+    android:textColor="@color/dialog_icon_success"
+    android:textSize="12sp"
+    android:textStyle="bold"
+    android:visibility="gone" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
