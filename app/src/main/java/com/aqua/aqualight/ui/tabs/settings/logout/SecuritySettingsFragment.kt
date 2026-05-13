@@ -1,11 +1,8 @@
 package com.aqua.aqualight.ui.tabs.settings.logout
 
 import android.animation.ObjectAnimator
-import android.content.Context
-import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
+import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -43,6 +40,7 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
     // ---------------------------------------------------
 
     private fun setupBackButton() {
+
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
@@ -84,8 +82,10 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
 
             if (isInitializing) return@setOnCheckedChangeListener
 
-            performHapticFeedback()
+            performHapticFeedback(binding.switch2FA)
+
             animateSwitch(binding.switch2FA)
+
             showSavedIndicator()
 
             updateTwoFactor(isChecked)
@@ -95,8 +95,10 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
 
             if (isInitializing) return@setOnCheckedChangeListener
 
-            performHapticFeedback()
+            performHapticFeedback(binding.switchLoginAlerts)
+
             animateSwitch(binding.switchLoginAlerts)
+
             showSavedIndicator()
 
             updateLoginAlerts(isChecked)
@@ -110,6 +112,7 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
     private fun updateTwoFactor(enabled: Boolean) {
 
         viewLifecycleOwner.lifecycleScope.launch {
+
             userPrefs.updateTwoFactorEnabled(enabled)
         }
     }
@@ -117,6 +120,7 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
     private fun updateLoginAlerts(enabled: Boolean) {
 
         viewLifecycleOwner.lifecycleScope.launch {
+
             userPrefs.updateLoginAlertsEnabled(enabled)
         }
     }
@@ -125,27 +129,11 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
     // HAPTIC FEEDBACK
     // ---------------------------------------------------
 
-    private fun performHapticFeedback() {
+    private fun performHapticFeedback(view: View) {
 
-        val vibrator =
-            requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
-        if (!vibrator.hasVibrator()) return
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            vibrator.vibrate(
-                VibrationEffect.createOneShot(
-                    60,
-                    80
-                )
-            )
-
-        } else {
-
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(60)
-        }
+        view.performHapticFeedback(
+            HapticFeedbackConstants.KEYBOARD_TAP
+        )
     }
 
     // ---------------------------------------------------
@@ -219,6 +207,7 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
     override fun onDestroyView() {
 
         binding.switch2FA.setOnCheckedChangeListener(null)
+
         binding.switchLoginAlerts.setOnCheckedChangeListener(null)
 
         binding.tvSaved.animate().cancel()
