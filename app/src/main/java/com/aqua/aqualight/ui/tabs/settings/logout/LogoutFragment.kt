@@ -179,7 +179,7 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
             reAuthManager.isGoogleUser() -> {
 
     findNavController().navigate(
-        R.id.reAuthenticateGoogleFragment
+        R.id.reAuthenticateFragment
     )
 }
 
