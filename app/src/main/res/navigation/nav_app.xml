@@ -160,6 +160,13 @@
         android:name="com.aqua.aqualight.ui.tabs.settings.logout.SecuritySettingsFragment"
         android:label="Security settings"
         tools:layout="@layout/fragment_security_settings" />
+		
+		<!-- 🔐 Re-Authenticate -->
+<fragment
+    android:id="@+id/reAuthenticateFragment"
+    android:name="com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment"
+    android:label="ReAuthenticate"
+    tools:layout="@layout/fragment_re_authenticate" />
 
     <!-- 🌍 Language Settings -->
     <fragment
