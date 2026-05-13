@@ -130,19 +130,21 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
         val vibrator =
             requireContext().getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
+        if (!vibrator.hasVibrator()) return
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
             vibrator.vibrate(
                 VibrationEffect.createOneShot(
-                    25,
-                    VibrationEffect.DEFAULT_AMPLITUDE
+                    60,
+                    80
                 )
             )
 
         } else {
 
             @Suppress("DEPRECATION")
-            vibrator.vibrate(25)
+            vibrator.vibrate(60)
         }
     }
 
@@ -199,6 +201,12 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
                     .alpha(0f)
                     .setStartDelay(700)
                     .setDuration(250)
+                    .withEndAction {
+
+                        if (_binding == null) return@withEndAction
+
+                        binding.tvSaved.visibility = View.GONE
+                    }
                     .start()
             }
             .start()
@@ -212,6 +220,8 @@ class SecuritySettingsFragment : Fragment(R.layout.fragment_security_settings) {
 
         binding.switch2FA.setOnCheckedChangeListener(null)
         binding.switchLoginAlerts.setOnCheckedChangeListener(null)
+
+        binding.tvSaved.animate().cancel()
 
         _binding = null
 
