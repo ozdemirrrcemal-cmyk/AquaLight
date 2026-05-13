@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
@@ -85,7 +86,7 @@ class ReAuthenticateFragment :
                             title = "Verification Failed",
                             message =
                                 it.localizedMessage
-                                    ?: "Google verification failed."
+                                    ?: getString(R.string.re_auth_google_failed)
                         )
                     }
 
@@ -99,7 +100,7 @@ class ReAuthenticateFragment :
                     title = "Google Error",
                     message =
                         e.localizedMessage
-                            ?: "Unknown error."
+                            ?: getString(R.string.re_auth_unknown_error)
                 )
             }
         }
@@ -120,7 +121,21 @@ class ReAuthenticateFragment :
 
         setupGoogle()
 
+        setupBackButton()
+
         setupUi()
+    }
+
+    // ---------------------------------------------------
+    // BACK BUTTON
+    // ---------------------------------------------------
+
+    private fun setupBackButton() {
+
+        binding.btnBack.setOnClickListener {
+
+            findNavController().popBackStack()
+        }
     }
 
     // ---------------------------------------------------
@@ -175,19 +190,20 @@ class ReAuthenticateFragment :
 
     private fun setupGoogleUi() {
 
-        binding.ivGoogle.visibility = View.VISIBLE
+        binding.ivGoogle.visibility =
+            View.VISIBLE
 
         binding.tvTitle.text =
-            "Verify Google Account"
+            getString(R.string.re_auth_google_title)
 
         binding.tvDescription.text =
-            "For security reasons, please verify your Google account before deleting your account."
+            getString(R.string.re_auth_google_description)
 
         binding.passwordLayout.visibility =
             View.GONE
 
         binding.btnContinue.text =
-            "Continue with Google"
+            getString(R.string.re_auth_continue_google)
 
         binding.btnContinue.setOnClickListener {
 
@@ -201,19 +217,20 @@ class ReAuthenticateFragment :
 
     private fun setupPasswordUi() {
 
-        binding.ivGoogle.visibility = View.GONE
+        binding.ivGoogle.visibility =
+            View.GONE
 
         binding.tvTitle.text =
-            "Confirm Password"
+            getString(R.string.re_auth_confirm_password)
 
         binding.tvDescription.text =
-            "Please enter your password to continue."
+            getString(R.string.re_auth_password_description)
 
         binding.passwordLayout.visibility =
             View.VISIBLE
 
         binding.btnContinue.text =
-            "Continue"
+            getString(R.string.re_auth_continue)
 
         binding.btnContinue.setOnClickListener {
 
@@ -255,7 +272,7 @@ class ReAuthenticateFragment :
         if (password.isBlank()) {
 
             binding.etPassword.error =
-                "Password required"
+                getString(R.string.re_auth_password_required)
 
             return
         }
@@ -284,7 +301,7 @@ class ReAuthenticateFragment :
                 baseActivity?.showLoading(false)
 
                 binding.etPassword.error =
-                    "Incorrect password"
+                    getString(R.string.re_auth_wrong_password)
             }
     }
 
@@ -307,8 +324,12 @@ class ReAuthenticateFragment :
                     DialogManager.showInfoDialog(
                         requireContext(),
                         DialogType.SUCCESS,
-                        title = "Account Deleted",
-                        message = "Your account has been deleted successfully.",
+                        title = getString(
+                            R.string.re_auth_delete_success_title
+                        ),
+                        message = getString(
+                            R.string.re_auth_delete_success_message
+                        ),
                         onDismiss = {
 
                             navigateToLogin()
@@ -323,10 +344,12 @@ class ReAuthenticateFragment :
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
-                    title = "Delete Failed",
+                    title = getString(
+                        R.string.re_auth_delete_failed_title
+                    ),
                     message =
                         it.localizedMessage
-                            ?: "Unknown error."
+                            ?: getString(R.string.re_auth_unknown_error)
                 )
             }
     }

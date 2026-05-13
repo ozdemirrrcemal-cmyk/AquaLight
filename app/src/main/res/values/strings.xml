@@ -253,6 +253,70 @@
         Permanently delete your account and all related data
     </string>
 	
+	<!-- RE-AUTH -->
+
+<string name="re_auth_page_title">Verify Account</string>
+
+<string name="re_auth_back_desc">
+Go back
+</string>
+
+<string name="re_auth_confirm_password">
+Confirm Password
+</string>
+
+<string name="re_auth_password_description">
+Please enter your password to continue.
+</string>
+
+<string name="re_auth_google_title">
+Verify Google Account
+</string>
+
+<string name="re_auth_google_description">
+For security reasons, please verify your Google account before deleting your account.
+</string>
+
+<string name="re_auth_password_hint">
+Password
+</string>
+
+<string name="re_auth_continue">
+Continue
+</string>
+
+<string name="re_auth_continue_google">
+Continue with Google
+</string>
+
+<string name="re_auth_password_required">
+Password required
+</string>
+
+<string name="re_auth_wrong_password">
+Incorrect password
+</string>
+
+<string name="re_auth_google_failed">
+Google verification failed.
+</string>
+
+<string name="re_auth_unknown_error">
+Unknown error.
+</string>
+
+<string name="re_auth_delete_success_title">
+Account Deleted
+</string>
+
+<string name="re_auth_delete_success_message">
+Your account has been deleted successfully.
+</string>
+
+<string name="re_auth_delete_failed_title">
+Delete Failed
+</string>
+	
 	<!-- 🧩 Settings detail screens: User Info -->
     <string name="user_info_title">User information</string>
     <string name="user_info_back_button_desc">
