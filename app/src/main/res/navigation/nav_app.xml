@@ -167,6 +167,12 @@
     android:name="com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment"
     android:label="ReAuthenticate"
     tools:layout="@layout/fragment_re_authenticate" />
+	
+	<fragment
+    android:id="@+id/reAuthenticateGoogleFragment"
+    android:name="com.aqua.aqualight.ui.auth.security.ReAuthenticateGoogleFragment"
+    android:label="ReAuthenticateGoogle"
+    tools:layout="@layout/fragment_re_authenticate_google" />
 
     <!-- 🌍 Language Settings -->
     <fragment

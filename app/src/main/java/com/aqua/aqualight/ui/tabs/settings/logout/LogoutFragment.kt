@@ -178,13 +178,10 @@ class LogoutFragment : Fragment(R.layout.fragment_logout) {
 
             reAuthManager.isGoogleUser() -> {
 
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.SUCCESS,
-                    title = "Google Account",
-                    message = "Google re-authentication flow will start here."
-                )
-            }
+    findNavController().navigate(
+        R.id.reAuthenticateGoogleFragment
+    )
+}
 
             // -------------------------------------------------
             // EMAIL/PASSWORD USER
