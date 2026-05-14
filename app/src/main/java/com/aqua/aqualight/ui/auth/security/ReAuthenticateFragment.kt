@@ -410,53 +410,60 @@ class ReAuthenticateFragment :
 
     private fun deleteAccount() {
 
-        val user =
-            auth.currentUser ?: return
+    val user =
+        auth.currentUser ?: return
 
-        user.delete()
-            .addOnSuccessListener {
+    user.delete()
+        .addOnSuccessListener {
 
-                lifecycleScope.launch {
+            lifecycleScope.launch {
 
-                    userPrefs.clearAllUserData()
+                userPrefs.clearAllUserData()
 
-                    baseActivity?.showLoading(false)
+                auth.signOut()
 
-                    setLoadingState(false)
+                googleSignInClient
+                    .revokeAccess()
+                    .addOnCompleteListener {
 
-                    baseActivity?.showSnackBar(
-                        getString(
-                            R.string.re_auth_delete_success_message
-                        )
-                    )
+                        baseActivity?.showLoading(false)
 
-                    binding.root.postDelayed({
+                        setLoadingState(false)
 
-                        navigateToLogin()
-
-                    }, 500)
-                }
-            }
-            .addOnFailureListener {
-
-                baseActivity?.showLoading(false)
-
-                setLoadingState(false)
-
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.ERROR,
-                    title = getString(
-                        R.string.re_auth_delete_failed_title
-                    ),
-                    message =
-                        it.localizedMessage
-                            ?: getString(
-                                R.string.re_auth_unknown_error
+                        baseActivity?.showSnackBar(
+                            getString(
+                                R.string.re_auth_delete_success_message
                             )
-                )
+                        )
+
+                        binding.root.postDelayed({
+
+                            navigateToLogin()
+
+                        }, 500)
+                    }
             }
-    }
+        }
+        .addOnFailureListener {
+
+            baseActivity?.showLoading(false)
+
+            setLoadingState(false)
+
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.ERROR,
+                title = getString(
+                    R.string.re_auth_delete_failed_title
+                ),
+                message =
+                    it.localizedMessage
+                        ?: getString(
+                            R.string.re_auth_unknown_error
+                        )
+            )
+        }
+}
 
     // ---------------------------------------------------
     // LOADING STATE
