@@ -560,63 +560,61 @@ class FeedbackFragment :
                 return@with
             }
 
-            // ---------------------------------------------------
-            // STORAGE UPLOAD
-            // ---------------------------------------------------
+         // ---------------------------------------------------
+// STORAGE UPLOAD
+// ---------------------------------------------------
 
-            val storageRef =
-                Firebase.storage.reference
-                    .child(
-                        "feedback_screenshots/$uid/${docRef.id}.jpg"
-                    )
+val storageRef =
+    Firebase.storage.reference
+        .child(
+            "feedback_screenshots/$uid/${docRef.id}.jpg"
+        )
 
-            storageRef.putFile(currentScreenshot)
-                .continueWithTask { task ->
+storageRef.putFile(currentScreenshot)
+    .continueWithTask<Uri> { task ->
 
-                    if (!task.isSuccessful) {
+        if (!task.isSuccessful) {
 
-                        throw (
-                            task.exception
-                                ?: Exception("Upload failed")
-                            )
-                    }
-
-                    return@continueWithTask
-                    storageRef.downloadUrl
-                }
-                .addOnSuccessListener { downloadUri ->
-
-                    val dataWithScreenshot =
-                        baseData.toMutableMap()
-
-                    dataWithScreenshot["screenshotUrl"] =
-                        downloadUri.toString()
-
-                    docRef.set(dataWithScreenshot)
-                        .addOnSuccessListener {
-
-                            setSendingState(false)
-
-                            resetForm()
-
-                            showSuccessUI()
-
-                            showSuccessSnackBar()
-                        }
-                        .addOnFailureListener {
-
-                            setSendingState(false)
-
-                            showErrorSnackBar()
-                        }
-                }
-                .addOnFailureListener {
-
-                    setSendingState(false)
-
-                    showErrorSnackBar()
-                }
+            throw (
+                task.exception
+                    ?: Exception("Upload failed")
+            )
         }
+
+        return@continueWithTask storageRef.downloadUrl
+    }
+    .addOnSuccessListener { downloadUri: Uri ->
+
+        val dataWithScreenshot =
+            baseData.toMutableMap()
+
+        dataWithScreenshot["screenshotUrl"] =
+            downloadUri.toString()
+
+        docRef.set(dataWithScreenshot)
+            .addOnSuccessListener {
+
+                setSendingState(false)
+
+                resetForm()
+
+                showSuccessUI()
+
+                showSuccessSnackBar()
+            }
+            .addOnFailureListener { _: Exception ->
+
+                setSendingState(false)
+
+                showErrorSnackBar()
+            }
+    }
+    .addOnFailureListener { _: Exception ->
+
+        setSendingState(false)
+
+        showErrorSnackBar()
+    }
 
     // ---------------------------------------------------
     // RESET FORM
