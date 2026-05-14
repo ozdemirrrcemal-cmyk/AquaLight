@@ -40,6 +40,13 @@ class FeedbackFragment :
         // Blaze planına geçene kadar
         private const val SCREENSHOT_ENABLED =
             true
+
+        // Max 3 MB
+        private const val MAX_SCREENSHOT_SIZE_MB =
+            3
+
+        private const val MAX_SCREENSHOT_SIZE_BYTES =
+            MAX_SCREENSHOT_SIZE_MB * 1024 * 1024
     }
 
     // ---------------------------------------------------
@@ -95,6 +102,22 @@ class FeedbackFragment :
             ) return@registerForActivityResult
 
             if (uri != null) {
+
+                // ---------------------------------------------------
+                // FILE SIZE CONTROL
+                // ---------------------------------------------------
+
+                if (!isFileSizeValid(uri)) {
+
+                    showSnackBar(
+                        getString(
+                            R.string.feedback_error_file_too_large
+                        ),
+                        BaseActivity.SnackType.ERROR
+                    )
+
+                    return@registerForActivityResult
+                }
 
                 screenshotUri = uri
 
@@ -606,7 +629,7 @@ class FeedbackFragment :
     }
 
     // ---------------------------------------------------
-    // COMPRESS IMAGE
+    // IMAGE COMPRESSION
     // ---------------------------------------------------
 
     private fun compressImage(
@@ -618,9 +641,41 @@ class FeedbackFragment :
                 .contentResolver
                 .openInputStream(uri)
 
-        val bitmap =
+        val originalBitmap =
             BitmapFactory.decodeStream(
                 inputStream
+            )
+
+        // ---------------------------------------------------
+        // MAX RESOLUTION
+        // ---------------------------------------------------
+
+        val maxSize =
+            1440
+
+        val ratio =
+            minOf(
+                maxSize.toFloat() /
+                        originalBitmap.width,
+
+                maxSize.toFloat() /
+                        originalBitmap.height
+            )
+
+        val width =
+            (originalBitmap.width * ratio)
+                .toInt()
+
+        val height =
+            (originalBitmap.height * ratio)
+                .toInt()
+
+        val resizedBitmap =
+            Bitmap.createScaledBitmap(
+                originalBitmap,
+                width,
+                height,
+                true
             )
 
         val file =
@@ -632,7 +687,7 @@ class FeedbackFragment :
         val outputStream =
             FileOutputStream(file)
 
-        bitmap.compress(
+        resizedBitmap.compress(
             Bitmap.CompressFormat.JPEG,
             75,
             outputStream
@@ -643,6 +698,37 @@ class FeedbackFragment :
         outputStream.close()
 
         return file
+    }
+
+    // ---------------------------------------------------
+    // FILE SIZE CONTROL
+    // ---------------------------------------------------
+
+    private fun isFileSizeValid(
+        uri: Uri
+    ): Boolean {
+
+        return try {
+
+            val descriptor =
+                requireContext()
+                    .contentResolver
+                    .openAssetFileDescriptor(
+                        uri,
+                        "r"
+                    )
+
+            val size =
+                descriptor?.length ?: 0L
+
+            descriptor?.close()
+
+            size <= MAX_SCREENSHOT_SIZE_BYTES
+
+        } catch (e: Exception) {
+
+            false
+        }
     }
 
     // ---------------------------------------------------

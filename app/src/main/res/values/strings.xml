@@ -1240,4 +1240,7 @@ Delete Failed
 <string name="feedback_sent_success">
     Feedback sent successfully
 </string>
+<string name="feedback_error_file_too_large">
+    Screenshot must be smaller than 3 MB
+</string>
 </resources>
