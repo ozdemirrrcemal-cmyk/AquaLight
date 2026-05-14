@@ -1248,10 +1248,6 @@ Delete Failed
     Username must be at least 3 characters
 </string>
 
-<string name="user_info_username_too_long">
-    Username cannot exceed 20 characters
-</string>
-
 <string name="user_info_username_invalid">
     Only letters, numbers, underscore and dot are allowed
 </string>

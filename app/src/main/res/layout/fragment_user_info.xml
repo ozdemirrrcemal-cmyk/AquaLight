@@ -127,43 +127,48 @@
                         android:layout_marginTop="4dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+<!-- 📝 Kullanıcı Adı -->
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/cardUsername"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    style="@style/Widget.Aqua.CardStyles">
 
-            <!-- 📝 Kullanıcı Adı -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardUsername"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputLayoutUsername"
+            style="@style/AuthTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/user_info_username_hint"
+            app:errorEnabled="true"
+            app:boxStrokeErrorColor="@color/snackbar_error"
+            app:startIconDrawable="@drawable/ic_profile"
+            app:startIconTint="@color/settings_text_secondary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etUsername"
+                style="@style/AuthEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                style="@style/Widget.Aqua.CardStyles">
+                android:inputType="text"
+                android:maxLength="20"
+                android:maxLines="1"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:contentDescription="@string/user_info_username_desc" />
 
-                <LinearLayout
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="12dp">
+        </com.google.android.material.textfield.TextInputLayout>
 
-                    <TextView
-                        android:id="@+id/tvUsernameLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/user_info_username_label"
-                        android:textSize="10sp"
-                        android:textColor="@color/settings_text_secondary" />
+    </LinearLayout>
 
-                    <EditText
-                        android:id="@+id/etUsername"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/user_info_username_hint"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:background="@null"
-                        android:padding="0dp"
-                        android:contentDescription="@string/user_info_username_desc" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
+</com.google.android.material.card.MaterialCardView>
             <!-- 📍 Adres -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAddress"

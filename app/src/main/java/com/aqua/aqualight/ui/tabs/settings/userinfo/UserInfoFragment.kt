@@ -1,8 +1,10 @@
 package com.aqua.aqualight.ui.tabs.settings.userinfo
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -175,12 +177,8 @@ class UserInfoFragment :
 
             etUsername.addTextChangedListener {
 
-                // USERNAME CARD RESET
-                cardUsername.strokeColor =
-                    resources.getColor(
-                        R.color.card_stroke,
-                        null
-                    )
+                inputLayoutUsername.error =
+                    null
             }
         }
 
@@ -210,6 +208,10 @@ class UserInfoFragment :
             // SAVE
             btnSave.setOnClickListener {
 
+                hideKeyboard()
+
+                etUsername.clearFocus()
+
                 saveUserInfo()
             }
         }
@@ -226,8 +228,7 @@ class UserInfoFragment :
                 ?.trim()
                 .orEmpty()
 
-        // RESET CARD
-        resetUsernameCardState()
+        resetUsernameError()
 
         // ---------------------------------------------------
         // EMPTY
@@ -235,14 +236,10 @@ class UserInfoFragment :
 
         if (username.isEmpty()) {
 
-            showUsernameErrorState()
-
-            showSnackBar(
+            binding.inputLayoutUsername.error =
                 getString(
                     R.string.user_info_username_empty_message
-                ),
-                BaseActivity.SnackType.WARNING
-            )
+                )
 
             return
         }
@@ -256,35 +253,10 @@ class UserInfoFragment :
             USERNAME_MIN_LENGTH
         ) {
 
-            showUsernameErrorState()
-
-            showSnackBar(
+            binding.inputLayoutUsername.error =
                 getString(
                     R.string.user_info_username_too_short
-                ),
-                BaseActivity.SnackType.WARNING
-            )
-
-            return
-        }
-
-        // ---------------------------------------------------
-        // TOO LONG
-        // ---------------------------------------------------
-
-        if (
-            username.length >
-            USERNAME_MAX_LENGTH
-        ) {
-
-            showUsernameErrorState()
-
-            showSnackBar(
-                getString(
-                    R.string.user_info_username_too_long
-                ),
-                BaseActivity.SnackType.WARNING
-            )
+                )
 
             return
         }
@@ -302,14 +274,10 @@ class UserInfoFragment :
             )
         ) {
 
-            showUsernameErrorState()
-
-            showSnackBar(
+            binding.inputLayoutUsername.error =
                 getString(
                     R.string.user_info_username_invalid
-                ),
-                BaseActivity.SnackType.WARNING
-            )
+                )
 
             return
         }
@@ -374,29 +342,30 @@ class UserInfoFragment :
     }
 
     // ---------------------------------------------------
-    // USERNAME ERROR STATE
+    // RESET USERNAME ERROR
     // ---------------------------------------------------
 
-    private fun showUsernameErrorState() {
+    private fun resetUsernameError() {
 
-        binding.cardUsername.strokeColor =
-            resources.getColor(
-                R.color.snackbar_error,
-                null
-            )
+        binding.inputLayoutUsername.error =
+            null
     }
 
     // ---------------------------------------------------
-    // RESET USERNAME CARD
+    // HIDE KEYBOARD
     // ---------------------------------------------------
 
-    private fun resetUsernameCardState() {
+    private fun hideKeyboard() {
 
-        binding.cardUsername.strokeColor =
-            resources.getColor(
-                R.color.card_stroke,
-                null
-            )
+        val imm =
+            requireContext().getSystemService(
+                Context.INPUT_METHOD_SERVICE
+            ) as InputMethodManager
+
+        imm.hideSoftInputFromWindow(
+            binding.etUsername.windowToken,
+            0
+        )
     }
 
     // ---------------------------------------------------
