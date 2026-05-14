@@ -37,11 +37,9 @@ class FeedbackFragment :
         private const val TAG =
             "FeedbackFragment"
 
-        // Blaze planına geçene kadar
         private const val SCREENSHOT_ENABLED =
             true
 
-        // Max 3 MB
         private const val MAX_SCREENSHOT_SIZE_MB =
             3
 
@@ -64,13 +62,11 @@ class FeedbackFragment :
 
     private val db:
         FirebaseFirestore by lazy {
-
             FirebaseFirestore.getInstance()
         }
 
     private val auth:
         FirebaseAuth by lazy {
-
             FirebaseAuth.getInstance()
         }
 
@@ -103,10 +99,7 @@ class FeedbackFragment :
 
             if (uri != null) {
 
-                // ---------------------------------------------------
-                // FILE SIZE CONTROL
-                // ---------------------------------------------------
-
+                // FILE SIZE CHECK
                 if (!isFileSizeValid(uri)) {
 
                     showSnackBar(
@@ -126,6 +119,9 @@ class FeedbackFragment :
 
                 binding.ivScreenshotClear.isVisible =
                     true
+
+                // PREMIUM SELECTED STATE
+                applySelectedScreenshotStyle()
 
                 showSnackBar(
                     getString(
@@ -167,6 +163,8 @@ class FeedbackFragment :
         setupLottie()
 
         setupScreenshotVisibility()
+
+        resetScreenshotStyle()
     }
 
     // ---------------------------------------------------
@@ -379,6 +377,76 @@ class FeedbackFragment :
                     }
                 }
             )
+        }
+
+    // ---------------------------------------------------
+    // PREMIUM SELECTED STATE
+    // ---------------------------------------------------
+
+    private fun applySelectedScreenshotStyle() =
+        with(binding) {
+
+            tvScreenshotInfo.setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    android.R.color.white
+                )
+            )
+
+            ivScreenshotIcon.setColorFilter(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_accent
+                )
+            )
+
+            ivScreenshotClear.setColorFilter(
+                ContextCompat.getColor(
+                    requireContext(),
+                    android.R.color.white
+                )
+            )
+
+            cardScreenshot.strokeColor =
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.aqua_accent
+                )
+        }
+
+    // ---------------------------------------------------
+    // DEFAULT STATE
+    // ---------------------------------------------------
+
+    private fun resetScreenshotStyle() =
+        with(binding) {
+
+            tvScreenshotInfo.setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.settings_text_secondary
+                )
+            )
+
+            ivScreenshotIcon.setColorFilter(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.settings_text_secondary
+                )
+            )
+
+            ivScreenshotClear.setColorFilter(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.settings_text_secondary
+                )
+            )
+
+            cardScreenshot.strokeColor =
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.card_stroke
+                )
         }
 
     // ---------------------------------------------------
@@ -646,10 +714,6 @@ class FeedbackFragment :
                 inputStream
             )
 
-        // ---------------------------------------------------
-        // MAX RESOLUTION
-        // ---------------------------------------------------
-
         val maxSize =
             1440
 
@@ -701,7 +765,7 @@ class FeedbackFragment :
     }
 
     // ---------------------------------------------------
-    // FILE SIZE CONTROL
+    // FILE SIZE CHECK
     // ---------------------------------------------------
 
     private fun isFileSizeValid(
@@ -886,6 +950,8 @@ class FeedbackFragment :
 
             ivScreenshotClear.isVisible =
                 false
+
+            resetScreenshotStyle()
         }
 
     // ---------------------------------------------------
