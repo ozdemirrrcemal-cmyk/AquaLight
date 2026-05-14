@@ -146,22 +146,6 @@ class SignInFragment : Fragment() {
             }
 
             // -------------------------------
-            // PASSWORD LENGTH
-            // -------------------------------
-
-            if (password.length < 6) {
-
-                baseActivity?.showLoading(false)
-
-                showWarning(
-                    R.string.invalid_password_title,
-                    R.string.invalid_password
-                )
-
-                return@launch
-            }
-
-            // -------------------------------
             // LOADING UI
             // -------------------------------
 
@@ -181,9 +165,7 @@ class SignInFragment : Fragment() {
                 email,
                 password
             )
-                .addOnCompleteListener(
-                    requireActivity()
-                ) { task ->
+                .addOnCompleteListener { task ->
 
                     baseActivity?.showLoading(false)
 
@@ -233,6 +215,19 @@ class SignInFragment : Fragment() {
                                         )
                                     }
                                 }
+
+                        } else {
+
+                            DialogManager.showInfoDialog(
+                                requireContext(),
+                                DialogType.ERROR,
+                                title = getString(
+                                    R.string.signin_failed_title
+                                ),
+                                message = getString(
+                                    R.string.login_user_info_unavailable
+                                )
+                            )
                         }
 
                     } else {

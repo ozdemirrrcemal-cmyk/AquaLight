@@ -1161,4 +1161,6 @@ Delete Failed
 <string name="re_auth_google_wrong_account">
     Please select the same Google account used for this account.
 </string>
+
+<string name="reset_loading">Sending...</string>
 </resources>
