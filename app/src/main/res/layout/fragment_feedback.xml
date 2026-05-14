@@ -191,67 +191,77 @@
                         android:layout_marginTop="16dp"
                         android:text="@string/feedback_attachment_title"
                         android:gravity="start" />
+<!-- Attachment için küçük kart -->
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/cardScreenshot"
+    style="@style/Widget.Aqua.CardStyles"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    app:cardElevation="0dp"
+    app:cardUseCompatPadding="false">
 
-                    <!-- Attachment için küçük kart -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cardScreenshot"
-                        style="@style/Widget.Aqua.CardStyles"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        app:cardElevation="0dp"
-                        app:cardUseCompatPadding="false">
-						
-						<com.google.android.material.imageview.ShapeableImageView
-    android:id="@+id/ivScreenshotPreview"
-    android:layout_width="90dp"
-    android:layout_height="90dp"
-    android:layout_marginTop="12dp"
-    android:layout_gravity="center_horizontal"
-    android:visibility="gone"
-    android:scaleType="centerCrop"
-    app:shapeAppearanceOverlay="@style/RoundedImageSmall" />
-                        <LinearLayout
-                            android:id="@+id/rowAddScreenshot"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="10dp"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:background="?attr/selectableItemBackgroundBorderless">
+    <!-- İç container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-                            <ImageView
-                                android:id="@+id/ivScreenshotIcon"
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/ic_image"
-                                app:tint="@color/settings_text_secondary" />
+        <!-- ÜST SATIR -->
+        <LinearLayout
+            android:id="@+id/rowAddScreenshot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless">
 
-                            <TextView
-                                android:id="@+id/tvScreenshotInfo"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="12dp"
-                                android:layout_weight="1"
-                                android:text="@string/feedback_screenshot_add"
-                                android:textSize="14sp"
-                                android:textColor="@color/settings_text_secondary" />
+            <ImageView
+                android:id="@+id/ivScreenshotIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_image"
+                app:tint="@color/settings_text_secondary" />
 
-                            <ImageView
-                                android:id="@+id/ivScreenshotClear"
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/ic_close"
-                                app:tint="@color/settings_text_secondary"
-                                android:visibility="gone" />
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/tvScreenshotInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:text="@string/feedback_screenshot_add"
+                android:textSize="14sp"
+                android:textColor="@color/settings_text_secondary" />
 
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            <ImageView
+                android:id="@+id/ivScreenshotClear"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_close"
+                android:visibility="gone"
+                app:tint="@color/settings_text_secondary" />
+        </LinearLayout>
+
+        <!-- SCREENSHOT PREVIEW -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivScreenshotPreview"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="12dp"
+            android:elevation="2dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            app:shapeAppearanceOverlay="@style/RoundedImageSmall" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
 
             <!-- Gönder butonu -->
             <com.google.android.material.button.MaterialButton
