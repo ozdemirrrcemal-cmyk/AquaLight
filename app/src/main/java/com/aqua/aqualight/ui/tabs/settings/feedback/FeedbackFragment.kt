@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.util.Log
 import android.util.Patterns
 import android.view.View
@@ -28,20 +29,17 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
 
-class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
+class FeedbackFragment :
+    Fragment(R.layout.fragment_feedback) {
 
     companion object {
 
         private const val TAG =
             "FeedbackFragment"
 
-        // 🔒 Blaze’e geçene kadar buradan yönet
+        // Blaze planına geçene kadar
         private const val SCREENSHOT_ENABLED =
             true
-
-        // 📦 Screenshot max MB
-        private const val MAX_IMAGE_SIZE_MB =
-            5
     }
 
     // ---------------------------------------------------
@@ -83,7 +81,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         Uri? = null
 
     // ---------------------------------------------------
-    // PICK IMAGE
+    // IMAGE PICKER
     // ---------------------------------------------------
 
     private val pickScreenshot =
@@ -101,19 +99,10 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 screenshotUri = uri
 
                 binding.tvScreenshotInfo.text =
-                    getString(
-                        R.string.feedback_screenshot_selected
-                    )
+                    getFileName(uri)
 
                 binding.ivScreenshotClear.isVisible =
                     true
-
-                binding.ivScreenshotPreview.isVisible =
-                    true
-
-                binding.ivScreenshotPreview.setImageURI(
-                    uri
-                )
 
                 showSnackBar(
                     getString(
@@ -182,7 +171,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         }
 
     // ---------------------------------------------------
-    // CATEGORY DROPDOWN
+    // CATEGORY
     // ---------------------------------------------------
 
     private fun setupCategoryDropdown() =
@@ -266,7 +255,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         }
 
     // ---------------------------------------------------
-    // SCREENSHOT UI
+    // SCREENSHOT VISIBILITY
     // ---------------------------------------------------
 
     private fun setupScreenshotVisibility() =
@@ -507,10 +496,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         val currentScreenshot =
             screenshotUri
 
-        // ---------------------------------------------------
-        // NO SCREENSHOT
-        // ---------------------------------------------------
-
         if (
             !SCREENSHOT_ENABLED ||
             currentScreenshot == null
@@ -523,10 +508,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
             return
         }
-
-        // ---------------------------------------------------
-        // WITH SCREENSHOT
-        // ---------------------------------------------------
 
         uploadScreenshotAndSaveFeedback(
             uid = uid,
@@ -625,7 +606,7 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
     }
 
     // ---------------------------------------------------
-    // IMAGE COMPRESS
+    // COMPRESS IMAGE
     // ---------------------------------------------------
 
     private fun compressImage(
@@ -662,6 +643,48 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
         outputStream.close()
 
         return file
+    }
+
+    // ---------------------------------------------------
+    // FILE NAME
+    // ---------------------------------------------------
+
+    private fun getFileName(
+        uri: Uri
+    ): String {
+
+        var result =
+            "screenshot"
+
+        val cursor =
+            requireContext()
+                .contentResolver
+                .query(
+                    uri,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+
+        cursor?.use {
+
+            val nameIndex =
+                it.getColumnIndex(
+                    OpenableColumns.DISPLAY_NAME
+                )
+
+            if (
+                nameIndex != -1 &&
+                it.moveToFirst()
+            ) {
+
+                result =
+                    it.getString(nameIndex)
+            }
+        }
+
+        return result
     }
 
     // ---------------------------------------------------
@@ -776,13 +799,6 @@ class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
                 )
 
             ivScreenshotClear.isVisible =
-                false
-
-            ivScreenshotPreview.setImageDrawable(
-                null
-            )
-
-            ivScreenshotPreview.isVisible =
                 false
         }
 

@@ -247,19 +247,6 @@
 
                             </LinearLayout>
 
-                            <!-- PREVIEW -->
-                            <com.google.android.material.imageview.ShapeableImageView
-                                android:id="@+id/ivScreenshotPreview"
-                                android:layout_width="90dp"
-                                android:layout_height="90dp"
-                                android:layout_gravity="center_horizontal"
-                                android:layout_marginTop="4dp"
-                                android:layout_marginBottom="12dp"
-                                android:elevation="2dp"
-                                android:scaleType="centerCrop"
-                                android:visibility="gone"
-                                app:shapeAppearanceOverlay="@style/RoundedImageSmall" />
-
                         </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
