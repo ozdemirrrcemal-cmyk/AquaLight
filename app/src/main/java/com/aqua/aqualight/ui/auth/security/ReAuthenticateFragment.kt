@@ -93,9 +93,12 @@ class ReAuthenticateFragment :
                         null
                     )
 
-                auth.currentUser
-                    ?.reauthenticate(credential)
-                    ?.addOnSuccessListener {
+                val user =
+                    auth.currentUser
+                        ?: return@registerForActivityResult
+
+                user.reauthenticate(credential)
+                    .addOnSuccessListener {
 
                         handleAuthenticatedAction()
                     }
@@ -407,9 +410,11 @@ class ReAuthenticateFragment :
 
     private fun deleteAccount() {
 
-        auth.currentUser
-            ?.delete()
-            ?.addOnSuccessListener {
+        val user =
+            auth.currentUser ?: return
+
+        user.delete()
+            .addOnSuccessListener {
 
                 lifecycleScope.launch {
 
