@@ -1,314 +1,965 @@
 package com.aqua.aqualight.ui.tabs.settings.userinfo
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserAddressBinding
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.textview.MaterialTextView
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
+class UserAddressFragment :
+    Fragment(R.layout.fragment_user_address) {
 
-    private var _binding: FragmentUserAddressBinding? = null
+    companion object {
+
+        private const val FIRST_NAME_MIN = 2
+        private const val LAST_NAME_MIN = 2
+    }
+
+    // ---------------------------------------------------
+    // VIEW BINDING
+    // ---------------------------------------------------
+
+    private var _binding:
+        FragmentUserAddressBinding? = null
+
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    // ---------------------------------------------------
+    // DATASTORE
+    // ---------------------------------------------------
 
-    // Son kullanılan ülke kodu, telefon alanından eski kodu sökebilmek için
-    private var lastDialCode: String? = null
+    private val userPrefs by lazy {
 
-    // Yazarken recursive TextWatcher tetiklenmesini engellemek için flag
-    private var isFormattingPhone = false
+        UserPreferencesManager.create(
+            requireContext()
+        )
+    }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentUserAddressBinding.bind(view)
+    // ---------------------------------------------------
+    // PHONE
+    // ---------------------------------------------------
+
+    private var lastDialCode:
+        String? = null
+
+    private var isFormattingPhone =
+        false
+
+    // ---------------------------------------------------
+    // ON VIEW CREATED
+    // ---------------------------------------------------
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        _binding =
+            FragmentUserAddressBinding.bind(view)
 
         loadAddressFromPrefs()
-        setupCountryPhoneLink()       // mevcut telefon–ülke senkronu
-        setupPhoneFormatting()        // yazarken format
+
+        setupCountryPhoneLink()
+
+        setupPhoneFormatting()
+
+        setupValidationWatchers()
+
         setupListeners()
-        setupCountryPickerClick()     // kart'a tıklayınca bottom sheet aç
+
+        setupCountryPickerClick()
     }
 
-    /** 🔹 DataStore'dan adres bilgilerini yükle */
+    // ---------------------------------------------------
+    // LOAD PREFS
+    // ---------------------------------------------------
+
     private fun loadAddressFromPrefs() {
+
         viewLifecycleOwner.lifecycleScope.launch {
-            val prefs = userPrefs.userPrefsFlow.first()
 
-            binding.etFirstName.setText(prefs.firstName)
-            binding.etLastName.setText(prefs.lastName)
-            binding.etCity.setText(prefs.city)
-            binding.etAddress.setText(prefs.addressLine)
-            binding.etPostCode.setText(prefs.postCode)
+            val prefs =
+                userPrefs.userPrefsFlow.first()
 
-            // 📍 Ülke – sadece kayıtlıysa set et, yoksa CCP'nin default'u kalsın
-            if (prefs.country.isNotBlank()) {
-                binding.ccpCountry.setCountryForNameCode(prefs.country.uppercase())
+            if (
+                !isAdded ||
+                _binding == null
+            ) return@launch
+
+            binding.etFirstName.setText(
+                prefs.firstName
+            )
+
+            binding.etLastName.setText(
+                prefs.lastName
+            )
+
+            binding.etCity.setText(
+                prefs.city
+            )
+
+            binding.etAddress.setText(
+                prefs.addressLine
+            )
+
+            binding.etPostCode.setText(
+                prefs.postCode
+            )
+
+            // COUNTRY
+
+            if (
+                prefs.country.isNotBlank()
+            ) {
+
+                binding.ccpCountry
+                    .setCountryForNameCode(
+                        prefs.country.uppercase()
+                    )
             }
-            // Şu an seçili ülkenin kodunu sakla
-            lastDialCode = binding.ccpCountry.selectedCountryCodeWithPlus
 
-            // Kartın text'ini de güncelle (SADECE ülke adı)
-            val name = binding.ccpCountry.selectedCountryName
-            binding.tvCountryValue.text = name
+            lastDialCode =
+                binding.ccpCountry
+                    .selectedCountryCodeWithPlus
 
-            // 📞 Telefon
+            binding.tvCountryValue.text =
+                binding.ccpCountry
+                    .selectedCountryName
+
+            // PHONE
+
             isFormattingPhone = true
-            if (prefs.phoneNumber.isNotBlank()) {
-                binding.etPhoneNumber.setText(prefs.phoneNumber)
+
+            if (
+                prefs.phoneNumber.isNotBlank()
+            ) {
+
+                binding.etPhoneNumber
+                    .setText(
+                        prefs.phoneNumber
+                    )
+
             } else {
-                val dial = binding.ccpCountry.selectedCountryCodeWithPlus
-                binding.etPhoneNumber.setText("$dial ")
+
+                val dial =
+                    binding.ccpCountry
+                        .selectedCountryCodeWithPlus
+
+                binding.etPhoneNumber
+                    .setText("$dial ")
             }
-            // Seçimi HER ZAMAN mevcut text uzunluğuna göre yap
-            val len = binding.etPhoneNumber.text?.length ?: 0
-            binding.etPhoneNumber.setSelection(len)
+
+            val len =
+                binding.etPhoneNumber
+                    .text?.length ?: 0
+
+            binding.etPhoneNumber
+                .setSelection(len)
+
             isFormattingPhone = false
         }
     }
 
-    /** 🔹 Ülke değişince telefon alanına kodu yaz (CCP'nin change listener'ı) */
-    private fun setupCountryPhoneLink() = with(binding) {
-        // İlk değer
-        lastDialCode = ccpCountry.selectedCountryCodeWithPlus
+    // ---------------------------------------------------
+    // VALIDATION WATCHERS
+    // ---------------------------------------------------
 
-        ccpCountry.setOnCountryChangeListener {
-            val newDialCode = ccpCountry.selectedCountryCodeWithPlus  // ör: +90
-            val current = etPhoneNumber.text?.toString().orEmpty()
+    private fun setupValidationWatchers() =
+        with(binding) {
 
-            // Eski ülke kodunu baştan sök
-            val withoutOld = if (!lastDialCode.isNullOrBlank() && current.startsWith(lastDialCode!!)) {
-                current.removePrefix(lastDialCode!!).trimStart()
-            } else {
-                current
+            etFirstName.addTextChangedListener {
+
+                clearFieldError(
+                    cardFirstName,
+                    tvFirstNameError
+                )
             }
 
-            // Yeni metni kur: "+90 " + kalan numara (varsa)
-            val newText = if (withoutOld.isBlank()) {
-                "$newDialCode "
-            } else {
-                "$newDialCode $withoutOld"
+            etLastName.addTextChangedListener {
+
+                clearFieldError(
+                    cardLastName,
+                    tvLastNameError
+                )
             }
 
-            isFormattingPhone = true
-            etPhoneNumber.setText(newText)
-            val len = etPhoneNumber.text?.length ?: newText.length
-            etPhoneNumber.setSelection(len)
-            isFormattingPhone = false
+            etCity.addTextChangedListener {
 
-            // Son kodu güncelle
-            lastDialCode = newDialCode
+                clearFieldError(
+                    cardCity,
+                    tvCityError
+                )
+            }
 
-            // Kart text'ini de güncelle (tek ülke adı)
-            val name = ccpCountry.selectedCountryName
-            tvCountryValue.text = name
+            etAddress.addTextChangedListener {
+
+                clearFieldError(
+                    cardAddressInput,
+                    tvAddressError
+                )
+            }
+
+            etPostCode.addTextChangedListener {
+
+                clearFieldError(
+                    cardPostCode,
+                    tvPostCodeError
+                )
+            }
+
+            etPhoneNumber.addTextChangedListener {
+
+                clearFieldError(
+                    cardPhone,
+                    tvPhoneError
+                )
+            }
         }
-    }
 
-    /** 🔹 Telefon alanına yazarken ülkeye göre format + yaklaşık max uzunluk */
+    // ---------------------------------------------------
+    // COUNTRY LINK
+    // ---------------------------------------------------
+
+    private fun setupCountryPhoneLink() =
+        with(binding) {
+
+            lastDialCode =
+                ccpCountry
+                    .selectedCountryCodeWithPlus
+
+            ccpCountry
+                .setOnCountryChangeListener {
+
+                    val newDialCode =
+                        ccpCountry
+                            .selectedCountryCodeWithPlus
+
+                    val current =
+                        etPhoneNumber.text
+                            ?.toString()
+                            .orEmpty()
+
+                    val withoutOld =
+                        if (
+                            !lastDialCode.isNullOrBlank() &&
+                            current.startsWith(
+                                lastDialCode!!
+                            )
+                        ) {
+
+                            current.removePrefix(
+                                lastDialCode!!
+                            ).trimStart()
+
+                        } else {
+
+                            current
+                        }
+
+                    val newText =
+                        if (
+                            withoutOld.isBlank()
+                        ) {
+
+                            "$newDialCode "
+
+                        } else {
+
+                            "$newDialCode $withoutOld"
+                        }
+
+                    isFormattingPhone =
+                        true
+
+                    etPhoneNumber.setText(
+                        newText
+                    )
+
+                    etPhoneNumber.setSelection(
+                        newText.length
+                    )
+
+                    isFormattingPhone =
+                        false
+
+                    lastDialCode =
+                        newDialCode
+
+                    tvCountryValue.text =
+                        ccpCountry
+                            .selectedCountryName
+                }
+        }
+
+    // ---------------------------------------------------
+    // PHONE FORMAT
+    // ---------------------------------------------------
+
     private fun setupPhoneFormatting() {
-        val phoneUtil = PhoneNumberUtil.getInstance()
 
-        binding.etPhoneNumber.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        val phoneUtil =
+            PhoneNumberUtil.getInstance()
 
-            override fun afterTextChanged(s: Editable?) {
-                if (isFormattingPhone) return
-                val text = s?.toString() ?: return
-                if (text.isBlank()) return
+        binding.etPhoneNumber
+            .addTextChangedListener(
 
-                val countryIso = binding.ccpCountry.selectedCountryNameCode // "TR"
-                val dialCode = lastDialCode ?: binding.ccpCountry.selectedCountryCodeWithPlus
+                object : TextWatcher {
 
-                // Text'ten eski dialCode'u sök
-                var raw = text
-                if (raw.startsWith(dialCode)) {
-                    raw = raw.removePrefix(dialCode).trimStart()
+                    override fun beforeTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        count: Int,
+                        after: Int
+                    ) = Unit
+
+                    override fun onTextChanged(
+                        s: CharSequence?,
+                        start: Int,
+                        before: Int,
+                        count: Int
+                    ) = Unit
+
+                    override fun afterTextChanged(
+                        s: Editable?
+                    ) {
+
+                        if (
+                            isFormattingPhone
+                        ) return
+
+                        val text =
+                            s?.toString()
+                                ?: return
+
+                        if (
+                            text.isBlank()
+                        ) return
+
+                        val countryIso =
+                            binding.ccpCountry
+                                .selectedCountryNameCode
+
+                        val dialCode =
+                            lastDialCode
+                                ?: binding.ccpCountry
+                                    .selectedCountryCodeWithPlus
+
+                        var raw = text
+
+                        if (
+                            raw.startsWith(
+                                dialCode
+                            )
+                        ) {
+
+                            raw =
+                                raw.removePrefix(
+                                    dialCode
+                                ).trimStart()
+                        }
+
+                        val digits =
+                            raw.filter {
+                                it.isDigit()
+                            }
+
+                        if (
+                            digits.isEmpty()
+                        ) {
+
+                            val onlyDial =
+                                "$dialCode "
+
+                            isFormattingPhone =
+                                true
+
+                            binding.etPhoneNumber
+                                .setText(
+                                    onlyDial
+                                )
+
+                            binding.etPhoneNumber
+                                .setSelection(
+                                    onlyDial.length
+                                )
+
+                            isFormattingPhone =
+                                false
+
+                            return
+                        }
+
+                        val example =
+                            try {
+
+                                phoneUtil
+                                    .getExampleNumber(
+                                        countryIso
+                                    )
+
+                            } catch (_: Exception) {
+
+                                null
+                            }
+
+                        val exampleLen =
+                            example?.nationalNumber
+                                ?.toString()
+                                ?.length ?: 15
+
+                        val limitedDigits =
+                            digits.take(exampleLen)
+
+                        val formatter =
+                            phoneUtil
+                                .getAsYouTypeFormatter(
+                                    countryIso
+                                )
+
+                        var nationalFormatted =
+                            ""
+
+                        for (
+                            ch in limitedDigits
+                        ) {
+
+                            nationalFormatted =
+                                formatter
+                                    .inputDigit(ch)
+                        }
+
+                        val finalText =
+                            "$dialCode $nationalFormatted"
+
+                        isFormattingPhone =
+                            true
+
+                        binding.etPhoneNumber
+                            .setText(
+                                finalText
+                            )
+
+                        binding.etPhoneNumber
+                            .setSelection(
+                                finalText.length
+                            )
+
+                        isFormattingPhone =
+                            false
+                    }
                 }
-
-                // Sadece rakamları al (kullanıcının yazdığı ulusal numara)
-                val digits = raw.filter { it.isDigit() }
-                if (digits.isEmpty()) {
-                    // Sadece kodu göster
-                    val onlyDial = "$dialCode "
-                    isFormattingPhone = true
-                    binding.etPhoneNumber.setText(onlyDial)
-                    val len = binding.etPhoneNumber.text?.length ?: onlyDial.length
-                    binding.etPhoneNumber.setSelection(len)
-                    isFormattingPhone = false
-                    return
-                }
-
-                // ✅ Public API: örnek numaradan yaklaşık uzunluk çıkar
-                val example = try {
-                    phoneUtil.getExampleNumber(countryIso)
-                } catch (e: Exception) {
-                    null
-                }
-                val exampleLen = example?.nationalNumber?.toString()?.length ?: 15
-                val limitedDigits = digits.take(exampleLen)
-
-                // AsYouTypeFormatter ile ulusal kısmı formatla
-                val formatter = phoneUtil.getAsYouTypeFormatter(countryIso)
-                var nationalFormatted = ""
-                for (ch in limitedDigits) {
-                    nationalFormatted = formatter.inputDigit(ch)
-                }
-
-                val finalText = if (nationalFormatted.isBlank()) {
-                    "$dialCode "
-                } else {
-                    "$dialCode $nationalFormatted"
-                }
-
-                isFormattingPhone = true
-                binding.etPhoneNumber.setText(finalText)
-                val len = binding.etPhoneNumber.text?.length ?: finalText.length
-                binding.etPhoneNumber.setSelection(len)
-                isFormattingPhone = false
-            }
-        })
+            )
     }
 
-    /** 🔹 Ülke kartına tıklayınca country bottomsheet’i aç */
-    private fun setupCountryPickerClick() = with(binding) {
-        cardCountry.setOnClickListener {
-            showCountryBottomSheet()
+    // ---------------------------------------------------
+    // COUNTRY PICKER
+    // ---------------------------------------------------
+
+    private fun setupCountryPickerClick() =
+        with(binding) {
+
+            cardCountry
+                .setOnClickListener {
+
+                    showCountryBottomSheet()
+                }
         }
-    }
 
-    /** 🔹 Listener'lar */
-    private fun setupListeners() = with(binding) {
-        btnBack.setOnClickListener { findNavController().popBackStack() }
-        btnCancel.setOnClickListener { findNavController().popBackStack() }
-        btnSave.setOnClickListener { saveAddress() }
-    }
+    // ---------------------------------------------------
+    // LISTENERS
+    // ---------------------------------------------------
 
-    /** 🔹 Kaydet — TÜM alanlar için boşluk kontrolü + telefon validasyonu */
+    private fun setupListeners() =
+        with(binding) {
+
+            btnBack.setOnClickListener {
+
+                findNavController()
+                    .popBackStack()
+            }
+
+            btnCancel.setOnClickListener {
+
+                findNavController()
+                    .popBackStack()
+            }
+
+            btnSave.setOnClickListener {
+
+                hideKeyboard()
+
+                saveAddress()
+            }
+        }
+
+    // ---------------------------------------------------
+    // SAVE
+    // ---------------------------------------------------
+
     private fun saveAddress() {
-        val firstName = binding.etFirstName.text?.toString()?.trim().orEmpty()
-        val lastName  = binding.etLastName.text?.toString()?.trim().orEmpty()
-        val city      = binding.etCity.text?.toString()?.trim().orEmpty()
-        val address   = binding.etAddress.text?.toString()?.trim().orEmpty()
-        val postCode  = binding.etPostCode.text?.toString()?.trim().orEmpty()
-        val phoneRaw  = binding.etPhoneNumber.text?.toString()?.trim().orEmpty()
 
-        val countryIso = binding.ccpCountry.selectedCountryNameCode   // "TR"
+        val firstName =
+            binding.etFirstName.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
 
-        // Eski error’ları temizle
-        binding.etFirstName.error = null
-        binding.etLastName.error = null
-        binding.etCity.error = null
-        binding.etAddress.error = null
-        binding.etPostCode.error = null
-        binding.etPhoneNumber.error = null
+        val lastName =
+            binding.etLastName.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val city =
+            binding.etCity.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val address =
+            binding.etAddress.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val postCode =
+            binding.etPostCode.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val phoneRaw =
+            binding.etPhoneNumber.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val countryIso =
+            binding.ccpCountry
+                .selectedCountryNameCode
+
+        clearAllErrors()
 
         var hasError = false
 
-        if (firstName.isEmpty()) {
-            binding.etFirstName.error =
-                getString(R.string.address_error_first_name_required)
+        // FIRST NAME
+
+        if (
+            firstName.length <
+            FIRST_NAME_MIN
+        ) {
+
+            showFieldError(
+                binding.cardFirstName,
+                binding.tvFirstNameError,
+                getString(
+                    R.string.address_error_first_name_required
+                )
+            )
+
             hasError = true
         }
-        if (lastName.isEmpty()) {
-            binding.etLastName.error =
-                getString(R.string.address_error_last_name_required)
+
+        // LAST NAME
+
+        if (
+            lastName.length <
+            LAST_NAME_MIN
+        ) {
+
+            showFieldError(
+                binding.cardLastName,
+                binding.tvLastNameError,
+                getString(
+                    R.string.address_error_last_name_required
+                )
+            )
+
             hasError = true
         }
-        if (city.isEmpty()) {
-            binding.etCity.error =
-                getString(R.string.address_error_city_required)
+
+        // CITY
+
+        if (
+            city.isBlank()
+        ) {
+
+            showFieldError(
+                binding.cardCity,
+                binding.tvCityError,
+                getString(
+                    R.string.address_error_city_required
+                )
+            )
+
             hasError = true
         }
-        if (address.isEmpty()) {
-            binding.etAddress.error =
-                getString(R.string.address_error_address_required)
+
+        // ADDRESS
+
+        if (
+            address.isBlank()
+        ) {
+
+            showFieldError(
+                binding.cardAddressInput,
+                binding.tvAddressError,
+                getString(
+                    R.string.address_error_address_required
+                )
+            )
+
             hasError = true
         }
-        if (postCode.isEmpty()) {
-            binding.etPostCode.error =
-                getString(R.string.address_error_postcode_required)
+
+        // POSTCODE
+
+        if (
+            postCode.isBlank()
+        ) {
+
+            showFieldError(
+                binding.cardPostCode,
+                binding.tvPostCodeError,
+                getString(
+                    R.string.address_error_postcode_required
+                )
+            )
+
             hasError = true
         }
-        if (phoneRaw.isEmpty()) {
-            binding.etPhoneNumber.error =
-                getString(R.string.address_error_phone_required)
+
+        // PHONE
+
+        if (
+            phoneRaw.isBlank()
+        ) {
+
+            showFieldError(
+                binding.cardPhone,
+                binding.tvPhoneError,
+                getString(
+                    R.string.address_error_phone_required
+                )
+            )
+
             hasError = true
         }
 
         if (hasError) return
 
-        // ✅ libphonenumber ile telefon validasyonu + format
-        val phoneUtil = PhoneNumberUtil.getInstance()
-        val numberProto = try {
-            phoneUtil.parse(phoneRaw, countryIso)   // "+90 5xx ..." + "TR"
-        } catch (e: NumberParseException) {
-            binding.etPhoneNumber.error =
-                getString(R.string.address_error_phone_invalid)
+        // PHONE VALIDATION
+
+        val phoneUtil =
+            PhoneNumberUtil.getInstance()
+
+        val numberProto =
+            try {
+
+                phoneUtil.parse(
+                    phoneRaw,
+                    countryIso
+                )
+
+            } catch (_: NumberParseException) {
+
+                showFieldError(
+                    binding.cardPhone,
+                    binding.tvPhoneError,
+                    getString(
+                        R.string.address_error_phone_invalid
+                    )
+                )
+
+                return
+            }
+
+        if (
+            !phoneUtil.isValidNumberForRegion(
+                numberProto,
+                countryIso
+            )
+        ) {
+
+            showFieldError(
+                binding.cardPhone,
+                binding.tvPhoneError,
+                getString(
+                    R.string.address_error_phone_invalid
+                )
+            )
+
             return
         }
 
-        if (!phoneUtil.isValidNumberForRegion(numberProto, countryIso)) {
-            binding.etPhoneNumber.error =
-                getString(R.string.address_error_phone_invalid)
-            return
-        }
+        val formattedPhone =
+            phoneUtil.format(
+                numberProto,
+                PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL
+            )
 
-        // International format: +90 5xx xxx xx xx
-        val formattedPhone = phoneUtil.format(
-            numberProto,
-            PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL
-        )
+        val fullName =
+            "$firstName $lastName"
 
-        val fullName = "$firstName $lastName"
+        setLoadingState(true)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.update { prefs ->
-                prefs.toBuilder()
-                    .setFirstName(firstName)
-                    .setLastName(lastName)
-                    .setFullName(fullName)
-                    .setCity(city)
-                    .setAddressLine(address)
-                    .setPostCode(postCode)
-                    .setCountry(countryIso)          // "TR"
-                    .setPhoneNumber(formattedPhone)   // "+90 5xx ..." formatlı
-                    .build()
+
+            try {
+
+                userPrefs.update { prefs ->
+
+                    prefs.toBuilder()
+                        .setFirstName(firstName)
+                        .setLastName(lastName)
+                        .setFullName(fullName)
+                        .setCity(city)
+                        .setAddressLine(address)
+                        .setPostCode(postCode)
+                        .setCountry(countryIso)
+                        .setPhoneNumber(formattedPhone)
+                        .build()
+                }
+
+                if (
+                    !isAdded ||
+                    _binding == null
+                ) return@launch
+
+                setLoadingState(false)
+
+                showSnackBar(
+                    getString(
+                        R.string.user_info_saved_success
+                    ),
+                    BaseActivity.SnackType.SUCCESS
+                )
+
+                findNavController()
+                    .popBackStack()
+
+            } catch (_: Exception) {
+
+                if (
+                    !isAdded ||
+                    _binding == null
+                ) return@launch
+
+                setLoadingState(false)
+
+                showSnackBar(
+                    getString(
+                        R.string.user_info_save_error_message
+                    ),
+                    BaseActivity.SnackType.ERROR
+                )
             }
-            findNavController().popBackStack()
         }
     }
 
-    /** 🔹 Country bottomsheet’i göster */
+    // ---------------------------------------------------
+    // FIELD ERROR
+    // ---------------------------------------------------
+
+    private fun showFieldError(
+        card: MaterialCardView,
+        errorText: MaterialTextView,
+        message: String
+    ) {
+
+        card.strokeColor =
+            resources.getColor(
+                R.color.snackbar_error,
+                null
+            )
+
+        card.strokeWidth = 2
+
+        errorText.text =
+            message
+
+        errorText.visibility =
+            View.VISIBLE
+    }
+
+    // ---------------------------------------------------
+    // CLEAR FIELD ERROR
+    // ---------------------------------------------------
+
+    private fun clearFieldError(
+        card: MaterialCardView,
+        errorText: MaterialTextView
+    ) {
+
+        card.strokeColor =
+            resources.getColor(
+                R.color.card_stroke,
+                null
+            )
+
+        card.strokeWidth = 1
+
+        errorText.visibility =
+            View.GONE
+    }
+
+    // ---------------------------------------------------
+    // CLEAR ALL ERRORS
+    // ---------------------------------------------------
+
+    private fun clearAllErrors() =
+        with(binding) {
+
+            clearFieldError(
+                cardFirstName,
+                tvFirstNameError
+            )
+
+            clearFieldError(
+                cardLastName,
+                tvLastNameError
+            )
+
+            clearFieldError(
+                cardCity,
+                tvCityError
+            )
+
+            clearFieldError(
+                cardAddressInput,
+                tvAddressError
+            )
+
+            clearFieldError(
+                cardPostCode,
+                tvPostCodeError
+            )
+
+            clearFieldError(
+                cardPhone,
+                tvPhoneError
+            )
+        }
+
+    // ---------------------------------------------------
+    // LOADING
+    // ---------------------------------------------------
+
+    private fun setLoadingState(
+        loading: Boolean
+    ) {
+
+        if (
+            !isAdded ||
+            _binding == null
+        ) return
+
+        binding.btnSave.isEnabled =
+            !loading
+
+        binding.btnCancel.isEnabled =
+            !loading
+
+        (
+            requireActivity()
+                as? BaseActivity
+            )?.showLoading(
+            loading
+        )
+    }
+
+    // ---------------------------------------------------
+    // KEYBOARD
+    // ---------------------------------------------------
+
+    private fun hideKeyboard() {
+
+        val imm =
+            requireContext()
+                .getSystemService(
+                    Context.INPUT_METHOD_SERVICE
+                ) as InputMethodManager
+
+        imm.hideSoftInputFromWindow(
+            binding.root.windowToken,
+            0
+        )
+
+        binding.root.clearFocus()
+    }
+
+    // ---------------------------------------------------
+    // SNACKBAR
+    // ---------------------------------------------------
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType
+    ) {
+
+        (
+            requireActivity()
+                as? BaseActivity
+            )?.showSnackBar(
+            message,
+            type
+        )
+    }
+
+    // ---------------------------------------------------
+    // COUNTRY SHEET
+    // ---------------------------------------------------
+
     private fun showCountryBottomSheet() {
-        val currentIso = binding.ccpCountry.selectedCountryNameCode // "TR" vs.
+
+        val currentIso =
+            binding.ccpCountry
+                .selectedCountryNameCode
 
         CountryPickerBottomSheet.show(
             fragment = this,
             currentIso = currentIso
         ) { selected ->
-            // Seçilen ülkeyi CCP'ye set et
-            binding.ccpCountry.setCountryForNameCode(selected.iso)
 
-            // Kart text'i güncelle (sadece ülke adı)
-            val newName = binding.ccpCountry.selectedCountryName
-            binding.tvCountryValue.text = newName
-            // OnCountryChangeListener zaten telefon kodunu güncelliyor
+            binding.ccpCountry
+                .setCountryForNameCode(
+                    selected.iso
+                )
+
+            binding.tvCountryValue.text =
+                binding.ccpCountry
+                    .selectedCountryName
         }
     }
 
+    // ---------------------------------------------------
+    // DESTROY
+    // ---------------------------------------------------
+
     override fun onDestroyView() {
+
         super.onDestroyView()
+
         _binding = null
     }
 }
