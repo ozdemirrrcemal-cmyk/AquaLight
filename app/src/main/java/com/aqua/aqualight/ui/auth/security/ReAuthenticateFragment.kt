@@ -94,31 +94,31 @@ class ReAuthenticateFragment :
                     )
 
                 val user =
-                    auth.currentUser
-                        ?: return@registerForActivityResult
+    auth.currentUser
+        ?: return@registerForActivityResult
 
-                user.reauthenticate(credential)
-                    .addOnSuccessListener {
+user.reauthenticate(credential)
+    .addOnSuccessListener {
 
-                        handleAuthenticatedAction()
-                    }
-                    .addOnFailureListener {
+        handleAuthenticatedAction()
+    }
+    .addOnFailureListener {
 
-                        baseActivity?.showLoading(false)
+        baseActivity?.showLoading(false)
 
-                        setLoadingState(false)
+        setLoadingState(false)
 
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.ERROR,
-                            title = "Verification Failed",
-                            message =
-                                it.localizedMessage
-                                    ?: getString(
-                                        R.string.re_auth_google_failed
-                                    )
-                        )
-                    }
+        DialogManager.showInfoDialog(
+            requireContext(),
+            DialogType.ERROR,
+            title = getString(
+                R.string.re_auth_verification_failed_title
+            ),
+            message = getString(
+                R.string.re_auth_google_wrong_account
+            )
+        )
+    }
 
             } catch (e: Exception) {
 
@@ -487,38 +487,38 @@ class ReAuthenticateFragment :
     // ---------------------------------------------------
 
     private fun setLoadingState(
-        loading: Boolean
-    ) {
+    loading: Boolean
+) {
 
-        isLoading = loading
+    isLoading = loading
 
-        binding.btnContinue.isEnabled =
-            !loading
+    binding.btnContinue.isEnabled =
+        !loading
 
-        binding.btnContinue.alpha =
-            if (loading) 0.6f else 1f
+    binding.btnContinue.alpha =
+        if (loading) 0.6f else 1f
 
-        binding.btnContinue.text =
-            if (loading) {
+    binding.btnContinue.text =
+        if (loading) {
 
-                getString(R.string.loading)
+            getString(R.string.loading)
+
+        } else {
+
+            if (binding.ivGoogle.visibility == View.VISIBLE) {
+
+                getString(
+                    R.string.re_auth_continue_google
+                )
 
             } else {
 
-                if (binding.ivGoogle.visibility == View.VISIBLE) {
-
-                    getString(
-                        R.string.re_auth_continue_google
-                    )
-
-                } else {
-
-                    getString(
-                        R.string.re_auth_continue
-                    )}
-                }
+                getString(
+                    R.string.re_auth_continue
+                )
             }
-    }
+        }
+}
 
     // ---------------------------------------------------
     // SHAKE ANIMATION

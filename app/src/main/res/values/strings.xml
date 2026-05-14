@@ -1154,5 +1154,11 @@ Delete Failed
     Failed to delete account. Please try again.
 </string>
 
+<string name="re_auth_verification_failed_title">
+    Verification Failed
+</string>
 
+<string name="re_auth_google_wrong_account">
+    Please select the same Google account used for this account.
+</string>
 </resources>
