@@ -88,6 +88,8 @@ class UserAddressFragment :
         setupListeners()
 
         setupCountryPickerClick()
+		
+		setupCountryPickerResult()
 
         setupKeyboardAutoScroll()
     }
@@ -534,6 +536,28 @@ class UserAddressFragment :
                     showCountryBottomSheet()
                 }
         }
+		
+		private fun setupCountryPickerResult() {
+
+    parentFragmentManager
+        .setFragmentResultListener(
+            CountryPickerBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
+
+            val iso =
+                bundle.getString(
+                    CountryPickerBottomSheet.RESULT_COUNTRY_ISO
+                ) ?: return@setFragmentResultListener
+
+            binding.ccpCountry
+                .setCountryForNameCode(iso)
+
+            binding.tvCountryValue.text =
+                binding.ccpCountry
+                    .selectedCountryName
+        }
+}
 
     // ---------------------------------------------------
     // LISTENERS
@@ -959,26 +983,17 @@ class UserAddressFragment :
 
     private fun showCountryBottomSheet() {
 
-        val currentIso =
-            binding.ccpCountry
-                .selectedCountryNameCode
+    val currentIso =
+        binding.ccpCountry
+            .selectedCountryNameCode
 
-        CountryPickerBottomSheet.show(
-            fragment = this,
-            currentIso = currentIso
-        ) { selected ->
-
-            binding.ccpCountry
-                .setCountryForNameCode(
-                    selected.iso
-                )
-
-            binding.tvCountryValue.text =
-                binding.ccpCountry
-                    .selectedCountryName
-        }
-    }
-
+    CountryPickerBottomSheet
+        .newInstance(currentIso)
+        .show(
+            parentFragmentManager,
+            CountryPickerBottomSheet.TAG
+        )
+}
     // ---------------------------------------------------
     // DESTROY
     // ---------------------------------------------------
