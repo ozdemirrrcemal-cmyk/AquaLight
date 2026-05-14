@@ -270,25 +270,7 @@ class UserInfoFragment :
 
             return
         }
-
-        // ---------------------------------------------------
-        // TOO LONG
-        // ---------------------------------------------------
-
-        if (
-            username.length >
-            USERNAME_MAX_LENGTH
-        ) {
-
-            showUsernameError(
-                getString(
-                    R.string.user_info_username_too_long
-                )
-            )
-
-            return
-        }
-
+		
         // ---------------------------------------------------
         // INVALID CHARACTERS
         // ---------------------------------------------------
