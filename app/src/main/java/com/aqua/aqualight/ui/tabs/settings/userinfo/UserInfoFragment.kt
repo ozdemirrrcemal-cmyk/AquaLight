@@ -96,6 +96,7 @@ class UserInfoFragment :
                     ) return@collectLatest
 
                     // NAME
+
                     binding.tvName.text =
                         prefs.fullName.ifBlank {
 
@@ -105,6 +106,7 @@ class UserInfoFragment :
                         }
 
                     // EMAIL
+
                     binding.tvUserEmail.text =
                         prefs.email.ifBlank {
 
@@ -114,6 +116,7 @@ class UserInfoFragment :
                         }
 
                     // USERNAME
+
                     val username =
                         prefs.username
 
@@ -137,6 +140,7 @@ class UserInfoFragment :
                     }
 
                     // PROFILE PHOTO
+
                     if (
                         prefs.profilePhotoUrl
                             .isNotBlank()
@@ -177,8 +181,7 @@ class UserInfoFragment :
 
             etUsername.addTextChangedListener {
 
-                inputLayoutUsername.error =
-                    null
+                resetUsernameError()
             }
         }
 
@@ -190,6 +193,7 @@ class UserInfoFragment :
         with(binding) {
 
             // BACK
+
             btnBack.setOnClickListener {
 
                 findNavController()
@@ -197,6 +201,7 @@ class UserInfoFragment :
             }
 
             // ADDRESS
+
             rowAddress.setOnClickListener {
 
                 findNavController()
@@ -206,6 +211,7 @@ class UserInfoFragment :
             }
 
             // SAVE
+
             btnSave.setOnClickListener {
 
                 hideKeyboard()
@@ -234,12 +240,15 @@ class UserInfoFragment :
         // EMPTY
         // ---------------------------------------------------
 
-        if (username.isEmpty()) {
+        if (
+            username.isEmpty()
+        ) {
 
-            binding.inputLayoutUsername.error =
+            showUsernameError(
                 getString(
                     R.string.user_info_username_empty_message
                 )
+            )
 
             return
         }
@@ -253,10 +262,29 @@ class UserInfoFragment :
             USERNAME_MIN_LENGTH
         ) {
 
-            binding.inputLayoutUsername.error =
+            showUsernameError(
                 getString(
                     R.string.user_info_username_too_short
                 )
+            )
+
+            return
+        }
+
+        // ---------------------------------------------------
+        // TOO LONG
+        // ---------------------------------------------------
+
+        if (
+            username.length >
+            USERNAME_MAX_LENGTH
+        ) {
+
+            showUsernameError(
+                getString(
+                    R.string.user_info_username_too_long
+                )
+            )
 
             return
         }
@@ -274,10 +302,11 @@ class UserInfoFragment :
             )
         ) {
 
-            binding.inputLayoutUsername.error =
+            showUsernameError(
                 getString(
                     R.string.user_info_username_invalid
                 )
+            )
 
             return
         }
@@ -342,13 +371,46 @@ class UserInfoFragment :
     }
 
     // ---------------------------------------------------
+    // SHOW USERNAME ERROR
+    // ---------------------------------------------------
+
+    private fun showUsernameError(
+        message: String
+    ) {
+
+        binding.tvUsernameError.text =
+            message
+
+        binding.tvUsernameError.visibility =
+            View.VISIBLE
+
+        binding.cardUsername.strokeColor =
+            resources.getColor(
+                R.color.snackbar_error,
+                null
+            )
+
+        binding.cardUsername.strokeWidth =
+            2
+    }
+
+    // ---------------------------------------------------
     // RESET USERNAME ERROR
     // ---------------------------------------------------
 
     private fun resetUsernameError() {
 
-        binding.inputLayoutUsername.error =
-            null
+        binding.tvUsernameError.visibility =
+            View.GONE
+
+        binding.cardUsername.strokeColor =
+            resources.getColor(
+                R.color.card_stroke,
+                null
+            )
+
+        binding.cardUsername.strokeWidth =
+            1
     }
 
     // ---------------------------------------------------
@@ -358,9 +420,10 @@ class UserInfoFragment :
     private fun hideKeyboard() {
 
         val imm =
-            requireContext().getSystemService(
-                Context.INPUT_METHOD_SERVICE
-            ) as InputMethodManager
+            requireContext()
+                .getSystemService(
+                    Context.INPUT_METHOD_SERVICE
+                ) as InputMethodManager
 
         imm.hideSoftInputFromWindow(
             binding.etUsername.windowToken,
@@ -418,7 +481,6 @@ class UserInfoFragment :
 
         super.onDestroyView()
 
-        _binding =
-            null
+        _binding = null
     }
 }
