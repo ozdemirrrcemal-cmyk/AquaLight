@@ -12,6 +12,9 @@ import com.aqua.aqualight.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import android.graphics.Color
+import android.widget.TextView
+import com.google.android.material.snackbar.Snackbar
 
 open class BaseActivity : AppCompatActivity() {
 
@@ -70,6 +73,41 @@ open class BaseActivity : AppCompatActivity() {
             overlay.visibility = View.GONE
         }
     }
+	
+	fun showSnackBar(
+    message: String,
+    isError: Boolean = false
+) {
+
+    val root =
+        findViewById<View>(android.R.id.content)
+
+    val snackbar =
+        Snackbar.make(
+            root,
+            message,
+            Snackbar.LENGTH_SHORT
+        )
+
+    snackbar.setBackgroundTint(
+        if (isError) {
+            Color.parseColor("#C62828")
+        } else {
+            Color.parseColor("#1E88E5")
+        }
+    )
+
+    snackbar.setTextColor(Color.WHITE)
+
+    val text =
+        snackbar.view.findViewById<TextView>(
+            com.google.android.material.R.id.snackbar_text
+        )
+
+    text.maxLines = 3
+
+    snackbar.show()
+}
 
     /**
      * 🪶 Hata loglama

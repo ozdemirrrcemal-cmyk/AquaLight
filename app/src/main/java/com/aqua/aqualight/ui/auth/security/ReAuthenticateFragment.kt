@@ -99,7 +99,7 @@ class ReAuthenticateFragment :
 
                         handleAuthenticatedAction()
                     }
-                    ?.addOnFailureListener {
+                    .addOnFailureListener {
 
                         baseActivity?.showLoading(false)
 
@@ -357,7 +357,7 @@ class ReAuthenticateFragment :
 
                 handleAuthenticatedAction()
             }
-            ?.addOnFailureListener {
+            .addOnFailureListener {
 
                 baseActivity?.showLoading(false)
 
@@ -385,19 +385,7 @@ class ReAuthenticateFragment :
                 deleteAccount()
             }
 
-            ACTION_CHANGE_PASSWORD -> {
-
-                findNavController()
-                    .previousBackStackEntry
-                    ?.savedStateHandle
-                    ?.set(
-                        "reauth_success",
-                        true
-                    )
-
-                findNavController().popBackStack()
-            }
-
+            ACTION_CHANGE_PASSWORD,
             ACTION_CHANGE_EMAIL -> {
 
                 findNavController()
@@ -431,23 +419,20 @@ class ReAuthenticateFragment :
 
                     setLoadingState(false)
 
-                    DialogManager.showInfoDialog(
-                        requireContext(),
-                        DialogType.SUCCESS,
-                        title = getString(
-                            R.string.re_auth_delete_success_title
-                        ),
-                        message = getString(
+                    baseActivity?.showSnackBar(
+                        getString(
                             R.string.re_auth_delete_success_message
-                        ),
-                        onDismiss = {
-
-                            navigateToLogin()
-                        }
+                        )
                     )
+
+                    binding.root.postDelayed({
+
+                        navigateToLogin()
+
+                    }, 500)
                 }
             }
-            ?.addOnFailureListener {
+            .addOnFailureListener {
 
                 baseActivity?.showLoading(false)
 
