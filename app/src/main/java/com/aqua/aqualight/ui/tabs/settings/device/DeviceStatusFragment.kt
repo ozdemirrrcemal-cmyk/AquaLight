@@ -101,7 +101,8 @@ class DeviceStatusFragment :
 
                                 DeviceCardUi(
 
-                                    id = dev.id,
+                                    id =
+                                        dev.id,
 
                                     aquaName =
                                         dev.aquaName
@@ -121,10 +122,12 @@ class DeviceStatusFragment :
                                 )
                             }
 
+                        // 🔹 Recycler update
                         adapter.submitList(
                             uiList
                         )
 
+                        // 🔹 Summary update
                         updateSummary(
                             uiList
                         )
@@ -156,6 +159,7 @@ class DeviceStatusFragment :
         binding.tvOfflineSummary.text =
             "$offlineCount Offline Device"
 
+        // 🔹 Summary dot
         if (onlineCount > 0) {
 
             binding.viewSummaryDot
@@ -171,6 +175,10 @@ class DeviceStatusFragment :
                 )
         }
     }
+
+    // ---------------------------------------------------
+    // DESTROY
+    // ---------------------------------------------------
 
     override fun onDestroyView() {
 
