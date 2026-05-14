@@ -143,7 +143,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             }
     }
 	
-	
 	// ---------------------------------------------------
 // ACTIVE DEVICES OBSERVER
 // ---------------------------------------------------
@@ -163,8 +162,7 @@ private fun observeActiveDevices() {
                         list.count { dev ->
 
                             dev.lastSeenMillis != 0L &&
-                                    (now - dev.lastSeenMillis)
-                                    <= 60_000L
+                            (now - dev.lastSeenMillis) <= 60_000L
                         }
 
                     updateActiveDevices(
@@ -173,7 +171,6 @@ private fun observeActiveDevices() {
                 }
         }
 }
-
     // ---------------------------------------------------
     // ACTIVE DEVICES
     // ---------------------------------------------------
