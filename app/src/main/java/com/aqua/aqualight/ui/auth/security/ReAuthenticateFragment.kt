@@ -30,17 +30,13 @@ class ReAuthenticateFragment :
 
     companion object {
 
-        const val ARG_ACTION =
-            "arg_action"
+        const val ARG_ACTION = "arg_action"
 
-        const val ACTION_DELETE_ACCOUNT =
-            "delete_account"
+        const val ACTION_DELETE_ACCOUNT = "delete_account"
 
-        const val ACTION_CHANGE_PASSWORD =
-            "change_password"
+        const val ACTION_CHANGE_PASSWORD = "change_password"
 
-        const val ACTION_CHANGE_EMAIL =
-            "change_email"
+        const val ACTION_CHANGE_EMAIL = "change_email"
     }
 
     private var _binding: FragmentReAuthenticateBinding? = null
@@ -58,8 +54,7 @@ class ReAuthenticateFragment :
 
     private var isLoading = false
 
-    private var currentAction =
-        ACTION_DELETE_ACCOUNT
+    private var currentAction = ACTION_DELETE_ACCOUNT
 
     // ---------------------------------------------------
     // GOOGLE LAUNCHER
@@ -73,7 +68,6 @@ class ReAuthenticateFragment :
             if (result.resultCode != Activity.RESULT_OK) {
 
                 baseActivity?.showLoading(false)
-
                 setLoadingState(false)
 
                 return@registerForActivityResult
@@ -94,31 +88,31 @@ class ReAuthenticateFragment :
                     )
 
                 val user =
-    auth.currentUser
-        ?: return@registerForActivityResult
+                    auth.currentUser
+                        ?: return@registerForActivityResult
 
-user.reauthenticate(credential)
-    .addOnSuccessListener {
+                user.reauthenticate(credential)
+                    .addOnSuccessListener {
 
-        handleAuthenticatedAction()
-    }
-    .addOnFailureListener {
+                        handleAuthenticatedAction()
+                    }
+                    .addOnFailureListener {
 
-        baseActivity?.showLoading(false)
+                        baseActivity?.showLoading(false)
 
-        setLoadingState(false)
+                        setLoadingState(false)
 
-        DialogManager.showInfoDialog(
-            requireContext(),
-            DialogType.ERROR,
-            title = getString(
-                R.string.re_auth_verification_failed_title
-            ),
-            message = getString(
-                R.string.re_auth_google_wrong_account
-            )
-        )
-    }
+                        DialogManager.showInfoDialog(
+                            requireContext(),
+                            DialogType.ERROR,
+                            title = getString(
+                                R.string.re_auth_verification_failed_title
+                            ),
+                            message = getString(
+                                R.string.re_auth_google_wrong_account
+                            )
+                        )
+                    }
 
             } catch (e: Exception) {
 
@@ -228,8 +222,7 @@ user.reauthenticate(credential)
 
     private fun setupGoogleUi() {
 
-        binding.ivGoogle.visibility =
-            View.VISIBLE
+        binding.ivGoogle.visibility = View.VISIBLE
 
         binding.tvTitle.text =
             getString(R.string.re_auth_google_title)
@@ -237,8 +230,7 @@ user.reauthenticate(credential)
         binding.tvDescription.text =
             getString(R.string.re_auth_google_description)
 
-        binding.passwordLayout.visibility =
-            View.GONE
+        binding.passwordLayout.visibility = View.GONE
 
         binding.btnContinue.text =
             getString(R.string.re_auth_continue_google)
@@ -255,8 +247,7 @@ user.reauthenticate(credential)
 
     private fun setupPasswordUi() {
 
-        binding.ivGoogle.visibility =
-            View.GONE
+        binding.ivGoogle.visibility = View.GONE
 
         binding.tvTitle.text =
             getString(R.string.re_auth_confirm_password)
@@ -264,8 +255,7 @@ user.reauthenticate(credential)
         binding.tvDescription.text =
             getString(R.string.re_auth_password_description)
 
-        binding.passwordLayout.visibility =
-            View.VISIBLE
+        binding.passwordLayout.visibility = View.VISIBLE
 
         binding.btnContinue.text =
             getString(R.string.re_auth_continue)
@@ -274,7 +264,7 @@ user.reauthenticate(credential)
 
         binding.etPassword.doOnTextChanged { _, _, _, _ ->
 
-            binding.etPassword.error = null
+            binding.passwordLayout.error = null
         }
 
         binding.etPassword.setOnEditorActionListener { _, _, _ ->
@@ -329,7 +319,7 @@ user.reauthenticate(credential)
 
         if (password.isBlank()) {
 
-            binding.etPassword.error =
+            binding.passwordLayout.error =
                 getString(
                     R.string.re_auth_password_required
                 )
@@ -366,7 +356,7 @@ user.reauthenticate(credential)
 
                 setLoadingState(false)
 
-                binding.etPassword.error =
+                binding.passwordLayout.error =
                     getString(
                         R.string.re_auth_wrong_password
                     )
@@ -384,7 +374,6 @@ user.reauthenticate(credential)
         when (currentAction) {
 
             ACTION_DELETE_ACCOUNT -> {
-
                 deleteAccount()
             }
 
@@ -410,123 +399,120 @@ user.reauthenticate(credential)
 
     private fun deleteAccount() {
 
-    val user =
-        auth.currentUser ?: return
+        val user =
+            auth.currentUser ?: return
 
-    user.delete()
-        .addOnSuccessListener {
+        user.delete()
+            .addOnSuccessListener {
 
-            lifecycleScope.launch {
+                lifecycleScope.launch {
 
-                userPrefs.clearAllUserData()
+                    userPrefs.clearAllUserData()
 
-                auth.signOut()
+                    auth.signOut()
 
-                googleSignInClient
-                    .revokeAccess()
-                    .addOnCompleteListener {
+                    googleSignInClient
+                        .revokeAccess()
+                        .addOnCompleteListener {
 
-                        baseActivity?.showLoading(false)
+                            baseActivity?.showLoading(false)
 
-                        setLoadingState(false)
+                            setLoadingState(false)
 
-                        baseActivity?.showSnackBar(
-                            getString(
-                                R.string.re_auth_delete_success_message
+                            baseActivity?.showSnackBar(
+                                getString(
+                                    R.string.re_auth_delete_success_message
+                                )
                             )
+
+                            binding.root.postDelayed({
+
+                                navigateToLogin()
+
+                            }, 500)
+                        }
+                }
+            }
+            .addOnFailureListener { exception ->
+
+                baseActivity?.showLoading(false)
+
+                setLoadingState(false)
+
+                val errorMessage = when {
+
+                    exception.localizedMessage
+                        ?.contains(
+                            "requires recent authentication",
+                            ignoreCase = true
+                        ) == true -> {
+
+                        getString(
+                            R.string.re_auth_session_expired
                         )
-
-                        binding.root.postDelayed({
-
-                            navigateToLogin()
-
-                        }, 500)
                     }
-            }
-        }
-        .addOnFailureListener { exception ->
 
-            baseActivity?.showLoading(false)
+                    else -> {
 
-            setLoadingState(false)
-
-            val errorMessage = when {
-
-                exception.localizedMessage
-                    ?.contains(
-                        "requires recent authentication",
-                        ignoreCase = true
-                    ) == true -> {
-
-                    getString(
-                        R.string.re_auth_session_expired
-                    )
+                        getString(
+                            R.string.re_auth_delete_failed_message
+                        )
+                    }
                 }
 
-                else -> {
-
-                    getString(
-                        R.string.re_auth_delete_failed_message
-                    )
-                }
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.ERROR,
+                    title = getString(
+                        R.string.re_auth_delete_failed_title
+                    ),
+                    message = errorMessage
+                )
             }
-
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.ERROR,
-                title = getString(
-                    R.string.re_auth_delete_failed_title
-                ),
-                message = errorMessage
-            )
-        }
-}
+    }
 
     // ---------------------------------------------------
     // LOADING STATE
     // ---------------------------------------------------
 
     private fun setLoadingState(
-    loading: Boolean
-) {
+        loading: Boolean
+    ) {
 
-    isLoading = loading
+        isLoading = loading
 
-    binding.btnContinue.isEnabled =
-        !loading
+        binding.btnContinue.isEnabled = !loading
 
-    binding.btnContinue.alpha =
-        if (loading) 0.6f else 1f
+        binding.btnContinue.alpha =
+            if (loading) 0.6f else 1f
 
-    binding.btnContinue.text =
-        if (loading) {
+        binding.btnContinue.text =
+            if (loading) {
 
-            getString(R.string.loading)
-
-        } else {
-
-            if (binding.ivGoogle.visibility == View.VISIBLE) {
-
-                getString(
-                    R.string.re_auth_continue_google
-                )
+                getString(R.string.loading)
 
             } else {
 
-                getString(
-                    R.string.re_auth_continue
-                )
+                if (binding.ivGoogle.visibility == View.VISIBLE) {
+
+                    getString(
+                        R.string.re_auth_continue_google
+                    )
+
+                } else {
+
+                    getString(
+                        R.string.re_auth_continue
+                    )
+                }
             }
-        }
-}
+    }
 
     // ---------------------------------------------------
     // SHAKE ANIMATION
     // ---------------------------------------------------
 
-    private fun shakeView(
-        view: View
-    ) {
+    private fun shakeView(view: View) {
 
         view.animate()
             .translationX(20f)
