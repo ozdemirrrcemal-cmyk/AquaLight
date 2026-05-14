@@ -26,13 +26,13 @@
             android:layout_height="32dp"
             android:src="@drawable/ic_back"
             android:scaleType="center"
-            app:tint="?attr/colorOnSurface"
             android:clickable="true"
             android:focusable="true"
             android:contentDescription="@string/feedback_back_button_desc"
+            app:tint="?attr/colorOnSurface"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/tvTitle"
@@ -40,11 +40,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/feedback_title"
-            android:importantForAccessibility="yes"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 🔹 İçerik -->
@@ -76,34 +76,32 @@
                 style="@style/TextAppearance.Aqua.Feedback.SubInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
                 android:gravity="center"
                 android:lineSpacingExtra="4dp"
-                android:layout_marginBottom="16dp"
                 android:contentDescription="@string/feedback_subinfo_desc" />
 
-            <!-- 🟦 Feedback formu -->
+            <!-- 🟦 FORM CARD -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardFeedbackForm"
+                style="@style/Widget.Aqua.CardStyles"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/Widget.Aqua.CardStyles">
+                android:layout_height="wrap_content">
 
                 <LinearLayout
                     android:id="@+id/formContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:contentDescription="@string/feedback_form_desc">
+                    android:padding="16dp">
 
-                    <!-- Kategori -->
+                    <!-- CATEGORY -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutCategory"
                         style="@style/AuthTextInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/feedback_hint_category"
-                        android:contentDescription="@string/feedback_category_desc"
                         app:startIconDrawable="@drawable/ic_category"
                         app:startIconTint="#64FFDA"
                         app:endIconMode="dropdown_menu"
@@ -118,17 +116,17 @@
                             android:focusable="true"
                             android:clickable="true"
                             android:cursorVisible="false" />
+
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- E-posta (opsiyonel) -->
+                    <!-- EMAIL -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/inputLayoutEmail"
                         style="@style/AuthTextInputLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/feedback_hint_email"
                         android:layout_marginTop="16dp"
-                        android:contentDescription="@string/feedback_email_desc"
+                        android:hint="@string/feedback_hint_email"
                         app:startIconDrawable="@drawable/ic_email"
                         app:startIconTint="#64FFDA">
 
@@ -138,9 +136,10 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="textEmailAddress" />
+
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Mesaj + Lottie overlay -->
+                    <!-- MESSAGE -->
                     <FrameLayout
                         android:id="@+id/messageContainer"
                         android:layout_width="match_parent"
@@ -153,7 +152,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="@string/feedback_hint_message"
-                            android:contentDescription="@string/feedback_message_area_desc"
                             app:startIconDrawable="@drawable/ic_message"
                             app:startIconTint="#64FFDA"
                             app:counterEnabled="true"
@@ -168,9 +166,10 @@
                                 android:gravity="top"
                                 android:inputType="textMultiLine"
                                 android:overScrollMode="never" />
+
                         </com.google.android.material.textfield.TextInputLayout>
 
-                        <!-- Lottie başarı animasyonu (mesaj kutusunun ortasında) -->
+                        <!-- SUCCESS LOTTIE -->
                         <com.airbnb.lottie.LottieAnimationView
                             android:id="@+id/lottieSuccess"
                             android:layout_width="60dp"
@@ -180,9 +179,10 @@
                             app:lottie_rawRes="@raw/success_feedback"
                             app:lottie_autoPlay="false"
                             app:lottie_loop="false" />
+
                     </FrameLayout>
 
-                    <!-- Attachment başlığı -->
+                    <!-- ATTACHMENT TITLE -->
                     <TextView
                         android:id="@+id/tvScreenshotLabel"
                         style="@style/TextAppearance.Aqua.Feedback.SubInfo"
@@ -191,79 +191,84 @@
                         android:layout_marginTop="16dp"
                         android:text="@string/feedback_attachment_title"
                         android:gravity="start" />
-<!-- Attachment için küçük kart -->
-<com.google.android.material.card.MaterialCardView
-    android:id="@+id/cardScreenshot"
-    style="@style/Widget.Aqua.CardStyles"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    app:cardElevation="0dp"
-    app:cardUseCompatPadding="false">
 
-    <!-- İç container -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+                    <!-- ATTACHMENT CARD -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardScreenshot"
+                        style="@style/Widget.Aqua.CardStyles"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:cardElevation="0dp"
+                        app:cardUseCompatPadding="false">
 
-        <!-- ÜST SATIR -->
-        <LinearLayout
-            android:id="@+id/rowAddScreenshot"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="10dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/ivScreenshotIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_image"
-                app:tint="@color/settings_text_secondary" />
+                            <!-- TOP ROW -->
+                            <LinearLayout
+                                android:id="@+id/rowAddScreenshot"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="10dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:background="?attr/selectableItemBackgroundBorderless">
 
-            <TextView
-                android:id="@+id/tvScreenshotInfo"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:text="@string/feedback_screenshot_add"
-                android:textSize="14sp"
-                android:textColor="@color/settings_text_secondary" />
+                                <ImageView
+                                    android:id="@+id/ivScreenshotIcon"
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:src="@drawable/ic_image"
+                                    app:tint="@color/settings_text_secondary" />
 
-            <ImageView
-                android:id="@+id/ivScreenshotClear"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_close"
-                android:visibility="gone"
-                app:tint="@color/settings_text_secondary" />
-        </LinearLayout>
+                                <TextView
+                                    android:id="@+id/tvScreenshotInfo"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_weight="1"
+                                    android:text="@string/feedback_screenshot_add"
+                                    android:textSize="14sp"
+                                    android:textColor="@color/settings_text_secondary" />
 
-        <!-- SCREENSHOT PREVIEW -->
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/ivScreenshotPreview"
-            android:layout_width="90dp"
-            android:layout_height="90dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="12dp"
-            android:elevation="2dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            app:shapeAppearanceOverlay="@style/RoundedImageSmall" />
+                                <ImageView
+                                    android:id="@+id/ivScreenshotClear"
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:src="@drawable/ic_close"
+                                    android:visibility="gone"
+                                    app:tint="@color/settings_text_secondary" />
 
-    </LinearLayout>
+                            </LinearLayout>
 
-</com.google.android.material.card.MaterialCardView>
+                            <!-- PREVIEW -->
+                            <com.google.android.material.imageview.ShapeableImageView
+                                android:id="@+id/ivScreenshotPreview"
+                                android:layout_width="90dp"
+                                android:layout_height="90dp"
+                                android:layout_gravity="center_horizontal"
+                                android:layout_marginTop="4dp"
+                                android:layout_marginBottom="12dp"
+                                android:elevation="2dp"
+                                android:scaleType="centerCrop"
+                                android:visibility="gone"
+                                app:shapeAppearanceOverlay="@style/RoundedImageSmall" />
 
-            <!-- Gönder butonu -->
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- SEND BUTTON -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSend"
                 style="@style/Widget.Aqua.PrimaryButton"
@@ -272,14 +277,14 @@
                 android:layout_marginTop="24dp"
                 android:text="@string/feedback_send"
                 android:textAllCaps="false"
+                android:contentDescription="@string/feedback_send_desc"
                 app:icon="@drawable/ic_send"
                 app:iconTint="#64FFDA"
                 app:iconSize="18dp"
                 app:iconGravity="textStart"
-                app:iconPadding="8dp"
-                android:contentDescription="@string/feedback_send_desc" />
+                app:iconPadding="8dp" />
 
-            <!-- Sending progress -->
+            <!-- PROGRESS -->
             <ProgressBar
                 android:id="@+id/progressBarSending"
                 style="?android:attr/progressBarStyleSmall"
@@ -289,7 +294,7 @@
                 android:layout_marginTop="8dp"
                 android:visibility="gone" />
 
-            <!-- Alt bilgi -->
+            <!-- FOOTER -->
             <TextView
                 android:id="@+id/tvFooter"
                 style="@style/TextAppearance.Aqua.Feedback.Footer"
@@ -302,6 +307,7 @@
                 android:contentDescription="@string/feedback_footer_desc" />
 
         </LinearLayout>
+
     </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
