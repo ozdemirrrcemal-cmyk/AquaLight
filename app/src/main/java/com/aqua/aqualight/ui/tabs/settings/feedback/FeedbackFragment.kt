@@ -486,7 +486,7 @@ class FeedbackFragment :
                     BaseActivity.SnackType.WARNING
                 )
 
-                return
+                return@with
             }
 
             setSendingState(true)
@@ -615,7 +615,7 @@ storageRef.putFile(currentScreenshot)
 
         showErrorSnackBar()
     }
-
+}
     // ---------------------------------------------------
     // RESET FORM
     // ---------------------------------------------------
