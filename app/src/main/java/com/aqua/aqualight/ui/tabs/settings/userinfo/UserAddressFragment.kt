@@ -88,6 +88,60 @@ class UserAddressFragment :
         setupListeners()
 
         setupCountryPickerClick()
+
+        setupKeyboardAutoScroll()
+    }
+
+    // ---------------------------------------------------
+    // KEYBOARD AUTO SCROLL
+    // ---------------------------------------------------
+
+    private fun setupKeyboardAutoScroll() {
+
+        val fields = listOf(
+
+            binding.etFirstName,
+            binding.etLastName,
+            binding.etCity,
+            binding.etAddress,
+            binding.etPostCode,
+            binding.etPhoneNumber
+        )
+
+        fields.forEach { editText ->
+
+            editText.setOnFocusChangeListener {
+
+                    view,
+                    hasFocus ->
+
+                if (hasFocus) {
+
+                    binding.scrollContent.postDelayed({
+
+                        binding.scrollContent
+                            .smoothScrollTo(
+                                0,
+                                view.bottom + 400
+                            )
+
+                    }, 250)
+                }
+            }
+
+            editText.setOnClickListener {
+
+                binding.scrollContent.postDelayed({
+
+                    binding.scrollContent
+                        .smoothScrollTo(
+                            0,
+                            editText.bottom + 400
+                        )
+
+                }, 250)
+            }
+        }
     }
 
     // ---------------------------------------------------
@@ -126,8 +180,6 @@ class UserAddressFragment :
                 prefs.postCode
             )
 
-            // COUNTRY
-
             if (
                 prefs.country.isNotBlank()
             ) {
@@ -145,8 +197,6 @@ class UserAddressFragment :
             binding.tvCountryValue.text =
                 binding.ccpCountry
                     .selectedCountryName
-
-            // PHONE
 
             isFormattingPhone = true
 
@@ -562,8 +612,6 @@ class UserAddressFragment :
 
         var hasError = false
 
-        // FIRST NAME
-
         if (
             firstName.length <
             FIRST_NAME_MIN
@@ -579,8 +627,6 @@ class UserAddressFragment :
 
             hasError = true
         }
-
-        // LAST NAME
 
         if (
             lastName.length <
@@ -598,8 +644,6 @@ class UserAddressFragment :
             hasError = true
         }
 
-        // CITY
-
         if (
             city.isBlank()
         ) {
@@ -614,8 +658,6 @@ class UserAddressFragment :
 
             hasError = true
         }
-
-        // ADDRESS
 
         if (
             address.isBlank()
@@ -632,8 +674,6 @@ class UserAddressFragment :
             hasError = true
         }
 
-        // POSTCODE
-
         if (
             postCode.isBlank()
         ) {
@@ -648,8 +688,6 @@ class UserAddressFragment :
 
             hasError = true
         }
-
-        // PHONE
 
         if (
             phoneRaw.isBlank()
@@ -667,8 +705,6 @@ class UserAddressFragment :
         }
 
         if (hasError) return
-
-        // PHONE VALIDATION
 
         val phoneUtil =
             PhoneNumberUtil.getInstance()
