@@ -1234,7 +1234,4 @@ Delete Failed
     Receive notifications when your account is accessed from a new device or location.
 </string>
 
-<string name="feedback_image_too_large_message">
-    Please select an image smaller than 3 MB.
-</string>
 </resources>

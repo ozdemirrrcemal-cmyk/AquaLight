@@ -2,8 +2,11 @@ package com.aqua.aqualight.ui.tabs.settings.feedback
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.util.Patterns
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,60 +22,68 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.storage
+import java.io.File
+import java.io.FileOutputStream
 import java.util.Locale
 
-class FeedbackFragment :
-    Fragment(R.layout.fragment_feedback) {
+class FeedbackFragment : Fragment(R.layout.fragment_feedback) {
 
-    // ---------------------------------------------------
-    // CONFIG
-    // ---------------------------------------------------
+    companion object {
 
-    private val SCREENSHOT_ENABLED = true
+        private const val TAG =
+            "FeedbackFragment"
 
-    private val MAX_SCREENSHOT_SIZE =
-        3 * 1024 * 1024L // 3MB
+        // 🔒 Blaze’e geçene kadar buradan yönet
+        private const val SCREENSHOT_ENABLED =
+            true
+
+        // 📦 Screenshot max MB
+        private const val MAX_IMAGE_SIZE_MB =
+            5
+    }
 
     // ---------------------------------------------------
     // VIEW BINDING
     // ---------------------------------------------------
 
-    private var _binding: FragmentFeedbackBinding? = null
+    private var _binding:
+        FragmentFeedbackBinding? = null
+
     private val binding get() = _binding!!
-
-    // ---------------------------------------------------
-    // BASE ACTIVITY
-    // ---------------------------------------------------
-
-    private val baseActivity
-        get() = activity as? BaseActivity
 
     // ---------------------------------------------------
     // FIREBASE
     // ---------------------------------------------------
 
-    private val db by lazy {
-        FirebaseFirestore.getInstance()
-    }
+    private val db:
+        FirebaseFirestore by lazy {
 
-    private val auth by lazy {
-        FirebaseAuth.getInstance()
-    }
+            FirebaseFirestore.getInstance()
+        }
 
-    // ---------------------------------------------------
-    // STATE
-    // ---------------------------------------------------
+    private val auth:
+        FirebaseAuth by lazy {
 
-    private var originalButtonText: CharSequence? =
-        null
-
-    private var isSending = false
-
-    private var screenshotUri: Uri? = null
+            FirebaseAuth.getInstance()
+        }
 
     // ---------------------------------------------------
-    // SCREENSHOT PICKER
+    // UI STATE
+    // ---------------------------------------------------
+
+    private lateinit var originalButtonText:
+        CharSequence
+
+    private var isSending =
+        false
+
+    private var screenshotUri:
+        Uri? = null
+
+    // ---------------------------------------------------
+    // PICK IMAGE
     // ---------------------------------------------------
 
     private val pickScreenshot =
@@ -80,36 +91,12 @@ class FeedbackFragment :
             ActivityResultContracts.GetContent()
         ) { uri ->
 
-            if (uri == null) {
-                return@registerForActivityResult
-            }
+            if (
+                !isAdded ||
+                _binding == null
+            ) return@registerForActivityResult
 
-            try {
-
-                val size =
-                    requireContext()
-                        .contentResolver
-                        .openAssetFileDescriptor(
-                            uri,
-                            "r"
-                        )
-                        ?.length ?: 0L
-
-                // ---------------------------------------------------
-                // SIZE CHECK
-                // ---------------------------------------------------
-
-                if (size > MAX_SCREENSHOT_SIZE) {
-
-                    baseActivity?.showSnackBar(
-                        getString(
-                            R.string.feedback_image_too_large_message
-                        ),
-                        BaseActivity.SnackType.ERROR
-                    )
-
-                    return@registerForActivityResult
-                }
+            if (uri != null) {
 
                 screenshotUri = uri
 
@@ -121,16 +108,19 @@ class FeedbackFragment :
                 binding.ivScreenshotClear.isVisible =
                     true
 
-                baseActivity?.showSnackBar(
+                binding.ivScreenshotPreview.isVisible =
+                    true
+
+                binding.ivScreenshotPreview.setImageURI(
+                    uri
+                )
+
+                showSnackBar(
                     getString(
                         R.string.feedback_screenshot_selected
                     ),
                     BaseActivity.SnackType.SUCCESS
                 )
-
-            } catch (_: Exception) {
-
-                showErrorSnackBar()
             }
         }
 
@@ -158,13 +148,13 @@ class FeedbackFragment :
 
         setupCategoryDropdown()
 
+        setupValidationWatchers()
+
         setupSendButton()
 
         setupLottie()
 
-        setupValidationWatchers()
-
-        setupScreenshotSection()
+        setupScreenshotVisibility()
     }
 
     // ---------------------------------------------------
@@ -199,11 +189,9 @@ class FeedbackFragment :
         with(binding) {
 
             val categories =
-                resources
-                    .getStringArray(
-                        R.array.feedback_categories
-                    )
-                    .toList()
+                resources.getStringArray(
+                    R.array.feedback_categories
+                ).toList()
 
             val adapter =
                 android.widget.ArrayAdapter(
@@ -214,17 +202,113 @@ class FeedbackFragment :
 
             autoCategory.setAdapter(adapter)
 
-            autoCategory
-                .setDropDownBackgroundDrawable(
-                    ContextCompat.getDrawable(
-                        requireContext(),
-                        R.drawable.bg_dropdown_popup
-                    )
+            autoCategory.setDropDownBackgroundDrawable(
+                ContextCompat.getDrawable(
+                    requireContext(),
+                    R.drawable.bg_dropdown_popup
                 )
+            )
 
             autoCategory.setOnClickListener {
 
                 autoCategory.showDropDown()
+            }
+        }
+
+    // ---------------------------------------------------
+    // VALIDATION WATCHERS
+    // ---------------------------------------------------
+
+    private fun setupValidationWatchers() =
+        with(binding) {
+
+            autoCategory.addTextChangedListener {
+
+                if (!it.isNullOrBlank()) {
+
+                    inputLayoutCategory.error =
+                        null
+                }
+            }
+
+            etMessage.addTextChangedListener {
+
+                val value =
+                    it?.toString()
+                        ?.trim()
+                        .orEmpty()
+
+                if (value.length >= 10) {
+
+                    inputLayoutMessage.error =
+                        null
+                }
+            }
+
+            etEmail.addTextChangedListener {
+
+                val value =
+                    it?.toString()
+                        ?.trim()
+                        .orEmpty()
+
+                if (
+                    value.isEmpty() ||
+                    Patterns.EMAIL_ADDRESS
+                        .matcher(value)
+                        .matches()
+                ) {
+
+                    inputLayoutEmail.error =
+                        null
+                }
+            }
+        }
+
+    // ---------------------------------------------------
+    // SCREENSHOT UI
+    // ---------------------------------------------------
+
+    private fun setupScreenshotVisibility() =
+        with(binding) {
+
+            if (SCREENSHOT_ENABLED) {
+
+                tvScreenshotLabel.isVisible =
+                    true
+
+                cardScreenshot.isVisible =
+                    true
+
+                setupScreenshotRow()
+
+            } else {
+
+                tvScreenshotLabel.isVisible =
+                    false
+
+                cardScreenshot.isVisible =
+                    false
+            }
+        }
+
+    // ---------------------------------------------------
+    // SCREENSHOT ROW
+    // ---------------------------------------------------
+
+    private fun setupScreenshotRow() =
+        with(binding) {
+
+            rowAddScreenshot.setOnClickListener {
+
+                pickScreenshot.launch(
+                    "image/*"
+                )
+            }
+
+            ivScreenshotClear.setOnClickListener {
+
+                clearScreenshot()
             }
         }
 
@@ -245,157 +329,54 @@ class FeedbackFragment :
         }
 
     // ---------------------------------------------------
-    // VALIDATION WATCHERS
-    // ---------------------------------------------------
-
-    private fun setupValidationWatchers() =
-        with(binding) {
-
-            autoCategory
-                .addTextChangedListener { text ->
-
-                    if (!text.isNullOrBlank()) {
-
-                        inputLayoutCategory.error =
-                            null
-                    }
-                }
-
-            etMessage
-                .addTextChangedListener { text ->
-
-                    val value =
-                        text?.toString()
-                            ?.trim()
-                            .orEmpty()
-
-                    if (value.length >= 10) {
-
-                        inputLayoutMessage.error =
-                            null
-                    }
-                }
-
-            etEmail
-                .addTextChangedListener { text ->
-
-                    val value =
-                        text?.toString()
-                            ?.trim()
-                            .orEmpty()
-
-                    if (
-                        value.isEmpty() ||
-                        Patterns.EMAIL_ADDRESS
-                            .matcher(value)
-                            .matches()
-                    ) {
-
-                        inputLayoutEmail.error =
-                            null
-                    }
-                }
-        }
-
-    // ---------------------------------------------------
-    // SCREENSHOT SECTION
-    // ---------------------------------------------------
-
-    private fun setupScreenshotSection() =
-        with(binding) {
-
-            if (SCREENSHOT_ENABLED) {
-
-                tvScreenshotLabel.isVisible =
-                    true
-
-                cardScreenshot.isVisible =
-                    true
-
-                rowAddScreenshot
-                    .setOnClickListener {
-
-                        pickScreenshot.launch(
-                            "image/*"
-                        )
-                    }
-
-                ivScreenshotClear
-                    .setOnClickListener {
-
-                        screenshotUri = null
-
-                        tvScreenshotInfo.text =
-                            getString(
-                                R.string.feedback_screenshot_add
-                            )
-
-                        ivScreenshotClear.isVisible =
-                            false
-
-                        baseActivity?.showSnackBar(
-                            getString(
-                                R.string.feedback_screenshot_add
-                            ),
-                            BaseActivity.SnackType.NORMAL
-                        )
-                    }
-
-            } else {
-
-                tvScreenshotLabel.isVisible =
-                    false
-
-                cardScreenshot.isVisible =
-                    false
-            }
-        }
-
-    // ---------------------------------------------------
     // LOTTIE
     // ---------------------------------------------------
 
     private fun setupLottie() =
         with(binding) {
 
-            lottieSuccess
-                .addAnimatorListener(
-                    object : AnimatorListenerAdapter() {
+            lottieSuccess.addAnimatorListener(
+                object : AnimatorListenerAdapter() {
 
-                        override fun onAnimationEnd(
-                            animation: Animator
-                        ) {
+                    override fun onAnimationEnd(
+                        animation: Animator
+                    ) {
 
-                            etMessage.isEnabled =
-                                true
+                        if (
+                            !isAdded ||
+                            _binding == null
+                        ) return
 
-                            etMessage.setText("")
+                        etMessage.isEnabled =
+                            true
 
-                            etMessage.clearFocus()
+                        etMessage.setText("")
 
-                            inputLayoutMessage.hint =
-                                getString(
-                                    R.string.feedback_hint_message
-                                )
+                        etMessage.clearFocus()
 
-                            inputLayoutMessage.error =
-                                null
+                        inputLayoutMessage.hint =
+                            getString(
+                                R.string.feedback_hint_message
+                            )
 
-                            lottieSuccess.isVisible =
-                                false
-                        }
+                        inputLayoutMessage.error =
+                            null
+
+                        lottieSuccess.isVisible =
+                            false
                     }
-                )
+                }
+            )
         }
 
     // ---------------------------------------------------
-    // SEND FEEDBACK
+    // VALIDATE FORM
     // ---------------------------------------------------
 
-    private fun sendFeedback() =
-        with(binding) {
+    private fun validateForm():
+        Boolean {
 
-            root.clearFocus()
+        with(binding) {
 
             inputLayoutCategory.error =
                 null
@@ -424,11 +405,8 @@ class FeedbackFragment :
                     ?.trim()
                     .orEmpty()
 
-            var hasError = false
-
-            // ---------------------------------------------------
-            // CATEGORY VALIDATION
-            // ---------------------------------------------------
+            var hasError =
+                false
 
             if (category.isEmpty()) {
 
@@ -437,12 +415,9 @@ class FeedbackFragment :
                         R.string.feedback_error_category_required
                     )
 
-                hasError = true
+                hasError =
+                    true
             }
-
-            // ---------------------------------------------------
-            // MESSAGE VALIDATION
-            // ---------------------------------------------------
 
             if (message.length < 10) {
 
@@ -451,12 +426,9 @@ class FeedbackFragment :
                         R.string.feedback_error_message_too_short
                     )
 
-                hasError = true
+                hasError =
+                    true
             }
-
-            // ---------------------------------------------------
-            // EMAIL VALIDATION
-            // ---------------------------------------------------
 
             if (
                 email.isNotEmpty() &&
@@ -470,152 +442,298 @@ class FeedbackFragment :
                         R.string.feedback_error_email_invalid
                     )
 
-                hasError = true
+                hasError =
+                    true
             }
 
-            // ---------------------------------------------------
-            // VALIDATION FAILED
-            // ---------------------------------------------------
+            return !hasError
+        }
+    }
 
-            if (hasError) {
+    // ---------------------------------------------------
+    // SEND FEEDBACK
+    // ---------------------------------------------------
 
-                baseActivity?.showSnackBar(
-                    getString(
-                        R.string.feedback_error_generic
-                    ),
-                    BaseActivity.SnackType.WARNING
-                )
+    private fun sendFeedback() {
 
-                return@with
-            }
-
-            setSendingState(true)
-
-            val user =
-                auth.currentUser
-
-            val uid =
-                user?.uid ?: "anonymous"
-
-            val docRef =
-                db.collection("feedback")
-                    .document(uid)
-                    .collection("items")
-                    .document()
-
-            // ---------------------------------------------------
-            // FIRESTORE DATA
-            // ---------------------------------------------------
-
-            val baseData =
-                hashMapOf<String, Any>(
-                    "category" to category,
-                    "message" to message,
-                    "platform" to "android",
-                    "appVersion" to getAppVersion(),
-                    "locale" to Locale
-                        .getDefault()
-                        .toLanguageTag(),
-                    "status" to "new",
-                    "userId" to uid,
-                    "createdAt" to FieldValue.serverTimestamp()
-                )
-
-            if (email.isNotBlank()) {
-
-                baseData["email"] =
-                    email
-            }
-
-            val currentScreenshot =
-                screenshotUri
-
-            // ---------------------------------------------------
-            // NO SCREENSHOT
-            // ---------------------------------------------------
-
-            if (
-                !SCREENSHOT_ENABLED ||
-                currentScreenshot == null
-            ) {
-
-                docRef.set(baseData)
-                    .addOnSuccessListener {
-
-                        setSendingState(false)
-
-                        resetForm()
-
-                        showSuccessUI()
-
-                        showSuccessSnackBar()
-                    }
-                    .addOnFailureListener {
-
-                        setSendingState(false)
-
-                        showErrorSnackBar()
-                    }
-
-                return@with
-            }
-
-         // ---------------------------------------------------
-// STORAGE UPLOAD
-// ---------------------------------------------------
-
-val storageRef =
-    Firebase.storage.reference
-        .child(
-            "feedback_screenshots/$uid/${docRef.id}.jpg"
-        )
-
-storageRef.putFile(currentScreenshot)
-    .continueWithTask<Uri> { task ->
-
-        if (!task.isSuccessful) {
-
-            throw (
-                task.exception
-                    ?: Exception("Upload failed")
-            )
+        if (!validateForm()) {
+            return
         }
 
-        return@continueWithTask storageRef.downloadUrl
+        setSendingState(true)
+
+        val user =
+            auth.currentUser
+
+        val uid =
+            user?.uid ?: "anonymous"
+
+        val category =
+            binding.autoCategory.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val email =
+            binding.etEmail.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val message =
+            binding.etMessage.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val docRef =
+            db.collection("feedback_items")
+                .document()
+
+        val feedbackData =
+            hashMapOf<String, Any?>(
+                "category" to category,
+                "email" to email.ifBlank { null },
+                "message" to message,
+                "platform" to "android",
+                "appVersion" to getAppVersion(),
+                "locale" to Locale.getDefault()
+                    .toLanguageTag(),
+                "status" to "new",
+                "userId" to uid,
+                "createdAt" to FieldValue.serverTimestamp()
+            )
+
+        val currentScreenshot =
+            screenshotUri
+
+        // ---------------------------------------------------
+        // NO SCREENSHOT
+        // ---------------------------------------------------
+
+        if (
+            !SCREENSHOT_ENABLED ||
+            currentScreenshot == null
+        ) {
+
+            saveFeedbackOnly(
+                docRef.id,
+                feedbackData
+            )
+
+            return
+        }
+
+        // ---------------------------------------------------
+        // WITH SCREENSHOT
+        // ---------------------------------------------------
+
+        uploadScreenshotAndSaveFeedback(
+            uid = uid,
+            documentId = docRef.id,
+            screenshotUri = currentScreenshot,
+            feedbackData = feedbackData
+        )
     }
-    .addOnSuccessListener { downloadUri: Uri ->
 
-        val dataWithScreenshot =
-            baseData.toMutableMap()
+    // ---------------------------------------------------
+    // SAVE FEEDBACK ONLY
+    // ---------------------------------------------------
 
-        dataWithScreenshot["screenshotUrl"] =
-            downloadUri.toString()
+    private fun saveFeedbackOnly(
+        documentId: String,
+        feedbackData: HashMap<String, Any?>
+    ) {
 
-        docRef.set(dataWithScreenshot)
+        db.collection("feedback_items")
+            .document(documentId)
+            .set(feedbackData)
+
             .addOnSuccessListener {
 
-                setSendingState(false)
-
-                resetForm()
-
-                showSuccessUI()
-
-                showSuccessSnackBar()
+                handleSuccess()
             }
-            .addOnFailureListener { _: Exception ->
 
-                setSendingState(false)
+            .addOnFailureListener {
 
-                showErrorSnackBar()
+                handleError(it)
             }
     }
-    .addOnFailureListener { _: Exception ->
+
+    // ---------------------------------------------------
+    // UPLOAD IMAGE
+    // ---------------------------------------------------
+
+    private fun uploadScreenshotAndSaveFeedback(
+        uid: String,
+        documentId: String,
+        screenshotUri: Uri,
+        feedbackData: HashMap<String, Any?>
+    ) {
+
+        try {
+
+            val compressedFile =
+                compressImage(screenshotUri)
+
+            val storageRef =
+                Firebase.storage.reference
+                    .child(
+                        "feedback_screenshots/$uid/$documentId.jpg"
+                    )
+
+            storageRef.putFile(
+                Uri.fromFile(compressedFile)
+            )
+
+                .continueWithTask { task ->
+
+                    if (!task.isSuccessful) {
+
+                        throw task.exception
+                            ?: Exception("Upload failed")
+                    }
+
+                    storageRef.downloadUrl
+                }
+
+                .addOnSuccessListener { uri ->
+
+                    if (
+                        !isAdded ||
+                        _binding == null
+                    ) return@addOnSuccessListener
+
+                    feedbackData["screenshotUrl"] =
+                        uri.toString()
+
+                    saveFeedbackOnly(
+                        documentId,
+                        feedbackData
+                    )
+                }
+
+                .addOnFailureListener {
+
+                    handleError(it)
+                }
+
+        } catch (e: Exception) {
+
+            handleError(e)
+        }
+    }
+
+    // ---------------------------------------------------
+    // IMAGE COMPRESS
+    // ---------------------------------------------------
+
+    private fun compressImage(
+        uri: Uri
+    ): File {
+
+        val inputStream =
+            requireContext()
+                .contentResolver
+                .openInputStream(uri)
+
+        val bitmap =
+            BitmapFactory.decodeStream(
+                inputStream
+            )
+
+        val file =
+            File(
+                requireContext().cacheDir,
+                "feedback_temp.jpg"
+            )
+
+        val outputStream =
+            FileOutputStream(file)
+
+        bitmap.compress(
+            Bitmap.CompressFormat.JPEG,
+            75,
+            outputStream
+        )
+
+        outputStream.flush()
+
+        outputStream.close()
+
+        return file
+    }
+
+    // ---------------------------------------------------
+    // SUCCESS
+    // ---------------------------------------------------
+
+    private fun handleSuccess() {
+
+        if (
+            !isAdded ||
+            _binding == null
+        ) return
 
         setSendingState(false)
 
-        showErrorSnackBar()
+        resetForm()
+
+        showSuccessUI()
+
+        showSnackBar(
+            getString(
+                R.string.feedback_sent_success
+            ),
+            BaseActivity.SnackType.SUCCESS
+        )
     }
-}
+
+    // ---------------------------------------------------
+    // ERROR
+    // ---------------------------------------------------
+
+    private fun handleError(
+        throwable: Throwable?
+    ) {
+
+        if (
+            !isAdded ||
+            _binding == null
+        ) return
+
+        Log.e(
+            TAG,
+            "Feedback error",
+            throwable
+        )
+
+        setSendingState(false)
+
+        val message =
+            when (throwable) {
+
+                is StorageException -> {
+
+                    getString(
+                        R.string.feedback_error_upload
+                    )
+                }
+
+                else -> {
+
+                    getString(
+                        R.string.feedback_error_generic
+                    )
+                }
+            }
+
+        showSnackBar(
+            message,
+            BaseActivity.SnackType.ERROR
+        )
+    }
+
     // ---------------------------------------------------
     // RESET FORM
     // ---------------------------------------------------
@@ -639,7 +757,18 @@ storageRef.putFile(currentScreenshot)
                     R.string.feedback_hint_message
                 )
 
-            screenshotUri = null
+            clearScreenshot()
+        }
+
+    // ---------------------------------------------------
+    // CLEAR SCREENSHOT
+    // ---------------------------------------------------
+
+    private fun clearScreenshot() =
+        with(binding) {
+
+            screenshotUri =
+                null
 
             tvScreenshotInfo.text =
                 getString(
@@ -648,18 +777,32 @@ storageRef.putFile(currentScreenshot)
 
             ivScreenshotClear.isVisible =
                 false
+
+            ivScreenshotPreview.setImageDrawable(
+                null
+            )
+
+            ivScreenshotPreview.isVisible =
+                false
         }
 
     // ---------------------------------------------------
-    // BUTTON LOADING STATE
+    // SENDING STATE
     // ---------------------------------------------------
 
     private fun setSendingState(
         sending: Boolean
-    ) =
+    ) {
+
+        if (
+            !isAdded ||
+            _binding == null
+        ) return
+
         with(binding) {
 
-            isSending = sending
+            isSending =
+                sending
 
             btnSend.isEnabled =
                 !sending
@@ -680,6 +823,14 @@ storageRef.putFile(currentScreenshot)
                 sending
         }
 
+        (
+            requireActivity()
+                as? BaseActivity
+            )?.showLoading(
+            sending
+        )
+    }
+
     // ---------------------------------------------------
     // SUCCESS UI
     // ---------------------------------------------------
@@ -687,7 +838,8 @@ storageRef.putFile(currentScreenshot)
     private fun showSuccessUI() =
         with(binding) {
 
-            inputLayoutMessage.hint = ""
+            inputLayoutMessage.hint =
+                ""
 
             etMessage.isEnabled =
                 false
@@ -708,38 +860,15 @@ storageRef.putFile(currentScreenshot)
         }
 
     // ---------------------------------------------------
-    // GLOBAL SNACKBAR
-    // ---------------------------------------------------
-
-    private fun showErrorSnackBar() {
-
-        baseActivity?.showSnackBar(
-            getString(
-                R.string.feedback_error_generic
-            ),
-            BaseActivity.SnackType.ERROR
-        )
-    }
-
-    private fun showSuccessSnackBar() {
-
-        baseActivity?.showSnackBar(
-            getString(
-                R.string.feedback_success_text
-            ),
-            BaseActivity.SnackType.SUCCESS
-        )
-    }
-
-    // ---------------------------------------------------
     // APP VERSION
     // ---------------------------------------------------
 
-    private fun getAppVersion(): String {
+    private fun getAppVersion():
+        String {
 
         return try {
 
-            val pInfo =
+            val info =
                 requireContext()
                     .packageManager
                     .getPackageInfo(
@@ -747,23 +876,42 @@ storageRef.putFile(currentScreenshot)
                         0
                     )
 
-            pInfo.versionName
+            info.versionName
                 ?: "unknown"
 
-        } catch (_: Exception) {
+        } catch (e: Exception) {
 
             "unknown"
         }
     }
 
     // ---------------------------------------------------
-    // CLEANUP
+    // GLOBAL SNACKBAR
+    // ---------------------------------------------------
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType
+    ) {
+
+        (
+            requireActivity()
+                as? BaseActivity
+            )?.showSnackBar(
+            message,
+            type
+        )
+    }
+
+    // ---------------------------------------------------
+    // DESTROY
     // ---------------------------------------------------
 
     override fun onDestroyView() {
 
         super.onDestroyView()
 
-        _binding = null
+        _binding =
+            null
     }
 }
