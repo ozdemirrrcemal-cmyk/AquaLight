@@ -1243,4 +1243,20 @@ Delete Failed
 <string name="feedback_error_file_too_large">
     Screenshot must be smaller than 3 MB
 </string>
+
+<string name="user_info_username_too_short">
+    Username must be at least 3 characters
+</string>
+
+<string name="user_info_username_too_long">
+    Username cannot exceed 20 characters
+</string>
+
+<string name="user_info_username_invalid">
+    Only letters, numbers, underscore and dot are allowed
+</string>
+
+<string name="user_info_saved_success">
+    Profile updated successfully
+</string>
 </resources>
