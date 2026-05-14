@@ -444,11 +444,32 @@ class ReAuthenticateFragment :
                     }
             }
         }
-        .addOnFailureListener {
+        .addOnFailureListener { exception ->
 
             baseActivity?.showLoading(false)
 
             setLoadingState(false)
+
+            val errorMessage = when {
+
+                exception.localizedMessage
+                    ?.contains(
+                        "requires recent authentication",
+                        ignoreCase = true
+                    ) == true -> {
+
+                    getString(
+                        R.string.re_auth_session_expired
+                    )
+                }
+
+                else -> {
+
+                    getString(
+                        R.string.re_auth_delete_failed_message
+                    )
+                }
+            }
 
             DialogManager.showInfoDialog(
                 requireContext(),
@@ -456,11 +477,7 @@ class ReAuthenticateFragment :
                 title = getString(
                     R.string.re_auth_delete_failed_title
                 ),
-                message =
-                    it.localizedMessage
-                        ?: getString(
-                            R.string.re_auth_unknown_error
-                        )
+                message = errorMessage
             )
         }
 }
@@ -498,7 +515,7 @@ class ReAuthenticateFragment :
 
                     getString(
                         R.string.re_auth_continue
-                    )
+                    )}
                 }
             }
     }
