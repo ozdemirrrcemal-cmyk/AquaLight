@@ -24,207 +24,435 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val userPrefs by lazy {
+        UserPreferencesManager.create(requireContext())
+    }
 
     companion object {
-        // 🔗 Sosyal linkler – kendi linklerini buraya yaz
-        private const val URL_WEBSITE   = "https://aqualight.example.com"
-        private const val URL_FACEBOOK  = "https://www.facebook.com/aqualight"
-        private const val URL_INSTAGRAM = "https://www.instagram.com/aqualight"
-        private const val URL_YOUTUBE   = "https://youtube.com/@aqualight"
 
-        private const val PKG_FACEBOOK  = "com.facebook.katana"
-        private const val PKG_INSTAGRAM = "com.instagram.android"
-        private const val PKG_YOUTUBE   = "com.google.android.youtube"
+        // 🔗 Sosyal linkler
+        private const val URL_WEBSITE =
+            "https://aqualight.example.com"
+
+        private const val URL_FACEBOOK =
+            "https://www.facebook.com/aqualight"
+
+        private const val URL_INSTAGRAM =
+            "https://www.instagram.com/aqualight"
+
+        private const val URL_YOUTUBE =
+            "https://youtube.com/@aqualight"
+
+        private const val PKG_FACEBOOK =
+            "com.facebook.katana"
+
+        private const val PKG_INSTAGRAM =
+            "com.instagram.android"
+
+        private const val PKG_YOUTUBE =
+            "com.google.android.youtube"
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentSettingsBinding.bind(view)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        _binding =
+            FragmentSettingsBinding.bind(view)
 
         observeUserInfo()
+
         setupClickListeners()
+
         setupSocialLinks()
+
         setupFooterVersion()
+
+        // 🔥 Şimdilik test verisi
+        updateActiveDevices(3)
     }
 
-    // 🔹 DataStore'dan kullanıcı bilgilerini oku ve UI'ya bas
+    // ---------------------------------------------------
+    // USER INFO
+    // ---------------------------------------------------
+
     private fun observeUserInfo() {
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.userPrefsFlow.collectLatest { prefs ->
-                val username =
-                    prefs.username.ifBlank { getString(R.string.settings_default_username) }
-                val email =
-                    prefs.email.ifBlank { getString(R.string.settings_default_email) }
 
-                binding.tvUsername.text = username
-                binding.tvEmail.text = email
+        viewLifecycleOwner.lifecycleScope
+            .launchWhenStarted {
 
-                // Profil fotoğrafı URL'i varsa Coil ile yükle
-                if (prefs.profilePhotoUrl.isNotBlank()) {
-                    binding.ivProfilePhoto.load(prefs.profilePhotoUrl) {
-                        placeholder(R.drawable.ic_profile_placeholder)
-                        error(R.drawable.ic_profile_placeholder)
-                        crossfade(true)
+                userPrefs.userPrefsFlow
+                    .collectLatest { prefs ->
+
+                        val username =
+                            prefs.username.ifBlank {
+
+                                getString(
+                                    R.string.settings_default_username
+                                )
+                            }
+
+                        val email =
+                            prefs.email.ifBlank {
+
+                                getString(
+                                    R.string.settings_default_email
+                                )
+                            }
+
+                        binding.tvUsername.text =
+                            username
+
+                        binding.tvEmail.text =
+                            email
+
+                        // 🔹 Profil fotoğrafı
+                        if (
+                            prefs.profilePhotoUrl.isNotBlank()
+                        ) {
+
+                            binding.ivProfilePhoto.load(
+                                prefs.profilePhotoUrl
+                            ) {
+
+                                placeholder(
+                                    R.drawable.ic_profile_placeholder
+                                )
+
+                                error(
+                                    R.drawable.ic_profile_placeholder
+                                )
+
+                                crossfade(true)
+                            }
+
+                        } else {
+
+                            binding.ivProfilePhoto
+                                .setImageResource(
+                                    R.drawable.ic_profile_placeholder
+                                )
+                        }
                     }
-                } else {
-                    binding.ivProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder)
-                }
             }
-        }
     }
 
-    // 🔹 Menü satır click'leri
-    private fun setupClickListeners() = with(binding) {
+    // ---------------------------------------------------
+    // ACTIVE DEVICES
+    // ---------------------------------------------------
 
-        ivProfilePhoto.setOnClickListener {
-            findNavController().navigate(R.id.editProfileFragment)
-        }
+    private fun updateActiveDevices(
+        activeDevices: Int
+    ) {
 
-        rowUserInfo.setOnClickListener {
-            findNavController().navigate(R.id.userInfoFragment)
-        }
+        if (activeDevices > 0) {
 
-        rowDeviceStatus.setOnClickListener {
-            findNavController().navigate(R.id.deviceStatusFragment)
-        }
-
-        rowNetwork.setOnClickListener {
-            findNavController().navigate(R.id.networkFragment)
-        }
-
-        rowSettings.setOnClickListener {
-            findNavController().navigate(R.id.appSettingsFragment)
-        }
-
-        rowUsage.setOnClickListener {
-            findNavController().navigate(R.id.usageFragment)
-        }
-
-        rowPrivacy.setOnClickListener {
-            findNavController().navigate(R.id.privacyFragment)
-        }
-
-        rowFeedback.setOnClickListener {
-            findNavController().navigate(R.id.feedbackFragment)
-        }
-
-        rowLogout.setOnClickListener {
-            findNavController().navigate(R.id.logoutFragment)
-        }
-    }
-
-    // 🔹 Sosyal medya ikonlarını bağla
-    private fun setupSocialLinks() = with(binding) {
-        // Website her zaman tarayıcıda
-        ivSocialWebsite.setOnClickListener {
-            openUrlInBrowser(URL_WEBSITE)
-        }
-
-        // Facebook -> önce app dene, yoksa tarayıcı
-        ivSocialFacebook.setOnClickListener {
-            openUrlPreferApp(URL_FACEBOOK, PKG_FACEBOOK)
-        }
-
-        // Instagram
-        ivSocialInstagram.setOnClickListener {
-            openUrlPreferApp(URL_INSTAGRAM, PKG_INSTAGRAM)
-        }
-
-        // YouTube -> sadece uygulama (gerekirse Play Store), TARAYICI YOK
-        ivSocialYoutube.setOnClickListener {
-            openYoutubeChannel()
-        }
-    }
-
-    // 🔹 Footer’da versiyonu otomatik yaz
-    private fun setupFooterVersion() {
-        // "Copyright © 2025\nAquaLight All rights reserved.\nVersion %1$s"
-        binding.tvFooterInfo.text = getString(
-            R.string.settings_footer_info,
-            BuildConfig.VERSION_NAME
-        )
-    }
-
-    /**
-     * Sadece tarayıcıda aç
-     */
-    private fun openUrlInBrowser(url: String) {
-        if (url.isBlank()) return
-        val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        try {
-            startActivity(webIntent)
-        } catch (_: Exception) {
-            // hiç browser yoksa sessiz geç
-        }
-    }
-
-    /**
-     * Önce ilgili uygulamayı dene, yüklü değilse tarayıcıya düş
-     */
-    private fun openUrlPreferApp(url: String, appPackage: String) {
-        if (url.isBlank()) return
-
-        val pm: PackageManager = requireContext().packageManager
-
-        // 1) App yüklü mü?
-        val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-            setPackage(appPackage)
-        }
-
-        val resolveInfo = pm.resolveActivity(appIntent, PackageManager.MATCH_DEFAULT_ONLY)
-        if (resolveInfo != null) {
-            // App VAR → direkt onu aç ve FONKSİYONDAN ÇIK
-            try {
-                startActivity(appIntent)
-                return
-            } catch (_: Exception) {
-                // yine de açamazsa aşağıdaki browser'a düşer
-            }
-        }
-
-        // 2) App yoksa / açamadıysa → tarayıcı
-        val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        try {
-            startActivity(webIntent)
-        } catch (_: Exception) {
-        }
-    }
-
-    /**
-     * YouTube ikonu için: sadece YouTube app + Play Store fallback
-     * Tarayıcı kesinlikle açılmaz.
-     */
-    private fun openYoutubeChannel() {
-        val url = URL_YOUTUBE
-        if (url.isBlank()) return
-
-        // 1) YouTube uygulamasını dene
-        val appIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-            setPackage(PKG_YOUTUBE)
-        }
-
-        try {
-            startActivity(appIntent)
-            return
-        } catch (e: ActivityNotFoundException) {
-            // YouTube app yok → Play Store'a yönlendir
-            try {
-                val storeIntent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("market://details?id=$PKG_YOUTUBE")
+            binding.tvActiveDevices.text =
+                getString(
+                    R.string.settings_active_devices,
+                    activeDevices
                 )
-                startActivity(storeIntent)
-            } catch (_: Exception) {
-                // Play Store da yoksa tamamen sessiz kal
-            }
-        } catch (_: Exception) {
-            // başka bir hata olursa da sessiz geç
+
+            binding.viewDeviceDot
+                .setBackgroundResource(
+                    R.drawable.bg_online_dot
+                )
+
+        } else {
+
+            binding.tvActiveDevices.text =
+                getString(
+                    R.string.settings_no_active_devices
+                )
+
+            binding.viewDeviceDot
+                .setBackgroundResource(
+                    R.drawable.bg_offline_dot
+                )
         }
     }
+
+    // ---------------------------------------------------
+    // CLICK LISTENERS
+    // ---------------------------------------------------
+
+    private fun setupClickListeners() =
+        with(binding) {
+
+            ivProfilePhoto.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.editProfileFragment
+                    )
+            }
+
+            rowUserInfo.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.userInfoFragment
+                    )
+            }
+
+            rowDeviceStatus.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.deviceStatusFragment
+                    )
+            }
+
+            rowNetwork.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.networkFragment
+                    )
+            }
+
+            rowSettings.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.appSettingsFragment
+                    )
+            }
+
+            rowUsage.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.usageFragment
+                    )
+            }
+
+            rowPrivacy.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.privacyFragment
+                    )
+            }
+
+            rowFeedback.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.feedbackFragment
+                    )
+            }
+
+            rowLogout.setOnClickListener {
+
+                findNavController()
+                    .navigate(
+                        R.id.logoutFragment
+                    )
+            }
+        }
+
+    // ---------------------------------------------------
+    // SOCIAL LINKS
+    // ---------------------------------------------------
+
+    private fun setupSocialLinks() =
+        with(binding) {
+
+            // 🌐 Website
+            ivSocialWebsite.setOnClickListener {
+
+                openUrlInBrowser(
+                    URL_WEBSITE
+                )
+            }
+
+            // 📘 Facebook
+            ivSocialFacebook.setOnClickListener {
+
+                openUrlPreferApp(
+                    URL_FACEBOOK,
+                    PKG_FACEBOOK
+                )
+            }
+
+            // 📸 Instagram
+            ivSocialInstagram.setOnClickListener {
+
+                openUrlPreferApp(
+                    URL_INSTAGRAM,
+                    PKG_INSTAGRAM
+                )
+            }
+
+            // ▶️ YouTube
+            ivSocialYoutube.setOnClickListener {
+
+                openYoutubeChannel()
+            }
+        }
+
+    // ---------------------------------------------------
+    // FOOTER VERSION
+    // ---------------------------------------------------
+
+    private fun setupFooterVersion() {
+
+        binding.tvFooterInfo.text =
+            getString(
+                R.string.settings_footer_info,
+                BuildConfig.VERSION_NAME
+            )
+    }
+
+    // ---------------------------------------------------
+    // BROWSER
+    // ---------------------------------------------------
+
+    private fun openUrlInBrowser(
+        url: String
+    ) {
+
+        if (url.isBlank()) return
+
+        val webIntent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(url)
+            )
+
+        try {
+
+            startActivity(webIntent)
+
+        } catch (_: Exception) {
+
+            // Browser yoksa sessiz geç
+        }
+    }
+
+    // ---------------------------------------------------
+    // OPEN URL WITH APP
+    // ---------------------------------------------------
+
+    private fun openUrlPreferApp(
+        url: String,
+        appPackage: String
+    ) {
+
+        if (url.isBlank()) return
+
+        val pm: PackageManager =
+            requireContext().packageManager
+
+        // 🔹 App intent
+        val appIntent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(url)
+            ).apply {
+
+                setPackage(appPackage)
+            }
+
+        val resolveInfo =
+            pm.resolveActivity(
+                appIntent,
+                PackageManager.MATCH_DEFAULT_ONLY
+            )
+
+        if (resolveInfo != null) {
+
+            try {
+
+                startActivity(appIntent)
+
+                return
+
+            } catch (_: Exception) {
+
+                // Browser fallback
+            }
+        }
+
+        // 🔹 Browser fallback
+        val webIntent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(url)
+            )
+
+        try {
+
+            startActivity(webIntent)
+
+        } catch (_: Exception) {
+        }
+    }
+
+    // ---------------------------------------------------
+    // YOUTUBE
+    // ---------------------------------------------------
+
+    private fun openYoutubeChannel() {
+
+        val url = URL_YOUTUBE
+
+        if (url.isBlank()) return
+
+        val appIntent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(url)
+            ).apply {
+
+                setPackage(PKG_YOUTUBE)
+            }
+
+        try {
+
+            startActivity(appIntent)
+
+            return
+
+        } catch (
+            e: ActivityNotFoundException
+        ) {
+
+            // 🔹 Play Store fallback
+            try {
+
+                val storeIntent =
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse(
+                            "market://details?id=$PKG_YOUTUBE"
+                        )
+                    )
+
+                startActivity(storeIntent)
+
+            } catch (_: Exception) {
+            }
+
+        } catch (_: Exception) {
+        }
+    }
+
+    // ---------------------------------------------------
+    // DESTROY
+    // ---------------------------------------------------
 
     override fun onDestroyView() {
+
         super.onDestroyView()
+
         _binding = null
     }
 }

@@ -1255,4 +1255,11 @@ Delete Failed
 <string name="user_info_saved_success">
     Profile updated successfully
 </string>
+
+<string name="settings_active_devices">%1$d Active Devices</string>
+
+<string name="settings_no_active_devices">
+    No Active Devices
+</string>
+
 </resources>
