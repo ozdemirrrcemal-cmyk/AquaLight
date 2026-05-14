@@ -67,6 +67,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             FragmentSettingsBinding.bind(view)
 
         observeUserInfo()
+		
+		observeActiveDevices()
 
         setupClickListeners()
 
@@ -74,8 +76,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         setupFooterVersion()
 
-        // 🔥 Şimdilik test verisi
-        updateActiveDevices(3)
     }
 
     // ---------------------------------------------------
@@ -142,6 +142,37 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                     }
             }
     }
+	
+	
+	// ---------------------------------------------------
+// ACTIVE DEVICES OBSERVER
+// ---------------------------------------------------
+
+private fun observeActiveDevices() {
+
+    viewLifecycleOwner.lifecycleScope
+        .launchWhenStarted {
+
+            userPrefs.devicesFlow
+                .collectLatest { list ->
+
+                    val now =
+                        System.currentTimeMillis()
+
+                    val onlineCount =
+                        list.count { dev ->
+
+                            dev.lastSeenMillis != 0L &&
+                                    (now - dev.lastSeenMillis)
+                                    <= 60_000L
+                        }
+
+                    updateActiveDevices(
+                        onlineCount
+                    )
+                }
+        }
+}
 
     // ---------------------------------------------------
     // ACTIVE DEVICES
