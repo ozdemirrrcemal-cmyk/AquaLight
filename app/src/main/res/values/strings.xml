@@ -1193,4 +1193,44 @@ Delete Failed
 <string name="auth_provider_error_message">
     Unsupported authentication provider.
 </string>
+
+<string name="security_settings_info_message">
+    Manage your account security preferences and login protection settings.
+</string>
+
+<string name="security_feature_in_development_title">
+    Feature In Development
+</string>
+
+<string name="security_2fa_placeholder_message">
+    Two-factor authentication infrastructure will be added in a future update.
+</string>
+
+<string name="security_login_alerts_title">
+    Login Alerts
+</string>
+
+<string name="security_login_alerts_enabled">
+    Login alerts enabled successfully.
+</string>
+
+<string name="security_login_alerts_disabled">
+    Login alerts disabled successfully.
+</string>
+
+<string name="security_2fa_info_title">
+    Two-Factor Authentication
+</string>
+
+<string name="security_2fa_info_message">
+    Adds an additional security layer during sign in using verification confirmation.
+</string>
+
+<string name="security_login_alerts_info_title">
+    Login Alerts
+</string>
+
+<string name="security_login_alerts_info_message">
+    Receive notifications when your account is accessed from a new device or location.
+</string>
 </resources>
