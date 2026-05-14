@@ -175,8 +175,12 @@ class UserInfoFragment :
 
             etUsername.addTextChangedListener {
 
-                inputLayoutUsername.error =
-                    null
+                // USERNAME CARD RESET
+                cardUsername.strokeColor =
+                    resources.getColor(
+                        R.color.card_stroke,
+                        null
+                    )
             }
         }
 
@@ -222,9 +226,8 @@ class UserInfoFragment :
                 ?.trim()
                 .orEmpty()
 
-        // RESET ERROR
-        binding.inputLayoutUsername.error =
-            null
+        // RESET CARD
+        resetUsernameCardState()
 
         // ---------------------------------------------------
         // EMPTY
@@ -232,10 +235,7 @@ class UserInfoFragment :
 
         if (username.isEmpty()) {
 
-            binding.inputLayoutUsername.error =
-                getString(
-                    R.string.user_info_username_empty_message
-                )
+            showUsernameErrorState()
 
             showSnackBar(
                 getString(
@@ -256,10 +256,7 @@ class UserInfoFragment :
             USERNAME_MIN_LENGTH
         ) {
 
-            binding.inputLayoutUsername.error =
-                getString(
-                    R.string.user_info_username_too_short
-                )
+            showUsernameErrorState()
 
             showSnackBar(
                 getString(
@@ -280,10 +277,7 @@ class UserInfoFragment :
             USERNAME_MAX_LENGTH
         ) {
 
-            binding.inputLayoutUsername.error =
-                getString(
-                    R.string.user_info_username_too_long
-                )
+            showUsernameErrorState()
 
             showSnackBar(
                 getString(
@@ -308,10 +302,7 @@ class UserInfoFragment :
             )
         ) {
 
-            binding.inputLayoutUsername.error =
-                getString(
-                    R.string.user_info_username_invalid
-                )
+            showUsernameErrorState()
 
             showSnackBar(
                 getString(
@@ -380,6 +371,32 @@ class UserInfoFragment :
                 )
             }
         }
+    }
+
+    // ---------------------------------------------------
+    // USERNAME ERROR STATE
+    // ---------------------------------------------------
+
+    private fun showUsernameErrorState() {
+
+        binding.cardUsername.strokeColor =
+            resources.getColor(
+                R.color.snackbar_error,
+                null
+            )
+    }
+
+    // ---------------------------------------------------
+    // RESET USERNAME CARD
+    // ---------------------------------------------------
+
+    private fun resetUsernameCardState() {
+
+        binding.cardUsername.strokeColor =
+            resources.getColor(
+                R.color.card_stroke,
+                null
+            )
     }
 
     // ---------------------------------------------------
