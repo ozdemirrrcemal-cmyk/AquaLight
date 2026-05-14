@@ -219,4 +219,10 @@
     <!-- 🔹 Lint’in istediği satır -->
     <item name="android:orientation">horizontal</item>
 </style>
+
+<style name="RoundedImageSmall">
+    <item name="cornerFamily">rounded</item>
+    <item name="cornerSize">14dp</item>
+</style>
+
 </resources>

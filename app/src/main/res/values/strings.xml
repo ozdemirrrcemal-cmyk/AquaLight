@@ -1234,4 +1234,10 @@ Delete Failed
     Receive notifications when your account is accessed from a new device or location.
 </string>
 
+<string name="feedback_error_upload">
+    Screenshot upload failed
+</string>
+<string name="feedback_sent_success">
+    Feedback sent successfully
+</string>
 </resources>
