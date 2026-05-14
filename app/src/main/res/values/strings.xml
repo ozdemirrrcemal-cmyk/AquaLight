@@ -1162,7 +1162,6 @@ Delete Failed
     Please select the same Google account used for this account.
 </string>
 
-<string name="reset_loading">Sending...</string>
 
 <string name="change_email_same_email">
     New email address cannot be the same as current email.
