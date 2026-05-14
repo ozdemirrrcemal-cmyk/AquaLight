@@ -149,7 +149,6 @@
             android:hint="@string/user_info_username_hint"
             app:errorEnabled="true"
             app:boxStrokeErrorColor="@color/snackbar_error"
-            app:startIconDrawable="@drawable/ic_profile"
             app:startIconTint="@color/settings_text_secondary">
 
             <com.google.android.material.textfield.TextInputEditText
