@@ -26,13 +26,13 @@
             android:layout_height="32dp"
             android:src="@drawable/ic_back"
             android:scaleType="center"
-            app:tint="?attr/colorOnSurface"
             android:clickable="true"
             android:focusable="true"
             android:contentDescription="@string/user_address_back_button_desc"
+            app:tint="?attr/colorOnSurface"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/tvTitle"
@@ -101,7 +101,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/tvFirstNameError"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -147,7 +147,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/tvLastNameError"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -250,7 +250,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/tvCityError"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -296,7 +296,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/tvAddressError"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -341,7 +341,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/tvPostCodeError"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -386,7 +386,7 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/tvPhoneError"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
