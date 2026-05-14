@@ -548,12 +548,6 @@ class UserAddressFragment :
                     .popBackStack()
             }
 
-            btnCancel.setOnClickListener {
-
-                findNavController()
-                    .popBackStack()
-            }
-
             btnSave.setOnClickListener {
 
                 hideKeyboard()
@@ -911,9 +905,6 @@ class UserAddressFragment :
         ) return
 
         binding.btnSave.isEnabled =
-            !loading
-
-        binding.btnCancel.isEnabled =
             !loading
 
         (
