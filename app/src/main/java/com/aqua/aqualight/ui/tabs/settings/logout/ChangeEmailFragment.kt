@@ -5,8 +5,8 @@ import android.util.Patterns
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
@@ -18,215 +18,400 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
-class ChangeEmailFragment : Fragment(R.layout.fragment_change_email) {
+class ChangeEmailFragment :
+    Fragment(R.layout.fragment_change_email) {
 
-private var _binding: FragmentChangeEmailBinding? = null  
-private val binding get() = _binding!!  
+    private var _binding: FragmentChangeEmailBinding? = null
+    private val binding get() = _binding!!
 
-private val auth get() = FirebaseAuth.getInstance()  
-private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }  
-private val baseActivity get() = activity as? BaseActivity  
+    private val auth get() = FirebaseAuth.getInstance()
 
-override fun onViewCreated(view: View, savedInstanceState: Bundle?) {  
-    super.onViewCreated(view, savedInstanceState)  
-    _binding = FragmentChangeEmailBinding.bind(view)  
+    private val userPrefs by lazy {
+        UserPreferencesManager.create(requireContext())
+    }
 
-    binding.btnBack.setOnClickListener { findNavController().popBackStack() }  
+    private val baseActivity
+        get() = activity as? BaseActivity
 
-    val user = auth.currentUser  
+    // ---------------------------------------------------
+    // ON VIEW CREATED
+    // ---------------------------------------------------
 
-    if (user == null) {  
-        DialogManager.showInfoDialog(  
-            requireContext(),  
-            DialogType.ERROR,  
-            title = getString(R.string.change_email_user_not_found_title),  
-            message = getString(R.string.change_email_user_not_found_message),  
-            onDismiss = { findNavController().popBackStack() }  
-        )  
-        return  
-    }  
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
 
-    // Google kullanıcı mı?  
-    val isGoogleUser = user.providerData.any { it.providerId == "google.com" }  
-    if (isGoogleUser) {  
-        showGoogleOnlyInfo()  
-        return  
-    }  
+        super.onViewCreated(view, savedInstanceState)
 
-    // Normal email/şifre kullanıcı → form çalışsın  
-    binding.btnSaveEmail.setOnClickListener { attemptEmailChange() }  
-}  
+        _binding =
+            FragmentChangeEmailBinding.bind(view)
 
-/**  
- * Google ile login olmuş kullanıcı için:  
- * - Inputları pasif yap  
- * - Yeni email + şifre inputlarını ve butonu gizle  
- * - Mevcut email'i readonly göster  
- * - helperText ile info yaz  
- */  
-private fun showGoogleOnlyInfo() {  
-    val user = auth.currentUser ?: return  
+        binding.btnBack.setOnClickListener {
 
-    // mevcut email'i göster, düzenlenemesin  
-    binding.etCurrentEmail.setText(user.email ?: "")  
-    binding.inputLayoutCurrentEmail.isEnabled = false  
+            findNavController().popBackStack()
+        }
 
-    // Diğer alanları gizle  
-    binding.inputLayoutNewEmail.visibility = View.GONE  
-    binding.inputLayoutPassword.visibility = View.GONE  
-    binding.btnSaveEmail.visibility = View.GONE  
+        val user =
+            auth.currentUser
 
-    // Uyarı mesajını helperText olarak göster  
-    binding.inputLayoutCurrentEmail.helperText =  
-        getString(R.string.change_email_google_only_info)  
-}  
+        // Kullanıcı yoksa
+        if (user == null) {
 
-/** ---------------------------------------------------------  
- *   0️⃣ VALIDATION  
- * --------------------------------------------------------- */  
-private fun attemptEmailChange() {  
-    val currentEmail = binding.etCurrentEmail.text.toString().trim()  
-    val newEmail = binding.etNewEmail.text.toString().trim()  
-    val password = binding.etPassword.text.toString().trim()  
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.ERROR,
+                title = getString(
+                    R.string.change_email_user_not_found_title
+                ),
+                message = getString(
+                    R.string.change_email_user_not_found_message
+                ),
+                onDismiss = {
+                    findNavController().popBackStack()
+                }
+            )
 
-    val user = auth.currentUser  
+            return
+        }
 
-    if (user == null) {  
-        DialogManager.showInfoDialog(  
-            requireContext(),  
-            DialogType.ERROR,  
-            title = getString(R.string.change_email_user_not_found_title),  
-            message = getString(R.string.change_email_user_not_found_message)  
-        )  
-        return  
-    }  
+        // Google kullanıcı kontrolü
+        val isGoogleUser =
+            user.providerData.any {
+                it.providerId == "google.com"
+            }
 
-    // Inline error reset + helperText gizle  
-    binding.inputLayoutCurrentEmail.error = null  
-    binding.inputLayoutNewEmail.error = null  
-    binding.inputLayoutPassword.error = null  
-    binding.inputLayoutCurrentEmail.helperText = null  
+        if (isGoogleUser) {
 
-    // Boş alan kontrolleri  
-    if (currentEmail.isEmpty()) {  
-        binding.inputLayoutCurrentEmail.error =  
-            getString(R.string.change_email_error_current_required)  
-        return  
-    }  
-    if (newEmail.isEmpty()) {  
-        binding.inputLayoutNewEmail.error =  
-            getString(R.string.change_email_error_new_required)  
-        return  
-    }  
-    if (password.isEmpty()) {  
-        binding.inputLayoutPassword.error =  
-            getString(R.string.change_email_error_password_required)  
-        return  
-    }  
+            showGoogleOnlyInfo()
 
-    // Email formatı  
-    if (!Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {  
-        binding.inputLayoutNewEmail.error =  
-            getString(R.string.change_email_error_invalid_format)  
-        return  
-    }  
+            return
+        }
 
-    // Mevcut email ile hesabın email'i eşleşiyor mu?  
-    if (currentEmail != user.email) {  
-        binding.inputLayoutCurrentEmail.error =  
-            getString(R.string.change_email_old_incorrect)  
-        return  
-    }  
+        binding.btnSaveEmail.setOnClickListener {
 
-    reauthenticateAndVerifyBeforeUpdate(currentEmail, password, newEmail)  
-}  
+            attemptEmailChange()
+        }
+    }
 
-/** ---------------------------------------------------------  
- *   1️⃣ REAUTHENTICATE  
- * --------------------------------------------------------- */  
-private fun reauthenticateAndVerifyBeforeUpdate(  
-    oldEmail: String,  
-    password: String,  
-    newEmail: String  
-) {  
-    val user = auth.currentUser ?: return  
+    // ---------------------------------------------------
+    // GOOGLE INFO UI
+    // ---------------------------------------------------
 
-    baseActivity?.showLoading(true)  
+    private fun showGoogleOnlyInfo() {
 
-    val credential = EmailAuthProvider.getCredential(oldEmail, password)  
+        val user =
+            auth.currentUser ?: return
 
-    user.reauthenticate(credential)  
-        .addOnSuccessListener {  
-            // Reauth OK → yeni email için verify linki yolla  
-            verifyBeforeUpdateEmail(newEmail)  
-        }  
-        .addOnFailureListener {  
-            baseActivity?.showLoading(false)  
-            binding.inputLayoutPassword.error =  
-                getString(R.string.change_email_error_incorrect_password)  
-        }  
-}  
+        binding.etCurrentEmail.setText(
+            user.email ?: ""
+        )
 
-/** ---------------------------------------------------------  
- *   2️⃣ EMAIL CHANGE (verifyBeforeUpdateEmail + FORCE LOGOUT)  
- * --------------------------------------------------------- */  
-private fun verifyBeforeUpdateEmail(newEmail: String) {  
-    val user = auth.currentUser ?: return  
+        binding.inputLayoutCurrentEmail.isEnabled =
+            false
 
-    user.verifyBeforeUpdateEmail(newEmail)  
-        .addOnSuccessListener {  
-            baseActivity?.showLoading(false)  
+        binding.inputLayoutNewEmail.visibility =
+            View.GONE
 
-            DialogManager.showInfoDialog(  
-                requireContext(),  
-                DialogType.SUCCESS,  
-                title = getString(R.string.change_email_verification_title),  
-                message = getString(  
-                    R.string.change_email_verification_message,  
-                    newEmail  
-                ),  
-                onDismiss = {  
-                    // ✅ 1) Oturumu kapat  
-                    auth.signOut()  
+        binding.inputLayoutPassword.visibility =
+            View.GONE
 
-                    // ✅ 2) Local session'ı sıfırla ve login graph'e dön  
-                    viewLifecycleOwner.lifecycleScope.launch {  
-                        userPrefs.logout()  
-                        navigateToLoginRoot()  
-                    }  
-                }  
-            )  
-        }  
-        .addOnFailureListener { e ->  
-            baseActivity?.showLoading(false)  
-            DialogManager.showInfoDialog(  
-                requireContext(),  
-                DialogType.ERROR,  
-                title = getString(R.string.change_email_update_failed_title),  
-                message = e.localizedMessage  
-                    ?: getString(R.string.change_email_update_failed)  
-            )  
-        }  
-}  
+        binding.btnSaveEmail.visibility =
+            View.GONE
 
-/** ---------------------------------------------------------  
- *   3️⃣ Root nav üzerinden Login graph'e dön  
- * --------------------------------------------------------- */  
-private fun navigateToLoginRoot() {  
-    val rootNav = (requireActivity().supportFragmentManager  
-        .findFragmentById(R.id.nav_host) as NavHostFragment).navController  
+        binding.inputLayoutCurrentEmail.helperText =
+            getString(
+                R.string.change_email_google_only_info
+            )
+    }
 
-    val opts = navOptions {  
-        popUpTo(R.id.nav_app) { inclusive = true } // app graph'i temizle  
-        launchSingleTop = true  
-    }  
+    // ---------------------------------------------------
+    // VALIDATION
+    // ---------------------------------------------------
 
-    rootNav.navigate(R.id.authContainerFragment, null, opts)  
-}  
+    private fun attemptEmailChange() {
 
-override fun onDestroyView() {  
-    super.onDestroyView()  
-    _binding = null  
-}
+        val currentEmail =
+            binding.etCurrentEmail.text
+                .toString()
+                .trim()
 
+        val newEmail =
+            binding.etNewEmail.text
+                .toString()
+                .trim()
+
+        val password =
+            binding.etPassword.text
+                .toString()
+                .trim()
+
+        val user =
+            auth.currentUser
+
+        if (user == null) {
+
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.ERROR,
+                title = getString(
+                    R.string.change_email_user_not_found_title
+                ),
+                message = getString(
+                    R.string.change_email_user_not_found_message
+                )
+            )
+
+            return
+        }
+
+        // Reset errors
+        binding.inputLayoutCurrentEmail.error =
+            null
+
+        binding.inputLayoutNewEmail.error =
+            null
+
+        binding.inputLayoutPassword.error =
+            null
+
+        binding.inputLayoutCurrentEmail.helperText =
+            null
+
+        // Empty checks
+        if (currentEmail.isEmpty()) {
+
+            binding.inputLayoutCurrentEmail.error =
+                getString(
+                    R.string.change_email_error_current_required
+                )
+
+            return
+        }
+
+        if (newEmail.isEmpty()) {
+
+            binding.inputLayoutNewEmail.error =
+                getString(
+                    R.string.change_email_error_new_required
+                )
+
+            return
+        }
+
+        if (password.isEmpty()) {
+
+            binding.inputLayoutPassword.error =
+                getString(
+                    R.string.change_email_error_password_required
+                )
+
+            return
+        }
+
+        // Email format
+        if (
+            !Patterns.EMAIL_ADDRESS
+                .matcher(newEmail)
+                .matches()
+        ) {
+
+            binding.inputLayoutNewEmail.error =
+                getString(
+                    R.string.change_email_error_invalid_format
+                )
+
+            return
+        }
+
+        // Aynı email kontrolü
+        if (
+            currentEmail.equals(
+                newEmail,
+                ignoreCase = true
+            )
+        ) {
+
+            binding.inputLayoutNewEmail.error =
+                getString(
+                    R.string.change_email_same_email
+                )
+
+            return
+        }
+
+        // Eski email doğrulama
+        if (currentEmail != user.email) {
+
+            binding.inputLayoutCurrentEmail.error =
+                getString(
+                    R.string.change_email_old_incorrect
+                )
+
+            return
+        }
+
+        reauthenticateAndVerifyBeforeUpdate(
+            currentEmail,
+            password,
+            newEmail
+        )
+    }
+
+    // ---------------------------------------------------
+    // REAUTH
+    // ---------------------------------------------------
+
+    private fun reauthenticateAndVerifyBeforeUpdate(
+        oldEmail: String,
+        password: String,
+        newEmail: String
+    ) {
+
+        val user =
+            auth.currentUser ?: return
+
+        baseActivity?.showLoading(true)
+
+        binding.btnSaveEmail.isEnabled =
+            false
+
+        val credential =
+            EmailAuthProvider.getCredential(
+                oldEmail,
+                password
+            )
+
+        user.reauthenticate(credential)
+            .addOnSuccessListener {
+
+                verifyBeforeUpdateEmail(
+                    newEmail
+                )
+            }
+            .addOnFailureListener {
+
+                baseActivity?.showLoading(false)
+
+                binding.btnSaveEmail.isEnabled =
+                    true
+
+                binding.inputLayoutPassword.error =
+                    getString(
+                        R.string.change_email_error_incorrect_password
+                    )
+            }
+    }
+
+    // ---------------------------------------------------
+    // VERIFY + UPDATE EMAIL
+    // ---------------------------------------------------
+
+    private fun verifyBeforeUpdateEmail(
+        newEmail: String
+    ) {
+
+        val user =
+            auth.currentUser ?: return
+
+        user.verifyBeforeUpdateEmail(
+            newEmail
+        )
+            .addOnSuccessListener {
+
+                baseActivity?.showLoading(false)
+
+                binding.btnSaveEmail.isEnabled =
+                    true
+
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.SUCCESS,
+                    title = getString(
+                        R.string.change_email_verification_title
+                    ),
+                    message = getString(
+                        R.string.change_email_verification_message,
+                        newEmail
+                    ),
+                    onDismiss = {
+
+                        // Logout
+                        auth.signOut()
+
+                        // Clear local session
+                        viewLifecycleOwner
+                            .lifecycleScope
+                            .launch {
+
+                                userPrefs.logout()
+
+                                navigateToLoginRoot()
+                            }
+                    }
+                )
+            }
+            .addOnFailureListener { e ->
+
+                baseActivity?.showLoading(false)
+
+                binding.btnSaveEmail.isEnabled =
+                    true
+
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    DialogType.ERROR,
+                    title = getString(
+                        R.string.change_email_update_failed_title
+                    ),
+                    message =
+                        e.localizedMessage
+                            ?: getString(
+                                R.string.change_email_update_failed
+                            )
+                )
+            }
+    }
+
+    // ---------------------------------------------------
+    // NAVIGATION
+    // ---------------------------------------------------
+
+    private fun navigateToLoginRoot() {
+
+        val rootNav =
+            (
+                requireActivity()
+                    .supportFragmentManager
+                    .findFragmentById(R.id.nav_host)
+                        as NavHostFragment
+                ).navController
+
+        val opts =
+            navOptions {
+
+                popUpTo(R.id.nav_app) {
+                    inclusive = true
+                }
+
+                launchSingleTop = true
+            }
+
+        rootNav.navigate(
+            R.id.authContainerFragment,
+            null,
+            opts
+        )
+    }
+
+    // ---------------------------------------------------
+    // CLEANUP
+    // ---------------------------------------------------
+
+    override fun onDestroyView() {
+
+        super.onDestroyView()
+
+        _binding = null
+    }
 }

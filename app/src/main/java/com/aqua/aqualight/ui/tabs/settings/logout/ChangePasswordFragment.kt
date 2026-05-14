@@ -2,177 +2,372 @@ package com.aqua.aqualight.ui.tabs.settings.logout
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentChangePasswordBinding
-import com.google.android.material.snackbar.Snackbar
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 
-class ChangePasswordFragment : Fragment(R.layout.fragment_change_password) {
+class ChangePasswordFragment :
+    Fragment(R.layout.fragment_change_password) {
 
-private var _binding: FragmentChangePasswordBinding? = null  
-private val binding get() = _binding!!  
+    private var _binding: FragmentChangePasswordBinding? = null
+    private val binding get() = _binding!!
 
-private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }  
+    private val auth: FirebaseAuth by lazy {
+        FirebaseAuth.getInstance()
+    }
 
-override fun onViewCreated(view: View, savedInstanceState: Bundle?) {  
-    super.onViewCreated(view, savedInstanceState)  
-    _binding = FragmentChangePasswordBinding.bind(view)  
+    private val baseActivity
+        get() = activity as? BaseActivity
 
-    // 🔙 Geri  
-    binding.btnBack.setOnClickListener {  
-        findNavController().popBackStack()  
-    }  
+    // ---------------------------------------------------
+    // ON VIEW CREATED
+    // ---------------------------------------------------
 
-    // 🔐 Eğer kullanıcı mail/şifre provider'ı yoksa formu gizle  
-    if (!hasPasswordProvider()) {  
-        showGoogleOnlyInfo()  
-        return  
-    }  
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
 
-    // 💾 Kaydet  
-    binding.btnSavePassword.setOnClickListener {  
-        changePassword()  
-    }  
-}  
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-/**  
- * Kullanıcının provider listesinde "password" var mı?  
- * (Email/şifre hesabı demek)  
- */  
-private fun hasPasswordProvider(): Boolean {  
-    val user = auth.currentUser ?: return false  
-    return user.providerData.any { it.providerId == EmailAuthProvider.PROVIDER_ID }  
-}  
+        _binding =
+            FragmentChangePasswordBinding.bind(view)
 
-/**  
- * Google-only kullanıcılar için UI'yı ayarla:  
- * - form ve butonu gizle  
- * - ortada bilgilendirici bir mesaj göster  
- */  
-private fun showGoogleOnlyInfo() {  
-    // formu ve butonu gizle  
-    binding.formContainer.visibility = View.GONE  
-    binding.btnSavePassword.visibility = View.GONE  
+        binding.btnBack.setOnClickListener {
 
-    // mesajı göster  
-    binding.tvPasswordMessage.apply {  
-        text = getString(R.string.change_password_google_only_info)  
-        setTextColor(resources.getColor(R.color.settings_text_secondary, null))  
-        visibility = View.VISIBLE  
-        alpha = 1f  
-    }  
-}  
+            findNavController().popBackStack()
+        }
 
-private fun changePassword() {  
-    // Güvenlik: ekstra check (normalde hasPasswordProvider false ise buraya gelmez)  
-    if (!hasPasswordProvider()) {  
-        showGoogleOnlyInfo()  
-        return  
-    }  
+        // Google kullanıcı kontrolü
+        if (!hasPasswordProvider()) {
 
-    // Eski hata mesajlarını temizle  
-    binding.inputLayoutCurrentPassword.error = null  
-    binding.inputLayoutNewPassword.error = null  
-    binding.inputLayoutConfirmPassword.error = null  
-    binding.tvPasswordMessage.visibility = View.GONE  
+            showGoogleOnlyInfo()
 
-    val currentPassword = binding.etCurrentPassword.text?.toString()?.trim().orEmpty()  
-    val newPassword = binding.etNewPassword.text?.toString()?.trim().orEmpty()  
-    val confirmPassword = binding.etConfirmPassword.text?.toString()?.trim().orEmpty()  
+            return
+        }
 
-    var hasError = false  
+        binding.btnSavePassword.setOnClickListener {
 
-    if (currentPassword.isEmpty()) {  
-        binding.inputLayoutCurrentPassword.error =  
-            getString(R.string.change_password_error_current_empty)  
-        hasError = true  
-    }  
+            changePassword()
+        }
+    }
 
-    if (newPassword.length < 6) {  
-        binding.inputLayoutNewPassword.error =  
-            getString(R.string.change_password_error_new_short)  
-        hasError = true  
-    }  
+    // ---------------------------------------------------
+    // PASSWORD PROVIDER CHECK
+    // ---------------------------------------------------
 
-    if (newPassword != confirmPassword) {  
-        binding.inputLayoutConfirmPassword.error =  
-            getString(R.string.change_password_error_not_match)  
-        hasError = true  
-    }  
+    private fun hasPasswordProvider(): Boolean {
 
-    if (hasError) return  
+        val user =
+            auth.currentUser ?: return false
 
-    val user = auth.currentUser  
-    if (user == null) {  
-        Snackbar.make(  
-            binding.root,  
-            R.string.change_password_error_not_logged_in,  
-            Snackbar.LENGTH_LONG  
-        ).show()  
-        return  
-    }  
+        return user.providerData.any {
 
-    val email = user.email  
-    if (email.isNullOrEmpty()) {  
-        Snackbar.make(  
-            binding.root,  
-            R.string.change_password_error_no_email,  
-            Snackbar.LENGTH_LONG  
-        ).show()  
-        return  
-    }  
+            it.providerId ==
+                    EmailAuthProvider.PROVIDER_ID
+        }
+    }
 
-    // UI’yi kilitle  
-    setLoading(true)  
+    // ---------------------------------------------------
+    // GOOGLE ONLY INFO
+    // ---------------------------------------------------
 
-    // 1️⃣ Re-authenticate  
-    val credential = EmailAuthProvider.getCredential(email, currentPassword)  
-    user.reauthenticate(credential).addOnCompleteListener { reauthTask ->  
-        if (!reauthTask.isSuccessful) {  
-            setLoading(false)  
-            binding.inputLayoutCurrentPassword.error =  
-                getString(R.string.change_password_error_current_wrong)  
-            return@addOnCompleteListener  
-        }  
+    private fun showGoogleOnlyInfo() {
 
-        // 2️⃣ Yeni şifreyi güncelle  
-        user.updatePassword(newPassword).addOnCompleteListener { updateTask ->  
-            setLoading(false)  
-            if (updateTask.isSuccessful) {  
-                binding.tvPasswordMessage.apply {  
-                    text = getString(R.string.change_password_success)  
-                    setTextColor(resources.getColor(R.color.settings_text_secondary, null))  
-                    visibility = View.VISIBLE  
-                    alpha = 1f  
-                }  
+        binding.formContainer.visibility =
+            View.GONE
 
-                // Alanları temizle  
-                binding.etCurrentPassword.text?.clear()  
-                binding.etNewPassword.text?.clear()  
-                binding.etConfirmPassword.text?.clear()  
-            } else {  
-                Snackbar.make(  
-                    binding.root,  
-                    R.string.change_password_error_generic,  
-                    Snackbar.LENGTH_LONG  
-                ).show()  
-            }  
-        }  
-    }  
-}  
+        binding.btnSavePassword.visibility =
+            View.GONE
 
-private fun setLoading(isLoading: Boolean) {  
-    binding.btnSavePassword.isEnabled = !isLoading  
-    binding.formContainer.isEnabled = !isLoading  
-    binding.btnSavePassword.alpha = if (isLoading) 0.6f else 1f  
-}  
+        binding.tvPasswordMessage.apply {
 
-override fun onDestroyView() {  
-    super.onDestroyView()  
-    _binding = null  
-}
+            text = getString(
+                R.string.change_password_google_only_info
+            )
 
+            setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.settings_text_secondary
+                )
+            )
+
+            visibility = View.VISIBLE
+
+            alpha = 1f
+        }
+    }
+
+    // ---------------------------------------------------
+    // CHANGE PASSWORD
+    // ---------------------------------------------------
+
+    private fun changePassword() {
+
+        // Güvenlik check
+        if (!hasPasswordProvider()) {
+
+            showGoogleOnlyInfo()
+
+            return
+        }
+
+        clearErrors()
+
+        val currentPassword =
+            binding.etCurrentPassword.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val newPassword =
+            binding.etNewPassword.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val confirmPassword =
+            binding.etConfirmPassword.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        var hasError = false
+
+        // -------------------------------
+        // VALIDATION
+        // -------------------------------
+
+        if (currentPassword.isEmpty()) {
+
+            binding.inputLayoutCurrentPassword.error =
+                getString(
+                    R.string.change_password_error_current_empty
+                )
+
+            hasError = true
+        }
+
+        if (newPassword.length < 6) {
+
+            binding.inputLayoutNewPassword.error =
+                getString(
+                    R.string.change_password_error_new_short
+                )
+
+            hasError = true
+        }
+
+        if (newPassword != confirmPassword) {
+
+            binding.inputLayoutConfirmPassword.error =
+                getString(
+                    R.string.change_password_error_not_match
+                )
+
+            hasError = true
+        }
+
+        // Aynı şifre kontrolü
+        if (currentPassword == newPassword) {
+
+            binding.inputLayoutNewPassword.error =
+                getString(
+                    R.string.change_password_error_same_password
+                )
+
+            hasError = true
+        }
+
+        if (hasError) return
+
+        val user =
+            auth.currentUser
+
+        if (user == null) {
+
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.ERROR,
+                title = getString(
+                    R.string.change_password_error_title
+                ),
+                message = getString(
+                    R.string.change_password_error_not_logged_in
+                )
+            )
+
+            return
+        }
+
+        val email =
+            user.email
+
+        if (email.isNullOrEmpty()) {
+
+            DialogManager.showInfoDialog(
+                requireContext(),
+                DialogType.ERROR,
+                title = getString(
+                    R.string.change_password_error_title
+                ),
+                message = getString(
+                    R.string.change_password_error_no_email
+                )
+            )
+
+            return
+        }
+
+        // -------------------------------
+        // LOADING
+        // -------------------------------
+
+        baseActivity?.showLoading(true)
+
+        setLoading(true)
+
+        // -------------------------------
+        // REAUTH
+        // -------------------------------
+
+        val credential =
+            EmailAuthProvider.getCredential(
+                email,
+                currentPassword
+            )
+
+        user.reauthenticate(credential)
+            .addOnCompleteListener { reauthTask ->
+
+                if (!reauthTask.isSuccessful) {
+
+                    baseActivity?.showLoading(false)
+
+                    setLoading(false)
+
+                    binding.inputLayoutCurrentPassword.error =
+                        getString(
+                            R.string.change_password_error_current_wrong
+                        )
+
+                    return@addOnCompleteListener
+                }
+
+                // -------------------------------
+                // UPDATE PASSWORD
+                // -------------------------------
+
+                user.updatePassword(newPassword)
+                    .addOnCompleteListener { updateTask ->
+
+                        baseActivity?.showLoading(false)
+
+                        setLoading(false)
+
+                        if (updateTask.isSuccessful) {
+
+                            baseActivity?.showSnackBar(
+                                getString(
+                                    R.string.change_password_success
+                                )
+                            )
+
+                            // Alanları temizle
+                            binding.etCurrentPassword
+                                .text
+                                ?.clear()
+
+                            binding.etNewPassword
+                                .text
+                                ?.clear()
+
+                            binding.etConfirmPassword
+                                .text
+                                ?.clear()
+
+                        } else {
+
+                            DialogManager.showInfoDialog(
+                                requireContext(),
+                                DialogType.ERROR,
+                                title = getString(
+                                    R.string.change_password_error_title
+                                ),
+                                message =
+                                    updateTask.exception
+                                        ?.localizedMessage
+                                        ?: getString(
+                                            R.string.change_password_error_generic
+                                        )
+                            )
+                        }
+                    }
+            }
+    }
+
+    // ---------------------------------------------------
+    // CLEAR ERRORS
+    // ---------------------------------------------------
+
+    private fun clearErrors() {
+
+        binding.inputLayoutCurrentPassword.error =
+            null
+
+        binding.inputLayoutNewPassword.error =
+            null
+
+        binding.inputLayoutConfirmPassword.error =
+            null
+
+        binding.tvPasswordMessage.visibility =
+            View.GONE
+    }
+
+    // ---------------------------------------------------
+    // LOADING STATE
+    // ---------------------------------------------------
+
+    private fun setLoading(
+        isLoading: Boolean
+    ) {
+
+        binding.btnSavePassword.isEnabled =
+            !isLoading
+
+        binding.etCurrentPassword.isEnabled =
+            !isLoading
+
+        binding.etNewPassword.isEnabled =
+            !isLoading
+
+        binding.etConfirmPassword.isEnabled =
+            !isLoading
+
+        binding.btnSavePassword.alpha =
+            if (isLoading) 0.6f else 1f
+    }
+
+    // ---------------------------------------------------
+    // CLEANUP
+    // ---------------------------------------------------
+
+    override fun onDestroyView() {
+
+        super.onDestroyView()
+
+        _binding = null
+    }
 }

@@ -1163,4 +1163,35 @@ Delete Failed
 </string>
 
 <string name="reset_loading">Sending...</string>
+
+<string name="change_email_same_email">
+    New email address cannot be the same as current email.
+</string>
+<string name="change_password_error_same_password">
+    New password cannot be the same as current password.
+</string>
+
+<string name="logout_dialog_title">
+    Logout
+</string>
+
+<string name="logout_dialog_message">
+    Are you sure you want to log out of your account?
+</string>
+
+<string name="delete_account_dialog_title">
+    Delete Account
+</string>
+
+<string name="delete_account_dialog_message">
+    Are you sure you want to permanently delete your account?\nThis action cannot be undone.
+</string>
+
+<string name="auth_provider_error_title">
+    Authentication Error
+</string>
+
+<string name="auth_provider_error_message">
+    Unsupported authentication provider.
+</string>
 </resources>
