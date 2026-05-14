@@ -75,36 +75,62 @@ open class BaseActivity : AppCompatActivity() {
     }
 	
 	fun showSnackBar(
-    message: String,
-    isError: Boolean = false
+    message: String
 ) {
 
     val root =
-        findViewById<View>(android.R.id.content)
+        findViewById<View>(
+            android.R.id.content
+        )
 
     val snackbar =
         Snackbar.make(
             root,
             message,
-            Snackbar.LENGTH_SHORT
+            Snackbar.LENGTH_LONG
         )
 
     snackbar.setBackgroundTint(
-        if (isError) {
-            Color.parseColor("#C62828")
-        } else {
-            Color.parseColor("#1E88E5")
-        }
+        ContextCompat.getColor(
+            this,
+            R.color.primary_blue
+        )
     )
 
-    snackbar.setTextColor(Color.WHITE)
-
-    val text =
-        snackbar.view.findViewById<TextView>(
-            com.google.android.material.R.id.snackbar_text
+    snackbar.setTextColor(
+        ContextCompat.getColor(
+            this,
+            android.R.color.white
         )
+    )
 
-    text.maxLines = 3
+    snackbar.animationMode =
+        Snackbar.ANIMATION_MODE_FADE
+
+    val snackView =
+        snackbar.view
+
+    val params =
+        snackView.layoutParams
+            as FrameLayout.LayoutParams
+
+    params.setMargins(
+        24,
+        0,
+        24,
+        42
+    )
+
+    snackView.layoutParams =
+        params
+
+    snackView.elevation = 12f
+
+    snackView.background =
+        ContextCompat.getDrawable(
+            this,
+            R.drawable.bg_snackbar
+        )
 
     snackbar.show()
 }
