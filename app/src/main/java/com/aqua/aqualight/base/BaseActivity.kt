@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
@@ -35,13 +36,12 @@ open class BaseActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // Tema ve sistem bar renklerini
-        // theme.xml yönetecek
+        // Tema ve sistem bar renkleri
+        // theme.xml tarafından yönetilir
     }
 
     /**
-     * setContentView her çağrıldığında
-     * otomatik tetiklenir
+     * setContentView sonrası otomatik çalışır
      */
     override fun onContentChanged() {
 
@@ -51,8 +51,7 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     /**
-     * 🧱 Loading overlay sadece
-     * bir kere eklenir
+     * 🧱 Loading overlay sadece 1 kere eklenir
      */
     private fun ensureLoadingOverlay() {
 
@@ -86,7 +85,7 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     /**
-     * ⚡ Loading göster/gizle
+     * ⚡ Loading göster / gizle
      */
     fun showLoading(
         show: Boolean
@@ -162,6 +161,24 @@ open class BaseActivity : AppCompatActivity() {
         val snackView =
             snackbar.view
 
+        // 🔹 Snackbar TextView
+        val textView =
+            snackView.findViewById<TextView>(
+                com.google.android.material.R.id.snackbar_text
+            )
+
+        textView.textSize = 15f
+
+        textView.maxLines = 2
+
+        textView.setPadding(
+            0,
+            0,
+            0,
+            0
+        )
+
+        // 🔹 Margin
         val params =
             snackView.layoutParams
                 as FrameLayout.LayoutParams
@@ -170,14 +187,16 @@ open class BaseActivity : AppCompatActivity() {
             24,
             0,
             24,
-            42
+            24
         )
 
         snackView.layoutParams =
             params
 
-        snackView.elevation = 12f
+        // 🔹 Elevation
+        snackView.elevation = 8f
 
+        // 🔹 Custom background
         snackView.background =
             ContextCompat.getDrawable(
                 this,
