@@ -6,8 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.TextView
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
@@ -18,31 +18,54 @@ import kotlinx.coroutines.SupervisorJob
 
 open class BaseActivity : AppCompatActivity() {
 
-    // 🔹 Activity yaşam döngüsüne bağlı coroutine scope
-    private val activityJob = SupervisorJob()
+    // ---------------------------------------------------
+    // SNACKBAR TYPES
+    // ---------------------------------------------------
+
+    enum class SnackType {
+        NORMAL,
+        SUCCESS,
+        ERROR,
+        WARNING
+    }
+
+    // ---------------------------------------------------
+    // COROUTINE SCOPE
+    // ---------------------------------------------------
+
+    private val activityJob =
+        SupervisorJob()
 
     protected val uiScope: CoroutineScope =
         CoroutineScope(
             Dispatchers.Main.immediate + activityJob
         )
 
-    // 🔹 Loading overlay öğeleri
-    private var loadingOverlay: FrameLayout? = null
-    private var loadingLogo: ImageView? = null
+    // ---------------------------------------------------
+    // LOADING OVERLAY
+    // ---------------------------------------------------
+
+    private var loadingOverlay: FrameLayout? =
+        null
+
+    private var loadingLogo: ImageView? =
+        null
+
+    // ---------------------------------------------------
+    // ON CREATE
+    // ---------------------------------------------------
 
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
 
         super.onCreate(savedInstanceState)
-
-        // Tema ve sistem bar renkleri
-        // theme.xml tarafından yönetilir
     }
 
-    /**
-     * setContentView sonrası otomatik çalışır
-     */
+    // ---------------------------------------------------
+    // CONTENT CHANGED
+    // ---------------------------------------------------
+
     override fun onContentChanged() {
 
         super.onContentChanged()
@@ -50,9 +73,10 @@ open class BaseActivity : AppCompatActivity() {
         ensureLoadingOverlay()
     }
 
-    /**
-     * 🧱 Loading overlay sadece 1 kere eklenir
-     */
+    // ---------------------------------------------------
+    // ENSURE LOADING OVERLAY
+    // ---------------------------------------------------
+
     private fun ensureLoadingOverlay() {
 
         val rootView =
@@ -84,9 +108,10 @@ open class BaseActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * ⚡ Loading göster / gizle
-     */
+    // ---------------------------------------------------
+    // SHOW LOADING
+    // ---------------------------------------------------
+
     fun showLoading(
         show: Boolean
     ) {
@@ -122,11 +147,13 @@ open class BaseActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * 🔔 Global Snackbar
-     */
+    // ---------------------------------------------------
+    // GLOBAL SNACKBAR
+    // ---------------------------------------------------
+
     fun showSnackBar(
-        message: String
+        message: String,
+        type: SnackType = SnackType.NORMAL
     ) {
 
         val root =
@@ -141,11 +168,48 @@ open class BaseActivity : AppCompatActivity() {
                 Snackbar.LENGTH_LONG
             )
 
+        // ---------------------------------------------------
+        // COLORS
+        // ---------------------------------------------------
+
+        val backgroundColor =
+            when (type) {
+
+                SnackType.SUCCESS -> {
+
+                    ContextCompat.getColor(
+                        this,
+                        R.color.snackbar_success
+                    )
+                }
+
+                SnackType.ERROR -> {
+
+                    ContextCompat.getColor(
+                        this,
+                        R.color.snackbar_error
+                    )
+                }
+
+                SnackType.WARNING -> {
+
+                    ContextCompat.getColor(
+                        this,
+                        R.color.snackbar_warning
+                    )
+                }
+
+                SnackType.NORMAL -> {
+
+                    ContextCompat.getColor(
+                        this,
+                        R.color.aqua_button_blue
+                    )
+                }
+            }
+
         snackbar.setBackgroundTint(
-            ContextCompat.getColor(
-                this,
-                R.color.aqua_button_blue
-            )
+            backgroundColor
         )
 
         snackbar.setTextColor(
@@ -161,7 +225,10 @@ open class BaseActivity : AppCompatActivity() {
         val snackView =
             snackbar.view
 
-        // 🔹 Snackbar TextView
+        // ---------------------------------------------------
+        // TEXT VIEW
+        // ---------------------------------------------------
+
         val textView =
             snackView.findViewById<TextView>(
                 com.google.android.material.R.id.snackbar_text
@@ -178,7 +245,10 @@ open class BaseActivity : AppCompatActivity() {
             0
         )
 
-        // 🔹 Margin
+        // ---------------------------------------------------
+        // MARGINS
+        // ---------------------------------------------------
+
         val params =
             snackView.layoutParams
                 as FrameLayout.LayoutParams
@@ -193,10 +263,16 @@ open class BaseActivity : AppCompatActivity() {
         snackView.layoutParams =
             params
 
-        // 🔹 Elevation
+        // ---------------------------------------------------
+        // ELEVATION
+        // ---------------------------------------------------
+
         snackView.elevation = 8f
 
-        // 🔹 Custom background
+        // ---------------------------------------------------
+        // BACKGROUND
+        // ---------------------------------------------------
+
         snackView.background =
             ContextCompat.getDrawable(
                 this,
@@ -206,9 +282,10 @@ open class BaseActivity : AppCompatActivity() {
         snackbar.show()
     }
 
-    /**
-     * 🪶 Hata loglama
-     */
+    // ---------------------------------------------------
+    // ERROR LOG
+    // ---------------------------------------------------
+
     protected fun logError(
         tag: String,
         message: String?,
@@ -221,6 +298,10 @@ open class BaseActivity : AppCompatActivity() {
             throwable
         )
     }
+
+    // ---------------------------------------------------
+    // DESTROY
+    // ---------------------------------------------------
 
     override fun onDestroy() {
 

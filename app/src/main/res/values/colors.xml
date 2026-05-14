@@ -78,4 +78,8 @@
 	
 	<color name="settings_card_stroke">#14FFFFFF</color>
 <color name="device_status_connected">#57D26A</color>
+
+<color name="snackbar_success">#1FAA59</color>
+<color name="snackbar_error">#D32F2F</color>
+<color name="snackbar_warning">#F9A825</color>
 </resources>

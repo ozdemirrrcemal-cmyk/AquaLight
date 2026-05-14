@@ -64,7 +64,8 @@ class FeedbackFragment :
     // STATE
     // ---------------------------------------------------
 
-    private var originalButtonText: CharSequence? = null
+    private var originalButtonText: CharSequence? =
+        null
 
     private var isSending = false
 
@@ -79,7 +80,9 @@ class FeedbackFragment :
             ActivityResultContracts.GetContent()
         ) { uri ->
 
-            if (uri == null) return@registerForActivityResult
+            if (uri == null) {
+                return@registerForActivityResult
+            }
 
             try {
 
@@ -102,7 +105,7 @@ class FeedbackFragment :
                         getString(
                             R.string.feedback_image_too_large_message
                         ),
-                        isError = true
+                        BaseActivity.SnackType.ERROR
                     )
 
                     return@registerForActivityResult
@@ -122,7 +125,7 @@ class FeedbackFragment :
                     getString(
                         R.string.feedback_screenshot_selected
                     ),
-                    isError = false
+                    BaseActivity.SnackType.SUCCESS
                 )
 
             } catch (_: Exception) {
@@ -332,9 +335,9 @@ class FeedbackFragment :
 
                         baseActivity?.showSnackBar(
                             getString(
-                                R.string.feedback_screenshot_removed
+                                R.string.feedback_screenshot_add
                             ),
-                            isError = false
+                            BaseActivity.SnackType.NORMAL
                         )
                     }
 
@@ -470,13 +473,17 @@ class FeedbackFragment :
                 hasError = true
             }
 
+            // ---------------------------------------------------
+            // VALIDATION FAILED
+            // ---------------------------------------------------
+
             if (hasError) {
 
                 baseActivity?.showSnackBar(
                     getString(
-                        R.string.feedback_validation_error
+                        R.string.feedback_error_generic
                     ),
-                    isError = true
+                    BaseActivity.SnackType.WARNING
                 )
 
                 return
@@ -550,7 +557,7 @@ class FeedbackFragment :
                         showErrorSnackBar()
                     }
 
-                return
+                return@with
             }
 
             // ---------------------------------------------------
@@ -574,6 +581,7 @@ class FeedbackFragment :
                             )
                     }
 
+                    return@continueWithTask
                     storageRef.downloadUrl
                 }
                 .addOnSuccessListener { downloadUri ->
@@ -711,7 +719,7 @@ class FeedbackFragment :
             getString(
                 R.string.feedback_error_generic
             ),
-            isError = true
+            BaseActivity.SnackType.ERROR
         )
     }
 
@@ -719,9 +727,9 @@ class FeedbackFragment :
 
         baseActivity?.showSnackBar(
             getString(
-                R.string.feedback_success_snackbar
+                R.string.feedback_success_text
             ),
-            isError = false
+            BaseActivity.SnackType.SUCCESS
         )
     }
 
