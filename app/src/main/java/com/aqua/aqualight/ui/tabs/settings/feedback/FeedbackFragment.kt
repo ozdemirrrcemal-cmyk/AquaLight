@@ -13,9 +13,8 @@ import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentFeedbackBinding
-import com.aqua.aqualight.utils.DialogManager
-import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -30,10 +29,8 @@ class FeedbackFragment :
     // CONFIG
     // ---------------------------------------------------
 
-    // Blaze planına geçene kadar kapatılabilir
     private val SCREENSHOT_ENABLED = true
 
-    // Maksimum screenshot boyutu
     private val MAX_SCREENSHOT_SIZE =
         3 * 1024 * 1024L // 3MB
 
@@ -43,6 +40,13 @@ class FeedbackFragment :
 
     private var _binding: FragmentFeedbackBinding? = null
     private val binding get() = _binding!!
+
+    // ---------------------------------------------------
+    // BASE ACTIVITY
+    // ---------------------------------------------------
+
+    private val baseActivity
+        get() = activity as? BaseActivity
 
     // ---------------------------------------------------
     // FIREBASE
@@ -88,18 +92,17 @@ class FeedbackFragment :
                         )
                         ?.length ?: 0L
 
-                // Boyut kontrolü
+                // ---------------------------------------------------
+                // SIZE CHECK
+                // ---------------------------------------------------
+
                 if (size > MAX_SCREENSHOT_SIZE) {
 
-                    DialogManager.showInfoDialog(
-                        requireContext(),
-                        DialogType.WARNING,
-                        title = getString(
-                            R.string.feedback_image_too_large_title
-                        ),
-                        message = getString(
+                    baseActivity?.showSnackBar(
+                        getString(
                             R.string.feedback_image_too_large_message
-                        )
+                        ),
+                        isError = true
                     )
 
                     return@registerForActivityResult
@@ -115,18 +118,16 @@ class FeedbackFragment :
                 binding.ivScreenshotClear.isVisible =
                     true
 
+                baseActivity?.showSnackBar(
+                    getString(
+                        R.string.feedback_screenshot_selected
+                    ),
+                    isError = false
+                )
+
             } catch (_: Exception) {
 
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.ERROR,
-                    title = getString(
-                        R.string.feedback_error_title
-                    ),
-                    message = getString(
-                        R.string.feedback_error_generic
-                    )
-                )
+                showErrorSnackBar()
             }
         }
 
@@ -328,6 +329,13 @@ class FeedbackFragment :
 
                         ivScreenshotClear.isVisible =
                             false
+
+                        baseActivity?.showSnackBar(
+                            getString(
+                                R.string.feedback_screenshot_removed
+                            ),
+                            isError = false
+                        )
                     }
 
             } else {
@@ -384,7 +392,6 @@ class FeedbackFragment :
     private fun sendFeedback() =
         with(binding) {
 
-            // Keyboard focus temizle
             root.clearFocus()
 
             inputLayoutCategory.error =
@@ -416,7 +423,10 @@ class FeedbackFragment :
 
             var hasError = false
 
-            // Kategori
+            // ---------------------------------------------------
+            // CATEGORY VALIDATION
+            // ---------------------------------------------------
+
             if (category.isEmpty()) {
 
                 inputLayoutCategory.error =
@@ -427,7 +437,10 @@ class FeedbackFragment :
                 hasError = true
             }
 
-            // Mesaj
+            // ---------------------------------------------------
+            // MESSAGE VALIDATION
+            // ---------------------------------------------------
+
             if (message.length < 10) {
 
                 inputLayoutMessage.error =
@@ -438,7 +451,10 @@ class FeedbackFragment :
                 hasError = true
             }
 
-            // Email
+            // ---------------------------------------------------
+            // EMAIL VALIDATION
+            // ---------------------------------------------------
+
             if (
                 email.isNotEmpty() &&
                 !Patterns.EMAIL_ADDRESS
@@ -454,7 +470,17 @@ class FeedbackFragment :
                 hasError = true
             }
 
-            if (hasError) return
+            if (hasError) {
+
+                baseActivity?.showSnackBar(
+                    getString(
+                        R.string.feedback_validation_error
+                    ),
+                    isError = true
+                )
+
+                return
+            }
 
             setSendingState(true)
 
@@ -488,7 +514,6 @@ class FeedbackFragment :
                     "createdAt" to FieldValue.serverTimestamp()
                 )
 
-            // Email boş değilse ekle
             if (email.isNotBlank()) {
 
                 baseData["email"] =
@@ -499,7 +524,7 @@ class FeedbackFragment :
                 screenshotUri
 
             // ---------------------------------------------------
-            // SCREENSHOT YOK
+            // NO SCREENSHOT
             // ---------------------------------------------------
 
             if (
@@ -515,12 +540,14 @@ class FeedbackFragment :
                         resetForm()
 
                         showSuccessUI()
+
+                        showSuccessSnackBar()
                     }
                     .addOnFailureListener {
 
                         setSendingState(false)
 
-                        showErrorDialog()
+                        showErrorSnackBar()
                     }
 
                 return
@@ -565,19 +592,21 @@ class FeedbackFragment :
                             resetForm()
 
                             showSuccessUI()
+
+                            showSuccessSnackBar()
                         }
                         .addOnFailureListener {
 
                             setSendingState(false)
 
-                            showErrorDialog()
+                            showErrorSnackBar()
                         }
                 }
                 .addOnFailureListener {
 
                     setSendingState(false)
 
-                    showErrorDialog()
+                    showErrorSnackBar()
                 }
         }
 
@@ -673,20 +702,26 @@ class FeedbackFragment :
         }
 
     // ---------------------------------------------------
-    // ERROR DIALOG
+    // GLOBAL SNACKBAR
     // ---------------------------------------------------
 
-    private fun showErrorDialog() {
+    private fun showErrorSnackBar() {
 
-        DialogManager.showInfoDialog(
-            requireContext(),
-            DialogType.ERROR,
-            title = getString(
-                R.string.feedback_error_title
-            ),
-            message = getString(
+        baseActivity?.showSnackBar(
+            getString(
                 R.string.feedback_error_generic
-            )
+            ),
+            isError = true
+        )
+    }
+
+    private fun showSuccessSnackBar() {
+
+        baseActivity?.showSnackBar(
+            getString(
+                R.string.feedback_success_snackbar
+            ),
+            isError = false
         )
     }
 
