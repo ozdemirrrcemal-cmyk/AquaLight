@@ -53,11 +53,11 @@ class DeviceStatusAdapter :
                 "Serial: ${item.serial}"
 
             binding.tvFirmware.text =
-           if (item.firmwareBuild.isNotBlank()) {
-                "FW: ${item.firmwareBuild}"
-            } else {
-              "FW: Unknown"
-             }
+                if (item.firmwareBuild.isBlank()) {
+                    "Firmware: Unknown"
+                } else {
+                    "Firmware: ${item.firmwareBuild}"
+                }
 
             // -------------------------------------------------
             // DEVICE ICON

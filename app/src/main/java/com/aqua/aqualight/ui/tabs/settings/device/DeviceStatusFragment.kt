@@ -104,19 +104,20 @@ class DeviceStatusFragment :
                                         dev.id,
 
                                     aquaName =
-                                        dev.aquaName
-                                            ?: "",
+                                        dev.aquaName,
 
                                     name =
-                                        dev.name,
+                                        dev.name.ifBlank {
+                                            "Device"
+                                        },
 
                                     ip =
                                         dev.ip,
 
                                     serial =
                                         dev.serial,
-										
-								    firmwareBuild =
+
+                                    firmwareBuild =
                                         dev.firmwareBuild,
 
                                     isOnline =
@@ -124,12 +125,18 @@ class DeviceStatusFragment :
                                 )
                             }
 
-                        // 🔹 Recycler update
+                        // ---------------------------------------------------
+                        // RECYCLER UPDATE
+                        // ---------------------------------------------------
+
                         adapter.submitList(
                             uiList
                         )
 
-                        // 🔹 Summary update
+                        // ---------------------------------------------------
+                        // SUMMARY UPDATE
+                        // ---------------------------------------------------
+
                         updateSummary(
                             uiList
                         )
@@ -155,13 +162,20 @@ class DeviceStatusFragment :
                 !it.isOnline
             }
 
+        // ---------------------------------------------------
+        // SUMMARY TEXT
+        // ---------------------------------------------------
+
         binding.tvOnlineSummary.text =
-            "$onlineCount Devices Online"
+            "Devices"
 
         binding.tvOfflineSummary.text =
-            "$offlineCount Offline Device"
+            "$onlineCount Online • $offlineCount Offline"
 
-        // 🔹 Summary dot
+        // ---------------------------------------------------
+        // SUMMARY STATUS DOT
+        // ---------------------------------------------------
+
         if (onlineCount > 0) {
 
             binding.viewSummaryDot
@@ -175,6 +189,19 @@ class DeviceStatusFragment :
                 .setBackgroundResource(
                     R.drawable.bg_offline_dot
                 )
+        }
+
+        // ---------------------------------------------------
+        // EMPTY STATE
+        // ---------------------------------------------------
+
+        if (list.isEmpty()) {
+
+            binding.tvOnlineSummary.text =
+                "No Devices"
+
+            binding.tvOfflineSummary.text =
+                "No registered device found"
         }
     }
 
