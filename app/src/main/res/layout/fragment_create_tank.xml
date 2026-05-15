@@ -116,7 +116,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#1C3252"   <!-- alt bar zemin rengi slightly farklı -->
+        android:background="#1C3252" 
         android:padding="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
