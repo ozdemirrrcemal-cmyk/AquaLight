@@ -26,7 +26,6 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         _binding = FragmentDeviceStatusBinding.bind(view)
 
         setupRecycler()
@@ -49,7 +48,8 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
                 val now = System.currentTimeMillis()
 
                 val uiList = list.map { dev ->
-                    val online = dev.lastSeenMillis != 0L && (now - dev.lastSeenMillis <= ONLINE_TIMEOUT_MS)
+                    val online = dev.lastSeenMillis != 0L &&
+                                 (now - dev.lastSeenMillis <= ONLINE_TIMEOUT_MS)
 
                     DeviceCardUi(
                         id = dev.id,
@@ -59,7 +59,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
                         serial = dev.serial,
                         firmwareBuild = dev.firmwareBuild,
                         isOnline = online,
-                        type = com.aqua.aqualight.ui.model.DeviceType.fromName(dev.aquaName)
+                        type = DeviceType.fromName(dev.aquaName) // ✅ düzeltildi
                     )
                 }
 

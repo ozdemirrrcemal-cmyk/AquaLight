@@ -86,7 +86,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                             serial = dev.serial,
                             firmwareBuild = dev.firmwareBuild,
                             isOnline = online,
-                            type = com.aqua.aqualight.ui.model.DeviceType.fromName(dev.aquaName)
+                            type = DeviceType.fromName(dev.aquaName) // ✅ artık doğru
                         )
                     }
 
