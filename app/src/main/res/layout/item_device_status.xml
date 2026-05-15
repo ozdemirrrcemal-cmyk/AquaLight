@@ -19,7 +19,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-		android:paddingStart="6dp"
+        android:paddingStart="6dp"
         android:paddingTop="8dp"
         android:paddingEnd="10dp"
         android:paddingBottom="8dp">
@@ -87,14 +87,6 @@
                 android:text="ONLINE"
                 android:textColor="#39D353"
                 android:textSize="10sp"/>
-
-            <ImageView
-                android:id="@+id/ivAlarm"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginStart="4dp"
-                android:src="@drawable/ic_alarm_red"
-                android:visibility="visible" />
         </LinearLayout>
 
         <!-- İnce ayraç -->
@@ -219,26 +211,26 @@
                 android:layout_marginHorizontal="6dp"
                 android:background="#24384F" />
 
-            <!-- Last Seen -->
+            <!-- Last Seen + Icon -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-                <TextView
-                    android:id="@+id/tvLastSeenTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Last seen"
-                    android:textColor="#8BCAFF"
-                    android:textSize="9sp" />
+                <ImageView
+                    android:id="@+id/ivLastSeen"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:src="@drawable/ic_last_seen"
+                    android:contentDescription="Last seen icon"/>
 
                 <TextView
                     android:id="@+id/tvLastSeen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
                     android:text="Just now"
                     android:textColor="#EEF4FF"
                     android:textSize="8sp"
