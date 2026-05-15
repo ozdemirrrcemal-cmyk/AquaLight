@@ -15,17 +15,8 @@ android:foreground="?attr/selectableItemBackground">
     android:paddingHorizontal="16dp"  
     android:paddingVertical="14dp">  
 
-    <!-- Sol: AquaName / Type -->  
-    <TextView  
-        android:id="@+id/tvAquaName"  
-        android:layout_width="wrap_content"  
-        android:layout_height="wrap_content"  
-        android:layout_marginEnd="12dp"  
-        android:text="Doser"  
-        android:textSize="10sp"  
-        android:textStyle="bold" />  
-
-    <!-- Orta: Name (ortalanmış, esnek alan) -->  
+ 
+    <!-- Name (ortalanmış, esnek alan) -->  
     <TextView  
         android:id="@+id/tvName"  
         android:layout_width="0dp"  
@@ -37,7 +28,17 @@ android:foreground="?attr/selectableItemBackground">
         android:ellipsize="end"  
         android:gravity="center_vertical|center_horizontal" />  
 
-    <!-- Sağ: ID / Serial -->  
+     <!--  AquaName / Type -->  
+    <TextView  
+        android:id="@+id/tvAquaName"  
+        android:layout_width="wrap_content"  
+        android:layout_height="wrap_content"  
+        android:layout_marginEnd="12dp"  
+        android:text="Doser"  
+        android:textSize="10sp"  
+        android:textStyle="bold" />  
+		
+    <!-- ID / Serial -->  
     <TextView  
         android:id="@+id/tvId"  
         android:layout_width="wrap_content"  
