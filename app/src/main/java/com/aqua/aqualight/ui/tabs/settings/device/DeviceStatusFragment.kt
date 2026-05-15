@@ -96,8 +96,7 @@ class DeviceStatusFragment :
 
                                 val online =
                                     dev.lastSeenMillis != 0L &&
-                                    (now - dev.lastSeenMillis)
-                                            <= ONLINE_TIMEOUT_MS
+                                    ((now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS)
 
                                 DeviceCardUi(
 
