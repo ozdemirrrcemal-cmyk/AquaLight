@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.settings.device
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -38,12 +39,14 @@ class DeviceStatusAdapter(
 
             binding.tvLastSeen.text = item.lastSeenText
 
-            // Online status
+            // Online/Offline status
             if (item.isOnline) {
                 binding.tvStatus.text = "ONLINE"
+                binding.tvStatus.setTextColor(Color.parseColor("#39D353")) // yeşil
                 binding.viewStatusDot.setBackgroundResource(com.aqua.aqualight.R.drawable.bg_online_dot)
             } else {
                 binding.tvStatus.text = "OFFLINE"
+                binding.tvStatus.setTextColor(Color.parseColor("#F44336")) // kırmızı
                 binding.viewStatusDot.setBackgroundResource(com.aqua.aqualight.R.drawable.bg_offline_dot)
             }
 

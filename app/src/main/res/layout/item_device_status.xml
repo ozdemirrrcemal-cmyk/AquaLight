@@ -142,7 +142,7 @@
                     android:layout_marginTop="4dp"
                     android:text="192.168.1.33"
                     android:textColor="#EEF4FF"
-                    android:textSize="7sp"
+                    android:textSize="8sp"
                     android:textStyle="normal" />
             </LinearLayout>
 
@@ -175,7 +175,7 @@
                     android:layout_marginTop="4dp"
                     android:text="CA-628206344"
                     android:textColor="#EEF4FF"
-                    android:textSize="7sp"
+                    android:textSize="8sp"
                     android:textStyle="normal" />
             </LinearLayout>
 
