@@ -31,6 +31,7 @@
             android:layout_height="64dp"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
+            android:layout_marginEnd="0dp"
             android:background="@drawable/bg_device_icon_container"
             android:padding="8dp">
 
@@ -40,8 +41,8 @@
                 android:layout_height="match_parent"
                 android:src="@drawable/ic_device_aqua_ster"
                 app:tint="@android:color/white"
-                android:scaleType="centerInside"
-                android:contentDescription="Device Icon"/>
+                android:contentDescription="Device Icon"
+                android:scaleType="centerInside"/>
         </FrameLayout>
 
         <!-- İsim + Tank -->
@@ -149,14 +150,19 @@
                     android:ellipsize="end"/>
             </LinearLayout>
 
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="38dp"
+                android:layout_marginHorizontal="6dp"
+                android:background="#24384F" />
+
             <!-- Serial -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/tvSerialTitle"
@@ -177,6 +183,13 @@
                     android:singleLine="true"
                     android:ellipsize="end"/>
             </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="38dp"
+                android:layout_marginHorizontal="6dp"
+                android:background="#24384F" />
 
             <!-- Firmware -->
             <LinearLayout
@@ -205,6 +218,13 @@
                     android:ellipsize="end"/>
             </LinearLayout>
 
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="38dp"
+                android:layout_marginHorizontal="6dp"
+                android:background="#24384F" />
+
             <!-- Last Seen -->
             <LinearLayout
                 android:layout_width="0dp"
@@ -213,6 +233,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
+                <!-- Icon -->
                 <ImageView
                     android:id="@+id/ivLastSeen"
                     android:layout_width="16dp"
@@ -221,6 +242,7 @@
                     android:layout_marginEnd="4dp"
                     android:contentDescription="Last seen icon"/>
 
+                <!-- Başlık ve değer -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -248,6 +270,7 @@
                         android:ellipsize="end"/>
                 </LinearLayout>
             </LinearLayout>
+
         </LinearLayout>
 
     </RelativeLayout>
