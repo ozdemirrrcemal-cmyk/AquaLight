@@ -72,8 +72,7 @@
                 android:id="@+id/viewStatusDot"
                 android:layout_width="10dp"
                 android:layout_height="10dp"
-                android:backgroundTint="#4caf50"
-                android:background="@drawable/bg_dot_circle"/>
+                android:background="@drawable/bg_online_dot"/>
 
             <TextView
                 android:id="@+id/tvStatus"
