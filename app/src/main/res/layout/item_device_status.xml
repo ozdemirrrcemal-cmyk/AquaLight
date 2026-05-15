@@ -19,7 +19,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-		android:paddingStart="6dp"
+        android:paddingStart="6dp"
         android:paddingTop="8dp"
         android:paddingEnd="10dp"
         android:paddingBottom="8dp">
@@ -182,7 +182,7 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_weight="0.9"
                 android:orientation="vertical">
 
                 <TextView
@@ -197,11 +197,13 @@
                     android:id="@+id/tvFirmware"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="2dp"
                     android:text="v5.1.4"
                     android:textColor="#EEF4FF"
                     android:textSize="8sp"
-                    android:textStyle="normal" />
+                    android:textStyle="normal"
+                    android:ellipsize="end"
+                    android:singleLine="true"/>
             </LinearLayout>
 
             <!-- Divider -->
@@ -212,46 +214,46 @@
                 android:background="#24384F" />
 
             <!-- Last Seen -->
-<LinearLayout
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_weight="1"
-    android:orientation="horizontal"
-    android:gravity="center_vertical">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-    <!-- Icon -->
-    <ImageView
-        android:id="@+id/ivLastSeen"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
-        android:src="@drawable/ic_last_seen"
-        android:layout_marginEnd="6dp" />
+                <!-- Icon -->
+                <ImageView
+                    android:id="@+id/ivLastSeen"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_last_seen"
+                    android:layout_marginEnd="6dp"
+                    android:contentDescription="Last seen icon"/>
 
-    <!-- Başlık ve değer -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+                <!-- Başlık ve değer -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvLastSeenTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Last seen"
-            android:textColor="#8BCAFF"
-            android:textSize="9sp" />
+                    <TextView
+                        android:id="@+id/tvLastSeenTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Last seen"
+                        android:textColor="#8BCAFF"
+                        android:textSize="9sp" />
 
-        <TextView
-            android:id="@+id/tvLastSeen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="Just now"
-            android:textColor="#EEF4FF"
-            android:textSize="8sp"
-            android:textStyle="normal" />
-    </LinearLayout>
-</LinearLayout>
+                    <TextView
+                        android:id="@+id/tvLastSeen"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Just now"
+                        android:textColor="#EEF4FF"
+                        android:textSize="8sp"
+                        android:textStyle="normal"/>
+                </LinearLayout>
+            </LinearLayout>
 
         </LinearLayout>
 
