@@ -26,6 +26,9 @@ class DeviceStatusAdapter(
             // Device name
             binding.tvDeviceName.text = item.aquaName.ifBlank { item.name }
 
+            // Tank name
+            binding.tvTankName.text = item.tankName // <-- tankName burada set ediliyor
+
             // Icon from enum
             binding.ivDeviceIcon.setImageResource(item.type.iconRes)
 

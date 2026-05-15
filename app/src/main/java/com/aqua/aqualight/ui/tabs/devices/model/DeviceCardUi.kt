@@ -4,6 +4,7 @@ data class DeviceCardUi(
     val id: Long,
     val name: String,
     val aquaName: String,
+    val tankName: String = "",          // <-- Yeni alan eklendi
     val ip: String,
     val serial: String,
     val firmwareBuild: String,
