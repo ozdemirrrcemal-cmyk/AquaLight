@@ -191,18 +191,5 @@
         android:id="@+id/openSourceLicensesFragment"
         android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment"
         android:label="@string/open_source_title" />
-		
-		<!-- 📡 Device Status -->
-<fragment
-    android:id="@+id/deviceStatusFragment"
-    android:name="com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusFragment"
-    android:label="Device status"
-    tools:layout="@layout/fragment_device_status">
-
-    <!-- Action: DeviceStatus -> DeviceMenu -->
-    <action
-        android:id="@+id/action_deviceStatusFragment_to_deviceMenuFragment"
-        app:destination="@id/deviceMenuFragment"/>
-</fragment>
 
 </navigation>

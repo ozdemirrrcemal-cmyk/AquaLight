@@ -5,113 +5,73 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
 import kotlinx.coroutines.flow.collectLatest
-import java.util.concurrent.TimeUnit
 
 class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
-    private var _binding: FragmentDeviceStatusBinding? = null
-    private val binding get() = _binding!!
+private var _binding: FragmentDeviceStatusBinding? = null  
+private val binding get() = _binding!!  
 
-    private lateinit var adapter: DeviceStatusAdapter
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+private lateinit var adapter: DeviceStatusAdapter  
+private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }  
 
-    companion object {
-        private const val ONLINE_TIMEOUT_MS = 60_000L
-    }
+companion object {  
+    private const val ONLINE_TIMEOUT_MS = 60_000L  
+}  
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentDeviceStatusBinding.bind(view)
+override fun onViewCreated(view: View, savedInstanceState: Bundle?) {  
+    super.onViewCreated(view, savedInstanceState)  
+    _binding = FragmentDeviceStatusBinding.bind(view)  
 
-        setupRecycler()
-        observeDevices()
+    setupRecycler()  
+    observeDevices()  
 
-        binding.btnBack.setOnClickListener {
-            requireActivity().onBackPressed()
-        }
-    }
+    binding.btnBack.setOnClickListener {  
+        requireActivity().onBackPressed()  
+    }  
+}  
 
-    private fun setupRecycler() {
-        adapter = DeviceStatusAdapter { device ->
-            // Kart tıklanınca DeviceMenuFragment'e geç
-            val args = Bundle().apply {
-                putLong("deviceId", device.id)
-                putString("deviceName", device.name)
-                putString("deviceAquaName", device.aquaName)
-                putString("deviceIp", device.ip)
-                putString("deviceSerial", device.serial)
-                putBoolean("deviceOnline", device.isOnline)
-            }
-            findNavController().navigate(R.id.action_deviceStatusFragment_to_deviceMenuFragment, args)
-        }
-        binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvDevices.adapter = adapter
-    }
+private fun setupRecycler() {  
+    adapter = DeviceStatusAdapter()  
+    binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())  
+    binding.rvDevices.adapter = adapter  
+}  
 
-    private fun observeDevices() {
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.devicesFlow.collectLatest { list ->
-                val now = System.currentTimeMillis()
+private fun observeDevices() {  
+    viewLifecycleOwner.lifecycleScope.launchWhenStarted {  
+        userPrefs.devicesFlow.collectLatest { list ->  
+            val now = System.currentTimeMillis()  
 
-                if (list.isEmpty()) {
-                    binding.tvEmptyState.visibility = View.VISIBLE
-                    binding.rvDevices.visibility = View.GONE
-                    return@collectLatest
-                } else {
-                    binding.tvEmptyState.visibility = View.GONE
-                    binding.rvDevices.visibility = View.VISIBLE
-                }
+            val uiList = list.map { dev ->  
+                val online = dev.lastSeenMillis != 0L &&  
+                             (now - dev.lastSeenMillis <= ONLINE_TIMEOUT_MS)  
 
-                val uiList = list.map { dev ->
-                    val online = dev.lastSeenMillis != 0L &&
-                                 (now - dev.lastSeenMillis <= ONLINE_TIMEOUT_MS)
+                DeviceCardUi(  
+                    id = dev.id,  
+                    name = dev.name.ifBlank { "Device" },  
+                    aquaName = dev.aquaName,  
+                    ip = dev.ip,  
+                    serial = dev.serial,  
+                    firmwareBuild = dev.firmwareBuild,  
+                    isOnline = online,  
+                    type = DeviceType.fromName(dev.aquaName) // ✅ düzeltildi  
+                )  
+            }  
 
-                    val lastSeenText = if (dev.lastSeenMillis != 0L)
-                        formatElapsedTime(now - dev.lastSeenMillis)
-                    else
-                        "Never"
+            adapter.submitList(uiList)  
+        }  
+    }  
+}  
 
-                    DeviceCardUi(
-                        id = dev.id,
-                        name = dev.name.ifBlank { "Device" },
-                        aquaName = dev.aquaName,
-                        ip = dev.ip,
-                        serial = dev.serial,
-                        firmwareBuild = dev.firmwareBuild,
-                        isOnline = online,
-                        lastSeenText = lastSeenText,
-                        type = DeviceType.fromName(dev.aquaName)
-                    )
-                }
+override fun onDestroyView() {  
+    binding.rvDevices.adapter = null  
+    _binding = null  
+    super.onDestroyView()  
+}
 
-                adapter.submitList(uiList)
-            }
-        }
-    }
-
-    private fun formatElapsedTime(deltaMs: Long): String {
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(deltaMs)
-        val hours = TimeUnit.MILLISECONDS.toHours(deltaMs)
-        val days = TimeUnit.MILLISECONDS.toDays(deltaMs)
-
-        return when {
-            minutes < 1 -> "Just now"
-            minutes < 60 -> "$minutes min ago"
-            hours < 24 -> "$hours h ago"
-            else -> "$days d ago"
-        }
-    }
-
-    override fun onDestroyView() {
-        binding.rvDevices.adapter = null
-        _binding = null
-        super.onDestroyView()
-    }
 }
