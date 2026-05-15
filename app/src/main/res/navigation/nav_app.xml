@@ -12,6 +12,16 @@
         android:label="Aquarium"
         tools:layout="@layout/fragment_aquarium" />
 		
+		<fragment
+    android:id="@+id/createTankFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.CreateTankFragment"
+    android:label="Create Tank"
+    tools:layout="@layout/fragment_create_tank" />
+
+<action
+    android:id="@+id/action_aquariumFragment_to_createTankFragment"
+    app:destination="@id/createTankFragment" />
+		
     <!-- Maintenance Tab -->
 		<fragment
         android:id="@+id/aquariumMaintenanceFragment"
