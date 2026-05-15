@@ -38,7 +38,6 @@
             android:layout_height="32dp"
             android:background="@drawable/bg_circle_scan"
             android:padding="4dp"
-            android:src="@drawable/ic_radar"
             android:scaleType="centerInside"
             app:tint="?attr/colorOnSurface"
             android:clickable="true"
