@@ -5,12 +5,14 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
 import kotlinx.coroutines.flow.collectLatest
+import java.util.concurrent.TimeUnit
 
 class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
@@ -37,7 +39,18 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     }
 
     private fun setupRecycler() {
-        adapter = DeviceStatusAdapter()
+        adapter = DeviceStatusAdapter { device ->
+            // Kart tıklanınca DeviceMenuFragment'e geç
+            val args = Bundle().apply {
+                putLong("deviceId", device.id)
+                putString("deviceName", device.name)
+                putString("deviceAquaName", device.aquaName)
+                putString("deviceIp", device.ip)
+                putString("deviceSerial", device.serial)
+                putBoolean("deviceOnline", device.isOnline)
+            }
+            findNavController().navigate(R.id.action_deviceStatusFragment_to_deviceMenuFragment, args)
+        }
         binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
         binding.rvDevices.adapter = adapter
     }
@@ -47,9 +60,23 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
             userPrefs.devicesFlow.collectLatest { list ->
                 val now = System.currentTimeMillis()
 
+                if (list.isEmpty()) {
+                    binding.tvEmptyState.visibility = View.VISIBLE
+                    binding.rvDevices.visibility = View.GONE
+                    return@collectLatest
+                } else {
+                    binding.tvEmptyState.visibility = View.GONE
+                    binding.rvDevices.visibility = View.VISIBLE
+                }
+
                 val uiList = list.map { dev ->
                     val online = dev.lastSeenMillis != 0L &&
                                  (now - dev.lastSeenMillis <= ONLINE_TIMEOUT_MS)
+
+                    val lastSeenText = if (dev.lastSeenMillis != 0L)
+                        formatElapsedTime(now - dev.lastSeenMillis)
+                    else
+                        "Never"
 
                     DeviceCardUi(
                         id = dev.id,
@@ -59,12 +86,26 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
                         serial = dev.serial,
                         firmwareBuild = dev.firmwareBuild,
                         isOnline = online,
-                        type = DeviceType.fromName(dev.aquaName) // ✅ düzeltildi
+                        lastSeenText = lastSeenText,
+                        type = DeviceType.fromName(dev.aquaName)
                     )
                 }
 
                 adapter.submitList(uiList)
             }
+        }
+    }
+
+    private fun formatElapsedTime(deltaMs: Long): String {
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(deltaMs)
+        val hours = TimeUnit.MILLISECONDS.toHours(deltaMs)
+        val days = TimeUnit.MILLISECONDS.toDays(deltaMs)
+
+        return when {
+            minutes < 1 -> "Just now"
+            minutes < 60 -> "$minutes min ago"
+            hours < 24 -> "$hours h ago"
+            else -> "$days d ago"
         }
     }
 

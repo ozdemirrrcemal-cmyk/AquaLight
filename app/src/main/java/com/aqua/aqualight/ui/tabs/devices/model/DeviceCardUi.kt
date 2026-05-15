@@ -8,5 +8,6 @@ data class DeviceCardUi(
     val serial: String,
     val firmwareBuild: String,
     val isOnline: Boolean,
+    val lastSeenText: String = "",
     val type: DeviceType = DeviceType.fromName(aquaName)
 )
