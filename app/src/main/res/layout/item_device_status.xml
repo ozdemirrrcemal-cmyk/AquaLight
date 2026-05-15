@@ -5,12 +5,14 @@
     android:id="@+id/cardDevice"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="6dp"
-    android:backgroundTint="#1e2a38"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="2dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginTop="10dp"
+    android:layout_marginBottom="10dp"
+    android:backgroundTint="#1E2A38"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="3dp"
     app:strokeWidth="1dp"
-    app:strokeColor="#2c3e50"
+    app:strokeColor="#31465D"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
@@ -18,17 +20,17 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="14dp">
+        android:padding="18dp">
 
         <!-- Tip ikonu -->
         <ImageView
             android:id="@+id/ivDeviceIcon"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:src="@drawable/ic_device_aqua_ster"
             app:tint="@android:color/white"
             android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"/>
+            android:layout_alignParentTop="true" />
 
         <!-- İsim + Tank -->
         <LinearLayout
@@ -37,7 +39,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_toEndOf="@id/ivDeviceIcon"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="16dp"
             android:layout_alignTop="@id/ivDeviceIcon">
 
             <TextView
@@ -47,18 +49,19 @@
                 android:text="CO2 Regülatör"
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
-                android:textSize="16sp"/>
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/tvTankName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:text="Akvaryum 1"
-                android:textColor="#8bcaff"
-                android:textSize="13sp"/>
+                android:textColor="#8BCAFF"
+                android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- Sağ üst: Online/Offline + Alarm -->
+        <!-- Sağ üst durum -->
         <LinearLayout
             android:id="@+id/llStatusContainer"
             android:layout_width="wrap_content"
@@ -70,42 +73,57 @@
 
             <View
                 android:id="@+id/viewStatusDot"
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:background="@drawable/bg_online_dot"/>
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@drawable/bg_online_dot" />
 
             <TextView
                 android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="8dp"
                 android:text="ONLINE"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"
-                android:textStyle="bold"/>
+                android:textColor="#39D353"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
             <ImageView
                 android:id="@+id/ivAlarm"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="6dp"
                 android:src="@drawable/ic_alarm_red"
-                android:visibility="gone"/>
+                android:visibility="gone" />
         </LinearLayout>
 
-        <!-- Alt: IP / Serial / Firmware / Last Seen dikey -->
+        <!-- İnce ayraç -->
+        <View
+            android:id="@+id/viewMetaTopDivider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/ivDeviceIcon"
+            android:layout_marginTop="14dp"
+            android:layout_toEndOf="@id/ivDeviceIcon"
+            android:layout_marginStart="16dp"
+            android:background="#24384F" />
+
+        <!-- Alt bilgi satırı -->
         <LinearLayout
             android:id="@+id/llDeviceMeta"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_below="@id/ivDeviceIcon"
-            android:layout_alignStart="@id/ivDeviceIcon"
-            android:layout_marginTop="8dp">
+            android:layout_below="@id/viewMetaTopDivider"
+            android:layout_toEndOf="@id/ivDeviceIcon"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:weightSum="4">
 
+            <!-- IP -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="vertical">
 
                 <TextView
@@ -113,87 +131,120 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="IP"
-                    android:textColor="#8bcaff"
-                    android:textSize="11sp"/>
+                    android:textColor="#8BCAFF"
+                    android:textSize="12sp" />
+
                 <TextView
                     android:id="@+id/tvIp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
                     android:text="192.168.1.33"
-                    android:textColor="#8bcaff"
-                    android:textSize="12sp"
-                    android:textStyle="bold"/>
+                    android:textColor="#EEF4FF"
+                    android:textSize="13sp"
+                    android:textStyle="normal" />
             </LinearLayout>
 
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="42dp"
+                android:layout_marginHorizontal="8dp"
+                android:background="#24384F" />
+
+            <!-- Serial -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="4dp">
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/tvSerialTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Serial"
-                    android:textColor="#8bcaff"
-                    android:textSize="11sp"/>
+                    android:textColor="#8BCAFF"
+                    android:textSize="12sp" />
+
                 <TextView
                     android:id="@+id/tvSerial"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
                     android:text="CA-628206344"
-                    android:textColor="#8bcaff"
-                    android:textSize="12sp"
-                    android:textStyle="bold"/>
+                    android:textColor="#EEF4FF"
+                    android:textSize="13sp"
+                    android:textStyle="normal" />
             </LinearLayout>
 
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="42dp"
+                android:layout_marginHorizontal="8dp"
+                android:background="#24384F" />
+
+            <!-- Firmware -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="4dp">
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/tvFirmwareTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Firmware"
-                    android:textColor="#8bcaff"
-                    android:textSize="11sp"/>
+                    android:textColor="#8BCAFF"
+                    android:textSize="12sp" />
+
                 <TextView
                     android:id="@+id/tvFirmware"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="v1.4.2"
-                    android:textColor="#8bcaff"
-                    android:textSize="12sp"
-                    android:textStyle="bold"/>
+                    android:layout_marginTop="6dp"
+                    android:text="v5.1.4"
+                    android:textColor="#EEF4FF"
+                    android:textSize="13sp"
+                    android:textStyle="normal" />
             </LinearLayout>
 
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="42dp"
+                android:layout_marginHorizontal="8dp"
+                android:background="#24384F" />
+
+            <!-- Last Seen -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="4dp">
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/tvLastSeenTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Last seen"
-                    android:textColor="#8bcaff"
-                    android:textSize="11sp"/>
+                    android:textColor="#8BCAFF"
+                    android:textSize="12sp" />
+
                 <TextView
                     android:id="@+id/tvLastSeen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="12 h ago"
-                    android:textColor="#8bcaff"
-                    android:textSize="12sp"
-                    android:textStyle="bold"/>
+                    android:layout_marginTop="6dp"
+                    android:text="Just now"
+                    android:textColor="#EEF4FF"
+                    android:textSize="13sp"
+                    android:textStyle="normal" />
             </LinearLayout>
 
         </LinearLayout>
+
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
