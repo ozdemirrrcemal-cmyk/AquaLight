@@ -31,8 +31,11 @@ class DeviceStatusAdapter(
             // Device info (sadece değerleri setle, başlıklar layout’tan geliyor)
             binding.tvIp.text = item.ip
             binding.tvSerial.text = item.serial
+
+            // Firmware sadece v5.1.4 kısmını göster
             binding.tvFirmware.text = if (item.firmwareBuild.isBlank()) "Unknown"
-                                      else item.firmwareBuild
+                                      else item.firmwareBuild.substringBefore(" (")
+
             binding.tvLastSeen.text = item.lastSeenText
 
             // Online status
