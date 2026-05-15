@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.devices.DeviceCardUi
+import com.aqua.aqualight.ui.tabs.devices.DeviceIconResolver
 
 class DeviceStatusAdapter :
     RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewHolder>() {
@@ -32,10 +33,18 @@ class DeviceStatusAdapter :
             item: DeviceCardUi
         ) {
 
+            // -------------------------------------------------
+            // DEVICE NAME
+            // -------------------------------------------------
+
             binding.tvDeviceName.text =
                 item.aquaName.ifBlank {
                     item.name
                 }
+
+            // -------------------------------------------------
+            // DEVICE INFO
+            // -------------------------------------------------
 
             binding.tvIp.text =
                 "IP: ${item.ip}"
@@ -44,7 +53,27 @@ class DeviceStatusAdapter :
                 "Serial: ${item.serial}"
 
             binding.tvFirmware.text =
-                "Firmware Unknown"
+    if (item.firmwareBuild.isNotBlank()) {
+        "FW: ${item.firmwareBuild}"
+    } else {
+        "FW: Unknown"
+    }
+
+            // -------------------------------------------------
+            // DEVICE ICON
+            // -------------------------------------------------
+
+            val iconRes =
+                DeviceIconResolver.resolve(
+                    item.aquaName
+                )
+
+            binding.ivDeviceIcon
+                .setImageResource(iconRes)
+
+            // -------------------------------------------------
+            // ONLINE STATUS
+            // -------------------------------------------------
 
             if (item.isOnline) {
 

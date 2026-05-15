@@ -98,13 +98,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                                     (now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS
 
                         DeviceCardUi(
-                            id = dev.id,
-                            aquaName = dev.aquaName,
-                            name = dev.name.ifBlank { "Device" },
-                            ip = dev.ip,
-                            serial = dev.serial,
-                            isOnline = online
-                        )
+    id = dev.id,
+    aquaName = dev.aquaName,
+    name = dev.name.ifBlank { "Device" },
+    ip = dev.ip,
+    serial = dev.serial,
+    firmwareBuild = dev.firmwareBuild,
+    isOnline = online
+)
                     }
 
                     adapter.submitList(uiList)

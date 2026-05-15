@@ -290,147 +290,205 @@ class UserPreferencesManager private constructor(
         }
     }
 
-    // --------------------------------------------------------
-    //  MULTI-DEVICE FLOWS
-    // --------------------------------------------------------
+   // --------------------------------------------------------
+//  MULTI-DEVICE FLOWS
+// --------------------------------------------------------
 
-    data class DeviceInfoUi(
-        val id: Long,
-        val aquaName: String,
-        val name: String,
-        val ip: String,
-        val serial: String,
-        val lastSeenMillis: Long
-    )
+data class DeviceInfoUi(
+    val id: Long,
+    val aquaName: String,
+    val name: String,
+    val ip: String,
+    val serial: String,
+    val firmwareBuild: String,
+    val lastSeenMillis: Long
+)
 
-    val devicesFlow: Flow<List<DeviceInfoUi>> =
-        userPrefsFlow.map { prefs ->
-            prefs.devicesList.map { dev ->
-                DeviceInfoUi(
-                    id = dev.id,
-                    aquaName = dev.aquaName,
-                    name = dev.name,
-                    ip = dev.ip,
-                    serial = dev.serial,
-                    lastSeenMillis = dev.lastSeenMillis
-                )
-            }
+val devicesFlow: Flow<List<DeviceInfoUi>> =
+    userPrefsFlow.map { prefs ->
+
+        prefs.devicesList.map { dev ->
+
+            DeviceInfoUi(
+                id = dev.id,
+                aquaName = dev.aquaName,
+                name = dev.name,
+                ip = dev.ip,
+                serial = dev.serial,
+                firmwareBuild = dev.firmwareBuild,
+                lastSeenMillis = dev.lastSeenMillis
+            )
         }
+    }
 
-    // --------------------------------------------------------
-    //  MULTI-DEVICE OPERATIONS
-    // --------------------------------------------------------
-	
-	suspend fun deviceExists(id: Long): Boolean {
-    return userPrefsFlow.first().devicesList.any { it.id == id }
+// --------------------------------------------------------
+//  MULTI-DEVICE OPERATIONS
+// --------------------------------------------------------
+
+suspend fun deviceExists(id: Long): Boolean {
+
+    return userPrefsFlow.first()
+        .devicesList
+        .any { it.id == id }
 }
 
-    suspend fun addDevice(
-        id: Long,
-        aquaName: String,
-        name: String,
-        ip: String,
-        serial: String
-    ) {
-        dataStore.updateData { prefs ->
-            val builder = prefs.toBuilder()
+suspend fun addDevice(
+    id: Long,
+    aquaName: String,
+    name: String,
+    ip: String,
+    serial: String,
+    firmwareBuild: String
+) {
 
-            // aynı id zaten varsa ekleme
-            if (builder.devicesList.any { it.id == id }) {
-                return@updateData prefs
-            }
+    dataStore.updateData { prefs ->
 
-            val now = System.currentTimeMillis()
+        val builder = prefs.toBuilder()
 
-            val device = UserPreferences.DeviceInfo.newBuilder()
+        // aynı id varsa ekleme
+        if (builder.devicesList.any { it.id == id }) {
+            return@updateData prefs
+        }
+
+        val now = System.currentTimeMillis()
+
+        val device =
+            UserPreferences.DeviceInfo
+                .newBuilder()
                 .setId(id)
                 .setAquaName(aquaName)
                 .setName(name)
                 .setIp(ip)
                 .setSerial(serial)
-                .setLastSeenMillis(now) // ilk eklediğimiz an görüldü say
+                .setFirmwareBuild(firmwareBuild)
+                .setLastSeenMillis(now)
                 .build()
 
-            builder.addDevices(device)
-            builder.build()
-        }
-    }
+        builder.addDevices(device)
 
-    suspend fun updateDevice(
-        id: Long,
-        aquaName: String? = null,
-        name: String? = null,
-        ip: String? = null,
-        serial: String? = null
-    ) {
-        dataStore.updateData { prefs ->
-            val updated = prefs.devicesList.map { dev ->
-                if (dev.id != id) return@map dev
+        builder.build()
+    }
+}
+
+suspend fun updateDevice(
+    id: Long,
+    aquaName: String? = null,
+    name: String? = null,
+    ip: String? = null,
+    serial: String? = null,
+    firmwareBuild: String? = null
+) {
+
+    dataStore.updateData { prefs ->
+
+        val updated =
+            prefs.devicesList.map { dev ->
+
+                if (dev.id != id) {
+                    return@map dev
+                }
 
                 dev.toBuilder().apply {
-                    aquaName?.let { setAquaName(it) }
-                    name?.let { setName(it) }
-                    ip?.let { setIp(it) }
-                    serial?.let { setSerial(it) }
+
+                    aquaName?.let {
+                        setAquaName(it)
+                    }
+
+                    name?.let {
+                        setName(it)
+                    }
+
+                    ip?.let {
+                        setIp(it)
+                    }
+
+                    serial?.let {
+                        setSerial(it)
+                    }
+
+                    firmwareBuild?.let {
+                        setFirmwareBuild(it)
+                    }
+
                 }.build()
             }
 
-            prefs.toBuilder()
-                .clearDevices()
-                .addAllDevices(updated)
-                .build()
-        }
+        prefs.toBuilder()
+            .clearDevices()
+            .addAllDevices(updated)
+            .build()
     }
+}
 
-    suspend fun deleteDevices(ids: Set<Long>) {
-        dataStore.updateData { prefs ->
-            val filtered = prefs.devicesList.filter { it.id !in ids }
-            prefs.toBuilder()
-                .clearDevices()
-                .addAllDevices(filtered)
-                .build()
-        }
+suspend fun deleteDevices(ids: Set<Long>) {
+
+    dataStore.updateData { prefs ->
+
+        val filtered =
+            prefs.devicesList.filter {
+                it.id !in ids
+            }
+
+        prefs.toBuilder()
+            .clearDevices()
+            .addAllDevices(filtered)
+            .build()
     }
+}
 
-    suspend fun clearAllDevices() {
-        dataStore.updateData { prefs ->
-            prefs.toBuilder()
-                .clearDevices()
-                .build()
-        }
+suspend fun clearAllDevices() {
+
+    dataStore.updateData { prefs ->
+
+        prefs.toBuilder()
+            .clearDevices()
+            .build()
     }
+}
 
-    /**
-     * LAN monitör her tarama sonrası çağıracak:
-     * discovered listesinde olan device'ların lastSeenMillis alanını now ile günceller.
-     */
-    suspend fun updateDevicesLastSeen(
-        discovered: List<com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice>
-    ) {
-        val now = System.currentTimeMillis()
+/**
+ * LAN monitör her tarama sonrası çağıracak:
+ * discovered listesinde olan device'ların
+ * lastSeenMillis alanını now ile günceller.
+ */
+suspend fun updateDevicesLastSeen(
+    discovered: List<com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice>
+) {
 
-        dataStore.updateData { prefs ->
-            val updated = prefs.devicesList.map { dev ->
-                val match = discovered.firstOrNull { d ->
-                    d.id == dev.id || (!d.ip.isNullOrBlank() && d.ip == dev.ip)
-                }
+    val now = System.currentTimeMillis()
+
+    dataStore.updateData { prefs ->
+
+        val updated =
+            prefs.devicesList.map { dev ->
+
+                val match =
+                    discovered.firstOrNull { d ->
+
+                        d.id == dev.id ||
+                        d.ip == dev.ip
+                    }
 
                 if (match != null) {
+
                     dev.toBuilder()
                         .setLastSeenMillis(now)
+                        .setFirmwareBuild(
+                            match.firmwareBuild ?: ""
+                        )
                         .build()
+
                 } else {
                     dev
                 }
             }
 
-            prefs.toBuilder()
-                .clearDevices()
-                .addAllDevices(updated)
-                .build()
-        }
+        prefs.toBuilder()
+            .clearDevices()
+            .addAllDevices(updated)
+            .build()
     }
-
+}
     // --------------------------------------------------------
     //  ADDRESS SAVE
     // --------------------------------------------------------

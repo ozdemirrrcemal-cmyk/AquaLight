@@ -49,5 +49,6 @@ message UserPreferences {
     string ip             = 4;
     string serial         = 5;
     int64  lastSeenMillis = 6;  // LAN’de en son görüldüğü zaman (System.currentTimeMillis)
+	string firmwareBuild = 7;
   }
 }
