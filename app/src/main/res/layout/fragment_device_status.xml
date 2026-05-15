@@ -55,8 +55,8 @@ tools:context=".ui.tabs.settings.device.DeviceStatusFragment">
 
     android:layout_marginTop="8dp"  
 
-    android:paddingStart="16dp"  
-    android:paddingEnd="16dp"  
+    android:paddingStart="5dp"  
+    android:paddingEnd="5dp"  
     android:paddingBottom="20dp"  
 
     android:clipToPadding="false"  

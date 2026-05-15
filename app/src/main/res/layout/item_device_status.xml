@@ -5,7 +5,7 @@
     android:id="@+id/cardDevice"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
+    android:layout_marginHorizontal="5dp"
     android:layout_marginTop="10dp"
     android:layout_marginBottom="10dp"
     android:backgroundTint="#1E2A38"
