@@ -1,0 +1,48 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- CENTER HUB -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M10,10h4v4h-4z"/>
+
+    <!-- TOP DEVICE -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M10,2h4v4h-4z"/>
+
+    <!-- LEFT DEVICE -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M2,10h4v4H2z"/>
+
+    <!-- RIGHT DEVICE -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M18,10h4v4h-4z"/>
+
+    <!-- BOTTOM DEVICE -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M10,18h4v4h-4z"/>
+
+    <!-- CONNECTIONS -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M11,6h2v4h-2z"/>
+
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M6,11h4v2H6z"/>
+
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M14,11h4v2h-4z"/>
+
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M11,14h2v4h-2z"/>
+</vector>

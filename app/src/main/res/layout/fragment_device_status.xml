@@ -68,12 +68,11 @@
             android:gravity="center_vertical"
             android:padding="16dp">
 
-            <!-- STATUS DOT -->
+            <!-- TEXT AREA -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
                 android:orientation="vertical">
 
                 <TextView
@@ -94,12 +93,13 @@
                     android:textSize="12sp"/>
             </LinearLayout>
 
-            <!-- DEVICES ICON -->
+            <!-- HUB ICON -->
             <ImageView
                 android:id="@+id/ivDevicesIcon"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_wifi"/>
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_hub"
+                app:tint="@color/settings_text_secondary"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
