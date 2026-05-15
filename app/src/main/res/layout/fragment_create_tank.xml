@@ -181,13 +181,12 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <!-- Next / Complete Butonu -->
-        <Button
-            android:id="@+id/btnNext"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:text="Next"
-            android:textColor="@color/white"
-            android:backgroundTint="@color/red"/>
+       <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnNext"
+    style="@style/Widget.Aqua.PrimaryButton"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:text="Next"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

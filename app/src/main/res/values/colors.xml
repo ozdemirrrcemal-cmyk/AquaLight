@@ -84,4 +84,7 @@
 <color name="snackbar_warning">#F9A825</color>
 <color name="aqua_accent">#64FFDA</color>
 <color name="card_stroke">#3A4A5E</color>
+
+<color name="white">#FFFFFF</color>
+
 </resources>
