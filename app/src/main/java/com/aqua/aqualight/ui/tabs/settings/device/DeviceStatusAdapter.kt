@@ -3,128 +3,53 @@ package com.aqua.aqualight.ui.tabs.settings.device
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
-import com.aqua.aqualight.ui.tabs.devices.DeviceCardUi
-import com.aqua.aqualight.ui.tabs.devices.DeviceIconResolver
+import com.aqua.aqualight.ui.model.DeviceCardUi
 
-class DeviceStatusAdapter :
-    RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewHolder>() {
+class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewHolder>() {
 
-    private val items =
-        mutableListOf<DeviceCardUi>()
+    private val items = mutableListOf<DeviceCardUi>()
 
-    fun submitList(
-        list: List<DeviceCardUi>
-    ) {
-
+    fun submitList(list: List<DeviceCardUi>) {
         items.clear()
-
         items.addAll(list)
-
         notifyDataSetChanged()
     }
 
-    inner class DeviceViewHolder(
-        private val binding: ItemDeviceStatusBinding
-    ) : RecyclerView.ViewHolder(binding.root) {
+    inner class DeviceViewHolder(private val binding: ItemDeviceStatusBinding) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(
-            item: DeviceCardUi
-        ) {
+        fun bind(item: DeviceCardUi) {
+            // Device name
+            binding.tvDeviceName.text = item.aquaName.ifBlank { item.name }
 
-            // -------------------------------------------------
-            // DEVICE NAME
-            // -------------------------------------------------
+            // Icon from enum
+            binding.ivDeviceIcon.setImageResource(item.type.iconRes)
 
-            binding.tvDeviceName.text =
-                item.aquaName.ifBlank {
-                    item.name
-                }
+            // Device info
+            binding.tvIp.text = "IP: ${item.ip}"
+            binding.tvSerial.text = "Serial: ${item.serial}"
+            binding.tvFirmware.text = if (item.firmwareBuild.isBlank()) "Firmware: Unknown"
+                                      else "Firmware: ${item.firmwareBuild}"
 
-            // -------------------------------------------------
-            // DEVICE INFO
-            // -------------------------------------------------
-
-            binding.tvIp.text =
-                "IP: ${item.ip}"
-
-            binding.tvSerial.text =
-                "Serial: ${item.serial}"
-
-            binding.tvFirmware.text =
-                if (item.firmwareBuild.isBlank()) {
-                    "Firmware: Unknown"
-                } else {
-                    "Firmware: ${item.firmwareBuild}"
-                }
-
-            // -------------------------------------------------
-            // DEVICE ICON
-            // -------------------------------------------------
-
-            val iconRes =
-                DeviceIconResolver.resolve(
-                    item.aquaName
-                )
-
-            binding.ivDeviceIcon
-                .setImageResource(iconRes)
-
-            // -------------------------------------------------
-            // ONLINE STATUS
-            // -------------------------------------------------
-
+            // Online status
             if (item.isOnline) {
-
-                binding.tvStatus.text =
-                    "ONLINE"
-
-                binding.viewStatusDot
-                    .setBackgroundResource(
-                        R.drawable.bg_online_dot
-                    )
-
+                binding.tvStatus.text = "ONLINE"
+                binding.viewStatusDot.setBackgroundResource(com.aqua.aqualight.R.drawable.bg_online_dot)
             } else {
-
-                binding.tvStatus.text =
-                    "OFFLINE"
-
-                binding.viewStatusDot
-                    .setBackgroundResource(
-                        R.drawable.bg_offline_dot
-                    )
+                binding.tvStatus.text = "OFFLINE"
+                binding.viewStatusDot.setBackgroundResource(com.aqua.aqualight.R.drawable.bg_offline_dot)
             }
         }
     }
 
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): DeviceViewHolder {
-
-        val binding =
-            ItemDeviceStatusBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
-
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
+        val binding = ItemDeviceStatusBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return DeviceViewHolder(binding)
     }
 
-    override fun onBindViewHolder(
-        holder: DeviceViewHolder,
-        position: Int
-    ) {
-
-        holder.bind(
-            items[position]
-        )
+    override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
+        holder.bind(items[position])
     }
 
-    override fun getItemCount(): Int {
-
-        return items.size
-    }
+    override fun getItemCount(): Int = items.size
 }

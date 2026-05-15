@@ -6,12 +6,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
+import com.aqua.aqualight.ui.model.DeviceCardUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
@@ -24,17 +25,15 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private lateinit var userPrefs: UserPreferencesManager
     private lateinit var adapter: DevicesListAdapter
-
     private var selectionMode = false
 
     private companion object {
         const val ONLINE_TIMEOUT_MS = 60_000L
-		const val LIVE_CHECK_TIMEOUT_MS = 800L
+        const val LIVE_CHECK_TIMEOUT_MS = 800L
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         _binding = FragmentDevicesBinding.bind(view)
         userPrefs = UserPreferencesManager.create(requireContext())
 
@@ -46,29 +45,17 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun setupRecyclerView() {
         adapter = DevicesListAdapter(
             onSelectionModeStart = { enterSelectionMode() },
-            onSelectionChanged = { count ->
-                if (count == 0) exitSelectionMode()
-            },
-            onDeviceClick = { device ->
-                openDeviceMenu(device)
-            }
+            onSelectionChanged = { count -> if (count == 0) exitSelectionMode() },
+            onDeviceClick = { device -> openDeviceMenu(device) }
         )
-
-        binding.rvSelectedDevices.layoutManager =
-            LinearLayoutManager(requireContext())
-
+        binding.rvSelectedDevices.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSelectedDevices.adapter = adapter
     }
 
     private fun setupClickListeners() {
         binding.btnScanDevices.setOnClickListener {
-            if (selectionMode) {
-                showDeleteConfirmDialog()
-            } else {
-                findNavController().navigate(
-                    R.id.action_devicesFragment_to_scanDevicesFragment
-                )
-            }
+            if (selectionMode) showDeleteConfirmDialog()
+            else findNavController().navigate(R.id.action_devicesFragment_to_scanDevicesFragment)
         }
     }
 
@@ -76,13 +63,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 userPrefs.devicesFlow.collect { list ->
-
                     if (list.isEmpty()) {
                         exitSelectionMode()
-
                         binding.tvEmptyState.visibility = View.VISIBLE
                         binding.rvSelectedDevices.visibility = View.GONE
-
                         adapter.submitList(emptyList())
                         return@collect
                     }
@@ -91,21 +75,18 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     binding.rvSelectedDevices.visibility = View.VISIBLE
 
                     val now = System.currentTimeMillis()
-
                     val uiList = list.map { dev ->
-                        val online =
-                            dev.lastSeenMillis != 0L &&
-                                    (now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS
-
+                        val online = dev.lastSeenMillis != 0L && (now - dev.lastSeenMillis <= ONLINE_TIMEOUT_MS)
                         DeviceCardUi(
-    id = dev.id,
-    aquaName = dev.aquaName,
-    name = dev.name.ifBlank { "Device" },
-    ip = dev.ip,
-    serial = dev.serial,
-    firmwareBuild = dev.firmwareBuild,
-    isOnline = online
-)
+                            id = dev.id,
+                            name = dev.name.ifBlank { "Device" },
+                            aquaName = dev.aquaName,
+                            ip = dev.ip,
+                            serial = dev.serial,
+                            firmwareBuild = dev.firmwareBuild,
+                            isOnline = online,
+                            type = com.aqua.aqualight.ui.model.DeviceType.fromName(dev.aquaName)
+                        )
                     }
 
                     adapter.submitList(uiList)
@@ -116,32 +97,27 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private fun openDeviceMenu(device: DeviceCardUi) {
         if (!device.isOnline) {
-            showOfflineDialog()
+            DialogManager.showInfoDialog(requireContext(), DialogType.WARNING,
+                getString(R.string.device_offline_title),
+                getString(R.string.device_offline_message))
             return
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             (activity as? BaseActivity)?.showLoading(true)
-
             val isActuallyOnline = try {
                 withTimeoutOrNull(LIVE_CHECK_TIMEOUT_MS + 500L) {
-                    val discovered = discoverDevices(
-                        context = requireContext(),
-                        timeoutMs = LIVE_CHECK_TIMEOUT_MS
-                    )
-
-                    discovered.any { found ->
-                        found.id == device.id || found.ip == device.ip
-                    }
+                    val discovered = discoverDevices(context = requireContext(), timeoutMs = LIVE_CHECK_TIMEOUT_MS)
+                    discovered.any { it.id == device.id || it.ip == device.ip }
                 } ?: false
             } finally {
                 (activity as? BaseActivity)?.showLoading(false)
             }
 
-            if (_binding == null) return@launch
-
             if (!isActuallyOnline) {
-                showOfflineDialog()
+                DialogManager.showInfoDialog(requireContext(), DialogType.WARNING,
+                    getString(R.string.device_offline_title),
+                    getString(R.string.device_offline_message))
                 return@launch
             }
 
@@ -153,21 +129,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 putString("deviceSerial", device.serial)
                 putBoolean("deviceOnline", true)
             }
-
-            findNavController().navigate(
-                R.id.action_devicesFragment_to_deviceMenuFragment,
-                args
-            )
+            findNavController().navigate(R.id.action_devicesFragment_to_deviceMenuFragment, args)
         }
-    }
-
-    private fun showOfflineDialog() {
-        DialogManager.showInfoDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
-            title = getString(R.string.device_offline_title),
-            message = getString(R.string.device_offline_message)
-        )
     }
 
     private fun enterSelectionMode() {
@@ -190,27 +153,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         if (ids.isEmpty()) return
 
         val count = ids.size
+        val title = if (count == 1) getString(R.string.devices_delete_title_single)
+                    else getString(R.string.devices_delete_title_multi, count)
+        val message = if (count == 1) getString(R.string.devices_delete_message_single)
+                      else getString(R.string.devices_delete_message_multi, count)
 
-        val title = if (count == 1) {
-            getString(R.string.devices_delete_title_single)
-        } else {
-            getString(R.string.devices_delete_title_multi, count)
-        }
-
-        val message = if (count == 1) {
-            getString(R.string.devices_delete_message_single)
-        } else {
-            getString(R.string.devices_delete_message_multi, count)
-        }
-
-        DialogManager.showConfirmDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
-            title = title,
-            message = message,
+        DialogManager.showConfirmDialog(requireContext(), DialogType.WARNING, title, message,
             onConfirm = { deleteSelectedDevices(ids) },
-            onCancel = { exitSelectionMode() }
-        )
+            onCancel = { exitSelectionMode() })
     }
 
     private fun deleteSelectedDevices(ids: Set<Long>) {

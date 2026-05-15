@@ -1,0 +1,12 @@
+package com.aqua.aqualight.ui.tabs.devices.model
+
+data class DeviceCardUi(
+    val id: Long,
+    val name: String,
+    val aquaName: String,
+    val ip: String,
+    val serial: String,
+    val firmwareBuild: String,
+    val isOnline: Boolean,
+    val type: DeviceType = DeviceType.fromName(aquaName)
+)

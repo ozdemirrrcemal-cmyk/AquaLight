@@ -4,135 +4,72 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
-import com.aqua.aqualight.ui.tabs.devices.DeviceCardUi
+import com.aqua.aqualight.ui.model.DeviceCardUi
 import kotlinx.coroutines.flow.collectLatest
 
-class DeviceStatusFragment :
-    Fragment(R.layout.fragment_device_status) {
+class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
     private var _binding: FragmentDeviceStatusBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var adapter: DeviceStatusAdapter
-
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
-    }
+    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
 
     companion object {
         private const val ONLINE_TIMEOUT_MS = 60_000L
     }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
-
-        _binding =
-            FragmentDeviceStatusBinding.bind(view)
+        _binding = FragmentDeviceStatusBinding.bind(view)
 
         setupRecycler()
-
         observeDevices()
 
-        // BACK
         binding.btnBack.setOnClickListener {
-            findNavController().popBackStack()
+            requireActivity().onBackPressed()
         }
     }
 
-    // ---------------------------------------------------
-    // RECYCLER
-    // ---------------------------------------------------
-
     private fun setupRecycler() {
-
-        adapter =
-            DeviceStatusAdapter()
-
-        binding.rvDevices.layoutManager =
-            LinearLayoutManager(requireContext())
-
-        binding.rvDevices.adapter =
-            adapter
+        adapter = DeviceStatusAdapter()
+        binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvDevices.adapter = adapter
     }
-
-    // ---------------------------------------------------
-    // OBSERVE DEVICES
-    // ---------------------------------------------------
 
     private fun observeDevices() {
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            userPrefs.devicesFlow.collectLatest { list ->
+                val now = System.currentTimeMillis()
 
-        viewLifecycleOwner.lifecycleScope
-            .launchWhenStarted {
+                val uiList = list.map { dev ->
+                    val online = dev.lastSeenMillis != 0L && (now - dev.lastSeenMillis <= ONLINE_TIMEOUT_MS)
 
-                userPrefs.devicesFlow
-                    .collectLatest { list ->
+                    DeviceCardUi(
+                        id = dev.id,
+                        name = dev.name.ifBlank { "Device" },
+                        aquaName = dev.aquaName,
+                        ip = dev.ip,
+                        serial = dev.serial,
+                        firmwareBuild = dev.firmwareBuild,
+                        isOnline = online,
+                        type = com.aqua.aqualight.ui.model.DeviceType.fromName(dev.aquaName)
+                    )
+                }
 
-                        val now =
-                            System.currentTimeMillis()
-
-                        val uiList =
-                            list.map { dev ->
-
-                                val online =
-                                    dev.lastSeenMillis != 0L &&
-                                    ((now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS)
-
-                                DeviceCardUi(
-
-                                    id =
-                                        dev.id,
-
-                                    aquaName =
-                                        dev.aquaName,
-
-                                    name =
-                                        dev.name.ifBlank {
-                                            "Device"
-                                        },
-
-                                    ip =
-                                        dev.ip,
-
-                                    serial =
-                                        dev.serial,
-
-                                    firmwareBuild =
-                                        dev.firmwareBuild,
-
-                                    isOnline =
-                                        online
-                                )
-                            }
-
-                        adapter.submitList(
-                            uiList
-                        )
-                    }
+                adapter.submitList(uiList)
             }
+        }
     }
 
-    // ---------------------------------------------------
-    // DESTROY
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         binding.rvDevices.adapter = null
-
         _binding = null
-
         super.onDestroyView()
     }
 }
