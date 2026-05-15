@@ -6,10 +6,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginVertical="6dp"
+    android:backgroundTint="#1e2a38"
     app:cardCornerRadius="18dp"
     app:cardElevation="2dp"
     app:strokeWidth="1dp"
-    app:strokeColor="@color/card_stroke"
+    app:strokeColor="#2c3e50"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
@@ -19,24 +20,25 @@
         android:layout_height="wrap_content"
         android:padding="14dp">
 
-        <!-- Sol: Tip ikonu -->
+        <!-- Tip ikonu -->
         <ImageView
             android:id="@+id/ivDeviceIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
             android:src="@drawable/ic_device_aqua_ster"
-            app:tint="@android:color/white"
+            android:tint="@android:color/white"
             android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"/>
+            android:layout_alignParentTop="true"/>
 
-        <!-- Orta: İsim + Tank adı -->
+        <!-- İsim + Tank -->
         <LinearLayout
             android:id="@+id/llDeviceInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_toEndOf="@id/ivDeviceIcon"
-            android:layout_marginStart="12dp">
+            android:layout_marginStart="12dp"
+            android:layout_alignTop="@id/ivDeviceIcon">
 
             <TextView
                 android:id="@+id/tvDeviceName"
@@ -45,55 +47,18 @@
                 android:text="CO2 Regülatör"
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
-                android:textSize="15sp"/>
+                android:textSize="16sp"/>
 
             <TextView
                 android:id="@+id/tvTankName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Akvaryum 1"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="12sp"/>
+                android:textColor="#8bcaff"
+                android:textSize="13sp"/>
         </LinearLayout>
 
-        <!-- Alt: IP / Serial / Firmware yatay -->
-        <LinearLayout
-            android:id="@+id/llDeviceMeta"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_below="@id/llDeviceInfo"
-            android:layout_alignStart="@id/llDeviceInfo"
-            android:layout_marginTop="4dp">
-
-            <TextView
-                android:id="@+id/tvIp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="IP: 192.168.1.33"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="12sp"
-                android:layout_marginEnd="16dp"/>
-
-            <TextView
-                android:id="@+id/tvSerial"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Serial: CA-628206344"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="12sp"
-                android:layout_marginEnd="16dp"/>
-
-            <TextView
-                android:id="@+id/tvFirmware"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Firmware: v1.4.2"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="12sp"/>
-        </LinearLayout>
-
-        <!-- Sağ üst: Online/Offline dot + tvStatus + Alarm -->
+        <!-- Sağ üst: Online/Offline + Alarm -->
         <LinearLayout
             android:id="@+id/llStatusContainer"
             android:layout_width="wrap_content"
@@ -103,14 +68,13 @@
             android:layout_alignParentEnd="true"
             android:layout_alignTop="@id/llDeviceInfo">
 
-            <!-- Online/Offline dot -->
             <View
                 android:id="@+id/viewStatusDot"
                 android:layout_width="10dp"
                 android:layout_height="10dp"
-                android:background="@drawable/bg_online_dot"/>
+                android:backgroundTint="#4caf50"
+                android:background="@drawable/bg_dot_circle"/>
 
-            <!-- ONLINE/OFFLINE yazısı -->
             <TextView
                 android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
@@ -118,29 +82,119 @@
                 android:layout_marginStart="6dp"
                 android:text="ONLINE"
                 android:textColor="@android:color/white"
-                android:textSize="11sp"
+                android:textSize="12sp"
                 android:textStyle="bold"/>
 
-            <!-- Alarm / Hata icon -->
             <ImageView
                 android:id="@+id/ivAlarm"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:layout_marginStart="4dp"
                 android:src="@drawable/ic_alarm_red"
                 android:visibility="gone"/>
         </LinearLayout>
 
-        <!-- Sağ alt: Son görülme -->
-        <TextView
-            android:id="@+id/tvLastSeen"
+        <!-- Alt: IP / Serial / Firmware / Last Seen dikey -->
+        <LinearLayout
+            android:id="@+id/llDeviceMeta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/llDeviceMeta"
-            android:layout_alignStart="@id/llDeviceInfo"
-            android:layout_marginTop="4dp"
-            android:text="Last seen: 12 h ago"
-            android:textColor="@color/settings_text_secondary"
-            android:textSize="12sp"/>
+            android:orientation="vertical"
+            android:layout_below="@id/ivDeviceIcon"
+            android:layout_alignStart="@id/ivDeviceIcon"
+            android:layout_marginTop="8dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvIpTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="IP"
+                    android:textColor="#8bcaff"
+                    android:textSize="11sp"/>
+                <TextView
+                    android:id="@+id/tvIp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="192.168.1.33"
+                    android:textColor="#8bcaff"
+                    android:textSize="12sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tvSerialTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Serial"
+                    android:textColor="#8bcaff"
+                    android:textSize="11sp"/>
+                <TextView
+                    android:id="@+id/tvSerial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CA-628206344"
+                    android:textColor="#8bcaff"
+                    android:textSize="12sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tvFirmwareTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Firmware"
+                    android:textColor="#8bcaff"
+                    android:textSize="11sp"/>
+                <TextView
+                    android:id="@+id/tvFirmware"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="v1.4.2"
+                    android:textColor="#8bcaff"
+                    android:textSize="12sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:id="@+id/tvLastSeenTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Last seen"
+                    android:textColor="#8bcaff"
+                    android:textSize="11sp"/>
+                <TextView
+                    android:id="@+id/tvLastSeen"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="12 h ago"
+                    android:textColor="#8bcaff"
+                    android:textSize="12sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+        </LinearLayout>
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
