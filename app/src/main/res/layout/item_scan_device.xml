@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,57 +6,51 @@
     android:padding="16dp"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    android:background="?android:attr/selectableItemBackground">
+    android:foreground="?attr/selectableItemBackground">
 
-    <!-- Name (sol hizalı) -->
+    <!-- Name solda -->
     <TextView
         android:id="@+id/tvName"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="SuperStar Pump"
+        android:text="AquaLight"
         android:textColor="#FFFFFF"
         android:textSize="12sp"
-        android:ellipsize="end"
-        android:maxLines="1"
         android:gravity="start|center_vertical"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/tvAquaName"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <!-- AquaName (ortada) -->
+    <!-- AquaName ekran ortasında -->
     <TextView
         android:id="@+id/tvAquaName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Doser"
-        android:textColor="#8BCAFF"
+        android:text="Wrgb Pro2"
         android:textStyle="bold"
+        android:textColor="#8BCAFF"
         android:textSize="12sp"
         android:gravity="center"
-        app:layout_constraintStart_toEndOf="@id/tvName"
-        app:layout_constraintEnd_toStartOf="@id/tvId"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Serial / ID (sağda) -->
+    <!-- Serial sağda -->
     <TextView
         android:id="@+id/tvId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="DS-637128968"
-        android:textColor="#AAAAAA"
+        android:text="WA-304027872"
         android:textSize="10sp"
-        android:alpha="0.85"
+        android:textColor="#AAAAAA"
         android:fontFamily="monospace"
         android:gravity="end|center_vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <!-- Alt çizgi / divider -->
+    <!-- Alt çizgi -->
     <View
         android:layout_width="0dp"
         android:layout_height="1dp"
