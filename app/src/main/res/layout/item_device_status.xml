@@ -91,11 +91,13 @@
                 android:textSize="12sp"/>
         </LinearLayout>
 
-        <!-- Sağ: Online/Offline + Alarm -->
-        <FrameLayout
-            android:id="@+id/flStatus"
+        <!-- Sağ: Online/Offline dot + tvStatus + Alarm -->
+        <LinearLayout
+            android:id="@+id/llStatusContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true">
 
@@ -106,15 +108,26 @@
                 android:layout_height="10dp"
                 android:background="@drawable/bg_online_dot"/>
 
+            <!-- ONLINE/OFFLINE yazısı -->
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="ONLINE"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textStyle="bold"/>
+
             <!-- Alarm / Hata icon -->
             <ImageView
                 android:id="@+id/ivAlarm"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
-                android:layout_gravity="top|end"
+                android:layout_marginStart="4dp"
                 android:src="@drawable/ic_alarm_red"
                 android:visibility="gone"/>
-        </FrameLayout>
+        </LinearLayout>
 
         <!-- Son görülme -->
         <TextView
@@ -127,6 +140,5 @@
             android:text="Last seen: 12 h ago"
             android:textColor="@color/settings_text_secondary"
             android:textSize="12sp"/>
-
     </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
