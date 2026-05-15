@@ -96,7 +96,7 @@
             <!-- HUB ICON -->
             <ImageView
                 android:id="@+id/ivDevicesIcon"
-                android:layout_width="22dp"
+                android:layout_width="23dp"
                 android:layout_height="22dp"
                 android:src="@drawable/ic_hub"
                 app:tint="@color/settings_text_secondary"/>
