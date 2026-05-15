@@ -53,20 +53,50 @@
         android:id="@+id/rvDevices"
         android:layout_width="0dp"
         android:layout_height="0dp"
-
         android:layout_marginTop="8dp"
-
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingBottom="20dp"
-
         android:clipToPadding="false"
         android:overScrollMode="never"
-
         tools:listitem="@layout/item_device_status"
-
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- EMPTY STATE: Boş cihaz listesi gösterimi -->
+    <LinearLayout
+        android:id="@+id/emptyStateContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/headerContainer"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Örnek ikon -->
+        <ImageView
+            android:id="@+id/ivEmptyStateIcon"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:src="@drawable/ic_device_empty"
+            android:contentDescription="@string/devices_empty_icon_desc"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Mesaj -->
+        <TextView
+            android:id="@+id/tvEmptyState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/devices_no_selected"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            android:gravity="center"/>
+    </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
