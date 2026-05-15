@@ -1,60 +1,68 @@
-<LinearLayout  
-xmlns:android="http://schemas.android.com/apk/res/android"  
-android:layout_width="match_parent"  
-android:layout_height="wrap_content"  
-android:orientation="vertical"  
-android:clickable="true"  
-android:focusable="true"  
-android:foreground="?attr/selectableItemBackground">
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:background="?android:attr/selectableItemBackground">
 
-<!-- Satır içeriği -->  
-<LinearLayout  
-    android:layout_width="match_parent"  
-    android:layout_height="wrap_content"  
-    android:orientation="horizontal"  
-    android:paddingHorizontal="16dp"  
-    android:paddingVertical="14dp">  
+    <!-- Name (sol hizalı) -->
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="SuperStar Pump"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:gravity="start|center_vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tvAquaName"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
- 
-    <!-- Name (ortalanmış, esnek alan) -->  
-    <TextView  
-        android:id="@+id/tvName"  
-        android:layout_width="0dp"  
-        android:layout_height="wrap_content"  
-        android:layout_weight="1"  
-        android:text="SuperStar Pump"  
-        android:textSize="10sp"  
-        android:maxLines="1"  
-        android:ellipsize="end"  
-        android:gravity="center_vertical|center_horizontal" />  
+    <!-- AquaName (ortada) -->
+    <TextView
+        android:id="@+id/tvAquaName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Doser"
+        android:textColor="#8BCAFF"
+        android:textStyle="bold"
+        android:textSize="12sp"
+        android:gravity="center"
+        app:layout_constraintStart_toEndOf="@id/tvName"
+        app:layout_constraintEnd_toStartOf="@id/tvId"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"/>
 
-     <!--  AquaName / Type -->  
-    <TextView  
-        android:id="@+id/tvAquaName"  
-        android:layout_width="wrap_content"  
-        android:layout_height="wrap_content"  
-        android:layout_marginEnd="12dp"  
-        android:text="Doser"  
-        android:textSize="10sp"  
-        android:textStyle="bold" />  
-		
-    <!-- ID / Serial -->  
-    <TextView  
-        android:id="@+id/tvId"  
-        android:layout_width="wrap_content"  
-        android:layout_height="wrap_content"  
-        android:text="DS-637128968"  
-        android:textSize="10sp"  
-        android:maxLines="1"  
-        android:ellipsize="end"  
-        android:alpha="0.85"  
-        android:fontFamily="monospace" />  
-</LinearLayout>  
+    <!-- Serial / ID (sağda) -->
+    <TextView
+        android:id="@+id/tvId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DS-637128968"
+        android:textColor="#AAAAAA"
+        android:textSize="10sp"
+        android:alpha="0.85"
+        android:fontFamily="monospace"
+        android:gravity="end|center_vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-<!-- Alt çizgi / divider: tam genişlik -->  
-<View  
-    android:layout_width="match_parent"  
-    android:layout_height="1dp"  
-    android:background="@color/settings_divider" />
-
-</LinearLayout>  
+    <!-- Alt çizgi / divider -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#2C3E50"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
