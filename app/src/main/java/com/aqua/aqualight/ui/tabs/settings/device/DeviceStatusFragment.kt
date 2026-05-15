@@ -47,14 +47,8 @@ class DeviceStatusFragment :
 
         // BACK
         binding.btnBack.setOnClickListener {
-
             findNavController().popBackStack()
         }
-
-        // SUMMARY ICON
-        binding.ivDevicesIcon.setImageResource(
-            R.drawable.ic_devices
-        )
     }
 
     // ---------------------------------------------------
@@ -63,7 +57,8 @@ class DeviceStatusFragment :
 
     private fun setupRecycler() {
 
-        adapter = DeviceStatusAdapter()
+        adapter =
+            DeviceStatusAdapter()
 
         binding.rvDevices.layoutManager =
             LinearLayoutManager(requireContext())
@@ -95,7 +90,9 @@ class DeviceStatusFragment :
                                     ((now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS)
 
                                 DeviceCardUi(
-                                    id = dev.id,
+
+                                    id =
+                                        dev.id,
 
                                     aquaName =
                                         dev.aquaName,
@@ -119,55 +116,11 @@ class DeviceStatusFragment :
                                 )
                             }
 
-                        // Recycler update
                         adapter.submitList(
-                            uiList
-                        )
-
-                        // Summary update
-                        updateSummary(
                             uiList
                         )
                     }
             }
-    }
-
-    // ---------------------------------------------------
-    // SUMMARY
-    // ---------------------------------------------------
-
-    private fun updateSummary(
-        list: List<DeviceCardUi>
-    ) {
-
-        val onlineCount =
-            list.count {
-                it.isOnline
-            }
-
-        val offlineCount =
-            list.count {
-                !it.isOnline
-            }
-
-        // EMPTY
-        if (list.isEmpty()) {
-
-            binding.tvOnlineSummary.text =
-                "No Devices"
-
-            binding.tvOfflineSummary.text =
-                "No registered device found"
-
-            return
-        }
-
-        // NORMAL
-        binding.tvOnlineSummary.text =
-            "Devices"
-
-        binding.tvOfflineSummary.text =
-            "$onlineCount Online • $offlineCount Offline"
     }
 
     // ---------------------------------------------------

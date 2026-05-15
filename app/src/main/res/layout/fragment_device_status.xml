@@ -28,9 +28,9 @@
             android:layout_height="32dp"
             android:src="@drawable/ic_back"
             android:scaleType="center"
-            app:tint="?attr/colorOnSurface"
             android:clickable="true"
             android:focusable="true"
+            app:tint="?attr/colorOnSurface"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"/>
@@ -48,75 +48,26 @@
             app:layout_constraintEnd_toEndOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- SUMMARY CARD -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardSummary"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        style="@style/Widget.Aqua.CardStyles"
-        app:layout_constraintTop_toBottomOf="@id/headerContainer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="16dp">
-
-            <!-- TEXT AREA -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvOnlineSummary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Devices"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:textSize="16sp"/>
-
-                <TextView
-                    android:id="@+id/tvOfflineSummary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 Online • 0 Offline"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="12sp"/>
-            </LinearLayout>
-
-            <!-- HUB ICON -->
-            <ImageView
-                android:id="@+id/ivDevicesIcon"
-                android:layout_width="23dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_hub"
-                app:tint="@color/settings_text_secondary"/>
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
     <!-- DEVICES RECYCLER -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDevices"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+
+        android:layout_marginTop="8dp"
+
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="16dp"
+        android:paddingBottom="20dp"
+
         android:clipToPadding="false"
         android:overScrollMode="never"
+
         tools:listitem="@layout/item_device_status"
-        app:layout_constraintTop_toBottomOf="@id/cardSummary"
+
+        app:layout_constraintTop_toBottomOf="@id/headerContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
