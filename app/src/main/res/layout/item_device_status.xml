@@ -1,149 +1,118 @@
-<?xml version="1.0" encoding="utf-8"?>  <com.google.android.material.card.MaterialCardView
-xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:app="http://schemas.android.com/apk/res-auto"
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardDevice"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/card_stroke"
+    app:strokeWidth="1dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
-android:id="@+id/cardDevice"  
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="14dp">
 
-android:layout_width="match_parent"  
-android:layout_height="wrap_content"  
+        <!-- DEVICE ICON -->
+        <ImageView
+            android:id="@+id/ivDeviceIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_device_aqua_ster"
+            app:tint="@android:color/white" />
 
-android:layout_marginBottom="12dp"  
+        <!-- INFO -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
+            android:orientation="vertical">
 
-  
-app:cardCornerRadius="18dp"  
-app:cardElevation="0dp"  
-app:strokeColor="@color/card_stroke"  
-app:strokeWidth="1dp">  
+            <!-- DEVICE NAME -->
+            <TextView
+                android:id="@+id/tvDeviceName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Living Room WRGB"
+                android:textColor="@android:color/white"
+                android:textSize="15sp"
+                android:textStyle="bold" />
 
-<LinearLayout  
-    android:layout_width="match_parent"  
-    android:layout_height="wrap_content"  
+            <!-- IP -->
+            <TextView
+                android:id="@+id/tvIp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="IP: 192.168.1.44"
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="12sp" />
 
-    android:orientation="horizontal"  
+            <!-- SERIAL -->
+            <TextView
+                android:id="@+id/tvSerial"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Serial: AQ-8821"
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="12sp" />
 
-    android:gravity="center_vertical"  
+            <!-- FIRMWARE -->
+            <TextView
+                android:id="@+id/tvFirmware"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Firmware 1.0.8"
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="12sp" />
 
-    android:padding="14dp">  
+            <!-- LAST SEEN -->
+            <TextView
+                android:id="@+id/tvLastSeen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Last seen: 5 min ago"
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
 
-    <!-- DEVICE ICON -->  
-    <ImageView  
-        android:id="@+id/ivDeviceIcon"  
+        <!-- STATUS -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-        android:layout_width="48dp"  
-        android:layout_height="48dp"  
+            <!-- DOT -->
+            <View
+                android:id="@+id/viewStatusDot"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/bg_online_dot" />
 
-        android:src="@drawable/ic_device_aqua_ster"  
+            <!-- TEXT -->
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="ONLINE"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-        app:tint="@android:color/white" />  
-
-    <!-- INFO -->  
-    <LinearLayout  
-        android:layout_width="0dp"  
-        android:layout_height="wrap_content"  
-
-        android:layout_weight="1"  
-
-        android:layout_marginStart="14dp"  
-
-        android:orientation="vertical">  
-
-        <!-- DEVICE NAME -->  
-        <TextView  
-            android:id="@+id/tvDeviceName"  
-
-            android:layout_width="wrap_content"  
-            android:layout_height="wrap_content"  
-
-            android:text="Living Room WRGB"  
-
-            android:textColor="@android:color/white"  
-
-            android:textSize="15sp"  
-
-            android:textStyle="bold" />  
-
-        <!-- IP -->  
-        <TextView  
-            android:id="@+id/tvIp"  
-
-            android:layout_width="wrap_content"  
-            android:layout_height="wrap_content"  
-
-            android:layout_marginTop="3dp"  
-
-            android:text="IP: 192.168.1.44"  
-
-            android:textColor="@color/settings_text_secondary"  
-
-            android:textSize="12sp" />  
-
-        <!-- SERIAL -->  
-        <TextView  
-            android:id="@+id/tvSerial"  
-
-            android:layout_width="wrap_content"  
-            android:layout_height="wrap_content"  
-
-            android:layout_marginTop="2dp"  
-
-            android:text="Serial: AQ-8821"  
-
-            android:textColor="@color/settings_text_secondary"  
-
-            android:textSize="12sp" />  
-
-        <!-- FIRMWARE -->  
-        <TextView  
-            android:id="@+id/tvFirmware"  
-
-            android:layout_width="wrap_content"  
-            android:layout_height="wrap_content"  
-
-            android:layout_marginTop="2dp"  
-
-            android:text="Firmware 1.0.8"  
-
-            android:textColor="@color/settings_text_secondary"  
-
-            android:textSize="12sp" />  
-    </LinearLayout>  
-
-    <!-- STATUS -->  
-    <LinearLayout  
-        android:layout_width="wrap_content"  
-        android:layout_height="wrap_content"  
-
-        android:orientation="horizontal"  
-
-        android:gravity="center_vertical">  
-
-        <!-- DOT -->  
-        <View  
-            android:id="@+id/viewStatusDot"  
-
-            android:layout_width="8dp"  
-            android:layout_height="8dp"  
-
-            android:background="@drawable/bg_online_dot" />  
-
-        <!-- TEXT -->  
-        <TextView  
-            android:id="@+id/tvStatus"  
-
-            android:layout_width="wrap_content"  
-            android:layout_height="wrap_content"  
-
-            android:layout_marginStart="6dp"  
-
-            android:text="ONLINE"  
-
-            android:textColor="@android:color/white"  
-
-            android:textSize="11sp"  
-
-            android:textStyle="bold" />  
-    </LinearLayout>  
-
-</LinearLayout>
-
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
