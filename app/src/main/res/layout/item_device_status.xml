@@ -56,12 +56,12 @@
                 android:textSize="12sp"/>
         </LinearLayout>
 
-        <!-- Alt: IP, Serial, Firmware -->
+        <!-- Alt: IP / Serial / Firmware yatay -->
         <LinearLayout
             android:id="@+id/llDeviceMeta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:layout_below="@id/llDeviceInfo"
             android:layout_alignStart="@id/llDeviceInfo"
             android:layout_marginTop="4dp">
@@ -72,7 +72,8 @@
                 android:layout_height="wrap_content"
                 android:text="IP: 192.168.1.33"
                 android:textColor="@color/settings_text_secondary"
-                android:textSize="12sp"/>
+                android:textSize="12sp"
+                android:layout_marginEnd="16dp"/>
 
             <TextView
                 android:id="@+id/tvSerial"
@@ -80,18 +81,19 @@
                 android:layout_height="wrap_content"
                 android:text="Serial: CA-628206344"
                 android:textColor="@color/settings_text_secondary"
-                android:textSize="12sp"/>
+                android:textSize="12sp"
+                android:layout_marginEnd="16dp"/>
 
             <TextView
                 android:id="@+id/tvFirmware"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Firmware: Unknown"
+                android:text="Firmware: v1.4.2"
                 android:textColor="@color/settings_text_secondary"
                 android:textSize="12sp"/>
         </LinearLayout>
 
-        <!-- Sağ: Online/Offline dot + tvStatus + Alarm -->
+        <!-- Sağ üst: Online/Offline dot + tvStatus + Alarm -->
         <LinearLayout
             android:id="@+id/llStatusContainer"
             android:layout_width="wrap_content"
@@ -99,7 +101,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true">
+            android:layout_alignTop="@id/llDeviceInfo">
 
             <!-- Online/Offline dot -->
             <View
@@ -129,7 +131,7 @@
                 android:visibility="gone"/>
         </LinearLayout>
 
-        <!-- Son görülme -->
+        <!-- Sağ alt: Son görülme -->
         <TextView
             android:id="@+id/tvLastSeen"
             android:layout_width="wrap_content"
