@@ -263,7 +263,7 @@
                 android:layout_height="wrap_content"
                 android:text="Just now"
                 android:textColor="#EEF4FF"
-                android:textSize="8sp"
+                android:textSize="7sp"
                 android:textStyle="normal"
                 android:singleLine="true"
                 android:ellipsize="end"/>
