@@ -17,6 +17,7 @@ data class DeviceCardUi(
     val name: String,
     val ip: String,
     val serial: String,
+    val firmwareBuild: String,
     val isOnline: Boolean
 )
 

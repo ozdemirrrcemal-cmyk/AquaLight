@@ -115,6 +115,9 @@ class DeviceStatusFragment :
 
                                     serial =
                                         dev.serial,
+										
+								    firmwareBuild =
+                                        dev.firmwareBuild,
 
                                     isOnline =
                                         online
