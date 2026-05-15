@@ -28,14 +28,12 @@ class DeviceStatusAdapter(
             // Icon from enum
             binding.ivDeviceIcon.setImageResource(item.type.iconRes)
 
-            // Device info
-            binding.tvIp.text = "IP: ${item.ip}"
-            binding.tvSerial.text = "Serial: ${item.serial}"
-            binding.tvFirmware.text = if (item.firmwareBuild.isBlank()) "Firmware: Unknown"
-                                      else "Firmware: ${item.firmwareBuild}"
-
-            // Last seen
-            binding.tvLastSeen.text = "Last seen: ${item.lastSeenText}"
+            // Device info (sadece değer)
+            binding.tvIp.text = item.ip
+            binding.tvSerial.text = item.serial
+            binding.tvFirmware.text = if (item.firmwareBuild.isBlank()) "Unknown"
+                                      else item.firmwareBuild
+            binding.tvLastSeen.text = item.lastSeenText
 
             // Online status
             if (item.isOnline) {
@@ -46,7 +44,11 @@ class DeviceStatusAdapter(
                 binding.viewStatusDot.setBackgroundResource(com.aqua.aqualight.R.drawable.bg_offline_dot)
             }
 
-            // Kart tıklanma olayı (opsiyonel)
+            // Alarm göstergesi
+            binding.ivAlarm.visibility = if (item.hasAlarm) android.view.View.VISIBLE
+                                         else android.view.View.GONE
+
+            // Kart tıklanma olayı
             binding.cardDevice.setOnClickListener {
                 onDeviceClick?.invoke(item)
             }
