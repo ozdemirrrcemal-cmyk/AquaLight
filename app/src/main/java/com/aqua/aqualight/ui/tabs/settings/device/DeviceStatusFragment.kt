@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
-import com.aqua.aqualight.ui.model.DeviceCardUi
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import kotlinx.coroutines.flow.collectLatest
 
 class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {

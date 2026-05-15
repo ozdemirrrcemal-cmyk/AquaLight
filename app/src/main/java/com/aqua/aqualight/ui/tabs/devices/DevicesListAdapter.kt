@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.databinding.ItemDeviceCardBinding
-import com.aqua.aqualight.ui.model.DeviceCardUi
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 
 class DevicesListAdapter(
     private val onSelectionModeStart: () -> Unit,

@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
-import com.aqua.aqualight.ui.model.DeviceCardUi
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 
 class DeviceStatusAdapter : RecyclerView.Adapter<DeviceStatusAdapter.DeviceViewHolder>() {
 

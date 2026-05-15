@@ -12,7 +12,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
-import com.aqua.aqualight.ui.model.DeviceCardUi
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
