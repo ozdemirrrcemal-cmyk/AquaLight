@@ -12,103 +12,174 @@ import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.devices.DeviceCardUi
 import kotlinx.coroutines.flow.collectLatest
 
-class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
+class DeviceStatusFragment :
+    Fragment(R.layout.fragment_device_status) {
 
     private var _binding: FragmentDeviceStatusBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var adapter: DeviceStatusAdapter
 
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val userPrefs by lazy {
+        UserPreferencesManager.create(requireContext())
+    }
 
     companion object {
         private const val ONLINE_TIMEOUT_MS = 60_000L
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentDeviceStatusBinding.bind(view)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
+        _binding =
+            FragmentDeviceStatusBinding.bind(view)
 
         setupRecycler()
+
         observeDevices()
 
         // BACK
-        binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+        binding.btnBack.setOnClickListener {
+
+            findNavController().popBackStack()
+        }
+
+        // SUMMARY ICON
+        binding.ivDevicesIcon.setImageResource(
+            R.drawable.ic_devices
+        )
     }
 
     // ---------------------------------------------------
     // RECYCLER
     // ---------------------------------------------------
+
     private fun setupRecycler() {
+
         adapter = DeviceStatusAdapter()
-        binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvDevices.adapter = adapter
+
+        binding.rvDevices.layoutManager =
+            LinearLayoutManager(requireContext())
+
+        binding.rvDevices.adapter =
+            adapter
     }
 
     // ---------------------------------------------------
     // OBSERVE DEVICES
     // ---------------------------------------------------
+
     private fun observeDevices() {
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            userPrefs.devicesFlow.collectLatest { list ->
-                val now = System.currentTimeMillis()
 
-                val uiList = list.map { dev ->
-                    val online = dev.lastSeenMillis != 0L &&
-                            ((now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS)
+        viewLifecycleOwner.lifecycleScope
+            .launchWhenStarted {
 
-                    DeviceCardUi(
-                        id = dev.id,
-                        aquaName = dev.aquaName ?: "",
-                        name = dev.name.ifBlank { "Device" },
-                        ip = dev.ip,
-                        serial = dev.serial,
-                        firmwareBuild = dev.firmwareBuild,
-                        isOnline = online
-                    )
-                }
+                userPrefs.devicesFlow
+                    .collectLatest { list ->
 
-                // Recycler update
-                adapter.submitList(uiList)
+                        val now =
+                            System.currentTimeMillis()
 
-                // Summary update
-                updateSummary(uiList)
+                        val uiList =
+                            list.map { dev ->
+
+                                val online =
+                                    dev.lastSeenMillis != 0L &&
+                                    ((now - dev.lastSeenMillis) <= ONLINE_TIMEOUT_MS)
+
+                                DeviceCardUi(
+                                    id = dev.id,
+
+                                    aquaName =
+                                        dev.aquaName,
+
+                                    name =
+                                        dev.name.ifBlank {
+                                            "Device"
+                                        },
+
+                                    ip =
+                                        dev.ip,
+
+                                    serial =
+                                        dev.serial,
+
+                                    firmwareBuild =
+                                        dev.firmwareBuild,
+
+                                    isOnline =
+                                        online
+                                )
+                            }
+
+                        // Recycler update
+                        adapter.submitList(
+                            uiList
+                        )
+
+                        // Summary update
+                        updateSummary(
+                            uiList
+                        )
+                    }
             }
-        }
     }
 
     // ---------------------------------------------------
-    // SUMMARY CARD
+    // SUMMARY
     // ---------------------------------------------------
-    private fun updateSummary(list: List<DeviceCardUi>) {
-        val onlineCount = list.count { it.isOnline }
-        val offlineCount = list.count { !it.isOnline }
 
-        if (list.isEmpty()) {
-            binding.tvOnlineSummary.text = "No Devices"
-            binding.tvOfflineSummary.text = "No registered device found"
-            binding.viewSummaryDot.setBackgroundResource(R.drawable.bg_offline_dot)
-        } else {
-            binding.tvOnlineSummary.text = "Devices"
-            binding.tvOfflineSummary.text = "$onlineCount Online • $offlineCount Offline"
+    private fun updateSummary(
+        list: List<DeviceCardUi>
+    ) {
 
-            if (onlineCount > 0) {
-                binding.viewSummaryDot.setBackgroundResource(R.drawable.bg_online_dot)
-            } else {
-                binding.viewSummaryDot.setBackgroundResource(R.drawable.bg_offline_dot)
+        val onlineCount =
+            list.count {
+                it.isOnline
             }
+
+        val offlineCount =
+            list.count {
+                !it.isOnline
+            }
+
+        // EMPTY
+        if (list.isEmpty()) {
+
+            binding.tvOnlineSummary.text =
+                "No Devices"
+
+            binding.tvOfflineSummary.text =
+                "No registered device found"
+
+            return
         }
 
-        // Devices icon sabit kalacak
-        binding.ivDevicesIcon.setImageResource(R.drawable.ic_devices)
+        // NORMAL
+        binding.tvOnlineSummary.text =
+            "Devices"
+
+        binding.tvOfflineSummary.text =
+            "$onlineCount Online • $offlineCount Offline"
     }
 
     // ---------------------------------------------------
     // DESTROY
     // ---------------------------------------------------
+
     override fun onDestroyView() {
+
         binding.rvDevices.adapter = null
+
         _binding = null
+
         super.onDestroyView()
     }
 }
