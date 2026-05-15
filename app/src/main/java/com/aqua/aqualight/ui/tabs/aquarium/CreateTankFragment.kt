@@ -12,7 +12,6 @@ class CreateTankFragment : Fragment() {
     private var _binding: FragmentCreateTankBinding? = null
     private val binding get() = _binding!!
 
-    // Step kontrolü
     private var currentStep = 1
     private val totalSteps = 5
 
@@ -33,7 +32,7 @@ class CreateTankFragment : Fragment() {
     }
 
     private fun setupButtons() {
-        // 🔙 Geri Butonu (header)
+        // 🔙 Geri Butonu
         binding.btnBack.setOnClickListener {
             if(currentStep == 1) {
                 requireActivity().onBackPressed()
@@ -43,8 +42,8 @@ class CreateTankFragment : Fragment() {
             }
         }
 
-        // Alt Next / Complete Butonları placeholder
-        binding.btnNext?.setOnClickListener {
+        // Next / Complete Butonu
+        binding.btnNext.setOnClickListener {
             if(currentStep < totalSteps) {
                 currentStep++
                 showStep(currentStep)
@@ -56,25 +55,23 @@ class CreateTankFragment : Fragment() {
     }
 
     private fun showStep(step: Int) {
-        // Önce tüm step layoutları gizle
-        binding.step1Layout.visibility = if(step==1) View.VISIBLE else View.GONE
-        binding.step2Layout.visibility = if(step==2) View.VISIBLE else View.GONE
-        binding.step3Layout.visibility = if(step==3) View.VISIBLE else View.GONE
-        binding.step4Layout.visibility = if(step==4) View.VISIBLE else View.GONE
-        binding.step5Layout.visibility = if(step==5) View.VISIBLE else View.GONE
+        // Step layoutları kontrol
+        binding.step1Layout.visibility = if(step == 1) View.VISIBLE else View.GONE
+        binding.step2Layout.visibility = if(step == 2) View.VISIBLE else View.GONE
+        binding.step3Layout.visibility = if(step == 3) View.VISIBLE else View.GONE
+        binding.step4Layout.visibility = if(step == 4) View.VISIBLE else View.GONE
+        binding.step5Layout.visibility = if(step == 5) View.VISIBLE else View.GONE
 
-        // Üst bar başlığını step’e göre değiştir
-        binding.tvTitle.text = when(step) {
-            1 -> "Step 1"
-            2 -> "Step 2"
-            3 -> "Step 3"
-            4 -> "Step 4"
-            5 -> "Step 5"
-            else -> "Create Tank"
-        }
+        // Başlık
+        binding.tvTitle.text = "Create Tank: Step $step"
 
-        // Next / Complete text değişimi
-        binding.btnNext?.text = if(step == totalSteps) "Complete" else "Next"
+        // Next / Complete
+        binding.btnNext.text = if(step == totalSteps) "Complete" else "Next"
+
+        // 🔹 Progress Bar güncelle
+        // max 100 olacak şekilde yüzde hesaplayacağız
+        val progressPercent = (step.toFloat() / totalSteps * 100).toInt()
+        binding.progressBar.progress = progressPercent
     }
 
     override fun onDestroyView() {

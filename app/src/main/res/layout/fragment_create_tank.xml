@@ -17,7 +17,6 @@
         android:background="@color/background_color"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- 🔙 Geri Butonu -->
         <ImageView
             android:id="@+id/btnBack"
             android:layout_width="32dp"
@@ -32,7 +31,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- 🏷️ Başlık -->
         <TextView
             android:id="@+id/tvTitle"
             style="@style/TextAppearance.Aqua.EditProfileTitle"
@@ -46,12 +44,13 @@
             app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 🔹 Step Layout Container -->
+    <!-- 🔹 Step Container -->
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/stepContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
-        app:layout_constraintBottom_toTopOf="@+id/buttonContainer"
+        app:layout_constraintBottom_toTopOf="@+id/bottomContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -60,13 +59,11 @@
             android:id="@+id/step1Layout"
             android:layout_width="0dp"
             android:layout_height="0dp"
-			android:text="Step 1: Başlık boş"
             android:visibility="visible"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <!-- Step 2 -->
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -74,76 +71,76 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="gone"
-			android:text="Step 2: Başlık boş"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <!-- Step 3 -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/step3Layout"
             android:layout_width="0dp"
             android:layout_height="0dp"
-			android:text="Step 3: Başlık boş"
             android:visibility="gone"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-           
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <!-- Step 4 -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/step4Layout"
             android:layout_width="0dp"
             android:layout_height="0dp"
-			android:text="Step 4: Başlık boş"
             android:visibility="gone"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-          
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_constraintEnd_toEndOf="parent"/>
 
         <!-- Step 5 -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/step5Layout"
             android:layout_width="0dp"
             android:layout_height="0dp"
-			android:text="Step 5: Başlık boş"
             android:visibility="gone"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-           
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
+            app:layout_constraintEnd_toEndOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 🔹 Alt Next Buton Container -->
+    <!-- 🔹 Alt Button + Progress Bar Container -->
     <LinearLayout
-        android:id="@+id/buttonContainer"
+        android:id="@+id/bottomContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end"
-        android:padding="16dp"
+        android:orientation="vertical"
+        android:background="#1C3252"   <!-- alt bar zemin rengi slightly farklı -->
+        android:padding="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Next / Complete Butonu -->
-       <com.google.android.material.button.MaterialButton
-    android:id="@+id/btnNext"
-    style="@style/Widget.Aqua.PrimaryButton"
-    android:layout_width="match_parent"
-    android:layout_height="48dp"
-    android:text="Next"/>
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:progress="0"
+            android:max="100"
+            android:progressTint="#1FAA59"
+            android:indeterminate="false"/>
+
+        <!-- Alt Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNext"
+            style="@style/Widget.Aqua.PrimaryButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="Next"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
