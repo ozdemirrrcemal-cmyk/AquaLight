@@ -94,7 +94,7 @@
                 android:layout_height="16dp"
                 android:layout_marginStart="4dp"
                 android:src="@drawable/ic_alarm_red"
-                android:visibility="gone" />
+                android:visibility="visible" />
         </LinearLayout>
 
         <!-- İnce ayraç -->
@@ -175,7 +175,7 @@
                     android:layout_marginTop="4dp"
                     android:text="CA-628206344"
                     android:textColor="#EEF4FF"
-                    android:textSize="8sp"
+                    android:textSize="7sp"
                     android:textStyle="normal" />
             </LinearLayout>
 
