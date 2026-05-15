@@ -28,7 +28,7 @@ class DeviceStatusAdapter(
             // Icon from enum
             binding.ivDeviceIcon.setImageResource(item.type.iconRes)
 
-            // Device info (sadece değer)
+            // Device info (sadece değerleri setle, başlıklar layout’tan geliyor)
             binding.tvIp.text = item.ip
             binding.tvSerial.text = item.serial
             binding.tvFirmware.text = if (item.firmwareBuild.isBlank()) "Unknown"
@@ -43,10 +43,6 @@ class DeviceStatusAdapter(
                 binding.tvStatus.text = "OFFLINE"
                 binding.viewStatusDot.setBackgroundResource(com.aqua.aqualight.R.drawable.bg_offline_dot)
             }
-
-            // Alarm göstergesi
-            binding.ivAlarm.visibility = if (item.hasAlarm) android.view.View.VISIBLE
-                                         else android.view.View.GONE
 
             // Kart tıklanma olayı
             binding.cardDevice.setOnClickListener {
