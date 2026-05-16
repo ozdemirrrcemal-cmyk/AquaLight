@@ -469,7 +469,7 @@ class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment
             setHintTextColor(Color.parseColor("#7F91AA"))
             setTextColor(Color.WHITE)
             textSize = 15f
-            singleLine = true
+            setSingleLine(true)
             background = null
             setPadding(16.dp(), 0, 16.dp(), 0)
         }
@@ -488,7 +488,7 @@ class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment
             text = "Choose a style or write your own aquarium concept."
             setTextColor(Color.parseColor("#8FA4BE"))
             textSize = 13f
-            lineSpacingExtra = 2.dp().toFloat()
+            setLineSpacing(2.dp().toFloat(), 1.0f)
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -777,7 +777,7 @@ class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment
             setTextColor(Color.WHITE)
             setHintTextColor(Color.parseColor("#7F91AA"))
             textSize = 16f
-            singleLine = true
+            setSingleLine(true)
             background = null
             setPadding(14.dp(), 0, 14.dp(), 0)
         }
