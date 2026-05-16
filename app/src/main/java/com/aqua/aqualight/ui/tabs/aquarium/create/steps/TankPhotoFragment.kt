@@ -23,7 +23,6 @@ import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
-import android.graphics.Color
 import java.io.File
 
 class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragment {
@@ -76,7 +75,9 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
         when {
             result.resultCode == Activity.RESULT_OK && data != null -> {
-                val croppedUri = UCrop.getOutput(data) ?: return@registerForActivityResult
+                val croppedUri = UCrop.getOutput(data)
+                    ?: return@registerForActivityResult
+
                 handleCroppedImage(croppedUri)
             }
 
@@ -187,7 +188,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             setShowCropGrid(true)
             setShowCropFrame(true)
 
-            // Alt scale/rotate kontrolleri kapalı.
+            // Alt scale / rotate kontrolleri kapalı.
             setHideBottomControls(true)
 
             // Üst bar
@@ -199,7 +200,6 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             )
 
             setToolbarColor(toolbarColor)
-            setStatusBarColor(toolbarColor)
             setToolbarWidgetColor(Color.WHITE)
 
             setToolbarCancelDrawable(R.drawable.ic_back)
@@ -234,7 +234,9 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
     private fun getTankPhotosDir(): File {
         return File(requireContext().filesDir, "tank_photos").apply {
-            if (!exists()) mkdirs()
+            if (!exists()) {
+                mkdirs()
+            }
         }
     }
 
