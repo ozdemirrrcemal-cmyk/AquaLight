@@ -172,14 +172,14 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     }
 
     fun openPlantPickerFlow() {
-        childFragmentManager.commit {
-            replace(
-                R.id.plantFlowContainer,
-                PlantPickerFragment(),
-                "PLANT_PICKER_FRAGMENT"
-            )
-
-            addToBackStack("PLANT_PICKER_FRAGMENT")
+    childFragmentManager.commit {
+        setReorderingAllowed(true)
+        add(
+            R.id.plantFlowContainer,
+            PlantPickerFragment(),
+            "PLANT_PICKER_FRAGMENT"
+        )
+        addToBackStack("PLANT_PICKER_FRAGMENT")
         }
     }
 
