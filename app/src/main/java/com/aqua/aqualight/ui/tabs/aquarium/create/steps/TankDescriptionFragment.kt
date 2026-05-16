@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.create.steps
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.aqua.aqualight.R
@@ -19,10 +20,47 @@ class TankDescriptionFragment : Fragment(R.layout.fragment_tank_description), Ta
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentTankDescriptionBinding.bind(view)
+
+        setupExistingValue()
+        setupInputListener()
+    }
+
+    private fun setupExistingValue() {
+        val currentDescription = viewModel.tankDraft.description
+
+        if (currentDescription.isNotBlank()) {
+            binding.etTankDescription.setText(currentDescription)
+            binding.etTankDescription.setSelection(currentDescription.length)
+        }
+    }
+
+    private fun setupInputListener() {
+        binding.etTankDescription.doAfterTextChanged {
+            binding.tilTankDescription.error = null
+        }
     }
 
     override fun validateAndSave(): Boolean {
-        viewModel.updateTankDescription("")
+        val description = binding.etTankDescription.text
+            ?.toString()
+            ?.trim()
+            .orEmpty()
+
+        if (description.isBlank()) {
+            binding.tilTankDescription.error = "Aquarium concept is required"
+            binding.etTankDescription.requestFocus()
+            return false
+        }
+
+        if (description.length < 10) {
+            binding.tilTankDescription.error = "Please enter at least 10 characters"
+            binding.etTankDescription.requestFocus()
+            return false
+        }
+
+        binding.tilTankDescription.error = null
+        viewModel.updateTankDescription(description)
+
         return true
     }
 
