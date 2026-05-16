@@ -5,11 +5,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import com.aqua.aqualight.databinding.BottomSheetPhotoSourceBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import androidx.core.os.bundleOf
-import com.aqua.aqualight.R
 
 class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
 
@@ -18,16 +17,27 @@ class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
 
     companion object {
         const val TAG = "PhotoSourceBottomSheet"
+
         const val REQUEST_KEY = "photo_source_request"
         const val RESULT_KEY = "photo_source_result"
+
         const val RESULT_CAMERA = "camera"
         const val RESULT_GALLERY = "gallery"
 
-        fun newInstance() = PhotoSourceBottomSheet()
+        private const val ARG_TITLE = "arg_title"
+
+        fun newInstance(
+            title: String = "Profile photo"
+        ): PhotoSourceBottomSheet {
+            return PhotoSourceBottomSheet().apply {
+                arguments = bundleOf(
+                    ARG_TITLE to title
+                )
+            }
+        }
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        // Material BottomSheetDialog
         return BottomSheetDialog(requireContext(), theme)
     }
 
@@ -43,7 +53,16 @@ class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 📷 Kamera
+        setupTexts()
+        setupClickListeners()
+    }
+
+    private fun setupTexts() {
+        binding.tvSheetTitle.text =
+            arguments?.getString(ARG_TITLE) ?: "Profile photo"
+    }
+
+    private fun setupClickListeners() {
         binding.btnCamera.setOnClickListener {
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
@@ -52,7 +71,6 @@ class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
             dismiss()
         }
 
-        // 🖼️ Galeri
         binding.btnGallery.setOnClickListener {
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,

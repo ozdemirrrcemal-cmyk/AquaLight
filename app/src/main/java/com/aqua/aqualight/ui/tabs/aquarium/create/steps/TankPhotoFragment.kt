@@ -48,19 +48,21 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private fun setupClickListeners() {
-        binding.btnCamera.setOnClickListener {
-            PhotoSourceBottomSheet
-                .newInstance()
-                .show(
-                    childFragmentManager,
-                    PhotoSourceBottomSheet.TAG
-                )
-        }
-
-        binding.btnAddPlant.setOnClickListener {
-            // Sonra Add Plant ekranına bağlanacak.
-        }
+    binding.btnCamera.setOnClickListener {
+        PhotoSourceBottomSheet
+            .newInstance(
+                title = "Aquarium photo"
+            )
+            .show(
+                childFragmentManager,
+                PhotoSourceBottomSheet.TAG
+            )
     }
+
+    binding.btnAddPlant.setOnClickListener {
+        // Sonra Add Plant ekranına bağlanacak.
+    }
+}
 
     private fun openCamera() {
         /*

@@ -22,14 +22,15 @@
 
     <!-- Title -->
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:gravity="center"
-        android:text="Profile photo"
-        android:textColor="@android:color/white"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+    android:id="@+id/tvSheetTitle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="20dp"
+    android:gravity="center"
+    android:text="Profile photo"
+    android:textColor="@android:color/white"
+    android:textSize="18sp"
+    android:textStyle="bold" />
 
     <!-- 📷 Camera -->
     <com.google.android.material.card.MaterialCardView
