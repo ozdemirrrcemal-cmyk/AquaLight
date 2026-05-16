@@ -16,16 +16,6 @@
         android:paddingTop="28dp"
         android:paddingBottom="24dp">
 
-        <!-- Sayfa başlığı -->
-        <TextView
-            android:id="@+id/tvStepContentTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Tank Name"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="34sp"
-            android:textStyle="bold" />
-
         <!-- Açıklama -->
         <TextView
             android:id="@+id/tvStepDescription"
