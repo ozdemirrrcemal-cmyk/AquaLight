@@ -59,6 +59,7 @@ class TankDescriptionFragment : Fragment(R.layout.fragment_tank_description), Ta
         }
 
         binding.tilTankDescription.error = null
+
         viewModel.updateTankDescription(description)
 
         return true
