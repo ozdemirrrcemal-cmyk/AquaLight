@@ -17,12 +17,38 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         ownerProducer = { requireParentFragment() }
     )
 
+    private var selectedPhotoUri: String? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentTankPhotoBinding.bind(view)
+
+        setupClickListeners()
+    }
+
+    private fun setupClickListeners() {
+        binding.btnCamera.setOnClickListener {
+            // Sonra burada fotoğraf seçme fragmentına geçeceğiz.
+            // Örnek:
+            // findNavController().navigate(R.id.action_tankPhoto_to_photoPickerFragment)
+        }
+
+        binding.btnAddPlant.setOnClickListener {
+            // Sonra burada plant ekleme/tag fragmentına geçeceğiz.
+            // Şimdilik boş.
+        }
     }
 
     override fun validateAndSave(): Boolean {
-        viewModel.updateTankPhoto(null)
+        /*
+            Şimdilik kullanıcı fotoğraf seçmese bile devam edebilsin.
+            Varsayılan görsel drawable/natureaquarium olarak ekranda gösteriliyor.
+
+            Kalıcı kayıt aşamasında:
+            selectedPhotoUri null ise default görsel kullanılacak.
+        */
+
+        viewModel.updateTankPhoto(selectedPhotoUri)
+
         return true
     }
 
