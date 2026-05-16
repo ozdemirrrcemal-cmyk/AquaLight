@@ -137,6 +137,8 @@
     <item name="android:textColor">@android:color/white</item>
     <item name="android:textSize">20sp</item>
 </style>
+
+
 <!-- 🔹 Step başlık textAppearance -->
 <style name="TextAppearance.Aqua.StepTitle"
     parent="TextAppearance.Material3.TitleSmall">
@@ -144,7 +146,7 @@
     <item name="android:fontFamily">@font/inter_regular</item>
     <item name="android:textColor">@android:color/white</item>
     <item name="android:textSize">18sp</item>
-    <item name="android:lineHeight">20sp</item>
+    <item name="android:lineSpacingExtra">2dp</item>
 </style>
 
 <!-- 🔹 Primary (mavi) buton – eski inline görünüme uygun -->
