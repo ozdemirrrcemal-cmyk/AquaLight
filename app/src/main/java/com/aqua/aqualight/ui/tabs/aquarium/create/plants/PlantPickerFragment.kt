@@ -39,7 +39,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         val title = TextView(requireContext()).apply {
             text = "Aquarium Plants"
-            textColor = Color.parseColor("#8FA4BE")
+            setTextColor(Color.parseColor("#8FA4BE"))
             textSize = 14f
             includeFontPadding = false
 
@@ -101,14 +101,14 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         val categoryText = TextView(requireContext()).apply {
             text = plant.category
-            textColor = Color.parseColor("#8FA4BE")
+            setTextColor(Color.parseColor("#8FA4BE"))
             textSize = 12f
             includeFontPadding = false
         }
 
         val plantNameText = TextView(requireContext()).apply {
             text = plant.name
-            textColor = Color.WHITE
+            setTextColor(Color.WHITE)
             textSize = 15f
             includeFontPadding = false
             maxLines = 2
