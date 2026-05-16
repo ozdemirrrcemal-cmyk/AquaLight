@@ -109,8 +109,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
- <!-- 🔹 Alt Progress Bar -->
+<!-- 🔹 Alt ProgressBar -->
 <ProgressBar
     android:id="@+id/progressBar"
     style="@android:style/Widget.ProgressBar.Horizontal"
@@ -122,7 +121,8 @@
     android:indeterminate="false"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintBottom_toTopOf="@id/bottomContainer" />
+    app:layout_constraintBottom_toTopOf="@id/bottomContainer"
+    android:layout_marginBottom="0dp" />
 
 <!-- 🔹 Alt Button Container -->
 <LinearLayout
@@ -136,7 +136,6 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- Alt Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNext"
         style="@style/Widget.Aqua.PrimaryButton"
@@ -144,5 +143,4 @@
         android:layout_height="48dp"
         android:text="Next"/>
 </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
