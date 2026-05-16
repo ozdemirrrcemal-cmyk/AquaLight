@@ -6,4 +6,9 @@
         name="profile_photos"
         path="profile_photos/" />
 
+    <!-- /data/data/<package>/files/tank_photos/ -->
+    <files-path
+        name="tank_photos"
+        path="tank_photos/" />
+
 </paths>
