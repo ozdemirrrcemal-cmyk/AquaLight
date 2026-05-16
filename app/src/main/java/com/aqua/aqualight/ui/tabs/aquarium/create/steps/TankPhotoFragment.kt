@@ -276,37 +276,45 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         }
 
         plants.forEachIndexed { index, plant ->
+
             val card = MaterialCardView(requireContext()).apply {
-                radius = 18.dp().toFloat()
+                radius = 16.dp().toFloat()
                 strokeWidth = 1.dp()
-                strokeColor = Color.parseColor("#1E5A46")
-                setCardBackgroundColor(Color.parseColor("#154736"))
+                strokeColor = Color.parseColor("#223A57")
+                setCardBackgroundColor(Color.parseColor("#10233A"))
+                useCompatPadding = false
 
                 val params = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
-                params.bottomMargin = 12.dp()
+                params.bottomMargin = 10.dp()
                 layoutParams = params
             }
 
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(14.dp(), 12.dp(), 14.dp(), 12.dp())
+                setPadding(
+                    14.dp(),
+                    11.dp(),
+                    12.dp(),
+                    11.dp()
+                )
             }
 
             val number = TextView(requireContext()).apply {
                 text = "${index + 1}"
                 gravity = Gravity.CENTER
-                textSize = 15f
+                textSize = 13f
+                includeFontPadding = false
                 setTextColor(Color.WHITE)
                 setTypeface(null, Typeface.BOLD)
-                setBackgroundColor(Color.parseColor("#A6FFFFFF"))
+                setBackgroundResource(R.drawable.bg_plant_number_circle)
 
                 layoutParams = LinearLayout.LayoutParams(
-                    42.dp(),
-                    42.dp()
+                    34.dp(),
+                    34.dp()
                 )
             }
 
@@ -324,15 +332,48 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
             val categoryText = TextView(requireContext()).apply {
                 text = plant.category
-                textSize = 13f
-                setTextColor(Color.parseColor("#9FB0C5"))
+                textSize = 12f
+                includeFontPadding = false
+                setTextColor(Color.parseColor("#8FA4BE"))
             }
 
             val nameText = TextView(requireContext()).apply {
                 text = plant.plantName
-                textSize = 15f
+                textSize = 14f
+                includeFontPadding = false
+                maxLines = 2
                 setTextColor(Color.WHITE)
-                setTypeface(null, Typeface.BOLD)
+
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                params.topMargin = 5.dp()
+                layoutParams = params
+            }
+
+            val delete = TextView(requireContext()).apply {
+                text = "×"
+                textSize = 23f
+                gravity = Gravity.CENTER
+                includeFontPadding = false
+                setTextColor(Color.parseColor("#8FA4BE"))
+
+                setOnClickListener {
+                    val updatedPlants = viewModel.tankDraft.plants
+                        .toMutableList()
+                        .apply {
+                            removeAt(index)
+                        }
+
+                    viewModel.updateTankPlants(updatedPlants)
+                    renderSelectedPlants()
+                }
+
+                layoutParams = LinearLayout.LayoutParams(
+                    34.dp(),
+                    34.dp()
+                )
             }
 
             textBox.addView(categoryText)
@@ -340,6 +381,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
             row.addView(number)
             row.addView(textBox)
+            row.addView(delete)
 
             card.addView(row)
             binding.selectedPlantsContainer.addView(card)
