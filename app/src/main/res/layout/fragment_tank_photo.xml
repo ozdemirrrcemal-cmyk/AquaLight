@@ -16,17 +16,6 @@
         android:paddingTop="28dp"
         android:paddingBottom="24dp">
 
-        <!-- Açıklama -->
-        <TextView
-            android:id="@+id/tvStepDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Add a visual reference for this aquarium. You can use a photo that represents the final look, inspiration, or current setup."
-            android:textColor="#8FA4BE"
-            android:textSize="14sp"
-            android:lineSpacingExtra="3dp" />
-
         <!-- Fotoğraf kartı -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardPhotoContainer"
