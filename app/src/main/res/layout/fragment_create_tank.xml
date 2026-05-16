@@ -50,7 +50,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
-        app:layout_constraintBottom_toTopOf="@+id/bottomContainer"
+        app:layout_constraintBottom_toTopOf="@id/bottomContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -60,11 +60,11 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="visible"
+            android:padding="24dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:padding="24dp">
+            app:layout_constraintEnd_toEndOf="parent">
 
             <!-- Başlık -->
             <TextView
@@ -80,31 +80,37 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- Input alanı -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tankNameInputLayout"
-                android:layout_width="0dp"
+            <!-- Input alanı (TextInputLayout + TextInputEditText) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTankName"
+                style="@style/Widget.Aqua.CardStyles"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Tank Name"
-                app:boxBackgroundMode="filled"
-                app:boxCornerRadiusTopStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:hintTextColor="@color/gray_hint"
                 app:layout_constraintTop_toBottomOf="@id/tvStep1Title"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etTankName"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:inputType="textCapWords"
-                    android:textColor="@android:color/white"
-                    android:fontFamily="@font/inter_regular"/>
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <EditText
+                        android:id="@+id/etTankName"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@null"
+                        android:hint="Tank Name"
+                        android:inputType="textCapWords"
+                        android:padding="0dp"
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/inter_regular"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
