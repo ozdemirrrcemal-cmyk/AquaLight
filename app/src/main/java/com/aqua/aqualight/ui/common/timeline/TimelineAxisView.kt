@@ -33,15 +33,21 @@ class TimelineAxisView @JvmOverloads constructor(
 
   private val nodeCoverColor = Color.parseColor("#152B45")
 
+  private val axisOffsetX = -3f.dp()
+
+  private val nodeOuterRadius = 10f.dp()
+  private val nodeCoverRadius = 13f.dp()
+  private val nodeInnerRadius = 8f.dp()
+
   private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     color = axisLineColor
-    strokeWidth = 2.dp().toFloat()
+    strokeWidth = 2f.dp()
     style = Paint.Style.STROKE
     strokeCap = Paint.Cap.ROUND
     pathEffect = DashPathEffect(
       floatArrayOf(
-        8.dp().toFloat(),
-        9.dp().toFloat()
+        8f.dp(),
+        9f.dp()
       ),
       0f
     )
@@ -54,7 +60,7 @@ class TimelineAxisView @JvmOverloads constructor(
 
   private val nodeStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     style = Paint.Style.STROKE
-    strokeWidth = 3.dp().toFloat()
+    strokeWidth = 2f.dp()
   }
 
   private val nodeFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -74,7 +80,7 @@ class TimelineAxisView @JvmOverloads constructor(
   ) {
     super.onDraw(canvas)
 
-    val centerX = width / 2f
+    val centerX = width / 2f + axisOffsetX
 
     canvas.drawLine(
       centerX,
@@ -105,14 +111,14 @@ class TimelineAxisView @JvmOverloads constructor(
     canvas.drawCircle(
       centerX,
       centerY,
-      13.dp().toFloat(),
+      nodeCoverRadius,
       nodeCoverPaint
     )
 
     canvas.drawCircle(
       centerX,
       centerY,
-      10.dp().toFloat(),
+      nodeOuterRadius,
       nodeStrokePaint
     )
 
@@ -120,7 +126,7 @@ class TimelineAxisView @JvmOverloads constructor(
       canvas.drawCircle(
         centerX,
         centerY,
-        4.dp().toFloat(),
+        nodeInnerRadius,
         nodeFillPaint
       )
     }
@@ -134,7 +140,7 @@ class TimelineAxisView @JvmOverloads constructor(
     }
   }
 
-  private fun Int.dp(): Int {
-    return (this * resources.displayMetrics.density).toInt()
+  private fun Float.dp(): Float {
+    return this * resources.displayMetrics.density
   }
 }
