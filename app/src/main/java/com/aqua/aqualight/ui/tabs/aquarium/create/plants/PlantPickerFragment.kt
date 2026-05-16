@@ -2,11 +2,14 @@ package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantPickerBinding
@@ -23,6 +26,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         _binding = FragmentPlantPickerBinding.bind(view)
 
         setupClickListeners()
+        setupSearch()
         renderPlantList(plants)
     }
 
@@ -30,6 +34,50 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         binding.btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
+
+        binding.btnClearSearch.setOnClickListener {
+            binding.etSearchPlants.setText("")
+        }
+    }
+
+    private fun setupSearch() {
+        binding.etSearchPlants.addTextChangedListener(
+            object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) = Unit
+
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int
+                ) {
+                    val query = s
+                        ?.toString()
+                        ?.trim()
+                        .orEmpty()
+
+                    binding.btnClearSearch.isVisible = query.isNotEmpty()
+
+                    val filteredPlants = if (query.isBlank()) {
+                        plants
+                    } else {
+                        plants.filter { plant ->
+                            plant.name.contains(query, ignoreCase = true) ||
+                                plant.category.contains(query, ignoreCase = true)
+                        }
+                    }
+
+                    renderPlantList(filteredPlants)
+                }
+
+                override fun afterTextChanged(s: Editable?) = Unit
+            }
+        )
     }
 
     private fun renderPlantList(
@@ -38,7 +86,12 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         binding.listContainer.removeAllViews()
 
         val title = TextView(requireContext()).apply {
-            text = "Aquarium Plants"
+            text = if (plantList.size == plants.size) {
+                "Aquarium Plants"
+            } else {
+                "${plantList.size} plants found"
+            }
+
             setTextColor(Color.parseColor("#8FA4BE"))
             textSize = 14f
             includeFontPadding = false
@@ -53,11 +106,35 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         binding.listContainer.addView(title)
 
+        if (plantList.isEmpty()) {
+            showEmptySearchResult()
+            return
+        }
+
         plantList.forEach { plant ->
             binding.listContainer.addView(
                 createPlantCard(plant)
             )
         }
+    }
+
+    private fun showEmptySearchResult() {
+        val emptyText = TextView(requireContext()).apply {
+            text = "No plants found"
+            setTextColor(Color.parseColor("#8FA4BE"))
+            textSize = 15f
+            gravity = Gravity.CENTER
+            includeFontPadding = false
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 32.dp()
+            layoutParams = params
+        }
+
+        binding.listContainer.addView(emptyText)
     }
 
     private fun createPlantCard(
