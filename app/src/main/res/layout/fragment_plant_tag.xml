@@ -47,8 +47,8 @@
 
        <com.google.android.material.card.MaterialCardView
     android:id="@+id/btnConfirm"
-    android:layout_width="42dp"
-    android:layout_height="42dp"
+    android:layout_width="32dp"
+    android:layout_height="32dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackgroundBorderless"
@@ -63,8 +63,8 @@
     app:layout_constraintBottom_toBottomOf="parent">
 
     <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
         android:layout_gravity="center"
         android:src="@drawable/ic_check_24"
         app:tint="@android:color/white" />

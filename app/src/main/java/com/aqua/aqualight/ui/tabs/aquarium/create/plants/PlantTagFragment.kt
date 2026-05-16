@@ -1,10 +1,12 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.os.bundleOf
@@ -63,11 +65,13 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
             viewLifecycleOwner
         ) { _, bundle ->
 
-            val plantName = bundle.getString(PlantPickerFragment.RESULT_PLANT_NAME)
-                ?: return@setFragmentResultListener
+            val plantName = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_NAME
+            ) ?: return@setFragmentResultListener
 
-            val category = bundle.getString(PlantPickerFragment.RESULT_PLANT_CATEGORY)
-                ?: return@setFragmentResultListener
+            val category = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_CATEGORY
+            ) ?: return@setFragmentResultListener
 
             selectedPlants.add(
                 TankPlantTag(
@@ -120,8 +124,9 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         binding.plantListContainer.removeAllViews()
 
         selectedPlants.forEachIndexed { index, plant ->
+
             val card = MaterialCardView(requireContext()).apply {
-                radius = 18.dp().toFloat()
+                radius = 16.dp().toFloat()
                 strokeWidth = 1.dp()
                 strokeColor = Color.parseColor("#223A57")
                 setCardBackgroundColor(Color.parseColor("#10233A"))
@@ -131,27 +136,33 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
-                params.bottomMargin = 12.dp()
+                params.bottomMargin = 10.dp()
                 layoutParams = params
             }
 
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(16.dp(), 14.dp(), 14.dp(), 14.dp())
+                setPadding(
+                    14.dp(),
+                    11.dp(),
+                    12.dp(),
+                    11.dp()
+                )
             }
 
             val number = TextView(requireContext()).apply {
                 text = "${index + 1}"
                 gravity = Gravity.CENTER
-                textSize = 15f
+                textSize = 13f
+                includeFontPadding = false
                 setTextColor(Color.WHITE)
-                setTypeface(null, android.graphics.Typeface.BOLD)
-                background = null
+                setTypeface(null, Typeface.BOLD)
+                setBackgroundResource(R.drawable.bg_plant_number_circle)
 
                 layoutParams = LinearLayout.LayoutParams(
-                    42.dp(),
-                    42.dp()
+                    34.dp(),
+                    34.dp()
                 )
             }
 
@@ -169,21 +180,33 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
             val categoryText = TextView(requireContext()).apply {
                 text = plant.category
-                textSize = 13f
+                textSize = 12f
+                includeFontPadding = false
                 setTextColor(Color.parseColor("#8FA4BE"))
             }
 
             val nameText = TextView(requireContext()).apply {
                 text = plant.plantName
-                textSize = 15f
+                textSize = 14f
+                includeFontPadding = false
+                maxLines = 2
                 setTextColor(Color.WHITE)
+
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                params.topMargin = 5.dp()
+                layoutParams = params
             }
 
             val delete = TextView(requireContext()).apply {
                 text = "×"
-                textSize = 26f
+                textSize = 23f
                 gravity = Gravity.CENTER
+                includeFontPadding = false
                 setTextColor(Color.parseColor("#8FA4BE"))
+
                 setOnClickListener {
                     selectedPlants.removeAt(index)
                     renderPlants()
@@ -191,8 +214,8 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 }
 
                 layoutParams = LinearLayout.LayoutParams(
-                    36.dp(),
-                    36.dp()
+                    34.dp(),
+                    34.dp()
                 )
             }
 
@@ -209,25 +232,27 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun renderMarkers() {
-        binding.markerContainer.removeAllViews()
-
         binding.markerContainer.post {
+            binding.markerContainer.removeAllViews()
+
             val width = binding.markerContainer.width
             val height = binding.markerContainer.height
 
             selectedPlants.forEachIndexed { index, plant ->
+
                 val marker = TextView(requireContext()).apply {
                     text = "${index + 1}"
                     gravity = Gravity.CENTER
-                    textSize = 13f
+                    textSize = 12f
+                    includeFontPadding = false
                     setTextColor(Color.WHITE)
-                    setTypeface(null, android.graphics.Typeface.BOLD)
-                    setBackgroundColor(Color.parseColor("#80000000"))
+                    setTypeface(null, Typeface.BOLD)
+                    setBackgroundResource(R.drawable.bg_plant_marker_circle)
                 }
 
-                val size = 32.dp()
+                val size = 28.dp()
 
-                val params = android.widget.FrameLayout.LayoutParams(
+                val params = FrameLayout.LayoutParams(
                     size,
                     size
                 )
