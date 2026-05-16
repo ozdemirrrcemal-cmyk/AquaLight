@@ -84,7 +84,12 @@
 <color name="snackbar_warning">#F9A825</color>
 <color name="aqua_accent">#64FFDA</color>
 <color name="card_stroke">#3A4A5E</color>
-
+<color name="aqua_input_background">#16314D</color>
+<color name="aqua_input_stroke_focused">#2B93F6</color>
+<color name="aqua_input_stroke_unfocused">#355679</color>
+<color name="aqua_input_stroke_disabled">#223A57</color>
+<color name="aqua_input_hint_focused">#8ABEF5</color>
+<color name="aqua_input_hint_unfocused">#7F91AA</color>
 <color name="white">#FFFFFF</color>
 
 </resources>

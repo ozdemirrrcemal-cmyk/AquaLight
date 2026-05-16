@@ -69,29 +69,28 @@
                     android:layout_marginTop="18dp"
                     android:hint="Tank name"
                     app:boxBackgroundMode="outline"
-                    app:boxBackgroundColor="#16314D"
+                    app:boxBackgroundColor="@color/aqua_input_background"
                     app:boxCornerRadiusTopStart="14dp"
                     app:boxCornerRadiusTopEnd="14dp"
                     app:boxCornerRadiusBottomStart="14dp"
                     app:boxCornerRadiusBottomEnd="14dp"
-                    app:boxStrokeColor="#355679"
+                    app:boxStrokeColor="@color/aqua_input_stroke_color"
                     app:boxStrokeWidth="1dp"
                     app:boxStrokeWidthFocused="2dp"
-                    app:hintTextColor="#8ABEF5"
+                    app:hintTextColor="@color/aqua_input_hint_color"
                     app:errorEnabled="true">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etTankName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@android:color/transparent"
                         android:inputType="textCapWords"
                         android:maxLength="32"
-                        android:paddingStart="4dp"
-                        android:paddingEnd="4dp"
+                        android:minHeight="58dp"
                         android:singleLine="true"
                         android:textColor="?attr/colorOnSurface"
-                        android:textColorHint="#7F91AA"
+                        android:textColorHint="@color/aqua_input_hint_unfocused"
+                        android:textCursorDrawable="@null"
                         android:textSize="16sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
