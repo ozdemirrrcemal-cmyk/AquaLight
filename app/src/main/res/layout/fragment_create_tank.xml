@@ -87,4 +87,17 @@
 
     </LinearLayout>
 
+     <androidx.fragment.app.FragmentContainerView
+    android:id="@+id/plantFlowContainer"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:visibility="gone"
+    android:background="@color/background_color"
+    android:clickable="true"
+    android:focusable="true"
+    android:elevation="32dp"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

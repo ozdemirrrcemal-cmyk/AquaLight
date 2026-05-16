@@ -1,0 +1,256 @@
+package com.aqua.aqualight.ui.tabs.aquarium.create.plants
+
+import android.graphics.Color
+import android.os.Bundle
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import coil3.load
+import coil3.request.crossfade
+import com.aqua.aqualight.R
+import com.aqua.aqualight.databinding.FragmentPlantTagBinding
+import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment
+import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
+import com.google.android.material.card.MaterialCardView
+
+class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
+
+    private var _binding: FragmentPlantTagBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: CreateTankViewModel by viewModels(
+        ownerProducer = { requireParentFragment() }
+    )
+
+    private val selectedPlants = mutableListOf<TankPlantTag>()
+
+    private var pendingMarkerX: Float = 0.5f
+    private var pendingMarkerY: Float = 0.5f
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        _binding = FragmentPlantTagBinding.bind(view)
+
+        selectedPlants.clear()
+        selectedPlants.addAll(viewModel.tankDraft.plants)
+
+        setupImage()
+        setupResultListener()
+        setupClickListeners()
+        renderPlants()
+        renderMarkers()
+    }
+
+    private fun setupImage() {
+        val photoUri = viewModel.tankDraft.photoUri
+
+        if (!photoUri.isNullOrBlank()) {
+            binding.imgAquariumPhoto.load(photoUri) {
+                crossfade(true)
+            }
+        } else {
+            binding.imgAquariumPhoto.setImageResource(R.drawable.nature_aquarium)
+        }
+    }
+
+    private fun setupResultListener() {
+        parentFragmentManager.setFragmentResultListener(
+            PlantPickerFragment.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
+
+            val plantName = bundle.getString(PlantPickerFragment.RESULT_PLANT_NAME)
+                ?: return@setFragmentResultListener
+
+            val category = bundle.getString(PlantPickerFragment.RESULT_PLANT_CATEGORY)
+                ?: return@setFragmentResultListener
+
+            selectedPlants.add(
+                TankPlantTag(
+                    plantName = plantName,
+                    category = category,
+                    markerX = pendingMarkerX,
+                    markerY = pendingMarkerY
+                )
+            )
+
+            renderPlants()
+            renderMarkers()
+        }
+    }
+
+    private fun setupClickListeners() {
+        binding.btnBack.setOnClickListener {
+            (requireParentFragment() as? CreateTankFragment)
+                ?.closePlantTagFlow()
+        }
+
+        binding.btnConfirm.setOnClickListener {
+            viewModel.updateTankPlants(selectedPlants)
+
+            parentFragmentManager.setFragmentResult(
+                RESULT_KEY,
+                bundleOf(RESULT_UPDATED to true)
+            )
+
+            (requireParentFragment() as? CreateTankFragment)
+                ?.closePlantTagFlow()
+        }
+
+        binding.imageTouchArea.setOnTouchListener { view, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                pendingMarkerX = event.x / view.width.toFloat()
+                pendingMarkerY = event.y / view.height.toFloat()
+
+                (requireParentFragment() as? CreateTankFragment)
+                    ?.openPlantPickerFlow()
+
+                true
+            } else {
+                true
+            }
+        }
+    }
+
+    private fun renderPlants() {
+        binding.plantListContainer.removeAllViews()
+
+        selectedPlants.forEachIndexed { index, plant ->
+            val card = MaterialCardView(requireContext()).apply {
+                radius = 18.dp().toFloat()
+                strokeWidth = 1.dp()
+                strokeColor = Color.parseColor("#223A57")
+                setCardBackgroundColor(Color.parseColor("#10233A"))
+                useCompatPadding = false
+
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                params.bottomMargin = 12.dp()
+                layoutParams = params
+            }
+
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(16.dp(), 14.dp(), 14.dp(), 14.dp())
+            }
+
+            val number = TextView(requireContext()).apply {
+                text = "${index + 1}"
+                gravity = Gravity.CENTER
+                textSize = 15f
+                setTextColor(Color.WHITE)
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                background = null
+
+                layoutParams = LinearLayout.LayoutParams(
+                    42.dp(),
+                    42.dp()
+                )
+            }
+
+            val textBox = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.VERTICAL
+
+                val params = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+                params.marginStart = 14.dp()
+                layoutParams = params
+            }
+
+            val categoryText = TextView(requireContext()).apply {
+                text = plant.category
+                textSize = 13f
+                setTextColor(Color.parseColor("#8FA4BE"))
+            }
+
+            val nameText = TextView(requireContext()).apply {
+                text = plant.plantName
+                textSize = 15f
+                setTextColor(Color.WHITE)
+            }
+
+            val delete = TextView(requireContext()).apply {
+                text = "×"
+                textSize = 26f
+                gravity = Gravity.CENTER
+                setTextColor(Color.parseColor("#8FA4BE"))
+                setOnClickListener {
+                    selectedPlants.removeAt(index)
+                    renderPlants()
+                    renderMarkers()
+                }
+
+                layoutParams = LinearLayout.LayoutParams(
+                    36.dp(),
+                    36.dp()
+                )
+            }
+
+            textBox.addView(categoryText)
+            textBox.addView(nameText)
+
+            row.addView(number)
+            row.addView(textBox)
+            row.addView(delete)
+
+            card.addView(row)
+            binding.plantListContainer.addView(card)
+        }
+    }
+
+    private fun renderMarkers() {
+        binding.markerContainer.removeAllViews()
+
+        binding.markerContainer.post {
+            val width = binding.markerContainer.width
+            val height = binding.markerContainer.height
+
+            selectedPlants.forEachIndexed { index, plant ->
+                val marker = TextView(requireContext()).apply {
+                    text = "${index + 1}"
+                    gravity = Gravity.CENTER
+                    textSize = 13f
+                    setTextColor(Color.WHITE)
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                    setBackgroundColor(Color.parseColor("#80000000"))
+                }
+
+                val size = 32.dp()
+
+                val params = android.widget.FrameLayout.LayoutParams(
+                    size,
+                    size
+                )
+
+                marker.x = (plant.markerX * width) - size / 2f
+                marker.y = (plant.markerY * height) - size / 2f
+
+                binding.markerContainer.addView(marker, params)
+            }
+        }
+    }
+
+    private fun Int.dp(): Int {
+        return (this * resources.displayMetrics.density).toInt()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    companion object {
+        const val RESULT_KEY = "plant_tag_result"
+        const val RESULT_UPDATED = "plant_tag_updated"
+    }
+}

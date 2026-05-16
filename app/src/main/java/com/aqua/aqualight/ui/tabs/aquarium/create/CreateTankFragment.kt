@@ -3,12 +3,16 @@ package com.aqua.aqualight.ui.tabs.aquarium.create
 import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentCreateTankBinding
+import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
+import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankDescriptionFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankInfoFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankMaterialFragment
@@ -45,7 +49,9 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         setupSystemBackButton()
         setupNextButton()
 
-        val currentChild = childFragmentManager.findFragmentById(R.id.stepFragmentContainer)
+        val currentChild = childFragmentManager.findFragmentById(
+            R.id.stepFragmentContainer
+        )
 
         if (currentChild == null) {
             showStep(currentStepIndex)
@@ -58,6 +64,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
     private fun setupBackButton() {
         binding.btnBack.setOnClickListener {
+            if (handlePlantFlowBack()) {
+                return@setOnClickListener
+            }
+
             goBack()
         }
     }
@@ -67,6 +77,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
+                    if (handlePlantFlowBack()) {
+                        return
+                    }
+
                     goBack()
                 }
             }
@@ -143,6 +157,63 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
             R.id.aquariumFragment,
             false
         )
+    }
+
+    fun openPlantTagFlow() {
+        binding.plantFlowContainer.isVisible = true
+
+        childFragmentManager.commit {
+            replace(
+                R.id.plantFlowContainer,
+                PlantTagFragment(),
+                "PLANT_TAG_FRAGMENT"
+            )
+        }
+    }
+
+    fun openPlantPickerFlow() {
+        childFragmentManager.commit {
+            replace(
+                R.id.plantFlowContainer,
+                PlantPickerFragment(),
+                "PLANT_PICKER_FRAGMENT"
+            )
+
+            addToBackStack("PLANT_PICKER_FRAGMENT")
+        }
+    }
+
+    fun closePlantTagFlow() {
+        childFragmentManager.popBackStack(
+            null,
+            FragmentManager.POP_BACK_STACK_INCLUSIVE
+        )
+
+        val currentPlantFragment = childFragmentManager.findFragmentById(
+            R.id.plantFlowContainer
+        )
+
+        if (currentPlantFragment != null) {
+            childFragmentManager.commit {
+                remove(currentPlantFragment)
+            }
+        }
+
+        binding.plantFlowContainer.isVisible = false
+    }
+
+    private fun handlePlantFlowBack(): Boolean {
+        if (!binding.plantFlowContainer.isVisible) {
+            return false
+        }
+
+        if (childFragmentManager.backStackEntryCount > 0) {
+            childFragmentManager.popBackStack()
+        } else {
+            closePlantTagFlow()
+        }
+
+        return true
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

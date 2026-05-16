@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import androidx.lifecycle.ViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
 
 class CreateTankViewModel : ViewModel() {
 
@@ -25,6 +26,12 @@ class CreateTankViewModel : ViewModel() {
         )
     }
 
+    fun updateTankPlants(plants: List<TankPlantTag>) {
+        tankDraft = tankDraft.copy(
+            plants = plants.toList()
+        )
+    }
+
     fun updateTankMaterial(material: String) {
         tankDraft = tankDraft.copy(
             material = material
@@ -40,12 +47,21 @@ class CreateTankViewModel : ViewModel() {
     fun completeTank() {
         /*
             Başlangıç aşaması:
-            Şimdilik burada database kaydı yok.
+            Şimdilik burada kalıcı kayıt yok.
+
+            Complete aşamasında hazır olacak bilgiler:
+
+            tankDraft.name
+            tankDraft.description
+            tankDraft.photoUri
+            tankDraft.plants
+            tankDraft.material
+            tankDraft.info
 
             Sonra buraya:
-            - Room insert
-            - Repository çağrısı
-            - AquariumFragment listesini güncelleme
+            - UserPreferencesManager addTank
+            - Proto DataStore kayıt
+            - AquariumFragment liste güncelleme
             eklenecek.
         */
     }

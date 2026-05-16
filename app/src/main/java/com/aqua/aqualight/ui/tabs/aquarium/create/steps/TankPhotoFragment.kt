@@ -4,9 +4,13 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -20,7 +24,10 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankPhotoBinding
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
+import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
 import java.io.File
@@ -97,8 +104,27 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentTankPhotoBinding.bind(view)
 
+        setupExistingPhoto()
         setupPhotoSourceResultListener()
+        setupPlantTagResultListener()
         setupClickListeners()
+        renderSelectedPlants()
+    }
+
+    private fun setupExistingPhoto() {
+        val currentPhotoUri = viewModel.tankDraft.photoUri
+
+        if (!currentPhotoUri.isNullOrBlank()) {
+            selectedPhotoUri = currentPhotoUri
+
+            binding.imgAquariumPhoto.load(currentPhotoUri) {
+                placeholder(R.drawable.nature_aquarium)
+                error(R.drawable.nature_aquarium)
+                crossfade(true)
+            }
+        } else {
+            binding.imgAquariumPhoto.setImageResource(R.drawable.nature_aquarium)
+        }
     }
 
     private fun setupPhotoSourceResultListener() {
@@ -119,6 +145,15 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         }
     }
 
+    private fun setupPlantTagResultListener() {
+        parentFragmentManager.setFragmentResultListener(
+            PlantTagFragment.RESULT_KEY,
+            viewLifecycleOwner
+        ) { _, _ ->
+            renderSelectedPlants()
+        }
+    }
+
     private fun setupClickListeners() {
         binding.btnCamera.setOnClickListener {
             PhotoSourceBottomSheet
@@ -132,7 +167,10 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         }
 
         binding.btnAddPlant.setOnClickListener {
-            // Sonra Add Plant ekranına bağlanacak.
+            viewModel.updateTankPhoto(selectedPhotoUri)
+
+            (requireParentFragment() as? CreateTankFragment)
+                ?.openPlantTagFlow()
         }
     }
 
@@ -183,15 +221,11 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         val destUri = Uri.fromFile(destFile)
 
         val options = UCrop.Options().apply {
-            // Akvaryum fotoğrafı yatay olacak.
             setCircleDimmedLayer(false)
             setShowCropGrid(true)
             setShowCropFrame(true)
-
-            // Alt scale / rotate kontrolleri kapalı.
             setHideBottomControls(true)
 
-            // Üst bar
             setToolbarTitle("Crop aquarium photo")
 
             val toolbarColor = ContextCompat.getColor(
@@ -201,7 +235,6 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
             setToolbarColor(toolbarColor)
             setToolbarWidgetColor(Color.WHITE)
-
             setToolbarCancelDrawable(R.drawable.ic_back)
         }
 
@@ -230,6 +263,87 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         }
 
         selectedPhotoUri = contentUri.toString()
+        viewModel.updateTankPhoto(selectedPhotoUri)
+    }
+
+    private fun renderSelectedPlants() {
+        val plants = viewModel.tankDraft.plants
+
+        binding.selectedPlantsContainer.removeAllViews()
+
+        if (plants.isEmpty()) {
+            return
+        }
+
+        plants.forEachIndexed { index, plant ->
+            val card = MaterialCardView(requireContext()).apply {
+                radius = 18.dp().toFloat()
+                strokeWidth = 1.dp()
+                strokeColor = Color.parseColor("#1E5A46")
+                setCardBackgroundColor(Color.parseColor("#154736"))
+
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                params.bottomMargin = 12.dp()
+                layoutParams = params
+            }
+
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(14.dp(), 12.dp(), 14.dp(), 12.dp())
+            }
+
+            val number = TextView(requireContext()).apply {
+                text = "${index + 1}"
+                gravity = Gravity.CENTER
+                textSize = 15f
+                setTextColor(Color.WHITE)
+                setTypeface(null, Typeface.BOLD)
+                setBackgroundColor(Color.parseColor("#A6FFFFFF"))
+
+                layoutParams = LinearLayout.LayoutParams(
+                    42.dp(),
+                    42.dp()
+                )
+            }
+
+            val textBox = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.VERTICAL
+
+                val params = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+                params.marginStart = 14.dp()
+                layoutParams = params
+            }
+
+            val categoryText = TextView(requireContext()).apply {
+                text = plant.category
+                textSize = 13f
+                setTextColor(Color.parseColor("#9FB0C5"))
+            }
+
+            val nameText = TextView(requireContext()).apply {
+                text = plant.plantName
+                textSize = 15f
+                setTextColor(Color.WHITE)
+                setTypeface(null, Typeface.BOLD)
+            }
+
+            textBox.addView(categoryText)
+            textBox.addView(nameText)
+
+            row.addView(number)
+            row.addView(textBox)
+
+            card.addView(row)
+            binding.selectedPlantsContainer.addView(card)
+        }
     }
 
     private fun getTankPhotosDir(): File {
@@ -268,6 +382,10 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             .setMessage(message)
             .setPositiveButton(android.R.string.ok, null)
             .show()
+    }
+
+    private fun Int.dp(): Int {
+        return (this * resources.displayMetrics.density).toInt()
     }
 
     override fun validateAndSave(): Boolean {
