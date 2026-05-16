@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/background_color">
 
+    <!-- Header -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerContainer"
         android:layout_width="match_parent"
@@ -14,6 +15,7 @@
         android:paddingEnd="24dp"
         android:paddingTop="20dp"
         android:paddingBottom="16dp"
+        android:background="@color/background_color"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
@@ -22,33 +24,51 @@
             android:layout_height="36dp"
             android:src="@drawable/ic_back"
             android:scaleType="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Back"
             app:tint="?attr/colorOnSurface"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
-        <TextView
-            android:id="@+id/tvSearchBox"
+        <!-- Search alanı şimdilik görsel; sonra filtreleme bağlayacağız -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/searchContainer"
             android:layout_width="0dp"
             android:layout_height="52dp"
             android:layout_marginStart="18dp"
-            android:gravity="center_vertical"
-            android:paddingStart="18dp"
-            android:paddingEnd="18dp"
-            android:text="Type here to search..."
-            android:textColor="#8FA4BE"
-            android:textSize="15sp"
-            android:background="@color/aqua_input_background"
+            app:cardBackgroundColor="@color/aqua_input_background"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/aqua_input_stroke_unfocused"
+            app:strokeWidth="1dp"
             app:layout_constraintStart_toEndOf="@id/btnBack"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/tvSearchBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"
+                android:text="Type here to search..."
+                android:textColor="#8FA4BE"
+                android:textSize="15sp" />
+
+        </com.google.android.material.card.MaterialCardView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- Dynamic plant list -->
     <ScrollView
+        android:id="@+id/plantScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:fillViewport="true"
         app:layout_constraintTop_toBottomOf="@id/headerContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -59,88 +79,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Popular plants"
-                android:textColor="#8FA4BE"
-                android:textSize="14sp" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardPlantOne"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="18dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Epiphytes"
-                        android:textColor="#8FA4BE"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Bucephalandra sp. &quot;Catarina&quot;"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="16sp" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardPlantTwo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="18dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Foreground"
-                        android:textColor="#8FA4BE"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Eriocaulon cinereum"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="16sp" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-        </LinearLayout>
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="28dp" />
 
     </ScrollView>
 
