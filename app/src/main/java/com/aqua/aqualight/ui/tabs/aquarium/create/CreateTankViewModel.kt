@@ -9,60 +9,75 @@ class CreateTankViewModel : ViewModel() {
         private set
 
     fun updateTankName(name: String) {
-        tankDraft = tankDraft.copy(
-            name = name
-        )
+        tankDraft = tankDraft.copy(name = name)
     }
 
     fun updateTankDescription(description: String) {
-        tankDraft = tankDraft.copy(
-            description = description
-        )
+        tankDraft = tankDraft.copy(description = description)
     }
 
     fun updateTankPhoto(photoUri: String?) {
-        tankDraft = tankDraft.copy(
-            photoUri = photoUri
-        )
+        tankDraft = tankDraft.copy(photoUri = photoUri)
     }
 
     fun updateTankPlants(plants: List<TankPlantTag>) {
-        tankDraft = tankDraft.copy(
-            plants = plants.toList()
-        )
+        tankDraft = tankDraft.copy(plants = plants.toList())
     }
 
     fun updateTankMaterial(material: String) {
-        tankDraft = tankDraft.copy(
-            material = material
-        )
+        tankDraft = tankDraft.copy(material = material)
     }
 
     fun updateTankInfo(info: String) {
+        tankDraft = tankDraft.copy(info = info)
+    }
+
+    fun updateSetupDate(setupDateMillis: Long?) {
+        tankDraft = tankDraft.copy(setupDateMillis = setupDateMillis)
+    }
+
+    fun updateTankSize(
+        widthCm: Int,
+        lengthCm: Int,
+        heightCm: Int
+    ) {
         tankDraft = tankDraft.copy(
-            info = info
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm
         )
+    }
+
+    fun updateVolumeUnit(volumeUnit: String) {
+        tankDraft = tankDraft.copy(volumeUnit = volumeUnit)
+    }
+
+    fun updateTankType(tankType: String) {
+        tankDraft = tankDraft.copy(tankType = tankType)
+    }
+
+    fun updateTankStyle(tankStyle: String) {
+        tankDraft = tankDraft.copy(tankStyle = tankStyle)
     }
 
     fun completeTank() {
         /*
-            Başlangıç aşaması:
-            Şimdilik burada kalıcı kayıt yok.
+          Kalıcı kayıt yok şimdilik.
+          Hazır bilgiler:
+          tankDraft.name
+          tankDraft.description
+          tankDraft.photoUri
+          tankDraft.plants
+          tankDraft.material
 
-            Complete aşamasında hazır olacak bilgiler:
-
-            tankDraft.name
-            tankDraft.description
-            tankDraft.photoUri
-            tankDraft.plants
-            tankDraft.material
-            tankDraft.info
-
-            Sonra buraya:
-            - UserPreferencesManager addTank
-            - Proto DataStore kayıt
-            - AquariumFragment liste güncelleme
-            eklenecek.
+          Step 5:
+          tankDraft.setupDateMillis
+          tankDraft.widthCm
+          tankDraft.lengthCm
+          tankDraft.heightCm
+          tankDraft.volumeUnit
+          tankDraft.tankType
+          tankDraft.tankStyle
         */
     }
 }
