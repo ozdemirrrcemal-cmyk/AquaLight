@@ -23,8 +23,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="Give your aquarium a clear and recognizable name. This name will be shown on your aquarium dashboard."
-            android:textColor="#9FB0C5"
-            android:textSize="15sp"
+            android:textColor="#8FA4BE"
+            android:textSize="14sp"
             android:lineSpacingExtra="3dp" />
 
         <!-- Form kartı -->
@@ -61,7 +61,8 @@
                     android:layout_marginTop="4dp"
                     android:text="Example: Living Room Tank, Planted 120, Shrimp Tank"
                     android:textColor="#7F91AA"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:lineSpacingExtra="2dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilTankName"
@@ -74,7 +75,9 @@
                     app:boxCornerRadiusTopEnd="14dp"
                     app:boxCornerRadiusBottomStart="14dp"
                     app:boxCornerRadiusBottomEnd="14dp"
-                    app:boxStrokeColor="#2B93F6"
+                    app:boxStrokeColor="#2B4A6B"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
                     app:hintTextColor="#8ABEF5"
                     app:errorEnabled="true">
 
