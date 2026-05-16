@@ -137,14 +137,14 @@
     <item name="android:textColor">@android:color/white</item>
     <item name="android:textSize">20sp</item>
 </style>
-
 <!-- 🔹 Step başlık textAppearance -->
 <style name="TextAppearance.Aqua.StepTitle"
-    parent="TextAppearance.Material3.TitleMedium">
+    parent="TextAppearance.Material3.TitleSmall">
     <item name="fontFamily">@font/inter_regular</item>
     <item name="android:fontFamily">@font/inter_regular</item>
     <item name="android:textColor">@android:color/white</item>
     <item name="android:textSize">18sp</item>
+    <item name="android:lineHeight">20sp</item> <!-- opsiyonel, başlığı daha kompakt yapar -->
 </style>
 
 <!-- 🔹 Primary (mavi) buton – eski inline görünüme uygun -->
