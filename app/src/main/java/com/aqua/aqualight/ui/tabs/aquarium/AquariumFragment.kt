@@ -28,8 +28,8 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
 
         // 🔹 Add butonu tıklandığında CreateTankFragment aç
         binding.btnAdd.setOnClickListener {
-            findNavController().navigate(R.id.action_aquariumFragment_to_createTankFragment)
-        }
+    findNavController().navigate(R.id.action_aquariumFragment_to_createTankFragment)
+      }
     }
 
     override fun onDestroyView() {

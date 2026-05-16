@@ -1,0 +1,161 @@
+package com.aqua.aqualight.ui.tabs.aquarium.create
+
+import android.os.Bundle
+import android.view.View
+import androidx.activity.OnBackPressedCallback
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import com.aqua.aqualight.R
+import com.aqua.aqualight.databinding.FragmentCreateTankBinding
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankDescriptionFragment
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankInfoFragment
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankMaterialFragment
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragment
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragment
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment
+
+class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
+
+    private var _binding: FragmentCreateTankBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: CreateTankViewModel by viewModels()
+
+    private val totalSteps = 5
+    private var currentStepIndex = 0
+
+    private val steps: List<() -> Fragment> = listOf(
+        { TankNameFragment() },
+        { TankDescriptionFragment() },
+        { TankPhotoFragment() },
+        { TankMaterialFragment() },
+        { TankInfoFragment() }
+    )
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        _binding = FragmentCreateTankBinding.bind(view)
+
+        currentStepIndex = savedInstanceState?.getInt(KEY_CURRENT_STEP) ?: 0
+
+        setupBackButton()
+        setupSystemBackButton()
+        setupNextButton()
+
+        val currentChild = childFragmentManager.findFragmentById(R.id.stepFragmentContainer)
+
+        if (currentChild == null) {
+            showStep(currentStepIndex)
+        } else {
+            updateHeader()
+            updateProgress()
+            updateButton()
+        }
+    }
+
+    private fun setupBackButton() {
+        binding.btnBack.setOnClickListener {
+            goBack()
+        }
+    }
+
+    private fun setupSystemBackButton() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    goBack()
+                }
+            }
+        )
+    }
+
+    private fun setupNextButton() {
+        binding.btnNext.setOnClickListener {
+            val currentFragment = childFragmentManager.findFragmentById(
+                R.id.stepFragmentContainer
+            )
+
+            if (currentFragment is TankStepFragment) {
+                val isValid = currentFragment.validateAndSave()
+
+                if (!isValid) {
+                    return@setOnClickListener
+                }
+            }
+
+            if (currentStepIndex == totalSteps - 1) {
+                completeTank()
+            } else {
+                showStep(currentStepIndex + 1)
+            }
+        }
+    }
+
+    private fun showStep(index: Int) {
+        currentStepIndex = index
+
+        childFragmentManager.commit {
+            replace(
+                R.id.stepFragmentContainer,
+                steps[index].invoke(),
+                "STEP_$index"
+            )
+        }
+
+        updateHeader()
+        updateProgress()
+        updateButton()
+    }
+
+    private fun updateHeader() {
+        binding.tvTitle.text = "Step ${currentStepIndex + 1}"
+    }
+
+    private fun updateProgress() {
+        val progress = ((currentStepIndex + 1) * 100) / totalSteps
+        binding.progressBar.progress = progress
+    }
+
+    private fun updateButton() {
+        binding.btnNext.text = if (currentStepIndex == totalSteps - 1) {
+            "Complete"
+        } else {
+            "Next"
+        }
+    }
+
+    private fun goBack() {
+        if (currentStepIndex > 0) {
+            showStep(currentStepIndex - 1)
+        } else {
+            findNavController().navigateUp()
+        }
+    }
+
+    private fun completeTank() {
+        viewModel.completeTank()
+
+        findNavController().popBackStack(
+            R.id.aquariumFragment,
+            false
+        )
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(KEY_CURRENT_STEP, currentStepIndex)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    companion object {
+        private const val KEY_CURRENT_STEP = "key_current_step"
+    }
+}

@@ -6,105 +6,23 @@
     app:startDestination="@id/aquariumFragment">
 
     <!-- 🐠 Aquarium Tab -->
-    <fragment
-        android:id="@+id/aquariumFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment"
-        android:label="Aquarium"
-        tools:layout="@layout/fragment_aquarium" />
-	
-	<!-- Create Tank Start Fragment -->
-<fragment
-    android:id="@+id/createTankFragment"
-    android:name="com.aqua.aqualight.ui.tabs.aquarium.CreateTankFragment"
-    android:label="Create Tank"
-    tools:layout="@layout/fragment_create_tank">
-
-    <!-- Başlangıç → Step 1 -->
-    <action
-        android:id="@+id/action_createTank_to_stepTankName"
-        app:destination="@id/stepTankNameFragment" />
-</fragment>
-
-<!-- Step 1: Tank Name -->
-<fragment
-    android:id="@+id/stepTankNameFragment"
-    android:name="com.aqua.aqualight.ui.tabs.aquarium.steps.StepTankNameFragment"
-    android:label="Tank Name"
-    tools:layout="@layout/fragment_step_tank_name">
+   <fragment
+    android:id="@+id/aquariumFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment"
+    android:label="Aquarium"
+    tools:layout="@layout/fragment_aquarium">
 
     <action
-        android:id="@+id/action_stepTankName_to_stepTankInfo"
-        app:destination="@id/stepTankInfoFragment" />
-
-    <action
-        android:id="@+id/action_stepTankName_to_createTank"
+        android:id="@+id/action_aquariumFragment_to_createTankFragment"
         app:destination="@id/createTankFragment" />
-</fragment>
-
-<!-- Step 2: Tank Info -->
-<fragment
-    android:id="@+id/stepTankInfoFragment"
-    android:name="com.aqua.aqualight.ui.tabs.aquarium.steps.StepTankInfoFragment"
-    android:label="Tank Info"
-    tools:layout="@layout/fragment_step_tank_info">
-
-    <action
-        android:id="@+id/action_stepTankInfo_to_stepTankPhoto"
-        app:destination="@id/stepTankPhotoFragment" />
-
-    <action
-        android:id="@+id/action_stepTankInfo_to_stepTankName"
-        app:destination="@id/stepTankNameFragment" />
-</fragment>
-
-<!-- Step 3: Tank Photo -->
-<fragment
-    android:id="@+id/stepTankPhotoFragment"
-    android:name="com.aqua.aqualight.ui.tabs.aquarium.steps.StepTankPhotoFragment"
-    android:label="Tank Photo"
-    tools:layout="@layout/fragment_step_tank_photo">
-
-    <action
-        android:id="@+id/action_stepTankPhoto_to_stepMaterials"
-        app:destination="@id/stepMaterialsFragment" />
-
-    <action
-        android:id="@+id/action_stepTankPhoto_to_stepTankInfo"
-        app:destination="@id/stepTankInfoFragment" />
-</fragment>
-
-<!-- Step 4: Materials -->
-<fragment
-    android:id="@+id/stepMaterialsFragment"
-    android:name="com.aqua.aqualight.ui.tabs.aquarium.steps.StepMaterialsFragment"
-    android:label="Materials"
-    tools:layout="@layout/fragment_step_materials">
-
-    <action
-        android:id="@+id/action_stepMaterials_to_stepTankDetail"
-        app:destination="@id/stepTankDetailFragment" />
-
-    <action
-        android:id="@+id/action_stepMaterials_to_stepTankPhoto"
-        app:destination="@id/stepTankPhotoFragment" />
-</fragment>
-
-<!-- Step 5: Tank Detail -->
-<fragment
-    android:id="@+id/stepTankDetailFragment"
-    android:name="com.aqua.aqualight.ui.tabs.aquarium.steps.StepTankDetailFragment"
-    android:label="Tank Detail"
-    tools:layout="@layout/fragment_step_tank_detail">
-
-    <action
-        android:id="@+id/action_stepTankDetail_to_stepMaterials"
-        app:destination="@id/stepMaterialsFragment" />
-</fragment>
-
-<action
-    android:id="@+id/action_aquariumFragment_to_createTankFragment"
-    app:destination="@id/createTankFragment" />
-		
+   </fragment>
+   
+   <fragment
+    android:id="@+id/createTankFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment"
+    android:label="Create Tank"
+    tools:layout="@layout/fragment_create_tank" />
+	
     <!-- Maintenance Tab -->
 		<fragment
         android:id="@+id/aquariumMaintenanceFragment"

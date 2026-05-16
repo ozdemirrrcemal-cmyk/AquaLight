@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -5,84 +6,85 @@
     android:layout_height="match_parent"
     android:background="@color/background_color">
 
-    <!-- Header -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/background_color"
         android:paddingHorizontal="16dp"
         android:paddingTop="20dp"
         android:paddingBottom="12dp"
-        android:background="@color/background_color"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/btnBack"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/ic_back"
-            android:scaleType="center"
-            app:tint="?attr/colorOnSurface"
             android:clickable="true"
-            android:focusable="true"
             android:contentDescription="Back"
-            app:layout_constraintTop_toTopOf="parent"
+            android:focusable="true"
+            android:scaleType="center"
+            android:src="@drawable/ic_back"
+            app:tint="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvTitle"
             style="@style/TextAppearance.Aqua.StepTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Create Tank"
-            app:layout_constraintTop_toTopOf="parent"
+            android:text="Step 1"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Step container -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/stepFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/headerContainer"
-        app:layout_constraintBottom_toTopOf="@id/bottomContainer"
+        app:layout_constraintBottom_toTopOf="@id/progressBar"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@id/headerContainer" />
 
-    <!-- Progress bar -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="0dp"
         android:layout_height="4dp"
-        android:progress="0"
-        android:max="100"
-        android:progressTint="#1FAA59"
         android:indeterminate="false"
-        app:layout_constraintStart_toStartOf="parent"
+        android:max="100"
+        android:progress="20"
+        android:progressBackgroundTint="#2D3A4F"
+        android:progressTint="#1FAA59"
+        app:layout_constraintBottom_toTopOf="@id/bottomContainer"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/bottomContainer"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Bottom button -->
     <LinearLayout
         android:id="@+id/bottomContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:background="#1C3252"
+        android:orientation="vertical"
         android:padding="12dp"
+        android:paddingBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNext"
             style="@style/Widget.Aqua.PrimaryButton"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:text="Next"/>
+            android:text="Next" />
+
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
