@@ -84,7 +84,7 @@
                             android:layout_height="match_parent"
                             android:contentDescription="Aquarium photo"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/natureaquarium" />
+                            android:src="@drawable/nature_aquarium" />
 
                         <!-- Hafif koyu overlay -->
                         <View
@@ -95,27 +95,27 @@
                         <!-- Sağ alt kamera butonu -->
                         <com.google.android.material.card.MaterialCardView
                             android:id="@+id/btnCamera"
-                            android:layout_width="54dp"
-                            android:layout_height="54dp"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
                             android:layout_gravity="bottom|end"
                             android:layout_marginEnd="14dp"
                             android:layout_marginBottom="14dp"
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackgroundBorderless"
-                            app:cardBackgroundColor="#F4F8FF"
-                            app:cardCornerRadius="18dp"
-                            app:cardElevation="6dp"
-                            app:strokeColor="#FFFFFF"
+                            app:cardBackgroundColor="#800D1D31"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="4dp"
+                            app:strokeColor="#33FFFFFF"
                             app:strokeWidth="1dp">
 
                             <ImageView
-                                android:layout_width="26dp"
-                                android:layout_height="26dp"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
                                 android:layout_gravity="center"
                                 android:contentDescription="Select photo"
                                 android:src="@drawable/ic_camera_24"
-                                app:tint="#1FAA59" />
+                                app:tint="@android:color/white" />
 
                         </com.google.android.material.card.MaterialCardView>
 
@@ -139,29 +139,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Bilgi kutusu -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            app:cardBackgroundColor="#0D1D31"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#1A304C"
-            app:strokeWidth="1dp">
-
-            <TextView
-                android:id="@+id/tvPhotoInfo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="You can update this image later. For now, the default nature aquarium image will be used as a placeholder."
-                android:textColor="#8FA4BE"
-                android:textSize="13sp"
-                android:lineSpacingExtra="2dp" />
-
-        </com.google.android.material.card.MaterialCardView>
+       
 
     </LinearLayout>
 
