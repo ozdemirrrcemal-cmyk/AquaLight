@@ -23,6 +23,7 @@ import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
+import android.graphics.Color
 import java.io.File
 
 class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragment {
