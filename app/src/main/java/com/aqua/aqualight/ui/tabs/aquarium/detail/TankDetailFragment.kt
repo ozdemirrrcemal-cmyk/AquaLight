@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
+package com.aqua.aqualight.ui.tabs.aquarium.detail
+
 import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
@@ -7,7 +9,6 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -25,12 +26,17 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.google.android.material.card.MaterialCardView
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
