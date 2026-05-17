@@ -13,6 +13,9 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemAquariumTankBinding
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class AquariumTankAdapter(
@@ -55,6 +58,10 @@ class AquariumTankAdapter(
             binding.tvTankName.text = tank.name
             binding.tvTankDay.text = getTankDayText(tank.setupDateMillis)
 
+            binding.tvCareInfo.text = getCareInfoText()
+            binding.tvTankSize.text = getTankSizeText(tank)
+            binding.tvSetupDate.text = getSetupDateText(tank.setupDateMillis)
+
             if (!tank.photoUri.isNullOrBlank()) {
                 binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {
                     placeholder(R.drawable.nature_aquarium)
@@ -70,6 +77,30 @@ class AquariumTankAdapter(
             }
         }
 
+        private fun getCareInfoText(): String {
+            return "Last Water Change: Today | Last Trim: Today"
+        }
+
+        private fun getTankSizeText(
+            tank: SavedAquariumTank
+        ): String {
+            return "${tank.widthCm}W x ${tank.lengthCm}L x ${tank.heightCm}H"
+        }
+
+        private fun getSetupDateText(
+            setupDateMillis: Long?
+        ): String {
+            if (setupDateMillis == null) {
+                return "Setup Date: -"
+            }
+
+            val formatter = SimpleDateFormat(
+                "yyyy/MM/dd",
+                Locale.getDefault()
+            )
+
+            return "Setup Date: ${formatter.format(Date(setupDateMillis))}"
+        }
 
         private fun getTankDayText(
             setupDateMillis: Long?
