@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import androidx.lifecycle.ViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
 
 class CreateTankViewModel : ViewModel() {
@@ -24,8 +25,41 @@ class CreateTankViewModel : ViewModel() {
         tankDraft = tankDraft.copy(plants = plants.toList())
     }
 
-    fun updateTankMaterial(material: String) {
-        tankDraft = tankDraft.copy(material = material)
+    fun updateTankMaterials(materials: List<TankMaterialSelection>) {
+        tankDraft = tankDraft.copy(materials = materials.toList())
+    }
+
+    fun addTankMaterial(material: TankMaterialSelection) {
+        val updatedMaterials = tankDraft.materials
+            .filterNot { it.id == material.id }
+            .toMutableList()
+            .apply {
+                add(material)
+            }
+
+        tankDraft = tankDraft.copy(materials = updatedMaterials)
+    }
+
+    fun removeTankMaterial(materialId: Long) {
+        val updatedMaterials = tankDraft.materials.filterNot {
+            it.id == materialId
+        }
+
+        tankDraft = tankDraft.copy(materials = updatedMaterials)
+    }
+
+    fun removeTankMaterialsByCategory(categoryKey: String) {
+        val updatedMaterials = tankDraft.materials.filterNot {
+            it.categoryKey == categoryKey
+        }
+
+        tankDraft = tankDraft.copy(materials = updatedMaterials)
+    }
+
+    fun getMaterialsByCategory(categoryKey: String): List<TankMaterialSelection> {
+        return tankDraft.materials.filter {
+            it.categoryKey == categoryKey
+        }
     }
 
     fun updateTankInfo(info: String) {
@@ -63,12 +97,19 @@ class CreateTankViewModel : ViewModel() {
     fun completeTank() {
         /*
           Kalıcı kayıt yok şimdilik.
-          Hazır bilgiler:
+
+          Step 1:
           tankDraft.name
+
+          Step 2:
           tankDraft.description
+
+          Step 3:
           tankDraft.photoUri
           tankDraft.plants
-          tankDraft.material
+
+          Step 4:
+          tankDraft.materials
 
           Step 5:
           tankDraft.setupDateMillis

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create
 
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
 
 data class TankDraft(
@@ -7,7 +8,9 @@ data class TankDraft(
     val description: String = "",
     val photoUri: String? = null,
     val plants: List<TankPlantTag> = emptyList(),
-    val material: String = "",
+
+    val materials: List<TankMaterialSelection> = emptyList(),
+
     val info: String = "",
 
     val setupDateMillis: Long? = null,
