@@ -7,11 +7,15 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputType
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
-import android.widget.LinearLayout
+import android.widget.EditText
+import android.widget.GridLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,18 +35,17 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.launch
 import java.io.File
+import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
-import android.text.InputType
-import android.widget.EditText
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.datepicker.MaterialDatePicker
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
@@ -134,24 +137,28 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         }
 
         binding.rowTankName.setOnClickListener {
-    showTankNameSheet()
-}
+            showTankNameSheet()
+        }
 
-binding.rowTankType.setOnClickListener {
-    showTankTypeSheet()
-}
+        binding.rowTankType.setOnClickListener {
+            showTankTypeSheet()
+        }
 
-binding.rowSize.setOnClickListener {
-    showTankSizeSheet()
-}
+        binding.rowSize.setOnClickListener {
+            showTankSizeSheet()
+        }
 
-binding.rowVolume.setOnClickListener {
-    showVolumeUnitSheet()
-}
+        binding.rowVolume.setOnClickListener {
+            showVolumeUnitSheet()
+        }
 
-binding.rowSetupDate.setOnClickListener {
-    showSetupDatePicker()
-}
+        binding.rowSetupDate.setOnClickListener {
+            showSetupDateSheet()
+        }
+
+        binding.rowStyle.setOnClickListener {
+            showComingSoon("Edit style")
+        }
 
         binding.rowIdea.setOnClickListener {
             showComingSoon("Edit idea")
@@ -647,15 +654,15 @@ binding.rowSetupDate.setOnClickListener {
         }
 
         val arrow = ImageView(requireContext()).apply {
-    setImageResource(R.drawable.ic_arrow_right)
-    setColorFilter(Color.parseColor("#8FA4BE"))
-    scaleType = ImageView.ScaleType.CENTER
+            setImageResource(R.drawable.ic_arrow_right)
+            setColorFilter(Color.parseColor("#8FA4BE"))
+            scaleType = ImageView.ScaleType.CENTER
 
-    layoutParams = LinearLayout.LayoutParams(
-        22.dp(),
-        22.dp()
-    )
-}
+            layoutParams = LinearLayout.LayoutParams(
+                22.dp(),
+                22.dp()
+            )
+        }
 
         textBox.addView(titleText)
         textBox.addView(summaryText)
@@ -704,6 +711,694 @@ binding.rowSetupDate.setOnClickListener {
         }
     }
 
+    private fun showTankNameSheet() {
+        val tank = currentTank ?: return
+        val dialog = BottomSheetDialog(requireContext())
+
+        val container = createStepSheetContainer()
+        container.addView(createStepSheetHeader("Tank Name", dialog))
+
+        val input = createStepInput(
+            text = tank.name,
+            hint = "Enter tank name",
+            inputType = InputType.TYPE_CLASS_TEXT
+        )
+
+        val saveButton = createStepSheetSaveButton {
+            val newName = input.text.toString().trim()
+
+            if (newName.length < 2) {
+                Toast.makeText(
+                    requireContext(),
+                    "Tank name must be at least 2 characters.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@createStepSheetSaveButton
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                aquariumTankViewModel.updateTankName(
+                    tankId = tankId,
+                    name = newName
+                )
+
+                dialog.dismiss()
+            }
+        }
+
+        container.addView(input)
+        container.addView(saveButton)
+        container.addView(createStepSheetCancelButton(dialog))
+
+        dialog.setContentView(container)
+        dialog.show()
+    }
+
+    private fun showTankTypeSheet() {
+        val tank = currentTank ?: return
+        val dialog = BottomSheetDialog(requireContext())
+
+        val container = createStepSheetContainer()
+        container.addView(createStepSheetHeader("Tank Type", dialog))
+
+        var selectedType = tank.tankType.ifBlank { "Fish" }
+
+        val grid = GridLayout(requireContext()).apply {
+            columnCount = 3
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 20.dp()
+            layoutParams = params
+        }
+
+        fun renderOptions() {
+            grid.removeAllViews()
+
+            listOf(
+                "Fish",
+                "Shrimp",
+                "Planted",
+                "Marine",
+                "Softies",
+                "Mixed Reef",
+                "SPS",
+                "Coral",
+                "Other"
+            ).forEach { type ->
+                grid.addView(
+                    createGridOption(
+                        text = type,
+                        selected = type.equals(selectedType, ignoreCase = true)
+                    ) {
+                        selectedType = type
+                        renderOptions()
+                    }
+                )
+            }
+        }
+
+        renderOptions()
+
+        val saveButton = createStepSheetSaveButton {
+            viewLifecycleOwner.lifecycleScope.launch {
+                aquariumTankViewModel.updateTankType(
+                    tankId = tankId,
+                    tankType = selectedType
+                )
+
+                dialog.dismiss()
+            }
+        }
+
+        container.addView(grid)
+        container.addView(saveButton)
+        container.addView(createStepSheetCancelButton(dialog))
+
+        dialog.setContentView(container)
+        dialog.show()
+    }
+
+    private fun showTankSizeSheet() {
+        val tank = currentTank ?: return
+        val dialog = BottomSheetDialog(requireContext())
+
+        val container = createStepSheetContainer()
+        container.addView(createStepSheetHeader("Size", dialog))
+
+        val unitRow = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = createRoundedDrawable(
+                color = "#16314D",
+                radiusPx = 14.dp()
+            )
+            setPadding(
+                16.dp(),
+                0,
+                16.dp(),
+                0
+            )
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                52.dp()
+            )
+            params.topMargin = 20.dp()
+            layoutParams = params
+        }
+
+        val unitTitle = TextView(requireContext()).apply {
+            text = "Unit"
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            includeFontPadding = false
+
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+
+        val unitValue = TextView(requireContext()).apply {
+            text = "centimeters"
+            textSize = 14f
+            setTextColor(Color.parseColor("#8FA4BE"))
+            includeFontPadding = false
+        }
+
+        unitRow.addView(unitTitle)
+        unitRow.addView(unitValue)
+
+        val inputsRow = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 28.dp()
+            layoutParams = params
+        }
+
+        val widthInput = addSizeInputColumn(
+            parent = inputsRow,
+            label = "Width",
+            value = tank.widthCm.toString()
+        )
+
+        val lengthInput = addSizeInputColumn(
+            parent = inputsRow,
+            label = "Length",
+            value = tank.lengthCm.toString()
+        )
+
+        val heightInput = addSizeInputColumn(
+            parent = inputsRow,
+            label = "Height",
+            value = tank.heightCm.toString()
+        )
+
+        val saveButton = createStepSheetSaveButton {
+            val width = widthInput.text.toString().toIntOrNull()
+            val length = lengthInput.text.toString().toIntOrNull()
+            val height = heightInput.text.toString().toIntOrNull()
+
+            if (width == null || length == null || height == null ||
+                width <= 0 || length <= 0 || height <= 0
+            ) {
+                Toast.makeText(
+                    requireContext(),
+                    "Please enter valid tank size.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@createStepSheetSaveButton
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                aquariumTankViewModel.updateTankSize(
+                    tankId = tankId,
+                    widthCm = width,
+                    lengthCm = length,
+                    heightCm = height
+                )
+
+                dialog.dismiss()
+            }
+        }
+
+        container.addView(unitRow)
+        container.addView(inputsRow)
+        container.addView(saveButton)
+        container.addView(createStepSheetCancelButton(dialog))
+
+        dialog.setContentView(container)
+        dialog.show()
+    }
+
+    private fun showVolumeUnitSheet() {
+        val tank = currentTank ?: return
+        val dialog = BottomSheetDialog(requireContext())
+
+        val container = createStepSheetContainer()
+        container.addView(createStepSheetHeader("Volume", dialog))
+
+        var selectedUnit = tank.volumeUnit.ifBlank { "L" }
+
+        val grid = GridLayout(requireContext()).apply {
+            columnCount = 2
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 22.dp()
+            layoutParams = params
+        }
+
+        fun renderOptions() {
+            grid.removeAllViews()
+
+            listOf("L", "gal").forEach { unit ->
+                grid.addView(
+                    createGridOption(
+                        text = unit,
+                        selected = unit.equals(selectedUnit, ignoreCase = true)
+                    ) {
+                        selectedUnit = unit
+                        renderOptions()
+                    }
+                )
+            }
+        }
+
+        renderOptions()
+
+        val info = TextView(requireContext()).apply {
+            text = "Volume is calculated automatically from tank size."
+            textSize = 13f
+            setTextColor(Color.parseColor("#8FA4BE"))
+            includeFontPadding = false
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 18.dp()
+            layoutParams = params
+        }
+
+        val saveButton = createStepSheetSaveButton {
+            viewLifecycleOwner.lifecycleScope.launch {
+                aquariumTankViewModel.updateTankVolumeUnit(
+                    tankId = tankId,
+                    volumeUnit = selectedUnit
+                )
+
+                dialog.dismiss()
+            }
+        }
+
+        container.addView(grid)
+        container.addView(info)
+        container.addView(saveButton)
+        container.addView(createStepSheetCancelButton(dialog))
+
+        dialog.setContentView(container)
+        dialog.show()
+    }
+
+    private fun showSetupDateSheet() {
+        val tank = currentTank ?: return
+        val dialog = BottomSheetDialog(requireContext())
+
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = tank.setupDateMillis ?: System.currentTimeMillis()
+        }
+
+        val container = createStepSheetContainer()
+        container.addView(createStepSheetHeader("Setup Date", dialog))
+
+        val pickerRow = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 34.dp()
+            layoutParams = params
+        }
+
+        val monthNames = Array(12) { index ->
+            DateFormatSymbols(Locale.getDefault())
+                .months[index]
+                .replaceFirstChar { char ->
+                    if (char.isLowerCase()) {
+                        char.titlecase(Locale.getDefault())
+                    } else {
+                        char.toString()
+                    }
+                }
+        }
+
+        val dayPicker = createDateNumberPicker().apply {
+            minValue = 1
+            maxValue = 31
+            value = calendar.get(Calendar.DAY_OF_MONTH)
+        }
+
+        val monthPicker = createDateNumberPicker().apply {
+            minValue = 0
+            maxValue = 11
+            displayedValues = monthNames
+            value = calendar.get(Calendar.MONTH)
+        }
+
+        val yearPicker = createDateNumberPicker().apply {
+            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+
+            minValue = currentYear - 10
+            maxValue = currentYear + 10
+            value = calendar.get(Calendar.YEAR)
+        }
+
+        fun updateDayMax() {
+            val tempCalendar = Calendar.getInstance().apply {
+                set(Calendar.YEAR, yearPicker.value)
+                set(Calendar.MONTH, monthPicker.value)
+                set(Calendar.DAY_OF_MONTH, 1)
+            }
+
+            val maxDay = tempCalendar.getActualMaximum(
+                Calendar.DAY_OF_MONTH
+            )
+
+            dayPicker.maxValue = maxDay
+
+            if (dayPicker.value > maxDay) {
+                dayPicker.value = maxDay
+            }
+        }
+
+        monthPicker.setOnValueChangedListener { _, _, _ ->
+            updateDayMax()
+        }
+
+        yearPicker.setOnValueChangedListener { _, _, _ ->
+            updateDayMax()
+        }
+
+        updateDayMax()
+
+        pickerRow.addView(dayPicker)
+        pickerRow.addView(monthPicker)
+        pickerRow.addView(yearPicker)
+
+        val saveButton = createStepSheetSaveButton {
+            val selectedCalendar = Calendar.getInstance().apply {
+                set(Calendar.YEAR, yearPicker.value)
+                set(Calendar.MONTH, monthPicker.value)
+                set(Calendar.DAY_OF_MONTH, dayPicker.value)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                aquariumTankViewModel.updateTankSetupDate(
+                    tankId = tankId,
+                    setupDateMillis = selectedCalendar.timeInMillis
+                )
+
+                dialog.dismiss()
+            }
+        }
+
+        container.addView(pickerRow)
+        container.addView(saveButton)
+        container.addView(createStepSheetCancelButton(dialog))
+
+        dialog.setContentView(container)
+        dialog.show()
+    }
+
+    private fun createStepSheetContainer(): LinearLayout {
+        return LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(
+                20.dp(),
+                22.dp(),
+                20.dp(),
+                26.dp()
+            )
+            background = createRoundedDrawable(
+                color = "#10233A",
+                radiusPx = 28.dp()
+            )
+        }
+    }
+
+    private fun createStepSheetHeader(
+        title: String,
+        dialog: BottomSheetDialog
+    ): View {
+        val row = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val leftSpacer = View(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                42.dp(),
+                42.dp()
+            )
+        }
+
+        val titleText = TextView(requireContext()).apply {
+            text = title
+            gravity = Gravity.CENTER
+            textSize = 18f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            includeFontPadding = false
+
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+
+        val close = TextView(requireContext()).apply {
+            text = "×"
+            gravity = Gravity.CENTER
+            textSize = 34f
+            setTextColor(Color.WHITE)
+            includeFontPadding = false
+
+            layoutParams = LinearLayout.LayoutParams(
+                42.dp(),
+                42.dp()
+            )
+
+            setOnClickListener {
+                dialog.dismiss()
+            }
+        }
+
+        row.addView(leftSpacer)
+        row.addView(titleText)
+        row.addView(close)
+
+        return row
+    }
+
+    private fun createStepInput(
+        text: String,
+        hint: String,
+        inputType: Int
+    ): EditText {
+        return EditText(requireContext()).apply {
+            setText(text)
+            this.hint = hint
+            this.inputType = inputType
+            setSingleLine(true)
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.parseColor("#8FA4BE"))
+            background = createRoundedDrawable(
+                color = "#16314D",
+                radiusPx = 16.dp()
+            )
+            setPadding(
+                16.dp(),
+                0,
+                16.dp(),
+                0
+            )
+            setSelectAllOnFocus(true)
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                54.dp()
+            )
+            params.topMargin = 22.dp()
+            layoutParams = params
+        }
+    }
+
+    private fun createGridOption(
+        text: String,
+        selected: Boolean,
+        onClick: () -> Unit
+    ): View {
+        return TextView(requireContext()).apply {
+            this.text = text
+            gravity = Gravity.CENTER
+            textSize = 15f
+            setTextColor(Color.WHITE)
+            setTypeface(
+                null,
+                if (selected) Typeface.BOLD else Typeface.NORMAL
+            )
+            includeFontPadding = false
+            background = createRoundedDrawable(
+                color = if (selected) "#1C3D63" else "#10233A",
+                radiusPx = 14.dp(),
+                strokeColor = if (selected) "#2196F3" else "#223A57",
+                strokeWidthPx = 1.dp()
+            )
+
+            val params = GridLayout.LayoutParams().apply {
+                width = 0
+                height = 54.dp()
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(
+                    0,
+                    0,
+                    10.dp(),
+                    10.dp()
+                )
+            }
+
+            layoutParams = params
+
+            setOnClickListener {
+                onClick()
+            }
+        }
+    }
+
+    private fun addSizeInputColumn(
+        parent: LinearLayout,
+        label: String,
+        value: String
+    ): EditText {
+        val column = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+
+            val params = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+            params.marginEnd = 8.dp()
+            layoutParams = params
+        }
+
+        val labelText = TextView(requireContext()).apply {
+            text = label
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            includeFontPadding = false
+        }
+
+        val input = EditText(requireContext()).apply {
+            setText(value)
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setSingleLine(true)
+            setSelectAllOnFocus(true)
+            gravity = Gravity.CENTER_VERTICAL
+            textSize = 20f
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.parseColor("#8FA4BE"))
+            background = createRoundedDrawable(
+                color = "#16314D",
+                radiusPx = 14.dp()
+            )
+            setPadding(
+                14.dp(),
+                0,
+                14.dp(),
+                0
+            )
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                58.dp()
+            )
+            params.topMargin = 12.dp()
+            layoutParams = params
+        }
+
+        column.addView(labelText)
+        column.addView(input)
+
+        parent.addView(column)
+
+        return input
+    }
+
+    private fun createDateNumberPicker(): NumberPicker {
+        return NumberPicker(requireContext()).apply {
+            wrapSelectorWheel = false
+
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                150.dp(),
+                1f
+            )
+        }
+    }
+
+    private fun createStepSheetSaveButton(
+        onClick: () -> Unit
+    ): MaterialButton {
+        return MaterialButton(requireContext()).apply {
+            text = "Save"
+            textSize = 15f
+            setTypeface(null, Typeface.BOLD)
+            setAllCaps(false)
+            setTextColor(Color.WHITE)
+            cornerRadius = 18.dp()
+            backgroundTintList = android.content.res.ColorStateList.valueOf(
+                Color.parseColor("#2196F3")
+            )
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                54.dp()
+            )
+            params.topMargin = 34.dp()
+            layoutParams = params
+
+            setOnClickListener {
+                onClick()
+            }
+        }
+    }
+
+    private fun createStepSheetCancelButton(
+        dialog: BottomSheetDialog
+    ): View {
+        return TextView(requireContext()).apply {
+            text = "Cancel"
+            gravity = Gravity.CENTER
+            textSize = 15f
+            setTextColor(Color.parseColor("#8FA4BE"))
+            includeFontPadding = false
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                46.dp()
+            )
+            params.topMargin = 14.dp()
+            layoutParams = params
+
+            setOnClickListener {
+                dialog.dismiss()
+            }
+        }
+    }
+
     private fun getSizeText(
         tank: SavedAquariumTank
     ): String {
@@ -737,402 +1432,6 @@ binding.rowSetupDate.setOnClickListener {
 
         return formatter.format(Date(setupDateMillis))
     }
-	
-	private fun showTankNameSheet() {
-    val tank = currentTank ?: return
-    val dialog = BottomSheetDialog(requireContext())
-
-    val container = createBottomSheetContainer()
-
-    val title = createSheetTitle("Tank name")
-
-    val input = createSheetInput(
-        text = tank.name,
-        hint = "Enter tank name",
-        inputType = InputType.TYPE_CLASS_TEXT
-    )
-
-    val saveButton = createSheetSaveButton("Save") {
-        val newName = input.text.toString().trim()
-
-        if (newName.length < 2) {
-            Toast.makeText(
-                requireContext(),
-                "Tank name must be at least 2 characters.",
-                Toast.LENGTH_SHORT
-            ).show()
-            return@createSheetSaveButton
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            aquariumTankViewModel.updateTankName(
-                tankId = tankId,
-                name = newName
-            )
-
-            dialog.dismiss()
-        }
-    }
-
-    container.addView(title)
-    container.addView(input)
-    container.addView(saveButton)
-
-    dialog.setContentView(container)
-    dialog.show()
-}
-
-private fun showTankTypeSheet() {
-    val tank = currentTank ?: return
-    val dialog = BottomSheetDialog(requireContext())
-
-    val container = createBottomSheetContainer()
-    val title = createSheetTitle("Tank type")
-
-    container.addView(title)
-
-    val types = listOf(
-        "Fish",
-        "Shrimp",
-        "Plant",
-        "Marine",
-        "Softies",
-        "Mixed Reef",
-        "SPS",
-        "Frags",
-        "ULNS",
-        "Coral",
-        "Other"
-    )
-
-    types.forEach { type ->
-        container.addView(
-            createOptionRow(
-                text = type,
-                selected = type.equals(tank.tankType, ignoreCase = true)
-            ) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    aquariumTankViewModel.updateTankType(
-                        tankId = tankId,
-                        tankType = type
-                    )
-
-                    dialog.dismiss()
-                }
-            }
-        )
-    }
-
-    dialog.setContentView(container)
-    dialog.show()
-}
-
-private fun showTankSizeSheet() {
-    val tank = currentTank ?: return
-    val dialog = BottomSheetDialog(requireContext())
-
-    val container = createBottomSheetContainer()
-    val title = createSheetTitle("Size (cm)")
-
-    val widthInput = createSheetInput(
-        text = tank.widthCm.toString(),
-        hint = "Width",
-        inputType = InputType.TYPE_CLASS_NUMBER
-    )
-
-    val lengthInput = createSheetInput(
-        text = tank.lengthCm.toString(),
-        hint = "Length",
-        inputType = InputType.TYPE_CLASS_NUMBER
-    )
-
-    val heightInput = createSheetInput(
-        text = tank.heightCm.toString(),
-        hint = "Height",
-        inputType = InputType.TYPE_CLASS_NUMBER
-    )
-
-    val saveButton = createSheetSaveButton("Save") {
-        val width = widthInput.text.toString().toIntOrNull()
-        val length = lengthInput.text.toString().toIntOrNull()
-        val height = heightInput.text.toString().toIntOrNull()
-
-        if (width == null || length == null || height == null ||
-            width <= 0 || length <= 0 || height <= 0
-        ) {
-            Toast.makeText(
-                requireContext(),
-                "Please enter valid tank size.",
-                Toast.LENGTH_SHORT
-            ).show()
-            return@createSheetSaveButton
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            aquariumTankViewModel.updateTankSize(
-                tankId = tankId,
-                widthCm = width,
-                lengthCm = length,
-                heightCm = height
-            )
-
-            dialog.dismiss()
-        }
-    }
-
-    container.addView(title)
-    container.addView(createSmallLabel("Width"))
-    container.addView(widthInput)
-    container.addView(createSmallLabel("Length"))
-    container.addView(lengthInput)
-    container.addView(createSmallLabel("Height"))
-    container.addView(heightInput)
-    container.addView(saveButton)
-
-    dialog.setContentView(container)
-    dialog.show()
-}
-
-private fun showVolumeUnitSheet() {
-    val tank = currentTank ?: return
-    val dialog = BottomSheetDialog(requireContext())
-
-    val container = createBottomSheetContainer()
-    val title = createSheetTitle("Volume unit")
-
-    container.addView(title)
-
-    listOf("L", "gal").forEach { unit ->
-        container.addView(
-            createOptionRow(
-                text = unit,
-                selected = unit.equals(tank.volumeUnit, ignoreCase = true)
-            ) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    aquariumTankViewModel.updateTankVolumeUnit(
-                        tankId = tankId,
-                        volumeUnit = unit
-                    )
-
-                    dialog.dismiss()
-                }
-            }
-        )
-    }
-
-    dialog.setContentView(container)
-    dialog.show()
-}
-
-private fun showSetupDatePicker() {
-    val tank = currentTank ?: return
-
-    val picker = MaterialDatePicker.Builder.datePicker()
-        .setTitleText("Setup date")
-        .setSelection(
-            tank.setupDateMillis ?: MaterialDatePicker.todayInUtcMilliseconds()
-        )
-        .build()
-
-    picker.addOnPositiveButtonClickListener { selectedDateMillis ->
-        viewLifecycleOwner.lifecycleScope.launch {
-            aquariumTankViewModel.updateTankSetupDate(
-                tankId = tankId,
-                setupDateMillis = selectedDateMillis
-            )
-        }
-    }
-
-    picker.show(
-        childFragmentManager,
-        "SETUP_DATE_PICKER"
-    )
-}
-
-private fun createBottomSheetContainer(): LinearLayout {
-    return LinearLayout(requireContext()).apply {
-        orientation = LinearLayout.VERTICAL
-        setPadding(
-            20.dp(),
-            18.dp(),
-            20.dp(),
-            24.dp()
-        )
-        background = createRoundedDrawable(
-            color = "#10233A",
-            radiusPx = 24.dp()
-        )
-    }
-}
-
-private fun createSheetTitle(
-    text: String
-): TextView {
-    return TextView(requireContext()).apply {
-        this.text = text
-        textSize = 17f
-        setTextColor(Color.WHITE)
-        setTypeface(null, Typeface.BOLD)
-        includeFontPadding = false
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        params.bottomMargin = 16.dp()
-        layoutParams = params
-    }
-}
-
-private fun createSmallLabel(
-    text: String
-): TextView {
-    return TextView(requireContext()).apply {
-        this.text = text
-        textSize = 12f
-        setTextColor(Color.parseColor("#8FA4BE"))
-        setTypeface(null, Typeface.BOLD)
-        includeFontPadding = false
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        params.topMargin = 10.dp()
-        params.bottomMargin = 7.dp()
-        layoutParams = params
-    }
-}
-
-private fun createSheetInput(
-    text: String,
-    hint: String,
-    inputType: Int
-): EditText {
-    return EditText(requireContext()).apply {
-        setText(text)
-        this.hint = hint
-        this.inputType = inputType
-        setSingleLine(true)
-        textSize = 15f
-        setTextColor(Color.WHITE)
-        setHintTextColor(Color.parseColor("#8FA4BE"))
-        background = createRoundedDrawable(
-            color = "#16314D",
-            radiusPx = 16.dp()
-        )
-        setPadding(
-            16.dp(),
-            0,
-            16.dp(),
-            0
-        )
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            52.dp()
-        )
-        params.bottomMargin = 10.dp()
-        layoutParams = params
-
-        setSelectAllOnFocus(true)
-    }
-}
-
-private fun createSheetSaveButton(
-    text: String,
-    onClick: () -> Unit
-): MaterialButton {
-    return MaterialButton(requireContext()).apply {
-        this.text = text
-        textSize = 14f
-        setTypeface(null, Typeface.BOLD)
-        setAllCaps(false)
-        setTextColor(Color.WHITE)
-        cornerRadius = 18.dp()
-        backgroundTintList = android.content.res.ColorStateList.valueOf(
-            Color.parseColor("#2196F3")
-        )
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            52.dp()
-        )
-        params.topMargin = 8.dp()
-        layoutParams = params
-
-        setOnClickListener {
-            onClick()
-        }
-    }
-}
-
-private fun createOptionRow(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit
-): View {
-    val row = LinearLayout(requireContext()).apply {
-        orientation = LinearLayout.HORIZONTAL
-        gravity = Gravity.CENTER_VERTICAL
-        setPadding(
-            16.dp(),
-            0,
-            16.dp(),
-            0
-        )
-        background = createRoundedDrawable(
-            color = if (selected) "#1C3D63" else "#16314D",
-            radiusPx = 16.dp()
-        )
-        setOnClickListener {
-            onClick()
-        }
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            52.dp()
-        )
-        params.bottomMargin = 10.dp()
-        layoutParams = params
-    }
-
-    val label = TextView(requireContext()).apply {
-        this.text = text
-        textSize = 15f
-        setTextColor(Color.WHITE)
-        setTypeface(
-            null,
-            if (selected) Typeface.BOLD else Typeface.NORMAL
-        )
-        includeFontPadding = false
-
-        layoutParams = LinearLayout.LayoutParams(
-            0,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            1f
-        )
-    }
-
-    val check = TextView(requireContext()).apply {
-        this.text = if (selected) "✓" else ""
-        textSize = 16f
-        setTextColor(Color.parseColor("#2196F3"))
-        setTypeface(null, Typeface.BOLD)
-        gravity = Gravity.CENTER
-
-        layoutParams = LinearLayout.LayoutParams(
-            28.dp(),
-            28.dp()
-        )
-    }
-
-    row.addView(label)
-    row.addView(check)
-
-    return row
-}
-	
 
     private fun showComingSoon(
         title: String
@@ -1146,12 +1445,21 @@ private fun createOptionRow(
 
     private fun createRoundedDrawable(
         color: String,
-        radiusPx: Int
+        radiusPx: Int,
+        strokeColor: String? = null,
+        strokeWidthPx: Int = 0
     ): GradientDrawable {
         return GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             setColor(Color.parseColor(color))
             cornerRadius = radiusPx.toFloat()
+
+            if (strokeColor != null && strokeWidthPx > 0) {
+                setStroke(
+                    strokeWidthPx,
+                    Color.parseColor(strokeColor)
+                )
+            }
         }
     }
 
