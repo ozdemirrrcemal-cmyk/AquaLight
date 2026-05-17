@@ -491,134 +491,117 @@
 
                 </com.google.android.material.card.MaterialCardView>
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/rowStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="76dp"
-                    android:layout_marginTop="10dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:cardBackgroundColor="#10233A"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="#223A57"
-                    app:strokeWidth="1dp">
+               <com.google.android.material.card.MaterialCardView
+    android:id="@+id/rowStyle"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:layout_marginTop="10dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="#10233A"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#223A57"
+    app:strokeWidth="1dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="14dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="14dp">
 
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Style"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:includeFontPadding="false"
-                                android:text="Style"
-                                android:textColor="#8FA4BE"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tvSettingStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:maxWidth="190dp"
+            android:text="Nature Aquarium"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
 
-                            <TextView
-                                android:id="@+id/tvSettingStyle"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:ellipsize="end"
-                                android:includeFontPadding="false"
-                                android:maxLines="1"
-                                android:text="Nature"
-                                android:textColor="?attr/colorOnSurface"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
 
-                        </LinearLayout>
+    </LinearLayout>
 
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="7dp"
-                            android:contentDescription="Open"
-                            android:scaleType="center"
-                            android:src="@drawable/ic_arrow_right"
-                            app:tint="#8FA4BE" />
+</com.google.android.material.card.MaterialCardView>
 
-                    </LinearLayout>
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/rowIdea"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:layout_marginTop="10dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="#10233A"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#223A57"
+    app:strokeWidth="1dp">
 
-                </com.google.android.material.card.MaterialCardView>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="14dp">
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/rowIdea"
-                    android:layout_width="match_parent"
-                    android:layout_height="92dp"
-                    android:layout_marginTop="10dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:cardBackgroundColor="#10233A"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="#223A57"
-                    app:strokeWidth="1dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Idea"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="14dp">
+        <TextView
+            android:id="@+id/tvSettingIdea"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:maxWidth="190dp"
+            android:text="No idea added"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
 
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:includeFontPadding="false"
-                                android:text="Idea"
-                                android:textColor="#8FA4BE"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
+    </LinearLayout>
 
-                            <TextView
-                                android:id="@+id/tvSettingIdea"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:ellipsize="end"
-                                android:includeFontPadding="false"
-                                android:maxLines="2"
-                                android:text="No idea added"
-                                android:textColor="?attr/colorOnSurface"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_marginStart="7dp"
-                            android:contentDescription="Open"
-                            android:scaleType="center"
-                            android:src="@drawable/ic_arrow_right"
-                            app:tint="#8FA4BE" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
+</com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
             <LinearLayout
