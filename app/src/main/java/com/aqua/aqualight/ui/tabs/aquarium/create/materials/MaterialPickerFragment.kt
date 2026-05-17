@@ -513,37 +513,39 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         root.addView(labelCategory)
 
-        val categoryCard = MaterialCardView(requireContext()).apply {
-            radius = 14.dp().toFloat()
-            strokeWidth = 0
-            setCardBackgroundColor(Color.parseColor("#10233A"))
+        val categoryInputCard = MaterialCardView(requireContext()).apply {
+    radius = 14.dp().toFloat()
+    strokeWidth = 1.dp()
+    strokeColor = Color.parseColor("#223A57")
+    setCardBackgroundColor(Color.parseColor("#16314D"))
 
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                56.dp()
-            )
-            params.topMargin = 10.dp()
-            layoutParams = params
-        }
+    val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        56.dp()
+    )
+    params.topMargin = 10.dp()
+    layoutParams = params
+}
 
-        val categoryText = TextView(requireContext()).apply {
-            text = categoryTitle
-            gravity = Gravity.CENTER_VERTICAL
-            setTextColor(Color.WHITE)
-            textSize = 15f
-            setTypeface(null, Typeface.BOLD)
-            setPadding(16.dp(), 0, 16.dp(), 0)
-        }
+val categoryText = TextView(requireContext()).apply {
+    text = categoryTitle
+    gravity = Gravity.CENTER_VERTICAL
+    setTextColor(Color.parseColor("#D6E2F0"))
+    textSize = 15f
+    setTypeface(null, Typeface.NORMAL)
+    setPadding(16.dp(), 0, 16.dp(), 0)
+    includeFontPadding = false
+}
 
-        categoryCard.addView(
-            categoryText,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
-        )
+categoryInputCard.addView(
+    categoryText,
+    LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.MATCH_PARENT
+    )
+)
 
-        root.addView(categoryCard)
+root.addView(categoryInputCard)
 
         val saveButton = MaterialButton(requireContext()).apply {
             text = "Save"
