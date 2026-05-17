@@ -309,7 +309,7 @@
           </com.google.android.material.card.MaterialCardView>
 
           <com.google.android.material.card.MaterialCardView
-		    android:id="@+id/cardTankVolume"
+		    android:id="@+id/cardTankValue"
             android:layout_width="0dp"
             android:layout_height="72dp"
             android:layout_columnWeight="1"
