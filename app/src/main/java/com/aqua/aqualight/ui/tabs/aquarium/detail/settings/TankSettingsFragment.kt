@@ -587,6 +587,24 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
   }
 
+fun openMaterialPickerFlow(
+    categoryKey: String,
+    categoryTitle: String
+) {
+    binding.settingsMaterialPickerContainer.isVisible = true
+
+    childFragmentManager.beginTransaction()
+        .replace(
+            R.id.settingsMaterialPickerContainer,
+            TankSettingsMaterialPickerFragment.newInstance(
+                tankId = tankId,
+                categoryKey = categoryKey,
+                categoryTitle = categoryTitle
+            )
+        )
+        .commit()
+}
+
   private fun createMaterialCard(
     categoryKey: String,
     title: String,
@@ -706,6 +724,24 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     return card
+  }
+
+  fun openMaterialPickerFlow(
+    categoryKey: String,
+    categoryTitle: String
+  ) {
+    binding.settingsMaterialPickerContainer.isVisible = true
+
+    childFragmentManager.beginTransaction()
+    .replace(
+      R.id.settingsMaterialPickerContainer,
+      TankSettingsMaterialPickerFragment.newInstance(
+        tankId = tankId,
+        categoryKey = categoryKey,
+        categoryTitle = categoryTitle
+      )
+    )
+    .commit()
   }
 
   fun closeMaterialPickerFlow() {
@@ -1804,6 +1840,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     DETAILS,
     OTHERS
   }
+
   companion object {
     private const val ARG_TANK_ID = "tankId"
   }
