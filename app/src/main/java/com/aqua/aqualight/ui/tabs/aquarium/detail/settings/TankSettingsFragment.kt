@@ -1424,47 +1424,68 @@ private fun showIdeaSheet() {
     }
 }
 
-    private fun createGridOption(
-        text: String,
-        selected: Boolean,
-        onClick: () -> Unit
-    ): View {
-        return TextView(requireContext()).apply {
-            this.text = text
-            gravity = Gravity.CENTER
-            textSize = 13.5f
-            setTextColor(Color.WHITE)
-            setTypeface(
-                null,
-                if (selected) Typeface.BOLD else Typeface.NORMAL
+    createStyleChip(
+    text = style,
+    selected = style.equals(selectedStyle, ignoreCase = true)
+) {
+    selectedStyle = style
+    input.setText(style)
+    input.setSelection(input.text.length)
+    renderStyleOptions()
+}
+
+private fun createStyleChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+): View {
+    return TextView(requireContext()).apply {
+        this.text = text
+        gravity = Gravity.CENTER
+        textSize = 14f
+        maxLines = 2
+        includeFontPadding = false
+        setSingleLine(false)
+        setLineSpacing(0f, 1.0f)
+        setTextColor(Color.WHITE)
+        setTypeface(
+            null,
+            if (selected) Typeface.BOLD else Typeface.NORMAL
+        )
+
+        background = createRoundedDrawable(
+            color = if (selected) "#1C3D63" else "#10233A",
+            radiusPx = 13.dp(),
+            strokeColor = if (selected) "#2196F3" else "#223A57",
+            strokeWidthPx = 1.dp()
+        )
+
+        setPadding(
+            6.dp(),
+            0,
+            6.dp(),
+            0
+        )
+
+        val params = GridLayout.LayoutParams().apply {
+            width = 0
+            height = 56.dp()
+            columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+            setMargins(
+                0,
+                0,
+                8.dp(),
+                8.dp()
             )
-            includeFontPadding = false
-            background = createRoundedDrawable(
-                color = if (selected) "#1C3D63" else "#10233A",
-                radiusPx = 13.dp(),
-                strokeColor = if (selected) "#2196F3" else "#223A57",
-                strokeWidthPx = 1.dp()
-            )
+        }
 
-            val params = GridLayout.LayoutParams().apply {
-                width = 0
-                height = 46.dp()
-                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-                setMargins(
-                    0,
-                    0,
-                    8.dp(),
-                    8.dp()
-                )
-            }
+        layoutParams = params
 
-            layoutParams = params
-
-            setOnClickListener {
-                onClick()
-            }
+        setOnClickListener {
+            onClick()
         }
     }
+}
 
     private fun addSizeInputColumn(
         parent: LinearLayout,
