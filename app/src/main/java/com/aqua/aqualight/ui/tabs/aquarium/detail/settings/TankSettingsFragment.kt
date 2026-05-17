@@ -1047,7 +1047,7 @@ private fun createSheetSaveButton(
         this.text = text
         textSize = 14f
         setTypeface(null, Typeface.BOLD)
-        textAllCaps = false
+        setAllCaps(false)
         setTextColor(Color.WHITE)
         cornerRadius = 18.dp()
         backgroundTintList = android.content.res.ColorStateList.valueOf(
