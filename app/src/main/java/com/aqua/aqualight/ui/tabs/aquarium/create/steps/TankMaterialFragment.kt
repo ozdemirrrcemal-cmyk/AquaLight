@@ -16,6 +16,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryKey
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.google.android.material.card.MaterialCardView
+import android.text.TextUtils
 
 class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStepFragment {
 
@@ -196,18 +197,30 @@ class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStep
         }
 
         val selectedText = TextView(requireContext()).apply {
-            text = getSelectedCountText(item.key)
-            setTextColor(Color.parseColor("#8FA4BE"))
-            textSize = 12f
-            includeFontPadding = false
+    val selectedMaterials = viewModel.getMaterialsByCategory(item.key)
 
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.topMargin = 6.dp()
-            layoutParams = params
+    text = getSelectedMaterialsText(item.key)
+
+    setTextColor(
+        if (selectedMaterials.isEmpty()) {
+            Color.parseColor("#8FA4BE")
+        } else {
+            Color.parseColor("#B8C7D9")
         }
+    )
+
+    textSize = 12f
+    includeFontPadding = false
+    maxLines = 1
+    ellipsize = TextUtils.TruncateAt.END
+
+    val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+    )
+    params.topMargin = 6.dp()
+    layoutParams = params
+}
 
         val arrow = TextView(requireContext()).apply {
             text = "›"
@@ -234,17 +247,21 @@ class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStep
         return card
     }
 
-    private fun getSelectedCountText(
-        categoryKey: String
-    ): String {
-        val count = viewModel.getMaterialsByCategory(categoryKey).size
+    private fun getSelectedMaterialsText(
+    categoryKey: String
+): String {
+    val materials = viewModel.getMaterialsByCategory(categoryKey)
 
-        return if (count == 0) {
-            "Not selected"
-        } else {
-            "$count selected"
-        }
+    if (materials.isEmpty()) {
+        return "Not selected"
     }
+
+    if (materials.size == 1) {
+        return materials.first().name
+    }
+
+    return "${materials.first().name} +${materials.size - 1} more"
+}
 
     private fun openMaterialPicker(
         item: MaterialCategoryUi
