@@ -35,61 +35,80 @@ class AquariumTankViewModel(
             photoUri = photoUri
         )
     }
-	
-	
-	suspend fun updateTankName(
-    tankId: Long,
-    name: String
-) {
-    tankDataStoreManager.updateTankName(
-        tankId = tankId,
-        name = name
-    )
-}
 
-suspend fun updateTankType(
-    tankId: Long,
-    tankType: String
-) {
-    tankDataStoreManager.updateTankType(
-        tankId = tankId,
-        tankType = tankType
-    )
-}
+    suspend fun updateTankName(
+        tankId: Long,
+        name: String
+    ) {
+        tankDataStoreManager.updateTankName(
+            tankId = tankId,
+            name = name
+        )
+    }
 
-suspend fun updateTankSize(
-    tankId: Long,
-    widthCm: Int,
-    lengthCm: Int,
-    heightCm: Int
-) {
-    tankDataStoreManager.updateTankSize(
-        tankId = tankId,
-        widthCm = widthCm,
-        lengthCm = lengthCm,
-        heightCm = heightCm
-    )
-}
+    suspend fun updateTankType(
+        tankId: Long,
+        tankType: String
+    ) {
+        tankDataStoreManager.updateTankType(
+            tankId = tankId,
+            tankType = tankType
+        )
+    }
 
-suspend fun updateTankVolumeUnit(
-    tankId: Long,
-    volumeUnit: String
-) {
-    tankDataStoreManager.updateTankVolumeUnit(
-        tankId = tankId,
-        volumeUnit = volumeUnit
-    )
-}
+    suspend fun updateTankSize(
+        tankId: Long,
+        widthCm: Int,
+        lengthCm: Int,
+        heightCm: Int
+    ) {
+        tankDataStoreManager.updateTankSize(
+            tankId = tankId,
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm
+        )
+    }
 
-suspend fun updateTankSetupDate(
-    tankId: Long,
-    setupDateMillis: Long
-) {
-    tankDataStoreManager.updateTankSetupDate(
-        tankId = tankId,
-        setupDateMillis = setupDateMillis
-    )
-}
+    suspend fun updateTankVolumeUnit(
+        tankId: Long,
+        volumeUnit: String
+    ) {
+        tankDataStoreManager.updateTankVolumeUnit(
+            tankId = tankId,
+            volumeUnit = volumeUnit
+        )
+    }
+
+    suspend fun updateTankSetupDate(
+        tankId: Long,
+        setupDateMillis: Long
+    ) {
+        tankDataStoreManager.updateTankSetupDate(
+            tankId = tankId,
+            setupDateMillis = setupDateMillis
+        )
+    }
+
+    suspend fun updateTankStyle(
+        tankId: Long,
+        tankStyle: String
+    ) {
+        tankDataStoreManager.updateTankStyle(
+            tankId = tankId,
+            tankStyle = tankStyle
+        )
+    }
+
+    suspend fun updateTankDescription(
+        tankId: Long,
+        description: String
+    ) {
+        tankDataStoreManager.updateTankDescription(
+            tankId = tankId,
+            description = description
+        )
+    }
 
     suspend fun updateTankPlants(
         tankId: Long,

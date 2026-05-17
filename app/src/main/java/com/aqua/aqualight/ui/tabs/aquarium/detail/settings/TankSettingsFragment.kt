@@ -158,12 +158,12 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         }
 
         binding.rowStyle.setOnClickListener {
-            showComingSoon("Edit style")
-        }
+    showStyleSheet()
+}
 
-        binding.rowIdea.setOnClickListener {
-            showComingSoon("Edit idea")
-        }
+binding.rowIdea.setOnClickListener {
+    showIdeaSheet()
+}
     }
 
     private fun observeTank() {
@@ -1153,6 +1153,136 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             content = container
         )
     }
+	
+	private fun showStyleSheet() {
+    val tank = currentTank ?: return
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = createStepSheetContainer()
+    container.addView(createStepSheetHeader("Style", dialog))
+
+    val input = createStepInput(
+        text = tank.tankStyle.ifBlank { "" },
+        hint = "The Nature Aquarium",
+        inputType = InputType.TYPE_CLASS_TEXT
+    )
+
+    val helperText = TextView(requireContext()).apply {
+        text = "Choose a style or write your own aquarium concept."
+        textSize = 12.5f
+        setTextColor(Color.parseColor("#8FA4BE"))
+        includeFontPadding = false
+
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        params.topMargin = 12.dp()
+        layoutParams = params
+    }
+
+    val grid = GridLayout(requireContext()).apply {
+        columnCount = 3
+
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        params.topMargin = 16.dp()
+        layoutParams = params
+    }
+
+    var selectedStyle = tank.tankStyle.ifBlank { "" }
+
+    fun renderStyleOptions() {
+        grid.removeAllViews()
+
+        listOf(
+            "Nature Aquarium",
+            "Iwagumi",
+            "Dutch",
+            "Jungle",
+            "Biotope",
+            "Blackwater",
+            "Forest",
+            "Mountain",
+            "Island"
+        ).forEach { style ->
+            grid.addView(
+                createGridOption(
+                    text = style,
+                    selected = style.equals(selectedStyle, ignoreCase = true)
+                ) {
+                    selectedStyle = style
+                    input.setText(style)
+                    input.setSelection(input.text.length)
+                    renderStyleOptions()
+                }
+            )
+        }
+    }
+
+    renderStyleOptions()
+
+    val saveButton = createStepSheetSaveButton {
+        val newStyle = input.text.toString().trim()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            aquariumTankViewModel.updateTankStyle(
+                tankId = tankId,
+                tankStyle = newStyle
+            )
+
+            dialog.dismiss()
+        }
+    }
+
+    container.addView(input)
+    container.addView(helperText)
+    container.addView(grid)
+    container.addView(saveButton)
+    container.addView(createStepSheetCancelButton(dialog))
+
+    showConfiguredBottomSheet(
+        dialog = dialog,
+        content = container
+    )
+}
+
+private fun showIdeaSheet() {
+    val tank = currentTank ?: return
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = createStepSheetContainer()
+    container.addView(createStepSheetHeader("Idea", dialog))
+
+    val input = createStepMultilineInput(
+        text = tank.description,
+        hint = "Write your aquarium idea or concept..."
+    )
+
+    val saveButton = createStepSheetSaveButton {
+        val newIdea = input.text.toString().trim()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            aquariumTankViewModel.updateTankDescription(
+                tankId = tankId,
+                description = newIdea
+            )
+
+            dialog.dismiss()
+        }
+    }
+
+    container.addView(input)
+    container.addView(saveButton)
+    container.addView(createStepSheetCancelButton(dialog))
+
+    showConfiguredBottomSheet(
+        dialog = dialog,
+        content = container
+    )
+}
 
     private fun createStepSheetContainer(): LinearLayout {
         return LinearLayout(requireContext()).apply {
@@ -1258,6 +1388,42 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             layoutParams = params
         }
     }
+	
+	
+	private fun createStepMultilineInput(
+    text: String,
+    hint: String
+): EditText {
+    return EditText(requireContext()).apply {
+        setText(text)
+        this.hint = hint
+        inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        gravity = Gravity.TOP or Gravity.START
+        minLines = 4
+        maxLines = 5
+        textSize = 14f
+        setTextColor(Color.WHITE)
+        setHintTextColor(Color.parseColor("#8FA4BE"))
+        background = createRoundedDrawable(
+            color = "#16314D",
+            radiusPx = 14.dp()
+        )
+        setPadding(
+            14.dp(),
+            12.dp(),
+            14.dp(),
+            12.dp()
+        )
+        setSelectAllOnFocus(false)
+
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            112.dp()
+        )
+        params.topMargin = 18.dp()
+        layoutParams = params
+    }
+}
 
     private fun createGridOption(
         text: String,

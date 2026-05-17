@@ -69,6 +69,50 @@ class AquariumTankDataStoreManager(
         }
     }
 	
+	suspend fun updateTankStyle(
+    tankId: Long,
+    tankStyle: String
+) {
+    context.aquariumTanksDataStore.updateData { currentStore ->
+        val updatedTanks = currentStore.getTanksList().map { storedTank ->
+            if (storedTank.id == tankId) {
+                storedTank.toBuilder()
+                    .setTankStyle(tankStyle)
+                    .build()
+            } else {
+                storedTank
+            }
+        }
+
+        currentStore.toBuilder()
+            .clearTanks()
+            .addAllTanks(updatedTanks)
+            .build()
+    }
+}
+
+suspend fun updateTankDescription(
+    tankId: Long,
+    description: String
+) {
+    context.aquariumTanksDataStore.updateData { currentStore ->
+        val updatedTanks = currentStore.getTanksList().map { storedTank ->
+            if (storedTank.id == tankId) {
+                storedTank.toBuilder()
+                    .setDescription(description)
+                    .build()
+            } else {
+                storedTank
+            }
+        }
+
+        currentStore.toBuilder()
+            .clearTanks()
+            .addAllTanks(updatedTanks)
+            .build()
+    }
+}
+	
 	suspend fun updateTankName(
     tankId: Long,
     name: String
