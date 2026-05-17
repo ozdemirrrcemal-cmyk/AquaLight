@@ -340,7 +340,6 @@ binding.rowIdea.setOnClickListener {
         setToolbarTitle("Crop aquarium photo")
 
         setToolbarColor(Color.parseColor("#081B31"))
-        setStatusBarColor(Color.parseColor("#081B31"))
         setToolbarWidgetColor(Color.WHITE)
 
         setRootViewBackgroundColor(Color.parseColor("#081B31"))
