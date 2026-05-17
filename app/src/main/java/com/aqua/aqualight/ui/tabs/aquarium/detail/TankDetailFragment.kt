@@ -62,12 +62,13 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         }
 
         binding.btnEdit.setOnClickListener {
-            Toast.makeText(
-                requireContext(),
-                "Edit tank will be added later.",
-                Toast.LENGTH_SHORT
-            ).show()
+    findNavController().navigate(
+        R.id.action_tankDetailFragment_to_tankSettingsFragment,
+        Bundle().apply {
+            putLong("tankId", tankId)
         }
+    )
+}
 
         binding.btnAddDevice.setOnClickListener {
             Toast.makeText(

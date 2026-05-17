@@ -32,6 +32,20 @@
     android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment"
     android:label="Tank Detail"
     tools:layout="@layout/fragment_tank_detail">
+    <argument
+        android:name="tankId"
+        app:argType="long" />
+	
+    <action
+    android:id="@+id/action_tankDetailFragment_to_tankSettingsFragment"
+    app:destination="@id/tankSettingsFragment" />
+</fragment>
+	
+<fragment
+    android:id="@+id/tankSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.settings.TankSettingsFragment"
+    android:label="Tank Settings"
+    tools:layout="@layout/fragment_tank_settings">
 
     <argument
         android:name="tankId"
