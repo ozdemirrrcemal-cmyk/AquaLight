@@ -212,8 +212,8 @@
               app:strokeWidth="1dp">
 			  
               <ImageView
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
                 android:layout_gravity="center"
                 android:contentDescription="Select photo"
                 android:src="@drawable/ic_camera_24"

@@ -50,6 +50,10 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+import android.annotation.SuppressLint
+import android.view.GestureDetector
+import android.view.MotionEvent
+import kotlin.math.abs
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -130,6 +134,7 @@ MaterialPickerFragment.MaterialPickerHost {
     _binding = FragmentTankSettingsBinding.bind(view)
 
     setupClickListeners()
+    setupSwipeBetweenTabs()
     observeTank()
     selectTab(SettingsTab.BASIC)
   }
@@ -508,6 +513,93 @@ MaterialPickerFragment.MaterialPickerHost {
       )
     }
   }
+
+  @SuppressLint("ClickableViewAccessibility")
+  private fun setupSwipeBetweenTabs() {
+    val gestureDetector = GestureDetector(
+      requireContext(),
+      object : GestureDetector.SimpleOnGestureListener() {
+
+        override fun onDown(
+          e: MotionEvent
+        ): Boolean {
+          return true
+        }
+
+        override fun onFling(
+          e1: MotionEvent?,
+          e2: MotionEvent,
+          velocityX: Float,
+          velocityY: Float
+        ): Boolean {
+          if (e1 == null) {
+            return false
+          }
+
+          if (binding.settingsMaterialPickerContainer.isVisible) {
+            return false
+          }
+
+          val diffX = e2.x - e1.x
+          val diffY = e2.y - e1.y
+
+          val isHorizontalSwipe = abs(diffX) > abs(diffY)
+          val hasEnoughDistance = abs(diffX) > 70.dp()
+          val hasEnoughVelocity = abs(velocityX) > 500
+
+          if (!isHorizontalSwipe || !hasEnoughDistance || !hasEnoughVelocity) {
+            return false
+          }
+
+          if (diffX < 0) {
+            moveToNextTab()
+          } else {
+            moveToPreviousTab()
+          }
+
+          return true
+        }
+      }
+    )
+
+    val swipeTouchListener = View.OnTouchListener {
+      _, event ->
+      gestureDetector.onTouchEvent(event)
+      false
+    }
+
+    binding.contentScrollView.setOnTouchListener(swipeTouchListener)
+    binding.settingsTabsContainer.setOnTouchListener(swipeTouchListener)
+  }
+
+  private fun moveToNextTab() {
+    when (selectedTab) {
+      SettingsTab.BASIC -> {
+        selectTab(SettingsTab.DETAILS)
+      }
+
+      SettingsTab.DETAILS -> {
+        selectTab(SettingsTab.OTHERS)
+      }
+
+      SettingsTab.OTHERS -> Unit
+    }
+  }
+
+  private fun moveToPreviousTab() {
+    when (selectedTab) {
+      SettingsTab.BASIC -> Unit
+
+      SettingsTab.DETAILS -> {
+        selectTab(SettingsTab.BASIC)
+      }
+
+      SettingsTab.OTHERS -> {
+        selectTab(SettingsTab.DETAILS)
+      }
+    }
+  }
+
 
   private fun resetTabs() {
     val inactiveColor = Color.parseColor("#8FA4BE")
