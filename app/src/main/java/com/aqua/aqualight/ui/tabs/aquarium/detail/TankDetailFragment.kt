@@ -126,6 +126,14 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       selectTab(TankDetailTab.ACTIVITY)
     }
 
+    binding.btnAddActivity.setOnClickListener {
+      Toast.makeText(
+        requireContext(),
+        "Add activity will be connected later.",
+        Toast.LENGTH_SHORT
+      ).show()
+    }
+
     binding.tabTank.setOnClickListener {
       selectTab(TankDetailTab.TANK)
     }
@@ -271,7 +279,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         activateTab(binding.tabActivity)
         moveTabUnderline(binding.tabActivity)
 
-        showEmptySection()
+        binding.activitySection.isVisible = true
+        binding.tvEmptyTab.isVisible = false
       }
 
       TankDetailTab.TANK -> {
@@ -757,6 +766,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     binding.devicesSection.isVisible = false
+    binding.activitySection.isVisible = false
     binding.tankSection.isVisible = false
     binding.plantsSection.isVisible = false
     binding.tvEmptyTab.isVisible = false
@@ -764,6 +774,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
   private fun showEmptySection() {
     binding.devicesSection.isVisible = false
+    binding.activitySection.isVisible = false
     binding.tankSection.isVisible = false
     binding.plantsSection.isVisible = false
     binding.tvEmptyTab.isVisible = true
