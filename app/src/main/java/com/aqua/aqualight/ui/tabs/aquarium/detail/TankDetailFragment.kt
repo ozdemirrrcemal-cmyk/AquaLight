@@ -56,13 +56,21 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    _binding = FragmentTankDetailBinding.bind(view)
+  _binding = FragmentTankDetailBinding.bind(view)
 
-    setupClickListeners()
-    setupSystemBackButton()
-    observeTank()
-    selectTab(TankDetailTab.DEVICES)
-  }
+  selectedTab = savedInstanceState
+    ?.getString(KEY_SELECTED_TAB)
+    ?.let { tabName ->
+      runCatching {
+        TankDetailTab.valueOf(tabName)
+      }.getOrNull()
+    } ?: selectedTab
+
+  setupClickListeners()
+  setupSystemBackButton()
+  observeTank()
+  selectTab(selectedTab)
+}
 
   private fun setupClickListeners() {
     binding.btnBack.setOnClickListener {
@@ -745,6 +753,15 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   private fun Int.dp(): Int {
     return (this * resources.displayMetrics.density).toInt()
   }
+  
+  override fun onSaveInstanceState(outState: Bundle) {
+  super.onSaveInstanceState(outState)
+
+  outState.putString(
+    KEY_SELECTED_TAB,
+    selectedTab.name
+  )
+}
 
   override fun onDestroyView() {
     super.onDestroyView()
@@ -760,6 +777,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   }
 
   companion object {
-    private const val ARG_TANK_ID = "tankId"
-  }
+  private const val ARG_TANK_ID = "tankId"
+  private const val KEY_SELECTED_TAB = "selectedTab"
+}
 }
