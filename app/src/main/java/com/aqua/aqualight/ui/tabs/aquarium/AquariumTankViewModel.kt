@@ -7,6 +7,7 @@ import androidx.lifecycle.asLiveData
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 
 class AquariumTankViewModel(
@@ -109,6 +110,19 @@ class AquariumTankViewModel(
             description = description
         )
     }
+	
+	
+	suspend fun updateTankMaterialsForCategory(
+    tankId: Long,
+    categoryKey: String,
+    materials: List<TankMaterialSelection>
+) {
+    tankDataStoreManager.updateTankMaterialsForCategory(
+        tankId = tankId,
+        categoryKey = categoryKey,
+        materials = materials
+    )
+}
 
     suspend fun updateTankPlants(
         tankId: Long,

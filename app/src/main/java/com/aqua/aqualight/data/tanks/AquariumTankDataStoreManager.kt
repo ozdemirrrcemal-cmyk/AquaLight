@@ -8,6 +8,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -259,6 +260,49 @@ suspend fun updateTankSetupDate(
                 .build()
         }
     }
+	
+	
+	suspend fun updateTankMaterialsForCategory(
+    tankId: Long,
+    categoryKey: String,
+    materials: List<TankMaterialSelection>
+) {
+    context.aquariumTanksDataStore.updateData { currentStore ->
+        val updatedTanks = currentStore.getTanksList().map { storedTank ->
+            if (storedTank.id == tankId) {
+                val otherMaterials = storedTank.getMaterialsList()
+                    .filterNot { material ->
+                        material.categoryKey == categoryKey
+                    }
+
+                val updatedCategoryMaterials = materials.map { material ->
+                    StoredMaterial.newBuilder()
+                        .setId(material.id)
+                        .setProductId(material.productId)
+                        .setCategoryKey(material.categoryKey)
+                        .setCategoryTitle(material.categoryTitle)
+                        .setName(material.name)
+                        .setBrand(material.brand)
+                        .setNote(material.note)
+                        .build()
+                }
+
+                storedTank.toBuilder()
+                    .clearMaterials()
+                    .addAllMaterials(otherMaterials)
+                    .addAllMaterials(updatedCategoryMaterials)
+                    .build()
+            } else {
+                storedTank
+            }
+        }
+
+        currentStore.toBuilder()
+            .clearTanks()
+            .addAllTanks(updatedTanks)
+            .build()
+    }
+}
 
     private fun TankDraft.toStoredTank(
         tankId: Long,
