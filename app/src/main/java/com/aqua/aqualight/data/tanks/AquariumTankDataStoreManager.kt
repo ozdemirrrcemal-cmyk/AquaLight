@@ -47,6 +47,28 @@ class AquariumTankDataStoreManager(
         return tankId
     }
 
+    suspend fun updateTankPhoto(
+        tankId: Long,
+        photoUri: String?
+    ) {
+        context.aquariumTanksDataStore.updateData { currentStore ->
+            val updatedTanks = currentStore.getTanksList().map { storedTank ->
+                if (storedTank.id == tankId) {
+                    storedTank.toBuilder()
+                        .setPhotoUri(photoUri.orEmpty())
+                        .build()
+                } else {
+                    storedTank
+                }
+            }
+
+            currentStore.toBuilder()
+                .clearTanks()
+                .addAllTanks(updatedTanks)
+                .build()
+        }
+    }
+
     suspend fun updateTankPlants(
         tankId: Long,
         plants: List<TankPlantTag>

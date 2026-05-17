@@ -26,6 +26,16 @@ class AquariumTankViewModel(
         return tankDataStoreManager.addTankFromDraft(draft)
     }
 
+    suspend fun updateTankPhoto(
+        tankId: Long,
+        photoUri: String?
+    ) {
+        tankDataStoreManager.updateTankPhoto(
+            tankId = tankId,
+            photoUri = photoUri
+        )
+    }
+
     suspend fun updateTankPlants(
         tankId: Long,
         plants: List<TankPlantTag>

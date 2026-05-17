@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
+import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -11,9 +13,12 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
@@ -24,7 +29,11 @@ import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
+import com.yalantis.ucrop.UCrop
+import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,6 +49,49 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private var tankId: Long = 0L
     private var selectedTab: SettingsTab = SettingsTab.BASIC
     private var currentTank: SavedAquariumTank? = null
+    private var pendingCameraUri: Uri? = null
+
+    private val galleryLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            startImageCrop(uri)
+        }
+    }
+
+    private val cameraLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            pendingCameraUri?.let { uri ->
+                startImageCrop(uri)
+            }
+        }
+    }
+
+    private val cropLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val outputUri = result.data?.let { intent ->
+                UCrop.getOutput(intent)
+            }
+
+            if (outputUri != null) {
+                saveTankPhoto(outputUri)
+            }
+        } else if (result.resultCode == UCrop.RESULT_ERROR) {
+            val error = result.data?.let { intent ->
+                UCrop.getError(intent)
+            }
+
+            Toast.makeText(
+                requireContext(),
+                error?.message ?: "Photo could not be cropped.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,11 +125,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         }
 
         binding.btnChangePhoto.setOnClickListener {
-            Toast.makeText(
-                requireContext(),
-                "Photo picker will be connected next.",
-                Toast.LENGTH_SHORT
-            ).show()
+            showPhotoSourceSheet()
         }
 
         binding.rowTankName.setOnClickListener {
@@ -153,6 +201,229 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         binding.tvSettingIdea.text = tank.description.ifBlank { "No idea added" }
 
         renderMaterials(tank)
+    }
+
+    private fun showPhotoSourceSheet() {
+        val dialog = BottomSheetDialog(requireContext())
+
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(
+                20.dp(),
+                18.dp(),
+                20.dp(),
+                24.dp()
+            )
+            background = createRoundedDrawable(
+                color = "#10233A",
+                radiusPx = 24.dp()
+            )
+        }
+
+        val title = TextView(requireContext()).apply {
+            text = "Aquarium photo"
+            textSize = 17f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            includeFontPadding = false
+        }
+
+        val cameraRow = createPhotoSourceRow(
+            title = "Camera",
+            subtitle = "Take a new aquarium photo"
+        ) {
+            dialog.dismiss()
+            openCamera()
+        }
+
+        val galleryRow = createPhotoSourceRow(
+            title = "Gallery",
+            subtitle = "Choose from your gallery"
+        ) {
+            dialog.dismiss()
+            openGallery()
+        }
+
+        container.addView(title)
+        container.addView(cameraRow)
+        container.addView(galleryRow)
+
+        dialog.setContentView(container)
+        dialog.show()
+    }
+
+    private fun createPhotoSourceRow(
+        title: String,
+        subtitle: String,
+        onClick: () -> Unit
+    ): View {
+        val row = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(
+                16.dp(),
+                13.dp(),
+                16.dp(),
+                13.dp()
+            )
+            background = createRoundedDrawable(
+                color = "#16314D",
+                radiusPx = 16.dp()
+            )
+            setOnClickListener {
+                onClick()
+            }
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 12.dp()
+            layoutParams = params
+        }
+
+        val titleText = TextView(requireContext()).apply {
+            text = title
+            textSize = 15f
+            setTextColor(Color.WHITE)
+            setTypeface(null, Typeface.BOLD)
+            includeFontPadding = false
+        }
+
+        val subtitleText = TextView(requireContext()).apply {
+            text = subtitle
+            textSize = 12f
+            setTextColor(Color.parseColor("#8FA4BE"))
+            includeFontPadding = false
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 5.dp()
+            layoutParams = params
+        }
+
+        row.addView(titleText)
+        row.addView(subtitleText)
+
+        return row
+    }
+
+    private fun openGallery() {
+        galleryLauncher.launch("image/*")
+    }
+
+    private fun openCamera() {
+        val cameraUri = createTankPhotoUri()
+        pendingCameraUri = cameraUri
+        cameraLauncher.launch(cameraUri)
+    }
+
+    private fun startImageCrop(
+        sourceUri: Uri
+    ) {
+        val destinationUri = createTankPhotoCropUri()
+
+        val options = UCrop.Options().apply {
+            setCompressionQuality(90)
+            setFreeStyleCropEnabled(false)
+            setHideBottomControls(false)
+        }
+
+        val cropIntent = UCrop.of(
+            sourceUri,
+            destinationUri
+        )
+            .withAspectRatio(
+                16f,
+                9f
+            )
+            .withMaxResultSize(
+                1600,
+                900
+            )
+            .withOptions(options)
+            .getIntent(requireContext())
+            .apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            }
+
+        cropLauncher.launch(cropIntent)
+    }
+
+    private fun saveTankPhoto(
+        photoUri: Uri
+    ) {
+        binding.imgTankPhoto.load(photoUri) {
+            placeholder(R.drawable.nature_aquarium)
+            error(R.drawable.nature_aquarium)
+            crossfade(true)
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                aquariumTankViewModel.updateTankPhoto(
+                    tankId = tankId,
+                    photoUri = photoUri.toString()
+                )
+
+                Toast.makeText(
+                    requireContext(),
+                    "Photo updated.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                Toast.makeText(
+                    requireContext(),
+                    "Photo could not be saved.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    private fun createTankPhotoUri(): Uri {
+        val directory = File(
+            requireContext().filesDir,
+            "tank_photos"
+        )
+
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+
+        val file = File(
+            directory,
+            "tank_camera_${tankId}_${System.currentTimeMillis()}.jpg"
+        )
+
+        return FileProvider.getUriForFile(
+            requireContext(),
+            "${requireContext().packageName}.fileprovider",
+            file
+        )
+    }
+
+    private fun createTankPhotoCropUri(): Uri {
+        val directory = File(
+            requireContext().filesDir,
+            "tank_photos"
+        )
+
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+
+        val file = File(
+            directory,
+            "tank_crop_${tankId}_${System.currentTimeMillis()}.jpg"
+        )
+
+        return Uri.fromFile(file)
     }
 
     private fun selectTab(
@@ -475,6 +746,17 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             "$title will be added next.",
             Toast.LENGTH_SHORT
         ).show()
+    }
+
+    private fun createRoundedDrawable(
+        color: String,
+        radiusPx: Int
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.parseColor(color))
+            cornerRadius = radiusPx.toFloat()
+        }
     }
 
     private fun Int.dp(): Int {
