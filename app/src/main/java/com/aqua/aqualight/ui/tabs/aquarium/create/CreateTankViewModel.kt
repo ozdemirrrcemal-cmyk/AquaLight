@@ -29,34 +29,22 @@ class CreateTankViewModel : ViewModel() {
         tankDraft = tankDraft.copy(materials = materials.toList())
     }
 
-    fun addTankMaterial(material: TankMaterialSelection) {
-        val updatedMaterials = tankDraft.materials
-            .filterNot { it.id == material.id }
-            .toMutableList()
-            .apply {
-                add(material)
-            }
-
-        tankDraft = tankDraft.copy(materials = updatedMaterials)
-    }
-
-    fun removeTankMaterial(materialId: Long) {
-        val updatedMaterials = tankDraft.materials.filterNot {
-            it.id == materialId
-        }
-
-        tankDraft = tankDraft.copy(materials = updatedMaterials)
-    }
-
-    fun removeTankMaterialsByCategory(categoryKey: String) {
-        val updatedMaterials = tankDraft.materials.filterNot {
+    fun updateTankMaterialsForCategory(
+        categoryKey: String,
+        materials: List<TankMaterialSelection>
+    ) {
+        val otherMaterials = tankDraft.materials.filterNot {
             it.categoryKey == categoryKey
         }
 
-        tankDraft = tankDraft.copy(materials = updatedMaterials)
+        tankDraft = tankDraft.copy(
+            materials = otherMaterials + materials
+        )
     }
 
-    fun getMaterialsByCategory(categoryKey: String): List<TankMaterialSelection> {
+    fun getMaterialsByCategory(
+        categoryKey: String
+    ): List<TankMaterialSelection> {
         return tankDraft.materials.filter {
             it.categoryKey == categoryKey
         }
@@ -96,8 +84,6 @@ class CreateTankViewModel : ViewModel() {
 
     fun completeTank() {
         /*
-          Kalıcı kayıt yok şimdilik.
-
           Step 1:
           tankDraft.name
 

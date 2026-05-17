@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentCreateTankBinding
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankDescriptionFragment
@@ -64,6 +65,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
     private fun setupBackButton() {
         binding.btnBack.setOnClickListener {
+            if (handleMaterialFlowBack()) {
+                return@setOnClickListener
+            }
+
             if (handlePlantFlowBack()) {
                 return@setOnClickListener
             }
@@ -77,6 +82,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
+                    if (handleMaterialFlowBack()) {
+                        return
+                    }
+
                     if (handlePlantFlowBack()) {
                         return
                     }
@@ -172,14 +181,14 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     }
 
     fun openPlantPickerFlow() {
-    childFragmentManager.commit {
-        setReorderingAllowed(true)
-        add(
-            R.id.plantFlowContainer,
-            PlantPickerFragment(),
-            "PLANT_PICKER_FRAGMENT"
-        )
-        addToBackStack("PLANT_PICKER_FRAGMENT")
+        childFragmentManager.commit {
+            setReorderingAllowed(true)
+            add(
+                R.id.plantFlowContainer,
+                PlantPickerFragment(),
+                "PLANT_PICKER_FRAGMENT"
+            )
+            addToBackStack("PLANT_PICKER_FRAGMENT")
         }
     }
 
@@ -213,6 +222,47 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
             closePlantTagFlow()
         }
 
+        return true
+    }
+
+    fun openMaterialPickerFlow(
+        categoryKey: String,
+        categoryTitle: String
+    ) {
+        binding.materialFlowContainer.isVisible = true
+
+        childFragmentManager.commit {
+            replace(
+                R.id.materialFlowContainer,
+                MaterialPickerFragment.newInstance(
+                    categoryKey = categoryKey,
+                    categoryTitle = categoryTitle
+                ),
+                "MATERIAL_PICKER_FRAGMENT"
+            )
+        }
+    }
+
+    fun closeMaterialPickerFlow() {
+        val currentMaterialFragment = childFragmentManager.findFragmentById(
+            R.id.materialFlowContainer
+        )
+
+        if (currentMaterialFragment != null) {
+            childFragmentManager.commit {
+                remove(currentMaterialFragment)
+            }
+        }
+
+        binding.materialFlowContainer.isVisible = false
+    }
+
+    private fun handleMaterialFlowBack(): Boolean {
+        if (!binding.materialFlowContainer.isVisible) {
+            return false
+        }
+
+        closeMaterialPickerFlow()
         return true
     }
 
