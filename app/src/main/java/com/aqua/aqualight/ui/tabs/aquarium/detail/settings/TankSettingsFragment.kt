@@ -332,37 +332,49 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun startImageCrop(
-        sourceUri: Uri
-    ) {
-        val destinationUri = createTankPhotoCropUri()
+    sourceUri: Uri
+) {
+    val destinationUri = createTankPhotoCropUri()
 
-        val options = UCrop.Options().apply {
-            setCompressionQuality(90)
-            setFreeStyleCropEnabled(false)
-            setHideBottomControls(false)
+    val options = UCrop.Options().apply {
+        setToolbarTitle("Crop aquarium photo")
+
+        setToolbarColor(Color.parseColor("#081B31"))
+        setStatusBarColor(Color.parseColor("#081B31"))
+        setToolbarWidgetColor(Color.WHITE)
+
+        setRootViewBackgroundColor(Color.parseColor("#081B31"))
+        setActiveControlsWidgetColor(Color.parseColor("#2196F3"))
+
+        setCompressionQuality(90)
+        setFreeStyleCropEnabled(false)
+
+        // Create Tank ekranındaki gibi sade crop ekranı.
+        // Alttaki ölçek / döndürme panelini gizler.
+        setHideBottomControls(true)
+    }
+
+    val cropIntent = UCrop.of(
+        sourceUri,
+        destinationUri
+    )
+        .withAspectRatio(
+            16f,
+            9f
+        )
+        .withMaxResultSize(
+            1600,
+            900
+        )
+        .withOptions(options)
+        .getIntent(requireContext())
+        .apply {
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
         }
 
-        val cropIntent = UCrop.of(
-            sourceUri,
-            destinationUri
-        )
-            .withAspectRatio(
-                16f,
-                9f
-            )
-            .withMaxResultSize(
-                1600,
-                900
-            )
-            .withOptions(options)
-            .getIntent(requireContext())
-            .apply {
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            }
-
-        cropLauncher.launch(cropIntent)
-    }
+    cropLauncher.launch(cropIntent)
+}
 
     private fun saveTankPhoto(
         photoUri: Uri
