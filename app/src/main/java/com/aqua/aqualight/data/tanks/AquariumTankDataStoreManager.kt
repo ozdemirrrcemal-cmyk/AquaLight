@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
+import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
@@ -44,6 +45,39 @@ class AquariumTankDataStoreManager(
         }
 
         return tankId
+    }
+
+    suspend fun updateTankPlants(
+        tankId: Long,
+        plants: List<TankPlantTag>
+    ) {
+        context.aquariumTanksDataStore.updateData { currentStore ->
+            val updatedTanks = currentStore.getTanksList().map { storedTank ->
+                if (storedTank.id == tankId) {
+                    storedTank.toBuilder()
+                        .clearPlants()
+                        .addAllPlants(
+                            plants.map { plant ->
+                                StoredPlantTag.newBuilder()
+                                    .setId(plant.id)
+                                    .setPlantName(plant.plantName)
+                                    .setCategory(plant.category)
+                                    .setMarkerX(plant.markerX)
+                                    .setMarkerY(plant.markerY)
+                                    .build()
+                            }
+                        )
+                        .build()
+                } else {
+                    storedTank
+                }
+            }
+
+            currentStore.toBuilder()
+                .clearTanks()
+                .addAllTanks(updatedTanks)
+                .build()
+        }
     }
 
     private fun TankDraft.toStoredTank(
