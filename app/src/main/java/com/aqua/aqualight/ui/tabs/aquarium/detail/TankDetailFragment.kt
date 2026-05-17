@@ -1,7 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-package com.aqua.aqualight.ui.tabs.aquarium.detail
-
 import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
