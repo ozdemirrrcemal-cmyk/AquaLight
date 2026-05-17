@@ -206,14 +206,14 @@
               android:focusable="true"
               android:foreground="?attr/selectableItemBackgroundBorderless"
               app:cardBackgroundColor="#800D1D31"
-              app:cardCornerRadius="14dp"
+              app:cardCornerRadius="50dp"
               app:cardElevation="4dp"
               app:strokeColor="#33FFFFFF"
               app:strokeWidth="1dp">
 			  
               <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:layout_gravity="center"
                 android:contentDescription="Select photo"
                 android:src="@drawable/ic_camera_24"

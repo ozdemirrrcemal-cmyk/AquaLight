@@ -1248,105 +1248,19 @@ MaterialPickerFragment.MaterialPickerHost {
 
   private fun showStyleSheet() {
     val tank = currentTank ?: return
-    val dialog = BottomSheetDialog(requireContext())
 
-    val container = createStepSheetContainer()
-    container.addView(createStepSheetHeader("Style", dialog))
-
-    val input = createStepInput(
-      text = tank.tankStyle.ifBlank {
-        ""
-      },
-      hint = "The Nature Aquarium",
-      inputType = InputType.TYPE_CLASS_TEXT
-    )
-
-    val helperText = TextView(requireContext()).apply {
-      text = "Choose a style or write your own aquarium concept."
-      textSize = 12.5f
-      setTextColor(Color.parseColor("#8FA4BE"))
-      includeFontPadding = false
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 12.dp()
-      layoutParams = params
-    }
-
-    val grid = GridLayout(requireContext()).apply {
-      columnCount = 2
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 16.dp()
-      layoutParams = params
-    }
-
-    var selectedStyle = tank.tankStyle.ifBlank {
-      ""
-    }
-
-    fun renderStyleOptions() {
-      grid.removeAllViews()
-
-      listOf(
-        "Nature Aquarium",
-        "Iwagumi",
-        "Dutch",
-        "Jungle",
-        "Biotope",
-        "Blackwater",
-        "Forest",
-        "Mountain",
-        "Island"
-      ).forEach {
-        style ->
-        grid.addView(
-          createStyleChip(
-            text = style,
-            selected = style.equals(
-              selectedStyle,
-              ignoreCase = true
-            )
-          ) {
-            selectedStyle = style
-            input.setText(style)
-            input.setSelection(input.text.length)
-            renderStyleOptions()
-          }
-        )
-      }
-    }
-
-    renderStyleOptions()
-
-    val saveButton = createStepSheetSaveButton {
-      val newStyle = input.text.toString().trim()
-
+    TankStyleBottomSheet.show(
+      fragment = this,
+      currentStyle = tank.tankStyle
+    ) {
+      newStyle ->
       viewLifecycleOwner.lifecycleScope.launch {
         aquariumTankViewModel.updateTankStyle(
           tankId = tankId,
           tankStyle = newStyle
         )
-
-        dialog.dismiss()
       }
     }
-
-    container.addView(input)
-    container.addView(helperText)
-    container.addView(grid)
-    container.addView(saveButton)
-    container.addView(createStepSheetCancelButton(dialog))
-
-    showConfiguredBottomSheet(
-      dialog = dialog,
-      content = container
-    )
   }
 
   private fun showIdeaSheet() {
@@ -1570,57 +1484,7 @@ MaterialPickerFragment.MaterialPickerHost {
     }
   }
 
-  private fun createStyleChip(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit
-  ): View {
-    return TextView(requireContext()).apply {
-      this.text = text
-      gravity = Gravity.CENTER
-      textSize = 13.5f
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-      includeFontPadding = false
-      setTextColor(Color.WHITE)
-      setTypeface(
-        null,
-        if (selected) Typeface.BOLD else Typeface.NORMAL
-      )
-
-      background = createRoundedDrawable(
-        color = if (selected) "#1C3D63" else "#10233A",
-        radiusPx = 13.dp(),
-        strokeColor = if (selected) "#2196F3" else "#223A57",
-        strokeWidthPx = 1.dp()
-      )
-
-      setPadding(
-        10.dp(),
-        0,
-        10.dp(),
-        0
-      )
-
-      val params = GridLayout.LayoutParams().apply {
-        width = 0
-        height = 48.dp()
-        columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-        setMargins(
-          0,
-          0,
-          8.dp(),
-          8.dp()
-        )
-      }
-
-      layoutParams = params
-
-      setOnClickListener {
-        onClick()
-      }
-    }
-  }
+  
   private fun addSizeInputColumn(
     parent: LinearLayout,
     label: String,
