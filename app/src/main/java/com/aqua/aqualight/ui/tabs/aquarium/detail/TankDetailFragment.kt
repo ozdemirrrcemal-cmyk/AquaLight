@@ -108,21 +108,24 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     private fun bindTank(
-        tank: SavedAquariumTank
+    tank: SavedAquariumTank
     ) {
-        binding.tvTankTitle.text = tank.name
+    binding.tvTankTitle.text = tank.name
 
-        if (!tank.photoUri.isNullOrBlank()) {
-            binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {
-                placeholder(R.drawable.nature_aquarium)
-                error(R.drawable.nature_aquarium)
-                crossfade(true)
-            }
-        } else {
-            binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
+    if (!tank.photoUri.isNullOrBlank()) {
+        binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {
+            placeholder(R.drawable.nature_aquarium)
+            error(R.drawable.nature_aquarium)
+            crossfade(true)
         }
+    } else {
+        binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
+    }
 
-        renderPlantMarkers(tank)
+    // Bu ekran Devices sekmesiyle açıldığı için fotoğraf rakamsız görünmeli.
+    // Bitki markerları ileride sadece Plants sekmesinde gösterilecek.
+    binding.markerContainer.removeAllViews()
+    binding.markerContainer.isVisible = false
     }
 
     private fun renderPlantMarkers(
