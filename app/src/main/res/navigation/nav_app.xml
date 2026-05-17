@@ -15,6 +15,10 @@
     <action
         android:id="@+id/action_aquariumFragment_to_createTankFragment"
         app:destination="@id/createTankFragment" />
+
+   <action
+    android:id="@+id/action_aquariumFragment_to_tankDetailFragment"
+    app:destination="@id/tankDetailFragment" />
    </fragment>
    
    <fragment
@@ -22,6 +26,18 @@
     android:name="com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment"
     android:label="Create Tank"
     tools:layout="@layout/fragment_create_tank" />
+	
+<fragment
+    android:id="@+id/tankDetailFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment"
+    android:label="Tank Detail"
+    tools:layout="@layout/fragment_tank_detail">
+
+    <argument
+        android:name="tankId"
+        app:argType="long" />
+
+</fragment>
 	
     <!-- Maintenance Tab -->
 		<fragment
