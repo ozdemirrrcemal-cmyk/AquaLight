@@ -136,7 +136,7 @@ MaterialPickerFragment.MaterialPickerHost {
     setupClickListeners()
     setupSwipeBetweenTabs()
     observeTank()
-    selectTab(SettingsTab.BASIC)
+    selectTab(getInitialTab())
   }
 
   private fun setupClickListeners() {
@@ -513,6 +513,16 @@ MaterialPickerFragment.MaterialPickerHost {
       )
     }
   }
+
+ private fun getInitialTab(): SettingsTab {
+  val startTab = arguments?.getString("startTab")
+
+  return when (startTab) {
+    "details" -> SettingsTab.DETAILS
+    "others" -> SettingsTab.OTHERS
+    else -> SettingsTab.BASIC
+  }
+}
 
   @SuppressLint("ClickableViewAccessibility")
   private fun setupSwipeBetweenTabs() {

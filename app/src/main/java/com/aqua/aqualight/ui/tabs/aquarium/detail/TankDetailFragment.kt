@@ -56,21 +56,22 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-  _binding = FragmentTankDetailBinding.bind(view)
+    _binding = FragmentTankDetailBinding.bind(view)
 
-  selectedTab = savedInstanceState
+    selectedTab = savedInstanceState
     ?.getString(KEY_SELECTED_TAB)
-    ?.let { tabName ->
+    ?.let {
+      tabName ->
       runCatching {
         TankDetailTab.valueOf(tabName)
       }.getOrNull()
     } ?: selectedTab
 
-  setupClickListeners()
-  setupSystemBackButton()
-  observeTank()
-  selectTab(selectedTab)
-}
+    setupClickListeners()
+    setupSystemBackButton()
+    observeTank()
+    selectTab(selectedTab)
+  }
 
   private fun setupClickListeners() {
     binding.btnBack.setOnClickListener {
@@ -143,6 +144,18 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       R.id.action_tankDetailFragment_to_tankSettingsFragment,
       Bundle().apply {
         putLong("tankId", tankId)
+      }
+    )
+  }
+
+  private fun openTankSettingsDetails() {
+    selectedTab = TankDetailTab.TANK
+
+    findNavController().navigate(
+      R.id.action_tankDetailFragment_to_tankSettingsFragment,
+      Bundle().apply {
+        putLong("tankId", tankId)
+        putString("startTab", "details")
       }
     )
   }
@@ -374,6 +387,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       setCardBackgroundColor(Color.parseColor("#10233A"))
       cardElevation = 0f
       useCompatPadding = false
+      isClickable = true
+      isFocusable = true
 
       val params = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
@@ -381,6 +396,10 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       )
       params.bottomMargin = 10.dp()
       layoutParams = params
+
+      setOnClickListener {
+        openTankSettingsDetails()
+      }
     }
 
     val row = LinearLayout(requireContext()).apply {
@@ -753,15 +772,15 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   private fun Int.dp(): Int {
     return (this * resources.displayMetrics.density).toInt()
   }
-  
-  override fun onSaveInstanceState(outState: Bundle) {
-  super.onSaveInstanceState(outState)
 
-  outState.putString(
-    KEY_SELECTED_TAB,
-    selectedTab.name
-  )
-}
+  override fun onSaveInstanceState(outState: Bundle) {
+    super.onSaveInstanceState(outState)
+
+    outState.putString(
+      KEY_SELECTED_TAB,
+      selectedTab.name
+    )
+  }
 
   override fun onDestroyView() {
     super.onDestroyView()
@@ -777,7 +796,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   }
 
   companion object {
-  private const val ARG_TANK_ID = "tankId"
-  private const val KEY_SELECTED_TAB = "selectedTab"
-}
+    private const val ARG_TANK_ID = "tankId"
+    private const val KEY_SELECTED_TAB = "selectedTab"
+  }
 }
