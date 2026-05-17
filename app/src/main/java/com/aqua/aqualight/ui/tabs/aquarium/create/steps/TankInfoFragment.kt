@@ -17,6 +17,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankInfoBinding
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.aqua.aqualight.ui.tabs.aquarium.common.TankStyleBottomSheet
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.text.DecimalFormat
