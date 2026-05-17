@@ -38,10 +38,11 @@ import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import android.widget.ScrollView
 import androidx.core.widget.doAfterTextChanged
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.AquariumMaterial
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.catalog.MaterialCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryKey
 import com.yalantis.ucrop.UCrop
@@ -556,7 +557,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     binding.bioMaterialsContainer.removeAllViews()
     binding.hardwareMaterialsContainer.removeAllViews()
 
-    BIO_CATEGORIES.forEach {
+    MaterialCategoryCatalog.bioCategories.forEach {
       category ->
       val selectedMaterials = tank.materials.filter {
         material ->
@@ -572,7 +573,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
       )
     }
 
-    HARDWARE_CATEGORIES.forEach {
+    MaterialCategoryCatalog.hardwareCategories.forEach {
       category ->
       val selectedMaterials = tank.materials.filter {
         material ->
@@ -1390,19 +1391,20 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
       .trim()
       .lowercase(Locale.getDefault())
 
-      val filteredMaterials = catalogMaterials.filter { material ->
-    val searchText = buildString {
-        append(material.name)
-        append(" ")
-        append(material.brand)
-        append(" ")
-        append(material.categoryTitle)
-        append(" ")
-        append(material.keywords.joinToString(" "))
-    }.lowercase(Locale.getDefault())
+      val filteredMaterials = catalogMaterials.filter {
+        material ->
+        val searchText = buildString {
+          append(material.name)
+          append(" ")
+          append(material.brand)
+          append(" ")
+          append(material.categoryTitle)
+          append(" ")
+          append(material.keywords.joinToString(" "))
+        }.lowercase(Locale.getDefault())
 
-    searchText.contains(normalizedQuery)
-}
+        searchText.contains(normalizedQuery)
+      }
 
       if (filteredMaterials.isEmpty()) {
         listContainer.addView(
@@ -2053,10 +2055,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     _binding = null
   }
 
-  private data class MaterialCategoryUi(
-    val key: String,
-    val title: String
-  )
 
   private enum class SettingsTab {
     BASIC,
@@ -2066,59 +2064,5 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
   companion object {
     private const val ARG_TANK_ID = "tankId"
-
-    private val BIO_CATEGORIES = listOf(
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.FERTILIZER,
-            title = "Fertilizer"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.DECORATION,
-            title = "Decoration"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.GRAVEL,
-            title = "Gravel"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.SUBSTRATE,
-            title = "Substrate"
-        )
-    )
-
-    private val HARDWARE_CATEGORIES = listOf(
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.AQUARIUM,
-            title = "Aquarium"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.CO2,
-            title = "CO2"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.LIGHT,
-            title = "Light"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.FILTER,
-            title = "Filter"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.HEATER,
-            title = "Heater"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.COOLER,
-            title = "Cooler"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.DOSING,
-            title = "Dosing"
-        ),
-        MaterialCategoryUi(
-            key = MaterialCategoryKey.LED_BACKGROUND,
-            title = "LED Background"
-        )
-    )
-}
+  }
 }

@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.create.steps
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
@@ -13,10 +14,10 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankMaterialBinding
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryKey
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategory
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.google.android.material.card.MaterialCardView
-import android.text.TextUtils
 
 class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStepFragment {
 
@@ -25,72 +26,6 @@ class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStep
 
     private val viewModel: CreateTankViewModel by viewModels(
         ownerProducer = { requireParentFragment() }
-    )
-
-    private val bioItems = listOf(
-        MaterialCategoryUi(
-            title = "Fertilizer",
-            key = MaterialCategoryKey.FERTILIZER,
-            shortCode = "Fe"
-        ),
-        MaterialCategoryUi(
-            title = "Decoration",
-            key = MaterialCategoryKey.DECORATION,
-            shortCode = "De"
-        ),
-        MaterialCategoryUi(
-            title = "Gravel",
-            key = MaterialCategoryKey.GRAVEL,
-            shortCode = "Gr"
-        ),
-        MaterialCategoryUi(
-            title = "Substrate",
-            key = MaterialCategoryKey.SUBSTRATE,
-            shortCode = "Su"
-        )
-    )
-
-    private val hardwareItems = listOf(
-        MaterialCategoryUi(
-            title = "Aquarium",
-            key = MaterialCategoryKey.AQUARIUM,
-            shortCode = "Aq"
-        ),
-        MaterialCategoryUi(
-            title = "CO2",
-            key = MaterialCategoryKey.CO2,
-            shortCode = "C"
-        ),
-        MaterialCategoryUi(
-            title = "Light",
-            key = MaterialCategoryKey.LIGHT,
-            shortCode = "Li"
-        ),
-        MaterialCategoryUi(
-            title = "Filter",
-            key = MaterialCategoryKey.FILTER,
-            shortCode = "Fi"
-        ),
-        MaterialCategoryUi(
-            title = "Heater",
-            key = MaterialCategoryKey.HEATER,
-            shortCode = "He"
-        ),
-        MaterialCategoryUi(
-            title = "Cooler",
-            key = MaterialCategoryKey.COOLER,
-            shortCode = "Co"
-        ),
-        MaterialCategoryUi(
-            title = "Dosing",
-            key = MaterialCategoryKey.DOSING,
-            shortCode = "Do"
-        ),
-        MaterialCategoryUi(
-            title = "LED Background",
-            key = MaterialCategoryKey.LED_BACKGROUND,
-            shortCode = "LED"
-        )
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -113,13 +48,13 @@ class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStep
         binding.bioContainer.removeAllViews()
         binding.hardwareContainer.removeAllViews()
 
-        bioItems.forEach { item ->
+        MaterialCategoryCatalog.bioCategories.forEach { item ->
             binding.bioContainer.addView(
                 createMaterialRow(item)
             )
         }
 
-        hardwareItems.forEach { item ->
+        MaterialCategoryCatalog.hardwareCategories.forEach { item ->
             binding.hardwareContainer.addView(
                 createMaterialRow(item)
             )
@@ -127,7 +62,7 @@ class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStep
     }
 
     private fun createMaterialRow(
-        item: MaterialCategoryUi
+        item: MaterialCategory
     ): View {
         val card = MaterialCardView(requireContext()).apply {
             radius = 18.dp().toFloat()
@@ -197,30 +132,30 @@ class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStep
         }
 
         val selectedText = TextView(requireContext()).apply {
-    val selectedMaterials = viewModel.getMaterialsByCategory(item.key)
+            val selectedMaterials = viewModel.getMaterialsByCategory(item.key)
 
-    text = getSelectedMaterialsText(item.key)
+            text = getSelectedMaterialsText(item.key)
 
-    setTextColor(
-        if (selectedMaterials.isEmpty()) {
-            Color.parseColor("#8FA4BE")
-        } else {
-            Color.parseColor("#B8C7D9")
+            setTextColor(
+                if (selectedMaterials.isEmpty()) {
+                    Color.parseColor("#8FA4BE")
+                } else {
+                    Color.parseColor("#B8C7D9")
+                }
+            )
+
+            textSize = 12f
+            includeFontPadding = false
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+
+            val params = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            params.topMargin = 6.dp()
+            layoutParams = params
         }
-    )
-
-    textSize = 12f
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
-
-    val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 6.dp()
-    layoutParams = params
-}
 
         val arrow = TextView(requireContext()).apply {
             text = "›"
@@ -248,23 +183,23 @@ class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStep
     }
 
     private fun getSelectedMaterialsText(
-    categoryKey: String
-): String {
-    val materials = viewModel.getMaterialsByCategory(categoryKey)
+        categoryKey: String
+    ): String {
+        val materials = viewModel.getMaterialsByCategory(categoryKey)
 
-    if (materials.isEmpty()) {
-        return "Not selected"
+        if (materials.isEmpty()) {
+            return "Not selected"
+        }
+
+        if (materials.size == 1) {
+            return materials.first().name
+        }
+
+        return "${materials.first().name} +${materials.size - 1} more"
     }
-
-    if (materials.size == 1) {
-        return materials.first().name
-    }
-
-    return "${materials.first().name} +${materials.size - 1} more"
-}
 
     private fun openMaterialPicker(
-        item: MaterialCategoryUi
+        item: MaterialCategory
     ) {
         (requireParentFragment() as? CreateTankFragment)
             ?.openMaterialPickerFlow(
@@ -285,10 +220,4 @@ class TankMaterialFragment : Fragment(R.layout.fragment_tank_material), TankStep
         super.onDestroyView()
         _binding = null
     }
-
-    private data class MaterialCategoryUi(
-        val title: String,
-        val key: String,
-        val shortCode: String
-    )
 }
