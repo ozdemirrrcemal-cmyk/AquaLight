@@ -47,6 +47,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:includeFontPadding="false"
             android:text="Tank Settings"
             android:textColor="?attr/colorOnSurface"
             android:textSize="18sp"
@@ -74,6 +75,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
+                android:includeFontPadding="false"
                 android:text="100"
                 android:textColor="#4CAF50"
                 android:textSize="13sp"
@@ -101,6 +103,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:includeFontPadding="false"
             android:paddingEnd="24dp"
             android:text="Basic"
             android:textColor="?attr/colorOnSurface"
@@ -112,6 +115,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:includeFontPadding="false"
             android:paddingEnd="24dp"
             android:text="Details"
             android:textColor="#8FA4BE"
@@ -122,6 +126,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:includeFontPadding="false"
             android:text="Others"
             android:textColor="#8FA4BE"
             android:textSize="15sp" />
@@ -244,6 +249,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:includeFontPadding="false"
                             android:text="Tank name"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp"
@@ -254,18 +260,20 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:ellipsize="end"
+                            android:includeFontPadding="false"
                             android:maxLines="1"
                             android:text="Aquarium"
                             android:textColor="#8FA4BE"
                             android:textSize="13sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
                             android:layout_marginStart="7dp"
-                            android:text="›"
-                            android:textColor="#8FA4BE"
-                            android:textSize="23sp" />
+                            android:contentDescription="Open"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="#8FA4BE" />
 
                     </LinearLayout>
 
@@ -296,6 +304,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:includeFontPadding="false"
                             android:text="Tank type"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp"
@@ -305,17 +314,19 @@
                             android:id="@+id/tvSettingTankType"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
                             android:text="Fish"
                             android:textColor="#8FA4BE"
                             android:textSize="13sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
                             android:layout_marginStart="7dp"
-                            android:text="›"
-                            android:textColor="#8FA4BE"
-                            android:textSize="23sp" />
+                            android:contentDescription="Open"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="#8FA4BE" />
 
                     </LinearLayout>
 
@@ -346,6 +357,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:includeFontPadding="false"
                             android:text="Size (cm)"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp"
@@ -355,17 +367,19 @@
                             android:id="@+id/tvSettingSize"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
                             android:text="10 W x 10 L x 10 H"
                             android:textColor="#8FA4BE"
                             android:textSize="13sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
                             android:layout_marginStart="7dp"
-                            android:text="›"
-                            android:textColor="#8FA4BE"
-                            android:textSize="23sp" />
+                            android:contentDescription="Open"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="#8FA4BE" />
 
                     </LinearLayout>
 
@@ -396,6 +410,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:includeFontPadding="false"
                             android:text="Volume"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp"
@@ -405,17 +420,19 @@
                             android:id="@+id/tvSettingVolume"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
                             android:text="1 L"
                             android:textColor="#8FA4BE"
                             android:textSize="13sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
                             android:layout_marginStart="7dp"
-                            android:text="›"
-                            android:textColor="#8FA4BE"
-                            android:textSize="23sp" />
+                            android:contentDescription="Open"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="#8FA4BE" />
 
                     </LinearLayout>
 
@@ -446,6 +463,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:includeFontPadding="false"
                             android:text="Setup Date"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp"
@@ -455,17 +473,19 @@
                             android:id="@+id/tvSettingSetupDate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
                             android:text="17 May 2026"
                             android:textColor="#8FA4BE"
                             android:textSize="13sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
                             android:layout_marginStart="7dp"
-                            android:text="›"
-                            android:textColor="#8FA4BE"
-                            android:textSize="23sp" />
+                            android:contentDescription="Open"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="#8FA4BE" />
 
                     </LinearLayout>
 
@@ -509,6 +529,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:includeFontPadding="false"
                                 android:text="Style"
                                 android:textColor="#8FA4BE"
                                 android:textSize="12sp"
@@ -520,6 +541,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
                                 android:ellipsize="end"
+                                android:includeFontPadding="false"
                                 android:maxLines="1"
                                 android:text="Nature"
                                 android:textColor="?attr/colorOnSurface"
@@ -528,12 +550,14 @@
 
                         </LinearLayout>
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="›"
-                            android:textColor="#8FA4BE"
-                            android:textSize="23sp" />
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_marginStart="7dp"
+                            android:contentDescription="Open"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="#8FA4BE" />
 
                     </LinearLayout>
 
@@ -569,6 +593,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:includeFontPadding="false"
                                 android:text="Idea"
                                 android:textColor="#8FA4BE"
                                 android:textSize="12sp"
@@ -580,6 +605,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
                                 android:ellipsize="end"
+                                android:includeFontPadding="false"
                                 android:maxLines="2"
                                 android:text="No idea added"
                                 android:textColor="?attr/colorOnSurface"
@@ -588,12 +614,14 @@
 
                         </LinearLayout>
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="›"
-                            android:textColor="#8FA4BE"
-                            android:textSize="23sp" />
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_marginStart="7dp"
+                            android:contentDescription="Open"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_arrow_right"
+                            app:tint="#8FA4BE" />
 
                     </LinearLayout>
 
@@ -604,6 +632,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="22dp"
+                    android:includeFontPadding="false"
                     android:text="Bio"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
@@ -620,6 +649,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="22dp"
+                    android:includeFontPadding="false"
                     android:text="Hardware"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
@@ -646,6 +676,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="32dp"
                     android:gravity="center"
+                    android:includeFontPadding="false"
                     android:text="Other settings will be added here."
                     android:textColor="#8FA4BE"
                     android:textSize="13sp" />

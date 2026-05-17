@@ -11,6 +11,7 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -645,17 +646,16 @@ binding.rowSetupDate.setOnClickListener {
             layoutParams = params
         }
 
-        val arrow = TextView(requireContext()).apply {
-            text = "›"
-            textSize = 23f
-            setTextColor(Color.parseColor("#8FA4BE"))
-            gravity = Gravity.CENTER
+        val arrow = ImageView(requireContext()).apply {
+    setImageResource(R.drawable.ic_arrow_right)
+    setColorFilter(Color.parseColor("#8FA4BE"))
+    scaleType = ImageView.ScaleType.CENTER
 
-            layoutParams = LinearLayout.LayoutParams(
-                22.dp(),
-                34.dp()
-            )
-        }
+    layoutParams = LinearLayout.LayoutParams(
+        22.dp(),
+        22.dp()
+    )
+}
 
         textBox.addView(titleText)
         textBox.addView(summaryText)
