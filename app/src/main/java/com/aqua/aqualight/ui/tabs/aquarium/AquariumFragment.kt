@@ -9,7 +9,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentAquariumBinding
-import android.os.Bundle
 
 class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
 
@@ -19,13 +18,13 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private val tankAdapter = AquariumTankAdapter { tank ->
-    findNavController().navigate(
-        R.id.action_aquariumFragment_to_tankDetailFragment,
-        Bundle().apply {
-            putLong("tankId", tank.id)
-        }
-    )
-}
+        findNavController().navigate(
+            R.id.action_aquariumFragment_to_tankDetailFragment,
+            Bundle().apply {
+                putLong("tankId", tank.id)
+            }
+        )
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentAquariumBinding.bind(view)
