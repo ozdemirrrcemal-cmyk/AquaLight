@@ -1804,7 +1804,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     DETAILS,
     OTHERS
   }
-
   companion object {
     private const val ARG_TANK_ID = "tankId"
   }
