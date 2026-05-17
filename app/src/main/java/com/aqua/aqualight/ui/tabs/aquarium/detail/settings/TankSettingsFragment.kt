@@ -538,11 +538,15 @@ MaterialPickerFragment.MaterialPickerHost {
     tabView: TextView
   ) {
     binding.settingsTabsContainer.post {
-      val underlineWidth = (tabView.width * 0.70f)
+      val textWidth = tabView.paint
+      .measureText(tabView.text.toString())
+      .toInt()
+
+      val underlineWidth = (textWidth * 0.90f)
       .toInt()
       .coerceIn(
-        42.dp(),
-        76.dp()
+        36.dp(),
+        72.dp()
       )
 
       val params = binding.tabUnderline.layoutParams
@@ -1485,7 +1489,7 @@ MaterialPickerFragment.MaterialPickerHost {
     }
   }
 
-  
+
   private fun addSizeInputColumn(
     parent: LinearLayout,
     label: String,

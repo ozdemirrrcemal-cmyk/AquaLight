@@ -104,7 +104,7 @@
       android:layout_height="match_parent"
       android:gravity="center"
       android:includeFontPadding="false"
-      android:paddingEnd="24dp"
+      android:layout_marginEnd="24dp"
       android:text="Basic"
       android:textColor="?attr/colorOnSurface"
       android:textSize="15sp"
@@ -116,7 +116,7 @@
       android:layout_height="match_parent"
       android:gravity="center"
       android:includeFontPadding="false"
-      android:paddingEnd="24dp"
+      android:layout_marginEnd="24dp"
       android:text="Details"
       android:textColor="#8FA4BE"
       android:textSize="15sp" />
