@@ -687,13 +687,15 @@
 
     </ScrollView>
 	
-	<FrameLayout
+<FrameLayout
     android:id="@+id/settingsMaterialPickerContainer"
     android:layout_width="0dp"
     android:layout_height="0dp"
     android:visibility="gone"
     android:background="@color/background_color"
     android:elevation="24dp"
+    android:clickable="true"
+    android:focusable="true"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintStart_toStartOf="parent"

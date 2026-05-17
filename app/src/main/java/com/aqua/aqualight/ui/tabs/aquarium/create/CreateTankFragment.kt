@@ -2,15 +2,19 @@ package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentCreateTankBinding
+import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
@@ -20,19 +24,16 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankMaterialFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment
-import android.widget.Toast
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
-import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import kotlinx.coroutines.launch
 
-class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
+class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
+    MaterialPickerFragment.MaterialPickerHost {
 
     private var _binding: FragmentCreateTankBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: CreateTankViewModel by viewModels()
-	private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private val totalSteps = 5
     private var currentStepIndex = 0
@@ -45,8 +46,14 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         { TankInfoFragment() }
     )
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentCreateTankBinding.bind(view)
 
@@ -124,7 +131,9 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         }
     }
 
-    private fun showStep(index: Int) {
+    private fun showStep(
+        index: Int
+    ) {
         currentStepIndex = index
 
         childFragmentManager.commit {
@@ -166,31 +175,31 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     }
 
     private fun completeTank() {
-    binding.btnNext.isEnabled = false
+        binding.btnNext.isEnabled = false
 
-    viewLifecycleOwner.lifecycleScope.launch {
-        try {
-            aquariumTankViewModel.addTankFromDraft(
-                viewModel.tankDraft
-            )
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                aquariumTankViewModel.addTankFromDraft(
+                    viewModel.tankDraft
+                )
 
-            findNavController().popBackStack(
-                R.id.aquariumFragment,
-                false
-            )
-        } catch (exception: Exception) {
-            exception.printStackTrace()
+                findNavController().popBackStack(
+                    R.id.aquariumFragment,
+                    false
+                )
+            } catch (exception: Exception) {
+                exception.printStackTrace()
 
-            binding.btnNext.isEnabled = true
+                binding.btnNext.isEnabled = true
 
-            Toast.makeText(
-                requireContext(),
-                "Tank could not be saved.",
-                Toast.LENGTH_SHORT
-            ).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Tank could not be saved.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
-}
 
     fun openPlantTagFlow() {
         binding.plantFlowContainer.isVisible = true
@@ -256,9 +265,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         binding.materialFlowContainer.isVisible = true
 
         childFragmentManager.commit {
+            setReorderingAllowed(true)
             replace(
                 R.id.materialFlowContainer,
-                MaterialPickerFragment.newInstance(
+                MaterialPickerFragment.newCreateInstance(
                     categoryKey = categoryKey,
                     categoryTitle = categoryTitle
                 ),
@@ -267,7 +277,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         }
     }
 
-    fun closeMaterialPickerFlow() {
+    override fun closeMaterialPickerFlow() {
         val currentMaterialFragment = childFragmentManager.findFragmentById(
             R.id.materialFlowContainer
         )
@@ -290,8 +300,14 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         return true
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putInt(KEY_CURRENT_STEP, currentStepIndex)
+    override fun onSaveInstanceState(
+        outState: Bundle
+    ) {
+        outState.putInt(
+            KEY_CURRENT_STEP,
+            currentStepIndex
+        )
+
         super.onSaveInstanceState(outState)
     }
 
