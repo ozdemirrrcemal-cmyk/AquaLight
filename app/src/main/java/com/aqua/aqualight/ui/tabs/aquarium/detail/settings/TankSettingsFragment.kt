@@ -39,9 +39,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
-import android.widget.ScrollView
-import androidx.core.widget.doAfterTextChanged
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.AquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.catalog.MaterialCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryKey
@@ -702,13 +699,27 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     card.addView(row)
 
     card.setOnClickListener {
-      showMaterialCategorySheet(
+      openMaterialPickerFlow(
         categoryKey = categoryKey,
         categoryTitle = title
       )
     }
 
     return card
+  }
+
+  fun closeMaterialPickerFlow() {
+    val fragment = childFragmentManager.findFragmentById(
+      R.id.settingsMaterialPickerContainer
+    )
+
+    if (fragment != null) {
+      childFragmentManager.beginTransaction()
+      .remove(fragment)
+      .commit()
+    }
+
+    binding.settingsMaterialPickerContainer.isVisible = false
   }
 
   private fun getMaterialSummary(
@@ -1315,274 +1326,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     )
   }
 
-  private fun showMaterialCategorySheet(
-    categoryKey: String,
-    categoryTitle: String
-  ) {
-    val tank = currentTank ?: return
-    val dialog = BottomSheetDialog(requireContext())
-
-    val catalogMaterials = MaterialCatalog.getByCategory(categoryKey)
-
-    val currentCategoryMaterials = tank.materials.filter {
-      material ->
-      material.categoryKey == categoryKey
-    }
-
-    val catalogProductIds = catalogMaterials.map {
-      material ->
-      material.id
-    }.toSet()
-
-    val selectedProductIds = currentCategoryMaterials.map {
-      material ->
-      material.productId
-    }.toMutableSet()
-
-    val customSelections = currentCategoryMaterials
-    .filterNot {
-      material ->
-      material.productId in catalogProductIds
-    }
-    .map {
-      material ->
-      TankMaterialSelection(
-        id = material.id,
-        productId = material.productId,
-        categoryKey = material.categoryKey,
-        categoryTitle = material.categoryTitle,
-        name = material.name,
-        brand = material.brand,
-        note = material.note
-      )
-    }
-
-    val container = createStepSheetContainer()
-    container.addView(createStepSheetHeader(categoryTitle, dialog))
-
-    val searchInput = createStepInput(
-      text = "",
-      hint = "Search $categoryTitle",
-      inputType = InputType.TYPE_CLASS_TEXT
-    )
-
-    val listContainer = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.VERTICAL
-    }
-
-    val scrollView = ScrollView(requireContext()).apply {
-      isVerticalScrollBarEnabled = false
-      overScrollMode = View.OVER_SCROLL_NEVER
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        310.dp()
-      )
-      params.topMargin = 14.dp()
-      layoutParams = params
-
-      addView(listContainer)
-    }
-
-    fun renderList(query: String) {
-      listContainer.removeAllViews()
-
-      val normalizedQuery = query
-      .trim()
-      .lowercase(Locale.getDefault())
-
-      val filteredMaterials = catalogMaterials.filter {
-        material ->
-        val searchText = buildString {
-          append(material.name)
-          append(" ")
-          append(material.brand)
-          append(" ")
-          append(material.categoryTitle)
-          append(" ")
-          append(material.keywords.joinToString(" "))
-        }.lowercase(Locale.getDefault())
-
-        searchText.contains(normalizedQuery)
-      }
-
-      if (filteredMaterials.isEmpty()) {
-        listContainer.addView(
-          createEmptyText("No products found.")
-        )
-        return
-      }
-
-      filteredMaterials.forEach {
-        material ->
-        listContainer.addView(
-          createMaterialOptionRow(
-            material = material,
-            selected = selectedProductIds.contains(material.id)
-          ) {
-            if (selectedProductIds.contains(material.id)) {
-              selectedProductIds.remove(material.id)
-            } else {
-              selectedProductIds.add(material.id)
-            }
-
-            renderList(searchInput.text.toString())
-          }
-        )
-      }
-    }
-
-    searchInput.doAfterTextChanged {
-      editable ->
-      renderList(editable?.toString().orEmpty())
-    }
-
-    renderList("")
-
-    val saveButton = createStepSheetSaveButton {
-      val selectedCatalogMaterials = catalogMaterials
-      .filter {
-        material ->
-        selectedProductIds.contains(material.id)
-      }
-      .map {
-        material ->
-        val existingMaterial = currentCategoryMaterials.firstOrNull {
-          saved ->
-          saved.productId == material.id
-        }
-
-        TankMaterialSelection(
-          id = existingMaterial?.id ?: System.nanoTime(),
-          productId = material.id,
-          categoryKey = material.categoryKey,
-          categoryTitle = material.categoryTitle,
-          name = material.name,
-          brand = material.brand,
-          note = existingMaterial?.note.orEmpty()
-        )
-      }
-
-      val updatedMaterials = customSelections + selectedCatalogMaterials
-
-      viewLifecycleOwner.lifecycleScope.launch {
-        aquariumTankViewModel.updateTankMaterialsForCategory(
-          tankId = tankId,
-          categoryKey = categoryKey,
-          materials = updatedMaterials
-        )
-
-        dialog.dismiss()
-      }
-    }
-
-    container.addView(searchInput)
-    container.addView(scrollView)
-    container.addView(saveButton)
-    container.addView(createStepSheetCancelButton(dialog))
-
-    showConfiguredBottomSheet(
-      dialog = dialog,
-      content = container
-    )
-  }
-
-  private fun createMaterialOptionRow(
-    material: AquariumMaterial,
-    selected: Boolean,
-    onClick: () -> Unit
-  ): View {
-    val row = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-      setPadding(
-        14.dp(),
-        10.dp(),
-        12.dp(),
-        10.dp()
-      )
-      background = createRoundedDrawable(
-        color = if (selected) "#1C3D63" else "#10233A",
-        radiusPx = 14.dp(),
-        strokeColor = if (selected) "#2196F3" else "#223A57",
-        strokeWidthPx = 1.dp()
-      )
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.bottomMargin = 9.dp()
-      layoutParams = params
-
-      setOnClickListener {
-        onClick()
-      }
-    }
-
-    val textBox = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.VERTICAL
-
-      layoutParams = LinearLayout.LayoutParams(
-        0,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        1f
-      )
-    }
-
-    val nameText = TextView(requireContext()).apply {
-      text = material.name
-      textSize = 13.5f
-      setTextColor(Color.WHITE)
-      setTypeface(
-        null,
-        if (selected) Typeface.BOLD else Typeface.NORMAL
-      )
-      includeFontPadding = false
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-    }
-
-    val brandText = TextView(requireContext()).apply {
-      text = material.brand.ifBlank {
-        material.categoryTitle
-      }
-      textSize = 12f
-      setTextColor(Color.parseColor("#8FA4BE"))
-      includeFontPadding = false
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 5.dp()
-      layoutParams = params
-    }
-
-    val checkText = TextView(requireContext()).apply {
-      text = if (selected) "✓" else ""
-      gravity = Gravity.CENTER
-      textSize = 17f
-      setTextColor(Color.parseColor("#2196F3"))
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-
-      layoutParams = LinearLayout.LayoutParams(
-        28.dp(),
-        28.dp()
-      )
-    }
-
-    textBox.addView(nameText)
-    textBox.addView(brandText)
-
-    row.addView(textBox)
-    row.addView(checkText)
-
-    return row
-  }
 
   private fun createStepSheetContainer(): LinearLayout {
     return LinearLayout(requireContext()).apply {
