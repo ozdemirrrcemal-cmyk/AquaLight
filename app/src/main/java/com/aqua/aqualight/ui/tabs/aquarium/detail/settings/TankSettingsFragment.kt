@@ -38,6 +38,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+import android.text.InputType
+import android.widget.EditText
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.datepicker.MaterialDatePicker
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
@@ -129,28 +133,24 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         }
 
         binding.rowTankName.setOnClickListener {
-            showComingSoon("Edit tank name")
-        }
+    showTankNameSheet()
+}
 
-        binding.rowTankType.setOnClickListener {
-            showComingSoon("Edit tank type")
-        }
+binding.rowTankType.setOnClickListener {
+    showTankTypeSheet()
+}
 
-        binding.rowSize.setOnClickListener {
-            showComingSoon("Edit size")
-        }
+binding.rowSize.setOnClickListener {
+    showTankSizeSheet()
+}
 
-        binding.rowVolume.setOnClickListener {
-            showComingSoon("Edit volume")
-        }
+binding.rowVolume.setOnClickListener {
+    showVolumeUnitSheet()
+}
 
-        binding.rowSetupDate.setOnClickListener {
-            showComingSoon("Edit setup date")
-        }
-
-        binding.rowStyle.setOnClickListener {
-            showComingSoon("Edit style")
-        }
+binding.rowSetupDate.setOnClickListener {
+    showSetupDatePicker()
+}
 
         binding.rowIdea.setOnClickListener {
             showComingSoon("Edit idea")
@@ -737,6 +737,402 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
         return formatter.format(Date(setupDateMillis))
     }
+	
+	private fun showTankNameSheet() {
+    val tank = currentTank ?: return
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = createBottomSheetContainer()
+
+    val title = createSheetTitle("Tank name")
+
+    val input = createSheetInput(
+        text = tank.name,
+        hint = "Enter tank name",
+        inputType = InputType.TYPE_CLASS_TEXT
+    )
+
+    val saveButton = createSheetSaveButton("Save") {
+        val newName = input.text.toString().trim()
+
+        if (newName.length < 2) {
+            Toast.makeText(
+                requireContext(),
+                "Tank name must be at least 2 characters.",
+                Toast.LENGTH_SHORT
+            ).show()
+            return@createSheetSaveButton
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            aquariumTankViewModel.updateTankName(
+                tankId = tankId,
+                name = newName
+            )
+
+            dialog.dismiss()
+        }
+    }
+
+    container.addView(title)
+    container.addView(input)
+    container.addView(saveButton)
+
+    dialog.setContentView(container)
+    dialog.show()
+}
+
+private fun showTankTypeSheet() {
+    val tank = currentTank ?: return
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = createBottomSheetContainer()
+    val title = createSheetTitle("Tank type")
+
+    container.addView(title)
+
+    val types = listOf(
+        "Fish",
+        "Shrimp",
+        "Plant",
+        "Marine",
+        "Softies",
+        "Mixed Reef",
+        "SPS",
+        "Frags",
+        "ULNS",
+        "Coral",
+        "Other"
+    )
+
+    types.forEach { type ->
+        container.addView(
+            createOptionRow(
+                text = type,
+                selected = type.equals(tank.tankType, ignoreCase = true)
+            ) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    aquariumTankViewModel.updateTankType(
+                        tankId = tankId,
+                        tankType = type
+                    )
+
+                    dialog.dismiss()
+                }
+            }
+        )
+    }
+
+    dialog.setContentView(container)
+    dialog.show()
+}
+
+private fun showTankSizeSheet() {
+    val tank = currentTank ?: return
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = createBottomSheetContainer()
+    val title = createSheetTitle("Size (cm)")
+
+    val widthInput = createSheetInput(
+        text = tank.widthCm.toString(),
+        hint = "Width",
+        inputType = InputType.TYPE_CLASS_NUMBER
+    )
+
+    val lengthInput = createSheetInput(
+        text = tank.lengthCm.toString(),
+        hint = "Length",
+        inputType = InputType.TYPE_CLASS_NUMBER
+    )
+
+    val heightInput = createSheetInput(
+        text = tank.heightCm.toString(),
+        hint = "Height",
+        inputType = InputType.TYPE_CLASS_NUMBER
+    )
+
+    val saveButton = createSheetSaveButton("Save") {
+        val width = widthInput.text.toString().toIntOrNull()
+        val length = lengthInput.text.toString().toIntOrNull()
+        val height = heightInput.text.toString().toIntOrNull()
+
+        if (width == null || length == null || height == null ||
+            width <= 0 || length <= 0 || height <= 0
+        ) {
+            Toast.makeText(
+                requireContext(),
+                "Please enter valid tank size.",
+                Toast.LENGTH_SHORT
+            ).show()
+            return@createSheetSaveButton
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            aquariumTankViewModel.updateTankSize(
+                tankId = tankId,
+                widthCm = width,
+                lengthCm = length,
+                heightCm = height
+            )
+
+            dialog.dismiss()
+        }
+    }
+
+    container.addView(title)
+    container.addView(createSmallLabel("Width"))
+    container.addView(widthInput)
+    container.addView(createSmallLabel("Length"))
+    container.addView(lengthInput)
+    container.addView(createSmallLabel("Height"))
+    container.addView(heightInput)
+    container.addView(saveButton)
+
+    dialog.setContentView(container)
+    dialog.show()
+}
+
+private fun showVolumeUnitSheet() {
+    val tank = currentTank ?: return
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = createBottomSheetContainer()
+    val title = createSheetTitle("Volume unit")
+
+    container.addView(title)
+
+    listOf("L", "gal").forEach { unit ->
+        container.addView(
+            createOptionRow(
+                text = unit,
+                selected = unit.equals(tank.volumeUnit, ignoreCase = true)
+            ) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    aquariumTankViewModel.updateTankVolumeUnit(
+                        tankId = tankId,
+                        volumeUnit = unit
+                    )
+
+                    dialog.dismiss()
+                }
+            }
+        )
+    }
+
+    dialog.setContentView(container)
+    dialog.show()
+}
+
+private fun showSetupDatePicker() {
+    val tank = currentTank ?: return
+
+    val picker = MaterialDatePicker.Builder.datePicker()
+        .setTitleText("Setup date")
+        .setSelection(
+            tank.setupDateMillis ?: MaterialDatePicker.todayInUtcMilliseconds()
+        )
+        .build()
+
+    picker.addOnPositiveButtonClickListener { selectedDateMillis ->
+        viewLifecycleOwner.lifecycleScope.launch {
+            aquariumTankViewModel.updateTankSetupDate(
+                tankId = tankId,
+                setupDateMillis = selectedDateMillis
+            )
+        }
+    }
+
+    picker.show(
+        childFragmentManager,
+        "SETUP_DATE_PICKER"
+    )
+}
+
+private fun createBottomSheetContainer(): LinearLayout {
+    return LinearLayout(requireContext()).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(
+            20.dp(),
+            18.dp(),
+            20.dp(),
+            24.dp()
+        )
+        background = createRoundedDrawable(
+            color = "#10233A",
+            radiusPx = 24.dp()
+        )
+    }
+}
+
+private fun createSheetTitle(
+    text: String
+): TextView {
+    return TextView(requireContext()).apply {
+        this.text = text
+        textSize = 17f
+        setTextColor(Color.WHITE)
+        setTypeface(null, Typeface.BOLD)
+        includeFontPadding = false
+
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        params.bottomMargin = 16.dp()
+        layoutParams = params
+    }
+}
+
+private fun createSmallLabel(
+    text: String
+): TextView {
+    return TextView(requireContext()).apply {
+        this.text = text
+        textSize = 12f
+        setTextColor(Color.parseColor("#8FA4BE"))
+        setTypeface(null, Typeface.BOLD)
+        includeFontPadding = false
+
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        params.topMargin = 10.dp()
+        params.bottomMargin = 7.dp()
+        layoutParams = params
+    }
+}
+
+private fun createSheetInput(
+    text: String,
+    hint: String,
+    inputType: Int
+): EditText {
+    return EditText(requireContext()).apply {
+        setText(text)
+        this.hint = hint
+        this.inputType = inputType
+        setSingleLine(true)
+        textSize = 15f
+        setTextColor(Color.WHITE)
+        setHintTextColor(Color.parseColor("#8FA4BE"))
+        background = createRoundedDrawable(
+            color = "#16314D",
+            radiusPx = 16.dp()
+        )
+        setPadding(
+            16.dp(),
+            0,
+            16.dp(),
+            0
+        )
+
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            52.dp()
+        )
+        params.bottomMargin = 10.dp()
+        layoutParams = params
+
+        setSelectAllOnFocus(true)
+    }
+}
+
+private fun createSheetSaveButton(
+    text: String,
+    onClick: () -> Unit
+): MaterialButton {
+    return MaterialButton(requireContext()).apply {
+        this.text = text
+        textSize = 14f
+        setTypeface(null, Typeface.BOLD)
+        textAllCaps = false
+        setTextColor(Color.WHITE)
+        cornerRadius = 18.dp()
+        backgroundTintList = android.content.res.ColorStateList.valueOf(
+            Color.parseColor("#2196F3")
+        )
+
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            52.dp()
+        )
+        params.topMargin = 8.dp()
+        layoutParams = params
+
+        setOnClickListener {
+            onClick()
+        }
+    }
+}
+
+private fun createOptionRow(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+): View {
+    val row = LinearLayout(requireContext()).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(
+            16.dp(),
+            0,
+            16.dp(),
+            0
+        )
+        background = createRoundedDrawable(
+            color = if (selected) "#1C3D63" else "#16314D",
+            radiusPx = 16.dp()
+        )
+        setOnClickListener {
+            onClick()
+        }
+
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            52.dp()
+        )
+        params.bottomMargin = 10.dp()
+        layoutParams = params
+    }
+
+    val label = TextView(requireContext()).apply {
+        this.text = text
+        textSize = 15f
+        setTextColor(Color.WHITE)
+        setTypeface(
+            null,
+            if (selected) Typeface.BOLD else Typeface.NORMAL
+        )
+        includeFontPadding = false
+
+        layoutParams = LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1f
+        )
+    }
+
+    val check = TextView(requireContext()).apply {
+        this.text = if (selected) "✓" else ""
+        textSize = 16f
+        setTextColor(Color.parseColor("#2196F3"))
+        setTypeface(null, Typeface.BOLD)
+        gravity = Gravity.CENTER
+
+        layoutParams = LinearLayout.LayoutParams(
+            28.dp(),
+            28.dp()
+        )
+    }
+
+    row.addView(label)
+    row.addView(check)
+
+    return row
+}
+	
 
     private fun showComingSoon(
         title: String

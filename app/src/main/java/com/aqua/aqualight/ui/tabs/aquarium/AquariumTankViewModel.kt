@@ -35,6 +35,61 @@ class AquariumTankViewModel(
             photoUri = photoUri
         )
     }
+	
+	
+	suspend fun updateTankName(
+    tankId: Long,
+    name: String
+) {
+    tankDataStoreManager.updateTankName(
+        tankId = tankId,
+        name = name
+    )
+}
+
+suspend fun updateTankType(
+    tankId: Long,
+    tankType: String
+) {
+    tankDataStoreManager.updateTankType(
+        tankId = tankId,
+        tankType = tankType
+    )
+}
+
+suspend fun updateTankSize(
+    tankId: Long,
+    widthCm: Int,
+    lengthCm: Int,
+    heightCm: Int
+) {
+    tankDataStoreManager.updateTankSize(
+        tankId = tankId,
+        widthCm = widthCm,
+        lengthCm = lengthCm,
+        heightCm = heightCm
+    )
+}
+
+suspend fun updateTankVolumeUnit(
+    tankId: Long,
+    volumeUnit: String
+) {
+    tankDataStoreManager.updateTankVolumeUnit(
+        tankId = tankId,
+        volumeUnit = volumeUnit
+    )
+}
+
+suspend fun updateTankSetupDate(
+    tankId: Long,
+    setupDateMillis: Long
+) {
+    tankDataStoreManager.updateTankSetupDate(
+        tankId = tankId,
+        setupDateMillis = setupDateMillis
+    )
+}
 
     suspend fun updateTankPlants(
         tankId: Long,
