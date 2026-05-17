@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
@@ -165,21 +166,18 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             SettingsTab.BASIC -> {
                 activateTab(binding.tabBasic)
                 moveTabUnderline(binding.tabBasic)
-
                 binding.basicSection.isVisible = true
             }
 
             SettingsTab.DETAILS -> {
                 activateTab(binding.tabDetails)
                 moveTabUnderline(binding.tabDetails)
-
                 binding.detailsSection.isVisible = true
             }
 
             SettingsTab.OTHERS -> {
                 activateTab(binding.tabOthers)
                 moveTabUnderline(binding.tabOthers)
-
                 binding.othersSection.isVisible = true
             }
         }
@@ -217,11 +215,11 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         tabView: TextView
     ) {
         binding.settingsTabsContainer.post {
-            val underlineWidth = (tabView.width * 0.75f)
+            val underlineWidth = (tabView.width * 0.70f)
                 .toInt()
                 .coerceIn(
-                    48.dp(),
-                    92.dp()
+                    42.dp(),
+                    76.dp()
                 )
 
             val params = binding.tabUnderline.layoutParams
@@ -291,7 +289,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         materials: List<SavedAquariumMaterial>
     ): View {
         val card = MaterialCardView(requireContext()).apply {
-            radius = 18.dp().toFloat()
+            radius = 16.dp().toFloat()
             strokeWidth = 1.dp()
             strokeColor = Color.parseColor("#223A57")
             setCardBackgroundColor(Color.parseColor("#10233A"))
@@ -302,7 +300,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.bottomMargin = 14.dp()
+            params.bottomMargin = 10.dp()
             layoutParams = params
         }
 
@@ -310,25 +308,31 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(
-                16.dp(),
-                16.dp(),
                 14.dp(),
-                16.dp()
+                12.dp(),
+                12.dp(),
+                12.dp()
             )
+        }
+
+        val iconBackground = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.parseColor("#263B5A"))
+            cornerRadius = 12.dp().toFloat()
         }
 
         val iconBox = TextView(requireContext()).apply {
             text = title.take(2).uppercase(Locale.getDefault())
             gravity = Gravity.CENTER
-            textSize = 12f
+            textSize = 10f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
-            setBackgroundColor(Color.parseColor("#263B5A"))
+            background = iconBackground
             includeFontPadding = false
 
             layoutParams = LinearLayout.LayoutParams(
-                50.dp(),
-                50.dp()
+                42.dp(),
+                42.dp()
             )
         }
 
@@ -340,45 +344,45 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
             )
-            params.marginStart = 16.dp()
+            params.marginStart = 14.dp()
             layoutParams = params
         }
 
         val titleText = TextView(requireContext()).apply {
             text = title
-            textSize = 15f
+            textSize = 14f
             setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.NORMAL)
+            setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
         }
 
         val summaryText = TextView(requireContext()).apply {
-            text = materials.joinToString(separator = " + ") { material ->
-                material.name
-            }
-            textSize = 13f
+            text = getMaterialSummary(materials)
+            textSize = 12f
             setTextColor(Color.parseColor("#8FA4BE"))
             setLineSpacing(2.dp().toFloat(), 1.0f)
-            maxLines = 3
+            maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 8.dp()
+            params.topMargin = 6.dp()
             layoutParams = params
         }
 
         val arrow = TextView(requireContext()).apply {
             text = "›"
-            textSize = 30f
+            textSize = 23f
             setTextColor(Color.parseColor("#8FA4BE"))
             gravity = Gravity.CENTER
 
             layoutParams = LinearLayout.LayoutParams(
-                28.dp(),
-                44.dp()
+                22.dp(),
+                34.dp()
             )
         }
 
@@ -398,19 +402,33 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         return card
     }
 
+    private fun getMaterialSummary(
+        materials: List<SavedAquariumMaterial>
+    ): String {
+        if (materials.isEmpty()) {
+            return "Not selected"
+        }
+
+        if (materials.size == 1) {
+            return materials.first().name
+        }
+
+        return "${materials.first().name} +${materials.size - 1} more"
+    }
+
     private fun createEmptyText(
         text: String
     ): View {
         return TextView(requireContext()).apply {
             this.text = text
-            textSize = 13f
+            textSize = 12f
             setTextColor(Color.parseColor("#8FA4BE"))
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.bottomMargin = 12.dp()
+            params.bottomMargin = 10.dp()
             layoutParams = params
         }
     }
