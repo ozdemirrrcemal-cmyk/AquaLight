@@ -435,9 +435,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
   private fun getTankSizeText(
     tank: SavedAquariumTank
-  ): String {
-    return "${tank.widthCm} × ${tank.lengthCm} × ${tank.heightCm}"
-  }
+): String {
+    return "${tank.widthCm}×${tank.lengthCm}×${tank.heightCm}"
+}
 
   private fun getTankSetupDateText(
     setupDateMillis: Long?
@@ -447,9 +447,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     val formatter = SimpleDateFormat(
-      "dd MMM yyyy",
-      Locale.getDefault()
-    )
+    "dd MMM yy",
+    Locale.getDefault()
+)
 
     return formatter.format(Date(setupDateMillis))
   }
