@@ -260,11 +260,15 @@
           android:rowCount="2">
 
           <com.google.android.material.card.MaterialCardView
+		    android:id="@+id/cardTankDays"
             android:layout_width="0dp"
             android:layout_height="72dp"
             android:layout_columnWeight="1"
             android:layout_marginEnd="5dp"
             android:layout_marginBottom="10dp"
+			android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="#10233A"
             app:cardCornerRadius="15dp"
             app:cardElevation="0dp"
@@ -305,12 +309,16 @@
           </com.google.android.material.card.MaterialCardView>
 
           <com.google.android.material.card.MaterialCardView
+		    android:id="@+id/cardTankVolume"
             android:layout_width="0dp"
             android:layout_height="72dp"
             android:layout_columnWeight="1"
             android:layout_marginStart="5dp"
             android:layout_marginEnd="5dp"
             android:layout_marginBottom="10dp"
+			android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="#10233A"
             app:cardCornerRadius="15dp"
             app:cardElevation="0dp"
@@ -351,11 +359,15 @@
           </com.google.android.material.card.MaterialCardView>
 
           <com.google.android.material.card.MaterialCardView
+		    android:id="@+id/cardTankSize"
             android:layout_width="0dp"
             android:layout_height="72dp"
             android:layout_columnWeight="1"
             android:layout_marginStart="5dp"
             android:layout_marginBottom="10dp"
+			android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="#10233A"
             app:cardCornerRadius="15dp"
             app:cardElevation="0dp"
@@ -396,10 +408,14 @@
           </com.google.android.material.card.MaterialCardView>
 
           <com.google.android.material.card.MaterialCardView
+		    android:id="@+id/cardTankType"
             android:layout_width="0dp"
             android:layout_height="72dp"
             android:layout_columnWeight="1"
             android:layout_marginEnd="5dp"
+			android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="#10233A"
             app:cardCornerRadius="15dp"
             app:cardElevation="0dp"
@@ -440,11 +456,15 @@
           </com.google.android.material.card.MaterialCardView>
 
           <com.google.android.material.card.MaterialCardView
+		    android:id="@+id/cardTankSetup"
             android:layout_width="0dp"
             android:layout_height="72dp"
             android:layout_columnWeight="1"
             android:layout_marginStart="5dp"
             android:layout_marginEnd="5dp"
+			android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="#10233A"
             app:cardCornerRadius="15dp"
             app:cardElevation="0dp"
@@ -485,11 +505,15 @@
           </com.google.android.material.card.MaterialCardView>
 
           <com.google.android.material.card.MaterialCardView
+		    android:id="@+id/cardTankStyle"
             android:layout_width="0dp"
             android:layout_height="72dp"
             android:layout_columnWeight="1"
             android:layout_marginStart="5dp"
             app:cardBackgroundColor="#10233A"
+			android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
             app:cardCornerRadius="15dp"
             app:cardElevation="0dp"
             app:strokeColor="#223A57"

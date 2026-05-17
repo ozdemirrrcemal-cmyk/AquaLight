@@ -35,6 +35,8 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
@@ -68,12 +70,31 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     binding.btnEdit.setOnClickListener {
-      findNavController().navigate(
-        R.id.action_tankDetailFragment_to_tankSettingsFragment,
-        Bundle().apply {
-          putLong("tankId", tankId)
-        }
-      )
+      openTankSettings()
+    }
+
+    binding.cardTankValue.setOnClickListener {
+      toggleTankVolumeUnit()
+    }
+
+    binding.cardTankDays.setOnClickListener {
+      openTankSettings()
+    }
+
+    binding.cardTankSize.setOnClickListener {
+      openTankSettings()
+    }
+
+    binding.cardTankType.setOnClickListener {
+      openTankSettings()
+    }
+
+    binding.cardTankSetup.setOnClickListener {
+      openTankSettings()
+    }
+
+    binding.cardTankStyle.setOnClickListener {
+      openTankSettings()
     }
 
     binding.btnAddDevice.setOnClickListener {
@@ -106,6 +127,41 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     binding.tabTankLife.setOnClickListener {
       selectTab(TankDetailTab.TANK_LIFE)
+    }
+  }
+
+  private fun openTankSettings() {
+    findNavController().navigate(
+      R.id.action_tankDetailFragment_to_tankSettingsFragment,
+      Bundle().apply {
+        putLong("tankId", tankId)
+      }
+    )
+  }
+
+  private fun toggleTankVolumeUnit() {
+    val tank = currentTank ?: return
+
+    val currentUnit = tank.volumeUnit.ifBlank {
+      "L"
+    }
+
+    val newUnit = if (currentUnit.equals("gal", ignoreCase = true)) {
+      "L"
+    } else {
+      "gal"
+    }
+
+    binding.tvTankVolumeValue.text = getTankVolumeText(
+      tank = tank,
+      volumeUnit = newUnit
+    )
+
+    viewLifecycleOwner.lifecycleScope.launch {
+      aquariumTankViewModel.updateTankVolumeUnit(
+        tankId = tankId,
+        volumeUnit = newUnit
+      )
     }
   }
 
@@ -236,7 +292,12 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     tank: SavedAquariumTank
   ) {
     binding.tvTankDaysValue.text = getTankDaysText(tank.setupDateMillis)
-    binding.tvTankVolumeValue.text = getTankVolumeText(tank)
+
+    binding.tvTankVolumeValue.text = getTankVolumeText(
+      tank = tank,
+      volumeUnit = tank.volumeUnit
+    )
+
     binding.tvTankSizeValue.text = getTankSizeText(tank)
 
     binding.tvTankTypeValue.text = tank.tankType.ifBlank {
@@ -421,11 +482,12 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   }
 
   private fun getTankVolumeText(
-    tank: SavedAquariumTank
+    tank: SavedAquariumTank,
+    volumeUnit: String
   ): String {
     val liter = (tank.widthCm * tank.lengthCm * tank.heightCm) / 1000.0
 
-    return if (tank.volumeUnit.equals("gal", ignoreCase = true)) {
+    return if (volumeUnit.equals("gal", ignoreCase = true)) {
       val gallon = liter * 0.264172
       "${gallon.roundToInt()} gal"
     } else {
@@ -435,9 +497,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
   private fun getTankSizeText(
     tank: SavedAquariumTank
-): String {
+  ): String {
     return "${tank.widthCm}×${tank.lengthCm}×${tank.heightCm}"
-}
+  }
 
   private fun getTankSetupDateText(
     setupDateMillis: Long?
@@ -447,9 +509,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     val formatter = SimpleDateFormat(
-    "dd MMM yy",
-    Locale.getDefault()
-)
+      "dd MMM yy",
+      Locale.getDefault()
+    )
 
     return formatter.format(Date(setupDateMillis))
   }
