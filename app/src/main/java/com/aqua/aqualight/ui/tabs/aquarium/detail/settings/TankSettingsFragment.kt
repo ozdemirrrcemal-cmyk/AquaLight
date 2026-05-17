@@ -12,6 +12,7 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -217,12 +218,12 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         val container = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
-                20.dp(),
                 18.dp(),
-                20.dp(),
-                24.dp()
+                18.dp(),
+                18.dp(),
+                20.dp()
             )
-            background = createRoundedDrawable(
+            background = createTopRoundedDrawable(
                 color = "#10233A",
                 radiusPx = 24.dp()
             )
@@ -230,7 +231,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
         val title = TextView(requireContext()).apply {
             text = "Aquarium photo"
-            textSize = 17f
+            textSize = 16f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
@@ -256,8 +257,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         container.addView(cameraRow)
         container.addView(galleryRow)
 
-        dialog.setContentView(container)
-        dialog.show()
+        showConfiguredBottomSheet(
+            dialog = dialog,
+            content = container
+        )
     }
 
     private fun createPhotoSourceRow(
@@ -269,14 +272,14 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(
-                16.dp(),
-                13.dp(),
-                16.dp(),
-                13.dp()
+                14.dp(),
+                11.dp(),
+                14.dp(),
+                11.dp()
             )
             background = createRoundedDrawable(
                 color = "#16314D",
-                radiusPx = 16.dp()
+                radiusPx = 14.dp()
             )
             setOnClickListener {
                 onClick()
@@ -286,13 +289,13 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 12.dp()
+            params.topMargin = 10.dp()
             layoutParams = params
         }
 
         val titleText = TextView(requireContext()).apply {
             text = title
-            textSize = 15f
+            textSize = 14f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
@@ -750,8 +753,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         container.addView(saveButton)
         container.addView(createStepSheetCancelButton(dialog))
 
-        dialog.setContentView(container)
-        dialog.show()
+        showConfiguredBottomSheet(
+            dialog = dialog,
+            content = container
+        )
     }
 
     private fun showTankTypeSheet() {
@@ -770,7 +775,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 20.dp()
+            params.topMargin = 16.dp()
             layoutParams = params
         }
 
@@ -817,8 +822,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         container.addView(saveButton)
         container.addView(createStepSheetCancelButton(dialog))
 
-        dialog.setContentView(container)
-        dialog.show()
+        showConfiguredBottomSheet(
+            dialog = dialog,
+            content = container
+        )
     }
 
     private fun showTankSizeSheet() {
@@ -833,26 +840,26 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             gravity = Gravity.CENTER_VERTICAL
             background = createRoundedDrawable(
                 color = "#16314D",
-                radiusPx = 14.dp()
+                radiusPx = 13.dp()
             )
             setPadding(
-                16.dp(),
+                14.dp(),
                 0,
-                16.dp(),
+                14.dp(),
                 0
             )
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                52.dp()
+                46.dp()
             )
-            params.topMargin = 20.dp()
+            params.topMargin = 16.dp()
             layoutParams = params
         }
 
         val unitTitle = TextView(requireContext()).apply {
             text = "Unit"
-            textSize = 14f
+            textSize = 13.5f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
@@ -866,7 +873,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
         val unitValue = TextView(requireContext()).apply {
             text = "centimeters"
-            textSize = 14f
+            textSize = 13.5f
             setTextColor(Color.parseColor("#8FA4BE"))
             includeFontPadding = false
         }
@@ -881,7 +888,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 28.dp()
+            params.topMargin = 22.dp()
             layoutParams = params
         }
 
@@ -936,8 +943,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         container.addView(saveButton)
         container.addView(createStepSheetCancelButton(dialog))
 
-        dialog.setContentView(container)
-        dialog.show()
+        showConfiguredBottomSheet(
+            dialog = dialog,
+            content = container
+        )
     }
 
     private fun showVolumeUnitSheet() {
@@ -956,7 +965,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 22.dp()
+            params.topMargin = 16.dp()
             layoutParams = params
         }
 
@@ -980,7 +989,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
         val info = TextView(requireContext()).apply {
             text = "Volume is calculated automatically from tank size."
-            textSize = 13f
+            textSize = 12.5f
             setTextColor(Color.parseColor("#8FA4BE"))
             includeFontPadding = false
 
@@ -988,7 +997,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 18.dp()
+            params.topMargin = 12.dp()
             layoutParams = params
         }
 
@@ -1008,8 +1017,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         container.addView(saveButton)
         container.addView(createStepSheetCancelButton(dialog))
 
-        dialog.setContentView(container)
-        dialog.show()
+        showConfiguredBottomSheet(
+            dialog = dialog,
+            content = container
+        )
     }
 
     private fun showSetupDateSheet() {
@@ -1031,7 +1042,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.topMargin = 34.dp()
+            params.topMargin = 24.dp()
             layoutParams = params
         }
 
@@ -1125,22 +1136,24 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         container.addView(saveButton)
         container.addView(createStepSheetCancelButton(dialog))
 
-        dialog.setContentView(container)
-        dialog.show()
+        showConfiguredBottomSheet(
+            dialog = dialog,
+            content = container
+        )
     }
 
     private fun createStepSheetContainer(): LinearLayout {
         return LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
-                20.dp(),
-                22.dp(),
-                20.dp(),
-                26.dp()
+                18.dp(),
+                18.dp(),
+                18.dp(),
+                20.dp()
             )
-            background = createRoundedDrawable(
+            background = createTopRoundedDrawable(
                 color = "#10233A",
-                radiusPx = 28.dp()
+                radiusPx = 24.dp()
             )
         }
     }
@@ -1156,15 +1169,15 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
         val leftSpacer = View(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
-                42.dp(),
-                42.dp()
+                38.dp(),
+                38.dp()
             )
         }
 
         val titleText = TextView(requireContext()).apply {
             text = title
             gravity = Gravity.CENTER
-            textSize = 18f
+            textSize = 16f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
@@ -1179,13 +1192,13 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         val close = TextView(requireContext()).apply {
             text = "×"
             gravity = Gravity.CENTER
-            textSize = 34f
+            textSize = 30f
             setTextColor(Color.WHITE)
             includeFontPadding = false
 
             layoutParams = LinearLayout.LayoutParams(
-                42.dp(),
-                42.dp()
+                38.dp(),
+                38.dp()
             )
 
             setOnClickListener {
@@ -1210,26 +1223,26 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             this.hint = hint
             this.inputType = inputType
             setSingleLine(true)
-            textSize = 16f
+            textSize = 14f
             setTextColor(Color.WHITE)
             setHintTextColor(Color.parseColor("#8FA4BE"))
             background = createRoundedDrawable(
                 color = "#16314D",
-                radiusPx = 16.dp()
+                radiusPx = 14.dp()
             )
             setPadding(
-                16.dp(),
+                14.dp(),
                 0,
-                16.dp(),
+                14.dp(),
                 0
             )
             setSelectAllOnFocus(true)
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                54.dp()
+                48.dp()
             )
-            params.topMargin = 22.dp()
+            params.topMargin = 18.dp()
             layoutParams = params
         }
     }
@@ -1242,7 +1255,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         return TextView(requireContext()).apply {
             this.text = text
             gravity = Gravity.CENTER
-            textSize = 15f
+            textSize = 13.5f
             setTextColor(Color.WHITE)
             setTypeface(
                 null,
@@ -1251,20 +1264,20 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             includeFontPadding = false
             background = createRoundedDrawable(
                 color = if (selected) "#1C3D63" else "#10233A",
-                radiusPx = 14.dp(),
+                radiusPx = 13.dp(),
                 strokeColor = if (selected) "#2196F3" else "#223A57",
                 strokeWidthPx = 1.dp()
             )
 
             val params = GridLayout.LayoutParams().apply {
                 width = 0
-                height = 54.dp()
+                height = 46.dp()
                 columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
                 setMargins(
                     0,
                     0,
-                    10.dp(),
-                    10.dp()
+                    8.dp(),
+                    8.dp()
                 )
             }
 
@@ -1295,7 +1308,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
         val labelText = TextView(requireContext()).apply {
             text = label
-            textSize = 14f
+            textSize = 13f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
@@ -1307,12 +1320,12 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             setSingleLine(true)
             setSelectAllOnFocus(true)
             gravity = Gravity.CENTER_VERTICAL
-            textSize = 20f
+            textSize = 18f
             setTextColor(Color.WHITE)
             setHintTextColor(Color.parseColor("#8FA4BE"))
             background = createRoundedDrawable(
                 color = "#16314D",
-                radiusPx = 14.dp()
+                radiusPx = 13.dp()
             )
             setPadding(
                 14.dp(),
@@ -1323,9 +1336,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                58.dp()
+                50.dp()
             )
-            params.topMargin = 12.dp()
+            params.topMargin = 9.dp()
             layoutParams = params
         }
 
@@ -1343,7 +1356,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
             layoutParams = LinearLayout.LayoutParams(
                 0,
-                150.dp(),
+                128.dp(),
                 1f
             )
         }
@@ -1354,20 +1367,20 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     ): MaterialButton {
         return MaterialButton(requireContext()).apply {
             text = "Save"
-            textSize = 15f
+            textSize = 14f
             setTypeface(null, Typeface.BOLD)
             setAllCaps(false)
             setTextColor(Color.WHITE)
-            cornerRadius = 18.dp()
+            cornerRadius = 16.dp()
             backgroundTintList = android.content.res.ColorStateList.valueOf(
                 Color.parseColor("#2196F3")
             )
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                54.dp()
+                50.dp()
             )
-            params.topMargin = 34.dp()
+            params.topMargin = 26.dp()
             layoutParams = params
 
             setOnClickListener {
@@ -1382,21 +1395,38 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         return TextView(requireContext()).apply {
             text = "Cancel"
             gravity = Gravity.CENTER
-            textSize = 15f
+            textSize = 14f
             setTextColor(Color.parseColor("#8FA4BE"))
             includeFontPadding = false
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                46.dp()
+                40.dp()
             )
-            params.topMargin = 14.dp()
+            params.topMargin = 10.dp()
             layoutParams = params
 
             setOnClickListener {
                 dialog.dismiss()
             }
         }
+    }
+
+    private fun showConfiguredBottomSheet(
+        dialog: BottomSheetDialog,
+        content: View
+    ) {
+        dialog.setContentView(content)
+
+        dialog.setOnShowListener {
+            val bottomSheet = dialog.findViewById<FrameLayout>(
+                com.google.android.material.R.id.design_bottom_sheet
+            )
+
+            bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+        }
+
+        dialog.show()
     }
 
     private fun getSizeText(
@@ -1441,6 +1471,27 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             "$title will be added next.",
             Toast.LENGTH_SHORT
         ).show()
+    }
+
+    private fun createTopRoundedDrawable(
+        color: String,
+        radiusPx: Int
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.parseColor(color))
+
+            cornerRadii = floatArrayOf(
+                radiusPx.toFloat(),
+                radiusPx.toFloat(),
+                radiusPx.toFloat(),
+                radiusPx.toFloat(),
+                0f,
+                0f,
+                0f,
+                0f
+            )
+        }
     }
 
     private fun createRoundedDrawable(
