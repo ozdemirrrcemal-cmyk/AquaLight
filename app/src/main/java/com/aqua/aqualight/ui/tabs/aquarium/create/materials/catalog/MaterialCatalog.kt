@@ -6,9 +6,17 @@ object MaterialCatalog {
 
     val products: List<AquariumMaterial> =
         FertilizerCatalog.products +
+            DecorationCatalog.products +
+            GravelCatalog.products +
             SubstrateCatalog.products +
             AquariumCatalog.products +
-            LightCatalog.products
+            Co2Catalog.products +
+            LightCatalog.products +
+            FilterCatalog.products +
+            HeaterCatalog.products +
+            CoolerCatalog.products +
+            DosingCatalog.products +
+            LedBackgroundCatalog.products
 
     fun getByCategory(
         categoryKey: String

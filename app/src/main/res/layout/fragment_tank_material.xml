@@ -18,16 +18,7 @@
         android:paddingEnd="20dp"
         android:paddingTop="8dp"
         android:paddingBottom="24dp">
-
-        <TextView
-            android:id="@+id/tvStepTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="What materials have you used?"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-
+		
         <TextView
             android:id="@+id/tvStepDescription"
             android:layout_width="match_parent"
