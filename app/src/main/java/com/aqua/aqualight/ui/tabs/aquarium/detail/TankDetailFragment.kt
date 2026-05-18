@@ -323,7 +323,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       setPadding(
         14.dp(),
         12.dp(),
-        12.dp(),
+        10.dp(),
         12.dp()
       )
     }
@@ -340,15 +340,15 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       }
 
       layoutParams = LinearLayout.LayoutParams(
-        42.dp(),
-        42.dp()
+        46.dp(),
+        46.dp()
       )
 
       setPadding(
-        9.dp(),
-        9.dp(),
-        9.dp(),
-        9.dp()
+        6.dp(),
+        6.dp(),
+        6.dp(),
+        6.dp()
       )
     }
     val textBox = LinearLayout(requireContext()).apply {
@@ -359,8 +359,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         LinearLayout.LayoutParams.WRAP_CONTENT,
         1f
       )
-      params.marginStart = 14.dp()
-      params.marginEnd = 10.dp()
+      params.marginStart = 12.dp()
+      params.marginEnd = 8.dp()
       layoutParams = params
     }
 
@@ -433,15 +433,15 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       contentDescription = "Remove device"
 
       layoutParams = LinearLayout.LayoutParams(
-        36.dp(),
-        36.dp()
+        34.dp(),
+        34.dp()
       )
 
       setPadding(
-        9.dp(),
-        9.dp(),
-        9.dp(),
-        9.dp()
+        8.dp(),
+        8.dp(),
+        8.dp(),
+        8.dp()
       )
 
       setOnClickListener {
