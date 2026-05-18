@@ -37,6 +37,15 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import android.content.res.ColorStateList
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.button.MaterialButton
+import kotlinx.coroutines.flow.first
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
@@ -45,6 +54,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
   private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
+  private lateinit var userPrefs: UserPreferencesManager
   private var tankId: Long = 0L
   private var selectedTab: TankDetailTab = TankDetailTab.DEVICES
   private var currentTank: SavedAquariumTank? = null
@@ -57,7 +67,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     _binding = FragmentTankDetailBinding.bind(view)
-
+    userPrefs = UserPreferencesManager.create(requireContext())
     selectedTab = savedInstanceState
     ?.getString(KEY_SELECTED_TAB)
     ?.let {
@@ -70,6 +80,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     setupClickListeners()
     setupSystemBackButton()
     observeTank()
+    observeTankDevices()
     selectTab(selectedTab)
   }
 
@@ -107,11 +118,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     binding.btnAddDevice.setOnClickListener {
-      Toast.makeText(
-        requireContext(),
-        "Add device will be connected later.",
-        Toast.LENGTH_SHORT
-      ).show()
+      showAddDeviceBottomSheet()
     }
 
     binding.btnAddPlant.setOnClickListener {
@@ -257,6 +264,475 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     if (selectedTab == TankDetailTab.TANK) {
       renderTankSection(tank)
     }
+  }
+
+  private fun observeTankDevices() {
+    viewLifecycleOwner.lifecycleScope.launch {
+      viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        userPrefs.devicesForTankFlow(tankId).collect {
+          devices ->
+          renderDevicesSection(devices)
+        }
+      }
+    }
+  }
+
+  private fun renderDevicesSection(
+    devices: List<UserPreferencesManager.DeviceInfoUi>
+  ) {
+    binding.tankDevicesContainer.removeAllViews()
+
+    binding.cardDevicesEmpty.isVisible = devices.isEmpty()
+    binding.tankDevicesContainer.isVisible = devices.isNotEmpty()
+
+    devices.forEach {
+      device ->
+      binding.tankDevicesContainer.addView(
+        createAssignedDeviceCard(device)
+      )
+    }
+  }
+
+  private fun createAssignedDeviceCard(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 18.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#223A57")
+      setCardBackgroundColor(Color.parseColor("#10233A"))
+      cardElevation = 0f
+      useCompatPadding = false
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.bottomMargin = 12.dp()
+      layoutParams = params
+    }
+
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(
+        14.dp(),
+        12.dp(),
+        14.dp(),
+        12.dp()
+      )
+    }
+
+    val iconBox = TextView(requireContext()).apply {
+      text = createDeviceShortCode(device)
+      gravity = Gravity.CENTER
+      textSize = 12f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      setBackgroundResource(R.drawable.bg_material_icon_box)
+      includeFontPadding = false
+
+      layoutParams = LinearLayout.LayoutParams(
+        42.dp(),
+        42.dp()
+      )
+    }
+
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 14.dp()
+      params.marginEnd = 10.dp()
+      layoutParams = params
+    }
+
+    val titleText = TextView(requireContext()).apply {
+      text = getDeviceTitle(device)
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+
+    val infoText = TextView(requireContext()).apply {
+      text = getDeviceInfoText(device)
+      textSize = 12f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 6.dp()
+      layoutParams = params
+    }
+
+    val statusText = TextView(requireContext()).apply {
+      text = if (isDeviceOnline(device)) {
+        "Online"
+      } else {
+        "Offline"
+      }
+
+      textSize = 11.5f
+      setTextColor(
+        if (isDeviceOnline(device)) {
+          Color.parseColor("#5FD6B4")
+        } else {
+          Color.parseColor("#D85C5C")
+        }
+      )
+      includeFontPadding = false
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 6.dp()
+      layoutParams = params
+    }
+
+    textBox.addView(titleText)
+    textBox.addView(infoText)
+    textBox.addView(statusText)
+
+    val removeButton = MaterialButton(requireContext()).apply {
+      text = "Remove"
+      textSize = 11f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      setAllCaps(false)
+      minWidth = 0
+      minHeight = 0
+      insetTop = 0
+      insetBottom = 0
+      cornerRadius = 18.dp()
+      backgroundTintList = ColorStateList.valueOf(
+        Color.parseColor("#1C3252")
+      )
+
+      layoutParams = LinearLayout.LayoutParams(
+        84.dp(),
+        36.dp()
+      )
+
+      setOnClickListener {
+        showRemoveDeviceConfirmationDialog(device)
+      }
+    }
+
+    row.addView(iconBox)
+    row.addView(textBox)
+    row.addView(removeButton)
+
+    card.addView(row)
+
+    return card
+  }
+
+  private fun showAddDeviceBottomSheet() {
+    viewLifecycleOwner.lifecycleScope.launch {
+      val availableDevices = userPrefs.unassignedDevicesFlow.first()
+
+      if (availableDevices.isEmpty()) {
+        showNoAvailableDeviceDialog()
+        return@launch
+      }
+
+      showAvailableDevicesBottomSheet(availableDevices)
+    }
+  }
+
+  private fun showAvailableDevicesBottomSheet(
+    devices: List<UserPreferencesManager.DeviceInfoUi>
+  ) {
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+      setBackgroundColor(Color.parseColor("#152B45"))
+      setPadding(
+        18.dp(),
+        20.dp(),
+        18.dp(),
+        22.dp()
+      )
+    }
+
+    val titleText = TextView(requireContext()).apply {
+      text = "Add Device"
+      textSize = 18f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+    }
+
+    val messageText = TextView(requireContext()).apply {
+      text = "Select a saved device to connect it to this aquarium."
+      textSize = 13f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      setLineSpacing(
+        3.dp().toFloat(),
+        1.0f
+      )
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 10.dp()
+      params.bottomMargin = 18.dp()
+      layoutParams = params
+    }
+
+    container.addView(titleText)
+    container.addView(messageText)
+
+    devices.forEach {
+      device ->
+      container.addView(
+        createAvailableDeviceCard(
+          device = device,
+          dialog = dialog
+        )
+      )
+    }
+
+    dialog.setContentView(container)
+
+    dialog.setOnShowListener {
+      val bottomSheet = dialog.findViewById<View>(
+        com.google.android.material.R.id.design_bottom_sheet
+      )
+
+      bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+    }
+
+    dialog.show()
+  }
+
+  private fun createAvailableDeviceCard(
+    device: UserPreferencesManager.DeviceInfoUi,
+    dialog: BottomSheetDialog
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 18.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#223A57")
+      setCardBackgroundColor(Color.parseColor("#10233A"))
+      cardElevation = 0f
+      useCompatPadding = false
+      isClickable = true
+      isFocusable = true
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.bottomMargin = 10.dp()
+      layoutParams = params
+
+      setOnClickListener {
+        assignDeviceToCurrentTank(
+          device = device,
+          dialog = dialog
+        )
+      }
+    }
+
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(
+        14.dp(),
+        12.dp(),
+        14.dp(),
+        12.dp()
+      )
+    }
+
+    val iconBox = TextView(requireContext()).apply {
+      text = createDeviceShortCode(device)
+      gravity = Gravity.CENTER
+      textSize = 12f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      setBackgroundResource(R.drawable.bg_material_icon_box)
+      includeFontPadding = false
+
+      layoutParams = LinearLayout.LayoutParams(
+        42.dp(),
+        42.dp()
+      )
+    }
+
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 14.dp()
+      layoutParams = params
+    }
+
+    val titleText = TextView(requireContext()).apply {
+      text = getDeviceTitle(device)
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+
+    val infoText = TextView(requireContext()).apply {
+      text = getDeviceInfoText(device)
+      textSize = 12f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 6.dp()
+      layoutParams = params
+    }
+
+    textBox.addView(titleText)
+    textBox.addView(infoText)
+
+    row.addView(iconBox)
+    row.addView(textBox)
+
+    card.addView(row)
+
+    return card
+  }
+
+  private fun assignDeviceToCurrentTank(
+    device: UserPreferencesManager.DeviceInfoUi,
+    dialog: BottomSheetDialog
+  ) {
+    viewLifecycleOwner.lifecycleScope.launch {
+      userPrefs.assignDeviceToTank(
+        deviceId = device.id,
+        tankId = tankId
+      )
+
+      dialog.dismiss()
+    }
+  }
+
+  private fun showRemoveDeviceConfirmationDialog(
+    device: UserPreferencesManager.DeviceInfoUi
+  ) {
+    DialogManager.showConfirmDialog(
+      context = requireContext(),
+      type = DialogType.WARNING,
+      title = "Remove Device?",
+      message = "\"${getDeviceTitle(device)}\" will be removed from this tank. The device will stay saved in Devices.",
+      confirmTextResId = R.string.confirm,
+      cancelTextResId = R.string.cancel,
+      onConfirm = {
+        removeDeviceFromCurrentTank(device)
+      }
+    )
+  }
+
+  private fun removeDeviceFromCurrentTank(
+    device: UserPreferencesManager.DeviceInfoUi
+  ) {
+    viewLifecycleOwner.lifecycleScope.launch {
+      userPrefs.removeDeviceFromTank(
+        deviceId = device.id
+      )
+    }
+  }
+
+  private fun showNoAvailableDeviceDialog() {
+    DialogManager.showInfoDialog(
+      context = requireContext(),
+      type = DialogType.WARNING,
+      title = "No Available Device",
+      message = "There is no saved device available for this tank. Scan and save a device from the Devices tab first."
+    )
+  }
+
+  private fun getDeviceTitle(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    return device.name.ifBlank {
+      device.aquaName.ifBlank {
+        "Device"
+      }
+    }
+  }
+
+  private fun getDeviceInfoText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    val typeText = device.aquaName.ifBlank {
+      "AquaLight Device"
+    }
+
+    return if (device.ip.isBlank()) {
+      typeText
+    } else {
+      "$typeText • ${device.ip}"
+    }
+  }
+
+  private fun createDeviceShortCode(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    val source = device.aquaName.ifBlank {
+      device.name.ifBlank {
+        "DV"
+      }
+    }
+
+    val words = source
+    .trim()
+    .split(Regex("\\s+"))
+    .filter {
+      word ->
+      word.isNotBlank()
+    }
+
+    if (words.size >= 2) {
+      return "${words[0].first()}${words[1].first()}"
+      .uppercase(Locale.getDefault())
+    }
+
+    return source
+    .take(2)
+    .uppercase(Locale.getDefault())
+  }
+
+  private fun isDeviceOnline(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): Boolean {
+    if (device.lastSeenMillis <= 0L) {
+      return false
+    }
+
+    return System.currentTimeMillis() - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
   }
 
   private fun selectTab(
@@ -809,5 +1285,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   companion object {
     private const val ARG_TANK_ID = "tankId"
     private const val KEY_SELECTED_TAB = "selectedTab"
+    private const val ONLINE_TIMEOUT_MS = 60_000L
   }
 }
