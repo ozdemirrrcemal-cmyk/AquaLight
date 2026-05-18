@@ -56,6 +56,9 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
   MaterialPickerFragment.MaterialPickerHost {
@@ -71,6 +74,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
   private var pendingCameraUri: Uri? = null
   private var isDeletingTank: Boolean = false
   private var isDuplicatingTank: Boolean = false
+  private var isExportingTank: Boolean = false
 
   private val galleryLauncher = registerForActivityResult(
     ActivityResultContracts.GetContent()
@@ -187,6 +191,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 	
 	binding.rowDuplicateTank.setOnClickListener {
     showDuplicateTankConfirmationDialog()
+}
+
+binding.rowExportTankData.setOnClickListener {
+  exportTankDataAsPdf()
 }
 
     binding.rowDeleteTank.setOnClickListener {
@@ -1472,6 +1480,54 @@ private fun duplicateCurrentTank() {
     }
 }
   
+  
+  private fun exportTankDataAsPdf() {
+  val tank = currentTank ?: return
+
+  if (isExportingTank) {
+    return
+  }
+
+  isExportingTank = true
+
+  val appContext = requireContext().applicationContext
+  val baseActivity = activity as? BaseActivity
+
+  baseActivity?.showLoading(true)
+
+  viewLifecycleOwner.lifecycleScope.launch {
+    try {
+      val pdfUri = withContext(Dispatchers.IO) {
+        TankPdfExporter.createTankReportPdf(
+          context = appContext,
+          tank = tank
+        )
+      }
+
+      baseActivity?.showLoading(false)
+      isExportingTank = false
+
+      TankPdfExporter.shareTankReportPdf(
+        context = requireContext(),
+        pdfUri = pdfUri,
+        tankName = tank.name
+      )
+
+    } catch (exception: Exception) {
+      exception.printStackTrace()
+
+      isExportingTank = false
+      baseActivity?.showLoading(false)
+
+      DialogManager.showInfoDialog(
+        context = requireContext(),
+        type = DialogType.ERROR,
+        title = "Export Failed",
+        message = "Tank report could not be created."
+      )
+    }
+  }
+}
 
   private fun showDeleteTankConfirmationDialog() {
     val tank = currentTank ?: return

@@ -10,5 +10,9 @@
     <files-path
         name="tank_photos"
         path="tank_photos/" />
+		
+    <cache-path
+    name="tank_exports"
+    path="tank_exports/" />
 
 </paths>
