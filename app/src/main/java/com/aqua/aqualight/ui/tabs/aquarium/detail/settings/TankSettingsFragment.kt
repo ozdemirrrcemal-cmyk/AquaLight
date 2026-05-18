@@ -56,17 +56,19 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
-  MaterialPickerFragment.MaterialPickerHost {
+MaterialPickerFragment.MaterialPickerHost {
 
   private var _binding: FragmentTankSettingsBinding? = null
   private val binding get() = _binding!!
 
   private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+  private lateinit var userPrefs: UserPreferencesManager
 
   private var tankId: Long = 0L
   private var selectedTab: SettingsTab = SettingsTab.BASIC
@@ -78,7 +80,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 
   private val galleryLauncher = registerForActivityResult(
     ActivityResultContracts.GetContent()
-  ) { uri ->
+  ) {
+    uri ->
     if (uri != null) {
       startImageCrop(uri)
     }
@@ -86,9 +89,11 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 
   private val cameraLauncher = registerForActivityResult(
     ActivityResultContracts.TakePicture()
-  ) { success ->
+  ) {
+    success ->
     if (success) {
-      pendingCameraUri?.let { uri ->
+      pendingCameraUri?.let {
+        uri ->
         startImageCrop(uri)
       }
     }
@@ -96,9 +101,11 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 
   private val cropLauncher = registerForActivityResult(
     ActivityResultContracts.StartActivityForResult()
-  ) { result ->
+  ) {
+    result ->
     if (result.resultCode == Activity.RESULT_OK) {
-      val outputUri = result.data?.let { intent ->
+      val outputUri = result.data?.let {
+        intent ->
         UCrop.getOutput(intent)
       }
 
@@ -106,7 +113,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
         saveTankPhoto(outputUri)
       }
     } else if (result.resultCode == UCrop.RESULT_ERROR) {
-      val error = result.data?.let { intent ->
+      val error = result.data?.let {
+        intent ->
         UCrop.getError(intent)
       }
 
@@ -133,6 +141,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
     )
 
     _binding = FragmentTankSettingsBinding.bind(view)
+    userPrefs = UserPreferencesManager.create(requireContext())
 
     setupClickListeners()
     setupSwipeBetweenTabs()
@@ -188,14 +197,14 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
     binding.rowIdea.setOnClickListener {
       showIdeaSheet()
     }
-	
-	binding.rowDuplicateTank.setOnClickListener {
-    showDuplicateTankConfirmationDialog()
-}
 
-binding.rowExportTankData.setOnClickListener {
-  exportTankDataAsPdf()
-}
+    binding.rowDuplicateTank.setOnClickListener {
+      showDuplicateTankConfirmationDialog()
+    }
+
+    binding.rowExportTankData.setOnClickListener {
+      exportTankDataAsPdf()
+    }
 
     binding.rowDeleteTank.setOnClickListener {
       showDeleteTankConfirmationDialog()
@@ -203,8 +212,10 @@ binding.rowExportTankData.setOnClickListener {
   }
 
   private fun observeTank() {
-    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-      val tank = tanks.firstOrNull { savedTank ->
+    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+      tanks ->
+      val tank = tanks.firstOrNull {
+        savedTank ->
         savedTank.id == tankId
       }
 
@@ -416,20 +427,20 @@ binding.rowExportTankData.setOnClickListener {
       sourceUri,
       destinationUri
     )
-      .withAspectRatio(
-        16f,
-        9f
-      )
-      .withMaxResultSize(
-        1600,
-        900
-      )
-      .withOptions(options)
-      .getIntent(requireContext())
-      .apply {
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-      }
+    .withAspectRatio(
+      16f,
+      9f
+    )
+    .withMaxResultSize(
+      1600,
+      900
+    )
+    .withOptions(options)
+    .getIntent(requireContext())
+    .apply {
+      addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+      addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+    }
 
     cropLauncher.launch(cropIntent)
   }
@@ -598,7 +609,8 @@ binding.rowExportTankData.setOnClickListener {
       }
     )
 
-    val swipeTouchListener = View.OnTouchListener { _, event ->
+    val swipeTouchListener = View.OnTouchListener {
+      _, event ->
       gestureDetector.onTouchEvent(event)
       false
     }
@@ -642,7 +654,8 @@ binding.rowExportTankData.setOnClickListener {
       binding.tabBasic,
       binding.tabDetails,
       binding.tabOthers
-    ).forEach { tab ->
+    ).forEach {
+      tab ->
       tab.setTextColor(inactiveColor)
       tab.setTypeface(null, Typeface.NORMAL)
     }
@@ -664,15 +677,15 @@ binding.rowExportTankData.setOnClickListener {
   ) {
     binding.settingsTabsContainer.post {
       val textWidth = tabView.paint
-        .measureText(tabView.text.toString())
-        .toInt()
+      .measureText(tabView.text.toString())
+      .toInt()
 
       val underlineWidth = (textWidth * 0.90f)
-        .toInt()
-        .coerceIn(
-          36.dp(),
-          72.dp()
-        )
+      .toInt()
+      .coerceIn(
+        36.dp(),
+        72.dp()
+      )
 
       val params = binding.tabUnderline.layoutParams
       params.width = underlineWidth
@@ -681,9 +694,9 @@ binding.rowExportTankData.setOnClickListener {
       val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
 
       binding.tabUnderline.animate()
-        .translationX(targetX)
-        .setDuration(180)
-        .start()
+      .translationX(targetX)
+      .setDuration(180)
+      .start()
     }
   }
 
@@ -693,8 +706,10 @@ binding.rowExportTankData.setOnClickListener {
     binding.bioMaterialsContainer.removeAllViews()
     binding.hardwareMaterialsContainer.removeAllViews()
 
-    MaterialCategoryCatalog.bioCategories.forEach { category ->
-      val selectedMaterials = tank.materials.filter { material ->
+    MaterialCategoryCatalog.bioCategories.forEach {
+      category ->
+      val selectedMaterials = tank.materials.filter {
+        material ->
         material.categoryKey == category.key
       }
 
@@ -707,8 +722,10 @@ binding.rowExportTankData.setOnClickListener {
       )
     }
 
-    MaterialCategoryCatalog.hardwareCategories.forEach { category ->
-      val selectedMaterials = tank.materials.filter { material ->
+    MaterialCategoryCatalog.hardwareCategories.forEach {
+      category ->
+      val selectedMaterials = tank.materials.filter {
+        material ->
         material.categoryKey == category.key
       }
 
@@ -855,16 +872,16 @@ binding.rowExportTankData.setOnClickListener {
     binding.settingsMaterialPickerContainer.isVisible = true
 
     childFragmentManager.beginTransaction()
-      .replace(
-        R.id.settingsMaterialPickerContainer,
-        MaterialPickerFragment.newSettingsInstance(
-          tankId = tankId,
-          categoryKey = categoryKey,
-          categoryTitle = categoryTitle
-        ),
-        "SETTINGS_MATERIAL_PICKER_FRAGMENT"
-      )
-      .commit()
+    .replace(
+      R.id.settingsMaterialPickerContainer,
+      MaterialPickerFragment.newSettingsInstance(
+        tankId = tankId,
+        categoryKey = categoryKey,
+        categoryTitle = categoryTitle
+      ),
+      "SETTINGS_MATERIAL_PICKER_FRAGMENT"
+    )
+    .commit()
   }
 
   override fun closeMaterialPickerFlow() {
@@ -874,8 +891,8 @@ binding.rowExportTankData.setOnClickListener {
 
     if (fragment != null) {
       childFragmentManager.beginTransaction()
-        .remove(fragment)
-        .commit()
+      .remove(fragment)
+      .commit()
     }
 
     binding.settingsMaterialPickerContainer.isVisible = false
@@ -974,7 +991,8 @@ binding.rowExportTankData.setOnClickListener {
         "SPS",
         "Coral",
         "Other"
-      ).forEach { type ->
+      ).forEach {
+        type ->
         grid.addView(
           createGridOption(
             text = type,
@@ -1161,7 +1179,8 @@ binding.rowExportTankData.setOnClickListener {
       listOf(
         "L",
         "gal"
-      ).forEach { unit ->
+      ).forEach {
+        unit ->
         grid.addView(
           createGridOption(
             text = unit,
@@ -1238,16 +1257,18 @@ binding.rowExportTankData.setOnClickListener {
       layoutParams = params
     }
 
-    val monthNames = Array(12) { index ->
+    val monthNames = Array(12) {
+      index ->
       DateFormatSymbols(Locale.getDefault())
-        .months[index]
-        .replaceFirstChar { char ->
-          if (char.isLowerCase()) {
-            char.titlecase(Locale.getDefault())
-          } else {
-            char.toString()
-          }
+      .months[index]
+      .replaceFirstChar {
+        char ->
+        if (char.isLowerCase()) {
+          char.titlecase(Locale.getDefault())
+        } else {
+          char.toString()
         }
+      }
     }
 
     val dayPicker = createDateNumberPicker().apply {
@@ -1298,11 +1319,13 @@ binding.rowExportTankData.setOnClickListener {
       }
     }
 
-    monthPicker.setOnValueChangedListener { _, _, _ ->
+    monthPicker.setOnValueChangedListener {
+      _, _, _ ->
       updateDayMax()
     }
 
-    yearPicker.setOnValueChangedListener { _, _, _ ->
+    yearPicker.setOnValueChangedListener {
+      _, _, _ ->
       updateDayMax()
     }
 
@@ -1370,7 +1393,8 @@ binding.rowExportTankData.setOnClickListener {
     TankStyleBottomSheet.show(
       fragment = this,
       currentStyle = tank.tankStyle
-    ) { newStyle ->
+    ) {
+      newStyle ->
       viewLifecycleOwner.lifecycleScope.launch {
         aquariumTankViewModel.updateTankStyle(
           tankId = tankId,
@@ -1414,30 +1438,30 @@ binding.rowExportTankData.setOnClickListener {
       content = container
     )
   }
-  
+
   private fun showDuplicateTankConfirmationDialog() {
     val tank = currentTank ?: return
 
     if (isDuplicatingTank) {
-        return
+      return
     }
 
     DialogManager.showConfirmDialog(
-        context = requireContext(),
-        type = DialogType.INFO,
-        title = "Duplicate Tank?",
-        message = "This will create a copy of \"${tank.name}\" with the same tank data, plants and components.",
-        confirmTextResId = R.string.duplicate,
-        cancelTextResId = R.string.cancel,
-        onConfirm = {
-            duplicateCurrentTank()
-        }
+      context = requireContext(),
+      type = DialogType.INFO,
+      title = "Duplicate Tank?",
+      message = "This will create a copy of \"${tank.name}\" with the same tank data, plants and components.",
+      confirmTextResId = R.string.duplicate,
+      cancelTextResId = R.string.cancel,
+      onConfirm = {
+        duplicateCurrentTank()
+      }
     )
-}
+  }
 
-private fun duplicateCurrentTank() {
+  private fun duplicateCurrentTank() {
     if (isDuplicatingTank) {
-        return
+      return
     }
 
     isDuplicatingTank = true
@@ -1446,88 +1470,88 @@ private fun duplicateCurrentTank() {
     baseActivity?.showLoading(true)
 
     viewLifecycleOwner.lifecycleScope.launch {
-        try {
-            aquariumTankViewModel.duplicateTank(
-                tankId = tankId
-            )
+      try {
+        aquariumTankViewModel.duplicateTank(
+          tankId = tankId
+        )
 
-            baseActivity?.showLoading(false)
+        baseActivity?.showLoading(false)
 
-            val popped = findNavController().popBackStack(
-                R.id.aquariumFragment,
-                false
-            )
+        val popped = findNavController().popBackStack(
+          R.id.aquariumFragment,
+          false
+        )
 
-            if (!popped) {
-                findNavController().navigate(
-                    R.id.aquariumFragment
-                )
-            }
-
-        } catch (exception: Exception) {
-            exception.printStackTrace()
-
-            isDuplicatingTank = false
-            baseActivity?.showLoading(false)
-
-            DialogManager.showInfoDialog(
-                context = requireContext(),
-                type = DialogType.ERROR,
-                title = "Duplicate Failed",
-                message = "Tank could not be duplicated."
-            )
+        if (!popped) {
+          findNavController().navigate(
+            R.id.aquariumFragment
+          )
         }
-    }
-}
-  
-  
-  private fun exportTankDataAsPdf() {
-  val tank = currentTank ?: return
 
-  if (isExportingTank) {
-    return
-  }
+      } catch (exception: Exception) {
+        exception.printStackTrace()
 
-  isExportingTank = true
+        isDuplicatingTank = false
+        baseActivity?.showLoading(false)
 
-  val appContext = requireContext().applicationContext
-  val baseActivity = activity as? BaseActivity
-
-  baseActivity?.showLoading(true)
-
-  viewLifecycleOwner.lifecycleScope.launch {
-    try {
-      val pdfUri = withContext(Dispatchers.IO) {
-        TankPdfExporter.createTankReportPdf(
-          context = appContext,
-          tank = tank
+        DialogManager.showInfoDialog(
+          context = requireContext(),
+          type = DialogType.ERROR,
+          title = "Duplicate Failed",
+          message = "Tank could not be duplicated."
         )
       }
-
-      baseActivity?.showLoading(false)
-      isExportingTank = false
-
-      TankPdfExporter.shareTankReportPdf(
-        context = requireContext(),
-        pdfUri = pdfUri,
-        tankName = tank.name
-      )
-
-    } catch (exception: Exception) {
-      exception.printStackTrace()
-
-      isExportingTank = false
-      baseActivity?.showLoading(false)
-
-      DialogManager.showInfoDialog(
-        context = requireContext(),
-        type = DialogType.ERROR,
-        title = "Export Failed",
-        message = "Tank report could not be created."
-      )
     }
   }
-}
+
+
+  private fun exportTankDataAsPdf() {
+    val tank = currentTank ?: return
+
+    if (isExportingTank) {
+      return
+    }
+
+    isExportingTank = true
+
+    val appContext = requireContext().applicationContext
+    val baseActivity = activity as? BaseActivity
+
+    baseActivity?.showLoading(true)
+
+    viewLifecycleOwner.lifecycleScope.launch {
+      try {
+        val pdfUri = withContext(Dispatchers.IO) {
+          TankPdfExporter.createTankReportPdf(
+            context = appContext,
+            tank = tank
+          )
+        }
+
+        baseActivity?.showLoading(false)
+        isExportingTank = false
+
+        TankPdfExporter.shareTankReportPdf(
+          context = requireContext(),
+          pdfUri = pdfUri,
+          tankName = tank.name
+        )
+
+      } catch (exception: Exception) {
+        exception.printStackTrace()
+
+        isExportingTank = false
+        baseActivity?.showLoading(false)
+
+        DialogManager.showInfoDialog(
+          context = requireContext(),
+          type = DialogType.ERROR,
+          title = "Export Failed",
+          message = "Tank report could not be created."
+        )
+      }
+    }
+  }
 
   private fun showDeleteTankConfirmationDialog() {
     val tank = currentTank ?: return
@@ -1557,6 +1581,10 @@ private fun duplicateCurrentTank() {
 
     viewLifecycleOwner.lifecycleScope.launch {
       try {
+        userPrefs.unassignDevicesFromTank(
+          tankId = tankId
+        )
+
         aquariumTankViewModel.deleteTanks(
           tankIds = listOf(tankId)
         )
