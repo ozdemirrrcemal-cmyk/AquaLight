@@ -1491,7 +1491,9 @@ MaterialPickerFragment.MaterialPickerHost {
 
     viewLifecycleOwner.lifecycleScope.launch {
       try {
-        aquariumTankViewModel.deleteTank(tankId)
+        aquariumTankViewModel.deleteTanks(
+          tankIds = listOf(tankId)
+        )
 
         Toast.makeText(
           requireContext(),
@@ -1499,10 +1501,15 @@ MaterialPickerFragment.MaterialPickerHost {
           Toast.LENGTH_SHORT
         ).show()
 
-        findNavController().popBackStack(
+        val popped = findNavController().popBackStack(
           R.id.aquariumFragment,
           false
         )
+
+        if (!popped) {
+          findNavController().navigate(R.id.aquariumFragment)
+        }
+
       } catch (exception: Exception) {
         exception.printStackTrace()
         isDeletingTank = false
