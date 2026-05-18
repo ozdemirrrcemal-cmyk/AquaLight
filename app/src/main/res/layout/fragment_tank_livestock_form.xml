@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@color/background_color">
+
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/headerContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/background_color"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="12dp"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <ImageView
+      android:id="@+id/btnBack"
+      android:layout_width="32dp"
+      android:layout_height="32dp"
+      android:clickable="true"
+      android:contentDescription="Back"
+      android:focusable="true"
+      android:scaleType="center"
+      android:src="@drawable/ic_back"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:tint="?attr/colorOnSurface" />
+
+    <TextView
+      android:id="@+id/tvFormTitle"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="18dp"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:text="Add Livestock"
+      android:textColor="?attr/colorOnSurface"
+      android:textSize="20sp"
+      android:textStyle="bold"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toEndOf="@id/btnBack"
+      app:layout_constraintTop_toTopOf="parent" />
+
+  </androidx.constraintlayout.widget.ConstraintLayout>
+
+  <ScrollView
+    android:id="@+id/contentScrollView"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:overScrollMode="never"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="18dp"
+    android:paddingBottom="120dp"
+    android:scrollbars="none"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/headerContainer">
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical">
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:padding="16dp">
+
+          <ImageView
+            android:id="@+id/ivLifeIconPreview"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:padding="12dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_life_fish_24"
+            app:tint="@android:color/white" />
+
+          <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+              android:id="@+id/tvLifePreviewTitle"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:includeFontPadding="false"
+              android:text="Livestock"
+              android:textColor="?attr/colorOnSurface"
+              android:textSize="16sp"
+              android:textStyle="bold" />
+
+            <TextView
+              android:id="@+id/tvLifeCategoryPreview"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="7dp"
+              android:includeFontPadding="false"
+              android:text="Fish"
+              android:textColor="#8FA4BE"
+              android:textSize="13sp" />
+
+          </LinearLayout>
+
+        </LinearLayout>
+
+      </com.google.android.material.card.MaterialCardView>
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:includeFontPadding="false"
+        android:text="Name"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+      <EditText
+        android:id="@+id/etLifeName"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/bg_life_input"
+        android:hint="Example: Neon Tetra"
+        android:inputType="textCapWords"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:singleLine="true"
+        android:textColor="@android:color/white"
+        android:textColorHint="#8FA4BE"
+        android:textSize="14sp" />
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:includeFontPadding="false"
+        android:text="Category"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+      <GridLayout
+        android:id="@+id/categoryGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:columnCount="2" />
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:includeFontPadding="false"
+        android:text="Quantity"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+      <LinearLayout
+        android:id="@+id/quantityRow"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/bg_life_input"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp">
+
+        <TextView
+          android:id="@+id/btnDecreaseQuantity"
+          android:layout_width="42dp"
+          android:layout_height="42dp"
+          android:gravity="center"
+          android:text="−"
+          android:textColor="?attr/colorOnSurface"
+          android:textSize="24sp"
+          android:textStyle="bold" />
+
+        <TextView
+          android:id="@+id/tvQuantityValue"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:gravity="center"
+          android:includeFontPadding="false"
+          android:text="1"
+          android:textColor="?attr/colorOnSurface"
+          android:textSize="18sp"
+          android:textStyle="bold" />
+
+        <TextView
+          android:id="@+id/btnIncreaseQuantity"
+          android:layout_width="42dp"
+          android:layout_height="42dp"
+          android:gravity="center"
+          android:text="+"
+          android:textColor="?attr/colorOnSurface"
+          android:textSize="22sp"
+          android:textStyle="bold" />
+
+      </LinearLayout>
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:includeFontPadding="false"
+        android:text="Added Date"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+      <LinearLayout
+        android:id="@+id/rowAddedDate"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/bg_life_input"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp">
+
+        <TextView
+          android:id="@+id/tvAddedDateValue"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:includeFontPadding="false"
+          android:text="18 May 2026"
+          android:textColor="?attr/colorOnSurface"
+          android:textSize="14sp"
+          android:textStyle="bold" />
+
+        <ImageView
+          android:layout_width="22dp"
+          android:layout_height="22dp"
+          android:src="@drawable/ic_arrow_right"
+          app:tint="#8FA4BE" />
+
+      </LinearLayout>
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:includeFontPadding="false"
+        android:text="Note"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+      <EditText
+        android:id="@+id/etLifeNote"
+        android:layout_width="match_parent"
+        android:layout_height="112dp"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/bg_life_input"
+        android:gravity="top|start"
+        android:hint="Optional note..."
+        android:inputType="textMultiLine|textCapSentences"
+        android:maxLines="5"
+        android:minLines="4"
+        android:paddingStart="14dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="12dp"
+        android:textColor="@android:color/white"
+        android:textColorHint="#8FA4BE"
+        android:textSize="14sp" />
+
+      <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSaveLife"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="26dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="Save Livestock"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:backgroundTint="#2196F3"
+        app:cornerRadius="18dp" />
+
+      <TextView
+        android:id="@+id/btnDeleteLife"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="14dp"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="Delete Livestock"
+        android:textColor="#D85C5C"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    </LinearLayout>
+
+  </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
