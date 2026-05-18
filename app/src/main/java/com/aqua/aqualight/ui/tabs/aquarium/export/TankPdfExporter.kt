@@ -19,6 +19,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.UserPreferencesManager
+import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
 import java.text.DecimalFormat
@@ -41,7 +43,8 @@ object TankPdfExporter {
 
   fun createTankReportPdf(
     context: Context,
-    tank: SavedAquariumTank
+    tank: SavedAquariumTank,
+    devices: List<UserPreferencesManager.DeviceInfoUi> = emptyList()
   ): Uri {
     val document = PdfDocument()
     val writer = PdfWriter(document)
@@ -76,7 +79,27 @@ object TankPdfExporter {
       )
     )
 
-    writer.drawSectionTitle("3. Plants")
+    writer.drawSectionTitle("3. Devices")
+
+    if (devices.isEmpty()) {
+      writer.drawMutedText("No devices connected.")
+    } else {
+      devices.forEachIndexed {
+        index, device ->
+        writer.drawDeviceInfo(
+          number = index + 1,
+          name = getDeviceNameText(device),
+          type = getDeviceTypeText(device),
+          status = getDeviceStatusText(device),
+          lastSeen = getDeviceLastSeenText(device),
+          ip = device.ip,
+          serial = device.serial,
+          firmware = getDeviceFirmwareText(device)
+        )
+      }
+    }
+
+    writer.drawSectionTitle("4. Plants")
 
     if (tank.plants.isEmpty()) {
       writer.drawMutedText("No plants selected.")
@@ -91,7 +114,7 @@ object TankPdfExporter {
       }
     }
 
-    writer.drawSectionTitle("4. Bio Components")
+    writer.drawSectionTitle("5. Bio Components")
 
     MaterialCategoryCatalog.bioCategories.forEach {
       category ->
@@ -106,7 +129,7 @@ object TankPdfExporter {
       )
     }
 
-    writer.drawSectionTitle("5. Hardware Components")
+    writer.drawSectionTitle("6. Hardware Components")
 
     MaterialCategoryCatalog.hardwareCategories.forEach {
       category ->
@@ -173,6 +196,70 @@ object TankPdfExporter {
     }
 
     context.startActivity(chooser)
+  }
+
+  private fun getDeviceNameText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    return device.name.ifBlank {
+      "Device"
+    }
+  }
+
+  private fun getDeviceTypeText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    return device.aquaName.ifBlank {
+      "Device"
+    }
+  }
+
+  private fun getDeviceStatusText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    if (device.lastSeenMillis <= 0L) {
+      return "Offline"
+    }
+
+    val isOnline =
+    System.currentTimeMillis() - device.lastSeenMillis <= 60_000L
+
+    return if (isOnline) {
+      "Online"
+    } else {
+      "Offline"
+    }
+  }
+
+  private fun getDeviceLastSeenText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    if (device.lastSeenMillis <= 0L) {
+      return "Never"
+    }
+
+    val deltaMs = System.currentTimeMillis() - device.lastSeenMillis
+
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(deltaMs)
+    val hours = TimeUnit.MILLISECONDS.toHours(deltaMs)
+    val days = TimeUnit.MILLISECONDS.toDays(deltaMs)
+
+    return when {
+      minutes < 1 -> "Just now"
+      minutes < 60 -> "$minutes min ago"
+      hours < 24 -> "$hours h ago"
+      else -> "$days d ago"
+    }
+  }
+
+  private fun getDeviceFirmwareText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    return device.firmwareBuild
+    .substringBefore(" (")
+    .ifBlank {
+      "-"
+    }
   }
 
   private fun getTankPhotoBitmap(
@@ -576,6 +663,122 @@ object TankPdfExporter {
       }
 
       y += 4f
+    }
+
+    fun drawDeviceInfo(
+      number: Int,
+      name: String,
+      type: String,
+      status: String,
+      lastSeen: String,
+      ip: String,
+      serial: String,
+      firmware: String
+    ) {
+      val titleLines = wrapText(
+        text = "$number. $name",
+        paint = categoryPaint,
+        maxWidth = PAGE_WIDTH - (PAGE_MARGIN * 2)
+      )
+
+      ensureSpace(
+        titleLines.size * 15f + 76f
+      )
+
+      titleLines.forEach {
+        line ->
+        canvas.drawText(
+          line,
+          PAGE_MARGIN,
+          y,
+          categoryPaint
+        )
+
+        y += 15f
+      }
+
+      y += 2f
+
+      drawDeviceDetailLine(
+        label = "Type",
+        value = type
+      )
+
+      drawDeviceDetailLine(
+        label = "Status",
+        value = status
+      )
+
+      drawDeviceDetailLine(
+        label = "Last Seen",
+        value = lastSeen
+      )
+
+      if (ip.isNotBlank()) {
+        drawDeviceDetailLine(
+          label = "IP",
+          value = ip
+        )
+      }
+
+      if (serial.isNotBlank()) {
+        drawDeviceDetailLine(
+          label = "Serial",
+          value = serial
+        )
+      }
+
+      if (firmware.isNotBlank() && firmware != "-") {
+        drawDeviceDetailLine(
+          label = "Firmware",
+          value = firmware
+        )
+      }
+
+      y += 8f
+    }
+
+    private fun drawDeviceDetailLine(
+      label: String,
+      value: String
+    ) {
+      val labelX = PAGE_MARGIN + 14f
+      val valueX = PAGE_MARGIN + 92f
+      val maxValueWidth = PAGE_WIDTH - PAGE_MARGIN - valueX
+
+      val lines = wrapText(
+        text = value.ifBlank {
+          "-"
+        },
+        paint = valuePaint,
+        maxWidth = maxValueWidth
+      )
+
+      val requiredHeight = max(
+        15f,
+        lines.size * 13f + 3f
+      )
+
+      ensureSpace(requiredHeight)
+
+      canvas.drawText(
+        "$label:",
+        labelX,
+        y,
+        labelPaint
+      )
+
+      lines.forEachIndexed {
+        index, line ->
+        canvas.drawText(
+          line,
+          valueX,
+          y + (index * 13f),
+          valuePaint
+        )
+      }
+
+      y += requiredHeight
     }
 
     fun drawPlantText(

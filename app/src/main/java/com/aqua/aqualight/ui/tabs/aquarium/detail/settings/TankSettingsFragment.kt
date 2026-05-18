@@ -61,6 +61,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
 import kotlinx.coroutines.Dispatchers
 import androidx.activity.OnBackPressedCallback
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -1551,12 +1552,16 @@ MaterialPickerFragment.MaterialPickerHost {
     viewLifecycleOwner.lifecycleScope.launch {
       try {
         val pdfUri = withContext(Dispatchers.IO) {
+          val connectedDevices = userPrefs.devicesForTankFlow(
+            tankId = tankId
+          ).first()
+
           TankPdfExporter.createTankReportPdf(
             context = appContext,
-            tank = tank
+            tank = tank,
+            devices = connectedDevices
           )
         }
-
         baseActivity?.showLoading(false)
         isExportingTank = false
 
