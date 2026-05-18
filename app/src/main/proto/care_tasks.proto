@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.care";
+option java_multiple_files = true;
+
+message CareTasksStore {
+  repeated StoredCareTask tasks = 1;
+}
+
+message StoredCareTask {
+  int64 id = 1;
+  int64 tankId = 2;
+
+  string title = 3;
+  string description = 4;
+
+  string type = 5;
+  string source = 6;
+  string status = 7;
+
+  int64 dueAtMillis = 8;
+  int64 completedAtMillis = 9;
+
+  bool repeatEnabled = 10;
+  int32 repeatIntervalDays = 11;
+
+  bool reminderEnabled = 12;
+  bool missedReminderEnabled = 13;
+  int32 missedReminderDays = 14;
+
+  int32 waterChangePercent = 15;
+
+  string note = 16;
+
+  string generatedRuleKey = 17;
+  int64 createdAtMillis = 18;
+  int64 updatedAtMillis = 19;
+}
