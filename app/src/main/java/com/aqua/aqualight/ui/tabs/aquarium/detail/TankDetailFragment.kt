@@ -445,19 +445,23 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
   private fun showAddDeviceBottomSheet() {
     viewLifecycleOwner.lifecycleScope.launch {
-      val availableDevices = userPrefs.unassignedDevicesFlow.first()
+      val allDevices = userPrefs.devicesFlow.first()
 
-      if (availableDevices.isEmpty()) {
-        showNoAvailableDeviceDialog()
-        return@launch
+      val availableDevices = allDevices.filter {
+        device ->
+        device.tankId == null
       }
 
-      showAvailableDevicesBottomSheet(availableDevices)
+      showAvailableDevicesBottomSheet(
+        devices = availableDevices,
+        hasAnySavedDevice = allDevices.isNotEmpty()
+      )
     }
   }
 
   private fun showAvailableDevicesBottomSheet(
-    devices: List<UserPreferencesManager.DeviceInfoUi>
+    devices: List<UserPreferencesManager.DeviceInfoUi>,
+    hasAnySavedDevice: Boolean
   ) {
     val dialog = BottomSheetDialog(requireContext())
 
@@ -467,9 +471,32 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       false
     )
 
-
     val titleText = contentView.findViewById<TextView>(
       R.id.tvAddDeviceBottomTitle
+    )
+
+    val messageText = contentView.findViewById<TextView>(
+      R.id.tvAddDeviceBottomMessage
+    )
+
+    val devicesContainer = contentView.findViewById<LinearLayout>(
+      R.id.availableDevicesContainer
+    )
+
+    val emptyContainer = contentView.findViewById<LinearLayout>(
+      R.id.emptyAddDeviceContainer
+    )
+
+    val emptyTitle = contentView.findViewById<TextView>(
+      R.id.tvAddDeviceEmptyTitle
+    )
+
+    val emptyMessage = contentView.findViewById<TextView>(
+      R.id.tvAddDeviceEmptyMessage
+    )
+
+    val scanButton = contentView.findViewById<MaterialButton>(
+      R.id.btnOpenDeviceScan
     )
 
     titleText.text = currentTank?.name?.let {
@@ -477,20 +504,43 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       "Add Device to $tankName"
     } ?: "Add Device"
 
-    val devicesContainer = contentView.findViewById<LinearLayout>(
-      R.id.availableDevicesContainer
-    )
-
     devicesContainer.removeAllViews()
 
-    devices.forEach {
-      device ->
-      devicesContainer.addView(
-        createAvailableDeviceCard(
-          device = device,
-          dialog = dialog
+    if (devices.isNotEmpty()) {
+      messageText.text = "Select a saved device to connect it to this aquarium."
+
+      devicesContainer.isVisible = true
+      emptyContainer.isVisible = false
+
+      devices.forEach {
+        device ->
+        devicesContainer.addView(
+          createAvailableDeviceCard(
+            device = device,
+            dialog = dialog
+          )
         )
-      )
+      }
+    } else {
+      devicesContainer.isVisible = false
+      emptyContainer.isVisible = true
+
+      if (hasAnySavedDevice) {
+        messageText.text = "All saved devices are already connected to another aquarium."
+        emptyTitle.text = "No available devices"
+        emptyMessage.text = "Remove a device from another aquarium or manage your saved devices."
+        scanButton.text = "Manage Devices"
+      } else {
+        messageText.text = "No saved devices found."
+        emptyTitle.text = "No saved devices"
+        emptyMessage.text = "Scan and save a device first, then connect it to this aquarium."
+        scanButton.text = "Scan Devices"
+      }
+
+      scanButton.setOnClickListener {
+        dialog.dismiss()
+        openDeviceScanScreen()
+      }
     }
 
     dialog.setContentView(contentView)
@@ -505,6 +555,21 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     dialog.show()
   }
+
+  private fun openDeviceScanScreen() {
+    runCatching {
+      findNavController().navigate(
+        R.id.scanDevicesFragment
+      )
+    }.onFailure {
+      runCatching {
+        findNavController().navigate(
+          R.id.devicesFragment
+        )
+      }
+    }
+  }
+
   private fun createAvailableDeviceCard(
     device: UserPreferencesManager.DeviceInfoUi,
     dialog: BottomSheetDialog
@@ -647,15 +712,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         deviceId = device.id
       )
     }
-  }
-
-  private fun showNoAvailableDeviceDialog() {
-    DialogManager.showInfoDialog(
-      context = requireContext(),
-      type = DialogType.WARNING,
-      title = "No Available Device",
-      message = "There is no saved device available for this tank. Scan and save a device from the Devices tab first."
-    )
   }
 
   private fun getDeviceTitle(

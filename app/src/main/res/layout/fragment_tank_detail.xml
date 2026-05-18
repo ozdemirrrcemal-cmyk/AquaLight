@@ -245,7 +245,7 @@
   android:layout_height="42dp"
   android:insetTop="0dp"
   android:insetBottom="0dp"
-  android:text="ADD"
+  android:text="Add Devices"
   android:textAllCaps="false"
   android:textColor="?attr/colorOnSurface"
   android:textSize="13sp"
