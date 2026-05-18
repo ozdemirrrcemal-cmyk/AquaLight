@@ -661,108 +661,10 @@
         android:visibility="gone">
 
         <TextView
-          android:id="@+id/tvTankStatusTitle"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="8dp"
-          android:includeFontPadding="false"
-          android:text="Tank Status"
-          android:textColor="?attr/colorOnSurface"
-          android:textSize="14sp" />
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowTankActive"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="12dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Active"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvTankActiveValue"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:includeFontPadding="false"
-              android:text="On"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowTankVisible"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Visible on Aquarium list"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvTankVisibleValue"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:includeFontPadding="false"
-              android:text="Visible"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
           android:id="@+id/tvDataManagementTitle"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="24dp"
+          android:layout_marginTop="8dp"
           android:includeFontPadding="false"
           android:text="Data Management"
           android:textColor="?attr/colorOnSurface"
@@ -858,7 +760,7 @@
           android:id="@+id/tvDangerZoneTitle"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="24dp"
+          android:layout_marginTop="26dp"
           android:includeFontPadding="false"
           android:text="Danger Zone"
           android:textColor="#F0625D"
@@ -871,11 +773,10 @@
           android:layout_marginTop="12dp"
           android:clickable="true"
           android:focusable="true"
-          app:cardBackgroundColor="#10233A"
+          app:cardBackgroundColor="#F0625D"
           app:cardCornerRadius="16dp"
           app:cardElevation="0dp"
-          app:strokeColor="#4A2A35"
-          app:strokeWidth="1dp">
+          app:strokeWidth="0dp">
 
           <LinearLayout
             android:layout_width="match_parent"
@@ -883,7 +784,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="16dp"
-            android:paddingEnd="14dp">
+            android:paddingEnd="16dp">
 
             <TextView
               android:layout_width="0dp"
@@ -891,7 +792,7 @@
               android:layout_weight="1"
               android:includeFontPadding="false"
               android:text="Delete Tank"
-              android:textColor="#F0625D"
+              android:textColor="@android:color/white"
               android:textSize="14sp"
               android:textStyle="bold" />
 
@@ -901,7 +802,7 @@
               android:contentDescription="Delete"
               android:scaleType="center"
               android:src="@drawable/ic_delete"
-              app:tint="#F0625D" />
+              app:tint="@android:color/white" />
 
           </LinearLayout>
 
