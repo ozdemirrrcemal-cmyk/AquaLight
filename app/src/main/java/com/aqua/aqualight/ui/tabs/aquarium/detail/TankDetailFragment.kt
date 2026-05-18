@@ -48,6 +48,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.flow.first
 import android.view.LayoutInflater
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
@@ -327,21 +328,29 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       )
     }
 
-    val iconBox = TextView(requireContext()).apply {
-      text = createDeviceShortCode(device)
-      gravity = Gravity.CENTER
-      textSize = 12f
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
+    val iconBox = ImageView(requireContext()).apply {
+      setImageResource(
+        DeviceType.fromName(device.aquaName).iconRes
+      )
+
       setBackgroundResource(R.drawable.bg_material_icon_box)
-      includeFontPadding = false
+      scaleType = ImageView.ScaleType.CENTER_INSIDE
+      contentDescription = device.aquaName.ifBlank {
+        "Device"
+      }
 
       layoutParams = LinearLayout.LayoutParams(
         42.dp(),
         42.dp()
       )
-    }
 
+      setPadding(
+        9.dp(),
+        9.dp(),
+        9.dp(),
+        9.dp()
+      )
+    }
     val textBox = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.VERTICAL
 
@@ -415,7 +424,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     val removeButton = ImageView(requireContext()).apply {
       setImageResource(R.drawable.ic_close_20)
-      setColorFilter(Color.parseColor("#8FA4BE"))
+      setColorFilter(Color.parseColor("#A7B4C5"))
       setBackgroundResource(R.drawable.bg_device_remove_icon_circle)
 
       scaleType = ImageView.ScaleType.CENTER
@@ -424,22 +433,21 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       contentDescription = "Remove device"
 
       layoutParams = LinearLayout.LayoutParams(
-        40.dp(),
-        40.dp()
+        36.dp(),
+        36.dp()
       )
 
       setPadding(
-        10.dp(),
-        10.dp(),
-        10.dp(),
-        10.dp()
+        9.dp(),
+        9.dp(),
+        9.dp(),
+        9.dp()
       )
 
       setOnClickListener {
         showRemoveDeviceConfirmationDialog(device)
       }
     }
-
     row.addView(iconBox)
     row.addView(textBox)
     row.addView(removeButton)
