@@ -47,6 +47,47 @@ class AquariumTankDataStoreManager(
 
         return tankId
     }
+	
+	suspend fun duplicateTank(
+    tankId: Long
+): Long {
+    var newTankId = System.currentTimeMillis()
+
+    context.aquariumTanksDataStore.updateData { currentStore ->
+        val sourceTank = currentStore.getTanksList().firstOrNull { storedTank ->
+            storedTank.id == tankId
+        } ?: throw IllegalArgumentException("Tank not found.")
+
+        val existingIds = currentStore.getTanksList().map { storedTank ->
+            storedTank.id
+        }.toMutableSet()
+
+        while (existingIds.contains(newTankId)) {
+            newTankId++
+        }
+
+        val existingNames = currentStore.getTanksList().map { storedTank ->
+            storedTank.name
+        }.toSet()
+
+        val duplicatedTank = sourceTank.toBuilder()
+            .setId(newTankId)
+            .setName(
+                createDuplicateTankName(
+                    originalName = sourceTank.name,
+                    existingNames = existingNames
+                )
+            )
+            .setCreatedAtMillis(System.currentTimeMillis())
+            .build()
+
+        currentStore.toBuilder()
+            .addTanks(duplicatedTank)
+            .build()
+    }
+
+    return newTankId
+}
 
     suspend fun deleteTanks(
         tankIds: List<Long>
@@ -405,4 +446,27 @@ class AquariumTankDataStoreManager(
             }
         )
     }
+	
+	private fun createDuplicateTankName(
+    originalName: String,
+    existingNames: Set<String>
+): String {
+    val baseName = originalName.ifBlank {
+        "Unnamed Aquarium"
+    }
+
+    val firstCopyName = "$baseName Copy"
+
+    if (!existingNames.contains(firstCopyName)) {
+        return firstCopyName
+    }
+
+    var copyNumber = 2
+
+    while (existingNames.contains("$baseName Copy $copyNumber")) {
+        copyNumber++
+    }
+
+    return "$baseName Copy $copyNumber"
+}
 }

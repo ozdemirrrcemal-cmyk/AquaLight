@@ -1263,4 +1263,5 @@ Delete Failed
     No devices online
 </string>
 <string name="delete">Delete</string>
+<string name="duplicate">Duplicate</string>
 </resources>

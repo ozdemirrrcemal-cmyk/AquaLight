@@ -70,6 +70,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
   private var currentTank: SavedAquariumTank? = null
   private var pendingCameraUri: Uri? = null
   private var isDeletingTank: Boolean = false
+  private var isDuplicatingTank: Boolean = false
 
   private val galleryLauncher = registerForActivityResult(
     ActivityResultContracts.GetContent()
@@ -183,6 +184,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
     binding.rowIdea.setOnClickListener {
       showIdeaSheet()
     }
+	
+	binding.rowDuplicateTank.setOnClickListener {
+    showDuplicateTankConfirmationDialog()
+}
 
     binding.rowDeleteTank.setOnClickListener {
       showDeleteTankConfirmationDialog()
@@ -1401,6 +1406,72 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
       content = container
     )
   }
+  
+  private fun showDuplicateTankConfirmationDialog() {
+    val tank = currentTank ?: return
+
+    if (isDuplicatingTank) {
+        return
+    }
+
+    DialogManager.showConfirmDialog(
+        context = requireContext(),
+        type = DialogType.INFO,
+        title = "Duplicate Tank?",
+        message = "This will create a copy of \"${tank.name}\" with the same tank data, plants and components.",
+        confirmTextResId = R.string.duplicate,
+        cancelTextResId = R.string.cancel,
+        onConfirm = {
+            duplicateCurrentTank()
+        }
+    )
+}
+
+private fun duplicateCurrentTank() {
+    if (isDuplicatingTank) {
+        return
+    }
+
+    isDuplicatingTank = true
+
+    val baseActivity = activity as? BaseActivity
+    baseActivity?.showLoading(true)
+
+    viewLifecycleOwner.lifecycleScope.launch {
+        try {
+            aquariumTankViewModel.duplicateTank(
+                tankId = tankId
+            )
+
+            baseActivity?.showLoading(false)
+
+            val popped = findNavController().popBackStack(
+                R.id.aquariumFragment,
+                false
+            )
+
+            if (!popped) {
+                findNavController().navigate(
+                    R.id.aquariumFragment
+                )
+            }
+
+        } catch (exception: Exception) {
+            exception.printStackTrace()
+
+            isDuplicatingTank = false
+            baseActivity?.showLoading(false)
+
+            DialogManager.showInfoDialog(
+                context = requireContext(),
+                type = DialogType.ERROR,
+                title = "Duplicate Failed",
+                message = "Tank could not be duplicated."
+            )
+        }
+    }
+}
+  
 
   private fun showDeleteTankConfirmationDialog() {
     val tank = currentTank ?: return

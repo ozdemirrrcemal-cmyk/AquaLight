@@ -26,6 +26,14 @@ class AquariumTankViewModel(
     ): Long {
         return tankDataStoreManager.addTankFromDraft(draft)
     }
+	
+	suspend fun duplicateTank(
+    tankId: Long
+): Long {
+    return tankDataStoreManager.duplicateTank(
+        tankId = tankId
+    )
+}
 
     suspend fun deleteTanks(
         tankIds: List<Long>
