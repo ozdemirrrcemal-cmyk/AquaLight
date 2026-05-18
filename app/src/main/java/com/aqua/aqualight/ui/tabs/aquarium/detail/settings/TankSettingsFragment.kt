@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
@@ -9,7 +10,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
 import android.text.TextUtils
+import android.view.GestureDetector
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -17,7 +20,6 @@ import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.NumberPicker
-import com.aqua.aqualight.ui.tabs.aquarium.common.TankStyleBottomSheet
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
@@ -31,16 +33,17 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.common.TankStyleBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.yalantis.ucrop.UCrop
@@ -51,14 +54,11 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import kotlin.math.roundToInt
-import android.annotation.SuppressLint
-import android.view.GestureDetector
-import android.view.MotionEvent
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
-MaterialPickerFragment.MaterialPickerHost {
+  MaterialPickerFragment.MaterialPickerHost {
 
   private var _binding: FragmentTankSettingsBinding? = null
   private val binding get() = _binding!!
@@ -73,8 +73,7 @@ MaterialPickerFragment.MaterialPickerHost {
 
   private val galleryLauncher = registerForActivityResult(
     ActivityResultContracts.GetContent()
-  ) {
-    uri ->
+  ) { uri ->
     if (uri != null) {
       startImageCrop(uri)
     }
@@ -82,11 +81,9 @@ MaterialPickerFragment.MaterialPickerHost {
 
   private val cameraLauncher = registerForActivityResult(
     ActivityResultContracts.TakePicture()
-  ) {
-    success ->
+  ) { success ->
     if (success) {
-      pendingCameraUri?.let {
-        uri ->
+      pendingCameraUri?.let { uri ->
         startImageCrop(uri)
       }
     }
@@ -94,11 +91,9 @@ MaterialPickerFragment.MaterialPickerHost {
 
   private val cropLauncher = registerForActivityResult(
     ActivityResultContracts.StartActivityForResult()
-  ) {
-    result ->
+  ) { result ->
     if (result.resultCode == Activity.RESULT_OK) {
-      val outputUri = result.data?.let {
-        intent ->
+      val outputUri = result.data?.let { intent ->
         UCrop.getOutput(intent)
       }
 
@@ -106,8 +101,7 @@ MaterialPickerFragment.MaterialPickerHost {
         saveTankPhoto(outputUri)
       }
     } else if (result.resultCode == UCrop.RESULT_ERROR) {
-      val error = result.data?.let {
-        intent ->
+      val error = result.data?.let { intent ->
         UCrop.getError(intent)
       }
 
@@ -196,10 +190,8 @@ MaterialPickerFragment.MaterialPickerHost {
   }
 
   private fun observeTank() {
-    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-      tanks ->
-      val tank = tanks.firstOrNull {
-        savedTank ->
+    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+      val tank = tanks.firstOrNull { savedTank ->
         savedTank.id == tankId
       }
 
@@ -208,12 +200,16 @@ MaterialPickerFragment.MaterialPickerHost {
           return@observe
         }
 
-        (requireActivity() as? BaseActivity)?.showSnackBar(
-          message = "Tank not found.",
-          type = BaseActivity.SnackType.ERROR
+        DialogManager.showInfoDialog(
+          context = requireContext(),
+          type = DialogType.ERROR,
+          title = "Tank Not Found",
+          message = "This tank no longer exists.",
+          onDismiss = {
+            findNavController().navigateUp()
+          }
         )
 
-        findNavController().navigateUp()
         return@observe
       }
 
@@ -407,20 +403,20 @@ MaterialPickerFragment.MaterialPickerHost {
       sourceUri,
       destinationUri
     )
-    .withAspectRatio(
-      16f,
-      9f
-    )
-    .withMaxResultSize(
-      1600,
-      900
-    )
-    .withOptions(options)
-    .getIntent(requireContext())
-    .apply {
-      addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-      addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-    }
+      .withAspectRatio(
+        16f,
+        9f
+      )
+      .withMaxResultSize(
+        1600,
+        900
+      )
+      .withOptions(options)
+      .getIntent(requireContext())
+      .apply {
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+      }
 
     cropLauncher.launch(cropIntent)
   }
@@ -589,8 +585,7 @@ MaterialPickerFragment.MaterialPickerHost {
       }
     )
 
-    val swipeTouchListener = View.OnTouchListener {
-      _, event ->
+    val swipeTouchListener = View.OnTouchListener { _, event ->
       gestureDetector.onTouchEvent(event)
       false
     }
@@ -627,7 +622,6 @@ MaterialPickerFragment.MaterialPickerHost {
     }
   }
 
-
   private fun resetTabs() {
     val inactiveColor = Color.parseColor("#8FA4BE")
 
@@ -635,8 +629,7 @@ MaterialPickerFragment.MaterialPickerHost {
       binding.tabBasic,
       binding.tabDetails,
       binding.tabOthers
-    ).forEach {
-      tab ->
+    ).forEach { tab ->
       tab.setTextColor(inactiveColor)
       tab.setTypeface(null, Typeface.NORMAL)
     }
@@ -658,15 +651,15 @@ MaterialPickerFragment.MaterialPickerHost {
   ) {
     binding.settingsTabsContainer.post {
       val textWidth = tabView.paint
-      .measureText(tabView.text.toString())
-      .toInt()
+        .measureText(tabView.text.toString())
+        .toInt()
 
       val underlineWidth = (textWidth * 0.90f)
-      .toInt()
-      .coerceIn(
-        36.dp(),
-        72.dp()
-      )
+        .toInt()
+        .coerceIn(
+          36.dp(),
+          72.dp()
+        )
 
       val params = binding.tabUnderline.layoutParams
       params.width = underlineWidth
@@ -675,9 +668,9 @@ MaterialPickerFragment.MaterialPickerHost {
       val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
 
       binding.tabUnderline.animate()
-      .translationX(targetX)
-      .setDuration(180)
-      .start()
+        .translationX(targetX)
+        .setDuration(180)
+        .start()
     }
   }
 
@@ -687,10 +680,8 @@ MaterialPickerFragment.MaterialPickerHost {
     binding.bioMaterialsContainer.removeAllViews()
     binding.hardwareMaterialsContainer.removeAllViews()
 
-    MaterialCategoryCatalog.bioCategories.forEach {
-      category ->
-      val selectedMaterials = tank.materials.filter {
-        material ->
+    MaterialCategoryCatalog.bioCategories.forEach { category ->
+      val selectedMaterials = tank.materials.filter { material ->
         material.categoryKey == category.key
       }
 
@@ -703,10 +694,8 @@ MaterialPickerFragment.MaterialPickerHost {
       )
     }
 
-    MaterialCategoryCatalog.hardwareCategories.forEach {
-      category ->
-      val selectedMaterials = tank.materials.filter {
-        material ->
+    MaterialCategoryCatalog.hardwareCategories.forEach { category ->
+      val selectedMaterials = tank.materials.filter { material ->
         material.categoryKey == category.key
       }
 
@@ -853,16 +842,16 @@ MaterialPickerFragment.MaterialPickerHost {
     binding.settingsMaterialPickerContainer.isVisible = true
 
     childFragmentManager.beginTransaction()
-    .replace(
-      R.id.settingsMaterialPickerContainer,
-      MaterialPickerFragment.newSettingsInstance(
-        tankId = tankId,
-        categoryKey = categoryKey,
-        categoryTitle = categoryTitle
-      ),
-      "SETTINGS_MATERIAL_PICKER_FRAGMENT"
-    )
-    .commit()
+      .replace(
+        R.id.settingsMaterialPickerContainer,
+        MaterialPickerFragment.newSettingsInstance(
+          tankId = tankId,
+          categoryKey = categoryKey,
+          categoryTitle = categoryTitle
+        ),
+        "SETTINGS_MATERIAL_PICKER_FRAGMENT"
+      )
+      .commit()
   }
 
   override fun closeMaterialPickerFlow() {
@@ -872,8 +861,8 @@ MaterialPickerFragment.MaterialPickerHost {
 
     if (fragment != null) {
       childFragmentManager.beginTransaction()
-      .remove(fragment)
-      .commit()
+        .remove(fragment)
+        .commit()
     }
 
     binding.settingsMaterialPickerContainer.isVisible = false
@@ -972,8 +961,7 @@ MaterialPickerFragment.MaterialPickerHost {
         "SPS",
         "Coral",
         "Other"
-      ).forEach {
-        type ->
+      ).forEach { type ->
         grid.addView(
           createGridOption(
             text = type,
@@ -1160,8 +1148,7 @@ MaterialPickerFragment.MaterialPickerHost {
       listOf(
         "L",
         "gal"
-      ).forEach {
-        unit ->
+      ).forEach { unit ->
         grid.addView(
           createGridOption(
             text = unit,
@@ -1238,18 +1225,16 @@ MaterialPickerFragment.MaterialPickerHost {
       layoutParams = params
     }
 
-    val monthNames = Array(12) {
-      index ->
+    val monthNames = Array(12) { index ->
       DateFormatSymbols(Locale.getDefault())
-      .months[index]
-      .replaceFirstChar {
-        char ->
-        if (char.isLowerCase()) {
-          char.titlecase(Locale.getDefault())
-        } else {
-          char.toString()
+        .months[index]
+        .replaceFirstChar { char ->
+          if (char.isLowerCase()) {
+            char.titlecase(Locale.getDefault())
+          } else {
+            char.toString()
+          }
         }
-      }
     }
 
     val dayPicker = createDateNumberPicker().apply {
@@ -1300,13 +1285,11 @@ MaterialPickerFragment.MaterialPickerHost {
       }
     }
 
-    monthPicker.setOnValueChangedListener {
-      _, _, _ ->
+    monthPicker.setOnValueChangedListener { _, _, _ ->
       updateDayMax()
     }
 
-    yearPicker.setOnValueChangedListener {
-      _, _, _ ->
+    yearPicker.setOnValueChangedListener { _, _, _ ->
       updateDayMax()
     }
 
@@ -1374,8 +1357,7 @@ MaterialPickerFragment.MaterialPickerHost {
     TankStyleBottomSheet.show(
       fragment = this,
       currentStyle = tank.tankStyle
-    ) {
-      newStyle ->
+    ) { newStyle ->
       viewLifecycleOwner.lifecycleScope.launch {
         aquariumTankViewModel.updateTankStyle(
           tankId = tankId,
@@ -1443,7 +1425,7 @@ MaterialPickerFragment.MaterialPickerHost {
 
     isDeletingTank = true
 
-    val baseActivity = requireActivity() as? BaseActivity
+    val baseActivity = activity as? BaseActivity
     baseActivity?.showLoading(true)
 
     viewLifecycleOwner.lifecycleScope.launch {
@@ -1453,11 +1435,6 @@ MaterialPickerFragment.MaterialPickerHost {
         )
 
         baseActivity?.showLoading(false)
-
-        baseActivity?.showSnackBar(
-          message = "Tank deleted.",
-          type = BaseActivity.SnackType.SUCCESS
-        )
 
         val popped = findNavController().popBackStack(
           R.id.aquariumFragment,
@@ -1476,9 +1453,11 @@ MaterialPickerFragment.MaterialPickerHost {
         isDeletingTank = false
         baseActivity?.showLoading(false)
 
-        baseActivity?.showSnackBar(
-          message = "Tank could not be deleted.",
-          type = BaseActivity.SnackType.ERROR
+        DialogManager.showInfoDialog(
+          context = requireContext(),
+          type = DialogType.ERROR,
+          title = "Delete Failed",
+          message = "Tank could not be deleted."
         )
       }
     }
@@ -1669,7 +1648,6 @@ MaterialPickerFragment.MaterialPickerHost {
       }
     }
   }
-
 
   private fun addSizeInputColumn(
     parent: LinearLayout,
