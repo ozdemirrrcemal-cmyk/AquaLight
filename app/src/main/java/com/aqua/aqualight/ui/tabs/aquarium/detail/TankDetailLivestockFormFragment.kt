@@ -31,9 +31,11 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import android.text.Editable
+import android.text.TextWatcher
 
 class TankDetailLivestockFormFragment :
-  Fragment(R.layout.fragment_tank_livestock_form) {
+Fragment(R.layout.fragment_tank_livestock_form) {
 
   private var _binding: FragmentTankLivestockFormBinding? = null
   private val binding get() = _binding!!
@@ -60,6 +62,7 @@ class TankDetailLivestockFormFragment :
     readArguments()
     setupInitialUi()
     setupClickListeners()
+    setupNamePreviewListener()
     renderCategoryOptions()
     updatePreview()
     updateQuantity()
@@ -73,10 +76,10 @@ class TankDetailLivestockFormFragment :
     editingLivestockId = args.getLong(ARG_LIVESTOCK_ID, 0L)
 
     selectedCategory = args.getString(ARG_CATEGORY)
-      ?: LivestockCategories.FISH
+    ?: LivestockCategories.FISH
 
     selectedQuantity = args.getInt(ARG_QUANTITY, 1)
-      .coerceAtLeast(1)
+    .coerceAtLeast(1)
 
     selectedAddedDateMillis = args.getLong(
       ARG_ADDED_DATE_MILLIS,
@@ -142,10 +145,38 @@ class TankDetailLivestockFormFragment :
     }
   }
 
+  private fun setupNamePreviewListener() {
+    binding.etLifeName.addTextChangedListener(
+      object : TextWatcher {
+
+        override fun beforeTextChanged(
+          s: CharSequence?,
+          start: Int,
+          count: Int,
+          after: Int
+        ) = Unit
+
+        override fun onTextChanged(
+          s: CharSequence?,
+          start: Int,
+          before: Int,
+          count: Int
+        ) {
+          updatePreview()
+        }
+
+        override fun afterTextChanged(
+          s: Editable?
+        ) = Unit
+      }
+    )
+  }
+
   private fun renderCategoryOptions() {
     binding.categoryGrid.removeAllViews()
 
-    LivestockCategories.all.forEach { category ->
+    LivestockCategories.all.forEach {
+      category ->
       binding.categoryGrid.addView(
         createCategoryOption(
           category = category,
@@ -203,6 +234,14 @@ class TankDetailLivestockFormFragment :
   }
 
   private fun updatePreview() {
+    val lifeName = binding.etLifeName.text
+    .toString()
+    .trim()
+
+    binding.tvLifePreviewTitle.text = lifeName.ifBlank {
+      "Livestock"
+    }
+
     binding.ivLifeIconPreview.setImageResource(
       getCategoryIcon(selectedCategory)
     )
@@ -233,8 +272,8 @@ class TankDetailLivestockFormFragment :
 
   private fun saveLivestock() {
     val name = binding.etLifeName.text
-      .toString()
-      .trim()
+    .toString()
+    .trim()
 
     if (name.length < 2) {
       showSnackBar(
@@ -255,8 +294,8 @@ class TankDetailLivestockFormFragment :
       quantity = selectedQuantity.coerceAtLeast(1),
       addedDateMillis = selectedAddedDateMillis,
       note = binding.etLifeNote.text
-        .toString()
-        .trim()
+      .toString()
+      .trim()
     )
 
     viewLifecycleOwner.lifecycleScope.launch {
@@ -352,16 +391,18 @@ class TankDetailLivestockFormFragment :
       layoutParams = params
     }
 
-    val monthNames = Array(12) { index ->
+    val monthNames = Array(12) {
+      index ->
       DateFormatSymbols(Locale.getDefault())
-        .months[index]
-        .replaceFirstChar { char ->
-          if (char.isLowerCase()) {
-            char.titlecase(Locale.getDefault())
-          } else {
-            char.toString()
-          }
+      .months[index]
+      .replaceFirstChar {
+        char ->
+        if (char.isLowerCase()) {
+          char.titlecase(Locale.getDefault())
+        } else {
+          char.toString()
         }
+      }
     }
 
     val dayPicker = createDateNumberPicker().apply {
@@ -403,11 +444,13 @@ class TankDetailLivestockFormFragment :
       }
     }
 
-    monthPicker.setOnValueChangedListener { _, _, _ ->
+    monthPicker.setOnValueChangedListener {
+      _, _, _ ->
       updateDayMax()
     }
 
-    yearPicker.setOnValueChangedListener { _, _, _ ->
+    yearPicker.setOnValueChangedListener {
+      _, _, _ ->
       updateDayMax()
     }
 

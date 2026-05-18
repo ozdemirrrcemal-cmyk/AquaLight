@@ -94,6 +94,14 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
   private fun setupClickListeners() {
     binding.btnBack.setOnClickListener {
+      if (handleLifeFlowBack()) {
+        return@setOnClickListener
+      }
+
+      if (handlePlantFlowBack()) {
+        return@setOnClickListener
+      }
+
       findNavController().navigateUp()
     }
 
