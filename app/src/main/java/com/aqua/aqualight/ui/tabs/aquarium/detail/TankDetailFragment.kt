@@ -17,6 +17,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.navigation.fragment.findNavController
+import android.widget.ImageView
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
@@ -321,7 +322,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       setPadding(
         14.dp(),
         12.dp(),
-        14.dp(),
+        12.dp(),
         12.dp()
       )
     }
@@ -364,8 +365,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       ellipsize = TextUtils.TruncateAt.END
     }
 
-    val infoText = TextView(requireContext()).apply {
-      text = getDeviceInfoText(device)
+    val typeText = TextView(requireContext()).apply {
+      text = getDeviceTypeText(device)
       textSize = 12f
       setTextColor(Color.parseColor("#8FA4BE"))
       includeFontPadding = false
@@ -381,52 +382,57 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     val statusText = TextView(requireContext()).apply {
-      text = if (isDeviceOnline(device)) {
+      val online = isDeviceOnline(device)
+
+      text = if (online) {
         "Online"
       } else {
         "Offline"
       }
 
-      textSize = 11.5f
+      textSize = 12f
       setTextColor(
-        if (isDeviceOnline(device)) {
+        if (online) {
           Color.parseColor("#5FD6B4")
         } else {
           Color.parseColor("#D85C5C")
         }
       )
+      setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
 
       val params = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
-      params.topMargin = 6.dp()
+      params.topMargin = 7.dp()
       layoutParams = params
     }
 
     textBox.addView(titleText)
-    textBox.addView(infoText)
+    textBox.addView(typeText)
     textBox.addView(statusText)
 
-    val removeButton = MaterialButton(requireContext()).apply {
-      text = "Remove"
-      textSize = 11f
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      setAllCaps(false)
-      minWidth = 0
-      minHeight = 0
-      insetTop = 0
-      insetBottom = 0
-      cornerRadius = 18.dp()
-      backgroundTintList = ColorStateList.valueOf(
-        Color.parseColor("#1C3252")
-      )
+    val removeButton = ImageView(requireContext()).apply {
+      setImageResource(R.drawable.ic_close_20)
+      setColorFilter(Color.parseColor("#8FA4BE"))
+      setBackgroundResource(R.drawable.bg_device_remove_icon_circle)
+
+      scaleType = ImageView.ScaleType.CENTER
+      isClickable = true
+      isFocusable = true
+      contentDescription = "Remove device"
 
       layoutParams = LinearLayout.LayoutParams(
-        84.dp(),
-        36.dp()
+        40.dp(),
+        40.dp()
+      )
+
+      setPadding(
+        10.dp(),
+        10.dp(),
+        10.dp(),
+        10.dp()
       )
 
       setOnClickListener {
@@ -721,6 +727,14 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       device.aquaName.ifBlank {
         "Device"
       }
+    }
+  }
+
+  private fun getDeviceTypeText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    return device.aquaName.ifBlank {
+      "Device"
     }
   }
 
