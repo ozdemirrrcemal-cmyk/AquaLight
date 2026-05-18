@@ -46,6 +46,7 @@ import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.flow.first
+import android.view.LayoutInflater
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
@@ -66,6 +67,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+    super.onViewCreated(view, savedInstanceState)
     _binding = FragmentTankDetailBinding.bind(view)
     userPrefs = UserPreferencesManager.create(requireContext())
     selectedTab = savedInstanceState
@@ -458,49 +461,31 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   ) {
     val dialog = BottomSheetDialog(requireContext())
 
-    val container = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.VERTICAL
-      setBackgroundColor(Color.parseColor("#152B45"))
-      setPadding(
-        18.dp(),
-        20.dp(),
-        18.dp(),
-        22.dp()
-      )
-    }
+    val contentView = LayoutInflater.from(requireContext()).inflate(
+      R.layout.bottom_sheet_add_device,
+      null,
+      false
+    )
 
-    val titleText = TextView(requireContext()).apply {
-      text = "Add Device"
-      textSize = 18f
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-    }
 
-    val messageText = TextView(requireContext()).apply {
-      text = "Select a saved device to connect it to this aquarium."
-      textSize = 13f
-      setTextColor(Color.parseColor("#8FA4BE"))
-      setLineSpacing(
-        3.dp().toFloat(),
-        1.0f
-      )
+    val titleText = contentView.findViewById<TextView>(
+      R.id.tvAddDeviceBottomTitle
+    )
 
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 10.dp()
-      params.bottomMargin = 18.dp()
-      layoutParams = params
-    }
+    titleText.text = currentTank?.name?.let {
+      tankName ->
+      "Add Device to $tankName"
+    } ?: "Add Device"
 
-    container.addView(titleText)
-    container.addView(messageText)
+    val devicesContainer = contentView.findViewById<LinearLayout>(
+      R.id.availableDevicesContainer
+    )
+
+    devicesContainer.removeAllViews()
 
     devices.forEach {
       device ->
-      container.addView(
+      devicesContainer.addView(
         createAvailableDeviceCard(
           device = device,
           dialog = dialog
@@ -508,7 +493,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       )
     }
 
-    dialog.setContentView(container)
+    dialog.setContentView(contentView)
 
     dialog.setOnShowListener {
       val bottomSheet = dialog.findViewById<View>(
@@ -520,7 +505,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     dialog.show()
   }
-
   private fun createAvailableDeviceCard(
     device: UserPreferencesManager.DeviceInfoUi,
     dialog: BottomSheetDialog
