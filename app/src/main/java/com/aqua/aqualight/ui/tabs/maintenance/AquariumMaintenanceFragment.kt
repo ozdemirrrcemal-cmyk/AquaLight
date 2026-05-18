@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -45,6 +47,7 @@ class AquariumMaintenanceFragment :
 
     setupRecycler()
     setupClickListeners()
+    setupSystemBackButton()
     observeTanks()
     observeSelectedTab()
     observeCareTasks()
@@ -93,12 +96,29 @@ class AquariumMaintenanceFragment :
     }
 
     binding.btnAddCareTask.setOnClickListener {
-      openAddCareTaskPlaceholder()
+      openAddCareTaskFlow()
     }
 
     binding.btnEmptyAddCareTask.setOnClickListener {
-      openAddCareTaskPlaceholder()
+      openAddCareTaskFlow()
     }
+  }
+
+  private fun setupSystemBackButton() {
+    requireActivity().onBackPressedDispatcher.addCallback(
+      viewLifecycleOwner,
+      object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+          if (handleAddCareTaskBack()) {
+            return
+          }
+
+          isEnabled = false
+          requireActivity().onBackPressedDispatcher.onBackPressed()
+          isEnabled = true
+        }
+      }
+    )
   }
 
   private fun observeTanks() {
@@ -240,12 +260,39 @@ class AquariumMaintenanceFragment :
     )
   }
 
-  private fun openAddCareTaskPlaceholder() {
-    Toast.makeText(
-      requireContext(),
-      "Add care task screen will be connected next.",
-      Toast.LENGTH_SHORT
-    ).show()
+  private fun openAddCareTaskFlow() {
+    binding.addCareTaskFlowContainer.isVisible = true
+
+    childFragmentManager.commit {
+      replace(
+        R.id.addCareTaskFlowContainer,
+        AddCareTaskFragment(),
+        "ADD_CARE_TASK_FRAGMENT"
+      )
+    }
+  }
+
+  fun closeAddCareTaskFlow() {
+    val fragment = childFragmentManager.findFragmentById(
+      R.id.addCareTaskFlowContainer
+    )
+
+    if (fragment != null) {
+      childFragmentManager.commit {
+        remove(fragment)
+      }
+    }
+
+    binding.addCareTaskFlowContainer.isVisible = false
+  }
+
+  private fun handleAddCareTaskBack(): Boolean {
+    if (!binding.addCareTaskFlowContainer.isVisible) {
+      return false
+    }
+
+    closeAddCareTaskFlow()
+    return true
   }
 
   private fun showTaskDetailsPlaceholder(

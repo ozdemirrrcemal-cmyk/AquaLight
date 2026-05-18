@@ -37,6 +37,8 @@ class MaintenanceViewModel(
   private val tanksFlow = MutableStateFlow<List<SavedAquariumTank>>(
     emptyList()
   )
+  
+  val tanks: StateFlow<List<SavedAquariumTank>> = tanksFlow
 
   val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
 
