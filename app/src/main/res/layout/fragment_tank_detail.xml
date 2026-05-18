@@ -239,19 +239,19 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-          <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAddDevice"
-            android:layout_width="96dp"
-            android:layout_height="42dp"
-            android:text="ADD"
-            android:textAllCaps="false"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            app:backgroundTint="#1C3252"
-            app:cornerRadius="21dp"
-            app:insetBottom="0dp"
-            app:insetTop="0dp" />
+         <com.google.android.material.button.MaterialButton
+  android:id="@+id/btnAddDevice"
+  android:layout_width="96dp"
+  android:layout_height="42dp"
+  android:insetTop="0dp"
+  android:insetBottom="0dp"
+  android:text="ADD"
+  android:textAllCaps="false"
+  android:textColor="?attr/colorOnSurface"
+  android:textSize="13sp"
+  android:textStyle="bold"
+  app:backgroundTint="#1C3252"
+  app:cornerRadius="21dp" />
 
         </LinearLayout>
 
