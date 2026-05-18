@@ -14,7 +14,8 @@ data class SavedAquariumTank(
     val tankStyle: String,
     val createdAtMillis: Long,
     val plants: List<SavedAquariumPlant>,
-    val materials: List<SavedAquariumMaterial>
+    val materials: List<SavedAquariumMaterial>,
+    val livestock: List<SavedAquariumLivestock> = emptyList()
 )
 
 data class SavedAquariumPlant(
@@ -33,4 +34,13 @@ data class SavedAquariumMaterial(
     val name: String,
     val brand: String,
     val note: String
+)
+
+data class SavedAquariumLivestock(
+    val id: Long = System.currentTimeMillis(),
+    val name: String = "",
+    val category: String = "",
+    val quantity: Int = 1,
+    val addedDateMillis: Long? = null,
+    val note: String = ""
 )

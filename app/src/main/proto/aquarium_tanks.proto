@@ -24,6 +24,7 @@ message StoredTank {
 
   repeated StoredPlantTag plants = 20;
   repeated StoredMaterial materials = 30;
+  repeated StoredLivestock livestock = 40;
 }
 
 message StoredPlantTag {
@@ -42,4 +43,13 @@ message StoredMaterial {
   string name = 5;
   string brand = 6;
   string note = 7;
+}
+
+message StoredLivestock {
+  int64 id = 1;
+  string name = 2;
+  string category = 3;
+  int32 quantity = 4;
+  int64 addedDateMillis = 5;
+  string note = 6;
 }
