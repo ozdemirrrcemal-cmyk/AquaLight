@@ -88,18 +88,30 @@ object TankPdfExporter {
         index, device ->
         writer.drawDeviceInfo(
           number = index + 1,
-          name = getDeviceNameText(device),
           type = getDeviceTypeText(device),
-          status = getDeviceStatusText(device),
-          lastSeen = getDeviceLastSeenText(device),
-          ip = device.ip,
           serial = device.serial,
           firmware = getDeviceFirmwareText(device)
         )
       }
     }
 
-    writer.drawSectionTitle("4. Plants")
+    writer.drawSectionTitle("4. Tank Life")
+
+    if (tank.livestock.isEmpty()) {
+      writer.drawMutedText("No livestock added.")
+    } else {
+      tank.livestock.forEachIndexed {
+        index, livestock ->
+        writer.drawLivestockInfo(
+          number = index + 1,
+          name = livestock.name,
+          category = livestock.category,
+          quantity = getLivestockQuantityText(livestock.quantity)
+        )
+      }
+    }
+
+    writer.drawSectionTitle("5. Plants")
 
     if (tank.plants.isEmpty()) {
       writer.drawMutedText("No plants selected.")
@@ -114,7 +126,7 @@ object TankPdfExporter {
       }
     }
 
-    writer.drawSectionTitle("5. Bio Components")
+    writer.drawSectionTitle("6. Bio Components")
 
     MaterialCategoryCatalog.bioCategories.forEach {
       category ->
@@ -129,7 +141,7 @@ object TankPdfExporter {
       )
     }
 
-    writer.drawSectionTitle("6. Hardware Components")
+    writer.drawSectionTitle("7. Hardware Components")
 
     MaterialCategoryCatalog.hardwareCategories.forEach {
       category ->
@@ -214,43 +226,6 @@ object TankPdfExporter {
     }
   }
 
-  private fun getDeviceStatusText(
-    device: UserPreferencesManager.DeviceInfoUi
-  ): String {
-    if (device.lastSeenMillis <= 0L) {
-      return "Offline"
-    }
-
-    val isOnline =
-    System.currentTimeMillis() - device.lastSeenMillis <= 60_000L
-
-    return if (isOnline) {
-      "Online"
-    } else {
-      "Offline"
-    }
-  }
-
-  private fun getDeviceLastSeenText(
-    device: UserPreferencesManager.DeviceInfoUi
-  ): String {
-    if (device.lastSeenMillis <= 0L) {
-      return "Never"
-    }
-
-    val deltaMs = System.currentTimeMillis() - device.lastSeenMillis
-
-    val minutes = TimeUnit.MILLISECONDS.toMinutes(deltaMs)
-    val hours = TimeUnit.MILLISECONDS.toHours(deltaMs)
-    val days = TimeUnit.MILLISECONDS.toDays(deltaMs)
-
-    return when {
-      minutes < 1 -> "Just now"
-      minutes < 60 -> "$minutes min ago"
-      hours < 24 -> "$hours h ago"
-      else -> "$days d ago"
-    }
-  }
 
   private fun getDeviceFirmwareText(
     device: UserPreferencesManager.DeviceInfoUi
@@ -259,6 +234,18 @@ object TankPdfExporter {
     .substringBefore(" (")
     .ifBlank {
       "-"
+    }
+  }
+
+  private fun getLivestockQuantityText(
+    quantity: Int
+  ): String {
+    val safeQuantity = quantity.coerceAtLeast(1)
+
+    return if (safeQuantity == 1) {
+      "1 pc"
+    } else {
+      "$safeQuantity pcs"
     }
   }
 
@@ -667,59 +654,25 @@ object TankPdfExporter {
 
     fun drawDeviceInfo(
       number: Int,
-      name: String,
       type: String,
-      status: String,
-      lastSeen: String,
-      ip: String,
       serial: String,
       firmware: String
     ) {
-      val titleLines = wrapText(
-        text = "$number. $name",
-        paint = categoryPaint,
-        maxWidth = PAGE_WIDTH - (PAGE_MARGIN * 2)
+      ensureSpace(70f)
+
+      canvas.drawText(
+        "$number. Device",
+        PAGE_MARGIN,
+        y,
+        categoryPaint
       )
 
-      ensureSpace(
-        titleLines.size * 15f + 76f
-      )
-
-      titleLines.forEach {
-        line ->
-        canvas.drawText(
-          line,
-          PAGE_MARGIN,
-          y,
-          categoryPaint
-        )
-
-        y += 15f
-      }
-
-      y += 2f
+      y += 17f
 
       drawDeviceDetailLine(
         label = "Type",
         value = type
       )
-
-      drawDeviceDetailLine(
-        label = "Status",
-        value = status
-      )
-
-      drawDeviceDetailLine(
-        label = "Last Seen",
-        value = lastSeen
-      )
-
-      if (ip.isNotBlank()) {
-        drawDeviceDetailLine(
-          label = "IP",
-          value = ip
-        )
-      }
 
       if (serial.isNotBlank()) {
         drawDeviceDetailLine(
@@ -734,6 +687,38 @@ object TankPdfExporter {
           value = firmware
         )
       }
+
+      y += 8f
+    }
+
+    fun drawLivestockInfo(
+      number: Int,
+      name: String,
+      category: String,
+      quantity: String
+    ) {
+      ensureSpace(70f)
+
+      canvas.drawText(
+        "$number. ${name.ifBlank { "Unnamed livestock" }}",
+        PAGE_MARGIN,
+        y,
+        categoryPaint
+      )
+
+      y += 17f
+
+      drawDeviceDetailLine(
+        label = "Category",
+        value = category.ifBlank {
+          "-"
+        }
+      )
+
+      drawDeviceDetailLine(
+        label = "Quantity",
+        value = quantity
+      )
 
       y += 8f
     }
