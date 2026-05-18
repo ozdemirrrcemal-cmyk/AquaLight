@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
@@ -10,8 +9,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentAquariumBinding
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
@@ -22,6 +24,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private var isDeleteMode = false
+    private var isDeletingTanks = false
     private val selectedTankIds = mutableSetOf<Long>()
 
     private val tankAdapter = AquariumTankAdapter(
@@ -164,51 +167,89 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     }
 
     private fun showDeleteConfirmDialog() {
+        if (isDeletingTanks) {
+            return
+        }
+
         if (selectedTankIds.isEmpty()) {
             exitDeleteMode()
             return
         }
 
-        val selectedCount = selectedTankIds.size
+        val tankIdsToDelete = selectedTankIds.toSet()
+        val selectedCount = tankIdsToDelete.size
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Delete aquarium?")
-            .setMessage(
-                if (selectedCount == 1) {
-                    "Selected aquarium will be permanently deleted."
-                } else {
-                    "$selectedCount selected aquariums will be permanently deleted."
-                }
-            )
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
+        val title = if (selectedCount == 1) {
+            "Delete aquarium?"
+        } else {
+            "Delete aquariums?"
+        }
+
+        val message = if (selectedCount == 1) {
+            "Selected aquarium will be permanently deleted."
+        } else {
+            "$selectedCount selected aquariums will be permanently deleted."
+        }
+
+        DialogManager.showConfirmDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = title,
+            message = message,
+            confirmTextResId = R.string.confirm,
+            cancelTextResId = R.string.cancel,
+            onConfirm = {
+                deleteSelectedTanks(tankIdsToDelete)
+            },
+            onCancel = {
+                exitDeleteMode()
             }
-            .setPositiveButton("Delete") { dialog, _ ->
-                dialog.dismiss()
-                deleteSelectedTanks()
-            }
-            .show()
+        )
     }
 
-    private fun deleteSelectedTanks() {
-        val tankIdsToDelete = selectedTankIds.toList()
+    private fun deleteSelectedTanks(
+        tankIdsToDelete: Set<Long>
+    ) {
+        if (isDeletingTanks) {
+            return
+        }
 
         if (tankIdsToDelete.isEmpty()) {
             exitDeleteMode()
             return
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            aquariumTankViewModel.deleteTanks(
-                tankIds = tankIdsToDelete
-            )
+        isDeletingTanks = true
 
-            exitDeleteMode()
+        val baseActivity = activity as? BaseActivity
+        baseActivity?.showLoading(true)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                aquariumTankViewModel.deleteTanks(
+                    tankIds = tankIdsToDelete.toList()
+                )
+
+                exitDeleteMode()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                DialogManager.showInfoDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Delete Failed",
+                    message = "Selected aquariums could not be deleted."
+                )
+            } finally {
+                isDeletingTanks = false
+                baseActivity?.showLoading(false)
+            }
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+
         binding.rvTanks.adapter = null
         _binding = null
     }
