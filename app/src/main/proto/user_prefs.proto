@@ -42,13 +42,17 @@ message UserPreferences {
   // Çoklu cihaz listesi
   repeated DeviceInfo devices = 100;
 
-  message DeviceInfo {
-    int64  id             = 1;
-    string aquaName       = 2;
-    string name           = 3;
-    string ip             = 4;
-    string serial         = 5;
-    int64  lastSeenMillis = 6;  // LAN’de en son görüldüğü zaman (System.currentTimeMillis)
-	string firmwareBuild = 7;
+  // Çoklu cihaz listesi
+repeated DeviceInfo devices = 100;
+
+message DeviceInfo {
+  int64  id             = 1;
+  string aquaName       = 2;
+  string name           = 3;
+  string ip             = 4;
+  string serial         = 5;
+  int64  lastSeenMillis = 6;
+  string firmwareBuild  = 7;
+  int64  tankId         = 8;
   }
 }
