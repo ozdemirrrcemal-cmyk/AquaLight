@@ -19,7 +19,6 @@ import android.widget.LinearLayout
 import android.widget.NumberPicker
 import com.aqua.aqualight.ui.tabs.aquarium.common.TankStyleBottomSheet
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
@@ -39,10 +38,12 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragme
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.yalantis.ucrop.UCrop
-import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.DateFormatSymbols
@@ -110,11 +111,10 @@ MaterialPickerFragment.MaterialPickerHost {
         UCrop.getError(intent)
       }
 
-      Toast.makeText(
-        requireContext(),
-        error?.message ?: "Photo could not be cropped.",
-        Toast.LENGTH_SHORT
-      ).show()
+      showSnackBar(
+        message = error?.message ?: "Photo could not be cropped.",
+        type = BaseActivity.SnackType.ERROR
+      )
     }
   }
 
@@ -191,7 +191,7 @@ MaterialPickerFragment.MaterialPickerHost {
     }
 
     binding.rowDeleteTank.setOnClickListener {
-      showDeleteTankConfirmationSheet()
+      showDeleteTankConfirmationDialog()
     }
   }
 
@@ -208,11 +208,10 @@ MaterialPickerFragment.MaterialPickerHost {
           return@observe
         }
 
-        Toast.makeText(
-          requireContext(),
-          "Tank not found.",
-          Toast.LENGTH_SHORT
-        ).show()
+        (requireActivity() as? BaseActivity)?.showSnackBar(
+          message = "Tank not found.",
+          type = BaseActivity.SnackType.ERROR
+        )
 
         findNavController().navigateUp()
         return@observe
@@ -256,6 +255,16 @@ MaterialPickerFragment.MaterialPickerHost {
     }
 
     renderMaterials(tank)
+  }
+
+  private fun showSnackBar(
+    message: String,
+    type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
+  ) {
+    (activity as? BaseActivity)?.showSnackBar(
+      message = message,
+      type = type
+    )
   }
 
   private fun showPhotoSourceSheet() {
@@ -432,19 +441,17 @@ MaterialPickerFragment.MaterialPickerHost {
           photoUri = photoUri.toString()
         )
 
-        Toast.makeText(
-          requireContext(),
-          "Photo updated.",
-          Toast.LENGTH_SHORT
-        ).show()
+        showSnackBar(
+          message = "Photo updated.",
+          type = BaseActivity.SnackType.SUCCESS
+        )
       } catch (exception: Exception) {
         exception.printStackTrace()
 
-        Toast.makeText(
-          requireContext(),
-          "Photo could not be saved.",
-          Toast.LENGTH_SHORT
-        ).show()
+        showSnackBar(
+          message = "Photo could not be saved.",
+          type = BaseActivity.SnackType.ERROR
+        )
       }
     }
   }
@@ -903,11 +910,10 @@ MaterialPickerFragment.MaterialPickerHost {
       val newName = input.text.toString().trim()
 
       if (newName.length < 2) {
-        Toast.makeText(
-          requireContext(),
-          "Tank name must be at least 2 characters.",
-          Toast.LENGTH_SHORT
-        ).show()
+        showSnackBar(
+          message = "Tank name must be at least 2 characters.",
+          type = BaseActivity.SnackType.WARNING
+        )
         return@createStepSheetSaveButton
       }
 
@@ -1096,11 +1102,10 @@ MaterialPickerFragment.MaterialPickerHost {
       if (width == null || length == null || height == null ||
         width <= 0 || length <= 0 || height <= 0
       ) {
-        Toast.makeText(
-          requireContext(),
-          "Please enter valid tank size.",
-          Toast.LENGTH_SHORT
-        ).show()
+        showSnackBar(
+          message = "Please enter valid tank size.",
+          type = BaseActivity.SnackType.WARNING
+        )
         return@createStepSheetSaveButton
       }
 
@@ -1415,79 +1420,31 @@ MaterialPickerFragment.MaterialPickerHost {
     )
   }
 
-  private fun showDeleteTankConfirmationSheet() {
+  private fun showDeleteTankConfirmationDialog() {
     val tank = currentTank ?: return
-    val dialog = BottomSheetDialog(requireContext())
 
-    val container = createStepSheetContainer()
-    container.addView(createStepSheetHeader("Delete Tank", dialog))
-
-    val message = TextView(requireContext()).apply {
-      text = "This will permanently delete \"${tank.name}\" and all saved tank data."
-      textSize = 13f
-      setTextColor(Color.parseColor("#8FA4BE"))
-      setLineSpacing(
-        3.dp().toFloat(),
-        1.0f
-      )
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 18.dp()
-      layoutParams = params
-    }
-
-    val deleteButton = MaterialButton(requireContext()).apply {
-      text = "Delete Tank"
-      textSize = 14f
-      setTypeface(null, Typeface.BOLD)
-      setAllCaps(false)
-      setTextColor(Color.WHITE)
-      cornerRadius = 16.dp()
-      icon = ContextCompat.getDrawable(
-        requireContext(),
-        R.drawable.ic_delete
-      )
-      iconTint = android.content.res.ColorStateList.valueOf(Color.WHITE)
-      iconPadding = 8.dp()
-      iconGravity = MaterialButton.ICON_GRAVITY_TEXT_END
-      backgroundTintList = android.content.res.ColorStateList.valueOf(
-        Color.parseColor("#D85C5C")
-      )
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        52.dp()
-      )
-      params.topMargin = 24.dp()
-      layoutParams = params
-
-      setOnClickListener {
-        deleteCurrentTank(dialog)
+    DialogManager.showConfirmDialog(
+      context = requireContext(),
+      type = DialogType.WARNING,
+      title = "Delete Tank?",
+      message = "This will permanently delete \"${tank.name}\" and all saved tank data.",
+      confirmTextResId = R.string.delete,
+      cancelTextResId = R.string.cancel,
+      onConfirm = {
+        deleteCurrentTank()
       }
-    }
-
-    container.addView(message)
-    container.addView(deleteButton)
-    container.addView(createStepSheetCancelButton(dialog))
-
-    showConfiguredBottomSheet(
-      dialog = dialog,
-      content = container
     )
   }
 
-  private fun deleteCurrentTank(
-    dialog: BottomSheetDialog
-  ) {
+  private fun deleteCurrentTank() {
     if (isDeletingTank) {
       return
     }
 
     isDeletingTank = true
-    dialog.dismiss()
+
+    val baseActivity = requireActivity() as? BaseActivity
+    baseActivity?.showLoading(true)
 
     viewLifecycleOwner.lifecycleScope.launch {
       try {
@@ -1495,11 +1452,12 @@ MaterialPickerFragment.MaterialPickerHost {
           tankIds = listOf(tankId)
         )
 
-        Toast.makeText(
-          requireContext(),
-          "Tank deleted.",
-          Toast.LENGTH_SHORT
-        ).show()
+        baseActivity?.showLoading(false)
+
+        baseActivity?.showSnackBar(
+          message = "Tank deleted.",
+          type = BaseActivity.SnackType.SUCCESS
+        )
 
         val popped = findNavController().popBackStack(
           R.id.aquariumFragment,
@@ -1507,18 +1465,21 @@ MaterialPickerFragment.MaterialPickerHost {
         )
 
         if (!popped) {
-          findNavController().navigate(R.id.aquariumFragment)
+          findNavController().navigate(
+            R.id.aquariumFragment
+          )
         }
 
       } catch (exception: Exception) {
         exception.printStackTrace()
-        isDeletingTank = false
 
-        Toast.makeText(
-          requireContext(),
-          "Tank could not be deleted.",
-          Toast.LENGTH_SHORT
-        ).show()
+        isDeletingTank = false
+        baseActivity?.showLoading(false)
+
+        baseActivity?.showSnackBar(
+          message = "Tank could not be deleted.",
+          type = BaseActivity.SnackType.ERROR
+        )
       }
     }
   }
