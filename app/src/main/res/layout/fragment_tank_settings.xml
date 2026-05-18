@@ -766,47 +766,29 @@
           android:textColor="#F0625D"
           android:textSize="14sp" />
 
-        <com.google.android.material.card.MaterialCardView
+        <com.google.android.material.button.MaterialButton
           android:id="@+id/rowDeleteTank"
           android:layout_width="match_parent"
-          android:layout_height="60dp"
+          android:layout_height="56dp"
           android:layout_marginTop="12dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#F0625D"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeWidth="0dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Delete Tank"
-              android:textColor="@android:color/white"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:contentDescription="Delete"
-              android:scaleType="center"
-              android:src="@drawable/ic_delete"
-              app:tint="@android:color/white" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
+          android:insetTop="0dp"
+          android:insetBottom="0dp"
+          android:minHeight="0dp"
+          android:minWidth="0dp"
+          android:paddingStart="16dp"
+          android:paddingEnd="16dp"
+          android:text="Delete Tank"
+          android:textAllCaps="false"
+          android:textColor="@android:color/white"
+          android:textSize="14sp"
+          android:textStyle="bold"
+          android:gravity="center_vertical"
+          app:backgroundTint="#F0625D"
+          app:cornerRadius="16dp"
+          app:icon="@drawable/ic_delete"
+          app:iconGravity="textEnd"
+          app:iconPadding="0dp"
+          app:iconTint="@android:color/white" />
 
       </LinearLayout>
 
