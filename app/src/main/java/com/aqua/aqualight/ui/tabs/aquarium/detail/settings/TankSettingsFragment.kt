@@ -59,6 +59,7 @@ import kotlin.math.roundToInt
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
 import kotlinx.coroutines.Dispatchers
+import androidx.activity.OnBackPressedCallback
 import kotlinx.coroutines.withContext
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
@@ -144,6 +145,7 @@ MaterialPickerFragment.MaterialPickerHost {
     userPrefs = UserPreferencesManager.create(requireContext())
 
     setupClickListeners()
+    setupSystemBackButton()
     setupSwipeBetweenTabs()
     observeTank()
     selectTab(getInitialTab())
@@ -151,9 +153,12 @@ MaterialPickerFragment.MaterialPickerHost {
 
   private fun setupClickListeners() {
     binding.btnBack.setOnClickListener {
+      if (handleMaterialPickerBack()) {
+        return@setOnClickListener
+      }
+
       findNavController().navigateUp()
     }
-
     binding.tabBasic.setOnClickListener {
       selectTab(SettingsTab.BASIC)
     }
@@ -209,6 +214,30 @@ MaterialPickerFragment.MaterialPickerHost {
     binding.rowDeleteTank.setOnClickListener {
       showDeleteTankConfirmationDialog()
     }
+  }
+
+  private fun setupSystemBackButton() {
+    requireActivity().onBackPressedDispatcher.addCallback(
+      viewLifecycleOwner,
+      object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+          if (handleMaterialPickerBack()) {
+            return
+          }
+
+          findNavController().navigateUp()
+        }
+      }
+    )
+  }
+
+  private fun handleMaterialPickerBack(): Boolean {
+    if (!binding.settingsMaterialPickerContainer.isVisible) {
+      return false
+    }
+
+    closeMaterialPickerFlow()
+    return true
   }
 
   private fun observeTank() {
