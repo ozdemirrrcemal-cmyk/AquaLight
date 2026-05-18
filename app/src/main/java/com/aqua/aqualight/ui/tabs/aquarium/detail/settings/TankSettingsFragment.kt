@@ -42,6 +42,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.yalantis.ucrop.UCrop
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.DateFormatSymbols
@@ -67,6 +68,7 @@ MaterialPickerFragment.MaterialPickerHost {
   private var selectedTab: SettingsTab = SettingsTab.BASIC
   private var currentTank: SavedAquariumTank? = null
   private var pendingCameraUri: Uri? = null
+  private var isDeletingTank: Boolean = false
 
   private val galleryLauncher = registerForActivityResult(
     ActivityResultContracts.GetContent()
@@ -187,6 +189,10 @@ MaterialPickerFragment.MaterialPickerHost {
     binding.rowIdea.setOnClickListener {
       showIdeaSheet()
     }
+
+    binding.rowDeleteTank.setOnClickListener {
+      showDeleteTankConfirmationSheet()
+    }
   }
 
   private fun observeTank() {
@@ -198,6 +204,10 @@ MaterialPickerFragment.MaterialPickerHost {
       }
 
       if (tank == null) {
+        if (isDeletingTank) {
+          return@observe
+        }
+
         Toast.makeText(
           requireContext(),
           "Tank not found.",
@@ -514,15 +524,15 @@ MaterialPickerFragment.MaterialPickerHost {
     }
   }
 
- private fun getInitialTab(): SettingsTab {
-  val startTab = arguments?.getString("startTab")
+  private fun getInitialTab(): SettingsTab {
+    val startTab = arguments?.getString("startTab")
 
-  return when (startTab) {
-    "details" -> SettingsTab.DETAILS
-    "others" -> SettingsTab.OTHERS
-    else -> SettingsTab.BASIC
+    return when (startTab) {
+      "details" -> SettingsTab.DETAILS
+      "others" -> SettingsTab.OTHERS
+      else -> SettingsTab.BASIC
+    }
   }
-}
 
   @SuppressLint("ClickableViewAccessibility")
   private fun setupSwipeBetweenTabs() {
@@ -1403,6 +1413,107 @@ MaterialPickerFragment.MaterialPickerHost {
       dialog = dialog,
       content = container
     )
+  }
+
+  private fun showDeleteTankConfirmationSheet() {
+    val tank = currentTank ?: return
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = createStepSheetContainer()
+    container.addView(createStepSheetHeader("Delete Tank", dialog))
+
+    val message = TextView(requireContext()).apply {
+      text = "This will permanently delete \"${tank.name}\" and all saved tank data."
+      textSize = 13f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      setLineSpacing(
+        3.dp().toFloat(),
+        1.0f
+      )
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 18.dp()
+      layoutParams = params
+    }
+
+    val deleteButton = MaterialButton(requireContext()).apply {
+      text = "Delete Tank"
+      textSize = 14f
+      setTypeface(null, Typeface.BOLD)
+      setAllCaps(false)
+      setTextColor(Color.WHITE)
+      cornerRadius = 16.dp()
+      icon = ContextCompat.getDrawable(
+        requireContext(),
+        R.drawable.ic_delete
+      )
+      iconTint = android.content.res.ColorStateList.valueOf(Color.WHITE)
+      iconPadding = 8.dp()
+      iconGravity = MaterialButton.ICON_GRAVITY_TEXT_END
+      backgroundTintList = android.content.res.ColorStateList.valueOf(
+        Color.parseColor("#D85C5C")
+      )
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        52.dp()
+      )
+      params.topMargin = 24.dp()
+      layoutParams = params
+
+      setOnClickListener {
+        deleteCurrentTank(dialog)
+      }
+    }
+
+    container.addView(message)
+    container.addView(deleteButton)
+    container.addView(createStepSheetCancelButton(dialog))
+
+    showConfiguredBottomSheet(
+      dialog = dialog,
+      content = container
+    )
+  }
+
+  private fun deleteCurrentTank(
+    dialog: BottomSheetDialog
+  ) {
+    if (isDeletingTank) {
+      return
+    }
+
+    isDeletingTank = true
+    dialog.dismiss()
+
+    viewLifecycleOwner.lifecycleScope.launch {
+      try {
+        aquariumTankViewModel.deleteTank(tankId)
+
+        Toast.makeText(
+          requireContext(),
+          "Tank deleted.",
+          Toast.LENGTH_SHORT
+        ).show()
+
+        findNavController().popBackStack(
+          R.id.aquariumFragment,
+          false
+        )
+      } catch (exception: Exception) {
+        exception.printStackTrace()
+        isDeletingTank = false
+
+        Toast.makeText(
+          requireContext(),
+          "Tank could not be deleted.",
+          Toast.LENGTH_SHORT
+        ).show()
+      }
+    }
   }
 
   private fun createStepSheetContainer(): LinearLayout {
