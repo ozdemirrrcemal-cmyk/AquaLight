@@ -12,5 +12,6 @@ data class SmartCareGeneratedTask(
   val dueAtMillis: Long,
   val setupDay: Int?,
   val requiresWaterTest: Boolean,
-  val sourceTags: List<String>
+  val sourceTags: List<String>,
+  val waterChangePercent: Int? = null
 )

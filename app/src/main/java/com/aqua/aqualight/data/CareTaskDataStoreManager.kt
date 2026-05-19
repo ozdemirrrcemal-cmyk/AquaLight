@@ -764,7 +764,7 @@ class CareTaskDataStoreManager private constructor(
       reminderEnabled = true,
       missedReminderEnabled = false,
       missedReminderDays = 1,
-      waterChangePercent = null,
+      waterChangePercent = waterChangePercent,
       note = "",
       generatedRuleKey = id,
       createdAtMillis = createdAtMillis,

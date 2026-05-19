@@ -141,15 +141,19 @@ object SmartCareTaskGenerator {
       ruleId = rule.id,
       taskType = rule.taskType,
       titleTr = rule.titleTr,
-      messageTr = enrichMessage(
-        profile = profile,
-        rule = rule
+      messageTr = buildShortMessage(
+        rule = rule,
+        profile = profile
       ),
       priority = rule.priority,
       dueAtMillis = dueAtMillis,
       setupDay = profile.setupDay,
       requiresWaterTest = rule.requiresWaterTest,
-      sourceTags = rule.sourceTags
+      sourceTags = rule.sourceTags,
+      waterChangePercent = getWaterChangePercent(
+        rule = rule,
+        profile = profile
+      )
     )
   }
 
@@ -161,34 +165,86 @@ object SmartCareTaskGenerator {
     return "smart_${tankId}_${rule.id}_${setupDay ?: 0}"
   }
 
-  private fun enrichMessage(
-    profile: SmartCareTankProfile,
-    rule: SmartCareRule
-  ): String {
-    val setupDayText = profile.setupDay?.let { day ->
-      "Kurulum günü: $day. "
-    }.orEmpty()
-
-    val volumeText = if (profile.estimatedWaterVolumeL > 0.0) {
-      "Tahmini su hacmi: ${profile.estimatedWaterVolumeL} L. "
-    } else {
-      ""
+  private fun getWaterChangePercent(
+    rule: SmartCareRule,
+    profile: SmartCareTankProfile
+  ): Int? {
+    if (rule.taskType != SmartCareTaskType.WATER_CHANGE) {
+      return null
     }
 
+    val setupDay = profile.setupDay ?: return 30
+
+    return when {
+      profile.hasActiveSoil && setupDay in 1..7 -> 50
+      profile.hasActiveSoil && setupDay in 8..21 -> 40
+      setupDay in 1..28 -> 30
+      setupDay in 29..90 -> 30
+      else -> 25
+    }
+  }
+
+  private fun buildShortMessage(
+    rule: SmartCareRule,
+    profile: SmartCareTankProfile
+  ): String {
+    val setupDay = profile.setupDay
+
     return when (rule.taskType) {
-      SmartCareTaskType.FERTILIZER -> {
-        setupDayText + volumeText + rule.messageTr
+      SmartCareTaskType.WATER_CHANGE -> {
+        val percent = getWaterChangePercent(
+          rule = rule,
+          profile = profile
+        ) ?: 30
+
+        if (setupDay != null) {
+          "Day $setupDay. Change about $percent% of the water to help keep the aquarium stable."
+        } else {
+          "Change about $percent% of the water to help keep the aquarium stable."
+        }
       }
 
-      SmartCareTaskType.WATER_CHANGE -> {
-        setupDayText + rule.messageTr
+      SmartCareTaskType.CO2_CHECK -> {
+        "Check CO₂ timing, drop checker color, and livestock behavior."
+      }
+
+      SmartCareTaskType.FEEDING -> {
+        "Feed lightly and remove excess food if needed."
+      }
+
+      SmartCareTaskType.LIGHTING -> {
+        "Check the light period and keep it stable."
+      }
+
+      SmartCareTaskType.FERTILIZER -> {
+        "Check dosing and adjust carefully based on plant response."
       }
 
       SmartCareTaskType.WATER_TEST -> {
-        setupDayText + rule.messageTr
+        "Test water before making livestock or dosing decisions."
       }
 
-      else -> {
+      SmartCareTaskType.PLANT_CHECK -> {
+        "Check plant health, melting leaves, and weak growth."
+      }
+
+      SmartCareTaskType.PLANT_TRIM -> {
+        "Trim overgrown or unhealthy plant sections if needed."
+      }
+
+      SmartCareTaskType.FILTER_CHECK -> {
+        "Check filter flow and clean only if flow is reduced."
+      }
+
+      SmartCareTaskType.GLASS_CLEANING -> {
+        "Check glass and hardscape for early algae signs."
+      }
+
+      SmartCareTaskType.LIVESTOCK_CHECK -> {
+        "Check livestock behavior, appetite, and visible stress signs."
+      }
+
+      SmartCareTaskType.GENERAL_CHECK -> {
         rule.messageTr
       }
     }
@@ -201,16 +257,16 @@ object SmartCareTaskGenerator {
     val hour = when (taskType) {
       SmartCareTaskType.CO2_CHECK -> 8
       SmartCareTaskType.LIGHTING -> 9
+      SmartCareTaskType.FEEDING -> 9
+      SmartCareTaskType.GENERAL_CHECK -> 9
       SmartCareTaskType.FERTILIZER -> 10
       SmartCareTaskType.WATER_CHANGE -> 11
-      SmartCareTaskType.WATER_TEST -> 18
-      SmartCareTaskType.FEEDING -> 9
       SmartCareTaskType.PLANT_CHECK -> 12
       SmartCareTaskType.PLANT_TRIM -> 12
       SmartCareTaskType.FILTER_CHECK -> 13
       SmartCareTaskType.GLASS_CLEANING -> 13
+      SmartCareTaskType.WATER_TEST -> 18
       SmartCareTaskType.LIVESTOCK_CHECK -> 18
-      SmartCareTaskType.GENERAL_CHECK -> 9
     }
 
     return Calendar.getInstance().apply {
