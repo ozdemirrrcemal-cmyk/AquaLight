@@ -67,7 +67,7 @@ class SmartCareDailyWorker(
         context.applicationContext
       ).enqueueUniquePeriodicWork(
         WORK_NAME,
-        ExExistingPeriodicWorkPolicy.KEEP,
+        ExistingPeriodicWorkPolicy.KEEP,
         request
       )
     }
