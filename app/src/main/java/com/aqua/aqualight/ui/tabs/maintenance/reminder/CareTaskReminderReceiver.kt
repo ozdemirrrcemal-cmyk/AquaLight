@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.aqua.aqualight.data.CareTaskDataStoreManager
+import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
 import com.aqua.aqualight.utils.NotificationHelper
@@ -37,12 +38,16 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
       try {
         val appContext = context.applicationContext
 
-        val manager = CareTaskDataStoreManager.create(
+        val careTaskManager = CareTaskDataStoreManager.create(
           appContext
         )
 
-        val task = manager.taskFlow(taskId).firstOrNull()
-          ?: return@launch
+        val tankManager = AquariumTankDataStoreManager(
+          appContext
+        )
+
+        val task = careTaskManager.taskFlow(taskId).firstOrNull()
+        ?: return@launch
 
         if (
           task.status != CareTaskStatus.PENDING ||
@@ -54,6 +59,14 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
           )
           return@launch
         }
+
+        val tanks = tankManager.tanksFlow.firstOrNull()
+        .orEmpty()
+
+        val aquariumName = tanks.firstOrNull {
+          tank ->
+          tank.id == task.tankId
+        }?.name.orEmpty()
 
         val typeUi = CareTaskTypeCatalog.get(
           task.type
@@ -73,7 +86,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
           baseTitle
         }
 
-        val message = when {
+        val bodyText = when {
           task.note.isNotBlank() -> {
             task.note
           }
@@ -84,11 +97,15 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
 
           typeUi.defaultDescription.isNotBlank() -> {
             typeUi.defaultDescription
-          }
-
-          else -> {
+          } else -> {
             "This care task is due now."
           }
+        }
+
+        val message = if (aquariumName.isNotBlank()) {
+          "$aquariumName\n$bodyText"
+        } else {
+          bodyText
         }
 
         NotificationHelper.showCareTaskReminderNotification(
