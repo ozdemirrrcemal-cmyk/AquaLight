@@ -980,12 +980,9 @@ Fragment(R.layout.fragment_add_care_task) {
       return false
     }
 
-    viewLifecycleOwner.lifecycleScope.launch {
-      userPrefs.updateNotificationsEnabled(true)
-    }
-
     return true
   }
+
 
   private fun openNotificationPermissionSheet() {
     val sheet = NotificationsBottomSheet(
@@ -1074,6 +1071,10 @@ Fragment(R.layout.fragment_add_care_task) {
     }
 
     viewLifecycleOwner.lifecycleScope.launch {
+      if (binding.switchReminder.isChecked) {
+        userPrefs.updateNotificationsEnabled(true)
+      }
+
       if (isEditMode) {
         maintenanceViewModel.updateManualTask(
           taskId = taskId,
