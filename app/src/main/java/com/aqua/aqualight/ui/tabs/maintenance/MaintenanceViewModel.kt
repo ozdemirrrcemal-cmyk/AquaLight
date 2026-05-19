@@ -12,6 +12,7 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
+import com.aqua.aqualight.ui.tabs.maintenance.smartcare.SmartCareTaskGenerator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,7 +30,7 @@ class MaintenanceViewModel(
 ) : AndroidViewModel(application) {
 
   private val careTaskDataStoreManager =
-    CareTaskDataStoreManager.create(application)
+  CareTaskDataStoreManager.create(application)
 
   private val selectedTabFlow = MutableStateFlow(
     MaintenanceTab.ALL
@@ -44,29 +45,31 @@ class MaintenanceViewModel(
   val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
 
   val taskItems: StateFlow<List<CareTaskUi>> =
-    combine(
-      careTaskDataStoreManager.tasksFlow,
-      tanksFlow,
-      selectedTabFlow
-    ) { tasks, tanks, selectedTab ->
-      val filteredTasks = filterTasksByTab(
-        tasks = tasks,
-        tab = selectedTab
-      )
-
-      filteredTasks.map { task ->
-        task.toCareTaskUi(
-          tankName = getTankName(
-            tankId = task.tankId,
-            tanks = tanks
-          )
-        )
-      }
-    }.stateIn(
-      scope = viewModelScope,
-      started = SharingStarted.WhileSubscribed(5_000),
-      initialValue = emptyList()
+  combine(
+    careTaskDataStoreManager.tasksFlow,
+    tanksFlow,
+    selectedTabFlow
+  ) {
+    tasks, tanks, selectedTab ->
+    val filteredTasks = filterTasksByTab(
+      tasks = tasks,
+      tab = selectedTab
     )
+
+    filteredTasks.map {
+      task ->
+      task.toCareTaskUi(
+        tankName = getTankName(
+          tankId = task.tankId,
+          tanks = tanks
+        )
+      )
+    }
+  }.stateIn(
+    scope = viewModelScope,
+    started = SharingStarted.WhileSubscribed(5_000),
+    initialValue = emptyList()
+  )
 
   fun taskByIdFlow(
     taskId: Long
@@ -74,7 +77,8 @@ class MaintenanceViewModel(
     return combine(
       careTaskDataStoreManager.taskFlow(taskId),
       tanksFlow
-    ) { task, tanks ->
+    ) {
+      task, tanks ->
       task?.toCareTaskUi(
         tankName = getTankName(
           tankId = task.tankId,
@@ -88,6 +92,25 @@ class MaintenanceViewModel(
     tanks: List<SavedAquariumTank>
   ) {
     tanksFlow.value = tanks
+    syncSmartCareTasks(tanks)
+  }
+
+  private fun syncSmartCareTasks(
+    tanks: List<SavedAquariumTank>
+  ) {
+    if (tanks.isEmpty()) {
+      return
+    }
+
+    viewModelScope.launch {
+      val generatedTasks = SmartCareTaskGenerator.generateForTanks(
+        tanks = tanks
+      )
+
+      careTaskDataStoreManager.syncAutomaticTasks(
+        generatedTasks = generatedTasks
+      )
+    }
   }
 
   fun selectTab(
@@ -195,44 +218,52 @@ class MaintenanceViewModel(
     return when (tab) {
       MaintenanceTab.ALL -> {
         tasks
-          .filter { task ->
-            task.status == CareTaskStatus.PENDING
-          }
-          .sortedBy { task ->
-            task.dueAtMillis
-          }
+        .filter {
+          task ->
+          task.status == CareTaskStatus.PENDING
+        }
+        .sortedBy {
+          task ->
+          task.dueAtMillis
+        }
       }
 
       MaintenanceTab.TODAY -> {
         tasks
-          .filter { task ->
-            task.status == CareTaskStatus.PENDING &&
-              task.dueAtMillis < tomorrowStartMillis
-          }
-          .sortedBy { task ->
-            task.dueAtMillis
-          }
+        .filter {
+          task ->
+          task.status == CareTaskStatus.PENDING &&
+          task.dueAtMillis < tomorrowStartMillis
+        }
+        .sortedBy {
+          task ->
+          task.dueAtMillis
+        }
       }
 
       MaintenanceTab.UPCOMING -> {
         tasks
-          .filter { task ->
-            task.status == CareTaskStatus.PENDING &&
-              task.dueAtMillis >= tomorrowStartMillis
-          }
-          .sortedBy { task ->
-            task.dueAtMillis
-          }
+        .filter {
+          task ->
+          task.status == CareTaskStatus.PENDING &&
+          task.dueAtMillis >= tomorrowStartMillis
+        }
+        .sortedBy {
+          task ->
+          task.dueAtMillis
+        }
       }
 
       MaintenanceTab.HISTORY -> {
         tasks
-          .filter { task ->
-            task.status == CareTaskStatus.COMPLETED
-          }
-          .sortedByDescending { task ->
-            task.completedAtMillis ?: 0L
-          }
+        .filter {
+          task ->
+          task.status == CareTaskStatus.COMPLETED
+        }
+        .sortedByDescending {
+          task ->
+          task.completedAtMillis ?: 0L
+        }
       }
     }
   }
@@ -271,7 +302,7 @@ class MaintenanceViewModel(
       iconRes = typeUi.iconRes,
       accentColor = typeUi.accentColor,
       isOverdue = status == CareTaskStatus.PENDING &&
-        dueAtMillis < getTodayStartMillis(),
+      dueAtMillis < getTodayStartMillis(),
       primaryTimeText = getPrimaryTimeText(this),
       secondaryText = getSecondaryText(this)
     )
@@ -339,9 +370,7 @@ class MaintenanceViewModel(
 
       task.reminderEnabled -> {
         "Reminder active"
-      }
-
-      else -> {
+      } else -> {
         task.description
       }
     }
@@ -351,7 +380,8 @@ class MaintenanceViewModel(
     tankId: Long,
     tanks: List<SavedAquariumTank>
   ): String {
-    return tanks.firstOrNull { tank ->
+    return tanks.firstOrNull {
+      tank ->
       tank.id == tankId
     }?.name ?: "Unknown aquarium"
   }
