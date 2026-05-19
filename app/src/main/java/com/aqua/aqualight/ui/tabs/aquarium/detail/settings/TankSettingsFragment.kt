@@ -752,18 +752,6 @@ MaterialPickerFragment.MaterialPickerHost {
     binding.scoreContainer.strokeColor = color
   }
 
-  private fun renderCareProfileScore(
-    tank: SavedAquariumTank
-  ) {
-    val result = buildCareProfileResult(tank)
-    val color = getCareProfileColor(result.percent)
-
-    binding.scoreContainer.isVisible = true
-    binding.tvScore.text = result.percent.toString()
-    binding.tvScore.setTextColor(color)
-    binding.scoreContainer.strokeColor = color
-  }
-
   private fun showCareProfileSheet(
     tank: SavedAquariumTank
   ) {
