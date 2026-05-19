@@ -348,7 +348,7 @@ class AquariumMaintenanceFragment :
       text = formatHistoryDate(millis)
       textSize = 13.5f
       setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
+      setTypeface(null, Typeface.NORMAL)
       includeFontPadding = false
 
       val params = LinearLayout.LayoutParams(

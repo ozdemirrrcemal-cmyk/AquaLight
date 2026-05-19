@@ -135,7 +135,7 @@
     android:paddingStart="16dp"
     android:paddingTop="16dp"
     android:paddingEnd="16dp"
-    android:paddingBottom="24dp"
+    android:paddingBottom="110dp"
     android:scrollbars="none"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
