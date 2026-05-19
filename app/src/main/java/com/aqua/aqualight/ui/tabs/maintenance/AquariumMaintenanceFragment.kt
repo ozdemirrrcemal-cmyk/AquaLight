@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -275,12 +278,9 @@ class AquariumMaintenanceFragment :
         )
       )
 
-      dayTasks.forEachIndexed { index, task ->
+      dayTasks.forEach { task ->
         binding.historyTimelineContainer.addView(
-          createHistoryTaskRow(
-            task = task,
-            isLastInGroup = index == dayTasks.lastIndex
-          )
+          createHistoryTaskRow(task)
         )
       }
     }
@@ -297,7 +297,7 @@ class AquariumMaintenanceFragment :
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
-      params.topMargin = 6.dp()
+      params.topMargin = 4.dp()
       params.bottomMargin = 12.dp()
       layoutParams = params
     }
@@ -305,11 +305,11 @@ class AquariumMaintenanceFragment :
     val nodeBox = FrameLayout(requireContext()).apply {
       layoutParams = LinearLayout.LayoutParams(
         HISTORY_AXIS_WIDTH_DP.dp(),
-        28.dp()
+        30.dp()
       )
     }
 
-    val node = View(requireContext()).apply {
+    val outerNode = View(requireContext()).apply {
       background = GradientDrawable().apply {
         shape = GradientDrawable.OVAL
         setColor(Color.TRANSPARENT)
@@ -320,18 +320,33 @@ class AquariumMaintenanceFragment :
       }
 
       val params = FrameLayout.LayoutParams(
-        18.dp(),
-        18.dp(),
+        20.dp(),
+        20.dp(),
         Gravity.CENTER
       )
       layoutParams = params
     }
 
-    nodeBox.addView(node)
+    val innerNode = View(requireContext()).apply {
+      background = GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(Color.parseColor("#5FD6B4"))
+      }
+
+      val params = FrameLayout.LayoutParams(
+        8.dp(),
+        8.dp(),
+        Gravity.CENTER
+      )
+      layoutParams = params
+    }
+
+    nodeBox.addView(outerNode)
+    nodeBox.addView(innerNode)
 
     val dateText = TextView(requireContext()).apply {
       text = formatHistoryDate(millis)
-      textSize = 15f
+      textSize = 13.5f
       setTextColor(Color.WHITE)
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
@@ -341,7 +356,7 @@ class AquariumMaintenanceFragment :
         LinearLayout.LayoutParams.WRAP_CONTENT,
         1f
       )
-      params.marginStart = 6.dp()
+      params.marginStart = 4.dp()
       layoutParams = params
     }
 
@@ -352,7 +367,7 @@ class AquariumMaintenanceFragment :
         ""
       }
 
-      textSize = 13f
+      textSize = 12.5f
       setTextColor(Color.parseColor("#5FD6B4"))
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
@@ -366,18 +381,15 @@ class AquariumMaintenanceFragment :
   }
 
   private fun createHistoryTaskRow(
-    task: CareTaskUi,
-    isLastInGroup: Boolean
+    task: CareTaskUi
   ): View {
     val row = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.HORIZONTAL
 
-      val params = LinearLayout.LayoutParams(
+      layoutParams = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
-      params.bottomMargin = 12.dp()
-      layoutParams = params
     }
 
     val lineBox = FrameLayout(requireContext()).apply {
@@ -387,10 +399,7 @@ class AquariumMaintenanceFragment :
       )
     }
 
-    val line = View(requireContext()).apply {
-      setBackgroundColor(Color.parseColor("#334A63"))
-      isVisible = !isLastInGroup
-
+    val dashedLine = createDashedTimelineLine().apply {
       val params = FrameLayout.LayoutParams(
         2.dp(),
         FrameLayout.LayoutParams.MATCH_PARENT,
@@ -399,7 +408,7 @@ class AquariumMaintenanceFragment :
       layoutParams = params
     }
 
-    lineBox.addView(line)
+    lineBox.addView(dashedLine)
 
     row.addView(lineBox)
     row.addView(
@@ -407,6 +416,39 @@ class AquariumMaintenanceFragment :
     )
 
     return row
+  }
+
+  private fun createDashedTimelineLine(): View {
+    return object : View(requireContext()) {
+
+      private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#3A4654")
+        strokeWidth = 2.dp().toFloat()
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        pathEffect = DashPathEffect(
+          floatArrayOf(
+            8.dp().toFloat(),
+            9.dp().toFloat()
+          ),
+          0f
+        )
+      }
+
+      override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        val centerX = width / 2f
+
+        canvas.drawLine(
+          centerX,
+          0f,
+          centerX,
+          height.toFloat(),
+          linePaint
+        )
+      }
+    }
   }
 
   private fun createHistoryTaskCard(
@@ -420,11 +462,13 @@ class AquariumMaintenanceFragment :
       cardElevation = 0f
       useCompatPadding = false
 
-      layoutParams = LinearLayout.LayoutParams(
+      val params = LinearLayout.LayoutParams(
         0,
         LinearLayout.LayoutParams.WRAP_CONTENT,
         1f
       )
+      params.bottomMargin = 12.dp()
+      layoutParams = params
     }
 
     val row = LinearLayout(requireContext()).apply {
@@ -432,10 +476,10 @@ class AquariumMaintenanceFragment :
       gravity = Gravity.CENTER_VERTICAL
 
       setPadding(
-        14.dp(),
         13.dp(),
         12.dp(),
-        13.dp()
+        12.dp(),
+        12.dp()
       )
     }
 
@@ -445,8 +489,8 @@ class AquariumMaintenanceFragment :
       )
 
       layoutParams = LinearLayout.LayoutParams(
-        42.dp(),
-        42.dp()
+        40.dp(),
+        40.dp()
       )
     }
 
@@ -455,8 +499,8 @@ class AquariumMaintenanceFragment :
       setColorFilter(Color.WHITE)
 
       val params = FrameLayout.LayoutParams(
-        21.dp(),
-        21.dp(),
+        20.dp(),
+        20.dp(),
         Gravity.CENTER
       )
       layoutParams = params
@@ -479,7 +523,7 @@ class AquariumMaintenanceFragment :
 
     val titleText = TextView(requireContext()).apply {
       text = task.title
-      textSize = 14.5f
+      textSize = 14f
       setTextColor(Color.WHITE)
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
@@ -499,13 +543,13 @@ class AquariumMaintenanceFragment :
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
-      params.topMargin = 6.dp()
+      params.topMargin = 5.dp()
       layoutParams = params
     }
 
     val completedText = TextView(requireContext()).apply {
       text = "Completed"
-      textSize = 12.5f
+      textSize = 12f
       setTextColor(Color.parseColor("#5FD6B4"))
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
@@ -514,7 +558,7 @@ class AquariumMaintenanceFragment :
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
-      params.topMargin = 6.dp()
+      params.topMargin = 5.dp()
       layoutParams = params
     }
 
@@ -657,7 +701,7 @@ class AquariumMaintenanceFragment :
   ): GradientDrawable {
     return GradientDrawable().apply {
       shape = GradientDrawable.RECTANGLE
-      cornerRadius = 14.dp().toFloat()
+      cornerRadius = 13.dp().toFloat()
       setColor(
         applyAlpha(
           color = color,
@@ -698,6 +742,6 @@ class AquariumMaintenanceFragment :
   }
 
   companion object {
-    private const val HISTORY_AXIS_WIDTH_DP = 40
+    private const val HISTORY_AXIS_WIDTH_DP = 42
   }
 }
