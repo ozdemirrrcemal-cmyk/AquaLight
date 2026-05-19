@@ -104,6 +104,9 @@ dependencies {
 	
 	// Lifecycle
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
+	
+	// WorkManager
+    implementation "androidx.work:work-runtime-ktx:2.11.2"
 
 	// Country Code
 	implementation "com.hbb20:ccp:2.7.3"
