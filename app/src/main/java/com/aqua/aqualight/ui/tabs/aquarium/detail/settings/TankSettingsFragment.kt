@@ -1190,6 +1190,91 @@ private fun showTankNameSheet() {
   }
 }
 
+private fun showTankTypeSheet() {
+  val tank = currentTank ?: return
+
+  val contentBinding = ContentSheetTankTypeBinding.inflate(
+    layoutInflater
+  )
+
+  var selectedType = tank.tankType.ifBlank {
+    "Fish"
+  }
+
+  val options = listOf(
+    contentBinding.optionFish to "Fish",
+    contentBinding.optionShrimp to "Shrimp",
+    contentBinding.optionPlanted to "Planted",
+    contentBinding.optionMarine to "Marine",
+    contentBinding.optionSofties to "Softies",
+    contentBinding.optionMixedReef to "Mixed Reef",
+    contentBinding.optionSps to "SPS",
+    contentBinding.optionCoral to "Coral",
+    contentBinding.optionOther to "Other"
+  )
+
+  fun renderSelection() {
+    options.forEach {
+      option ->
+      val view = option.first
+      val value = option.second
+
+      val selected = value.equals(
+        selectedType,
+        ignoreCase = true
+      )
+
+      view.setTypeface(
+        null,
+        if (selected) Typeface.BOLD else Typeface.NORMAL
+      )
+
+      view.setBackgroundResource(
+        if (selected) {
+          R.drawable.bg_settings_sheet_grid_option_selected
+        } else {
+          R.drawable.bg_settings_sheet_grid_option
+        }
+      )
+    }
+  }
+
+  options.forEach {
+    option ->
+    val view = option.first
+    val value = option.second
+
+    view.setOnClickListener {
+      selectedType = value
+      renderSelection()
+    }
+  }
+
+  renderSelection()
+
+  showSettingsBottomSheet(
+    title = "Tank Type",
+    contentView = contentBinding.root
+  ) {
+    dialog ->
+
+    contentBinding.btnCancel.setOnClickListener {
+      dialog.dismiss()
+    }
+
+    contentBinding.btnSave.setOnClickListener {
+      viewLifecycleOwner.lifecycleScope.launch {
+        aquariumTankViewModel.updateTankType(
+          tankId = tankId,
+          tankType = selectedType
+        )
+
+        dialog.dismiss()
+      }
+    }
+  }
+}
+
 private fun showTankSizeSheet() {
   val tank = currentTank ?: return
 
@@ -1213,16 +1298,16 @@ private fun showTankSizeSheet() {
 
     contentBinding.btnSave.setOnClickListener {
       val width = contentBinding.inputWidth.text
-        .toString()
-        .toIntOrNull()
+      .toString()
+      .toIntOrNull()
 
       val length = contentBinding.inputLength.text
-        .toString()
-        .toIntOrNull()
+      .toString()
+      .toIntOrNull()
 
       val height = contentBinding.inputHeight.text
-        .toString()
-        .toIntOrNull()
+      .toString()
+      .toIntOrNull()
 
       if (
         width == null ||
@@ -1272,69 +1357,6 @@ private fun toggleVolumeUnit() {
       tankId = tankId,
       volumeUnit = newUnit
     )
-  }
-}
-
-private fun showTankSizeSheet() {
-  val tank = currentTank ?: return
-
-  val contentBinding = ContentSheetTankSizeBinding.inflate(
-    layoutInflater
-  )
-
-  contentBinding.inputWidth.setText(tank.widthCm.toString())
-  contentBinding.inputLength.setText(tank.lengthCm.toString())
-  contentBinding.inputHeight.setText(tank.heightCm.toString())
-
-  showSettingsBottomSheet(
-    title = "Tank Size",
-    contentView = contentBinding.root
-  ) {
-    dialog ->
-
-    contentBinding.btnCancel.setOnClickListener {
-      dialog.dismiss()
-    }
-
-    contentBinding.btnSave.setOnClickListener {
-      val width = contentBinding.inputWidth.text
-        .toString()
-        .toIntOrNull()
-
-      val length = contentBinding.inputLength.text
-        .toString()
-        .toIntOrNull()
-
-      val height = contentBinding.inputHeight.text
-        .toString()
-        .toIntOrNull()
-
-      if (
-        width == null ||
-        length == null ||
-        height == null ||
-        width <= 0 ||
-        length <= 0 ||
-        height <= 0
-      ) {
-        showSnackBar(
-          message = "Please enter valid tank size.",
-          type = BaseActivity.SnackType.WARNING
-        )
-        return@setOnClickListener
-      }
-
-      viewLifecycleOwner.lifecycleScope.launch {
-        aquariumTankViewModel.updateTankSize(
-          tankId = tankId,
-          widthCm = width,
-          lengthCm = length,
-          heightCm = height
-        )
-
-        dialog.dismiss()
-      }
-    }
   }
 }
 
