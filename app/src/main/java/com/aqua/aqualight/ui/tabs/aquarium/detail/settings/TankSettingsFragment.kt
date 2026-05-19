@@ -1188,6 +1188,91 @@ private fun showTankNameSheet() {
   }
 }
 
+private fun showTankTypeSheet() {
+  val tank = currentTank ?: return
+
+  val contentBinding = ContentSheetTankTypeBinding.inflate(
+    layoutInflater
+  )
+
+  var selectedType = tank.tankType.ifBlank {
+    "Fish"
+  }
+
+  val options = listOf(
+    contentBinding.optionFish to "Fish",
+    contentBinding.optionShrimp to "Shrimp",
+    contentBinding.optionPlanted to "Planted",
+    contentBinding.optionMarine to "Marine",
+    contentBinding.optionSofties to "Softies",
+    contentBinding.optionMixedReef to "Mixed Reef",
+    contentBinding.optionSps to "SPS",
+    contentBinding.optionCoral to "Coral",
+    contentBinding.optionOther to "Other"
+  )
+
+  fun renderSelection() {
+    options.forEach {
+      option ->
+      val view = option.first
+      val value = option.second
+
+      val selected = value.equals(
+        selectedType,
+        ignoreCase = true
+      )
+
+      view.setTypeface(
+        null,
+        if (selected) Typeface.BOLD else Typeface.NORMAL
+      )
+
+      view.setBackgroundResource(
+        if (selected) {
+          R.drawable.bg_settings_sheet_grid_option_selected
+        } else {
+          R.drawable.bg_settings_sheet_grid_option
+        }
+      )
+    }
+  }
+
+  options.forEach {
+    option ->
+    val view = option.first
+    val value = option.second
+
+    view.setOnClickListener {
+      selectedType = value
+      renderSelection()
+    }
+  }
+
+  renderSelection()
+
+  showSettingsBottomSheet(
+    title = "Tank Type",
+    contentView = contentBinding.root
+  ) {
+    dialog ->
+
+    contentBinding.btnCancel.setOnClickListener {
+      dialog.dismiss()
+    }
+
+    contentBinding.btnSave.setOnClickListener {
+      viewLifecycleOwner.lifecycleScope.launch {
+        aquariumTankViewModel.updateTankType(
+          tankId = tankId,
+          tankType = selectedType
+        )
+
+        dialog.dismiss()
+      }
+    }
+  }
+}
+
 private fun showTankSizeSheet() {
   val tank = currentTank ?: return
   val dialog = BottomSheetDialog(requireContext())
