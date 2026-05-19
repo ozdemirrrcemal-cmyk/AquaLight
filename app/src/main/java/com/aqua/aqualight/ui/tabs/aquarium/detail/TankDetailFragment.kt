@@ -87,6 +87,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     setupClickListeners()
     setupSystemBackButton()
+    observeCareProfileActions()
     observeTank()
     observeTankDevices()
     selectTab(selectedTab)
@@ -175,6 +176,45 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     binding.btnEmptyAddLife.setOnClickListener {
       openLivestockFormFlow()
+    }
+  }
+
+  private fun observeCareProfileActions() {
+    val savedStateHandle = findNavController()
+    .currentBackStackEntry
+    ?.savedStateHandle
+    ?: return
+
+    savedStateHandle.getLiveData<String>(
+      KEY_CARE_PROFILE_ACTION
+    ).observe(viewLifecycleOwner) {
+      action ->
+      if (action.isBlank()) {
+        return@observe
+      }
+
+      savedStateHandle.remove<String>(
+        KEY_CARE_PROFILE_ACTION
+      )
+
+      binding.root.post {
+        when (action) {
+          CARE_PROFILE_ACTION_PLANTS -> {
+            selectTab(TankDetailTab.PLANTS)
+            openPlantTagFlow()
+          }
+
+          CARE_PROFILE_ACTION_LIVESTOCK -> {
+            selectTab(TankDetailTab.TANK_LIFE)
+
+            val hasLivestock = currentTank?.livestock?.isNotEmpty() == true
+
+            if (!hasLivestock) {
+              openLivestockFormFlow()
+            }
+          }
+        }
+      }
     }
   }
 
@@ -1675,5 +1715,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     private const val ARG_TANK_ID = "tankId"
     private const val KEY_SELECTED_TAB = "selectedTab"
     private const val ONLINE_TIMEOUT_MS = 60_000L
+
+    const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
+    const val CARE_PROFILE_ACTION_PLANTS = "plants"
+    const val CARE_PROFILE_ACTION_LIVESTOCK = "livestock"
   }
 }

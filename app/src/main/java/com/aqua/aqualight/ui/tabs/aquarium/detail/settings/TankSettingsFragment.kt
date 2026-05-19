@@ -64,6 +64,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
+import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -878,17 +879,77 @@ MaterialPickerFragment.MaterialPickerHost {
       return
     }
 
-    item.targetTab?.let {
-      tab ->
-      selectTab(tab)
+    when (item.title) {
+      "Tank name" -> {
+        selectTab(SettingsTab.BASIC)
 
-      showSnackBar(
-        message = "Update ${item.title} to improve your care profile.",
-        type = BaseActivity.SnackType.NORMAL
-      )
+        binding.contentScrollView.post {
+          showTankNameSheet()
+        }
+      }
+
+      "Tank type" -> {
+        selectTab(SettingsTab.BASIC)
+
+        binding.contentScrollView.post {
+          showTankTypeSheet()
+        }
+      }
+
+      "Tank size" -> {
+        selectTab(SettingsTab.BASIC)
+
+        binding.contentScrollView.post {
+          showTankSizeSheet()
+        }
+      }
+
+      "Setup date" -> {
+        selectTab(SettingsTab.BASIC)
+
+        binding.contentScrollView.post {
+          showSetupDateSheet()
+        }
+      }
+
+      "Tank style" -> {
+        selectTab(SettingsTab.BASIC)
+
+        binding.contentScrollView.post {
+          showStyleSheet()
+        }
+      }
+
+      "Plants" -> {
+        findNavController()
+        .previousBackStackEntry
+        ?.savedStateHandle
+        ?.set(
+          TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+          TankDetailFragment.CARE_PROFILE_ACTION_PLANTS
+        )
+
+        findNavController().navigateUp()
+      }
+
+      "Livestock" -> {
+        findNavController()
+        .previousBackStackEntry
+        ?.savedStateHandle
+        ?.set(
+          TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+          TankDetailFragment.CARE_PROFILE_ACTION_LIVESTOCK
+        )
+
+        findNavController().navigateUp()
+      } else -> {
+        item.targetTab?.let {
+          tab ->
+          selectTab(tab)
+        }
+      }
     }
   }
-
   private fun buildCareProfileResult(
     tank: SavedAquariumTank
   ): CareProfileResult {
