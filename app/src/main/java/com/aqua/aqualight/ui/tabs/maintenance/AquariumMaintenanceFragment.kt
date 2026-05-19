@@ -4,15 +4,13 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.commit
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentAquariumMaintenanceBinding
@@ -29,7 +27,7 @@ class AquariumMaintenanceFragment :
   private var _binding: FragmentAquariumMaintenanceBinding? = null
   private val binding get() = _binding!!
 
-  private val maintenanceViewModel: MaintenanceViewModel by viewModels()
+  private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
   private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
   private lateinit var adapter: CareTaskAdapter
@@ -47,7 +45,6 @@ class AquariumMaintenanceFragment :
 
     setupRecycler()
     setupClickListeners()
-    setupSystemBackButton()
     observeTanks()
     observeSelectedTab()
     observeCareTasks()
@@ -96,29 +93,12 @@ class AquariumMaintenanceFragment :
     }
 
     binding.btnAddCareTask.setOnClickListener {
-      openAddCareTaskFlow()
+      openAddCareTaskScreen()
     }
 
     binding.btnEmptyAddCareTask.setOnClickListener {
-      openAddCareTaskFlow()
+      openAddCareTaskScreen()
     }
-  }
-
-  private fun setupSystemBackButton() {
-    requireActivity().onBackPressedDispatcher.addCallback(
-      viewLifecycleOwner,
-      object : OnBackPressedCallback(true) {
-        override fun handleOnBackPressed() {
-          if (handleAddCareTaskBack()) {
-            return
-          }
-
-          isEnabled = false
-          requireActivity().onBackPressedDispatcher.onBackPressed()
-          isEnabled = true
-        }
-      }
-    )
   }
 
   private fun observeTanks() {
@@ -260,39 +240,10 @@ class AquariumMaintenanceFragment :
     )
   }
 
-  private fun openAddCareTaskFlow() {
-    binding.addCareTaskFlowContainer.isVisible = true
-
-    childFragmentManager.commit {
-      replace(
-        R.id.addCareTaskFlowContainer,
-        AddCareTaskFragment(),
-        "ADD_CARE_TASK_FRAGMENT"
-      )
-    }
-  }
-
-  fun closeAddCareTaskFlow() {
-    val fragment = childFragmentManager.findFragmentById(
-      R.id.addCareTaskFlowContainer
+  private fun openAddCareTaskScreen() {
+    findNavController().navigate(
+      R.id.addCareTaskFragment
     )
-
-    if (fragment != null) {
-      childFragmentManager.commit {
-        remove(fragment)
-      }
-    }
-
-    binding.addCareTaskFlowContainer.isVisible = false
-  }
-
-  private fun handleAddCareTaskBack(): Boolean {
-    if (!binding.addCareTaskFlowContainer.isVisible) {
-      return false
-    }
-
-    closeAddCareTaskFlow()
-    return true
   }
 
   private fun showTaskDetailsPlaceholder(

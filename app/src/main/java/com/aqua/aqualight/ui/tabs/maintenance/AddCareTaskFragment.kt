@@ -15,13 +15,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
+import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
@@ -39,11 +39,8 @@ class AddCareTaskFragment :
   private var _binding: FragmentAddCareTaskBinding? = null
   private val binding get() = _binding!!
 
-  private val maintenanceViewModel: MaintenanceViewModel by viewModels(
-    ownerProducer = {
-      requireParentFragment()
-    }
-  )
+  private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
+  private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
   private var selectedType: CareTaskType = CareTaskType.WATER_CHANGE
   private var selectedTankId: Long = 0L
@@ -112,16 +109,14 @@ class AddCareTaskFragment :
   }
 
   private fun observeTanks() {
-    viewLifecycleOwner.lifecycleScope.launch {
-      viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        maintenanceViewModel.tanks.collect { tanks ->
-          if (selectedTankId == 0L && tanks.isNotEmpty()) {
-            selectedTankId = tanks.first().id
-          }
+    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+      maintenanceViewModel.setTanks(tanks)
 
-          renderTankOptions(tanks)
-        }
+      if (selectedTankId == 0L && tanks.isNotEmpty()) {
+        selectedTankId = tanks.first().id
       }
+
+      renderTankOptions(tanks)
     }
   }
 
@@ -265,7 +260,11 @@ class AddCareTaskFragment :
       setTextColor(Color.WHITE)
       setTypeface(
         null,
-        if (selected) Typeface.BOLD else Typeface.NORMAL
+        if (selected) {
+          Typeface.BOLD
+        } else {
+          Typeface.NORMAL
+        }
       )
       includeFontPadding = false
       maxLines = 2
@@ -329,14 +328,26 @@ class AddCareTaskFragment :
       setTextColor(Color.WHITE)
       setTypeface(
         null,
-        if (selected) Typeface.BOLD else Typeface.NORMAL
+        if (selected) {
+          Typeface.BOLD
+        } else {
+          Typeface.NORMAL
+        }
       )
       includeFontPadding = false
 
       background = createRoundedDrawable(
-        color = if (selected) "#1C3D63" else "#10233A",
+        color = if (selected) {
+          "#1C3D63"
+        } else {
+          "#10233A"
+        },
         radiusPx = 16.dp(),
-        strokeColor = if (selected) "#2196F3" else "#223A57",
+        strokeColor = if (selected) {
+          "#2196F3"
+        } else {
+          "#223A57"
+        },
         strokeWidthPx = 1.dp()
       )
 
@@ -421,9 +432,9 @@ class AddCareTaskFragment :
 
       setOnClickListener {
         selectedTankId = tank.id
-        maintenanceViewModel.tanks.value.let { tanks ->
-          renderTankOptions(tanks)
-        }
+
+        val tanks = aquariumTankViewModel.tanks.value.orEmpty()
+        renderTankOptions(tanks)
       }
     }
 
@@ -446,7 +457,11 @@ class AddCareTaskFragment :
       setTextColor(Color.WHITE)
       setTypeface(
         null,
-        if (selected) Typeface.BOLD else Typeface.NORMAL
+        if (selected) {
+          Typeface.BOLD
+        } else {
+          Typeface.NORMAL
+        }
       )
       includeFontPadding = false
 
@@ -609,7 +624,7 @@ class AddCareTaskFragment :
   }
 
   private fun closeForm() {
-    (parentFragment as? AquariumMaintenanceFragment)?.closeAddCareTaskFlow()
+    findNavController().navigateUp()
   }
 
   private fun showSnackBar(
@@ -632,14 +647,22 @@ class AddCareTaskFragment :
       setColor(
         applyAlpha(
           color = color,
-          alpha = if (selected) 0.34f else 0.22f
+          alpha = if (selected) {
+            0.34f
+          } else {
+            0.22f
+          }
         )
       )
       setStroke(
         1.dp(),
         applyAlpha(
           color = color,
-          alpha = if (selected) 0.9f else 0.55f
+          alpha = if (selected) {
+            0.9f
+          } else {
+            0.55f
+          }
         )
       )
     }
