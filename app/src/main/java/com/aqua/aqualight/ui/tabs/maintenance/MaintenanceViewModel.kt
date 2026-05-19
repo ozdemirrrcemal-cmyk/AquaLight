@@ -330,7 +330,7 @@ class MaintenanceViewModel(
   ): String {
     return when (source) {
       CareTaskSource.MANUAL -> "Manual"
-      CareTaskSource.AUTOMATIC -> "Auto"
+      CareTaskSource.AUTOMATIC -> "Smart"
     }
   }
 

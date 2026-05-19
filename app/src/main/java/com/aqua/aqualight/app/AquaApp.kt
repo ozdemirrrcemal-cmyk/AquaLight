@@ -30,7 +30,6 @@ class AquaApp : Application() {
 
         // 🧠 Smart care daily background sync
         SmartCareDailyWorker.schedule(this)
-		SmartCareDailyWorker.runOnceForTest(this)
     }
 
     private fun applyTheme(mode: String) {

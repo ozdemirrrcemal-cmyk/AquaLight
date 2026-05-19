@@ -8,15 +8,13 @@ object SmartCareRuleCatalog {
       id = "startup_day_1_general_check",
       dayStart = 1,
       dayEnd = 1,
-      conditions = listOf(
-        SmartCareCondition.STARTUP_PERIOD
-      ),
+      conditions = emptyList(),
       taskType = SmartCareTaskType.GENERAL_CHECK,
-      titleTr = "Yeni kurulum kontrolü",
-      messageTr = "Filtrenin çalıştığını, ekipmanların doğru kurulduğunu ve su akışının yeterli olduğunu kontrol edin.",
+      titleTr = "Initial setup check",
+      messageTr = "Check that the filter is running, equipment is installed correctly, and water circulation is stable.",
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("Tropica", "ADA", "Dennerle")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -28,11 +26,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_LIGHT
       ),
       taskType = SmartCareTaskType.LIGHTING,
-      titleTr = "Işık süresini kontrol et",
-      messageTr = "Yeni kurulum döneminde ışığı yaklaşık 6 saat civarında tutmak yosun riskini azaltır.",
-      priority = SmartCarePriority.HIGH,
+      titleTr = "Check light duration",
+      messageTr = "During the early setup phase, keeping the light period around 6 hours can help reduce algae risk.",
+      priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("Tropica", "Chihiros", "CO2Art")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -43,11 +41,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_CO2
       ),
       taskType = SmartCareTaskType.CO2_CHECK,
-      titleTr = "CO₂ kontrolü",
-      messageTr = "CO₂ zamanlamasını, drop checker rengini ve canlıların davranışını kontrol edin.",
+      titleTr = "CO₂ check",
+      messageTr = "Check CO₂ timing, drop checker color, and livestock behavior.",
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.DAILY,
-      sourceTags = listOf("Tropica", "CO2Art", "Chihiros")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -58,11 +56,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_ACTIVE_SOIL
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
-      titleTr = "Başlangıç su değişimi",
-      messageTr = "Aktif soil yeni kurulumda fazla besin salabilir. Su değişimi yosun riskini azaltmaya yardımcı olur.",
+      titleTr = "Early water change",
+      messageTr = "Active soil can release excess nutrients during the first days. A water change helps reduce algae risk.",
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.EVERY_2_DAYS,
-      sourceTags = listOf("ADA", "Tropica", "CO2Art")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -73,11 +71,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
-      titleTr = "Yeni kurulum su değişimi",
-      messageTr = "İlk haftalarda düzenli su değişimi, fazla besinleri ve yosun riskini azaltmaya yardımcı olur.",
+      titleTr = "Startup water change",
+      messageTr = "Regular water changes during the first weeks help stabilize the aquarium and reduce excess nutrients.",
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("Tropica", "ADA", "Dennerle")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -88,11 +86,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.PLANT_CHECK,
-      titleTr = "Bitki adaptasyon kontrolü",
-      messageTr = "Eriyen veya çürüyen yaprakları temizleyin. Yeni dikilen bitkiler ilk haftalarda adaptasyon gösterebilir.",
+      titleTr = "Plant adaptation check",
+      messageTr = "Check for melting leaves, weak stems, or newly planted sections that may need adjustment.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
-      sourceTags = listOf("Tropica", "Dennerle")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -103,11 +101,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.GLASS_CLEANING,
-      titleTr = "Yosun kontrolü",
-      messageTr = "Cam, zemin ve bitki yapraklarında yosun başlangıcı olup olmadığını kontrol edin.",
+      titleTr = "Algae check",
+      messageTr = "Check glass, hardscape, and plant leaves for early algae signs.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("Tropica", "CO2Art", "Chihiros")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -119,11 +117,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.FERTILIZER_UNKNOWN
       ),
       taskType = SmartCareTaskType.FERTILIZER,
-      titleTr = "Gübrelemeyi düşük dozla değerlendir",
-      messageTr = "Yeni kurulum döneminde gübrelemeye düşük dozla başlamak yosun riskini azaltabilir.",
+      titleTr = "Review fertilizer plan",
+      messageTr = "Add your fertilizer product to improve automatic dosing recommendations.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("Dennerle", "Tropica")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -135,11 +133,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_FERTILIZER
       ),
       taskType = SmartCareTaskType.FERTILIZER,
-      titleTr = "Gübre dozunu kontrol et",
-      messageTr = "Tankınız yeni kurulum döneminde. Seçtiğiniz gübre için düşük başlangıç dozu daha güvenli olabilir.",
+      titleTr = "Fertilizer check",
+      messageTr = "Start carefully with reduced dosing and adjust based on plant response and algae signs.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("Tropica", "Dennerle", "2Hr Aquarist", "ADA")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -150,12 +148,12 @@ object SmartCareRuleCatalog {
         SmartCareCondition.NO_LIVESTOCK
       ),
       taskType = SmartCareTaskType.WATER_TEST,
-      titleTr = "Canlı ekleme öncesi su testi",
-      messageTr = "Canlı eklemeden önce amonyak ve nitrit değerlerinin güvenli olduğundan emin olun.",
+      titleTr = "Water test before livestock",
+      messageTr = "Before adding livestock, check that the aquarium is stable and no ammonia or nitrite is detected.",
       priority = SmartCarePriority.CRITICAL,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       requiresWaterTest = true,
-      sourceTags = listOf("ADA", "Dennerle", "Tropica")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -166,12 +164,12 @@ object SmartCareRuleCatalog {
         SmartCareCondition.NO_LIVESTOCK
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
-      titleTr = "İlk canlı ekleme değerlendirmesi",
-      messageTr = "Su değerleri güvenliyse temizlik ekibi veya dayanıklı canlıları kademeli eklemeyi değerlendirebilirsiniz.",
+      titleTr = "Livestock readiness check",
+      messageTr = "If water parameters are stable, you can start planning suitable cleanup crew or livestock gradually.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       requiresWaterTest = true,
-      sourceTags = listOf("ADA", "Dennerle", "Tropica")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -181,13 +179,13 @@ object SmartCareRuleCatalog {
       conditions = listOf(
         SmartCareCondition.NO_LIVESTOCK
       ),
-      taskType = SmartCareTaskType.WATER_TEST,
-      titleTr = "Balık ekleme kontrolü",
-      messageTr = "Amonyak ve nitrit güvenliyse canlıları az sayıda ve kademeli eklemeyi değerlendirebilirsiniz.",
-      priority = SmartCarePriority.HIGH,
+      taskType = SmartCareTaskType.LIVESTOCK_CHECK,
+      titleTr = "Fish addition check",
+      messageTr = "Add fish only if the tank is stable. Start with a small number and avoid overstocking.",
+      priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       requiresWaterTest = true,
-      sourceTags = listOf("ADA", "Tropica", "Dennerle")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -199,11 +197,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_LIGHT
       ),
       taskType = SmartCareTaskType.LIGHTING,
-      titleTr = "Işık süresini artırmayı değerlendir",
-      messageTr = "Yosun artışı yoksa ışık süresi kademeli olarak artırılabilir. Ani artışlardan kaçının.",
+      titleTr = "Adjust light period",
+      messageTr = "If plant growth is stable and algae is under control, you can gradually increase the light period.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("Tropica", "Chihiros", "CO2Art")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -214,11 +212,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.PLANT_TRIM,
-      titleTr = "İlk budama kontrolü",
-      messageTr = "Hızlı büyüyen bitkiler uzadıysa hafif budama yaparak yeni sürgünleri destekleyebilirsiniz.",
-      priority = SmartCarePriority.MEDIUM,
+      titleTr = "First trimming check",
+      messageTr = "Check fast-growing plants and trim unhealthy or overgrown sections if needed.",
+      priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("Tropica", "ADA")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -229,11 +227,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.STARTUP_PERIOD
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
-      titleTr = "Haftalık su değişimi",
-      messageTr = "Tank oturmaya başladıkça haftalık düzenli su değişimi su kalitesini korumaya yardımcı olur.",
-      priority = SmartCarePriority.HIGH,
+      titleTr = "Weekly water change",
+      messageTr = "Continue weekly water changes while the aquarium matures.",
+      priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("Tropica", "Dennerle", "ADA")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -244,11 +242,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_FILTER
       ),
       taskType = SmartCareTaskType.FILTER_CHECK,
-      titleTr = "Filtre akışını kontrol et",
-      messageTr = "Filtre çıkış debisi azaldıysa temizlik gerekebilir. Biyolojik medyayı musluk suyuyla yıkamayın.",
+      titleTr = "Filter flow check",
+      messageTr = "Check filter flow and make sure circulation is still strong and stable.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_2_WEEKS,
-      sourceTags = listOf("ADA", "Dennerle")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -259,11 +257,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_SHRIMP
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
-      titleTr = "Karides stabilite kontrolü",
-      messageTr = "Karidesler ani değişimlere hassastır. Su değişimlerinde sıcaklık ve değer farkını düşük tutmaya çalışın.",
+      titleTr = "Shrimp stability check",
+      messageTr = "Shrimp are sensitive to unstable water parameters. Check behavior and avoid sudden changes.",
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("Dennerle", "ADA")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -274,11 +272,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_FISH
       ),
       taskType = SmartCareTaskType.FEEDING,
-      titleTr = "Yemleme miktarını kontrol et",
-      messageTr = "Canlıların kısa sürede tüketebileceği kadar yem verin. Fazla yem su kalitesini bozabilir.",
+      titleTr = "Feeding amount check",
+      messageTr = "Feed only what livestock can consume quickly. Excess food can reduce water quality.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.DAILY,
-      sourceTags = listOf("ADA", "Dennerle")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
@@ -289,11 +287,11 @@ object SmartCareRuleCatalog {
         SmartCareCondition.STARTUP_PERIOD
       ),
       taskType = SmartCareTaskType.GENERAL_CHECK,
-      titleTr = "Kurulum dönemi tamamlandı",
-      messageTr = "Tankınız ilk 90 günlük başlangıç dönemini tamamladı. Artık düzenli bakım rutinine geçebilirsiniz.",
+      titleTr = "Startup phase complete",
+      messageTr = "Your aquarium has reached the end of the startup phase. Continue with a regular maintenance routine.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("Tropica")
+      sourceTags = listOf("SmartCare")
     )
   )
 
@@ -302,76 +300,80 @@ object SmartCareRuleCatalog {
     SmartCareRule(
       id = "mature_weekly_water_change",
       dayStart = 91,
-      dayEnd = 36500,
+      dayEnd = Int.MAX_VALUE,
       conditions = listOf(
         SmartCareCondition.MATURE_TANK
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
-      titleTr = "Haftalık su değişimi",
-      messageTr = "Düzenli su değişimi, su kalitesini ve tank dengesini korumaya yardımcı olur.",
-      priority = SmartCarePriority.HIGH,
+      titleTr = "Weekly water change",
+      messageTr = "Perform a regular water change to keep water quality stable.",
+      priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("Dennerle", "ADA", "Tropica")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
-      id = "mature_planted_trim_weekly",
+      id = "mature_weekly_plant_trim",
       dayStart = 91,
-      dayEnd = 36500,
+      dayEnd = Int.MAX_VALUE,
       conditions = listOf(
+        SmartCareCondition.MATURE_TANK,
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.PLANT_TRIM,
-      titleTr = "Bitki budama kontrolü",
-      messageTr = "Uzayan veya gölge yapan bitkileri kontrol edin. Düzenli budama bitki formunu korur.",
-      priority = SmartCarePriority.MEDIUM,
+      titleTr = "Plant trimming check",
+      messageTr = "Check plant growth and trim overgrown or unhealthy sections if needed.",
+      priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("Tropica", "ADA")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
-      id = "mature_filter_monthly_check",
+      id = "mature_monthly_filter_check",
       dayStart = 91,
-      dayEnd = 36500,
+      dayEnd = Int.MAX_VALUE,
       conditions = listOf(
+        SmartCareCondition.MATURE_TANK,
         SmartCareCondition.HAS_FILTER
       ),
       taskType = SmartCareTaskType.FILTER_CHECK,
-      titleTr = "Filtre bakım kontrolü",
-      messageTr = "Filtre akışı azaldıysa temizlik yapın. Biyolojik filtre medyasını akvaryum suyunda nazikçe durulayın.",
+      titleTr = "Filter maintenance check",
+      messageTr = "Check filter flow and clean mechanical media only if the flow is reduced.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.MONTHLY,
-      sourceTags = listOf("ADA", "Dennerle")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
-      id = "mature_co2_weekly_check",
+      id = "mature_weekly_co2_check",
       dayStart = 91,
-      dayEnd = 36500,
+      dayEnd = Int.MAX_VALUE,
       conditions = listOf(
+        SmartCareCondition.MATURE_TANK,
         SmartCareCondition.HAS_CO2
       ),
       taskType = SmartCareTaskType.CO2_CHECK,
-      titleTr = "CO₂ denge kontrolü",
-      messageTr = "CO₂, ışık ve gübre dengesini kontrol edin. Canlılarda stres belirtisi varsa CO₂ ayarını gözden geçirin.",
-      priority = SmartCarePriority.HIGH,
+      titleTr = "CO₂ system check",
+      messageTr = "Check CO₂ timing, bubble rate, drop checker color, and livestock behavior.",
+      priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("CO2Art", "Chihiros", "Tropica")
+      sourceTags = listOf("SmartCare")
     ),
 
     SmartCareRule(
-      id = "mature_livestock_weekly_check",
+      id = "mature_weekly_livestock_check",
       dayStart = 91,
-      dayEnd = 36500,
+      dayEnd = Int.MAX_VALUE,
       conditions = listOf(
+        SmartCareCondition.MATURE_TANK,
         SmartCareCondition.HAS_LIVESTOCK
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
-      titleTr = "Canlı sağlık kontrolü",
-      messageTr = "Balık ve karideslerin davranışını, iştahını ve görünümünü kontrol edin.",
+      titleTr = "Livestock health check",
+      messageTr = "Check appetite, behavior, breathing, and visible signs of stress.",
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("ADA", "Dennerle")
+      sourceTags = listOf("SmartCare")
     )
   )
 
