@@ -72,6 +72,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.databinding.ContentSheetPhotoSourceBinding
 import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
+import com.aqua.aqualight.databinding.ContentSheetTankSizeBinding
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -1189,70 +1190,19 @@ private fun showTankNameSheet() {
   }
 }
 
-private fun showTankTypeSheet() {
+private fun showTankSizeSheet() {
   val tank = currentTank ?: return
 
-  val contentBinding = ContentSheetTankTypeBinding.inflate(
+  val contentBinding = ContentSheetTankSizeBinding.inflate(
     layoutInflater
   )
 
-  var selectedType = tank.tankType.ifBlank {
-    "Fish"
-  }
-
-  val options = listOf(
-    contentBinding.optionFish to "Fish",
-    contentBinding.optionShrimp to "Shrimp",
-    contentBinding.optionPlanted to "Planted",
-    contentBinding.optionMarine to "Marine",
-    contentBinding.optionSofties to "Softies",
-    contentBinding.optionMixedReef to "Mixed Reef",
-    contentBinding.optionSps to "SPS",
-    contentBinding.optionCoral to "Coral",
-    contentBinding.optionOther to "Other"
-  )
-
-  fun renderSelection() {
-    options.forEach {
-      option ->
-      val view = option.first
-      val value = option.second
-
-      val selected = value.equals(
-        selectedType,
-        ignoreCase = true
-      )
-
-      view.setTypeface(
-        null,
-        if (selected) Typeface.BOLD else Typeface.NORMAL
-      )
-
-      view.setBackgroundResource(
-        if (selected) {
-          R.drawable.bg_settings_sheet_grid_option_selected
-        } else {
-          R.drawable.bg_settings_sheet_grid_option
-        }
-      )
-    }
-  }
-
-  options.forEach {
-    option ->
-    val view = option.first
-    val value = option.second
-
-    view.setOnClickListener {
-      selectedType = value
-      renderSelection()
-    }
-  }
-
-  renderSelection()
+  contentBinding.inputWidth.setText(tank.widthCm.toString())
+  contentBinding.inputLength.setText(tank.lengthCm.toString())
+  contentBinding.inputHeight.setText(tank.heightCm.toString())
 
   showSettingsBottomSheet(
-    title = "Tank Type",
+    title = "Size",
     contentView = contentBinding.root
   ) {
     dialog ->
@@ -1262,10 +1212,39 @@ private fun showTankTypeSheet() {
     }
 
     contentBinding.btnSave.setOnClickListener {
+      val width = contentBinding.inputWidth.text
+        .toString()
+        .toIntOrNull()
+
+      val length = contentBinding.inputLength.text
+        .toString()
+        .toIntOrNull()
+
+      val height = contentBinding.inputHeight.text
+        .toString()
+        .toIntOrNull()
+
+      if (
+        width == null ||
+        length == null ||
+        height == null ||
+        width <= 0 ||
+        length <= 0 ||
+        height <= 0
+      ) {
+        showSnackBar(
+          message = "Please enter valid tank size.",
+          type = BaseActivity.SnackType.WARNING
+        )
+        return@setOnClickListener
+      }
+
       viewLifecycleOwner.lifecycleScope.launch {
-        aquariumTankViewModel.updateTankType(
+        aquariumTankViewModel.updateTankSize(
           tankId = tankId,
-          tankType = selectedType
+          widthCm = width,
+          lengthCm = length,
+          heightCm = height
         )
 
         dialog.dismiss()
@@ -1954,67 +1933,6 @@ private fun createGridOption(
       onClick()
     }
   }
-}
-
-private fun addSizeInputColumn(
-  parent: LinearLayout,
-  label: String,
-  value: String
-): EditText {
-  val column = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.VERTICAL
-
-    val params = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-    params.marginEnd = 8.dp()
-    layoutParams = params
-  }
-
-  val labelText = TextView(requireContext()).apply {
-    text = label
-    textSize = 13f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-  }
-
-  val input = EditText(requireContext()).apply {
-    setText(value)
-    inputType = InputType.TYPE_CLASS_NUMBER
-    setSingleLine(true)
-    setSelectAllOnFocus(true)
-    gravity = Gravity.CENTER_VERTICAL
-    textSize = 18f
-    setTextColor(Color.WHITE)
-    setHintTextColor(Color.parseColor("#8FA4BE"))
-    background = createRoundedDrawable(
-      color = "#16314D",
-      radiusPx = 13.dp()
-    )
-    setPadding(
-      14.dp(),
-      0,
-      14.dp(),
-      0
-    )
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      50.dp()
-    )
-    params.topMargin = 9.dp()
-    layoutParams = params
-  }
-
-  column.addView(labelText)
-  column.addView(input)
-
-  parent.addView(column)
-
-  return input
 }
 
 private fun createDateNumberPicker(): NumberPicker {
