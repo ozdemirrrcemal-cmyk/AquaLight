@@ -280,10 +280,10 @@ class CareTaskDataStoreManager private constructor(
             title = generatedTask.titleTr,
             description = generatedTask.messageTr,
             type = generatedTask.taskType.toCareTaskType(),
+            waterChangePercent = generatedTask.waterChangePercent,
             note = "",
             updatedAtMillis = now
           )
-
           updatedTasks[existingExactIndex] = updatedTask.toStoredCareTask()
 
           return@forEach

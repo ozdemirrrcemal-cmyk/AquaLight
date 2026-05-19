@@ -49,6 +49,7 @@ object SmartCareTaskGenerator {
       }
       .map { rule ->
         createGeneratedTask(
+          tank = tank,
           profile = profile,
           rule = rule,
           nowMillis = nowMillis
@@ -121,6 +122,7 @@ object SmartCareTaskGenerator {
   }
 
   private fun createGeneratedTask(
+    tank: SavedAquariumTank,
     profile: SmartCareTankProfile,
     rule: SmartCareRule,
     nowMillis: Long
@@ -142,6 +144,7 @@ object SmartCareTaskGenerator {
       taskType = rule.taskType,
       titleTr = rule.titleTr,
       messageTr = buildShortMessage(
+        tank = tank,
         rule = rule,
         profile = profile
       ),
@@ -185,6 +188,7 @@ object SmartCareTaskGenerator {
   }
 
   private fun buildShortMessage(
+    tank: SavedAquariumTank,
     rule: SmartCareRule,
     profile: SmartCareTankProfile
   ): String {
@@ -204,6 +208,13 @@ object SmartCareTaskGenerator {
         }
       }
 
+      SmartCareTaskType.FERTILIZER -> {
+        buildFertilizerMessage(
+          tank = tank,
+          profile = profile
+        )
+      }
+
       SmartCareTaskType.CO2_CHECK -> {
         "Check CO₂ timing, drop checker color, and livestock behavior."
       }
@@ -214,10 +225,6 @@ object SmartCareTaskGenerator {
 
       SmartCareTaskType.LIGHTING -> {
         "Check the light period and keep it stable."
-      }
-
-      SmartCareTaskType.FERTILIZER -> {
-        "Check dosing and adjust carefully based on plant response."
       }
 
       SmartCareTaskType.WATER_TEST -> {
@@ -247,6 +254,100 @@ object SmartCareTaskGenerator {
       SmartCareTaskType.GENERAL_CHECK -> {
         rule.messageTr
       }
+    }
+  }
+
+  private fun buildFertilizerMessage(
+    tank: SavedAquariumTank,
+    profile: SmartCareTankProfile
+  ): String {
+    val fertilizerRule = findSelectedFertilizerRule(
+      tank = tank
+    )
+
+    if (fertilizerRule == null) {
+      return if (profile.setupDay != null) {
+        "Day ${profile.setupDay}. Add your fertilizer product to improve automatic dosing recommendations."
+      } else {
+        "Add your fertilizer product to improve automatic dosing recommendations."
+      }
+    }
+
+    val recommendation = SmartFertilizerDoseCalculator.calculate(
+      rule = fertilizerRule,
+      grossVolumeL = profile.grossVolumeL,
+      setupDay = profile.setupDay,
+      hasActiveSoil = profile.hasActiveSoil
+    )
+
+    val productName = fertilizerRule.productName
+    val frequencyText = getFrequencyText(
+      frequency = fertilizerRule.frequency
+    )
+
+    val setupDay = profile.setupDay
+
+    if (
+      setupDay != null &&
+      setupDay <= 7 &&
+      recommendation.startupDoseFactor == 0.0
+    ) {
+      return "Day $setupDay. Delay $productName dosing for now and monitor plant response."
+    }
+
+    if (
+      setupDay != null &&
+      setupDay <= 30
+    ) {
+      return "Day $setupDay. Use about ${recommendation.startupDoseMl} mL of $productName as a reduced startup dose."
+    }
+
+    return "Dose about ${recommendation.normalDoseMl} mL of $productName $frequencyText."
+  }
+
+  private fun findSelectedFertilizerRule(
+    tank: SavedAquariumTank
+  ): FertilizerDoseRule? {
+    val materialText = tank.materials.joinToString(
+      separator = " "
+    ) { material ->
+      listOf(
+        material.brand,
+        material.name,
+        material.note,
+        material.categoryKey,
+        material.categoryTitle
+      ).joinToString(
+        separator = " "
+      )
+    }.lowercase()
+
+    if (materialText.isBlank()) {
+      return null
+    }
+
+    return FertilizerDoseCatalog.rules.firstOrNull { rule ->
+      val productName = rule.productName.lowercase()
+      val brandName = rule.brand.name.lowercase()
+
+      materialText.contains(productName) ||
+        productName.split(" ").all { token ->
+          token.length <= 2 || materialText.contains(token)
+        } ||
+        materialText.contains(brandName)
+    }
+  }
+
+  private fun getFrequencyText(
+    frequency: FertilizerFrequency
+  ): String {
+    return when (frequency) {
+      FertilizerFrequency.DAILY -> "daily"
+      FertilizerFrequency.WEEKLY -> "weekly"
+      FertilizerFrequency.ONCE_OR_TWICE_WEEKLY -> "once or twice weekly"
+      FertilizerFrequency.TWICE_WEEKLY -> "twice weekly"
+      FertilizerFrequency.TWO_TO_THREE_TIMES_WEEKLY -> "2–3 times weekly"
+      FertilizerFrequency.AS_NEEDED -> "as needed"
     }
   }
 
