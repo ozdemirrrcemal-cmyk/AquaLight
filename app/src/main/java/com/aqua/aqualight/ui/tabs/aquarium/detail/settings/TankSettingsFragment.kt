@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.first
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
+import androidx.core.os.bundleOf
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
@@ -743,21 +744,21 @@ MaterialPickerFragment.MaterialPickerHost {
   }
 
   private fun renderCareProfileScore(
-  tank: SavedAquariumTank
-) {
-  val result = CareProfileCalculator.calculate(tank)
-  val color = getCareProfileColor(result.percent)
+    tank: SavedAquariumTank
+  ) {
+    val result = CareProfileCalculator.calculate(tank)
+    val color = getCareProfileColor(result.percent)
 
-  binding.scoreContainer.isVisible = true
-  binding.tvScore.text = result.percent.toString()
-  binding.tvScore.setTextColor(color)
-  binding.scoreContainer.strokeColor = color
-}
+    binding.scoreContainer.isVisible = true
+    binding.tvScore.text = result.percent.toString()
+    binding.tvScore.setTextColor(color)
+    binding.scoreContainer.strokeColor = color
+  }
 
   private fun showCareProfileSheet(
     tank: SavedAquariumTank
   ) {
-  val result = CareProfileCalculator.calculate(tank)
+    val result = CareProfileCalculator.calculate(tank)
     val dialog = BottomSheetDialog(requireContext())
     val sheetBinding = DialogCareProfileBinding.inflate(layoutInflater)
 
@@ -859,93 +860,112 @@ MaterialPickerFragment.MaterialPickerHost {
     dialog.show()
   }
 
-private fun handleCareProfileItemClick(
-  item: CareProfileCalculator.Item
-) {
-  if (
-    item.materialCategoryKey != null &&
-    item.materialCategoryTitle != null
+  private fun handleCareProfileItemClick(
+    item: CareProfileCalculator.Item
   ) {
-    selectTab(SettingsTab.DETAILS)
-
-    binding.contentScrollView.post {
-      openMaterialPickerFlow(
-        categoryKey = item.materialCategoryKey,
-        categoryTitle = item.materialCategoryTitle
-      )
-    }
-
-    return
-  }
-
-  when (item.title) {
-    "Tank name" -> {
-      selectTab(SettingsTab.BASIC)
+    if (
+      item.materialCategoryKey != null &&
+      item.materialCategoryTitle != null
+    ) {
+      selectTab(SettingsTab.DETAILS)
 
       binding.contentScrollView.post {
-        showTankNameSheet()
+        openMaterialPickerFlow(
+          categoryKey = item.materialCategoryKey,
+          categoryTitle = item.materialCategoryTitle
+        )
       }
+
+      return
     }
 
-    "Tank type" -> {
-      selectTab(SettingsTab.BASIC)
+    when (item.title) {
+      "Tank name" -> {
+        selectTab(SettingsTab.BASIC)
 
-      binding.contentScrollView.post {
-        showTankTypeSheet()
+        binding.contentScrollView.post {
+          showTankNameSheet()
+        }
       }
-    }
 
-    "Tank size" -> {
-      selectTab(SettingsTab.BASIC)
+      "Tank type" -> {
+        selectTab(SettingsTab.BASIC)
 
-      binding.contentScrollView.post {
-        showTankSizeSheet()
+        binding.contentScrollView.post {
+          showTankTypeSheet()
+        }
       }
-    }
 
-    "Setup date" -> {
-      selectTab(SettingsTab.BASIC)
+      "Tank size" -> {
+        selectTab(SettingsTab.BASIC)
 
-      binding.contentScrollView.post {
-        showSetupDateSheet()
+        binding.contentScrollView.post {
+          showTankSizeSheet()
+        }
       }
-    }
 
-    "Tank style" -> {
-      selectTab(SettingsTab.BASIC)
+      "Setup date" -> {
+        selectTab(SettingsTab.BASIC)
 
-      binding.contentScrollView.post {
-        showStyleSheet()
+        binding.contentScrollView.post {
+          showSetupDateSheet()
+        }
       }
-    }
 
-    "Plants" -> {
-      findNavController()
-        .previousBackStackEntry
-        ?.savedStateHandle
-        ?.set(
-          TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+      "Tank style" -> {
+        selectTab(SettingsTab.BASIC)
+
+        binding.contentScrollView.post {
+          showStyleSheet()
+        }
+      }
+
+      "Plants" -> {
+        openTankDetailCareProfileAction(
           TankDetailFragment.CARE_PROFILE_ACTION_PLANTS
         )
+      }
 
-      findNavController().navigateUp()
-    }
-
-    "Livestock" -> {
-      findNavController()
-        .previousBackStackEntry
-        ?.savedStateHandle
-        ?.set(
-          TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+      "Livestock" -> {
+        openTankDetailCareProfileAction(
           TankDetailFragment.CARE_PROFILE_ACTION_LIVESTOCK
         )
+      } else -> Unit
+    }
+  }
 
-      findNavController().navigateUp()
+  private fun openTankDetailCareProfileAction(
+    action: String
+  ) {
+    val navController = findNavController()
+    val previousEntry = navController.previousBackStackEntry
+
+    if (previousEntry?.destination?.id == R.id.tankDetailFragment) {
+      previousEntry.savedStateHandle.set(
+        TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+        action
+      )
+
+      navController.navigateUp()
+      return
     }
 
-    else -> Unit
+    navController.popBackStack()
+
+    navController.navigate(
+      R.id.tankDetailFragment,
+      bundleOf(
+        "tankId" to tankId
+      )
+    )
+
+    navController.currentBackStackEntry
+    ?.savedStateHandle
+    ?.set(
+      TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+      action
+    )
   }
-}
 
   private fun getCareProfileColor(
     percent: Int
