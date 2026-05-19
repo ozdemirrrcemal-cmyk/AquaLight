@@ -59,753 +59,750 @@
 
     <com.google.android.material.card.MaterialCardView
       android:id="@+id/scoreContainer"
-      android:layout_width="42dp"
-      android:layout_height="42dp"
+      android:layout_width="36dp"
+      android:layout_height="36dp"
+      android:clickable="true"
+      android:focusable="true"
+      android:foreground="?attr/selectableItemBackgroundBorderless"
       app:cardBackgroundColor="@android:color/transparent"
       app:cardCornerRadius="21dp"
       app:cardElevation="0dp"
-      android:visibility="invisible"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toTopOf="parent"
-      app:strokeColor="#4CAF50"
-      app:strokeWidth="2dp">
 
       <TextView
-        android:id="@+id/tvScore"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:text="100"
-        android:textColor="#4CAF50"
-        android:textSize="13sp"
-        android:textStyle="bold" />
-
-    </com.google.android.material.card.MaterialCardView>
-
-  </androidx.constraintlayout.widget.ConstraintLayout>
-
-  <LinearLayout
-    android:id="@+id/settingsTabsContainer"
-    android:layout_width="0dp"
-    android:layout_height="42dp"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="10dp"
-    android:layout_marginEnd="16dp"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/headerContainer">
-
-    <TextView
-      android:id="@+id/tabBasic"
-      android:layout_width="wrap_content"
+      android:id="@+id/tvScore"
+      android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:gravity="center"
       android:includeFontPadding="false"
-      android:layout_marginEnd="24dp"
-      android:text="Basic"
-      android:textColor="?attr/colorOnSurface"
-      android:textSize="15sp"
+      android:text="100"
+      android:textColor="#4CAF50"
+      android:textSize="13sp"
       android:textStyle="bold" />
 
-    <TextView
-      android:id="@+id/tabDetails"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:layout_marginEnd="24dp"
-      android:text="Details"
-      android:textColor="#8FA4BE"
-      android:textSize="15sp" />
+  </com.google.android.material.card.MaterialCardView>
 
-    <TextView
-      android:id="@+id/tabOthers"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:text="Others"
-      android:textColor="#8FA4BE"
-      android:textSize="15sp" />
+</androidx.constraintlayout.widget.ConstraintLayout>
 
-  </LinearLayout>
+<LinearLayout
+  android:id="@+id/settingsTabsContainer"
+  android:layout_width="0dp"
+  android:layout_height="42dp"
+  android:layout_marginStart="16dp"
+  android:layout_marginTop="10dp"
+  android:layout_marginEnd="16dp"
+  android:gravity="center_vertical"
+  android:orientation="horizontal"
+  app:layout_constraintEnd_toEndOf="parent"
+  app:layout_constraintStart_toStartOf="parent"
+  app:layout_constraintTop_toBottomOf="@id/headerContainer">
 
-  <View
-    android:id="@+id/tabUnderline"
-    android:layout_width="60dp"
-    android:layout_height="3dp"
-    android:background="#2196F3"
-    app:layout_constraintStart_toStartOf="@id/settingsTabsContainer"
-    app:layout_constraintTop_toBottomOf="@id/settingsTabsContainer" />
+  <TextView
+    android:id="@+id/tabBasic"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:includeFontPadding="false"
+    android:layout_marginEnd="24dp"
+    android:text="Basic"
+    android:textColor="?attr/colorOnSurface"
+    android:textSize="15sp"
+    android:textStyle="bold" />
 
-  <ScrollView
-    android:id="@+id/contentScrollView"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:overScrollMode="never"
-    android:paddingStart="16dp"
-    android:paddingTop="12dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="120dp"
-    android:scrollbars="none"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/tabUnderline">
+  <TextView
+    android:id="@+id/tabDetails"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:includeFontPadding="false"
+    android:layout_marginEnd="24dp"
+    android:text="Details"
+    android:textColor="#8FA4BE"
+    android:textSize="15sp" />
+
+  <TextView
+    android:id="@+id/tabOthers"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:includeFontPadding="false"
+    android:text="Others"
+    android:textColor="#8FA4BE"
+    android:textSize="15sp" />
+
+</LinearLayout>
+
+<View
+  android:id="@+id/tabUnderline"
+  android:layout_width="60dp"
+  android:layout_height="3dp"
+  android:background="#2196F3"
+  app:layout_constraintStart_toStartOf="@id/settingsTabsContainer"
+  app:layout_constraintTop_toBottomOf="@id/settingsTabsContainer" />
+
+<ScrollView
+  android:id="@+id/contentScrollView"
+  android:layout_width="0dp"
+  android:layout_height="0dp"
+  android:clipToPadding="false"
+  android:fillViewport="true"
+  android:overScrollMode="never"
+  android:paddingStart="16dp"
+  android:paddingTop="12dp"
+  android:paddingEnd="16dp"
+  android:paddingBottom="120dp"
+  android:scrollbars="none"
+  app:layout_constraintBottom_toBottomOf="parent"
+  app:layout_constraintEnd_toEndOf="parent"
+  app:layout_constraintStart_toStartOf="parent"
+  app:layout_constraintTop_toBottomOf="@id/tabUnderline">
+
+  <LinearLayout
+    android:id="@+id/contentContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
     <LinearLayout
-      android:id="@+id/contentContainer"
+      android:id="@+id/basicSection"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical">
 
-      <LinearLayout
-        android:id="@+id/basicSection"
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardTankPhoto"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="180dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp">
 
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/cardTankPhoto"
+        <FrameLayout
           android:layout_width="match_parent"
-          android:layout_height="180dp"
-          app:cardCornerRadius="20dp"
-          app:cardElevation="0dp"
-          app:strokeWidth="0dp">
+          android:layout_height="match_parent">
 
-          <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageView
-              android:id="@+id/imgTankPhoto"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:contentDescription="Tank photo"
-              android:scaleType="centerCrop"
-              android:src="@drawable/nature_aquarium" />
-
-            <View
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="#22000000" />
-
-            <com.google.android.material.card.MaterialCardView
-              android:id="@+id/btnChangePhoto"
-              android:layout_width="44dp"
-              android:layout_height="44dp"
-              android:layout_gravity="bottom|end"
-              android:layout_marginEnd="14dp"
-              android:layout_marginBottom="14dp"
-              android:clickable="true"
-              android:focusable="true"
-              android:foreground="?attr/selectableItemBackgroundBorderless"
-              app:cardBackgroundColor="#800D1D31"
-              app:cardCornerRadius="50dp"
-              app:cardElevation="4dp"
-              app:strokeColor="#33FFFFFF"
-              app:strokeWidth="1dp">
-
-              <ImageView
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_gravity="center"
-                android:contentDescription="Select photo"
-                android:src="@drawable/ic_camera_24"
-                app:tint="@android:color/white" />
-
-            </com.google.android.material.card.MaterialCardView>
-
-          </FrameLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowTankName"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="16dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
+          <ImageView
+            android:id="@+id/imgTankPhoto"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
+            android:contentDescription="Tank photo"
+            android:scaleType="centerCrop"
+            android:src="@drawable/nature_aquarium" />
 
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Tank Name"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvSettingTankName"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:ellipsize="end"
-              android:includeFontPadding="false"
-              android:maxLines="1"
-              android:text="Aquarium"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
-
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:layout_marginStart="7dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowTankType"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
+          <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
+            android:background="#22000000" />
 
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Tank Type"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvSettingTankType"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:includeFontPadding="false"
-              android:text="Fish"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
+          <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btnChangePhoto"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="14dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            app:cardBackgroundColor="#800D1D31"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="4dp"
+            app:strokeColor="#33FFFFFF"
+            app:strokeWidth="1dp">
 
             <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:layout_marginStart="7dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
+              android:layout_width="25dp"
+              android:layout_height="25dp"
+              android:layout_gravity="center"
+              android:contentDescription="Select photo"
+              android:src="@drawable/ic_camera_24"
+              app:tint="@android:color/white" />
 
-          </LinearLayout>
+          </com.google.android.material.card.MaterialCardView>
 
-        </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
 
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowSize"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
+      </com.google.android.material.card.MaterialCardView>
 
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Size (cm)"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvSettingSize"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:includeFontPadding="false"
-              android:text="10 W x 10 L x 10 H"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
-
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:layout_marginStart="7dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowVolume"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Volume"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvSettingVolume"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:includeFontPadding="false"
-              android:text="1 L"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
-
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:layout_marginStart="7dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowSetupDate"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Setup Date"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvSettingSetupDate"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:includeFontPadding="false"
-              android:text="17 May 2026"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
-
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:layout_marginStart="7dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowStyle"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Tank Style"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvSettingStyle"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:ellipsize="end"
-              android:includeFontPadding="false"
-              android:maxLines="1"
-              android:maxWidth="190dp"
-              android:text="Nature Aquarium"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
-
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:layout_marginStart="7dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowIdea"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Idea"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <TextView
-              android:id="@+id/tvSettingIdea"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:ellipsize="end"
-              android:includeFontPadding="false"
-              android:maxLines="1"
-              android:maxWidth="190dp"
-              android:text="No idea added"
-              android:textColor="#8FA4BE"
-              android:textSize="13sp" />
-
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:layout_marginStart="7dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-
-      </LinearLayout>
-
-      <LinearLayout
-        android:id="@+id/detailsSection"
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowTankName"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <TextView
-          android:id="@+id/tvBioTitle"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="8dp"
-          android:includeFontPadding="false"
-          android:text="Bio"
-          android:textColor="?attr/colorOnSurface"
-          android:textSize="14sp" />
+        android:layout_height="60dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
 
         <LinearLayout
-          android:id="@+id/bioMaterialsContainer"
           android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="12dp"
-          android:orientation="vertical" />
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
 
-        <TextView
-          android:id="@+id/tvHardwareTitle"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="22dp"
-          android:includeFontPadding="false"
-          android:text="Hardware"
-          android:textColor="?attr/colorOnSurface"
-          android:textSize="14sp" />
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Tank Name"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+          <TextView
+            android:id="@+id/tvSettingTankName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Aquarium"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
+
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
+
+        </LinearLayout>
+
+      </com.google.android.material.card.MaterialCardView>
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowTankType"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
 
         <LinearLayout
-          android:id="@+id/hardwareMaterialsContainer"
           android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="12dp"
-          android:orientation="vertical" />
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
 
-      </LinearLayout>
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Tank Type"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-      <LinearLayout
-        android:id="@+id/othersSection"
+          <TextView
+            android:id="@+id/tvSettingTankType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="Fish"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
+
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
+
+        </LinearLayout>
+
+      </com.google.android.material.card.MaterialCardView>
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowSize"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
 
-        <TextView
-          android:id="@+id/tvDataManagementTitle"
+        <LinearLayout
           android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="8dp"
-          android:includeFontPadding="false"
-          android:text="Data Management"
-          android:textColor="?attr/colorOnSurface"
-          android:textSize="14sp" />
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
 
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowDuplicateTank"
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Size (cm)"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+          <TextView
+            android:id="@+id/tvSettingSize"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="10 W x 10 L x 10 H"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
+
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
+
+        </LinearLayout>
+
+      </com.google.android.material.card.MaterialCardView>
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowVolume"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
           android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="12dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
 
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Volume"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Duplicate Tank"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
+          <TextView
+            android:id="@+id/tvSettingVolume"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="1 L"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
 
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
 
-          </LinearLayout>
+        </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+      </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowExportTankData"
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowSetupDate"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
           android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
 
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Setup Date"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Export Tank Data"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
+          <TextView
+            android:id="@+id/tvSettingSetupDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="17 May 2026"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
 
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
 
-          </LinearLayout>
+        </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+      </com.google.android.material.card.MaterialCardView>
 
-        <TextView
-          android:id="@+id/tvDangerZoneTitle"
+
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowStyle"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
           android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="26dp"
-          android:includeFontPadding="false"
-          android:text="Danger Zone"
-          android:textColor="#E06A6A"
-          android:textSize="14sp" />
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
 
-        <com.google.android.material.button.MaterialButton
-    android:id="@+id/rowDeleteTank"
-    android:layout_width="match_parent"
-    android:layout_height="56dp"
-    android:layout_marginTop="12dp"
-    android:gravity="center"
-    android:insetTop="0dp"
-    android:insetBottom="0dp"
-    android:minHeight="0dp"
-    android:minWidth="0dp"
-    android:text="Delete Tank"
-    android:textAllCaps="false"
-    android:textColor="@android:color/white"
-    android:textSize="14sp"
-    android:textStyle="bold"
-    app:backgroundTint="#D85C5C"
-    app:cornerRadius="16dp"
-    app:icon="@drawable/ic_delete"
-    app:iconGravity="textEnd"
-    app:iconPadding="8dp"
-    app:iconTint="@android:color/white" />
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Tank Style"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-      </LinearLayout>
+          <TextView
+            android:id="@+id/tvSettingStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:maxWidth="190dp"
+            android:text="Nature Aquarium"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
+
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
+
+        </LinearLayout>
+
+      </com.google.android.material.card.MaterialCardView>
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowIdea"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
+
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Idea"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+          <TextView
+            android:id="@+id/tvSettingIdea"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:maxWidth="190dp"
+            android:text="No idea added"
+            android:textColor="#8FA4BE"
+            android:textSize="13sp" />
+
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="7dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
+
+        </LinearLayout>
+
+      </com.google.android.material.card.MaterialCardView>
+
 
     </LinearLayout>
 
-  </ScrollView>
+    <LinearLayout
+      android:id="@+id/detailsSection"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:visibility="gone">
 
-  <FrameLayout
-    android:id="@+id/settingsMaterialPickerContainer"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:background="@color/background_color"
-    android:clickable="true"
-    android:elevation="24dp"
-    android:focusable="true"
-    android:visibility="gone"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+      <TextView
+        android:id="@+id/tvBioTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:includeFontPadding="false"
+        android:text="Bio"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp" />
+
+      <LinearLayout
+        android:id="@+id/bioMaterialsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical" />
+
+      <TextView
+        android:id="@+id/tvHardwareTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:includeFontPadding="false"
+        android:text="Hardware"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp" />
+
+      <LinearLayout
+        android:id="@+id/hardwareMaterialsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical" />
+
+    </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/othersSection"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:visibility="gone">
+
+      <TextView
+        android:id="@+id/tvDataManagementTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:includeFontPadding="false"
+        android:text="Data Management"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp" />
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowDuplicateTank"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
+
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Duplicate Tank"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
+
+        </LinearLayout>
+
+      </com.google.android.material.card.MaterialCardView>
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rowExportTankData"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:paddingStart="16dp"
+          android:paddingEnd="14dp">
+
+          <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:includeFontPadding="false"
+            android:text="Export Tank Data"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+          <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="Open"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="#8FA4BE" />
+
+        </LinearLayout>
+
+      </com.google.android.material.card.MaterialCardView>
+
+      <TextView
+        android:id="@+id/tvDangerZoneTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="26dp"
+        android:includeFontPadding="false"
+        android:text="Danger Zone"
+        android:textColor="#E06A6A"
+        android:textSize="14sp" />
+
+      <com.google.android.material.button.MaterialButton
+        android:id="@+id/rowDeleteTank"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:minHeight="0dp"
+        android:minWidth="0dp"
+        android:text="Delete Tank"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:backgroundTint="#D85C5C"
+        app:cornerRadius="16dp"
+        app:icon="@drawable/ic_delete"
+        app:iconGravity="textEnd"
+        app:iconPadding="8dp"
+        app:iconTint="@android:color/white" />
+
+    </LinearLayout>
+
+  </LinearLayout>
+
+</ScrollView>
+
+<FrameLayout
+  android:id="@+id/settingsMaterialPickerContainer"
+  android:layout_width="0dp"
+  android:layout_height="0dp"
+  android:background="@color/background_color"
+  android:clickable="true"
+  android:elevation="24dp"
+  android:focusable="true"
+  android:visibility="gone"
+  app:layout_constraintBottom_toBottomOf="parent"
+  app:layout_constraintEnd_toEndOf="parent"
+  app:layout_constraintStart_toStartOf="parent"
+  app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -176,6 +176,13 @@ MaterialPickerFragment.MaterialPickerHost {
       showPhotoSourceSheet()
     }
 
+    binding.scoreContainer.setOnClickListener {
+      currentTank?.let {
+        tank ->
+        showCareProfileSheet(tank)
+      }
+    }
+
     binding.rowTankName.setOnClickListener {
       showTankNameSheet()
     }
@@ -305,6 +312,7 @@ MaterialPickerFragment.MaterialPickerHost {
     }
 
     renderMaterials(tank)
+    renderCareProfileScore(tank)
   }
 
   private fun showSnackBar(
@@ -729,6 +737,630 @@ MaterialPickerFragment.MaterialPickerHost {
       .start()
     }
   }
+
+  private fun renderCareProfileScore(
+    tank: SavedAquariumTank
+  ) {
+    val result = buildCareProfileResult(tank)
+    val color = getCareProfileColor(result.percent)
+
+    binding.scoreContainer.isVisible = true
+    binding.tvScore.text = result.percent.toString()
+    binding.tvScore.setTextColor(color)
+    binding.scoreContainer.strokeColor = color
+  }
+
+  private fun showCareProfileSheet(
+    tank: SavedAquariumTank
+  ) {
+    val result = buildCareProfileResult(tank)
+    val dialog = BottomSheetDialog(requireContext())
+
+    val container = createStepSheetContainer()
+    container.addView(
+      createStepSheetHeader(
+        title = "Care Profile",
+        dialog = dialog
+      )
+    )
+
+    container.addView(
+      createCareProfileProgressBlock(result)
+    )
+
+    val description = TextView(requireContext()).apply {
+      text = "Complete your aquarium profile to get more accurate automatic care tasks."
+      textSize = 13f
+      setTextColor(Color.parseColor("#C8D3E0"))
+      setLineSpacing(
+        3.dp().toFloat(),
+        1.0f
+      )
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 18.dp()
+      layoutParams = params
+    }
+
+    container.addView(description)
+
+    result.items.forEach {
+      item ->
+      container.addView(
+        createCareProfileRow(
+          item = item,
+          dialog = dialog
+        )
+      )
+    }
+
+    showConfiguredBottomSheet(
+      dialog = dialog,
+      content = container
+    )
+  }
+
+  private fun createCareProfileProgressBlock(
+    result: CareProfileResult
+  ): View {
+    val wrapper = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 24.dp()
+      layoutParams = params
+    }
+
+    val topRow = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+    }
+
+    val title = TextView(requireContext()).apply {
+      text = "Profile completion"
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+
+      layoutParams = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+    }
+
+    val percent = TextView(requireContext()).apply {
+      text = "${result.percent}%"
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+    }
+
+    topRow.addView(title)
+    topRow.addView(percent)
+
+    val progressBackground = FrameLayout(requireContext()).apply {
+      background = createRoundedDrawable(
+        color = "#DDE3EA",
+        radiusPx = 2.dp()
+      )
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        5.dp()
+      )
+      params.topMargin = 14.dp()
+      layoutParams = params
+    }
+
+    val progressFill = View(requireContext()).apply {
+      background = createRoundedDrawable(
+        color = String.format(
+          "#%06X",
+          0xFFFFFF and getCareProfileColor(result.percent)
+        ),
+        radiusPx = 2.dp()
+      )
+
+      layoutParams = FrameLayout.LayoutParams(
+        0,
+        FrameLayout.LayoutParams.MATCH_PARENT
+      )
+    }
+
+    progressBackground.addView(progressFill)
+
+    progressBackground.post {
+      val width = (
+        progressBackground.width * result.percent / 100f
+      ).roundToInt()
+
+      val params = progressFill.layoutParams
+      params.width = width
+      progressFill.layoutParams = params
+    }
+
+    val summary = TextView(requireContext()).apply {
+      text = "${result.completedCount} of ${result.totalCount} care details completed"
+      textSize = 12.5f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      includeFontPadding = false
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 10.dp()
+      layoutParams = params
+    }
+
+    wrapper.addView(topRow)
+    wrapper.addView(progressBackground)
+    wrapper.addView(summary)
+
+    return wrapper
+  }
+
+  private fun createCareProfileRow(
+    item: CareProfileItem,
+    dialog: BottomSheetDialog
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 15.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#223A57")
+      setCardBackgroundColor(Color.parseColor("#0D1D31"))
+      cardElevation = 0f
+      useCompatPadding = false
+      isClickable = true
+      isFocusable = true
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        66.dp()
+      )
+      params.topMargin = 10.dp()
+      layoutParams = params
+    }
+
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(
+        14.dp(),
+        0,
+        12.dp(),
+        0
+      )
+    }
+
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      layoutParams = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+    }
+
+    val title = TextView(requireContext()).apply {
+      text = item.title
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+
+    val subtitle = TextView(requireContext()).apply {
+      text = item.subtitle
+      textSize = 12f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 6.dp()
+      layoutParams = params
+    }
+
+    val status = TextView(requireContext()).apply {
+      text = if (item.completed) "✓" else "–"
+      gravity = Gravity.CENTER
+      textSize = 18f
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      setTextColor(
+        if (item.completed) {
+          Color.parseColor("#5FD6B4")
+        } else {
+          Color.parseColor("#A6AFBB")
+        }
+      )
+      background = createRoundedDrawable(
+        color = if (item.completed) "#071B14" else "#1E2733",
+        radiusPx = 18.dp()
+      )
+
+      layoutParams = LinearLayout.LayoutParams(
+        36.dp(),
+        36.dp()
+      )
+    }
+
+    textBox.addView(title)
+    textBox.addView(subtitle)
+
+    row.addView(textBox)
+    row.addView(status)
+
+    card.addView(row)
+
+    card.setOnClickListener {
+      dialog.dismiss()
+      handleCareProfileItemClick(item)
+    }
+
+    return card
+  }
+
+  private fun handleCareProfileItemClick(
+    item: CareProfileItem
+  ) {
+    if (
+      item.materialCategoryKey != null &&
+      item.materialCategoryTitle != null
+    ) {
+      selectTab(SettingsTab.DETAILS)
+
+      binding.contentScrollView.post {
+        openMaterialPickerFlow(
+          categoryKey = item.materialCategoryKey,
+          categoryTitle = item.materialCategoryTitle
+        )
+      }
+
+      return
+    }
+
+    item.targetTab?.let {
+      tab ->
+      selectTab(tab)
+
+      showSnackBar(
+        message = "Update ${item.title} to improve your care profile.",
+        type = BaseActivity.SnackType.NORMAL
+      )
+    }
+  }
+
+  private fun buildCareProfileResult(
+    tank: SavedAquariumTank
+  ): CareProfileResult {
+    val items = mutableListOf<CareProfileItem>()
+
+    items.add(
+      CareProfileItem(
+        title = "Tank name",
+        subtitle = if (tank.name.isNotBlank()) tank.name else "Missing tank name",
+        completed = tank.name.isNotBlank(),
+        targetTab = SettingsTab.BASIC
+      )
+    )
+
+    items.add(
+      CareProfileItem(
+        title = "Tank type",
+        subtitle = if (tank.tankType.isNotBlank()) tank.tankType else "Missing tank type",
+        completed = tank.tankType.isNotBlank(),
+        targetTab = SettingsTab.BASIC
+      )
+    )
+
+    items.add(
+      CareProfileItem(
+        title = "Tank size",
+        subtitle = if (hasValidTankSize(tank)) getSizeText(tank) else "Missing tank dimensions",
+        completed = hasValidTankSize(tank),
+        targetTab = SettingsTab.BASIC
+      )
+    )
+
+    items.add(
+      CareProfileItem(
+        title = "Setup date",
+        subtitle = getSetupDateText(tank.setupDateMillis),
+        completed = tank.setupDateMillis != null,
+        targetTab = SettingsTab.BASIC
+      )
+    )
+
+    items.add(
+      CareProfileItem(
+        title = "Tank style",
+        subtitle = if (tank.tankStyle.isNotBlank()) tank.tankStyle else "Missing tank style",
+        completed = tank.tankStyle.isNotBlank(),
+        targetTab = SettingsTab.BASIC
+      )
+    )
+
+    items.add(
+      CareProfileItem(
+        title = "Plants",
+        subtitle = if (tank.plants.isNotEmpty()) {
+          "${tank.plants.size} plants selected"
+        } else {
+          "Missing plant information"
+        },
+        completed = tank.plants.isNotEmpty(),
+        targetTab = SettingsTab.DETAILS
+      )
+    )
+
+    items.add(
+      CareProfileItem(
+        title = "Livestock",
+        subtitle = if (tank.livestock.isNotEmpty()) {
+          "${tank.livestock.size} livestock selected"
+        } else {
+          "Missing fish / shrimp information"
+        },
+        completed = tank.livestock.isNotEmpty(),
+        targetTab = SettingsTab.DETAILS
+      )
+    )
+
+    items.add(
+      createMaterialCareProfileItem(
+        title = "Lighting",
+        missingSubtitle = "Missing lighting information",
+        tank = tank,
+        keywords = arrayOf(
+          "light",
+          "lighting",
+          "led",
+          "lamba",
+          "aydınlatma"
+        )
+      )
+    )
+
+    items.add(
+      createMaterialCareProfileItem(
+        title = "Filter",
+        missingSubtitle = "Missing filter information",
+        tank = tank,
+        keywords = arrayOf(
+          "filter",
+          "filtre"
+        )
+      )
+    )
+
+    items.add(
+      createMaterialCareProfileItem(
+        title = "Substrate / soil",
+        missingSubtitle = "Missing substrate or soil information",
+        tank = tank,
+        keywords = arrayOf(
+          "substrate",
+          "soil",
+          "aqua soil",
+          "sand",
+          "gravel",
+          "kum",
+          "toprak",
+          "zemin"
+        )
+      )
+    )
+
+    items.add(
+      createMaterialCareProfileItem(
+        title = "CO₂",
+        missingSubtitle = "Missing CO₂ information",
+        tank = tank,
+        keywords = arrayOf(
+          "co2",
+          "co₂",
+          "carbon dioxide"
+        )
+      )
+    )
+
+    items.add(
+      createMaterialCareProfileItem(
+        title = "Fertilizer",
+        missingSubtitle = "Missing fertilizer information",
+        tank = tank,
+        keywords = arrayOf(
+          "fertilizer",
+          "fertiliser",
+          "fert",
+          "gübre",
+          "nutrition"
+        )
+      )
+    )
+
+    val completedCount = items.count {
+      item ->
+      item.completed
+    }
+
+    val totalCount = items.size
+
+    val percent = if (totalCount == 0) {
+      0
+    } else {
+      ((completedCount * 100f) / totalCount).roundToInt()
+    }
+
+    return CareProfileResult(
+      percent = percent,
+      completedCount = completedCount,
+      totalCount = totalCount,
+      items = items
+    )
+  }
+
+  private fun createMaterialCareProfileItem(
+    title: String,
+    missingSubtitle: String,
+    tank: SavedAquariumTank,
+    keywords: Array<String>
+  ): CareProfileItem {
+    val completed = hasMaterial(
+      tank = tank,
+      keywords = keywords
+    )
+
+    val category = findMaterialCategory(
+      keywords = keywords
+    )
+
+    return CareProfileItem(
+      title = title,
+      subtitle = if (completed) {
+        getMaterialMatchSummary(
+          tank = tank,
+          keywords = keywords
+        )
+      } else {
+        missingSubtitle
+      },
+      completed = completed,
+      targetTab = SettingsTab.DETAILS,
+      materialCategoryKey = category?.first,
+      materialCategoryTitle = category?.second
+    )
+  }
+
+  private fun hasValidTankSize(
+    tank: SavedAquariumTank
+  ): Boolean {
+    return tank.widthCm > 0 &&
+    tank.lengthCm > 0 &&
+    tank.heightCm > 0
+  }
+
+  private fun hasMaterial(
+    tank: SavedAquariumTank,
+    keywords: Array<String>
+  ): Boolean {
+    return tank.materials.any {
+      material ->
+      containsAnyCareKeyword(
+        value = "${material.categoryKey} ${material.name}",
+        keywords = keywords
+      )
+    }
+  }
+
+  private fun getMaterialMatchSummary(
+    tank: SavedAquariumTank,
+    keywords: Array<String>
+  ): String {
+    val matchedMaterials = tank.materials.filter {
+      material ->
+      containsAnyCareKeyword(
+        value = "${material.categoryKey} ${material.name}",
+        keywords = keywords
+      )
+    }
+
+    if (matchedMaterials.isEmpty()) {
+      return "Selected"
+    }
+
+    if (matchedMaterials.size == 1) {
+      return matchedMaterials.first().name
+    }
+
+    return "${matchedMaterials.first().name} +${matchedMaterials.size - 1} more"
+  }
+
+  private fun findMaterialCategory(
+    keywords: Array<String>
+  ): Pair<String, String>? {
+    val categories = MaterialCategoryCatalog.bioCategories +
+    MaterialCategoryCatalog.hardwareCategories
+
+    val category = categories.firstOrNull {
+      category ->
+      containsAnyCareKeyword(
+        value = "${category.key} ${category.title}",
+        keywords = keywords
+      )
+    }
+
+    return category?.let {
+      it.key to it.title
+    }
+  }
+
+  private fun containsAnyCareKeyword(
+    value: String,
+    keywords: Array<String>
+  ): Boolean {
+    val normalizedValue = normalizeCareText(value)
+
+    return keywords.any {
+      keyword ->
+      normalizedValue.contains(
+        normalizeCareText(keyword)
+      )
+    }
+  }
+
+  private fun normalizeCareText(
+    value: String
+  ): String {
+    return value
+    .lowercase(Locale.ROOT)
+    .replace("₂", "2")
+    .replace("ı", "i")
+  }
+
+  private fun getCareProfileColor(
+    percent: Int
+  ): Int {
+    return when {
+      percent < 40 -> Color.parseColor("#D85C5C")
+      percent < 75 -> Color.parseColor("#E0A84C")
+      else -> Color.parseColor("#5FD6B4")
+    }
+  }
+
+  private data class CareProfileResult(
+    val percent: Int,
+    val completedCount: Int,
+    val totalCount: Int,
+    val items: List<CareProfileItem>
+  )
+
+  private data class CareProfileItem(
+    val title: String,
+    val subtitle: String,
+    val completed: Boolean,
+    val targetTab: SettingsTab?,
+    val materialCategoryKey: String? = null,
+    val materialCategoryTitle: String? = null
+  )
 
   private fun renderMaterials(
     tank: SavedAquariumTank

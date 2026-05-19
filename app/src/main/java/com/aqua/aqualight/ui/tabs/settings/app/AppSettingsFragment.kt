@@ -31,40 +31,41 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
   private var changingNotificationSwitchProgrammatically = false
 
   private val notificationPermissionLauncher =
-    registerForActivityResult(
-      ActivityResultContracts.RequestPermission()
-    ) { granted ->
-      viewLifecycleOwner.lifecycleScope.launch {
-        val ctx = requireContext()
+  registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) {
+    granted ->
+    viewLifecycleOwner.lifecycleScope.launch {
+      val ctx = requireContext()
 
-        val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
-          ctx
-        )
+      val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(
+        ctx
+      )
 
-        val shouldEnableNotifications = granted && systemEnabled
+      val shouldEnableNotifications = granted && systemEnabled
 
-        userPrefs.updateNotificationsEnabled(
-          shouldEnableNotifications
-        )
+      userPrefs.updateNotificationsEnabled(
+        shouldEnableNotifications
+      )
 
-        if (shouldEnableNotifications) {
-          reschedulePendingCareTaskReminders()
-        } else {
-          cancelPendingCareTaskReminders()
-        }
-
-        setNotificationSwitchChecked(
-          shouldEnableNotifications
-        )
-
-        _binding?.root?.postDelayed(
-          {
-            refreshNotificationSwitchState()
-          },
-          150
-        )
+      if (shouldEnableNotifications) {
+        reschedulePendingCareTaskReminders()
+      } else {
+        cancelPendingCareTaskReminders()
       }
+
+      setNotificationSwitchChecked(
+        shouldEnableNotifications
+      )
+
+      _binding?.root?.postDelayed(
+        {
+          refreshNotificationSwitchState()
+        },
+        150
+      )
     }
+  }
 
   override fun onViewCreated(
     view: View,
@@ -116,13 +117,15 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
       findNavController().popBackStack()
     }
 
-    switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+    switchNotifications.setOnCheckedChangeListener {
+      _, isChecked ->
       if (!changingNotificationSwitchProgrammatically) {
         handleNotificationToggle(isChecked)
       }
     }
 
-    switchAutoUpdate.setOnCheckedChangeListener { _, enabled ->
+    switchAutoUpdate.setOnCheckedChangeListener {
+      _, enabled ->
       viewLifecycleOwner.lifecycleScope.launch {
         userPrefs.updateAutoUpdateEnabled(enabled)
       }
@@ -218,12 +221,19 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
   private suspend fun reschedulePendingCareTaskReminders() {
     val ctx = context?.applicationContext ?: return
+    val now = System.currentTimeMillis()
 
     val pendingTasks = CareTaskDataStoreManager.create(ctx)
-      .pendingTasksFlow
-      .first()
+    .pendingTasksFlow
+    .first()
 
-    pendingTasks.forEach { task ->
+    pendingTasks
+    .filter {
+      task ->
+      task.dueAtMillis > now
+    }
+    .forEach {
+      task ->
       CareTaskReminderScheduler.schedule(
         context = ctx,
         task = task
@@ -235,10 +245,11 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
     val ctx = context?.applicationContext ?: return
 
     val pendingTasks = CareTaskDataStoreManager.create(ctx)
-      .pendingTasksFlow
-      .first()
+    .pendingTasksFlow
+    .first()
 
-    pendingTasks.forEach { task ->
+    pendingTasks.forEach {
+      task ->
       CareTaskReminderScheduler.cancel(
         context = ctx,
         taskId = task.id
@@ -248,7 +259,8 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
   private fun observeThemeSummary() {
     viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-      userPrefs.themeMode.collectLatest { mode ->
+      userPrefs.themeMode.collectLatest {
+        mode ->
         binding.tvThemeSummary.text = when (mode) {
           "dark" -> getString(R.string.app_settings_theme_dark)
           "system" -> getString(R.string.app_settings_theme_system)
@@ -260,7 +272,8 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
   private fun observeLanguageSummary() {
     viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-      userPrefs.languageCode.collectLatest { code ->
+      userPrefs.languageCode.collectLatest {
+        code ->
         binding.tvLanguageSubtitle.text = when (code) {
           "tr" -> getString(R.string.language_turkish)
           "de" -> getString(R.string.language_german)
@@ -275,7 +288,8 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
   private fun observeAutoUpdateState() {
     viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-      userPrefs.autoUpdateEnabled.collectLatest { enabled ->
+      userPrefs.autoUpdateEnabled.collectLatest {
+        enabled ->
         binding.switchAutoUpdate.isChecked = enabled
       }
     }
