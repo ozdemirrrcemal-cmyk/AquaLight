@@ -29,63 +29,186 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="18dp"
     android:includeFontPadding="false"
+    android:lineSpacingExtra="2dp"
     android:text="Choose a style or write your own aquarium concept."
     android:textColor="#8FA4BE"
     android:textSize="13sp" />
 
-  <GridLayout
-    android:id="@+id/styleOptionsGrid"
+  <LinearLayout
+    android:id="@+id/styleOptionsContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="18dp"
-    android:columnCount="3">
+    android:layout_marginTop="28dp"
+    android:orientation="vertical">
 
-    <TextView
-      android:id="@+id/optionNatureAquarium"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Nature Aquarium" />
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:baselineAligned="false"
+      android:orientation="horizontal">
 
-    <TextView
-      android:id="@+id/optionIwagumi"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Iwagumi" />
+      <TextView
+        android:id="@+id/optionNatureAquarium"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Nature&#10;Aquarium"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
-    <TextView
-      android:id="@+id/optionDutch"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Dutch" />
+      <TextView
+        android:id="@+id/optionIwagumi"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Iwagumi"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
-    <TextView
-      android:id="@+id/optionJungle"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Jungle" />
+      <TextView
+        android:id="@+id/optionDutch"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Dutch"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
-    <TextView
-      android:id="@+id/optionBiotope"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Biotope" />
+    </LinearLayout>
 
-    <TextView
-      android:id="@+id/optionBlackwater"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Blackwater" />
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="14dp"
+      android:baselineAligned="false"
+      android:orientation="horizontal">
 
-    <TextView
-      android:id="@+id/optionForest"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Forest" />
+      <TextView
+        android:id="@+id/optionJungle"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Jungle"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
-    <TextView
-      android:id="@+id/optionMountain"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Mountain" />
+      <TextView
+        android:id="@+id/optionBiotope"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Biotope"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
-    <TextView
-      android:id="@+id/optionIsland"
-      style="@style/AquaSettingsSheetGridOption"
-      android:text="Island" />
+      <TextView
+        android:id="@+id/optionBlackwater"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Blackwater"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
 
-  </GridLayout>
+    </LinearLayout>
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="14dp"
+      android:baselineAligned="false"
+      android:orientation="horizontal">
+
+      <TextView
+        android:id="@+id/optionForest"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Forest"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
+
+      <TextView
+        android:id="@+id/optionMountain"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Mountain"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
+
+      <TextView
+        android:id="@+id/optionIsland"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_settings_sheet_grid_option"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="0dp"
+        android:maxLines="2"
+        android:text="Island"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
+
+    </LinearLayout>
+
+  </LinearLayout>
 
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnSave"
