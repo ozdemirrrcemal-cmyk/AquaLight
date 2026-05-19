@@ -44,7 +44,7 @@ object SmartCareRuleCatalog {
       titleTr = "CO₂ check",
       messageTr = "Check CO₂ timing, drop checker color, and livestock behavior.",
       priority = SmartCarePriority.HIGH,
-      repeatMode = SmartCareRepeatMode.DAILY,
+      repeatMode = SmartCareRepeatMode.EVERY_2_DAYS,
       sourceTags = listOf("SmartCare")
     ),
 
@@ -272,10 +272,10 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_FISH
       ),
       taskType = SmartCareTaskType.FEEDING,
-      titleTr = "Feeding amount check",
-      messageTr = "Feed only what livestock can consume quickly. Excess food can reduce water quality.",
+      titleTr = "Feeding review",
+      messageTr = "Review feeding amount and remove excess food if needed.",
       priority = SmartCarePriority.MEDIUM,
-      repeatMode = SmartCareRepeatMode.DAILY,
+      repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
       sourceTags = listOf("SmartCare")
     ),
 

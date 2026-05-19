@@ -452,33 +452,68 @@ object SmartCareTaskGenerator {
     }
   }
 
-  private fun getDueTimeForToday(
-    taskType: SmartCareTaskType,
-    nowMillis: Long
-  ): Long {
-    val hour = when (taskType) {
-      SmartCareTaskType.CO2_CHECK -> 8
-      SmartCareTaskType.LIGHTING -> 9
-      SmartCareTaskType.FEEDING -> 9
-      SmartCareTaskType.GENERAL_CHECK -> 9
-      SmartCareTaskType.FERTILIZER -> 10
-      SmartCareTaskType.WATER_CHANGE -> 11
-      SmartCareTaskType.PLANT_CHECK -> 12
-      SmartCareTaskType.PLANT_TRIM -> 12
-      SmartCareTaskType.FILTER_CHECK -> 13
-      SmartCareTaskType.GLASS_CLEANING -> 13
-      SmartCareTaskType.WATER_TEST -> 18
-      SmartCareTaskType.LIVESTOCK_CHECK -> 18
+private fun getDueTimeForToday(
+  taskType: SmartCareTaskType,
+  nowMillis: Long
+): Long {
+  val dueTime = when (taskType) {
+    SmartCareTaskType.CO2_CHECK -> {
+      9 to 0
     }
 
-    return Calendar.getInstance().apply {
-      timeInMillis = nowMillis
-      set(Calendar.HOUR_OF_DAY, hour)
-      set(Calendar.MINUTE, 0)
-      set(Calendar.SECOND, 0)
-      set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
+    SmartCareTaskType.LIGHTING -> {
+      9 to 30
+    }
+
+    SmartCareTaskType.GENERAL_CHECK -> {
+      10 to 0
+    }
+
+    SmartCareTaskType.FERTILIZER -> {
+      10 to 30
+    }
+
+    SmartCareTaskType.PLANT_CHECK -> {
+      13 to 0
+    }
+
+    SmartCareTaskType.PLANT_TRIM -> {
+      13 to 0
+    }
+
+    SmartCareTaskType.GLASS_CLEANING -> {
+      15 to 0
+    }
+
+    SmartCareTaskType.FILTER_CHECK -> {
+      15 to 0
+    }
+
+    SmartCareTaskType.WATER_CHANGE -> {
+      18 to 0
+    }
+
+    SmartCareTaskType.WATER_TEST -> {
+      19 to 0
+    }
+
+    SmartCareTaskType.FEEDING -> {
+      19 to 30
+    }
+
+    SmartCareTaskType.LIVESTOCK_CHECK -> {
+      20 to 0
+    }
   }
+
+  return Calendar.getInstance().apply {
+    timeInMillis = nowMillis
+    set(Calendar.HOUR_OF_DAY, dueTime.first)
+    set(Calendar.MINUTE, dueTime.second)
+    set(Calendar.SECOND, 0)
+    set(Calendar.MILLISECOND, 0)
+  }.timeInMillis
+}
 
   private fun getPriorityWeight(
     priority: SmartCarePriority
