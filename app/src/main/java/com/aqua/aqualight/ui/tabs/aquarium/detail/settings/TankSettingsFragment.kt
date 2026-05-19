@@ -57,6 +57,8 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
+import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
 import kotlinx.coroutines.Dispatchers
 import androidx.activity.OnBackPressedCallback
@@ -329,6 +331,34 @@ MaterialPickerFragment.MaterialPickerHost {
       type = type
     )
   }
+
+ private fun showSettingsBottomSheet(
+  title: String,
+  contentView: View,
+  onDialogReady: ((BottomSheetDialog) -> Unit)? = null
+) {
+  val dialog = BottomSheetDialog(requireContext())
+  val sheetBinding = DialogSettingsBottomSheetBinding.inflate(layoutInflater)
+
+  sheetBinding.tvSheetTitle.text = title
+
+  sheetBinding.sheetContentContainer.removeAllViews()
+  sheetBinding.sheetContentContainer.addView(contentView)
+
+  dialog.setContentView(sheetBinding.root)
+
+  dialog.setOnShowListener {
+    val bottomSheet = dialog.findViewById<FrameLayout>(
+      com.google.android.material.R.id.design_bottom_sheet
+    )
+
+    bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+  }
+
+  onDialogReady?.invoke(dialog)
+
+  dialog.show()
+}
 
   private fun showPhotoSourceSheet() {
     val dialog = BottomSheetDialog(requireContext())
@@ -1198,28 +1228,35 @@ MaterialPickerFragment.MaterialPickerHost {
     return "${materials.first().name} +${materials.size - 1} more"
   }
 
-  private fun showTankNameSheet() {
-    val tank = currentTank ?: return
-    val dialog = BottomSheetDialog(requireContext())
+private fun showTankNameSheet() {
+  val tank = currentTank ?: return
 
-    val container = createStepSheetContainer()
-    container.addView(createStepSheetHeader("Tank Name", dialog))
+  val contentBinding = ContentSheetTankNameBinding.inflate(
+    layoutInflater
+  )
 
-    val input = createStepInput(
-      text = tank.name,
-      hint = "Enter tank name",
-      inputType = InputType.TYPE_CLASS_TEXT
-    )
+  contentBinding.inputTankName.setText(tank.name)
 
-    val saveButton = createStepSheetSaveButton {
-      val newName = input.text.toString().trim()
+  showSettingsBottomSheet(
+    title = "Tank Name",
+    contentView = contentBinding.root
+  ) { dialog ->
+
+    contentBinding.btnCancel.setOnClickListener {
+      dialog.dismiss()
+    }
+
+    contentBinding.btnSave.setOnClickListener {
+      val newName = contentBinding.inputTankName.text
+        .toString()
+        .trim()
 
       if (newName.length < 2) {
         showSnackBar(
           message = "Tank name must be at least 2 characters.",
           type = BaseActivity.SnackType.WARNING
         )
-        return@createStepSheetSaveButton
+        return@setOnClickListener
       }
 
       viewLifecycleOwner.lifecycleScope.launch {
@@ -1231,16 +1268,8 @@ MaterialPickerFragment.MaterialPickerHost {
         dialog.dismiss()
       }
     }
-
-    container.addView(input)
-    container.addView(saveButton)
-    container.addView(createStepSheetCancelButton(dialog))
-
-    showConfiguredBottomSheet(
-      dialog = dialog,
-      content = container
-    )
   }
+}
 
   private fun showTankTypeSheet() {
     val tank = currentTank ?: return

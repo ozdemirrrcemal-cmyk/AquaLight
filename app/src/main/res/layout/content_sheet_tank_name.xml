@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical">
+
+  <EditText
+    android:id="@+id/inputTankName"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:background="@drawable/bg_settings_sheet_input"
+    android:hint="Enter tank name"
+    android:includeFontPadding="false"
+    android:inputType="text"
+    android:maxLines="1"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:selectAllOnFocus="true"
+    android:singleLine="true"
+    android:textColor="@android:color/white"
+    android:textColorHint="#8FA4BE"
+    android:textSize="14sp" />
+
+  <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnSave"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:layout_marginTop="26dp"
+    android:insetTop="0dp"
+    android:insetBottom="0dp"
+    android:minHeight="0dp"
+    android:minWidth="0dp"
+    android:text="Save"
+    android:textAllCaps="false"
+    android:textColor="@android:color/white"
+    android:textSize="14sp"
+    android:textStyle="bold"
+    app:backgroundTint="#2196F3"
+    app:cornerRadius="16dp" />
+
+  <TextView
+    android:id="@+id/btnCancel"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:layout_marginTop="10dp"
+    android:gravity="center"
+    android:includeFontPadding="false"
+    android:text="Cancel"
+    android:textColor="#8FA4BE"
+    android:textSize="14sp" />
+
+</LinearLayout>

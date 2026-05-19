@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.aqua.aqualight.data.CareTaskDataStoreManager
+import com.aqua.aqualight.ui.tabs.maintenance.smartcare.SmartCareDailyWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -28,6 +29,10 @@ class CareTaskBootReceiver : BroadcastReceiver() {
 
     CoroutineScope(Dispatchers.IO).launch {
       try {
+        // 🧠 Restore SmartCare daily worker after boot/update
+        SmartCareDailyWorker.schedule(context)
+
+        // 🔔 Restore pending task reminders
         val manager = CareTaskDataStoreManager.create(context)
 
         val pendingTasks = manager.pendingTasksFlow
