@@ -62,6 +62,8 @@ import kotlinx.coroutines.Dispatchers
 import androidx.activity.OnBackPressedCallback
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
+import com.aqua.aqualight.databinding.DialogCareProfileBinding
+import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -750,273 +752,122 @@ MaterialPickerFragment.MaterialPickerHost {
     binding.scoreContainer.strokeColor = color
   }
 
+  private fun renderCareProfileScore(
+    tank: SavedAquariumTank
+  ) {
+    val result = buildCareProfileResult(tank)
+    val color = getCareProfileColor(result.percent)
+
+    binding.scoreContainer.isVisible = true
+    binding.tvScore.text = result.percent.toString()
+    binding.tvScore.setTextColor(color)
+    binding.scoreContainer.strokeColor = color
+  }
+
   private fun showCareProfileSheet(
     tank: SavedAquariumTank
   ) {
     val result = buildCareProfileResult(tank)
     val dialog = BottomSheetDialog(requireContext())
+    val sheetBinding = DialogCareProfileBinding.inflate(layoutInflater)
 
-    val container = createStepSheetContainer()
-    container.addView(
-      createStepSheetHeader(
-        title = "Care Profile",
-        dialog = dialog
-      )
+    val profileColor = getCareProfileColor(result.percent)
+
+    sheetBinding.tvCareProfilePercent.text = "${result.percent}%"
+    sheetBinding.tvCareProfileSummary.text =
+    "${result.completedCount} of ${result.totalCount} care details completed"
+
+    sheetBinding.careProgressTrack.background = createRoundedDrawable(
+      color = "#DDE3EA",
+      radiusPx = 3.dp()
     )
 
-    container.addView(
-      createCareProfileProgressBlock(result)
+    sheetBinding.careProgressFill.background = createRoundedDrawable(
+      color = colorToHex(profileColor),
+      radiusPx = 3.dp()
     )
 
-    val description = TextView(requireContext()).apply {
-      text = "Complete your aquarium profile to get more accurate automatic care tasks."
-      textSize = 13f
-      setTextColor(Color.parseColor("#C8D3E0"))
-      setLineSpacing(
-        3.dp().toFloat(),
-        1.0f
-      )
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 18.dp()
-      layoutParams = params
+    sheetBinding.btnCloseCareProfile.setOnClickListener {
+      dialog.dismiss()
     }
 
-    container.addView(description)
+    sheetBinding.careProfileItemsContainer.removeAllViews()
 
     result.items.forEach {
       item ->
-      container.addView(
-        createCareProfileRow(
-          item = item,
-          dialog = dialog
-        )
-      )
-    }
-
-    showConfiguredBottomSheet(
-      dialog = dialog,
-      content = container
-    )
-  }
-
-  private fun createCareProfileProgressBlock(
-    result: CareProfileResult
-  ): View {
-    val wrapper = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.VERTICAL
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 24.dp()
-      layoutParams = params
-    }
-
-    val topRow = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-    }
-
-    val title = TextView(requireContext()).apply {
-      text = "Profile completion"
-      textSize = 14f
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-
-      layoutParams = LinearLayout.LayoutParams(
-        0,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        1f
-      )
-    }
-
-    val percent = TextView(requireContext()).apply {
-      text = "${result.percent}%"
-      textSize = 14f
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-    }
-
-    topRow.addView(title)
-    topRow.addView(percent)
-
-    val progressBackground = FrameLayout(requireContext()).apply {
-      background = createRoundedDrawable(
-        color = "#DDE3EA",
-        radiusPx = 2.dp()
+      val rowBinding = ItemCareProfileRowBinding.inflate(
+        layoutInflater,
+        sheetBinding.careProfileItemsContainer,
+        false
       )
 
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        5.dp()
-      )
-      params.topMargin = 14.dp()
-      layoutParams = params
-    }
+      rowBinding.tvCareProfileItemTitle.text = item.title
+      rowBinding.tvCareProfileItemSubtitle.text = item.subtitle
 
-    val progressFill = View(requireContext()).apply {
-      background = createRoundedDrawable(
-        color = String.format(
-          "#%06X",
-          0xFFFFFF and getCareProfileColor(result.percent)
-        ),
-        radiusPx = 2.dp()
-      )
+      rowBinding.tvCareProfileItemStatus.text = if (item.completed) {
+        "✓"
+      } else {
+        "–"
+      }
 
-      layoutParams = FrameLayout.LayoutParams(
-        0,
-        FrameLayout.LayoutParams.MATCH_PARENT
-      )
-    }
-
-    progressBackground.addView(progressFill)
-
-    progressBackground.post {
-      val width = (
-        progressBackground.width * result.percent / 100f
-      ).roundToInt()
-
-      val params = progressFill.layoutParams
-      params.width = width
-      progressFill.layoutParams = params
-    }
-
-    val summary = TextView(requireContext()).apply {
-      text = "${result.completedCount} of ${result.totalCount} care details completed"
-      textSize = 12.5f
-      setTextColor(Color.parseColor("#8FA4BE"))
-      includeFontPadding = false
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 10.dp()
-      layoutParams = params
-    }
-
-    wrapper.addView(topRow)
-    wrapper.addView(progressBackground)
-    wrapper.addView(summary)
-
-    return wrapper
-  }
-
-  private fun createCareProfileRow(
-    item: CareProfileItem,
-    dialog: BottomSheetDialog
-  ): View {
-    val card = MaterialCardView(requireContext()).apply {
-      radius = 15.dp().toFloat()
-      strokeWidth = 1.dp()
-      strokeColor = Color.parseColor("#223A57")
-      setCardBackgroundColor(Color.parseColor("#0D1D31"))
-      cardElevation = 0f
-      useCompatPadding = false
-      isClickable = true
-      isFocusable = true
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        66.dp()
-      )
-      params.topMargin = 10.dp()
-      layoutParams = params
-    }
-
-    val row = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-      setPadding(
-        14.dp(),
-        0,
-        12.dp(),
-        0
-      )
-    }
-
-    val textBox = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.VERTICAL
-
-      layoutParams = LinearLayout.LayoutParams(
-        0,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        1f
-      )
-    }
-
-    val title = TextView(requireContext()).apply {
-      text = item.title
-      textSize = 14f
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-    }
-
-    val subtitle = TextView(requireContext()).apply {
-      text = item.subtitle
-      textSize = 12f
-      setTextColor(Color.parseColor("#8FA4BE"))
-      includeFontPadding = false
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 6.dp()
-      layoutParams = params
-    }
-
-    val status = TextView(requireContext()).apply {
-      text = if (item.completed) "✓" else "–"
-      gravity = Gravity.CENTER
-      textSize = 18f
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-      setTextColor(
+      rowBinding.tvCareProfileItemStatus.setTextColor(
         if (item.completed) {
           Color.parseColor("#5FD6B4")
         } else {
           Color.parseColor("#A6AFBB")
         }
       )
-      background = createRoundedDrawable(
-        color = if (item.completed) "#071B14" else "#1E2733",
-        radiusPx = 18.dp()
+
+      rowBinding.tvCareProfileItemStatus.background = createRoundedDrawable(
+        color = if (item.completed) "#061C15" else "#263241",
+        radiusPx = 17.dp()
       )
 
-      layoutParams = LinearLayout.LayoutParams(
-        36.dp(),
-        36.dp()
+      rowBinding.root.setOnClickListener {
+        dialog.dismiss()
+        handleCareProfileItemClick(item)
+      }
+
+      sheetBinding.careProfileItemsContainer.addView(rowBinding.root)
+    }
+
+    dialog.setContentView(sheetBinding.root)
+
+    dialog.setOnShowListener {
+      val bottomSheet = dialog.findViewById<FrameLayout>(
+        com.google.android.material.R.id.design_bottom_sheet
       )
+
+      val maxHeight = (
+        resources.displayMetrics.heightPixels * 0.82f
+      ).roundToInt()
+
+      bottomSheet?.let {
+        sheet ->
+        sheet.setBackgroundColor(Color.TRANSPARENT)
+
+        val params = sheet.layoutParams
+        params.height = maxHeight
+        sheet.layoutParams = params
+      }
+
+      dialog.behavior.peekHeight = maxHeight
+
+      sheetBinding.careProgressTrack.post {
+        val fillWidth = (
+          sheetBinding.careProgressTrack.width * result.percent / 100f
+        ).roundToInt()
+
+        val params = sheetBinding.careProgressFill.layoutParams
+        params.width = fillWidth
+        sheetBinding.careProgressFill.layoutParams = params
+      }
     }
 
-    textBox.addView(title)
-    textBox.addView(subtitle)
-
-    row.addView(textBox)
-    row.addView(status)
-
-    card.addView(row)
-
-    card.setOnClickListener {
-      dialog.dismiss()
-      handleCareProfileItemClick(item)
-    }
-
-    return card
+    dialog.show()
   }
+
+
 
   private fun handleCareProfileItemClick(
     item: CareProfileItem
@@ -1344,6 +1195,15 @@ MaterialPickerFragment.MaterialPickerHost {
       percent < 75 -> Color.parseColor("#E0A84C")
       else -> Color.parseColor("#5FD6B4")
     }
+  }
+
+  private fun colorToHex(
+    color: Int
+  ): String {
+    return String.format(
+      "#%06X",
+      0xFFFFFF and color
+    )
   }
 
   private data class CareProfileResult(
