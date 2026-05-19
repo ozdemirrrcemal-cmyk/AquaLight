@@ -74,6 +74,8 @@ import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
 import com.aqua.aqualight.databinding.ContentSheetTankSizeBinding
 import com.aqua.aqualight.databinding.ContentSheetSetupDateBinding
+import com.aqua.aqualight.databinding.ContentSheetTankStyleBinding
+
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -1380,15 +1382,15 @@ private fun showSetupDateSheet() {
   val monthNames = Array(12) {
     index ->
     DateFormatSymbols(Locale.getDefault())
-      .months[index]
-      .replaceFirstChar {
-        char ->
-        if (char.isLowerCase()) {
-          char.titlecase(Locale.getDefault())
-        } else {
-          char.toString()
-        }
+    .months[index]
+    .replaceFirstChar {
+      char ->
+      if (char.isLowerCase()) {
+        char.titlecase(Locale.getDefault())
+      } else {
+        char.toString()
       }
+    }
   }
 
   contentBinding.dayPicker.apply {
@@ -1512,20 +1514,137 @@ private fun showSetupDateSheet() {
 private fun showStyleSheet() {
   val tank = currentTank ?: return
 
-  TankStyleBottomSheet.show(
-    fragment = this,
-    currentStyle = tank.tankStyle
-  ) {
-    newStyle ->
-    viewLifecycleOwner.lifecycleScope.launch {
-      aquariumTankViewModel.updateTankStyle(
-        tankId = tankId,
-        tankStyle = newStyle
+  val contentBinding = ContentSheetTankStyleBinding.inflate(
+    layoutInflater
+  )
+
+  val currentStyle = tank.tankStyle.ifBlank {
+    "Nature Aquarium"
+  }
+
+  contentBinding.inputStyle.setText(currentStyle)
+
+  val options = listOf(
+    contentBinding.optionNatureAquarium to "Nature Aquarium",
+    contentBinding.optionIwagumi to "Iwagumi",
+    contentBinding.optionDutch to "Dutch",
+    contentBinding.optionJungle to "Jungle",
+    contentBinding.optionBiotope to "Biotope",
+    contentBinding.optionBlackwater to "Blackwater",
+    contentBinding.optionForest to "Forest",
+    contentBinding.optionMountain to "Mountain",
+    contentBinding.optionIsland to "Island"
+  )
+
+  fun renderSelection() {
+    val inputValue = contentBinding.inputStyle.text
+    .toString()
+    .trim()
+
+    options.forEach {
+      option ->
+      val view = option.first
+      val value = option.second
+
+      val selected = value.equals(
+        inputValue,
+        ignoreCase = true
+      )
+
+      view.setTypeface(
+        null,
+        if (selected) Typeface.BOLD else Typeface.NORMAL
+      )
+
+      view.setBackgroundResource(
+        if (selected) {
+          R.drawable.bg_settings_sheet_grid_option_selected
+        } else {
+          R.drawable.bg_settings_sheet_grid_option
+        }
       )
     }
   }
-}
 
+  options.forEach {
+    option ->
+    val view = option.first
+    val value = option.second
+
+    view.setOnClickListener {
+      contentBinding.inputStyle.setText(value)
+      contentBinding.inputStyle.setSelection(
+        contentBinding.inputStyle.text?.length ?: 0
+      )
+      renderSelection()
+    }
+  }
+
+  contentBinding.inputStyle.setOnFocusChangeListener {
+    _, _ ->
+    renderSelection()
+  }
+
+  contentBinding.inputStyle.addTextChangedListener(
+    object : android.text.TextWatcher {
+      override fun beforeTextChanged(
+        s: CharSequence?,
+        start: Int,
+        count: Int,
+        after: Int
+      ) = Unit
+
+      override fun onTextChanged(
+        s: CharSequence?,
+        start: Int,
+        before: Int,
+        count: Int
+      ) {
+        renderSelection()
+      }
+
+      override fun afterTextChanged(
+        s: android.text.Editable?
+      ) = Unit
+    }
+  )
+
+  renderSelection()
+
+  showSettingsBottomSheet(
+    title = "Style",
+    contentView = contentBinding.root
+  ) {
+    dialog ->
+
+    contentBinding.btnCancel.setOnClickListener {
+      dialog.dismiss()
+    }
+
+    contentBinding.btnSave.setOnClickListener {
+      val newStyle = contentBinding.inputStyle.text
+      .toString()
+      .trim()
+
+      if (newStyle.isBlank()) {
+        showSnackBar(
+          message = "Please enter a tank style.",
+          type = BaseActivity.SnackType.WARNING
+        )
+        return@setOnClickListener
+      }
+
+      viewLifecycleOwner.lifecycleScope.launch {
+        aquariumTankViewModel.updateTankStyle(
+          tankId = tankId,
+          tankStyle = newStyle
+        )
+
+        dialog.dismiss()
+      }
+    }
+  }
+}
 private fun showIdeaSheet() {
   val tank = currentTank ?: return
 

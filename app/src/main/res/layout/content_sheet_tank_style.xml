@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical">
+
+  <EditText
+    android:id="@+id/inputStyle"
+    android:layout_width="match_parent"
+    android:layout_height="58dp"
+    android:background="@drawable/bg_settings_sheet_input"
+    android:gravity="center_vertical"
+    android:hint="Write custom style"
+    android:includeFontPadding="false"
+    android:inputType="textCapWords"
+    android:maxLines="1"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:selectAllOnFocus="false"
+    android:singleLine="true"
+    android:textColor="@android:color/white"
+    android:textColorHint="#8FA4BE"
+    android:textSize="15sp" />
+
+  <TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="18dp"
+    android:includeFontPadding="false"
+    android:text="Choose a style or write your own aquarium concept."
+    android:textColor="#8FA4BE"
+    android:textSize="13sp" />
+
+  <GridLayout
+    android:id="@+id/styleOptionsGrid"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="18dp"
+    android:columnCount="3">
+
+    <TextView
+      android:id="@+id/optionNatureAquarium"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Nature Aquarium" />
+
+    <TextView
+      android:id="@+id/optionIwagumi"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Iwagumi" />
+
+    <TextView
+      android:id="@+id/optionDutch"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Dutch" />
+
+    <TextView
+      android:id="@+id/optionJungle"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Jungle" />
+
+    <TextView
+      android:id="@+id/optionBiotope"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Biotope" />
+
+    <TextView
+      android:id="@+id/optionBlackwater"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Blackwater" />
+
+    <TextView
+      android:id="@+id/optionForest"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Forest" />
+
+    <TextView
+      android:id="@+id/optionMountain"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Mountain" />
+
+    <TextView
+      android:id="@+id/optionIsland"
+      style="@style/AquaSettingsSheetGridOption"
+      android:text="Island" />
+
+  </GridLayout>
+
+  <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnSave"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:layout_marginTop="26dp"
+    android:insetTop="0dp"
+    android:insetBottom="0dp"
+    android:minWidth="0dp"
+    android:minHeight="0dp"
+    android:text="Save"
+    android:textAllCaps="false"
+    android:textColor="@android:color/white"
+    android:textSize="14sp"
+    android:textStyle="bold"
+    app:backgroundTint="#2196F3"
+    app:cornerRadius="16dp" />
+
+  <TextView
+    android:id="@+id/btnCancel"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:layout_marginTop="10dp"
+    android:gravity="center"
+    android:includeFontPadding="false"
+    android:text="Cancel"
+    android:textColor="#8FA4BE"
+    android:textSize="14sp" />
+
+</LinearLayout>
