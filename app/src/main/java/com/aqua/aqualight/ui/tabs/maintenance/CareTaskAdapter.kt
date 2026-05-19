@@ -59,15 +59,19 @@ class CareTaskAdapter(
       )
 
       binding.tvTaskTitle.text = item.title
-
-      binding.tvTaskMeta.text = buildTaskMetaText(item)
-
-      binding.tvTaskDescription.text = item.description
-
-      binding.tvTaskSecondary.text = item.secondaryText
+      binding.tvTaskTitle.textSize = 13.2f
+      binding.tvTaskTitle.setTextColor(Color.WHITE)
+      binding.tvTaskTitle.setTypeface(
+        null,
+        if (item.status == CareTaskStatus.COMPLETED) {
+          Typeface.NORMAL
+        } else {
+          Typeface.BOLD
+        }
+      )
 
       binding.tvSourceBadge.text = item.sourceLabel
-
+      binding.tvSourceBadge.textSize = 10.2f
       binding.tvSourceBadge.background = createSourceBadgeBackground(
         source = item.source
       )
@@ -80,36 +84,32 @@ class CareTaskAdapter(
         }
       )
 
+      binding.tvTaskMeta.text = buildScheduleText(item)
+      binding.tvTaskMeta.textSize = 11.6f
+      binding.tvTaskMeta.setTextColor(
+        if (item.isOverdue && item.status == CareTaskStatus.PENDING) {
+          Color.parseColor("#D85C5C")
+        } else {
+          Color.parseColor("#B8C7D9")
+        }
+      )
+
+      binding.tvTaskSecondary.text = item.tankName.ifBlank {
+        "Aquarium"
+      }
+      binding.tvTaskSecondary.textSize = 11.6f
+      binding.tvTaskSecondary.setTextColor(Color.parseColor("#B8C7D9"))
+
+      binding.tvTaskDescription.text = item.description
+      binding.tvTaskDescription.textSize = 11.4f
+      binding.tvTaskDescription.setTextColor(Color.parseColor("#8FA4BE"))
+      binding.tvTaskDescription.isVisible = item.description.isNotBlank()
+
       binding.btnCompleteTask.isVisible =
         item.status == CareTaskStatus.PENDING
 
       binding.tvCompletedBadge.isVisible =
         item.status == CareTaskStatus.COMPLETED
-
-      binding.tvTaskSecondary.setTextColor(
-        when {
-          item.status == CareTaskStatus.COMPLETED -> {
-            Color.parseColor("#5FD6B4")
-          }
-
-          item.isOverdue -> {
-            Color.parseColor("#D85C5C")
-          }
-
-          else -> {
-            Color.parseColor("#5FD6B4")
-          }
-        }
-      )
-
-      binding.tvTaskTitle.setTypeface(
-        null,
-        if (item.status == CareTaskStatus.COMPLETED) {
-          Typeface.NORMAL
-        } else {
-          Typeface.BOLD
-        }
-      )
 
       binding.btnCompleteTask.setOnClickListener {
         onCompleteClick(item)
@@ -120,18 +120,17 @@ class CareTaskAdapter(
       }
     }
 
-    private fun buildTaskMetaText(
+    private fun buildScheduleText(
       item: CareTaskUi
     ): String {
       return buildString {
-        append(item.tankName)
-
         if (item.primaryTimeText.isNotBlank()) {
-          append(" • ")
           append(item.primaryTimeText)
+        } else {
+          append("-")
         }
 
-        if (item.isOverdue) {
+        if (item.isOverdue && item.status == CareTaskStatus.PENDING) {
           append(" • Overdue")
         }
       }
@@ -142,7 +141,7 @@ class CareTaskAdapter(
     ): GradientDrawable {
       return GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        cornerRadius = 17.dp().toFloat()
+        cornerRadius = 14.dp().toFloat()
         setColor(
           applyAlpha(
             color = color,
@@ -176,7 +175,7 @@ class CareTaskAdapter(
 
       return GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        cornerRadius = 12.dp().toFloat()
+        cornerRadius = 11.dp().toFloat()
         setColor(color)
         setStroke(
           1.dp(),
