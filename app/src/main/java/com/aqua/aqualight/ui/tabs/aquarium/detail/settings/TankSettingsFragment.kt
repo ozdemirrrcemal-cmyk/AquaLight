@@ -73,6 +73,7 @@ import com.aqua.aqualight.databinding.ContentSheetPhotoSourceBinding
 import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
 import com.aqua.aqualight.databinding.ContentSheetTankSizeBinding
+import com.aqua.aqualight.databinding.ContentSheetSetupDateBinding
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -1360,57 +1361,54 @@ private fun toggleVolumeUnit() {
   }
 }
 
+
+
+
+
+
 private fun showSetupDateSheet() {
   val tank = currentTank ?: return
-  val dialog = BottomSheetDialog(requireContext())
+
+  val contentBinding = ContentSheetSetupDateBinding.inflate(
+    layoutInflater
+  )
 
   val calendar = Calendar.getInstance().apply {
     timeInMillis = tank.setupDateMillis ?: System.currentTimeMillis()
   }
 
-  val container = createStepSheetContainer()
-  container.addView(createStepSheetHeader("Setup Date", dialog))
-
-  val pickerRow = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 24.dp()
-    layoutParams = params
-  }
-
   val monthNames = Array(12) {
     index ->
     DateFormatSymbols(Locale.getDefault())
-    .months[index]
-    .replaceFirstChar {
-      char ->
-      if (char.isLowerCase()) {
-        char.titlecase(Locale.getDefault())
-      } else {
-        char.toString()
+      .months[index]
+      .replaceFirstChar {
+        char ->
+        if (char.isLowerCase()) {
+          char.titlecase(Locale.getDefault())
+        } else {
+          char.toString()
+        }
       }
-    }
   }
 
-  val dayPicker = createDateNumberPicker().apply {
+  contentBinding.dayPicker.apply {
+    wrapSelectorWheel = false
     minValue = 1
     maxValue = 31
     value = calendar.get(Calendar.DAY_OF_MONTH)
   }
 
-  val monthPicker = createDateNumberPicker().apply {
+  contentBinding.monthPicker.apply {
+    wrapSelectorWheel = false
     minValue = 0
     maxValue = 11
     displayedValues = monthNames
     value = calendar.get(Calendar.MONTH)
   }
 
-  val yearPicker = createDateNumberPicker().apply {
+  contentBinding.yearPicker.apply {
+    wrapSelectorWheel = false
+
     val currentYear = Calendar.getInstance().get(Calendar.YEAR)
 
     minValue = currentYear - 10
@@ -1422,11 +1420,11 @@ private fun showSetupDateSheet() {
     val tempCalendar = Calendar.getInstance().apply {
       set(
         Calendar.YEAR,
-        yearPicker.value
+        contentBinding.yearPicker.value
       )
       set(
         Calendar.MONTH,
-        monthPicker.value
+        contentBinding.monthPicker.value
       )
       set(
         Calendar.DAY_OF_MONTH,
@@ -1438,79 +1436,77 @@ private fun showSetupDateSheet() {
       Calendar.DAY_OF_MONTH
     )
 
-    dayPicker.maxValue = maxDay
+    contentBinding.dayPicker.maxValue = maxDay
 
-    if (dayPicker.value > maxDay) {
-      dayPicker.value = maxDay
+    if (contentBinding.dayPicker.value > maxDay) {
+      contentBinding.dayPicker.value = maxDay
     }
   }
 
-  monthPicker.setOnValueChangedListener {
+  contentBinding.monthPicker.setOnValueChangedListener {
     _, _, _ ->
     updateDayMax()
   }
 
-  yearPicker.setOnValueChangedListener {
+  contentBinding.yearPicker.setOnValueChangedListener {
     _, _, _ ->
     updateDayMax()
   }
 
   updateDayMax()
 
-  pickerRow.addView(dayPicker)
-  pickerRow.addView(monthPicker)
-  pickerRow.addView(yearPicker)
+  showSettingsBottomSheet(
+    title = "Setup Date",
+    contentView = contentBinding.root
+  ) {
+    dialog ->
 
-  val saveButton = createStepSheetSaveButton {
-    val selectedCalendar = Calendar.getInstance().apply {
-      set(
-        Calendar.YEAR,
-        yearPicker.value
-      )
-      set(
-        Calendar.MONTH,
-        monthPicker.value
-      )
-      set(
-        Calendar.DAY_OF_MONTH,
-        dayPicker.value
-      )
-      set(
-        Calendar.HOUR_OF_DAY,
-        0
-      )
-      set(
-        Calendar.MINUTE,
-        0
-      )
-      set(
-        Calendar.SECOND,
-        0
-      )
-      set(
-        Calendar.MILLISECOND,
-        0
-      )
-    }
-
-    viewLifecycleOwner.lifecycleScope.launch {
-      aquariumTankViewModel.updateTankSetupDate(
-        tankId = tankId,
-        setupDateMillis = selectedCalendar.timeInMillis
-      )
-
+    contentBinding.btnCancel.setOnClickListener {
       dialog.dismiss()
     }
+
+    contentBinding.btnSave.setOnClickListener {
+      val selectedCalendar = Calendar.getInstance().apply {
+        set(
+          Calendar.YEAR,
+          contentBinding.yearPicker.value
+        )
+        set(
+          Calendar.MONTH,
+          contentBinding.monthPicker.value
+        )
+        set(
+          Calendar.DAY_OF_MONTH,
+          contentBinding.dayPicker.value
+        )
+        set(
+          Calendar.HOUR_OF_DAY,
+          0
+        )
+        set(
+          Calendar.MINUTE,
+          0
+        )
+        set(
+          Calendar.SECOND,
+          0
+        )
+        set(
+          Calendar.MILLISECOND,
+          0
+        )
+      }
+
+      viewLifecycleOwner.lifecycleScope.launch {
+        aquariumTankViewModel.updateTankSetupDate(
+          tankId = tankId,
+          setupDateMillis = selectedCalendar.timeInMillis
+        )
+
+        dialog.dismiss()
+      }
+    }
   }
-
-  container.addView(pickerRow)
-  container.addView(saveButton)
-  container.addView(createStepSheetCancelButton(dialog))
-
-  showConfiguredBottomSheet(
-    dialog = dialog,
-    content = container
-  )
 }
 
 private fun showStyleSheet() {
