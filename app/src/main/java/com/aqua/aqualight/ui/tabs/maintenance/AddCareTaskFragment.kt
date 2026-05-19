@@ -40,9 +40,16 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import android.Manifest
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.ui.tabs.settings.app.NotificationsBottomSheet
+import com.aqua.aqualight.utils.NotificationHelper
+
 
 class AddCareTaskFragment :
-  Fragment(R.layout.fragment_add_care_task) {
+Fragment(R.layout.fragment_add_care_task) {
 
   private var _binding: FragmentAddCareTaskBinding? = null
   private val binding get() = _binding!!
@@ -52,7 +59,7 @@ class AddCareTaskFragment :
 
   private var taskId: Long = -1L
   private val isEditMode: Boolean
-    get() = taskId > 0L
+  get() = taskId > 0L
 
   private var hasLoadedEditTask = false
   private var currentEditTask: CareTaskUi? = null
@@ -62,6 +69,38 @@ class AddCareTaskFragment :
   private var selectedWaterChangePercent: Int? = null
 
   private var latestTanks: List<SavedAquariumTank> = emptyList()
+
+  private val userPrefs by lazy {
+    UserPreferencesManager.create(requireContext())
+  }
+
+  private var pendingSaveAfterNotificationPermission = false
+
+  private val notificationPermissionLauncher =
+  registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) {
+    granted ->
+    if (_binding == null) {
+      return@registerForActivityResult
+    }
+
+    val ctx = requireContext()
+    val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
+    val canUseNotifications = granted && systemEnabled
+
+    viewLifecycleOwner.lifecycleScope.launch {
+      userPrefs.updateNotificationsEnabled(canUseNotifications)
+
+      if (canUseNotifications && pendingSaveAfterNotificationPermission) {
+        pendingSaveAfterNotificationPermission = false
+        saveTaskInternal()
+      } else {
+        pendingSaveAfterNotificationPermission = false
+        openNotificationPermissionSheet()
+      }
+    }
+  }
 
   private val selectedCalendar: Calendar = Calendar.getInstance().apply {
     add(Calendar.HOUR_OF_DAY, 1)
@@ -140,15 +179,18 @@ class AddCareTaskFragment :
       showTimePicker()
     }
 
-    binding.switchRepeat.setOnCheckedChangeListener { _, _ ->
+    binding.switchRepeat.setOnCheckedChangeListener {
+      _, _ ->
       updateDynamicSections()
     }
 
-    binding.switchReminder.setOnCheckedChangeListener { _, _ ->
+    binding.switchReminder.setOnCheckedChangeListener {
+      _, _ ->
       updateDynamicSections()
     }
 
-    binding.switchMissedReminder.setOnCheckedChangeListener { _, _ ->
+    binding.switchMissedReminder.setOnCheckedChangeListener {
+      _, _ ->
       updateDynamicSections()
     }
 
@@ -158,11 +200,14 @@ class AddCareTaskFragment :
   }
 
   private fun observeTanks() {
-    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+      tanks ->
       latestTanks = tanks
       maintenanceViewModel.setTanks(tanks)
 
-      if (selectedTankId != 0L && tanks.none { tank -> tank.id == selectedTankId }) {
+      if (selectedTankId != 0L && tanks.none {
+        tank -> tank.id == selectedTankId
+      }) {
         selectedTankId = 0L
       }
 
@@ -174,7 +219,8 @@ class AddCareTaskFragment :
   private fun observeEditTask() {
     viewLifecycleOwner.lifecycleScope.launch {
       viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        maintenanceViewModel.taskByIdFlow(taskId).collect { task ->
+        maintenanceViewModel.taskByIdFlow(taskId).collect {
+          task ->
           if (task == null) {
             return@collect
           }
@@ -274,7 +320,8 @@ class AddCareTaskFragment :
   ) {
     container.removeAllViews()
 
-    CareTaskTypeCatalog.categories.forEach { category ->
+    CareTaskTypeCatalog.categories.forEach {
+      category ->
       val items = CareTaskTypeCatalog.byCategory(category)
 
       if (items.isEmpty()) {
@@ -306,7 +353,8 @@ class AddCareTaskFragment :
         )
       }
 
-      items.forEach { item ->
+      items.forEach {
+        item ->
         grid.addView(
           createTaskTypeCard(
             item = item,
@@ -517,7 +565,8 @@ class AddCareTaskFragment :
       )
     }
 
-    percentages.forEach { percent ->
+    percentages.forEach {
+      percent ->
       grid.addView(
         createPercentChip(
           percent = percent,
@@ -636,7 +685,8 @@ class AddCareTaskFragment :
   ) {
     container.removeAllViews()
 
-    latestTanks.forEach { tank ->
+    latestTanks.forEach {
+      tank ->
       container.addView(
         createAquariumOptionCard(
           tank = tank,
@@ -785,9 +835,7 @@ class AddCareTaskFragment :
 
       type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent != null -> {
         "$category • ${selectedWaterChangePercent}%"
-      }
-
-      else -> {
+      } else -> {
         category
       }
     }
@@ -799,7 +847,8 @@ class AddCareTaskFragment :
   }
 
   private fun updateSelectedAquariumUi() {
-    val selectedTank = latestTanks.firstOrNull { tank ->
+    val selectedTank = latestTanks.firstOrNull {
+      tank ->
       tank.id == selectedTankId
     }
 
@@ -821,17 +870,17 @@ class AddCareTaskFragment :
 
   private fun updateDynamicSections() {
     binding.customTitleSection.isVisible =
-      selectedType == CareTaskType.CUSTOM
+    selectedType == CareTaskType.CUSTOM
 
     binding.repeatDaysContainer.isVisible =
-      binding.switchRepeat.isChecked
+    binding.switchRepeat.isChecked
 
     binding.missedReminderSection.isVisible =
-      binding.switchReminder.isChecked
+    binding.switchReminder.isChecked
 
     binding.missedReminderDaysContainer.isVisible =
-      binding.switchReminder.isChecked &&
-        binding.switchMissedReminder.isChecked
+    binding.switchReminder.isChecked &&
+    binding.switchMissedReminder.isChecked
 
     updateSaveButtonState()
   }
@@ -842,7 +891,7 @@ class AddCareTaskFragment :
     val hasTaskType = type != null
     val hasAquarium = selectedTankId != 0L
     val hasWaterPercent = type != CareTaskType.WATER_CHANGE ||
-      selectedWaterChangePercent != null
+    selectedWaterChangePercent != null
 
     val canSave = hasTaskType && hasAquarium && hasWaterPercent
 
@@ -861,7 +910,8 @@ class AddCareTaskFragment :
   private fun showDatePicker() {
     DatePickerDialog(
       requireContext(),
-      { _, year, month, dayOfMonth ->
+      {
+        _, year, month, dayOfMonth ->
         selectedCalendar.set(Calendar.YEAR, year)
         selectedCalendar.set(Calendar.MONTH, month)
         selectedCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
@@ -876,7 +926,8 @@ class AddCareTaskFragment :
   private fun showTimePicker() {
     TimePickerDialog(
       requireContext(),
-      { _, hourOfDay, minute ->
+      {
+        _, hourOfDay, minute ->
         selectedCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
         selectedCalendar.set(Calendar.MINUTE, minute)
         selectedCalendar.set(Calendar.SECOND, 0)
@@ -901,7 +952,61 @@ class AddCareTaskFragment :
     ).format(Date(selectedCalendar.timeInMillis))
   }
 
+  private fun ensureNotificationPermissionBeforeSave(): Boolean {
+    if (!binding.switchReminder.isChecked) {
+      return true
+    }
+
+    val ctx = requireContext()
+    val hasPermission = NotificationHelper.hasSystemPermission(ctx)
+    val systemEnabled = NotificationHelper.areSystemNotificationsEnabled(ctx)
+
+    if (
+      Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+      !hasPermission
+    ) {
+      pendingSaveAfterNotificationPermission = true
+
+      notificationPermissionLauncher.launch(
+        Manifest.permission.POST_NOTIFICATIONS
+      )
+
+      return false
+    }
+
+    if (!systemEnabled) {
+      pendingSaveAfterNotificationPermission = false
+      openNotificationPermissionSheet()
+      return false
+    }
+
+    viewLifecycleOwner.lifecycleScope.launch {
+      userPrefs.updateNotificationsEnabled(true)
+    }
+
+    return true
+  }
+
+  private fun openNotificationPermissionSheet() {
+    val sheet = NotificationsBottomSheet(
+      NotificationsBottomSheet.PermissionType.NOTIFICATION
+    )
+
+    sheet.show(
+      parentFragmentManager,
+      "care_task_notification_sheet"
+    )
+  }
+
   private fun saveTask() {
+    if (!ensureNotificationPermissionBeforeSave()) {
+      return
+    }
+
+    saveTaskInternal()
+  }
+
+  private fun saveTaskInternal() {
     val type = selectedType
 
     if (type == null) {
@@ -931,8 +1036,8 @@ class AddCareTaskFragment :
     val typeUi = CareTaskTypeCatalog.get(type)
 
     val customTitle = binding.etCustomTitle.text
-      .toString()
-      .trim()
+    .toString()
+    .trim()
 
     if (type == CareTaskType.CUSTOM && customTitle.length < 2) {
       showSnackBar(
@@ -943,16 +1048,16 @@ class AddCareTaskFragment :
     }
 
     val repeatDays = binding.etRepeatDays.text
-      .toString()
-      .toIntOrNull()
-      ?.coerceAtLeast(1)
-      ?: 7
+    .toString()
+    .toIntOrNull()
+    ?.coerceAtLeast(1)
+    ?: 7
 
     val missedDays = binding.etMissedReminderDays.text
-      .toString()
-      .toIntOrNull()
-      ?.coerceAtLeast(1)
-      ?: 3
+    .toString()
+    .toIntOrNull()
+    ?.coerceAtLeast(1)
+    ?: 3
 
     val title = if (type == CareTaskType.CUSTOM) {
       customTitle
@@ -981,12 +1086,12 @@ class AddCareTaskFragment :
           repeatIntervalDays = repeatDays,
           reminderEnabled = binding.switchReminder.isChecked,
           missedReminderEnabled = binding.switchReminder.isChecked &&
-            binding.switchMissedReminder.isChecked,
+          binding.switchMissedReminder.isChecked,
           missedReminderDays = missedDays,
           waterChangePercent = waterPercent,
           note = binding.etNote.text
-            .toString()
-            .trim()
+          .toString()
+          .trim()
         )
       } else {
         maintenanceViewModel.addManualTask(
@@ -999,12 +1104,12 @@ class AddCareTaskFragment :
           repeatIntervalDays = repeatDays,
           reminderEnabled = binding.switchReminder.isChecked,
           missedReminderEnabled = binding.switchReminder.isChecked &&
-            binding.switchMissedReminder.isChecked,
+          binding.switchMissedReminder.isChecked,
           missedReminderDays = missedDays,
           waterChangePercent = waterPercent,
           note = binding.etNote.text
-            .toString()
-            .trim()
+          .toString()
+          .trim()
         )
       }
 
@@ -1015,8 +1120,10 @@ class AddCareTaskFragment :
   private fun getCategoryForTaskType(
     type: CareTaskType
   ): String {
-    CareTaskTypeCatalog.categories.forEach { category ->
-      val match = CareTaskTypeCatalog.byCategory(category).firstOrNull { item ->
+    CareTaskTypeCatalog.categories.forEach {
+      category ->
+      val match = CareTaskTypeCatalog.byCategory(category).firstOrNull {
+        item ->
         item.type == type
       }
 

@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.aqua.aqualight.data.CareTaskDataStoreManager
+import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
@@ -38,6 +39,17 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
       try {
         val appContext = context.applicationContext
 
+        val userPrefs = UserPreferencesManager.create(
+          appContext
+        )
+
+        val appNotificationsEnabled = userPrefs.notificationsEnabled
+          .firstOrNull() ?: false
+
+        if (!appNotificationsEnabled) {
+          return@launch
+        }
+
         val careTaskManager = CareTaskDataStoreManager.create(
           appContext
         )
@@ -47,7 +59,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         )
 
         val task = careTaskManager.taskFlow(taskId).firstOrNull()
-        ?: return@launch
+          ?: return@launch
 
         if (
           task.status != CareTaskStatus.PENDING ||
@@ -61,10 +73,9 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         }
 
         val tanks = tankManager.tanksFlow.firstOrNull()
-        .orEmpty()
+          .orEmpty()
 
-        val aquariumName = tanks.firstOrNull {
-          tank ->
+        val aquariumName = tanks.firstOrNull { tank ->
           tank.id == task.tankId
         }?.name.orEmpty()
 
@@ -97,7 +108,9 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
 
           typeUi.defaultDescription.isNotBlank() -> {
             typeUi.defaultDescription
-          } else -> {
+          }
+
+          else -> {
             "This care task is due now."
           }
         }
