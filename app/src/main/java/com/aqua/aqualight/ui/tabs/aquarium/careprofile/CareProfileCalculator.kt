@@ -17,7 +17,9 @@ object CareProfileCalculator {
   data class Item(
     val title: String,
     val subtitle: String,
-    val completed: Boolean
+    val completed: Boolean,
+    val materialCategoryKey: String? = null,
+    val materialCategoryTitle: String? = null
   )
 
   fun calculate(
@@ -197,6 +199,10 @@ object CareProfileCalculator {
       keywords = keywords
     )
 
+    val category = findMaterialCategory(
+      keywords = keywords
+    )
+
     return Item(
       title = title,
       subtitle = if (completed) {
@@ -207,7 +213,9 @@ object CareProfileCalculator {
       } else {
         missingSubtitle
       },
-      completed = completed
+      completed = completed,
+      materialCategoryKey = category?.first,
+      materialCategoryTitle = category?.second
     )
   }
 
@@ -251,6 +259,24 @@ object CareProfileCalculator {
     }
 
     return "${matchedMaterials.first().name} +${matchedMaterials.size - 1} more"
+  }
+
+  private fun findMaterialCategory(
+    keywords: Array<String>
+  ): Pair<String, String>? {
+    val categories = MaterialCategoryCatalog.bioCategories +
+      MaterialCategoryCatalog.hardwareCategories
+
+    val category = categories.firstOrNull { category ->
+      containsAnyCareKeyword(
+        value = "${category.key} ${category.title}",
+        keywords = keywords
+      )
+    }
+
+    return category?.let {
+      it.key to it.title
+    }
   }
 
   private fun containsAnyCareKeyword(

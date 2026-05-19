@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<?xml version="1.0" encoding="utf-8"?> 
+ <androidx.constraintlayout.widget.ConstraintLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   android:id="@+id/maintenanceRoot"
@@ -124,9 +124,106 @@
 
     </HorizontalScrollView>
 
+    <com.google.android.material.card.MaterialCardView
+      android:id="@+id/cardCareProfileWarning"
+      android:layout_width="0dp"
+      android:layout_height="72dp"
+      android:layout_marginTop="14dp"
+      android:clickable="true"
+      android:focusable="true"
+      android:foreground="?attr/selectableItemBackground"
+      android:visibility="gone"
+      app:cardBackgroundColor="#10233A"
+      app:cardCornerRadius="22dp"
+      app:cardElevation="0dp"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/tabsScrollView"
+      app:strokeColor="#223A57"
+      app:strokeWidth="1dp">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="14dp">
+
+        <com.google.android.material.card.MaterialCardView
+          android:layout_width="40dp"
+          android:layout_height="40dp"
+          app:cardBackgroundColor="#1C3252"
+          app:cardCornerRadius="14dp"
+          app:cardElevation="0dp"
+          app:strokeColor="#2D4E78"
+          app:strokeWidth="1dp">
+
+          <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="!"
+            android:textColor="#E0A84C"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_marginStart="14dp"
+          android:layout_marginEnd="10dp"
+          android:layout_weight="1"
+          android:orientation="vertical">
+
+          <TextView
+            android:id="@+id/tvCareProfileWarningTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Care profile incomplete"
+            android:textColor="@android:color/white"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+          <TextView
+            android:id="@+id/tvCareProfileWarningMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Improve automatic care tasks"
+            android:textColor="#8FA4BE"
+            android:textSize="11.5sp" />
+
+        </LinearLayout>
+
+        <TextView
+          android:id="@+id/tvCareProfileWarningPercent"
+          android:layout_width="48dp"
+          android:layout_height="28dp"
+          android:background="@drawable/bg_maintenance_profile_percent_warning"
+          android:gravity="center"
+          android:includeFontPadding="false"
+          android:text="42%"
+          android:textColor="#E0A84C"
+          android:textSize="12sp"
+          android:textStyle="bold" />
+
+      </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
   </androidx.constraintlayout.widget.ConstraintLayout>
 
- <androidx.recyclerview.widget.RecyclerView
+  <androidx.recyclerview.widget.RecyclerView
     android:id="@+id/rvCareTasks"
     android:layout_width="0dp"
     android:layout_height="0dp"
@@ -141,9 +238,8 @@
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toBottomOf="@id/headerContainer" />
-	
-	
-	<ScrollView
+
+  <ScrollView
     android:id="@+id/historyScrollView"
     android:layout_width="0dp"
     android:layout_height="0dp"
@@ -160,15 +256,13 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toBottomOf="@id/headerContainer">
 
-  <LinearLayout
-    android:id="@+id/historyTimelineContainer"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical" />
+    <LinearLayout
+      android:id="@+id/historyTimelineContainer"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical" />
 
-</ScrollView>
-
-  <LinearLayout
+  </ScrollView>  <LinearLayout
     android:id="@+id/emptyStateContainer"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
@@ -236,6 +330,4 @@
       app:backgroundTint="#2196F3"
       app:cornerRadius="23dp" />
 
-  </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+  </LinearLayout>  </androidx.constraintlayout.widget.ConstraintLayout>

@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.first
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
+import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -742,21 +743,21 @@ MaterialPickerFragment.MaterialPickerHost {
   }
 
   private fun renderCareProfileScore(
-    tank: SavedAquariumTank
-  ) {
-    val result = buildCareProfileResult(tank)
-    val color = getCareProfileColor(result.percent)
+  tank: SavedAquariumTank
+) {
+  val result = CareProfileCalculator.calculate(tank)
+  val color = getCareProfileColor(result.percent)
 
-    binding.scoreContainer.isVisible = true
-    binding.tvScore.text = result.percent.toString()
-    binding.tvScore.setTextColor(color)
-    binding.scoreContainer.strokeColor = color
-  }
+  binding.scoreContainer.isVisible = true
+  binding.tvScore.text = result.percent.toString()
+  binding.tvScore.setTextColor(color)
+  binding.scoreContainer.strokeColor = color
+}
 
   private fun showCareProfileSheet(
     tank: SavedAquariumTank
   ) {
-    val result = buildCareProfileResult(tank)
+  val result = CareProfileCalculator.calculate(tank)
     val dialog = BottomSheetDialog(requireContext())
     val sheetBinding = DialogCareProfileBinding.inflate(layoutInflater)
 
@@ -858,70 +859,68 @@ MaterialPickerFragment.MaterialPickerHost {
     dialog.show()
   }
 
-
-
-  private fun handleCareProfileItemClick(
-    item: CareProfileItem
+private fun handleCareProfileItemClick(
+  item: CareProfileCalculator.Item
+) {
+  if (
+    item.materialCategoryKey != null &&
+    item.materialCategoryTitle != null
   ) {
-    if (
-      item.materialCategoryKey != null &&
-      item.materialCategoryTitle != null
-    ) {
-      selectTab(SettingsTab.DETAILS)
+    selectTab(SettingsTab.DETAILS)
 
-      binding.contentScrollView.post {
-        openMaterialPickerFlow(
-          categoryKey = item.materialCategoryKey,
-          categoryTitle = item.materialCategoryTitle
-        )
-      }
-
-      return
+    binding.contentScrollView.post {
+      openMaterialPickerFlow(
+        categoryKey = item.materialCategoryKey,
+        categoryTitle = item.materialCategoryTitle
+      )
     }
 
-    when (item.title) {
-      "Tank name" -> {
-        selectTab(SettingsTab.BASIC)
+    return
+  }
 
-        binding.contentScrollView.post {
-          showTankNameSheet()
-        }
+  when (item.title) {
+    "Tank name" -> {
+      selectTab(SettingsTab.BASIC)
+
+      binding.contentScrollView.post {
+        showTankNameSheet()
       }
+    }
 
-      "Tank type" -> {
-        selectTab(SettingsTab.BASIC)
+    "Tank type" -> {
+      selectTab(SettingsTab.BASIC)
 
-        binding.contentScrollView.post {
-          showTankTypeSheet()
-        }
+      binding.contentScrollView.post {
+        showTankTypeSheet()
       }
+    }
 
-      "Tank size" -> {
-        selectTab(SettingsTab.BASIC)
+    "Tank size" -> {
+      selectTab(SettingsTab.BASIC)
 
-        binding.contentScrollView.post {
-          showTankSizeSheet()
-        }
+      binding.contentScrollView.post {
+        showTankSizeSheet()
       }
+    }
 
-      "Setup date" -> {
-        selectTab(SettingsTab.BASIC)
+    "Setup date" -> {
+      selectTab(SettingsTab.BASIC)
 
-        binding.contentScrollView.post {
-          showSetupDateSheet()
-        }
+      binding.contentScrollView.post {
+        showSetupDateSheet()
       }
+    }
 
-      "Tank style" -> {
-        selectTab(SettingsTab.BASIC)
+    "Tank style" -> {
+      selectTab(SettingsTab.BASIC)
 
-        binding.contentScrollView.post {
-          showStyleSheet()
-        }
+      binding.contentScrollView.post {
+        showStyleSheet()
       }
+    }
 
-      "Plants" -> {
-        findNavController()
+    "Plants" -> {
+      findNavController()
         .previousBackStackEntry
         ?.savedStateHandle
         ?.set(
@@ -929,11 +928,11 @@ MaterialPickerFragment.MaterialPickerHost {
           TankDetailFragment.CARE_PROFILE_ACTION_PLANTS
         )
 
-        findNavController().navigateUp()
-      }
+      findNavController().navigateUp()
+    }
 
-      "Livestock" -> {
-        findNavController()
+    "Livestock" -> {
+      findNavController()
         .previousBackStackEntry
         ?.savedStateHandle
         ?.set(
@@ -941,302 +940,12 @@ MaterialPickerFragment.MaterialPickerHost {
           TankDetailFragment.CARE_PROFILE_ACTION_LIVESTOCK
         )
 
-        findNavController().navigateUp()
-      } else -> {
-        item.targetTab?.let {
-          tab ->
-          selectTab(tab)
-        }
-      }
+      findNavController().navigateUp()
     }
+
+    else -> Unit
   }
-  private fun buildCareProfileResult(
-    tank: SavedAquariumTank
-  ): CareProfileResult {
-    val items = mutableListOf<CareProfileItem>()
-
-    items.add(
-      CareProfileItem(
-        title = "Tank name",
-        subtitle = if (tank.name.isNotBlank()) tank.name else "Missing tank name",
-        completed = tank.name.isNotBlank(),
-        targetTab = SettingsTab.BASIC
-      )
-    )
-
-    items.add(
-      CareProfileItem(
-        title = "Tank type",
-        subtitle = if (tank.tankType.isNotBlank()) tank.tankType else "Missing tank type",
-        completed = tank.tankType.isNotBlank(),
-        targetTab = SettingsTab.BASIC
-      )
-    )
-
-    items.add(
-      CareProfileItem(
-        title = "Tank size",
-        subtitle = if (hasValidTankSize(tank)) getSizeText(tank) else "Missing tank dimensions",
-        completed = hasValidTankSize(tank),
-        targetTab = SettingsTab.BASIC
-      )
-    )
-
-    items.add(
-      CareProfileItem(
-        title = "Setup date",
-        subtitle = getSetupDateText(tank.setupDateMillis),
-        completed = tank.setupDateMillis != null,
-        targetTab = SettingsTab.BASIC
-      )
-    )
-
-    items.add(
-      CareProfileItem(
-        title = "Tank style",
-        subtitle = if (tank.tankStyle.isNotBlank()) tank.tankStyle else "Missing tank style",
-        completed = tank.tankStyle.isNotBlank(),
-        targetTab = SettingsTab.BASIC
-      )
-    )
-
-    items.add(
-      CareProfileItem(
-        title = "Plants",
-        subtitle = if (tank.plants.isNotEmpty()) {
-          "${tank.plants.size} plants selected"
-        } else {
-          "Missing plant information"
-        },
-        completed = tank.plants.isNotEmpty(),
-        targetTab = SettingsTab.DETAILS
-      )
-    )
-
-    items.add(
-      CareProfileItem(
-        title = "Livestock",
-        subtitle = if (tank.livestock.isNotEmpty()) {
-          "${tank.livestock.size} livestock selected"
-        } else {
-          "Missing fish / shrimp information"
-        },
-        completed = tank.livestock.isNotEmpty(),
-        targetTab = SettingsTab.DETAILS
-      )
-    )
-
-    items.add(
-      createMaterialCareProfileItem(
-        title = "Lighting",
-        missingSubtitle = "Missing lighting information",
-        tank = tank,
-        keywords = arrayOf(
-          "light",
-          "lighting",
-          "led",
-          "lamba",
-          "aydınlatma"
-        )
-      )
-    )
-
-    items.add(
-      createMaterialCareProfileItem(
-        title = "Filter",
-        missingSubtitle = "Missing filter information",
-        tank = tank,
-        keywords = arrayOf(
-          "filter",
-          "filtre"
-        )
-      )
-    )
-
-    items.add(
-      createMaterialCareProfileItem(
-        title = "Substrate / soil",
-        missingSubtitle = "Missing substrate or soil information",
-        tank = tank,
-        keywords = arrayOf(
-          "substrate",
-          "soil",
-          "aqua soil",
-          "sand",
-          "gravel",
-          "kum",
-          "toprak",
-          "zemin"
-        )
-      )
-    )
-
-    items.add(
-      createMaterialCareProfileItem(
-        title = "CO₂",
-        missingSubtitle = "Missing CO₂ information",
-        tank = tank,
-        keywords = arrayOf(
-          "co2",
-          "co₂",
-          "carbon dioxide"
-        )
-      )
-    )
-
-    items.add(
-      createMaterialCareProfileItem(
-        title = "Fertilizer",
-        missingSubtitle = "Missing fertilizer information",
-        tank = tank,
-        keywords = arrayOf(
-          "fertilizer",
-          "fertiliser",
-          "fert",
-          "gübre",
-          "nutrition"
-        )
-      )
-    )
-
-    val completedCount = items.count {
-      item ->
-      item.completed
-    }
-
-    val totalCount = items.size
-
-    val percent = if (totalCount == 0) {
-      0
-    } else {
-      ((completedCount * 100f) / totalCount).roundToInt()
-    }
-
-    return CareProfileResult(
-      percent = percent,
-      completedCount = completedCount,
-      totalCount = totalCount,
-      items = items
-    )
-  }
-
-  private fun createMaterialCareProfileItem(
-    title: String,
-    missingSubtitle: String,
-    tank: SavedAquariumTank,
-    keywords: Array<String>
-  ): CareProfileItem {
-    val completed = hasMaterial(
-      tank = tank,
-      keywords = keywords
-    )
-
-    val category = findMaterialCategory(
-      keywords = keywords
-    )
-
-    return CareProfileItem(
-      title = title,
-      subtitle = if (completed) {
-        getMaterialMatchSummary(
-          tank = tank,
-          keywords = keywords
-        )
-      } else {
-        missingSubtitle
-      },
-      completed = completed,
-      targetTab = SettingsTab.DETAILS,
-      materialCategoryKey = category?.first,
-      materialCategoryTitle = category?.second
-    )
-  }
-
-  private fun hasValidTankSize(
-    tank: SavedAquariumTank
-  ): Boolean {
-    return tank.widthCm > 0 &&
-    tank.lengthCm > 0 &&
-    tank.heightCm > 0
-  }
-
-  private fun hasMaterial(
-    tank: SavedAquariumTank,
-    keywords: Array<String>
-  ): Boolean {
-    return tank.materials.any {
-      material ->
-      containsAnyCareKeyword(
-        value = "${material.categoryKey} ${material.name}",
-        keywords = keywords
-      )
-    }
-  }
-
-  private fun getMaterialMatchSummary(
-    tank: SavedAquariumTank,
-    keywords: Array<String>
-  ): String {
-    val matchedMaterials = tank.materials.filter {
-      material ->
-      containsAnyCareKeyword(
-        value = "${material.categoryKey} ${material.name}",
-        keywords = keywords
-      )
-    }
-
-    if (matchedMaterials.isEmpty()) {
-      return "Selected"
-    }
-
-    if (matchedMaterials.size == 1) {
-      return matchedMaterials.first().name
-    }
-
-    return "${matchedMaterials.first().name} +${matchedMaterials.size - 1} more"
-  }
-
-  private fun findMaterialCategory(
-    keywords: Array<String>
-  ): Pair<String, String>? {
-    val categories = MaterialCategoryCatalog.bioCategories +
-    MaterialCategoryCatalog.hardwareCategories
-
-    val category = categories.firstOrNull {
-      category ->
-      containsAnyCareKeyword(
-        value = "${category.key} ${category.title}",
-        keywords = keywords
-      )
-    }
-
-    return category?.let {
-      it.key to it.title
-    }
-  }
-
-  private fun containsAnyCareKeyword(
-    value: String,
-    keywords: Array<String>
-  ): Boolean {
-    val normalizedValue = normalizeCareText(value)
-
-    return keywords.any {
-      keyword ->
-      normalizedValue.contains(
-        normalizeCareText(keyword)
-      )
-    }
-  }
-
-  private fun normalizeCareText(
-    value: String
-  ): String {
-    return value
-    .lowercase(Locale.ROOT)
-    .replace("₂", "2")
-    .replace("ı", "i")
-  }
+}
 
   private fun getCareProfileColor(
     percent: Int
@@ -1256,22 +965,6 @@ MaterialPickerFragment.MaterialPickerHost {
       0xFFFFFF and color
     )
   }
-
-  private data class CareProfileResult(
-    val percent: Int,
-    val completedCount: Int,
-    val totalCount: Int,
-    val items: List<CareProfileItem>
-  )
-
-  private data class CareProfileItem(
-    val title: String,
-    val subtitle: String,
-    val completed: Boolean,
-    val targetTab: SettingsTab?,
-    val materialCategoryKey: String? = null,
-    val materialCategoryTitle: String? = null
-  )
 
   private fun renderMaterials(
     tank: SavedAquariumTank
