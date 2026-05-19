@@ -57,29 +57,31 @@
       app:layout_constraintStart_toEndOf="@id/btnBack"
       app:layout_constraintTop_toTopOf="@id/btnBack" />
 
-    <com.google.android.material.card.MaterialCardView
-      android:id="@+id/scoreContainer"
-      android:layout_width="36dp"
-      android:layout_height="36dp"
-      android:clickable="true"
-      android:focusable="true"
-      android:foreground="?attr/selectableItemBackgroundBorderless"
-      app:cardBackgroundColor="@android:color/transparent"
-      app:cardCornerRadius="21dp"
-      app:cardElevation="0dp"
+   <com.google.android.material.card.MaterialCardView
+    android:id="@+id/scoreContainer"
+    android:layout_width="36dp"
+    android:layout_height="36dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackgroundBorderless"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#4CAF50"
+    app:strokeWidth="2dp">
 
-      <TextView
-      android:id="@+id/tvScore"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:text="100"
-      android:textColor="#4CAF50"
-      android:textSize="13sp"
-      android:textStyle="bold" />
+    <TextView
+        android:id="@+id/tvScore"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="100"
+        android:textColor="#4CAF50"
+        android:textSize="12sp"
+        android:textStyle="bold" />
 
-  </com.google.android.material.card.MaterialCardView>
+</com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
