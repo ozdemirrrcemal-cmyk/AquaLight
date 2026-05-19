@@ -85,11 +85,74 @@
         android:textStyle="bold" />
 
       <LinearLayout
-        android:id="@+id/typeOptionsContainer"
+        android:id="@+id/rowTaskType"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:orientation="vertical" />
+        android:layout_height="72dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_care_input"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingEnd="12dp">
+
+        <FrameLayout
+          android:id="@+id/taskTypeIconContainer"
+          android:layout_width="44dp"
+          android:layout_height="44dp"
+          android:visibility="gone">
+
+          <ImageView
+            android:id="@+id/ivTaskTypeIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:scaleType="centerInside"
+            app:tint="@android:color/white" />
+
+        </FrameLayout>
+
+        <LinearLayout
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_marginStart="0dp"
+          android:layout_weight="1"
+          android:orientation="vertical">
+
+          <TextView
+            android:id="@+id/tvTaskTypeTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Select care task type"
+            android:textColor="#8FA4BE"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+          <TextView
+            android:id="@+id/tvTaskTypeSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Required"
+            android:textColor="#6F829B"
+            android:textSize="12.5sp" />
+
+        </LinearLayout>
+
+        <ImageView
+          android:layout_width="22dp"
+          android:layout_height="22dp"
+          android:src="@drawable/ic_arrow_right"
+          app:tint="#8FA4BE" />
+
+      </LinearLayout>
 
       <LinearLayout
         android:id="@+id/customTitleSection"
@@ -125,31 +188,6 @@
 
       </LinearLayout>
 
-      <LinearLayout
-        android:id="@+id/waterChangePercentSection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:orientation="vertical">
-
-        <TextView
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:includeFontPadding="false"
-          android:text="Water Change Percentage"
-          android:textColor="?attr/colorOnSurface"
-          android:textSize="13sp"
-          android:textStyle="bold" />
-
-        <LinearLayout
-          android:id="@+id/percentOptionsContainer"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="10dp"
-          android:orientation="vertical" />
-
-      </LinearLayout>
-
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -161,11 +199,57 @@
         android:textStyle="bold" />
 
       <LinearLayout
-        android:id="@+id/tankOptionsContainer"
+        android:id="@+id/rowAquarium"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="64dp"
         android:layout_marginTop="12dp"
-        android:orientation="vertical" />
+        android:background="@drawable/bg_care_input"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingEnd="12dp">
+
+        <LinearLayout
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:orientation="vertical">
+
+          <TextView
+            android:id="@+id/tvAquariumTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Select aquarium"
+            android:textColor="#8FA4BE"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+          <TextView
+            android:id="@+id/tvAquariumSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Required"
+            android:textColor="#6F829B"
+            android:textSize="12.5sp" />
+
+        </LinearLayout>
+
+        <ImageView
+          android:layout_width="22dp"
+          android:layout_height="22dp"
+          android:src="@drawable/ic_arrow_right"
+          app:tint="#8FA4BE" />
+
+      </LinearLayout>
 
       <TextView
         android:layout_width="match_parent"
@@ -560,6 +644,7 @@
       android:id="@+id/btnSaveTask"
       android:layout_width="match_parent"
       android:layout_height="52dp"
+      android:enabled="false"
       android:insetTop="0dp"
       android:insetBottom="0dp"
       android:text="Save Task"
@@ -567,7 +652,7 @@
       android:textColor="@android:color/white"
       android:textSize="14sp"
       android:textStyle="bold"
-      app:backgroundTint="#2196F3"
+      app:backgroundTint="#35506D"
       app:cornerRadius="18dp" />
 
   </LinearLayout>
