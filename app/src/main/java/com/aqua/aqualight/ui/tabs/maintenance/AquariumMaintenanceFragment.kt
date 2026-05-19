@@ -346,7 +346,7 @@ class AquariumMaintenanceFragment :
 
     val dateText = TextView(requireContext()).apply {
       text = formatHistoryDate(millis)
-      textSize = 13.5f
+      textSize = 11.5f
       setTextColor(Color.WHITE)
       setTypeface(null, Typeface.NORMAL)
       includeFontPadding = false
