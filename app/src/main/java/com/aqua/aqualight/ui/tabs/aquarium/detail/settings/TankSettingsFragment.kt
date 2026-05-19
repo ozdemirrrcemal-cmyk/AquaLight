@@ -8,21 +8,19 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
-import android.text.InputType
 import android.text.TextUtils
 import android.view.GestureDetector
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
-import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.NumberPicker
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -34,20 +32,35 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
+import com.aqua.aqualight.databinding.ContentSheetPhotoSourceBinding
+import com.aqua.aqualight.databinding.ContentSheetSetupDateBinding
+import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
+import com.aqua.aqualight.databinding.ContentSheetTankSizeBinding
+import com.aqua.aqualight.databinding.ContentSheetTankStyleBinding
+import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
+import com.aqua.aqualight.databinding.DialogCareProfileBinding
+import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
+import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.common.TankStyleBottomSheet
+import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
+import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
+import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.yalantis.ucrop.UCrop
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
@@ -56,26 +69,6 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import com.aqua.aqualight.data.UserPreferencesManager
-import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
-import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
-import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
-import kotlinx.coroutines.Dispatchers
-import androidx.activity.OnBackPressedCallback
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.flow.first
-import com.aqua.aqualight.databinding.DialogCareProfileBinding
-import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
-import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
-import androidx.core.os.bundleOf
-import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
-import com.aqua.aqualight.databinding.ContentSheetPhotoSourceBinding
-import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
-import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
-import com.aqua.aqualight.databinding.ContentSheetTankSizeBinding
-import com.aqua.aqualight.databinding.ContentSheetSetupDateBinding
-import com.aqua.aqualight.databinding.ContentSheetTankStyleBinding
-
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -1864,235 +1857,6 @@ private fun deleteCurrentTank() {
   }
 }
 
-private fun createStepSheetContainer(): LinearLayout {
-  return LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.VERTICAL
-    setPadding(
-      18.dp(),
-      18.dp(),
-      18.dp(),
-      20.dp()
-    )
-    background = createTopRoundedDrawable(
-      color = "#10233A",
-      radiusPx = 24.dp()
-    )
-  }
-}
-
-private fun createStepSheetHeader(
-  title: String,
-  dialog: BottomSheetDialog
-): View {
-  val row = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-  }
-
-  val leftSpacer = View(requireContext()).apply {
-    layoutParams = LinearLayout.LayoutParams(
-      38.dp(),
-      38.dp()
-    )
-  }
-
-  val titleText = TextView(requireContext()).apply {
-    text = title
-    gravity = Gravity.CENTER
-    textSize = 16f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-
-    layoutParams = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-  }
-
-  val close = TextView(requireContext()).apply {
-    text = "×"
-    gravity = Gravity.CENTER
-    textSize = 30f
-    setTextColor(Color.WHITE)
-    includeFontPadding = false
-
-    layoutParams = LinearLayout.LayoutParams(
-      38.dp(),
-      38.dp()
-    )
-
-    setOnClickListener {
-      dialog.dismiss()
-    }
-  }
-
-  row.addView(leftSpacer)
-  row.addView(titleText)
-  row.addView(close)
-
-  return row
-}
-
-private fun createStepInput(
-  text: String,
-  hint: String,
-  inputType: Int
-): EditText {
-  return EditText(requireContext()).apply {
-    setText(text)
-    this.hint = hint
-    this.inputType = inputType
-    setSingleLine(true)
-    textSize = 14f
-    setTextColor(Color.WHITE)
-    setHintTextColor(Color.parseColor("#8FA4BE"))
-    background = createRoundedDrawable(
-      color = "#16314D",
-      radiusPx = 14.dp()
-    )
-    setPadding(
-      14.dp(),
-      0,
-      14.dp(),
-      0
-    )
-    setSelectAllOnFocus(true)
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      48.dp()
-    )
-    params.topMargin = 18.dp()
-    layoutParams = params
-  }
-}
-
-private fun createGridOption(
-  text: String,
-  selected: Boolean,
-  onClick: () -> Unit
-): View {
-  return TextView(requireContext()).apply {
-    this.text = text
-    gravity = Gravity.CENTER
-    textSize = 13.5f
-    setTextColor(Color.WHITE)
-    setTypeface(
-      null,
-      if (selected) Typeface.BOLD else Typeface.NORMAL
-    )
-    includeFontPadding = false
-
-    background = createRoundedDrawable(
-      color = if (selected) "#1C3D63" else "#10233A",
-      radiusPx = 13.dp(),
-      strokeColor = if (selected) "#2196F3" else "#223A57",
-      strokeWidthPx = 1.dp()
-    )
-
-    val params = GridLayout.LayoutParams().apply {
-      width = 0
-      height = 46.dp()
-      columnSpec = GridLayout.spec(
-        GridLayout.UNDEFINED,
-        1f
-      )
-      setMargins(
-        0,
-        0,
-        8.dp(),
-        8.dp()
-      )
-    }
-
-    layoutParams = params
-
-    setOnClickListener {
-      onClick()
-    }
-  }
-}
-
-private fun createDateNumberPicker(): NumberPicker {
-  return NumberPicker(requireContext()).apply {
-    wrapSelectorWheel = false
-
-    layoutParams = LinearLayout.LayoutParams(
-      0,
-      128.dp(),
-      1f
-    )
-  }
-}
-
-private fun createStepSheetSaveButton(
-  onClick: () -> Unit
-): MaterialButton {
-  return MaterialButton(requireContext()).apply {
-    text = "Save"
-    textSize = 14f
-    setTypeface(null, Typeface.BOLD)
-    setAllCaps(false)
-    setTextColor(Color.WHITE)
-    cornerRadius = 16.dp()
-    backgroundTintList = android.content.res.ColorStateList.valueOf(
-      Color.parseColor("#2196F3")
-    )
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      50.dp()
-    )
-    params.topMargin = 26.dp()
-    layoutParams = params
-
-    setOnClickListener {
-      onClick()
-    }
-  }
-}
-
-private fun createStepSheetCancelButton(
-  dialog: BottomSheetDialog
-): View {
-  return TextView(requireContext()).apply {
-    text = "Cancel"
-    gravity = Gravity.CENTER
-    textSize = 14f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    includeFontPadding = false
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      40.dp()
-    )
-    params.topMargin = 10.dp()
-    layoutParams = params
-
-    setOnClickListener {
-      dialog.dismiss()
-    }
-  }
-}
-
-private fun showConfiguredBottomSheet(
-  dialog: BottomSheetDialog,
-  content: View
-) {
-  dialog.setContentView(content)
-
-  dialog.setOnShowListener {
-    val bottomSheet = dialog.findViewById<FrameLayout>(
-      com.google.android.material.R.id.design_bottom_sheet
-    )
-
-    bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-  }
-
-  dialog.show()
-}
 
 private fun getSizeText(
   tank: SavedAquariumTank
@@ -2126,27 +1890,6 @@ private fun getSetupDateText(
   )
 
   return formatter.format(Date(setupDateMillis))
-}
-
-private fun createTopRoundedDrawable(
-  color: String,
-  radiusPx: Int
-): GradientDrawable {
-  return GradientDrawable().apply {
-    shape = GradientDrawable.RECTANGLE
-    setColor(Color.parseColor(color))
-
-    cornerRadii = floatArrayOf(
-      radiusPx.toFloat(),
-      radiusPx.toFloat(),
-      radiusPx.toFloat(),
-      radiusPx.toFloat(),
-      0f,
-      0f,
-      0f,
-      0f
-    )
-  }
 }
 
 private fun createRoundedDrawable(
