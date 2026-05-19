@@ -181,72 +181,75 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
   }
 
   private fun renderCareProfileWarning() {
-  if (_binding == null) {
-    return
-  }
+    if (_binding == null) {
+      return
+    }
 
-  if (
-    currentSelectedTab == MaintenanceTab.HISTORY ||
-    latestTanks.isEmpty()
-  ) {
-    binding.cardCareProfileWarning.isVisible = false
-    careProfileTargetTankId = 0L
-    return
-  }
+    if (
+      currentSelectedTab == MaintenanceTab.HISTORY ||
+      latestTanks.isEmpty()
+    ) {
+      binding.cardCareProfileWarning.isVisible = false
+      careProfileTargetTankId = 0L
+      return
+    }
 
-  val incompleteProfiles = latestTanks
-    .map { tank ->
+    val incompleteProfiles = latestTanks
+    .map {
+      tank ->
       tank to CareProfileCalculator.calculate(tank)
     }
-    .filter { (_, result) ->
+    .filter {
+      (_, result) ->
       result.percent < 100
     }
 
-  if (incompleteProfiles.isEmpty()) {
-    binding.cardCareProfileWarning.isVisible = false
-    careProfileTargetTankId = 0L
-    return
+    if (incompleteProfiles.isEmpty()) {
+      binding.cardCareProfileWarning.isVisible = false
+      careProfileTargetTankId = 0L
+      return
+    }
+
+    val targetProfile = incompleteProfiles.minBy {
+      (_, result) ->
+      result.percent
+    }
+
+    val targetTank = targetProfile.first
+    val targetResult = targetProfile.second
+
+    careProfileTargetTankId = targetTank.id
+
+    binding.cardCareProfileWarning.isVisible = true
+    binding.tvCareProfileWarningPercent.text = "${targetResult.percent}%"
+
+    if (incompleteProfiles.size == 1) {
+      binding.tvCareProfileWarningTitle.text =
+      "Care profile incomplete"
+
+      binding.tvCareProfileWarningMessage.text =
+      "Improve automatic care tasks"
+    } else {
+      binding.tvCareProfileWarningTitle.text =
+      "Care profiles incomplete"
+
+      binding.tvCareProfileWarningMessage.text =
+      "${incompleteProfiles.size} aquariums need more details"
+    }
   }
 
-  val targetProfile = incompleteProfiles.minBy { (_, result) ->
-    result.percent
-  }
+  private fun openCareProfileTargetTankSettings() {
+    if (careProfileTargetTankId <= 0L) {
+      return
+    }
 
-  val targetTank = targetProfile.first
-  val targetResult = targetProfile.second
-
-  careProfileTargetTankId = targetTank.id
-
-  binding.cardCareProfileWarning.isVisible = true
-  binding.tvCareProfileWarningPercent.text = "${targetResult.percent}%"
-
-  if (incompleteProfiles.size == 1) {
-    binding.tvCareProfileWarningTitle.text =
-      "Complete ${targetTank.name.ifBlank { "Aquarium" }} profile"
-
-    binding.tvCareProfileWarningMessage.text =
-      "Add missing tank details for better automatic tasks."
-  } else {
-    binding.tvCareProfileWarningTitle.text =
-      "Complete Care Profiles"
-
-    binding.tvCareProfileWarningMessage.text =
-      "${incompleteProfiles.size} aquariums need more details for better automatic tasks."
-  }
-}
-
-private fun openCareProfileTargetTankSettings() {
-  if (careProfileTargetTankId <= 0L) {
-    return
-  }
-
-  findNavController().navigate(
-    R.id.tankSettingsFragment,
-    bundleOf(
-      "tankId" to careProfileTargetTankId
+    findNavController().navigate(
+      R.id.tankSettingsFragment,
+      bundleOf(
+        "tankId" to careProfileTargetTankId
+      )
     )
-  )
-}
+  }
 
   private fun renderTaskListState(
     tasks: List<CareTaskUi>
