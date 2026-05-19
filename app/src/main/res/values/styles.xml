@@ -230,8 +230,7 @@
     <!-- 🔹 Lint’in istediği satır -->
     <item name="android:orientation">horizontal</item>
 </style>
-
-<style name="Aqua.SettingsSheet.GridOption">
+<style name="AquaSettingsSheetGridOption">
   <item name="android:layout_width">0dp</item>
   <item name="android:layout_height">46dp</item>
   <item name="android:layout_columnWeight">1</item>
@@ -246,5 +245,4 @@
   <item name="android:textColor">@android:color/white</item>
   <item name="android:textSize">13.5sp</item>
 </style>
-
 </resources>

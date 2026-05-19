@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <GridLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
   android:id="@+id/typeOptionsGrid"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
@@ -8,51 +9,50 @@
 
   <TextView
     android:id="@+id/optionFish"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="Fish" />
 
   <TextView
     android:id="@+id/optionShrimp"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="Shrimp" />
 
   <TextView
     android:id="@+id/optionPlanted"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="Planted" />
 
   <TextView
     android:id="@+id/optionMarine"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="Marine" />
 
   <TextView
     android:id="@+id/optionSofties"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="Softies" />
 
   <TextView
     android:id="@+id/optionMixedReef"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="Mixed Reef" />
 
   <TextView
     android:id="@+id/optionSps"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="SPS" />
 
   <TextView
     android:id="@+id/optionCoral"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="Coral" />
 
   <TextView
     android:id="@+id/optionOther"
-    style="@style/Aqua.SettingsSheet.GridOption"
+    style="@style/AquaSettingsSheetGridOption"
     android:text="Other" />
 
   <com.google.android.material.button.MaterialButton
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/btnSave"
     android:layout_width="match_parent"
     android:layout_height="50dp"
