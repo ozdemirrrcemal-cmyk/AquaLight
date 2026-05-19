@@ -357,24 +357,33 @@ class MaintenanceViewModel(
   }
 
   private fun getSecondaryText(
-    task: CareTask
-  ): String {
-    return when {
-      task.note.isNotBlank() -> {
-        task.note
-      }
+  task: CareTask
+): String {
+  if (
+    task.source == CareTaskSource.AUTOMATIC &&
+    task.description.isNotBlank()
+  ) {
+    return task.description
+  }
 
-      task.reminderEnabled && task.missedReminderEnabled -> {
-        "Reminder active • repeats ${task.missedReminderDays.coerceAtLeast(1)} days if missed"
-      }
+  return when {
+    task.note.isNotBlank() -> {
+      task.note
+    }
 
-      task.reminderEnabled -> {
-        "Reminder active"
-      } else -> {
-        task.description
-      }
+    task.reminderEnabled && task.missedReminderEnabled -> {
+      "Reminder active • repeats ${task.missedReminderDays.coerceAtLeast(1)} days if missed"
+    }
+
+    task.reminderEnabled -> {
+      "Reminder active"
+    }
+
+    else -> {
+      task.description
     }
   }
+}
 
   private fun getTankName(
     tankId: Long,
