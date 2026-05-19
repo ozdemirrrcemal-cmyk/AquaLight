@@ -71,6 +71,7 @@ import androidx.core.os.bundleOf
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.databinding.ContentSheetPhotoSourceBinding
 import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
+import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -1587,37 +1588,38 @@ private fun showStyleSheet() {
 
 private fun showIdeaSheet() {
   val tank = currentTank ?: return
-  val dialog = BottomSheetDialog(requireContext())
 
-  val container = createStepSheetContainer()
-  container.addView(createStepSheetHeader("Idea", dialog))
-
-  val input = createStepMultilineInput(
-    text = tank.description,
-    hint = "Write your aquarium idea or concept..."
+  val contentBinding = ContentSheetIdeaBinding.inflate(
+    layoutInflater
   )
 
-  val saveButton = createStepSheetSaveButton {
-    val newIdea = input.text.toString().trim()
+  contentBinding.inputIdea.setText(tank.description)
 
-    viewLifecycleOwner.lifecycleScope.launch {
-      aquariumTankViewModel.updateTankDescription(
-        tankId = tankId,
-        description = newIdea
-      )
+  showSettingsBottomSheet(
+    title = "Idea",
+    contentView = contentBinding.root
+  ) {
+    dialog ->
 
+    contentBinding.btnCancel.setOnClickListener {
       dialog.dismiss()
     }
+
+    contentBinding.btnSave.setOnClickListener {
+      val newIdea = contentBinding.inputIdea.text
+      .toString()
+      .trim()
+
+      viewLifecycleOwner.lifecycleScope.launch {
+        aquariumTankViewModel.updateTankDescription(
+          tankId = tankId,
+          description = newIdea
+        )
+
+        dialog.dismiss()
+      }
+    }
   }
-
-  container.addView(input)
-  container.addView(saveButton)
-  container.addView(createStepSheetCancelButton(dialog))
-
-  showConfiguredBottomSheet(
-    dialog = dialog,
-    content = container
-  )
 }
 
 private fun showDuplicateTankConfirmationDialog() {
@@ -1902,41 +1904,6 @@ private fun createStepInput(
     val params = LinearLayout.LayoutParams(
       LinearLayout.LayoutParams.MATCH_PARENT,
       48.dp()
-    )
-    params.topMargin = 18.dp()
-    layoutParams = params
-  }
-}
-
-private fun createStepMultilineInput(
-  text: String,
-  hint: String
-): EditText {
-  return EditText(requireContext()).apply {
-    setText(text)
-    this.hint = hint
-    inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
-    gravity = Gravity.TOP or Gravity.START
-    minLines = 4
-    maxLines = 5
-    textSize = 14f
-    setTextColor(Color.WHITE)
-    setHintTextColor(Color.parseColor("#8FA4BE"))
-    background = createRoundedDrawable(
-      color = "#16314D",
-      radiusPx = 14.dp()
-    )
-    setPadding(
-      14.dp(),
-      12.dp(),
-      14.dp(),
-      12.dp()
-    )
-    setSelectAllOnFocus(false)
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      112.dp()
     )
     params.topMargin = 18.dp()
     layoutParams = params
