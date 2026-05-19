@@ -205,7 +205,7 @@ MaterialPickerFragment.MaterialPickerHost {
     }
 
     binding.rowVolume.setOnClickListener {
-      showVolumeUnitSheet()
+      toggleVolumeUnit()
     }
 
     binding.rowSetupDate.setOnClickListener {
@@ -1273,6 +1273,28 @@ private fun showTankTypeSheet() {
   }
 }
 
+private fun toggleVolumeUnit() {
+  val tank = currentTank ?: return
+
+  val newUnit = if (
+    tank.volumeUnit.equals(
+      "gal",
+      ignoreCase = true
+    )
+  ) {
+    "L"
+  } else {
+    "gal"
+  }
+
+  viewLifecycleOwner.lifecycleScope.launch {
+    aquariumTankViewModel.updateTankVolumeUnit(
+      tankId = tankId,
+      volumeUnit = newUnit
+    )
+  }
+}
+
 private fun showTankSizeSheet() {
   val tank = currentTank ?: return
   val dialog = BottomSheetDialog(requireContext())
@@ -1384,89 +1406,6 @@ private fun showTankSizeSheet() {
 
   container.addView(unitRow)
   container.addView(inputsRow)
-  container.addView(saveButton)
-  container.addView(createStepSheetCancelButton(dialog))
-
-  showConfiguredBottomSheet(
-    dialog = dialog,
-    content = container
-  )
-}
-
-private fun showVolumeUnitSheet() {
-  val tank = currentTank ?: return
-  val dialog = BottomSheetDialog(requireContext())
-
-  val container = createStepSheetContainer()
-  container.addView(createStepSheetHeader("Volume", dialog))
-
-  var selectedUnit = tank.volumeUnit.ifBlank {
-    "L"
-  }
-
-  val grid = GridLayout(requireContext()).apply {
-    columnCount = 2
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 16.dp()
-    layoutParams = params
-  }
-
-  fun renderOptions() {
-    grid.removeAllViews()
-
-    listOf(
-      "L",
-      "gal"
-    ).forEach {
-      unit ->
-      grid.addView(
-        createGridOption(
-          text = unit,
-          selected = unit.equals(
-            selectedUnit,
-            ignoreCase = true
-          )
-        ) {
-          selectedUnit = unit
-          renderOptions()
-        }
-      )
-    }
-  }
-
-  renderOptions()
-
-  val info = TextView(requireContext()).apply {
-    text = "Volume is calculated automatically from tank size."
-    textSize = 12.5f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    includeFontPadding = false
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 12.dp()
-    layoutParams = params
-  }
-
-  val saveButton = createStepSheetSaveButton {
-    viewLifecycleOwner.lifecycleScope.launch {
-      aquariumTankViewModel.updateTankVolumeUnit(
-        tankId = tankId,
-        volumeUnit = selectedUnit
-      )
-
-      dialog.dismiss()
-    }
-  }
-
-  container.addView(grid)
-  container.addView(info)
   container.addView(saveButton)
   container.addView(createStepSheetCancelButton(dialog))
 
