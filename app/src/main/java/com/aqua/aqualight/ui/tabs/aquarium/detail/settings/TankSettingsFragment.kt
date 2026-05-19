@@ -805,22 +805,24 @@ MaterialPickerFragment.MaterialPickerHost {
       rowBinding.tvCareProfileItemSubtitle.text = item.subtitle
 
       rowBinding.tvCareProfileItemStatus.text = if (item.completed) {
-        "✓"
+        "Complete"
       } else {
-        "–"
+        "Missing"
       }
 
       rowBinding.tvCareProfileItemStatus.setTextColor(
         if (item.completed) {
           Color.parseColor("#5FD6B4")
         } else {
-          Color.parseColor("#A6AFBB")
+          Color.parseColor("#E0A84C")
         }
       )
 
       rowBinding.tvCareProfileItemStatus.background = createRoundedDrawable(
-        color = if (item.completed) "#061C15" else "#263241",
-        radiusPx = 17.dp()
+        color = if (item.completed) "#09251D" else "#2A2315",
+        radiusPx = 14.dp(),
+        strokeColor = if (item.completed) "#1E5A48" else "#6A4D1E",
+        strokeWidthPx = 1.dp()
       )
 
       rowBinding.root.setOnClickListener {
