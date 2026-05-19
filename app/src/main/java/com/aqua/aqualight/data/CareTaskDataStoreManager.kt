@@ -276,15 +276,6 @@ class CareTaskDataStoreManager private constructor(
             return@forEach
           }
 
-          val updatedTask = generatedTask.toAutomaticCareTask(
-            taskId = existingTask.id,
-            createdAtMillis = existingTask.createdAtMillis,
-            updatedAtMillis = now
-          )
-
-          updatedTasks[existingExactIndex] = updatedTask.toStoredCareTask()
-          tasksToSchedule.add(updatedTask)
-
           return@forEach
         }
 
@@ -317,7 +308,9 @@ class CareTaskDataStoreManager private constructor(
           newTask.toStoredCareTask()
         )
 
-        tasksToSchedule.add(newTask)
+        if (newTask.dueAtMillis > now) {
+          tasksToSchedule.add(newTask)
+        }
       }
 
       currentStore.toBuilder()
@@ -731,89 +724,90 @@ class CareTaskDataStoreManager private constructor(
     }
   }
 
-  private fun parseCareTaskStatus(
-    value: String
-  ): CareTaskStatus {
-    return runCatching {
-      CareTaskStatus.valueOf(value)
-    }.getOrElse {
-      CareTaskStatus.PENDING
-    }
+private fun parseCareTaskStatus(
+  value: String
+): CareTaskStatus {
+  return runCatching {
+    CareTaskStatus.valueOf(value)
+  }.getOrElse {
+    CareTaskStatus.PENDING
   }
+}
 
-  private fun SmartCareGeneratedTask.toAutomaticCareTask(
-    taskId: Long,
-    createdAtMillis: Long,
-    updatedAtMillis: Long
-  ): CareTask {
-    return CareTask(
-      id = taskId,
-      tankId = tankId,
-      title = titleTr,
-      description = messageTr,
-      type = taskType.toCareTaskType(),
-      source = CareTaskSource.AUTOMATIC,
-      status = CareTaskStatus.PENDING,
-      dueAtMillis = dueAtMillis,
-      completedAtMillis = null,
-      repeatEnabled = false,
-      repeatIntervalDays = 1,
-      reminderEnabled = true,
-      missedReminderEnabled = false,
-      missedReminderDays = 1,
-      waterChangePercent = null,
-      note = "",
-      generatedRuleKey = id,
-      createdAtMillis = createdAtMillis,
-      updatedAtMillis = updatedAtMillis
-    }
+private fun SmartCareGeneratedTask.toAutomaticCareTask(
+  taskId: Long,
+  createdAtMillis: Long,
+  updatedAtMillis: Long
+): CareTask {
+  return CareTask(
+    id = taskId,
+    tankId = tankId,
+    title = titleTr,
+    description = messageTr,
+    type = taskType.toCareTaskType(),
+    source = CareTaskSource.AUTOMATIC,
+    status = CareTaskStatus.PENDING,
+    dueAtMillis = dueAtMillis,
+    completedAtMillis = null,
+    repeatEnabled = false,
+    repeatIntervalDays = 1,
+    reminderEnabled = true,
+    missedReminderEnabled = false,
+    missedReminderDays = 1,
+    waterChangePercent = null,
+    note = "",
+    generatedRuleKey = id,
+    createdAtMillis = createdAtMillis,
+    updatedAtMillis = updatedAtMillis
+  )
+}
 
-    private fun SmartCareTaskType.toCareTaskType(): CareTaskType {
-      return when (this) {
-        SmartCareTaskType.WATER_CHANGE -> CareTaskType.WATER_CHANGE
-        SmartCareTaskType.WATER_TEST -> CareTaskType.WATER_TEST
-        SmartCareTaskType.LIGHTING -> CareTaskType.LIGHT_CHECK
-        SmartCareTaskType.CO2_CHECK -> CareTaskType.CO2_CHECK
-        SmartCareTaskType.FERTILIZER -> CareTaskType.FERTILIZER_DOSING
-        SmartCareTaskType.PLANT_CHECK -> CareTaskType.PLANT_HEALTH_CHECK
-        SmartCareTaskType.PLANT_TRIM -> CareTaskType.PLANT_TRIM
-        SmartCareTaskType.FILTER_CHECK -> CareTaskType.FILTER_MAINTENANCE
-        SmartCareTaskType.GLASS_CLEANING -> CareTaskType.GLASS_CLEANING
-        SmartCareTaskType.LIVESTOCK_CHECK -> CareTaskType.LIVESTOCK_CHECK
-        SmartCareTaskType.FEEDING -> CareTaskType.FEEDING
-        SmartCareTaskType.GENERAL_CHECK -> CareTaskType.CUSTOM
-      }
-    }
-
-    private fun getAutomaticRulePrefix(
-      tankId: Long,
-      ruleId: String
-    ): String {
-      return "smart_${tankId}_${ruleId}_"
-    }
-
-    private fun createNextTaskId(
-      currentTasks: List<StoredCareTask>
-    ): Long {
-      val now = System.currentTimeMillis()
-      val maxExistingId = currentTasks.maxOfOrNull {
-        task ->
-        task.id
-      } ?: 0L
-
-      return maxOf(
-        now,
-        maxExistingId + 1L
-      )
-    }
-
-    companion object {
-      fun create(
-        context: Context
-      ): CareTaskDataStoreManager {
-        return CareTaskDataStoreManager(
-          context.applicationContext
-        )
-      }
-    }
+private fun SmartCareTaskType.toCareTaskType(): CareTaskType {
+  return when (this) {
+    SmartCareTaskType.WATER_CHANGE -> CareTaskType.WATER_CHANGE
+    SmartCareTaskType.WATER_TEST -> CareTaskType.WATER_TEST
+    SmartCareTaskType.LIGHTING -> CareTaskType.LIGHT_CHECK
+    SmartCareTaskType.CO2_CHECK -> CareTaskType.CO2_CHECK
+    SmartCareTaskType.FERTILIZER -> CareTaskType.FERTILIZER_DOSING
+    SmartCareTaskType.PLANT_CHECK -> CareTaskType.PLANT_HEALTH_CHECK
+    SmartCareTaskType.PLANT_TRIM -> CareTaskType.PLANT_TRIM
+    SmartCareTaskType.FILTER_CHECK -> CareTaskType.FILTER_MAINTENANCE
+    SmartCareTaskType.GLASS_CLEANING -> CareTaskType.GLASS_CLEANING
+    SmartCareTaskType.LIVESTOCK_CHECK -> CareTaskType.LIVESTOCK_CHECK
+    SmartCareTaskType.FEEDING -> CareTaskType.FEEDING
+    SmartCareTaskType.GENERAL_CHECK -> CareTaskType.CUSTOM
   }
+}
+
+private fun getAutomaticRulePrefix(
+  tankId: Long,
+  ruleId: String
+): String {
+  return "smart_${tankId}_${ruleId}_"
+}
+
+private fun createNextTaskId(
+  currentTasks: List<StoredCareTask>
+): Long {
+  val now = System.currentTimeMillis()
+
+  val maxExistingId = currentTasks.maxOfOrNull { task ->
+    task.id
+  } ?: 0L
+
+  return maxOf(
+    now,
+    maxExistingId + 1L
+  )
+}
+
+companion object {
+  fun create(
+    context: Context
+  ): CareTaskDataStoreManager {
+    return CareTaskDataStoreManager(
+      context.applicationContext
+    )
+  }
+}
+}
