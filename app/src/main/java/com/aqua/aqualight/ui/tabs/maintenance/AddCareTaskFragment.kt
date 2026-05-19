@@ -393,14 +393,17 @@ class AddCareTaskFragment :
     container.removeAllViews()
 
     val percentages = listOf(
-      10,
-      20,
-      30,
-      40,
-      50,
-      75,
-      100
-    )
+  10,
+  20,
+  30,
+  40,
+  50,
+  60,
+  70,
+  80,
+  90,
+  100
+)
 
     val grid = GridLayout(requireContext()).apply {
       columnCount = 4
