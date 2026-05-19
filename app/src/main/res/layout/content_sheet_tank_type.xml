@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GridLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/typeOptionsGrid"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:columnCount="3">
+
+  <TextView
+    android:id="@+id/optionFish"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="Fish" />
+
+  <TextView
+    android:id="@+id/optionShrimp"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="Shrimp" />
+
+  <TextView
+    android:id="@+id/optionPlanted"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="Planted" />
+
+  <TextView
+    android:id="@+id/optionMarine"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="Marine" />
+
+  <TextView
+    android:id="@+id/optionSofties"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="Softies" />
+
+  <TextView
+    android:id="@+id/optionMixedReef"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="Mixed Reef" />
+
+  <TextView
+    android:id="@+id/optionSps"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="SPS" />
+
+  <TextView
+    android:id="@+id/optionCoral"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="Coral" />
+
+  <TextView
+    android:id="@+id/optionOther"
+    style="@style/Aqua.SettingsSheet.GridOption"
+    android:text="Other" />
+
+  <com.google.android.material.button.MaterialButton
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/btnSave"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:layout_columnSpan="3"
+    android:layout_marginTop="18dp"
+    android:insetTop="0dp"
+    android:insetBottom="0dp"
+    android:minWidth="0dp"
+    android:minHeight="0dp"
+    android:text="Save"
+    android:textAllCaps="false"
+    android:textColor="@android:color/white"
+    android:textSize="14sp"
+    android:textStyle="bold"
+    app:backgroundTint="#2196F3"
+    app:cornerRadius="16dp" />
+
+  <TextView
+    android:id="@+id/btnCancel"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:layout_columnSpan="3"
+    android:layout_marginTop="10dp"
+    android:gravity="center"
+    android:includeFontPadding="false"
+    android:text="Cancel"
+    android:textColor="#8FA4BE"
+    android:textSize="14sp" />
+
+</GridLayout>

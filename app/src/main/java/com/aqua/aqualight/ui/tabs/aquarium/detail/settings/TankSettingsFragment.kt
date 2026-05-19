@@ -70,6 +70,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
 import androidx.core.os.bundleOf
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.databinding.ContentSheetPhotoSourceBinding
+import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -1185,81 +1186,6 @@ private fun showTankNameSheet() {
       }
     }
   }
-}
-
-private fun showTankTypeSheet() {
-  val tank = currentTank ?: return
-  val dialog = BottomSheetDialog(requireContext())
-
-  val container = createStepSheetContainer()
-  container.addView(createStepSheetHeader("Tank Type", dialog))
-
-  var selectedType = tank.tankType.ifBlank {
-    "Fish"
-  }
-
-  val grid = GridLayout(requireContext()).apply {
-    columnCount = 3
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 16.dp()
-    layoutParams = params
-  }
-
-  fun renderOptions() {
-    grid.removeAllViews()
-
-    listOf(
-      "Fish",
-      "Shrimp",
-      "Planted",
-      "Marine",
-      "Softies",
-      "Mixed Reef",
-      "SPS",
-      "Coral",
-      "Other"
-    ).forEach {
-      type ->
-      grid.addView(
-        createGridOption(
-          text = type,
-          selected = type.equals(
-            selectedType,
-            ignoreCase = true
-          )
-        ) {
-          selectedType = type
-          renderOptions()
-        }
-      )
-    }
-  }
-
-  renderOptions()
-
-  val saveButton = createStepSheetSaveButton {
-    viewLifecycleOwner.lifecycleScope.launch {
-      aquariumTankViewModel.updateTankType(
-        tankId = tankId,
-        tankType = selectedType
-      )
-
-      dialog.dismiss()
-    }
-  }
-
-  container.addView(grid)
-  container.addView(saveButton)
-  container.addView(createStepSheetCancelButton(dialog))
-
-  showConfiguredBottomSheet(
-    dialog = dialog,
-    content = container
-  )
 }
 
 private fun showTankSizeSheet() {
