@@ -1202,7 +1202,7 @@ private fun showTankSizeSheet() {
   contentBinding.inputHeight.setText(tank.heightCm.toString())
 
   showSettingsBottomSheet(
-    title = "Size",
+    title = "Tank Size",
     contentView = contentBinding.root
   ) {
     dialog ->
@@ -1277,122 +1277,65 @@ private fun toggleVolumeUnit() {
 
 private fun showTankSizeSheet() {
   val tank = currentTank ?: return
-  val dialog = BottomSheetDialog(requireContext())
 
-  val container = createStepSheetContainer()
-  container.addView(createStepSheetHeader("Size", dialog))
-
-  val unitRow = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-    background = createRoundedDrawable(
-      color = "#16314D",
-      radiusPx = 13.dp()
-    )
-    setPadding(
-      14.dp(),
-      0,
-      14.dp(),
-      0
-    )
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      46.dp()
-    )
-    params.topMargin = 16.dp()
-    layoutParams = params
-  }
-
-  val unitTitle = TextView(requireContext()).apply {
-    text = "Unit"
-    textSize = 13.5f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-
-    layoutParams = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-  }
-
-  val unitValue = TextView(requireContext()).apply {
-    text = "centimeters"
-    textSize = 13.5f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    includeFontPadding = false
-  }
-
-  unitRow.addView(unitTitle)
-  unitRow.addView(unitValue)
-
-  val inputsRow = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 22.dp()
-    layoutParams = params
-  }
-
-  val widthInput = addSizeInputColumn(
-    parent = inputsRow,
-    label = "Width",
-    value = tank.widthCm.toString()
+  val contentBinding = ContentSheetTankSizeBinding.inflate(
+    layoutInflater
   )
 
-  val lengthInput = addSizeInputColumn(
-    parent = inputsRow,
-    label = "Length",
-    value = tank.lengthCm.toString()
-  )
+  contentBinding.inputWidth.setText(tank.widthCm.toString())
+  contentBinding.inputLength.setText(tank.lengthCm.toString())
+  contentBinding.inputHeight.setText(tank.heightCm.toString())
 
-  val heightInput = addSizeInputColumn(
-    parent = inputsRow,
-    label = "Height",
-    value = tank.heightCm.toString()
-  )
+  showSettingsBottomSheet(
+    title = "Tank Size",
+    contentView = contentBinding.root
+  ) {
+    dialog ->
 
-  val saveButton = createStepSheetSaveButton {
-    val width = widthInput.text.toString().toIntOrNull()
-    val length = lengthInput.text.toString().toIntOrNull()
-    val height = heightInput.text.toString().toIntOrNull()
-
-    if (width == null || length == null || height == null ||
-      width <= 0 || length <= 0 || height <= 0
-    ) {
-      showSnackBar(
-        message = "Please enter valid tank size.",
-        type = BaseActivity.SnackType.WARNING
-      )
-      return@createStepSheetSaveButton
-    }
-
-    viewLifecycleOwner.lifecycleScope.launch {
-      aquariumTankViewModel.updateTankSize(
-        tankId = tankId,
-        widthCm = width,
-        lengthCm = length,
-        heightCm = height
-      )
-
+    contentBinding.btnCancel.setOnClickListener {
       dialog.dismiss()
     }
+
+    contentBinding.btnSave.setOnClickListener {
+      val width = contentBinding.inputWidth.text
+        .toString()
+        .toIntOrNull()
+
+      val length = contentBinding.inputLength.text
+        .toString()
+        .toIntOrNull()
+
+      val height = contentBinding.inputHeight.text
+        .toString()
+        .toIntOrNull()
+
+      if (
+        width == null ||
+        length == null ||
+        height == null ||
+        width <= 0 ||
+        length <= 0 ||
+        height <= 0
+      ) {
+        showSnackBar(
+          message = "Please enter valid tank size.",
+          type = BaseActivity.SnackType.WARNING
+        )
+        return@setOnClickListener
+      }
+
+      viewLifecycleOwner.lifecycleScope.launch {
+        aquariumTankViewModel.updateTankSize(
+          tankId = tankId,
+          widthCm = width,
+          lengthCm = length,
+          heightCm = height
+        )
+
+        dialog.dismiss()
+      }
+    }
   }
-
-  container.addView(unitRow)
-  container.addView(inputsRow)
-  container.addView(saveButton)
-  container.addView(createStepSheetCancelButton(dialog))
-
-  showConfiguredBottomSheet(
-    dialog = dialog,
-    content = container
-  )
 }
 
 private fun showSetupDateSheet() {
