@@ -10,9 +10,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.GridLayout
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
@@ -31,7 +29,6 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
@@ -46,6 +43,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.ui.tabs.settings.app.NotificationsBottomSheet
 import com.aqua.aqualight.utils.NotificationHelper
+import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 
 
 class AddCareTaskFragment :
@@ -127,6 +125,7 @@ Fragment(R.layout.fragment_add_care_task) {
 
     setupInitialUi()
     setupClickListeners()
+    observeTaskTypeSelection()
     observeTanks()
 
     if (isEditMode) {
@@ -284,227 +283,56 @@ Fragment(R.layout.fragment_add_care_task) {
   }
 
   private fun showTaskTypeBottomSheet() {
-    val dialog = BottomSheetDialog(requireContext())
-
-    val contentView = LayoutInflater.from(requireContext()).inflate(
-      R.layout.bottom_sheet_care_task_type,
-      null,
-      false
+    CareTaskTypeBottomSheetFragment.show(
+      fragmentManager = childFragmentManager,
+      title = "Select Task Type",
+      resultRequestKey = CareTaskTypeBottomSheetFragment.REQUEST_KEY_SELECT_TASK_TYPE,
+      selectedType = selectedType
     )
-
-    val container = contentView.findViewById<LinearLayout>(
-      R.id.typeOptionsContainer
-    )
-
-    renderTaskTypesIntoContainer(
-      container = container,
-      dialog = dialog
-    )
-
-    dialog.setContentView(contentView)
-
-    dialog.setOnShowListener {
-      val bottomSheet = dialog.findViewById<View>(
-        com.google.android.material.R.id.design_bottom_sheet
-      )
-
-      bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-    }
-
-    dialog.show()
   }
 
-  private fun renderTaskTypesIntoContainer(
-    container: LinearLayout,
-    dialog: BottomSheetDialog
+  private fun observeTaskTypeSelection() {
+    childFragmentManager.setFragmentResultListener(
+      CareTaskTypeBottomSheetFragment.REQUEST_KEY_SELECT_TASK_TYPE,
+      viewLifecycleOwner
+    ) {
+      _,
+      bundle ->
+
+      val typeName = bundle.getString(
+        CareTaskTypeBottomSheetFragment.RESULT_TASK_TYPE
+      ).orEmpty()
+
+      val type = runCatching {
+        CareTaskType.valueOf(typeName)
+      }.getOrNull() ?: return@setFragmentResultListener
+
+      applySelectedTaskType(type)
+    }
+  }
+
+  private fun applySelectedTaskType(
+    type: CareTaskType
   ) {
-    container.removeAllViews()
+    selectedType = type
 
-    CareTaskTypeCatalog.categories.forEach {
-      category ->
-      val items = CareTaskTypeCatalog.byCategory(category)
-
-      if (items.isEmpty()) {
-        return@forEach
-      }
-
-      val categoryTitle = TextView(requireContext()).apply {
-        text = category
-        textSize = 12f
-        setTextColor(Color.parseColor("#8FA4BE"))
-        setTypeface(null, Typeface.BOLD)
-        includeFontPadding = false
-
-        val params = LinearLayout.LayoutParams(
-          LinearLayout.LayoutParams.MATCH_PARENT,
-          LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        params.topMargin = 2.dp()
-        params.bottomMargin = 9.dp()
-        layoutParams = params
-      }
-
-      val grid = GridLayout(requireContext()).apply {
-        columnCount = 2
-
-        layoutParams = LinearLayout.LayoutParams(
-          LinearLayout.LayoutParams.MATCH_PARENT,
-          LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-      }
-
-      items.forEach {
-        item ->
-        grid.addView(
-          createTaskTypeCard(
-            item = item,
-            dialog = dialog
-          )
-        )
-      }
-
-      container.addView(categoryTitle)
-      container.addView(grid)
-    }
-  }
-
-  private fun createTaskTypeCard(
-    item: CareTaskTypeUi,
-    dialog: BottomSheetDialog
-  ): View {
-    val selected = item.type == selectedType
-    val accentColor = Color.parseColor(item.accentColor)
-
-    val card = MaterialCardView(requireContext()).apply {
-      radius = 16.dp().toFloat()
-      strokeWidth = 1.dp()
-      strokeColor = if (selected) {
-        accentColor
-      } else {
-        Color.parseColor("#223A57")
-      }
-      setCardBackgroundColor(
-        if (selected) {
-          Color.parseColor("#1C3D63")
-        } else {
-          Color.parseColor("#10233A")
-        }
-      )
-      cardElevation = 0f
-      isClickable = true
-      isFocusable = true
-
-      val params = GridLayout.LayoutParams().apply {
-        width = 0
-        height = 58.dp()
-        columnSpec = GridLayout.spec(
-          GridLayout.UNDEFINED,
-          1f
-        )
-        setMargins(
-          0,
-          0,
-          8.dp(),
-          8.dp()
-        )
-      }
-
-      layoutParams = params
-
-      setOnClickListener {
-        selectedType = item.type
-
-        if (item.type != CareTaskType.WATER_CHANGE) {
-          selectedWaterChangePercent = null
-        }
-
-        if (item.type != CareTaskType.CUSTOM) {
-          binding.etCustomTitle.setText("")
-        }
-
-        updateSelectedTaskTypeUi()
-        updateDynamicSections()
-        updateSaveButtonState()
-
-        dialog.dismiss()
-
-        if (item.type == CareTaskType.WATER_CHANGE) {
-          binding.root.post {
-            showWaterChangePercentBottomSheet()
-          }
-        }
-      }
+    if (type != CareTaskType.WATER_CHANGE) {
+      selectedWaterChangePercent = null
     }
 
-    val row = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-      setPadding(
-        9.dp(),
-        8.dp(),
-        9.dp(),
-        8.dp()
-      )
+    if (type != CareTaskType.CUSTOM) {
+      binding.etCustomTitle.setText("")
     }
 
-    val iconContainer = FrameLayout(requireContext()).apply {
-      background = createIconBackground(
-        color = accentColor,
-        selected = selected
-      )
+    updateSelectedTaskTypeUi()
+    updateDynamicSections()
+    updateSaveButtonState()
 
-      layoutParams = LinearLayout.LayoutParams(
-        36.dp(),
-        36.dp()
-      )
+    if (type == CareTaskType.WATER_CHANGE) {
+      binding.root.post {
+        showWaterChangePercentBottomSheet()
+      }
     }
-
-    val icon = ImageView(requireContext()).apply {
-      setImageResource(item.iconRes)
-      setColorFilter(Color.WHITE)
-      scaleType = ImageView.ScaleType.CENTER_INSIDE
-
-      val params = FrameLayout.LayoutParams(
-        20.dp(),
-        20.dp(),
-        Gravity.CENTER
-      )
-
-      layoutParams = params
-    }
-
-    iconContainer.addView(icon)
-
-    val title = TextView(requireContext()).apply {
-      text = item.title
-      textSize = 12.2f
-      setTextColor(Color.WHITE)
-      setTypeface(
-        null,
-        if (selected) {
-          Typeface.BOLD
-        } else {
-          Typeface.NORMAL
-        }
-      )
-      includeFontPadding = false
-      maxLines = 2
-
-      val params = LinearLayout.LayoutParams(
-        0,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        1f
-      )
-      params.marginStart = 10.dp()
-      layoutParams = params
-    }
-
-    row.addView(iconContainer)
-    row.addView(title)
-
-    card.addView(row)
-
-    return card
   }
 
   private fun showWaterChangePercentBottomSheet() {

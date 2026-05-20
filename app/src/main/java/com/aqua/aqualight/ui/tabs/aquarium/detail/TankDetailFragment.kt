@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import android.content.res.ColorStateList
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.data.UserPreferencesManager
@@ -52,7 +51,7 @@ import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
 import android.graphics.drawable.GradientDrawable
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.ui.tabs.aquarium.model.LivestockCategories
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
+import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
@@ -152,7 +151,11 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     binding.btnAddActivity.setOnClickListener {
-      showActivityTaskTypeBottomSheet()
+      CareTaskTypeBottomSheetFragment.show(
+        fragmentManager = childFragmentManager,
+        title = "Add Activity",
+        resultRequestKey = CareTaskTypeBottomSheetFragment.REQUEST_KEY_ADD_ACTIVITY
+      )
     }
 
     binding.tabTank.setOnClickListener {
@@ -632,240 +635,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     dialog.show()
-  }
-
-  private fun showActivityTaskTypeBottomSheet() {
-    val dialog = BottomSheetDialog(requireContext())
-
-    val contentView = LayoutInflater.from(requireContext()).inflate(
-      R.layout.bottom_sheet_care_task_type,
-      null,
-      false
-    )
-
-    val typeOptionsContainer = contentView.findViewById<LinearLayout>(
-      R.id.typeOptionsContainer
-    )
-
-    renderActivityTaskTypesIntoContainer(
-      container = typeOptionsContainer,
-      dialog = dialog
-    )
-
-    dialog.setContentView(contentView)
-
-    dialog.setOnShowListener {
-      val bottomSheet = dialog.findViewById<View>(
-        com.google.android.material.R.id.design_bottom_sheet
-      )
-
-      bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-    }
-
-    dialog.show()
-  }
-
-  private fun renderActivityTaskTypesIntoContainer(
-    container: LinearLayout,
-    dialog: BottomSheetDialog
-  ) {
-    container.removeAllViews()
-
-    CareTaskTypeCatalog.categories.forEach {
-      category ->
-
-      val taskTypes = CareTaskTypeCatalog.byCategory(category)
-
-      if (taskTypes.isEmpty()) {
-        return@forEach
-      }
-
-      container.addView(
-        createActivityTaskCategoryTitle(category)
-      )
-
-      taskTypes.forEach {
-        taskType ->
-        container.addView(
-          createActivityTaskTypeCard(
-            taskType = taskType,
-            dialog = dialog
-          )
-        )
-      }
-    }
-  }
-
-  private fun createActivityTaskCategoryTitle(
-    category: Any
-  ): View {
-    return TextView(requireContext()).apply {
-      text = readStringProperty(
-        source = category,
-        fallback = category.toString(),
-        "title",
-        "name",
-        "label"
-      )
-
-      textSize = 12f
-      setTextColor(Color.parseColor("#8FA4BE"))
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-
-      params.topMargin = 16.dp()
-      params.bottomMargin = 8.dp()
-
-      layoutParams = params
-    }
-  }
-
-  private fun createActivityTaskTypeCard(
-    taskType: Any,
-    dialog: BottomSheetDialog
-  ): View {
-    val title = readStringProperty(
-      source = taskType,
-      fallback = "Task Type",
-      "title",
-      "name",
-      "label"
-    )
-
-    val description = readStringProperty(
-      source = taskType,
-      fallback = "Add this activity to your aquarium timeline.",
-      "description",
-      "subtitle",
-      "summary"
-    )
-
-    val iconRes = readIntProperty(
-      source = taskType,
-      "iconRes",
-      "iconResId",
-      "icon"
-    ) ?: R.drawable.ic_add_24
-
-    val card = MaterialCardView(requireContext()).apply {
-      radius = 18.dp().toFloat()
-      strokeWidth = 1.dp()
-      strokeColor = Color.parseColor("#223A57")
-      setCardBackgroundColor(Color.parseColor("#10233A"))
-      cardElevation = 0f
-      useCompatPadding = false
-      isClickable = true
-      isFocusable = true
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-
-      params.bottomMargin = 10.dp()
-      layoutParams = params
-
-      setOnClickListener {
-        Toast.makeText(
-          requireContext(),
-          "$title selected.",
-          Toast.LENGTH_SHORT
-        ).show()
-      }
-    }
-
-    val row = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-
-      setPadding(
-        14.dp(),
-        12.dp(),
-        14.dp(),
-        12.dp()
-      )
-    }
-
-    val iconBox = ImageView(requireContext()).apply {
-      setImageResource(iconRes)
-      setColorFilter(Color.WHITE)
-
-      background = GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        setColor(Color.parseColor("#1C5D8F"))
-        cornerRadius = 16.dp().toFloat()
-      }
-
-      scaleType = ImageView.ScaleType.CENTER_INSIDE
-      contentDescription = title
-
-      layoutParams = LinearLayout.LayoutParams(
-        44.dp(),
-        44.dp()
-      )
-
-      setPadding(
-        10.dp(),
-        10.dp(),
-        10.dp(),
-        10.dp()
-      )
-    }
-
-    val textBox = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.VERTICAL
-
-      val params = LinearLayout.LayoutParams(
-        0,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        1f
-      )
-
-      params.marginStart = 14.dp()
-      layoutParams = params
-    }
-
-    val titleText = TextView(requireContext()).apply {
-      text = title
-      textSize = 14f
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-    }
-
-    val descriptionText = TextView(requireContext()).apply {
-      text = description
-      textSize = 12f
-      setTextColor(Color.parseColor("#8FA4BE"))
-      includeFontPadding = false
-      maxLines = 2
-      ellipsize = TextUtils.TruncateAt.END
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-
-      params.topMargin = 6.dp()
-      layoutParams = params
-    }
-
-    textBox.addView(titleText)
-    textBox.addView(descriptionText)
-
-    row.addView(iconBox)
-    row.addView(textBox)
-
-    card.addView(row)
-
-    return card
   }
 
   private fun openDeviceScanScreen() {
@@ -1922,86 +1691,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
   private fun Int.dp(): Int {
     return (this * resources.displayMetrics.density).toInt()
-  }
-
-  private fun readStringProperty(
-    source: Any,
-    fallback: String,
-    vararg names: String
-  ): String {
-    names.forEach {
-      name ->
-      val value = readPropertyValue(
-        source = source,
-        name = name
-      )
-
-      if (value != null && value.toString().isNotBlank()) {
-        return value.toString()
-      }
-    }
-
-    return fallback
-  }
-
-  private fun readIntProperty(
-    source: Any,
-    vararg names: String
-  ): Int? {
-    names.forEach {
-      name ->
-      val value = readPropertyValue(
-        source = source,
-        name = name
-      )
-
-      when (value) {
-        is Int -> {
-          if (value != 0) {
-            return value
-          }
-        }
-
-        is Number -> {
-          val intValue = value.toInt()
-
-          if (intValue != 0) {
-            return intValue
-          }
-        }
-      }
-    }
-
-    return null
-  }
-
-  private fun readPropertyValue(
-    source: Any,
-    name: String
-  ): Any? {
-    val getterName = "get" + name.replaceFirstChar {
-      if (it.isLowerCase()) {
-        it.titlecase(Locale.getDefault())
-      } else {
-        it.toString()
-      }
-    }
-
-    source.javaClass.methods.firstOrNull {
-      method ->
-      method.name == getterName && method.parameterTypes.isEmpty()
-    }?.let {
-      method ->
-      return runCatching {
-        method.invoke(source)
-      }.getOrNull()
-    }
-
-    return runCatching {
-      source.javaClass.getDeclaredField(name).apply {
-        isAccessible = true
-      }.get(source)
-    }.getOrNull()
   }
 
   override fun onSaveInstanceState(outState: Bundle) {
