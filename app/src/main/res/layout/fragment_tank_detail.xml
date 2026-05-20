@@ -1071,7 +1071,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
       android:layout_width="match_parent"
       android:layout_height="match_parent"
-      android:paddingStart="5dp"
+      android:paddingStart="2dp"
       android:paddingEnd="22dp">
 
       <com.google.android.material.card.MaterialCardView
@@ -1098,12 +1098,12 @@
       <TextView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="18dp"
+        android:layout_marginStart="10dp"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:text="Add Activity"
         android:textColor="?attr/colorOnSurface"
-        android:textSize="13sp"
+        android:textSize="11sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/addActivityIconCircle"
