@@ -425,7 +425,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       tasks = state.completedTasks
     )
   }
-  .
+
   private fun renderActivityTimeline(
     tasks: List<CareTaskUi>
   ) {
