@@ -52,6 +52,7 @@ import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
 import android.graphics.drawable.GradientDrawable
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.ui.tabs.aquarium.model.LivestockCategories
+import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
