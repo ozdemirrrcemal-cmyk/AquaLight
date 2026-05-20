@@ -215,7 +215,7 @@ Fragment(R.layout.fragment_task_detail) {
 
     val hasNote = task.note.isNotBlank()
     binding.tvNoteLabel.isVisible = hasNote
-    binding.tvNoteValue.isVisible = hasNote
+    binding.noteCard.isVisible = hasNote
     binding.tvNoteValue.text = task.note
 
     renderActionState(task)
