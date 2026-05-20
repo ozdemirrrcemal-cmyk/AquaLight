@@ -8,18 +8,12 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 
-enum class TimelineAxisStatus {
-  TODAY,
-  UPCOMING,
-  PAST
-}
-
 class TimelineAxisView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-  var status: TimelineAxisStatus = TimelineAxisStatus.PAST
+  var status: TimelineDayStatus = TimelineDayStatus.PAST
     set(value) {
       field = value
       invalidate()
@@ -37,7 +31,7 @@ class TimelineAxisView @JvmOverloads constructor(
   private val upcomingNodeColor = Color.parseColor("#7C8897")
   private val pastNodeColor = Color.parseColor("#38B8A8")
 
-  private val nodeCoverColor = Color.parseColor("#071625")
+  private val nodeCoverColor = Color.parseColor("#152B45")
 
   private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     color = axisLineColor
@@ -68,14 +62,16 @@ class TimelineAxisView @JvmOverloads constructor(
   }
 
   fun bind(
-    status: TimelineAxisStatus,
+    status: TimelineDayStatus,
     showNode: Boolean
   ) {
     this.status = status
     this.showNode = showNode
   }
 
-  override fun onDraw(canvas: Canvas) {
+  override fun onDraw(
+    canvas: Canvas
+  ) {
     super.onDraw(canvas)
 
     val centerX = width / 2f
@@ -120,7 +116,7 @@ class TimelineAxisView @JvmOverloads constructor(
       nodeStrokePaint
     )
 
-    if (status != TimelineAxisStatus.UPCOMING) {
+    if (status != TimelineDayStatus.UPCOMING) {
       canvas.drawCircle(
         centerX,
         centerY,
@@ -132,9 +128,9 @@ class TimelineAxisView @JvmOverloads constructor(
 
   private fun getNodeColor(): Int {
     return when (status) {
-      TimelineAxisStatus.TODAY -> todayNodeColor
-      TimelineAxisStatus.UPCOMING -> upcomingNodeColor
-      TimelineAxisStatus.PAST -> pastNodeColor
+      TimelineDayStatus.TODAY -> todayNodeColor
+      TimelineDayStatus.UPCOMING -> upcomingNodeColor
+      TimelineDayStatus.PAST -> pastNodeColor
     }
   }
 

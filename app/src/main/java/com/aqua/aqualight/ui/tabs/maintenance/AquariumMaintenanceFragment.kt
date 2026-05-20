@@ -22,8 +22,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentAquariumMaintenanceBinding
-import com.aqua.aqualight.ui.common.timeline.TimelineAxisStatus
 import com.aqua.aqualight.ui.common.timeline.TimelineAxisView
+import com.aqua.aqualight.ui.common.timeline.TimelineDayResolver
+import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
@@ -34,7 +35,6 @@ import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -391,7 +391,7 @@ class AquariumMaintenanceFragment :
   private fun createHistoryDateHeader(
     millis: Long
   ): View {
-    val dayStatus = getTimelineDayStatus(millis)
+    val dayStatus = TimelineDayResolver.resolve(millis)
 
     val row = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.HORIZONTAL
@@ -408,7 +408,7 @@ class AquariumMaintenanceFragment :
 
     val axisView = TimelineAxisView(requireContext()).apply {
       bind(
-        status = dayStatus.toTimelineAxisStatus(),
+        status = dayStatus,
         showNode = true
       )
 
@@ -435,9 +435,11 @@ class AquariumMaintenanceFragment :
     }
 
     val statusText = TextView(requireContext()).apply {
-      text = getTimelineStatusText(dayStatus)
+      text = TimelineDayResolver.getStatusText(dayStatus)
       textSize = 12.5f
-      setTextColor(getTimelineStatusTextColor(dayStatus))
+      setTextColor(
+        TimelineDayResolver.getStatusTextColor(dayStatus)
+      )
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
     }
@@ -463,7 +465,7 @@ class AquariumMaintenanceFragment :
 
     val axisView = TimelineAxisView(requireContext()).apply {
       bind(
-        status = TimelineAxisStatus.PAST,
+        status = TimelineDayStatus.PAST,
         showNode = false
       )
 
@@ -715,67 +717,6 @@ class AquariumMaintenanceFragment :
     ).format(Date(millis))
   }
 
-  private fun getTimelineDayStatus(
-    millis: Long
-  ): TimelineDayStatus {
-    val targetDayStart = getStartOfDayMillis(millis)
-    val todayStart = getStartOfDayMillis(System.currentTimeMillis())
-
-    return when {
-      targetDayStart == todayStart -> {
-        TimelineDayStatus.TODAY
-      }
-
-      targetDayStart > todayStart -> {
-        TimelineDayStatus.UPCOMING
-      }
-
-      else -> {
-        TimelineDayStatus.PAST
-      }
-    }
-  }
-
-  private fun TimelineDayStatus.toTimelineAxisStatus(): TimelineAxisStatus {
-    return when (this) {
-      TimelineDayStatus.TODAY -> TimelineAxisStatus.TODAY
-      TimelineDayStatus.UPCOMING -> TimelineAxisStatus.UPCOMING
-      TimelineDayStatus.PAST -> TimelineAxisStatus.PAST
-    }
-  }
-
-  private fun getTimelineStatusText(
-    status: TimelineDayStatus
-  ): String {
-    return when (status) {
-      TimelineDayStatus.TODAY -> "Today"
-      TimelineDayStatus.UPCOMING -> "Upcoming"
-      TimelineDayStatus.PAST -> ""
-    }
-  }
-
-  private fun getTimelineStatusTextColor(
-    status: TimelineDayStatus
-  ): Int {
-    return when (status) {
-      TimelineDayStatus.TODAY -> Color.parseColor("#46DCC9")
-      TimelineDayStatus.UPCOMING -> Color.parseColor("#7C8897")
-      TimelineDayStatus.PAST -> Color.TRANSPARENT
-    }
-  }
-
-  private fun getStartOfDayMillis(
-    millis: Long
-  ): Long {
-    return Calendar.getInstance().apply {
-      timeInMillis = millis
-      set(Calendar.HOUR_OF_DAY, 0)
-      set(Calendar.MINUTE, 0)
-      set(Calendar.SECOND, 0)
-      set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-  }
-
   private fun createHistoryIconBackground(
     color: Int
   ): GradientDrawable {
@@ -821,12 +762,6 @@ class AquariumMaintenanceFragment :
     _binding = null
 
     super.onDestroyView()
-  }
-
-  private enum class TimelineDayStatus {
-    TODAY,
-    UPCOMING,
-    PAST
   }
 
   companion object {
