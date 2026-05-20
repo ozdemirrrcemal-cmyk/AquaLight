@@ -45,6 +45,7 @@ import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import java.text.DecimalFormat
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
@@ -69,6 +70,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import java.text.DecimalFormatSymbols
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -86,6 +88,10 @@ MaterialPickerFragment.MaterialPickerHost {
   private var isDeletingTank: Boolean = false
   private var isDuplicatingTank: Boolean = false
   private var isExportingTank: Boolean = false
+  private val sheetSizeFormatter = DecimalFormat(
+    "#0.#",
+    DecimalFormatSymbols(Locale.US)
+  )
 
   private val galleryLauncher = registerForActivityResult(
     ActivityResultContracts.GetContent()
@@ -306,7 +312,9 @@ MaterialPickerFragment.MaterialPickerHost {
       "-"
     }
 
+    binding.tvSettingSizeTitle.text = getSizeTitleText(tank)
     binding.tvSettingSize.text = getSizeText(tank)
+
     binding.tvSettingVolume.text = getVolumeText(tank)
     binding.tvSettingSetupDate.text = getSetupDateText(tank.setupDateMillis)
 
@@ -1278,12 +1286,150 @@ private fun showTankSizeSheet() {
     layoutInflater
   )
 
-  contentBinding.inputWidth.setText(tank.widthCm.toString())
-  contentBinding.inputLength.setText(tank.lengthCm.toString())
-  contentBinding.inputHeight.setText(tank.heightCm.toString())
+  var selectedUnit = tank.sizeUnit.ifBlank {
+    "cm"
+  }.lowercase(Locale.getDefault())
+
+  fun unitText(): String {
+    return if (selectedUnit == "in") {
+      "inches"
+    } else {
+      "centimeters"
+    }
+  }
+
+  fun cmToInputValue(
+    cmValue: Int
+  ): String {
+    val value = if (selectedUnit == "in") {
+      cmValue / 2.54
+    } else {
+      cmValue.toDouble()
+    }
+
+    return sheetSizeFormatter.format(value)
+  }
+
+  fun renderUnit() {
+    contentBinding.tvUnitValue.text = unitText()
+  }
+
+  fun fillInputsFromTank() {
+    contentBinding.inputWidth.setText(
+      cmToInputValue(tank.widthCm)
+    )
+
+    contentBinding.inputLength.setText(
+      cmToInputValue(tank.lengthCm)
+    )
+
+    contentBinding.inputHeight.setText(
+      cmToInputValue(tank.heightCm)
+    )
+  }
+
+  fun convertInputsToUnit(
+    oldUnit: String,
+    newUnit: String
+  ) {
+    val widthValue = contentBinding.inputWidth.text
+    .toString()
+    .toDoubleOrNull()
+
+    val lengthValue = contentBinding.inputLength.text
+    .toString()
+    .toDoubleOrNull()
+
+    val heightValue = contentBinding.inputHeight.text
+    .toString()
+    .toDoubleOrNull()
+
+    if (
+      widthValue == null ||
+      lengthValue == null ||
+      heightValue == null ||
+      widthValue <= 0.0 ||
+      lengthValue <= 0.0 ||
+      heightValue <= 0.0
+    ) {
+      showSnackBar(
+        message = "Please enter valid tank size.",
+        type = BaseActivity.SnackType.WARNING
+      )
+      return
+    }
+
+    val widthCm = if (oldUnit == "in") {
+      widthValue * 2.54
+    } else {
+      widthValue
+    }
+
+    val lengthCm = if (oldUnit == "in") {
+      lengthValue * 2.54
+    } else {
+      lengthValue
+    }
+
+    val heightCm = if (oldUnit == "in") {
+      heightValue * 2.54
+    } else {
+      heightValue
+    }
+
+    val newWidth = if (newUnit == "in") {
+      widthCm / 2.54
+    } else {
+      widthCm
+    }
+
+    val newLength = if (newUnit == "in") {
+      lengthCm / 2.54
+    } else {
+      lengthCm
+    }
+
+    val newHeight = if (newUnit == "in") {
+      heightCm / 2.54
+    } else {
+      heightCm
+    }
+
+    contentBinding.inputWidth.setText(
+      sheetSizeFormatter.format(newWidth)
+    )
+
+    contentBinding.inputLength.setText(
+      sheetSizeFormatter.format(newLength)
+    )
+
+    contentBinding.inputHeight.setText(
+      sheetSizeFormatter.format(newHeight)
+    )
+  }
+
+  renderUnit()
+  fillInputsFromTank()
+
+  contentBinding.unitRow.setOnClickListener {
+    val oldUnit = selectedUnit
+
+    selectedUnit = if (selectedUnit == "in") {
+      "cm"
+    } else {
+      "in"
+    }
+
+    convertInputsToUnit(
+      oldUnit = oldUnit,
+      newUnit = selectedUnit
+    )
+
+    renderUnit()
+  }
 
   showSettingsBottomSheet(
-    title = "Tank Size",
+    title = "Size",
     contentView = contentBinding.root
   ) {
     dialog ->
@@ -1293,25 +1439,25 @@ private fun showTankSizeSheet() {
     }
 
     contentBinding.btnSave.setOnClickListener {
-      val width = contentBinding.inputWidth.text
+      val widthValue = contentBinding.inputWidth.text
       .toString()
-      .toIntOrNull()
+      .toDoubleOrNull()
 
-      val length = contentBinding.inputLength.text
+      val lengthValue = contentBinding.inputLength.text
       .toString()
-      .toIntOrNull()
+      .toDoubleOrNull()
 
-      val height = contentBinding.inputHeight.text
+      val heightValue = contentBinding.inputHeight.text
       .toString()
-      .toIntOrNull()
+      .toDoubleOrNull()
 
       if (
-        width == null ||
-        length == null ||
-        height == null ||
-        width <= 0 ||
-        length <= 0 ||
-        height <= 0
+        widthValue == null ||
+        lengthValue == null ||
+        heightValue == null ||
+        widthValue <= 0.0 ||
+        lengthValue <= 0.0 ||
+        heightValue <= 0.0
       ) {
         showSnackBar(
           message = "Please enter valid tank size.",
@@ -1320,12 +1466,31 @@ private fun showTankSizeSheet() {
         return@setOnClickListener
       }
 
+      val widthCm = if (selectedUnit == "in") {
+        (widthValue * 2.54).roundToInt()
+      } else {
+        widthValue.roundToInt()
+      }
+
+      val lengthCm = if (selectedUnit == "in") {
+        (lengthValue * 2.54).roundToInt()
+      } else {
+        lengthValue.roundToInt()
+      }
+
+      val heightCm = if (selectedUnit == "in") {
+        (heightValue * 2.54).roundToInt()
+      } else {
+        heightValue.roundToInt()
+      }
+
       viewLifecycleOwner.lifecycleScope.launch {
         aquariumTankViewModel.updateTankSize(
           tankId = tankId,
-          widthCm = width,
-          lengthCm = length,
-          heightCm = height
+          widthCm = widthCm,
+          lengthCm = lengthCm,
+          heightCm = heightCm,
+          sizeUnit = selectedUnit
         )
 
         dialog.dismiss()
@@ -1857,11 +2022,28 @@ private fun deleteCurrentTank() {
   }
 }
 
+private fun getSizeTitleText(
+  tank: SavedAquariumTank
+): String {
+  return if (tank.sizeUnit.equals("in", ignoreCase = true)) {
+    "Size (in)"
+  } else {
+    "Size (cm)"
+  }
+}
 
 private fun getSizeText(
   tank: SavedAquariumTank
 ): String {
-  return "${tank.widthCm} W x ${tank.lengthCm} L x ${tank.heightCm} H"
+  return if (tank.sizeUnit.equals("in", ignoreCase = true)) {
+    val widthIn = tank.widthCm / 2.54
+    val lengthIn = tank.lengthCm / 2.54
+    val heightIn = tank.heightCm / 2.54
+
+    "${sheetSizeFormatter.format(widthIn)} W x ${sheetSizeFormatter.format(lengthIn)} L x ${sheetSizeFormatter.format(heightIn)} H"
+  } else {
+    "${tank.widthCm} W x ${tank.lengthCm} L x ${tank.heightCm} H"
+  }
 }
 
 private fun getVolumeText(

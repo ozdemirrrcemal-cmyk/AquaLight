@@ -21,6 +21,7 @@ message StoredTank {
   string tankType = 10;
   string tankStyle = 11;
   int64 createdAtMillis = 12;
+  string sizeUnit = 13;
 
   repeated StoredPlantTag plants = 20;
   repeated StoredMaterial materials = 30;

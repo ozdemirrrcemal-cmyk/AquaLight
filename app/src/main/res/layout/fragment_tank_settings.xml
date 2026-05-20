@@ -355,11 +355,12 @@
             android:paddingEnd="14dp">
 
             <TextView
+			  android:id="@+id/tvSettingSizeTitle"
               android:layout_width="0dp"
               android:layout_height="wrap_content"
               android:layout_weight="1"
               android:includeFontPadding="false"
-              android:text="Size (cm)"
+              android:text="Tank Size (cm)"
               android:textColor="?attr/colorOnSurface"
               android:textSize="14sp"
               android:textStyle="bold" />
@@ -576,7 +577,7 @@
               android:layout_height="wrap_content"
               android:layout_weight="1"
               android:includeFontPadding="false"
-              android:text="Idea"
+              android:text="Tank Concept"
               android:textColor="?attr/colorOnSurface"
               android:textSize="14sp"
               android:textStyle="bold" />

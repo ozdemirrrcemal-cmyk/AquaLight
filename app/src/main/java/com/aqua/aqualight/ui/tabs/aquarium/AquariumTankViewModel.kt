@@ -8,8 +8,8 @@ import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 
 class AquariumTankViewModel(
   application: Application
@@ -20,7 +20,7 @@ class AquariumTankViewModel(
   )
 
   val tanks: LiveData<List<SavedAquariumTank>> =
-  tankDataStoreManager.tanksFlow.asLiveData()
+    tankDataStoreManager.tanksFlow.asLiveData()
 
   suspend fun addTankFromDraft(
     draft: TankDraft
@@ -78,13 +78,15 @@ class AquariumTankViewModel(
     tankId: Long,
     widthCm: Int,
     lengthCm: Int,
-    heightCm: Int
+    heightCm: Int,
+    sizeUnit: String
   ) {
     tankDataStoreManager.updateTankSize(
       tankId = tankId,
       widthCm = widthCm,
       lengthCm = lengthCm,
-      heightCm = heightCm
+      heightCm = heightCm,
+      sizeUnit = sizeUnit
     )
   }
 

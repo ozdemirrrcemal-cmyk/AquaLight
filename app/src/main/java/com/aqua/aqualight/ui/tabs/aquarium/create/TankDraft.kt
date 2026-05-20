@@ -8,15 +8,13 @@ data class TankDraft(
     val description: String = "",
     val photoUri: String? = null,
     val plants: List<TankPlantTag> = emptyList(),
-
     val materials: List<TankMaterialSelection> = emptyList(),
-
     val info: String = "",
-
     val setupDateMillis: Long? = null,
     val widthCm: Int = 10,
     val lengthCm: Int = 10,
     val heightCm: Int = 10,
+    val sizeUnit: String = "cm",
     val volumeUnit: String = "L",
     val tankType: String = "Fish",
     val tankStyle: String = ""

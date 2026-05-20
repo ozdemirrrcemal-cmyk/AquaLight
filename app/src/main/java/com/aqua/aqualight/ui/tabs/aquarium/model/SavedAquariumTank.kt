@@ -9,6 +9,7 @@ data class SavedAquariumTank(
     val widthCm: Int,
     val lengthCm: Int,
     val heightCm: Int,
+    val sizeUnit: String = "cm",
     val volumeUnit: String,
     val tankType: String,
     val tankStyle: String,

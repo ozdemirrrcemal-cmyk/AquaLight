@@ -248,17 +248,23 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     widthCm: Int,
     lengthCm: Int,
-    heightCm: Int
+    heightCm: Int,
+    sizeUnit: String
   ) {
     context.aquariumTanksDataStore.updateData {
       currentStore ->
+
       val updatedTanks = currentStore.getTanksList().map {
         storedTank ->
+
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
           .setWidthCm(widthCm)
           .setLengthCm(lengthCm)
           .setHeightCm(heightCm)
+          .setSizeUnit(sizeUnit.ifBlank {
+            "cm"
+          })
           .build()
         } else {
           storedTank
@@ -508,6 +514,9 @@ class AquariumTankDataStoreManager(
     .setWidthCm(widthCm)
     .setLengthCm(lengthCm)
     .setHeightCm(heightCm)
+    .setSizeUnit(sizeUnit.ifBlank {
+      "cm"
+    })
     .setVolumeUnit(volumeUnit)
     .setTankType(tankType)
     .setTankStyle(tankStyle)
@@ -566,6 +575,9 @@ class AquariumTankDataStoreManager(
       widthCm = widthCm,
       lengthCm = lengthCm,
       heightCm = heightCm,
+      sizeUnit = sizeUnit.ifBlank {
+        "cm"
+      },
       volumeUnit = volumeUnit,
       tankType = tankType,
       tankStyle = tankStyle,

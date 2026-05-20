@@ -11,6 +11,8 @@
     android:layout_width="match_parent"
     android:layout_height="46dp"
     android:background="@drawable/bg_settings_sheet_input"
+    android:clickable="true"
+    android:focusable="true"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingStart="14dp"
@@ -27,6 +29,7 @@
       android:textStyle="bold" />
 
     <TextView
+      android:id="@+id/tvUnitValue"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:includeFontPadding="false"
@@ -67,7 +70,7 @@
         android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
-        android:inputType="number"
+        android:inputType="numberDecimal"
         android:maxLines="1"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
@@ -103,7 +106,7 @@
         android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
-        android:inputType="number"
+        android:inputType="numberDecimal"
         android:maxLines="1"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
@@ -138,7 +141,7 @@
         android:background="@drawable/bg_settings_sheet_input"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
-        android:inputType="number"
+        android:inputType="numberDecimal"
         android:maxLines="1"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
