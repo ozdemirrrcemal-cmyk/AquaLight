@@ -25,11 +25,11 @@ class TimelineAxisView @JvmOverloads constructor(
       invalidate()
     }
 
-  private val axisLineColor = Color.parseColor("#2E4258")
+  private val axisLineColor = Color.parseColor("#33475D")
 
-  private val todayNodeColor = Color.parseColor("#46DCC9")
-  private val upcomingNodeColor = Color.parseColor("#7C8897")
-  private val pastNodeColor = Color.parseColor("#38B8A8")
+  private val todayNodeColor = Color.parseColor("#45CDBD")
+  private val pastNodeColor = Color.parseColor("#3FB7A9")
+  private val upcomingNodeColor = axisLineColor
 
   private val nodeCoverColor = Color.parseColor("#152B45")
 
@@ -60,7 +60,7 @@ class TimelineAxisView @JvmOverloads constructor(
 
   private val nodeStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     style = Paint.Style.STROKE
-    strokeWidth = 2f.dp()
+    strokeWidth = 1.5f.dp()
   }
 
   private val nodeFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -122,14 +122,12 @@ class TimelineAxisView @JvmOverloads constructor(
       nodeStrokePaint
     )
 
-    if (status != TimelineDayStatus.UPCOMING) {
-      canvas.drawCircle(
-        centerX,
-        centerY,
-        nodeInnerRadius,
-        nodeFillPaint
-      )
-    }
+    canvas.drawCircle(
+      centerX,
+      centerY,
+      nodeInnerRadius,
+      nodeFillPaint
+    )
   }
 
   private fun getNodeColor(): Int {

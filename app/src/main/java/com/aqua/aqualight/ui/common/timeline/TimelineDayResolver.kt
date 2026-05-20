@@ -37,15 +37,14 @@ object TimelineDayResolver {
   }
 
   fun getStatusTextColor(
-    status: TimelineDayStatus
-  ): Int {
-    return when (status) {
-      TimelineDayStatus.TODAY -> Color.parseColor("#46DCC9")
-      TimelineDayStatus.UPCOMING -> Color.parseColor("#7C8897")
-      TimelineDayStatus.PAST -> Color.TRANSPARENT
-    }
+  status: TimelineDayStatus
+): Int {
+  return when (status) {
+    TimelineDayStatus.TODAY -> Color.parseColor("#45CDBD")
+    TimelineDayStatus.UPCOMING -> Color.parseColor("#8FA0B5")
+    TimelineDayStatus.PAST -> Color.TRANSPARENT
   }
-
+}
   private fun getStartOfDayMillis(
     millis: Long
   ): Long {
