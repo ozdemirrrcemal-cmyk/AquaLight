@@ -416,10 +416,13 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     binding.tvLastWaterChangeValue.text = state.lastWaterChangeText
     binding.tvLastFilterValue.text = state.lastFilterMaintenanceText
 
-    binding.tvNextCareValue.text = state.nextCareTask?.let {
-      task ->
-      "${task.title} • ${state.nextCareText}"
-    } ?: "--"
+    if (state.nextCareTask == null) {
+      binding.tvNextCareTaskTitle.text = "--"
+      binding.tvNextCareValue.text = "No upcoming care"
+    } else {
+      binding.tvNextCareTaskTitle.text = state.nextCareTask.title
+      binding.tvNextCareValue.text = state.nextCareText
+    }
 
     renderActivityTimeline(
       tasks = state.completedTasks
