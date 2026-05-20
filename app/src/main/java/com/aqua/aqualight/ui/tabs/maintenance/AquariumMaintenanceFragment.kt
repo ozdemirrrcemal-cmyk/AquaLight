@@ -1,9 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.DashPathEffect
-import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -14,18 +11,22 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentAquariumMaintenanceBinding
+import com.aqua.aqualight.ui.common.timeline.TimelineAxisStatus
+import com.aqua.aqualight.ui.common.timeline.TimelineAxisView
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.aqua.aqualight.utils.DialogManager
@@ -36,11 +37,9 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 
 class AquariumMaintenanceFragment :
-Fragment(R.layout.fragment_aquarium_maintenance) {
+  Fragment(R.layout.fragment_aquarium_maintenance) {
 
   private var _binding: FragmentAquariumMaintenanceBinding? = null
   private val binding get() = _binding!!
@@ -49,6 +48,7 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
   private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
   private lateinit var adapter: CareTaskAdapter
+
   private var currentSelectedTab: MaintenanceTab = MaintenanceTab.ALL
   private var latestTanks: List<SavedAquariumTank> = emptyList()
   private var careProfileTargetTankId: Long = 0L
@@ -144,6 +144,7 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
         maintenanceViewModel.selectedTab.collect {
           selectedTab ->
           currentSelectedTab = selectedTab
+
           renderSelectedTab(selectedTab)
           renderEmptyText(selectedTab)
           renderCareProfileWarning()
@@ -195,14 +196,14 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
     }
 
     val incompleteProfiles = latestTanks
-    .map {
-      tank ->
-      tank to CareProfileCalculator.calculate(tank)
-    }
-    .filter {
-      (_, result) ->
-      result.percent < 100
-    }
+      .map {
+        tank ->
+        tank to CareProfileCalculator.calculate(tank)
+      }
+      .filter {
+        (_, result) ->
+        result.percent < 100
+      }
 
     if (incompleteProfiles.isEmpty()) {
       binding.cardCareProfileWarning.isVisible = false
@@ -225,16 +226,16 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
 
     if (incompleteProfiles.size == 1) {
       binding.tvCareProfileWarningTitle.text =
-      "Care profile incomplete"
+        "Care profile incomplete"
 
       binding.tvCareProfileWarningMessage.text =
-      "Improve automatic care tasks"
+        "Improve automatic care tasks"
     } else {
       binding.tvCareProfileWarningTitle.text =
-      "Care profiles incomplete"
+        "Care profiles incomplete"
 
       binding.tvCareProfileWarningMessage.text =
-      "${incompleteProfiles.size} aquariums need more details"
+        "${incompleteProfiles.size} aquariums need more details"
     }
   }
 
@@ -323,25 +324,25 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
       MaintenanceTab.ALL -> {
         binding.tvEmptyMaintenanceTitle.text = "No care tasks yet"
         binding.tvEmptyMaintenanceMessage.text =
-        "Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup."
+          "Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup."
       }
 
       MaintenanceTab.TODAY -> {
         binding.tvEmptyMaintenanceTitle.text = "Nothing due today"
         binding.tvEmptyMaintenanceMessage.text =
-        "There are no care tasks scheduled for today."
+          "There are no care tasks scheduled for today."
       }
 
       MaintenanceTab.UPCOMING -> {
         binding.tvEmptyMaintenanceTitle.text = "No upcoming tasks"
         binding.tvEmptyMaintenanceMessage.text =
-        "Future care reminders will appear here."
+          "Future care reminders will appear here."
       }
 
       MaintenanceTab.HISTORY -> {
         binding.tvEmptyMaintenanceTitle.text = "No completed tasks"
         binding.tvEmptyMaintenanceMessage.text =
-        "Completed maintenance tasks will be listed here."
+          "Completed maintenance tasks will be listed here."
       }
     }
   }
@@ -356,16 +357,16 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
     }
 
     val groupedTasks = tasks
-    .sortedByDescending {
-      task ->
-      task.completedAtMillis ?: task.dueAtMillis
-    }
-    .groupBy {
-      task ->
-      getHistoryDateKey(
+      .sortedByDescending {
+        task ->
         task.completedAtMillis ?: task.dueAtMillis
-      )
-    }
+      }
+      .groupBy {
+        task ->
+        getHistoryDateKey(
+          task.completedAtMillis ?: task.dueAtMillis
+        )
+      }
 
     groupedTasks.forEach {
       (_, dayTasks) ->
@@ -390,6 +391,8 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
   private fun createHistoryDateHeader(
     millis: Long
   ): View {
+    val dayStatus = getTimelineDayStatus(millis)
+
     val row = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
@@ -399,55 +402,25 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
       params.topMargin = 4.dp()
-      params.bottomMargin = 12.dp()
+      params.bottomMargin = 0
       layoutParams = params
     }
 
-    val nodeBox = FrameLayout(requireContext()).apply {
+    val axisView = TimelineAxisView(requireContext()).apply {
+      bind(
+        status = dayStatus.toTimelineAxisStatus(),
+        showNode = true
+      )
+
       layoutParams = LinearLayout.LayoutParams(
         HISTORY_AXIS_WIDTH_DP.dp(),
-        30.dp()
+        38.dp()
       )
     }
-
-    val outerNode = View(requireContext()).apply {
-      background = GradientDrawable().apply {
-        shape = GradientDrawable.OVAL
-        setColor(Color.TRANSPARENT)
-        setStroke(
-          3.dp(),
-          Color.parseColor("#5FD6B4")
-        )
-      }
-
-      val params = FrameLayout.LayoutParams(
-        20.dp(),
-        20.dp(),
-        Gravity.CENTER
-      )
-      layoutParams = params
-    }
-
-    val innerNode = View(requireContext()).apply {
-      background = GradientDrawable().apply {
-        shape = GradientDrawable.OVAL
-        setColor(Color.parseColor("#5FD6B4"))
-      }
-
-      val params = FrameLayout.LayoutParams(
-        8.dp(),
-        8.dp(),
-        Gravity.CENTER
-      )
-      layoutParams = params
-    }
-
-    nodeBox.addView(outerNode)
-    nodeBox.addView(innerNode)
 
     val dateText = TextView(requireContext()).apply {
       text = formatHistoryDate(millis)
-      textSize = 11.5f
+      textSize = 12.5f
       setTextColor(Color.WHITE)
       setTypeface(null, Typeface.NORMAL)
       includeFontPadding = false
@@ -461,22 +434,17 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
       layoutParams = params
     }
 
-    val todayText = TextView(requireContext()).apply {
-      text = if (isToday(millis)) {
-        "Today"
-      } else {
-        ""
-      }
-
+    val statusText = TextView(requireContext()).apply {
+      text = getTimelineStatusText(dayStatus)
       textSize = 12.5f
-      setTextColor(Color.parseColor("#5FD6B4"))
+      setTextColor(getTimelineStatusTextColor(dayStatus))
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
     }
 
-    row.addView(nodeBox)
+    row.addView(axisView)
     row.addView(dateText)
-    row.addView(todayText)
+    row.addView(statusText)
 
     return row
   }
@@ -493,25 +461,20 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
       )
     }
 
-    val lineBox = FrameLayout(requireContext()).apply {
+    val axisView = TimelineAxisView(requireContext()).apply {
+      bind(
+        status = TimelineAxisStatus.PAST,
+        showNode = false
+      )
+
       layoutParams = LinearLayout.LayoutParams(
         HISTORY_AXIS_WIDTH_DP.dp(),
         LinearLayout.LayoutParams.MATCH_PARENT
       )
     }
 
-    val dashedLine = createDashedTimelineLine().apply {
-      val params = FrameLayout.LayoutParams(
-        2.dp(),
-        FrameLayout.LayoutParams.MATCH_PARENT,
-        Gravity.CENTER_HORIZONTAL
-      )
-      layoutParams = params
-    }
+    row.addView(axisView)
 
-    lineBox.addView(dashedLine)
-
-    row.addView(lineBox)
     row.addView(
       createHistoryTaskCard(task)
     )
@@ -519,331 +482,354 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
     return row
   }
 
-  private fun createDashedTimelineLine(): View {
-    return object : View(requireContext()) {
+  private fun createHistoryTaskCard(
+    task: CareTaskUi
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 18.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#2B6F5A")
+      setCardBackgroundColor(Color.parseColor("#12382F"))
+      cardElevation = 0f
+      useCompatPadding = false
 
-    private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-      color = Color.parseColor("#3A4654")
-      strokeWidth = 2.dp().toFloat()
-      style = Paint.Style.STROKE
-      strokeCap = Paint.Cap.ROUND
-      pathEffect = DashPathEffect(
-        floatArrayOf(
-          8.dp().toFloat(),
-          9.dp().toFloat()
-        ),
-        0f
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.bottomMargin = 12.dp()
+      layoutParams = params
+    }
+
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+
+      setPadding(
+        13.dp(),
+        12.dp(),
+        12.dp(),
+        12.dp()
       )
     }
 
-    override fun onDraw(canvas: Canvas) {
-      super.onDraw(canvas)
+    val iconBox = FrameLayout(requireContext()).apply {
+      background = createHistoryIconBackground(
+        color = Color.parseColor(task.accentColor)
+      )
 
-      val centerX = width / 2f
-
-      canvas.drawLine(
-        centerX,
-        0f,
-        centerX,
-        height.toFloat(),
-        linePaint
+      layoutParams = LinearLayout.LayoutParams(
+        40.dp(),
+        40.dp()
       )
     }
+
+    val icon = ImageView(requireContext()).apply {
+      setImageResource(task.iconRes)
+      setColorFilter(Color.WHITE)
+
+      val params = FrameLayout.LayoutParams(
+        20.dp(),
+        20.dp(),
+        Gravity.CENTER
+      )
+      layoutParams = params
+    }
+
+    iconBox.addView(icon)
+
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 12.dp()
+      params.marginEnd = 8.dp()
+      layoutParams = params
+    }
+
+    val titleText = TextView(requireContext()).apply {
+      text = task.title
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+
+    val metaText = TextView(requireContext()).apply {
+      text = buildHistoryMetaText(task)
+      textSize = 12f
+      setTextColor(Color.parseColor("#B8C7D9"))
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 5.dp()
+      layoutParams = params
+    }
+
+    val completedText = TextView(requireContext()).apply {
+      text = "Completed"
+      textSize = 12f
+      setTextColor(Color.parseColor("#5FD6B4"))
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 5.dp()
+      layoutParams = params
+    }
+
+    textBox.addView(titleText)
+    textBox.addView(metaText)
+    textBox.addView(completedText)
+
+    val checkBox = FrameLayout(requireContext()).apply {
+      background = GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(Color.TRANSPARENT)
+        setStroke(
+          1.dp(),
+          Color.parseColor("#3FAE87")
+        )
+      }
+
+      layoutParams = LinearLayout.LayoutParams(
+        34.dp(),
+        34.dp()
+      )
+    }
+
+    val checkIcon = ImageView(requireContext()).apply {
+      setImageResource(R.drawable.ic_check_20)
+      setColorFilter(Color.parseColor("#5FD6B4"))
+
+      val params = FrameLayout.LayoutParams(
+        18.dp(),
+        18.dp(),
+        Gravity.CENTER
+      )
+      layoutParams = params
+    }
+
+    checkBox.addView(checkIcon)
+
+    row.addView(iconBox)
+    row.addView(textBox)
+    row.addView(checkBox)
+
+    card.addView(row)
+
+    return card
   }
-}
 
-private fun createHistoryTaskCard(
-  task: CareTaskUi
-): View {
-  val card = MaterialCardView(requireContext()).apply {
-    radius = 18.dp().toFloat()
-    strokeWidth = 1.dp()
-    strokeColor = Color.parseColor("#2B6F5A")
-    setCardBackgroundColor(Color.parseColor("#12382F"))
-    cardElevation = 0f
-    useCompatPadding = false
-
-    val params = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
+  private fun showCompleteTaskDialog(
+    task: CareTaskUi
+  ) {
+    DialogManager.showConfirmDialog(
+      context = requireContext(),
+      type = DialogType.SUCCESS,
+      title = "Complete Task?",
+      message = "\"${task.title}\" will be marked as completed.",
+      confirmTextResId = R.string.confirm,
+      cancelTextResId = R.string.cancel,
+      onConfirm = {
+        maintenanceViewModel.completeTask(
+          taskId = task.id
+        )
+      }
     )
-    params.bottomMargin = 12.dp()
-    layoutParams = params
   }
 
-  val row = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-
-    setPadding(
-      13.dp(),
-      12.dp(),
-      12.dp(),
-      12.dp()
+  private fun openAddCareTaskScreen() {
+    findNavController().navigate(
+      R.id.addCareTaskFragment
     )
   }
 
-  val iconBox = FrameLayout(requireContext()).apply {
-    background = createHistoryIconBackground(
-      color = Color.parseColor(task.accentColor)
-    )
-
-    layoutParams = LinearLayout.LayoutParams(
-      40.dp(),
-      40.dp()
+  private fun openTaskDetailScreen(
+    task: CareTaskUi
+  ) {
+    findNavController().navigate(
+      R.id.action_aquariumMaintenanceFragment_to_taskDetailFragment,
+      bundleOf(
+        "taskId" to task.id
+      )
     )
   }
 
-  val icon = ImageView(requireContext()).apply {
-    setImageResource(task.iconRes)
-    setColorFilter(Color.WHITE)
+  private fun buildHistoryMetaText(
+    task: CareTaskUi
+  ): String {
+    val completedAt = task.completedAtMillis ?: task.dueAtMillis
 
-    val params = FrameLayout.LayoutParams(
-      20.dp(),
-      20.dp(),
-      Gravity.CENTER
-    )
-    layoutParams = params
+    return buildString {
+      append(task.tankName)
+      append(" • ")
+      append(formatHistoryTime(completedAt))
+
+      if (task.sourceLabel.isNotBlank()) {
+        append(" • ")
+        append(task.sourceLabel)
+      }
+    }
   }
 
-  iconBox.addView(icon)
-
-  val textBox = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.VERTICAL
-
-    val params = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-    params.marginStart = 12.dp()
-    params.marginEnd = 8.dp()
-    layoutParams = params
+  private fun formatHistoryDate(
+    millis: Long
+  ): String {
+    return SimpleDateFormat(
+      "dd.MM.yyyy",
+      Locale.getDefault()
+    ).format(Date(millis))
   }
 
-  val titleText = TextView(requireContext()).apply {
-    text = task.title
-    textSize = 14f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
+  private fun formatHistoryTime(
+    millis: Long
+  ): String {
+    return SimpleDateFormat(
+      "HH:mm",
+      Locale.getDefault()
+    ).format(Date(millis))
   }
 
-  val metaText = TextView(requireContext()).apply {
-    text = buildHistoryMetaText(task)
-    textSize = 12f
-    setTextColor(Color.parseColor("#B8C7D9"))
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 5.dp()
-    layoutParams = params
+  private fun getHistoryDateKey(
+    millis: Long
+  ): String {
+    return SimpleDateFormat(
+      "yyyyMMdd",
+      Locale.getDefault()
+    ).format(Date(millis))
   }
 
-  val completedText = TextView(requireContext()).apply {
-    text = "Completed"
-    textSize = 12f
-    setTextColor(Color.parseColor("#5FD6B4"))
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
+  private fun getTimelineDayStatus(
+    millis: Long
+  ): TimelineDayStatus {
+    val targetDayStart = getStartOfDayMillis(millis)
+    val todayStart = getStartOfDayMillis(System.currentTimeMillis())
 
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 5.dp()
-    layoutParams = params
+    return when {
+      targetDayStart == todayStart -> {
+        TimelineDayStatus.TODAY
+      }
+
+      targetDayStart > todayStart -> {
+        TimelineDayStatus.UPCOMING
+      }
+
+      else -> {
+        TimelineDayStatus.PAST
+      }
+    }
   }
 
-  textBox.addView(titleText)
-  textBox.addView(metaText)
-  textBox.addView(completedText)
+  private fun TimelineDayStatus.toTimelineAxisStatus(): TimelineAxisStatus {
+    return when (this) {
+      TimelineDayStatus.TODAY -> TimelineAxisStatus.TODAY
+      TimelineDayStatus.UPCOMING -> TimelineAxisStatus.UPCOMING
+      TimelineDayStatus.PAST -> TimelineAxisStatus.PAST
+    }
+  }
 
-  val checkBox = FrameLayout(requireContext()).apply {
-    background = GradientDrawable().apply {
-      shape = GradientDrawable.OVAL
-      setColor(Color.TRANSPARENT)
+  private fun getTimelineStatusText(
+    status: TimelineDayStatus
+  ): String {
+    return when (status) {
+      TimelineDayStatus.TODAY -> "Today"
+      TimelineDayStatus.UPCOMING -> "Upcoming"
+      TimelineDayStatus.PAST -> ""
+    }
+  }
+
+  private fun getTimelineStatusTextColor(
+    status: TimelineDayStatus
+  ): Int {
+    return when (status) {
+      TimelineDayStatus.TODAY -> Color.parseColor("#46DCC9")
+      TimelineDayStatus.UPCOMING -> Color.parseColor("#7C8897")
+      TimelineDayStatus.PAST -> Color.TRANSPARENT
+    }
+  }
+
+  private fun getStartOfDayMillis(
+    millis: Long
+  ): Long {
+    return Calendar.getInstance().apply {
+      timeInMillis = millis
+      set(Calendar.HOUR_OF_DAY, 0)
+      set(Calendar.MINUTE, 0)
+      set(Calendar.SECOND, 0)
+      set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+  }
+
+  private fun createHistoryIconBackground(
+    color: Int
+  ): GradientDrawable {
+    return GradientDrawable().apply {
+      shape = GradientDrawable.RECTANGLE
+      cornerRadius = 13.dp().toFloat()
+
+      setColor(
+        applyAlpha(
+          color = color,
+          alpha = 0.26f
+        )
+      )
+
       setStroke(
         1.dp(),
-        Color.parseColor("#3FAE87")
+        applyAlpha(
+          color = color,
+          alpha = 0.7f
+        )
       )
     }
+  }
 
-    layoutParams = LinearLayout.LayoutParams(
-      34.dp(),
-      34.dp()
+  private fun applyAlpha(
+    color: Int,
+    alpha: Float
+  ): Int {
+    return Color.argb(
+      (255 * alpha).toInt(),
+      Color.red(color),
+      Color.green(color),
+      Color.blue(color)
     )
   }
 
-  val checkIcon = ImageView(requireContext()).apply {
-    setImageResource(R.drawable.ic_check_20)
-    setColorFilter(Color.parseColor("#5FD6B4"))
-
-    val params = FrameLayout.LayoutParams(
-      18.dp(),
-      18.dp(),
-      Gravity.CENTER
-    )
-    layoutParams = params
+  private fun Int.dp(): Int {
+    return (this * resources.displayMetrics.density).toInt()
   }
 
-  checkBox.addView(checkIcon)
+  override fun onDestroyView() {
+    binding.rvCareTasks.adapter = null
+    _binding = null
 
-  row.addView(iconBox)
-  row.addView(textBox)
-  row.addView(checkBox)
-
-  card.addView(row)
-
-  return card
-}
-
-private fun showCompleteTaskDialog(
-  task: CareTaskUi
-) {
-  DialogManager.showConfirmDialog(
-    context = requireContext(),
-    type = DialogType.SUCCESS,
-    title = "Complete Task?",
-    message = "\"${task.title}\" will be marked as completed.",
-    confirmTextResId = R.string.confirm,
-    cancelTextResId = R.string.cancel,
-    onConfirm = {
-      maintenanceViewModel.completeTask(
-        taskId = task.id
-      )
-    }
-  )
-}
-
-private fun openAddCareTaskScreen() {
-  findNavController().navigate(
-    R.id.addCareTaskFragment
-  )
-}
-
-private fun openTaskDetailScreen(
-  task: CareTaskUi
-) {
-  findNavController().navigate(
-    R.id.action_aquariumMaintenanceFragment_to_taskDetailFragment,
-    androidx.core.os.bundleOf(
-      "taskId" to task.id
-    )
-  )
-}
-
-private fun buildHistoryMetaText(
-  task: CareTaskUi
-): String {
-  val completedAt = task.completedAtMillis ?: task.dueAtMillis
-
-  return buildString {
-    append(task.tankName)
-    append(" • ")
-    append(formatHistoryTime(completedAt))
-
-    if (task.sourceLabel.isNotBlank()) {
-      append(" • ")
-      append(task.sourceLabel)
-    }
-  }
-}
-
-private fun formatHistoryDate(
-  millis: Long
-): String {
-  return SimpleDateFormat(
-    "dd.MM.yyyy",
-    Locale.getDefault()
-  ).format(Date(millis))
-}
-
-private fun formatHistoryTime(
-  millis: Long
-): String {
-  return SimpleDateFormat(
-    "HH:mm",
-    Locale.getDefault()
-  ).format(Date(millis))
-}
-
-private fun getHistoryDateKey(
-  millis: Long
-): String {
-  return SimpleDateFormat(
-    "yyyyMMdd",
-    Locale.getDefault()
-  ).format(Date(millis))
-}
-
-private fun isToday(
-  millis: Long
-): Boolean {
-  val target = Calendar.getInstance().apply {
-    timeInMillis = millis
+    super.onDestroyView()
   }
 
-  val today = Calendar.getInstance()
-
-  return target.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-  target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
-}
-
-private fun createHistoryIconBackground(
-  color: Int
-): GradientDrawable {
-  return GradientDrawable().apply {
-    shape = GradientDrawable.RECTANGLE
-    cornerRadius = 13.dp().toFloat()
-    setColor(
-      applyAlpha(
-        color = color,
-        alpha = 0.26f
-      )
-    )
-    setStroke(
-      1.dp(),
-      applyAlpha(
-        color = color,
-        alpha = 0.7f
-      )
-    )
+  private enum class TimelineDayStatus {
+    TODAY,
+    UPCOMING,
+    PAST
   }
-}
 
-private fun applyAlpha(
-  color: Int,
-  alpha: Float
-): Int {
-  return Color.argb(
-    (255 * alpha).toInt(),
-    Color.red(color),
-    Color.green(color),
-    Color.blue(color)
-  )
-}
-
-private fun Int.dp(): Int {
-  return (this * resources.displayMetrics.density).toInt()
-}
-
-override fun onDestroyView() {
-  binding.rvCareTasks.adapter = null
-  _binding = null
-
-  super.onDestroyView()
-}
-
-companion object {
-  private const val HISTORY_AXIS_WIDTH_DP = 42
-}
+  companion object {
+    private const val HISTORY_AXIS_WIDTH_DP = 42
+  }
 }
