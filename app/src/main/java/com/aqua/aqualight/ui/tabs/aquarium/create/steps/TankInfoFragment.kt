@@ -35,11 +35,10 @@ class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment
 
 private val volumeFormatter = DecimalFormat("#.##")
 
-private val sizeFormatter = DecimalFormat(
-  "#0.#",
+private val sizeFormatterprivate val sizeFormatter = DecimalFormat(
+  "#0.##",
   DecimalFormatSymbols(Locale.US)
 )
-
 override fun onViewCreated(
   view: View,
   savedInstanceState: Bundle?
@@ -84,7 +83,9 @@ private fun renderDetails() {
     }
   )
 
+  binding.tvSizeLabel.text = formatSizeTitle()
   binding.tvSizeValue.text = formatSize()
+
   binding.tvVolumeValue.text = formatVolume()
   binding.tvTankTypeValue.text = draft.tankType
 
@@ -719,6 +720,16 @@ return SimpleDateFormat(
 "dd MMM yyyy",
 Locale.ENGLISH
 ).format(Date(millis))
+}
+
+private fun formatSizeTitle(): String {
+val draft = viewModel.tankDraft
+
+return if (draft.sizeUnit.equals("in", ignoreCase = true)) {
+"Size (in)"
+} else {
+"Size (cm)"
+}
 }
 
 private fun formatSize(): String {

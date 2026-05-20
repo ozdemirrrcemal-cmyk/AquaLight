@@ -88,11 +88,10 @@ MaterialPickerFragment.MaterialPickerHost {
   private var isDeletingTank: Boolean = false
   private var isDuplicatingTank: Boolean = false
   private var isExportingTank: Boolean = false
-  private val sheetSizeFormatter = DecimalFormat(
-    "#0.#",
+  private val sizeFormatter = DecimalFormat(
+    "#0.##",
     DecimalFormatSymbols(Locale.US)
   )
-
   private val galleryLauncher = registerForActivityResult(
     ActivityResultContracts.GetContent()
   ) {
