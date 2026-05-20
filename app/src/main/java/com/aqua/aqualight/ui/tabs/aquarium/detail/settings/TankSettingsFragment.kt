@@ -88,10 +88,12 @@ MaterialPickerFragment.MaterialPickerHost {
   private var isDeletingTank: Boolean = false
   private var isDuplicatingTank: Boolean = false
   private var isExportingTank: Boolean = false
+
   private val sizeFormatter = DecimalFormat(
     "#0.##",
     DecimalFormatSymbols(Locale.US)
   )
+
   private val galleryLauncher = registerForActivityResult(
     ActivityResultContracts.GetContent()
   ) {
@@ -1306,7 +1308,7 @@ private fun showTankSizeSheet() {
       cmValue.toDouble()
     }
 
-    return sheetSizeFormatter.format(value)
+    return sizeFormatter.format(value)
   }
 
   fun renderUnit() {
@@ -1395,15 +1397,15 @@ private fun showTankSizeSheet() {
     }
 
     contentBinding.inputWidth.setText(
-      sheetSizeFormatter.format(newWidth)
+      sizeFormatter.format(newWidth)
     )
 
     contentBinding.inputLength.setText(
-      sheetSizeFormatter.format(newLength)
+      sizeFormatter.format(newLength)
     )
 
     contentBinding.inputHeight.setText(
-      sheetSizeFormatter.format(newHeight)
+      sizeFormatter.format(newHeight)
     )
   }
 
@@ -2039,7 +2041,7 @@ private fun getSizeText(
     val lengthIn = tank.lengthCm / 2.54
     val heightIn = tank.heightCm / 2.54
 
-    "${sheetSizeFormatter.format(widthIn)} W x ${sheetSizeFormatter.format(lengthIn)} L x ${sheetSizeFormatter.format(heightIn)} H"
+    "${sizeFormatter.format(widthIn)} W x ${sizeFormatter.format(lengthIn)} L x ${sizeFormatter.format(heightIn)} H"
   } else {
     "${tank.widthCm} W x ${tank.lengthCm} L x ${tank.heightCm} H"
   }

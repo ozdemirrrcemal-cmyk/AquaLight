@@ -33,12 +33,17 @@ class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment
     ownerProducer = { requireParentFragment() }
 )
 
-private val volumeFormatter = DecimalFormat("#.##")
+private val volumeFormatter = DecimalFormat(
+  "#.##",
+  DecimalFormatSymbols(Locale.US)
+)
 
-private val sizeFormatterprivate val sizeFormatter = DecimalFormat(
+private val sizeFormatter = DecimalFormat(
   "#0.##",
   DecimalFormatSymbols(Locale.US)
 )
+
+
 override fun onViewCreated(
   view: View,
   savedInstanceState: Bundle?
