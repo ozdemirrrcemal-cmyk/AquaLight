@@ -55,6 +55,11 @@ import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
+import android.widget.FrameLayout
+import com.aqua.aqualight.ui.common.timeline.TimelineAxisView
+import com.aqua.aqualight.ui.common.timeline.TimelineDayResolver
+import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
+import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
@@ -415,6 +420,384 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       task ->
       "${task.title} • ${state.nextCareText}"
     } ?: "--"
+
+    renderActivityTimeline(
+      tasks = state.completedTasks
+    )
+  }
+  .
+  private fun renderActivityTimeline(
+    tasks: List<CareTaskUi>
+  ) {
+    binding.activityTimelineContainer.removeAllViews()
+
+    val hasActivity = tasks.isNotEmpty()
+
+    binding.tvTimelineEmpty.isVisible = !hasActivity
+    binding.activityTimelineContainer.isVisible = hasActivity
+
+    if (!hasActivity) {
+      return
+    }
+
+    val groupedTasks = tasks
+    .sortedByDescending {
+      task ->
+      task.completedAtMillis ?: task.dueAtMillis
+    }
+    .groupBy {
+      task ->
+      formatActivityDateKey(
+        task.completedAtMillis ?: task.dueAtMillis
+      )
+    }
+
+    groupedTasks.forEach {
+      (_, dayTasks) ->
+      val firstTask = dayTasks.firstOrNull() ?: return@forEach
+      val dateMillis = firstTask.completedAtMillis ?: firstTask.dueAtMillis
+
+      binding.activityTimelineContainer.addView(
+        createActivityDateHeader(
+          millis = dateMillis
+        )
+      )
+
+      dayTasks.forEach {
+        task ->
+        binding.activityTimelineContainer.addView(
+          createActivityTaskRow(task)
+        )
+      }
+    }
+  }
+
+  private fun createActivityDateHeader(
+    millis: Long
+  ): View {
+    val dayStatus = TimelineDayResolver.resolve(millis)
+
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 4.dp()
+      params.bottomMargin = 0
+      layoutParams = params
+    }
+
+    val axisView = TimelineAxisView(requireContext()).apply {
+      bind(
+        status = dayStatus,
+        showNode = true
+      )
+
+      layoutParams = LinearLayout.LayoutParams(
+        ACTIVITY_AXIS_WIDTH_DP.dp(),
+        38.dp()
+      )
+    }
+
+    val dateText = TextView(requireContext()).apply {
+      text = formatActivityDate(millis)
+      textSize = 12.5f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.NORMAL)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 4.dp()
+      layoutParams = params
+    }
+
+    row.addView(axisView)
+    row.addView(dateText)
+
+    return row
+  }
+
+  private fun createActivityTaskRow(
+    task: CareTaskUi
+  ): View {
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+
+      layoutParams = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+    }
+
+    val axisView = TimelineAxisView(requireContext()).apply {
+      bind(
+        status = TimelineDayStatus.PAST,
+        showNode = false
+      )
+
+      layoutParams = LinearLayout.LayoutParams(
+        ACTIVITY_AXIS_WIDTH_DP.dp(),
+        LinearLayout.LayoutParams.MATCH_PARENT
+      )
+    }
+
+    row.addView(axisView)
+    row.addView(
+      createActivityTaskCard(task)
+    )
+
+    return row
+  }
+
+  private fun createActivityTaskCard(
+    task: CareTaskUi
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 18.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#223A57")
+      setCardBackgroundColor(Color.parseColor("#10233A"))
+      cardElevation = 0f
+      useCompatPadding = false
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.bottomMargin = 12.dp()
+      layoutParams = params
+    }
+
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.TOP
+
+      setPadding(
+        12.dp(),
+        11.dp(),
+        12.dp(),
+        11.dp()
+      )
+    }
+
+    val iconBox = FrameLayout(requireContext()).apply {
+      background = createActivityIconBackground(
+        color = Color.parseColor(task.accentColor)
+      )
+
+      val params = LinearLayout.LayoutParams(
+        38.dp(),
+        38.dp()
+      )
+      params.topMargin = 2.dp()
+      layoutParams = params
+    }
+
+    val icon = ImageView(requireContext()).apply {
+      setImageResource(task.iconRes)
+      setColorFilter(Color.WHITE)
+
+      val params = FrameLayout.LayoutParams(
+        19.dp(),
+        19.dp(),
+        Gravity.CENTER
+      )
+      layoutParams = params
+    }
+
+    iconBox.addView(icon)
+
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 11.dp()
+      layoutParams = params
+    }
+
+    val titleText = TextView(requireContext()).apply {
+      text = task.title
+      textSize = 13.2f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+
+    val metaText = TextView(requireContext()).apply {
+      text = buildActivityMetaText(task)
+      textSize = 11.8f
+      setTextColor(Color.parseColor("#B8C7D9"))
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 6.dp()
+      layoutParams = params
+    }
+
+    val completedText = TextView(requireContext()).apply {
+      text = "Completed"
+      textSize = 11.8f
+      setTextColor(Color.parseColor("#5FD6B4"))
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 7.dp()
+      layoutParams = params
+    }
+
+    textBox.addView(titleText)
+    textBox.addView(metaText)
+    textBox.addView(completedText)
+
+    row.addView(iconBox)
+    row.addView(textBox)
+
+    card.addView(row)
+
+    return card
+  }
+
+  private fun buildActivityMetaText(
+    task: CareTaskUi
+  ): String {
+    val completedAt = task.completedAtMillis ?: task.dueAtMillis
+
+    return buildString {
+      append(formatActivityTime(completedAt))
+
+      if (task.sourceLabel.isNotBlank()) {
+        append(" • ")
+        append(task.sourceLabel)
+      }
+    }
+  }
+
+  private fun formatActivityDate(
+    millis: Long
+  ): String {
+    val dateText = SimpleDateFormat(
+      "dd.MM.yyyy",
+      Locale.getDefault()
+    ).format(Date(millis))
+
+    return when {
+      isActivityToday(millis) -> {
+        "$dateText · Today"
+      }
+
+      isActivityYesterday(millis) -> {
+        "$dateText · Yesterday"
+      } else -> {
+        dateText
+      }
+    }
+  }
+
+  private fun formatActivityTime(
+    millis: Long
+  ): String {
+    return SimpleDateFormat(
+      "HH:mm",
+      Locale.getDefault()
+    ).format(Date(millis))
+  }
+
+  private fun formatActivityDateKey(
+    millis: Long
+  ): String {
+    return SimpleDateFormat(
+      "yyyyMMdd",
+      Locale.getDefault()
+    ).format(Date(millis))
+  }
+
+  private fun isActivityToday(
+    millis: Long
+  ): Boolean {
+    val target = java.util.Calendar.getInstance().apply {
+      timeInMillis = millis
+    }
+
+    val today = java.util.Calendar.getInstance()
+
+    return target.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR) &&
+    target.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR)
+  }
+
+  private fun isActivityYesterday(
+    millis: Long
+  ): Boolean {
+    val target = java.util.Calendar.getInstance().apply {
+      timeInMillis = millis
+    }
+
+    val yesterday = java.util.Calendar.getInstance().apply {
+      add(java.util.Calendar.DAY_OF_YEAR, -1)
+    }
+
+    return target.get(java.util.Calendar.YEAR) == yesterday.get(java.util.Calendar.YEAR) &&
+    target.get(java.util.Calendar.DAY_OF_YEAR) == yesterday.get(java.util.Calendar.DAY_OF_YEAR)
+  }
+
+  private fun createActivityIconBackground(
+    color: Int
+  ): GradientDrawable {
+    return GradientDrawable().apply {
+      shape = GradientDrawable.RECTANGLE
+      cornerRadius = 13.dp().toFloat()
+
+      setColor(
+        applyAlpha(
+          color = color,
+          alpha = 0.24f
+        )
+      )
+
+      setStroke(
+        1.dp(),
+        applyAlpha(
+          color = color,
+          alpha = 0.65f
+        )
+      )
+    }
+  }
+
+  private fun applyAlpha(
+    color: Int,
+    alpha: Float
+  ): Int {
+    return Color.argb(
+      (255 * alpha).toInt(),
+      Color.red(color),
+      Color.green(color),
+      Color.blue(color)
+    )
   }
 
   private fun renderDevicesSection(
@@ -1787,6 +2170,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     private const val ARG_TANK_ID = "tankId"
     private const val KEY_SELECTED_TAB = "selectedTab"
     private const val ONLINE_TIMEOUT_MS = 60_000L
+    private const val ACTIVITY_AXIS_WIDTH_DP = 36
 
     const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
     const val CARE_PROFILE_ACTION_PLANTS = "plants"
