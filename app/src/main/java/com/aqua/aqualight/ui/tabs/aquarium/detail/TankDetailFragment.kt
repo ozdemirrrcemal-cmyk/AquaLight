@@ -776,9 +776,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
           "$title selected.",
           Toast.LENGTH_SHORT
         ).show()
-
-        // Sonraki adımda burada WATER_CHANGE vb. seçime göre işlem yapacağız.
-        // Şimdilik sadece bottom sheet içeriğini test ediyoruz.
       }
     }
 
@@ -871,915 +868,650 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     return card
   }
 
-  val typeOptionsContainer = contentView.findViewById<LinearLayout>(
-    R.id.typeOptionsContainer
-  )
-
-  renderActivityTaskTypesIntoContainer(
-    container = typeOptionsContainer,
-    dialog = dialog
-  )
-
-  dialog.setContentView(contentView)
-
-  dialog.setOnShowListener {
-    val bottomSheet = dialog.findViewById<View>(
-      com.google.android.material.R.id.design_bottom_sheet
-    )
-
-    bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+  private fun openDeviceScanScreen() {
+    runCatching {
+      findNavController().navigate(
+        R.id.scanDevicesFragment
+      )
+    }.onFailure {
+      runCatching {
+        findNavController().navigate(
+          R.id.devicesFragment
+        )
+      }
+    }
   }
 
-  dialog.show()
-}
+  private fun createAvailableDeviceCard(
+    device: UserPreferencesManager.DeviceInfoUi,
+    dialog: BottomSheetDialog
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 18.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#223A57")
+      setCardBackgroundColor(Color.parseColor("#10233A"))
+      cardElevation = 0f
+      useCompatPadding = false
+      isClickable = true
+      isFocusable = true
 
-private fun renderActivityTaskTypesIntoContainer(
-  container: LinearLayout,
-  dialog: BottomSheetDialog
-) {
-  container.removeAllViews()
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.bottomMargin = 10.dp()
+      layoutParams = params
 
-  CareTaskTypeCatalog.categories.forEach {
-    category ->
-
-    val taskTypes = CareTaskTypeCatalog.byCategory(category)
-
-    if (taskTypes.isEmpty()) {
-      return@forEach
+      setOnClickListener {
+        assignDeviceToCurrentTank(
+          device = device,
+          dialog = dialog
+        )
+      }
     }
 
-    container.addView(
-      createActivityTaskCategoryTitle(category)
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(
+        14.dp(),
+        12.dp(),
+        14.dp(),
+        12.dp()
+      )
+    }
+
+    val iconBox = TextView(requireContext()).apply {
+      text = createDeviceShortCode(device)
+      gravity = Gravity.CENTER
+      textSize = 12f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      setBackgroundResource(R.drawable.bg_material_icon_box)
+      includeFontPadding = false
+
+      layoutParams = LinearLayout.LayoutParams(
+        42.dp(),
+        42.dp()
+      )
+    }
+
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 14.dp()
+      layoutParams = params
+    }
+
+    val titleText = TextView(requireContext()).apply {
+      text = getDeviceTitle(device)
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+
+    val infoText = TextView(requireContext()).apply {
+      text = getDeviceInfoText(device)
+      textSize = 12f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 6.dp()
+      layoutParams = params
+    }
+
+    textBox.addView(titleText)
+    textBox.addView(infoText)
+
+    row.addView(iconBox)
+    row.addView(textBox)
+
+    card.addView(row)
+
+    return card
+  }
+
+  private fun assignDeviceToCurrentTank(
+    device: UserPreferencesManager.DeviceInfoUi,
+    dialog: BottomSheetDialog
+  ) {
+    viewLifecycleOwner.lifecycleScope.launch {
+      userPrefs.assignDeviceToTank(
+        deviceId = device.id,
+        tankId = tankId
+      )
+
+      dialog.dismiss()
+    }
+  }
+
+  private fun showRemoveDeviceConfirmationDialog(
+    device: UserPreferencesManager.DeviceInfoUi
+  ) {
+    DialogManager.showConfirmDialog(
+      context = requireContext(),
+      type = DialogType.WARNING,
+      title = "Remove Device?",
+      message = "\"${getDeviceTitle(device)}\" will be removed from this tank. The device will stay saved in Devices.",
+      confirmTextResId = R.string.confirm,
+      cancelTextResId = R.string.cancel,
+      onConfirm = {
+        removeDeviceFromCurrentTank(device)
+      }
+    )
+  }
+
+  private fun removeDeviceFromCurrentTank(
+    device: UserPreferencesManager.DeviceInfoUi
+  ) {
+    viewLifecycleOwner.lifecycleScope.launch {
+      userPrefs.removeDeviceFromTank(
+        deviceId = device.id
+      )
+    }
+  }
+
+  private fun getDeviceTitle(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    return device.name.ifBlank {
+      device.aquaName.ifBlank {
+        "Device"
+      }
+    }
+  }
+
+  private fun getDeviceTypeText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    return device.aquaName.ifBlank {
+      "Device"
+    }
+  }
+
+  private fun getDeviceInfoText(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    val typeText = device.aquaName.ifBlank {
+      "AquaLight Device"
+    }
+
+    return if (device.ip.isBlank()) {
+      typeText
+    } else {
+      "$typeText • ${device.ip}"
+    }
+  }
+
+  private fun createDeviceShortCode(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): String {
+    val source = device.aquaName.ifBlank {
+      device.name.ifBlank {
+        "DV"
+      }
+    }
+
+    val words = source
+    .trim()
+    .split(Regex("\\s+"))
+    .filter {
+      word ->
+      word.isNotBlank()
+    }
+
+    if (words.size >= 2) {
+      return "${words[0].first()}${words[1].first()}"
+      .uppercase(Locale.getDefault())
+    }
+
+    return source
+    .take(2)
+    .uppercase(Locale.getDefault())
+  }
+
+  private fun isDeviceOnline(
+    device: UserPreferencesManager.DeviceInfoUi
+  ): Boolean {
+    if (device.lastSeenMillis <= 0L) {
+      return false
+    }
+
+    return System.currentTimeMillis() - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+  }
+
+  private fun selectTab(
+    tab: TankDetailTab
+  ) {
+    selectedTab = tab
+
+    resetTabs()
+
+    when (tab) {
+      TankDetailTab.DEVICES -> {
+        activateTab(binding.tabDevices)
+        moveTabUnderline(binding.tabDevices)
+
+        binding.devicesSection.isVisible = true
+        binding.tvEmptyTab.isVisible = false
+      }
+
+      TankDetailTab.ACTIVITY -> {
+        activateTab(binding.tabActivity)
+        moveTabUnderline(binding.tabActivity)
+
+        binding.activitySection.isVisible = true
+        binding.tvEmptyTab.isVisible = false
+        binding.btnAddActivity.isVisible = true
+      }
+
+      TankDetailTab.TANK -> {
+        activateTab(binding.tabTank)
+        moveTabUnderline(binding.tabTank)
+
+        binding.tankSection.isVisible = true
+        binding.tvEmptyTab.isVisible = false
+
+        currentTank?.let {
+          tank ->
+          renderTankSection(tank)
+        }
+      }
+
+      TankDetailTab.PLANTS -> {
+        activateTab(binding.tabPlants)
+        moveTabUnderline(binding.tabPlants)
+
+        binding.plantsSection.isVisible = true
+        binding.tvEmptyTab.isVisible = false
+
+        currentTank?.let {
+          tank ->
+          renderPlantsSection(tank)
+        }
+      }
+
+      TankDetailTab.TANK_LIFE -> {
+        activateTab(binding.tabTankLife)
+        moveTabUnderline(binding.tabTankLife)
+
+        binding.tankLifeSection.isVisible = true
+        binding.tvEmptyTab.isVisible = false
+
+        currentTank?.let {
+          tank ->
+          renderLivestockSection(tank)
+        }
+      }
+    }
+  }
+
+  private fun renderTankSection(
+    tank: SavedAquariumTank
+  ) {
+    binding.tvTankDaysValue.text = getTankDaysText(tank.setupDateMillis)
+
+    binding.tvTankVolumeValue.text = getTankVolumeText(
+      tank = tank,
+      volumeUnit = tank.volumeUnit
     )
 
-    taskTypes.forEach {
-      taskType ->
-      container.addView(
-        createActivityTaskTypeCard(
-          taskType = taskType,
-          dialog = dialog
+    binding.tvTankSizeValue.text = getTankSizeText(tank)
+
+    binding.tvTankTypeValue.text = tank.tankType.ifBlank {
+      "-"
+    }
+
+    binding.tvTankSetupDateValue.text = getTankSetupDateText(
+      tank.setupDateMillis
+    )
+
+    binding.tvTankStyleValue.text = tank.tankStyle.ifBlank {
+      "-"
+    }
+
+    renderTankComponents(tank)
+  }
+
+  private fun renderTankComponents(
+    tank: SavedAquariumTank
+  ) {
+    binding.tankBioComponentsContainer.removeAllViews()
+    binding.tankHardwareComponentsContainer.removeAllViews()
+
+    MaterialCategoryCatalog.bioCategories.forEach {
+      category ->
+      val selectedMaterials = tank.materials.filter {
+        material ->
+        material.categoryKey == category.key
+      }
+
+      binding.tankBioComponentsContainer.addView(
+        createTankComponentCard(
+          shortCode = category.shortCode,
+          title = category.title,
+          materials = selectedMaterials
+        )
+      )
+    }
+
+    MaterialCategoryCatalog.hardwareCategories.forEach {
+      category ->
+      val selectedMaterials = tank.materials.filter {
+        material ->
+        material.categoryKey == category.key
+      }
+
+      binding.tankHardwareComponentsContainer.addView(
+        createTankComponentCard(
+          shortCode = category.shortCode,
+          title = category.title,
+          materials = selectedMaterials
         )
       )
     }
   }
-}
 
-private fun createActivityTaskCategoryTitle(
-  category: Any
-): View {
-  return TextView(requireContext()).apply {
-    text = readStringProperty(
-      source = category,
-      fallback = category.toString(),
-      "title",
-      "name",
-      "label"
-    )
+  private fun createTankComponentCard(
+    shortCode: String,
+    title: String,
+    materials: List<SavedAquariumMaterial>
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 16.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#223A57")
+      setCardBackgroundColor(Color.parseColor("#10233A"))
+      cardElevation = 0f
+      useCompatPadding = false
+      isClickable = true
+      isFocusable = true
 
-    textSize = 12f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-
-    params.topMargin = 16.dp()
-    params.bottomMargin = 8.dp()
-
-    layoutParams = params
-  }
-}
-
-private fun createActivityTaskTypeCard(
-  taskType: Any,
-  dialog: BottomSheetDialog
-): View {
-  val title = readStringProperty(
-    source = taskType,
-    fallback = "Task Type",
-    "title",
-    "name",
-    "label"
-  )
-
-  val description = readStringProperty(
-    source = taskType,
-    fallback = "Add this activity to your aquarium timeline.",
-    "description",
-    "subtitle",
-    "summary"
-  )
-
-  val iconRes = readIntProperty(
-    source = taskType,
-    "iconRes",
-    "iconResId",
-    "icon"
-  ) ?: R.drawable.ic_add_24
-
-  val card = MaterialCardView(requireContext()).apply {
-    radius = 18.dp().toFloat()
-    strokeWidth = 1.dp()
-    strokeColor = Color.parseColor("#223A57")
-    setCardBackgroundColor(Color.parseColor("#10233A"))
-    cardElevation = 0f
-    useCompatPadding = false
-    isClickable = true
-    isFocusable = true
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-
-    params.bottomMargin = 10.dp()
-    layoutParams = params
-
-    setOnClickListener {
-      Toast.makeText(
-        requireContext(),
-        "$title selected.",
-        Toast.LENGTH_SHORT
-      ).show()
-
-      // Sonraki adımda burada WATER_CHANGE vb. seçime göre işlem yapacağız.
-      // Şimdilik sadece bottom sheet içeriğini test ediyoruz.
-    }
-  }
-
-  val row = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-
-    setPadding(
-      14.dp(),
-      12.dp(),
-      14.dp(),
-      12.dp()
-    )
-  }
-
-  val iconBox = ImageView(requireContext()).apply {
-    setImageResource(iconRes)
-    setColorFilter(Color.WHITE)
-
-    background = GradientDrawable().apply {
-      shape = GradientDrawable.RECTANGLE
-      setColor(Color.parseColor("#1C5D8F"))
-      cornerRadius = 16.dp().toFloat()
-    }
-
-    scaleType = ImageView.ScaleType.CENTER_INSIDE
-    contentDescription = title
-
-    layoutParams = LinearLayout.LayoutParams(
-      44.dp(),
-      44.dp()
-    )
-
-    setPadding(
-      10.dp(),
-      10.dp(),
-      10.dp(),
-      10.dp()
-    )
-  }
-
-  val textBox = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.VERTICAL
-
-    val params = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-
-    params.marginStart = 14.dp()
-    layoutParams = params
-  }
-
-  val titleText = TextView(requireContext()).apply {
-    text = title
-    textSize = 14f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
-  }
-
-  val descriptionText = TextView(requireContext()).apply {
-    text = description
-    textSize = 12f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    includeFontPadding = false
-    maxLines = 2
-    ellipsize = TextUtils.TruncateAt.END
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-
-    params.topMargin = 6.dp()
-    layoutParams = params
-  }
-
-  textBox.addView(titleText)
-  textBox.addView(descriptionText)
-
-  row.addView(iconBox)
-  row.addView(textBox)
-
-  card.addView(row)
-
-  return card
-}
-
-private fun openDeviceScanScreen() {
-  runCatching {
-    findNavController().navigate(
-      R.id.scanDevicesFragment
-    )
-  }.onFailure {
-    runCatching {
-      findNavController().navigate(
-        R.id.devicesFragment
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
       )
-    }
-  }
-}
+      params.bottomMargin = 10.dp()
+      layoutParams = params
 
-private fun createAvailableDeviceCard(
-  device: UserPreferencesManager.DeviceInfoUi,
-  dialog: BottomSheetDialog
-): View {
-  val card = MaterialCardView(requireContext()).apply {
-    radius = 18.dp().toFloat()
-    strokeWidth = 1.dp()
-    strokeColor = Color.parseColor("#223A57")
-    setCardBackgroundColor(Color.parseColor("#10233A"))
-    cardElevation = 0f
-    useCompatPadding = false
-    isClickable = true
-    isFocusable = true
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.bottomMargin = 10.dp()
-    layoutParams = params
-
-    setOnClickListener {
-      assignDeviceToCurrentTank(
-        device = device,
-        dialog = dialog
-      )
-    }
-  }
-
-  val row = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-    setPadding(
-      14.dp(),
-      12.dp(),
-      14.dp(),
-      12.dp()
-    )
-  }
-
-  val iconBox = TextView(requireContext()).apply {
-    text = createDeviceShortCode(device)
-    gravity = Gravity.CENTER
-    textSize = 12f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    setBackgroundResource(R.drawable.bg_material_icon_box)
-    includeFontPadding = false
-
-    layoutParams = LinearLayout.LayoutParams(
-      42.dp(),
-      42.dp()
-    )
-  }
-
-  val textBox = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.VERTICAL
-
-    val params = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-    params.marginStart = 14.dp()
-    layoutParams = params
-  }
-
-  val titleText = TextView(requireContext()).apply {
-    text = getDeviceTitle(device)
-    textSize = 14f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
-  }
-
-  val infoText = TextView(requireContext()).apply {
-    text = getDeviceInfoText(device)
-    textSize = 12f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 6.dp()
-    layoutParams = params
-  }
-
-  textBox.addView(titleText)
-  textBox.addView(infoText)
-
-  row.addView(iconBox)
-  row.addView(textBox)
-
-  card.addView(row)
-
-  return card
-}
-
-private fun assignDeviceToCurrentTank(
-  device: UserPreferencesManager.DeviceInfoUi,
-  dialog: BottomSheetDialog
-) {
-  viewLifecycleOwner.lifecycleScope.launch {
-    userPrefs.assignDeviceToTank(
-      deviceId = device.id,
-      tankId = tankId
-    )
-
-    dialog.dismiss()
-  }
-}
-
-private fun showRemoveDeviceConfirmationDialog(
-  device: UserPreferencesManager.DeviceInfoUi
-) {
-  DialogManager.showConfirmDialog(
-    context = requireContext(),
-    type = DialogType.WARNING,
-    title = "Remove Device?",
-    message = "\"${getDeviceTitle(device)}\" will be removed from this tank. The device will stay saved in Devices.",
-    confirmTextResId = R.string.confirm,
-    cancelTextResId = R.string.cancel,
-    onConfirm = {
-      removeDeviceFromCurrentTank(device)
-    }
-  )
-}
-
-private fun removeDeviceFromCurrentTank(
-  device: UserPreferencesManager.DeviceInfoUi
-) {
-  viewLifecycleOwner.lifecycleScope.launch {
-    userPrefs.removeDeviceFromTank(
-      deviceId = device.id
-    )
-  }
-}
-
-private fun getDeviceTitle(
-  device: UserPreferencesManager.DeviceInfoUi
-): String {
-  return device.name.ifBlank {
-    device.aquaName.ifBlank {
-      "Device"
-    }
-  }
-}
-
-private fun getDeviceTypeText(
-  device: UserPreferencesManager.DeviceInfoUi
-): String {
-  return device.aquaName.ifBlank {
-    "Device"
-  }
-}
-
-private fun getDeviceInfoText(
-  device: UserPreferencesManager.DeviceInfoUi
-): String {
-  val typeText = device.aquaName.ifBlank {
-    "AquaLight Device"
-  }
-
-  return if (device.ip.isBlank()) {
-    typeText
-  } else {
-    "$typeText • ${device.ip}"
-  }
-}
-
-private fun createDeviceShortCode(
-  device: UserPreferencesManager.DeviceInfoUi
-): String {
-  val source = device.aquaName.ifBlank {
-    device.name.ifBlank {
-      "DV"
-    }
-  }
-
-  val words = source
-  .trim()
-  .split(Regex("\\s+"))
-  .filter {
-    word ->
-    word.isNotBlank()
-  }
-
-  if (words.size >= 2) {
-    return "${words[0].first()}${words[1].first()}"
-    .uppercase(Locale.getDefault())
-  }
-
-  return source
-  .take(2)
-  .uppercase(Locale.getDefault())
-}
-
-private fun isDeviceOnline(
-  device: UserPreferencesManager.DeviceInfoUi
-): Boolean {
-  if (device.lastSeenMillis <= 0L) {
-    return false
-  }
-
-  return System.currentTimeMillis() - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
-}
-
-private fun selectTab(
-  tab: TankDetailTab
-) {
-  selectedTab = tab
-
-  resetTabs()
-
-  when (tab) {
-    TankDetailTab.DEVICES -> {
-      activateTab(binding.tabDevices)
-      moveTabUnderline(binding.tabDevices)
-
-      binding.devicesSection.isVisible = true
-      binding.tvEmptyTab.isVisible = false
-    }
-
-    TankDetailTab.ACTIVITY -> {
-      activateTab(binding.tabActivity)
-      moveTabUnderline(binding.tabActivity)
-
-      binding.activitySection.isVisible = true
-      binding.tvEmptyTab.isVisible = false
-      binding.btnAddActivity.isVisible = true
-    }
-
-    TankDetailTab.TANK -> {
-      activateTab(binding.tabTank)
-      moveTabUnderline(binding.tabTank)
-
-      binding.tankSection.isVisible = true
-      binding.tvEmptyTab.isVisible = false
-
-      currentTank?.let {
-        tank ->
-        renderTankSection(tank)
+      setOnClickListener {
+        openTankSettingsDetails()
       }
     }
 
-    TankDetailTab.PLANTS -> {
-      activateTab(binding.tabPlants)
-      moveTabUnderline(binding.tabPlants)
-
-      binding.plantsSection.isVisible = true
-      binding.tvEmptyTab.isVisible = false
-
-      currentTank?.let {
-        tank ->
-        renderPlantsSection(tank)
-      }
-    }
-
-    TankDetailTab.TANK_LIFE -> {
-      activateTab(binding.tabTankLife)
-      moveTabUnderline(binding.tabTankLife)
-
-      binding.tankLifeSection.isVisible = true
-      binding.tvEmptyTab.isVisible = false
-
-      currentTank?.let {
-        tank ->
-        renderLivestockSection(tank)
-      }
-    }
-  }
-}
-
-private fun renderTankSection(
-  tank: SavedAquariumTank
-) {
-  binding.tvTankDaysValue.text = getTankDaysText(tank.setupDateMillis)
-
-  binding.tvTankVolumeValue.text = getTankVolumeText(
-    tank = tank,
-    volumeUnit = tank.volumeUnit
-  )
-
-  binding.tvTankSizeValue.text = getTankSizeText(tank)
-
-  binding.tvTankTypeValue.text = tank.tankType.ifBlank {
-    "-"
-  }
-
-  binding.tvTankSetupDateValue.text = getTankSetupDateText(
-    tank.setupDateMillis
-  )
-
-  binding.tvTankStyleValue.text = tank.tankStyle.ifBlank {
-    "-"
-  }
-
-  renderTankComponents(tank)
-}
-
-private fun renderTankComponents(
-  tank: SavedAquariumTank
-) {
-  binding.tankBioComponentsContainer.removeAllViews()
-  binding.tankHardwareComponentsContainer.removeAllViews()
-
-  MaterialCategoryCatalog.bioCategories.forEach {
-    category ->
-    val selectedMaterials = tank.materials.filter {
-      material ->
-      material.categoryKey == category.key
-    }
-
-    binding.tankBioComponentsContainer.addView(
-      createTankComponentCard(
-        shortCode = category.shortCode,
-        title = category.title,
-        materials = selectedMaterials
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(
+        14.dp(),
+        12.dp(),
+        14.dp(),
+        12.dp()
       )
-    )
-  }
-
-  MaterialCategoryCatalog.hardwareCategories.forEach {
-    category ->
-    val selectedMaterials = tank.materials.filter {
-      material ->
-      material.categoryKey == category.key
     }
 
-    binding.tankHardwareComponentsContainer.addView(
-      createTankComponentCard(
-        shortCode = category.shortCode,
-        title = category.title,
-        materials = selectedMaterials
+    val iconBox = TextView(requireContext()).apply {
+      text = shortCode.uppercase(Locale.getDefault())
+      gravity = Gravity.CENTER
+      textSize = if (shortCode.length > 2) 10f else 12f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      setBackgroundResource(R.drawable.bg_material_icon_box)
+      includeFontPadding = false
+
+      layoutParams = LinearLayout.LayoutParams(
+        42.dp(),
+        42.dp()
       )
-    )
-  }
-}
-
-private fun createTankComponentCard(
-  shortCode: String,
-  title: String,
-  materials: List<SavedAquariumMaterial>
-): View {
-  val card = MaterialCardView(requireContext()).apply {
-    radius = 16.dp().toFloat()
-    strokeWidth = 1.dp()
-    strokeColor = Color.parseColor("#223A57")
-    setCardBackgroundColor(Color.parseColor("#10233A"))
-    cardElevation = 0f
-    useCompatPadding = false
-    isClickable = true
-    isFocusable = true
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.bottomMargin = 10.dp()
-    layoutParams = params
-
-    setOnClickListener {
-      openTankSettingsDetails()
-    }
-  }
-
-  val row = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-    setPadding(
-      14.dp(),
-      12.dp(),
-      14.dp(),
-      12.dp()
-    )
-  }
-
-  val iconBox = TextView(requireContext()).apply {
-    text = shortCode.uppercase(Locale.getDefault())
-    gravity = Gravity.CENTER
-    textSize = if (shortCode.length > 2) 10f else 12f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    setBackgroundResource(R.drawable.bg_material_icon_box)
-    includeFontPadding = false
-
-    layoutParams = LinearLayout.LayoutParams(
-      42.dp(),
-      42.dp()
-    )
-  }
-
-  val textBox = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.VERTICAL
-
-    val params = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-    params.marginStart = 14.dp()
-    layoutParams = params
-  }
-
-  val titleText = TextView(requireContext()).apply {
-    text = title
-    textSize = 14f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
-  }
-
-  val summaryText = TextView(requireContext()).apply {
-    text = getComponentSummary(materials)
-    textSize = 12f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    setLineSpacing(
-      2.dp().toFloat(),
-      1.0f
-    )
-    maxLines = 2
-    ellipsize = TextUtils.TruncateAt.END
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 6.dp()
-    layoutParams = params
-  }
-
-  textBox.addView(titleText)
-  textBox.addView(summaryText)
-
-  row.addView(iconBox)
-  row.addView(textBox)
-
-  card.addView(row)
-
-  return card
-}
-
-private fun getComponentSummary(
-  materials: List<SavedAquariumMaterial>
-): String {
-  if (materials.isEmpty()) {
-    return "Not selected"
-  }
-
-  if (materials.size == 1) {
-    return materials.first().name
-  }
-
-  return "${materials.first().name} +${materials.size - 1} more"
-}
-
-private fun getTankDaysText(
-  setupDateMillis: Long?
-): String {
-  if (setupDateMillis == null) {
-    return "-"
-  }
-
-  val day = TimeUnit.MILLISECONDS
-  .toDays(System.currentTimeMillis() - setupDateMillis)
-  .coerceAtLeast(0)
-
-  return "$day days"
-}
-
-private fun getTankVolumeText(
-  tank: SavedAquariumTank,
-  volumeUnit: String
-): String {
-  val liter = (tank.widthCm * tank.lengthCm * tank.heightCm) / 1000.0
-
-  return if (volumeUnit.equals("gal", ignoreCase = true)) {
-    val gallon = liter * 0.264172
-    "${gallon.roundToInt()} gal"
-  } else {
-    "${liter.roundToInt()} L"
-  }
-}
-
-private fun getTankSizeText(
-  tank: SavedAquariumTank
-): String {
-  return "${tank.widthCm}×${tank.lengthCm}×${tank.heightCm}"
-}
-
-private fun getTankSetupDateText(
-  setupDateMillis: Long?
-): String {
-  if (setupDateMillis == null) {
-    return "-"
-  }
-
-  val formatter = SimpleDateFormat(
-    "dd MMM yy",
-    Locale.getDefault()
-  )
-
-  return formatter.format(Date(setupDateMillis))
-}
-
-private fun renderLivestockSection(
-  tank: SavedAquariumTank
-) {
-  val livestock = tank.livestock
-
-  binding.tankLifeListContainer.removeAllViews()
-
-  val totalQuantity = livestock.sumOf {
-    item ->
-    item.quantity.coerceAtLeast(1)
-  }
-
-  binding.tvTankLifeSummary.text = if (livestock.isEmpty()) {
-    "No livestock yet"
-  } else {
-    "${livestock.size} species • $totalQuantity total livestock"
-  }
-
-  binding.cardTankLifeEmpty.isVisible = livestock.isEmpty()
-  binding.tankLifeListContainer.isVisible = livestock.isNotEmpty()
-
-  livestock.forEach {
-    item ->
-    binding.tankLifeListContainer.addView(
-      createLivestockCard(item)
-    )
-  }
-}
-
-private fun createLivestockCard(
-  livestock: SavedAquariumLivestock
-): View {
-  val card = MaterialCardView(requireContext()).apply {
-    radius = 18.dp().toFloat()
-    strokeWidth = 1.dp()
-    strokeColor = Color.parseColor("#223A57")
-    setCardBackgroundColor(Color.parseColor("#10233A"))
-    cardElevation = 0f
-    useCompatPadding = false
-    isClickable = true
-    isFocusable = true
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.bottomMargin = 12.dp()
-    layoutParams = params
-
-    setOnClickListener {
-      openLivestockFormFlow(livestock)
-    }
-  }
-
-  val row = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-    setPadding(
-      14.dp(),
-      12.dp(),
-      12.dp(),
-      12.dp()
-    )
-  }
-
-  val iconBox = ImageView(requireContext()).apply {
-    setImageResource(getLivestockCategoryIcon(livestock.category))
-    setColorFilter(Color.WHITE)
-    background = createLifeIconBackground(
-      color = getLivestockCategoryColor(livestock.category)
-    )
-    scaleType = ImageView.ScaleType.CENTER_INSIDE
-    contentDescription = livestock.category.ifBlank {
-      "Livestock"
     }
 
-    layoutParams = LinearLayout.LayoutParams(
-      46.dp(),
-      46.dp()
-    )
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
 
-    setPadding(
-      10.dp(),
-      10.dp(),
-      10.dp(),
-      10.dp()
-    )
-  }
-
-  val textBox = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.VERTICAL
-
-    val params = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-    params.marginStart = 14.dp()
-    params.marginEnd = 10.dp()
-    layoutParams = params
-  }
-
-  val nameText = TextView(requireContext()).apply {
-    text = livestock.name.ifBlank {
-      "Unnamed livestock"
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 14.dp()
+      layoutParams = params
     }
-    textSize = 14.5f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.BOLD)
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
-  }
 
-  val metaText = TextView(requireContext()).apply {
-    text = "${livestock.category.ifBlank { "Other" }} • ${getLivestockQuantityText(livestock.quantity)}"
-    textSize = 12.5f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
+    val titleText = TextView(requireContext()).apply {
+      text = title
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
 
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 7.dp()
-    layoutParams = params
-  }
-
-  val dateText = TextView(requireContext()).apply {
-    text = getLivestockAddedDateText(livestock.addedDateMillis)
-    textSize = 12f
-    setTextColor(Color.parseColor("#5FD6B4"))
-    includeFontPadding = false
-    maxLines = 1
-    ellipsize = TextUtils.TruncateAt.END
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 7.dp()
-    layoutParams = params
-  }
-
-  textBox.addView(nameText)
-  textBox.addView(metaText)
-  textBox.addView(dateText)
-
-  if (livestock.note.isNotBlank()) {
-    val noteText = TextView(requireContext()).apply {
-      text = livestock.note
+    val summaryText = TextView(requireContext()).apply {
+      text = getComponentSummary(materials)
       textSize = 12f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      setLineSpacing(
+        2.dp().toFloat(),
+        1.0f
+      )
+      maxLines = 2
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 6.dp()
+      layoutParams = params
+    }
+
+    textBox.addView(titleText)
+    textBox.addView(summaryText)
+
+    row.addView(iconBox)
+    row.addView(textBox)
+
+    card.addView(row)
+
+    return card
+  }
+
+  private fun getComponentSummary(
+    materials: List<SavedAquariumMaterial>
+  ): String {
+    if (materials.isEmpty()) {
+      return "Not selected"
+    }
+
+    if (materials.size == 1) {
+      return materials.first().name
+    }
+
+    return "${materials.first().name} +${materials.size - 1} more"
+  }
+
+  private fun getTankDaysText(
+    setupDateMillis: Long?
+  ): String {
+    if (setupDateMillis == null) {
+      return "-"
+    }
+
+    val day = TimeUnit.MILLISECONDS
+    .toDays(System.currentTimeMillis() - setupDateMillis)
+    .coerceAtLeast(0)
+
+    return "$day days"
+  }
+
+  private fun getTankVolumeText(
+    tank: SavedAquariumTank,
+    volumeUnit: String
+  ): String {
+    val liter = (tank.widthCm * tank.lengthCm * tank.heightCm) / 1000.0
+
+    return if (volumeUnit.equals("gal", ignoreCase = true)) {
+      val gallon = liter * 0.264172
+      "${gallon.roundToInt()} gal"
+    } else {
+      "${liter.roundToInt()} L"
+    }
+  }
+
+  private fun getTankSizeText(
+    tank: SavedAquariumTank
+  ): String {
+    return "${tank.widthCm}×${tank.lengthCm}×${tank.heightCm}"
+  }
+
+  private fun getTankSetupDateText(
+    setupDateMillis: Long?
+  ): String {
+    if (setupDateMillis == null) {
+      return "-"
+    }
+
+    val formatter = SimpleDateFormat(
+      "dd MMM yy",
+      Locale.getDefault()
+    )
+
+    return formatter.format(Date(setupDateMillis))
+  }
+
+  private fun renderLivestockSection(
+    tank: SavedAquariumTank
+  ) {
+    val livestock = tank.livestock
+
+    binding.tankLifeListContainer.removeAllViews()
+
+    val totalQuantity = livestock.sumOf {
+      item ->
+      item.quantity.coerceAtLeast(1)
+    }
+
+    binding.tvTankLifeSummary.text = if (livestock.isEmpty()) {
+      "No livestock yet"
+    } else {
+      "${livestock.size} species • $totalQuantity total livestock"
+    }
+
+    binding.cardTankLifeEmpty.isVisible = livestock.isEmpty()
+    binding.tankLifeListContainer.isVisible = livestock.isNotEmpty()
+
+    livestock.forEach {
+      item ->
+      binding.tankLifeListContainer.addView(
+        createLivestockCard(item)
+      )
+    }
+  }
+
+  private fun createLivestockCard(
+    livestock: SavedAquariumLivestock
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 18.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#223A57")
+      setCardBackgroundColor(Color.parseColor("#10233A"))
+      cardElevation = 0f
+      useCompatPadding = false
+      isClickable = true
+      isFocusable = true
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.bottomMargin = 12.dp()
+      layoutParams = params
+
+      setOnClickListener {
+        openLivestockFormFlow(livestock)
+      }
+    }
+
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(
+        14.dp(),
+        12.dp(),
+        12.dp(),
+        12.dp()
+      )
+    }
+
+    val iconBox = ImageView(requireContext()).apply {
+      setImageResource(getLivestockCategoryIcon(livestock.category))
+      setColorFilter(Color.WHITE)
+      background = createLifeIconBackground(
+        color = getLivestockCategoryColor(livestock.category)
+      )
+      scaleType = ImageView.ScaleType.CENTER_INSIDE
+      contentDescription = livestock.category.ifBlank {
+        "Livestock"
+      }
+
+      layoutParams = LinearLayout.LayoutParams(
+        46.dp(),
+        46.dp()
+      )
+
+      setPadding(
+        10.dp(),
+        10.dp(),
+        10.dp(),
+        10.dp()
+      )
+    }
+
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 14.dp()
+      params.marginEnd = 10.dp()
+      layoutParams = params
+    }
+
+    val nameText = TextView(requireContext()).apply {
+      text = livestock.name.ifBlank {
+        "Unnamed livestock"
+      }
+      textSize = 14.5f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+    }
+
+    val metaText = TextView(requireContext()).apply {
+      text = "${livestock.category.ifBlank { "Other" }} • ${getLivestockQuantityText(livestock.quantity)}"
+      textSize = 12.5f
       setTextColor(Color.parseColor("#8FA4BE"))
       includeFontPadding = false
       maxLines = 1
@@ -1793,477 +1525,514 @@ private fun createLivestockCard(
       layoutParams = params
     }
 
-    textBox.addView(noteText)
-  }
+    val dateText = TextView(requireContext()).apply {
+      text = getLivestockAddedDateText(livestock.addedDateMillis)
+      textSize = 12f
+      setTextColor(Color.parseColor("#5FD6B4"))
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
 
-  val arrow = ImageView(requireContext()).apply {
-    setImageResource(R.drawable.ic_arrow_right)
-    setColorFilter(Color.parseColor("#8FA4BE"))
-    scaleType = ImageView.ScaleType.CENTER
-
-    layoutParams = LinearLayout.LayoutParams(
-      22.dp(),
-      22.dp()
-    )
-  }
-
-  row.addView(iconBox)
-  row.addView(textBox)
-  row.addView(arrow)
-
-  card.addView(row)
-
-  return card
-}
-
-private fun openLivestockFormFlow(
-  livestock: SavedAquariumLivestock? = null
-) {
-  binding.lifeFlowContainer.isVisible = true
-
-  childFragmentManager.commit {
-    replace(
-      R.id.lifeFlowContainer,
-      TankDetailLivestockFormFragment.newInstance(
-        tankId = tankId,
-        livestock = livestock
-      ),
-      "TANK_DETAIL_LIVESTOCK_FORM_FRAGMENT"
-    )
-  }
-}
-
-fun closeLivestockFormFlow() {
-  val fragment = childFragmentManager.findFragmentById(
-    R.id.lifeFlowContainer
-  )
-
-  if (fragment != null) {
-    childFragmentManager.commit {
-      remove(fragment)
-    }
-  }
-
-  binding.lifeFlowContainer.isVisible = false
-}
-
-private fun renderPlantsSection(
-  tank: SavedAquariumTank
-) {
-  binding.plantListContainer.removeAllViews()
-
-  tank.plants.forEachIndexed {
-    index, plant ->
-    binding.plantListContainer.addView(
-      createPlantCard(
-        index = index,
-        plant = plant
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
       )
-    )
-  }
-}
+      params.topMargin = 7.dp()
+      layoutParams = params
+    }
 
-private fun createPlantCard(
-  index: Int,
-  plant: SavedAquariumPlant
-): View {
-  val card = MaterialCardView(requireContext()).apply {
-    radius = 18.dp().toFloat()
-    strokeWidth = 1.dp()
-    strokeColor = Color.parseColor("#223A57")
-    setCardBackgroundColor(Color.parseColor("#10233A"))
-    cardElevation = 0f
-    useCompatPadding = false
+    textBox.addView(nameText)
+    textBox.addView(metaText)
+    textBox.addView(dateText)
 
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.bottomMargin = 12.dp()
-    layoutParams = params
-  }
+    if (livestock.note.isNotBlank()) {
+      val noteText = TextView(requireContext()).apply {
+        text = livestock.note
+        textSize = 12f
+        setTextColor(Color.parseColor("#8FA4BE"))
+        includeFontPadding = false
+        maxLines = 1
+        ellipsize = TextUtils.TruncateAt.END
 
-  val row = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER_VERTICAL
-    setPadding(
-      14.dp(),
-      12.dp(),
-      14.dp(),
-      12.dp()
-    )
-  }
+        val params = LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.MATCH_PARENT,
+          LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        params.topMargin = 7.dp()
+        layoutParams = params
+      }
 
-  val number = TextView(requireContext()).apply {
-    text = "${index + 1}"
-    gravity = Gravity.CENTER
-    textSize = 13f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.NORMAL)
-    setBackgroundResource(R.drawable.bg_plant_number_circle)
-    includeFontPadding = false
+      textBox.addView(noteText)
+    }
 
-    layoutParams = LinearLayout.LayoutParams(
-      38.dp(),
-      38.dp()
-    )
+    val arrow = ImageView(requireContext()).apply {
+      setImageResource(R.drawable.ic_arrow_right)
+      setColorFilter(Color.parseColor("#8FA4BE"))
+      scaleType = ImageView.ScaleType.CENTER
+
+      layoutParams = LinearLayout.LayoutParams(
+        22.dp(),
+        22.dp()
+      )
+    }
+
+    row.addView(iconBox)
+    row.addView(textBox)
+    row.addView(arrow)
+
+    card.addView(row)
+
+    return card
   }
 
-  val textBox = LinearLayout(requireContext()).apply {
-    orientation = LinearLayout.VERTICAL
+  private fun openLivestockFormFlow(
+    livestock: SavedAquariumLivestock? = null
+  ) {
+    binding.lifeFlowContainer.isVisible = true
 
-    val params = LinearLayout.LayoutParams(
-      0,
-      LinearLayout.LayoutParams.WRAP_CONTENT,
-      1f
-    )
-    params.marginStart = 14.dp()
-    layoutParams = params
-  }
-
-  val categoryText = TextView(requireContext()).apply {
-    text = plant.category
-    textSize = 12f
-    setTextColor(Color.parseColor("#8FA4BE"))
-    includeFontPadding = false
-  }
-
-  val nameText = TextView(requireContext()).apply {
-    text = plant.plantName
-    textSize = 14f
-    setTextColor(Color.WHITE)
-    setTypeface(null, Typeface.NORMAL)
-    includeFontPadding = false
-    maxLines = 2
-    ellipsize = TextUtils.TruncateAt.END
-
-    val params = LinearLayout.LayoutParams(
-      LinearLayout.LayoutParams.MATCH_PARENT,
-      LinearLayout.LayoutParams.WRAP_CONTENT
-    )
-    params.topMargin = 6.dp()
-    layoutParams = params
-  }
-
-  textBox.addView(categoryText)
-  textBox.addView(nameText)
-
-  row.addView(number)
-  row.addView(textBox)
-
-  card.addView(row)
-
-  return card
-}
-
-fun openPlantTagFlow() {
-  binding.plantFlowContainer.isVisible = true
-
-  childFragmentManager.commit {
-    replace(
-      R.id.plantFlowContainer,
-      TankDetailPlantTagFragment.newInstance(tankId),
-      "TANK_DETAIL_PLANT_TAG_FRAGMENT"
-    )
-  }
-}
-
-fun openPlantPickerFlow() {
-  childFragmentManager.commit {
-    setReorderingAllowed(true)
-    add(
-      R.id.plantFlowContainer,
-      PlantPickerFragment(),
-      "PLANT_PICKER_FRAGMENT"
-    )
-    addToBackStack("PLANT_PICKER_FRAGMENT")
-  }
-}
-
-fun closePlantTagFlow() {
-  childFragmentManager.popBackStack(
-    null,
-    FragmentManager.POP_BACK_STACK_INCLUSIVE
-  )
-
-  val currentPlantFragment = childFragmentManager.findFragmentById(
-    R.id.plantFlowContainer
-  )
-
-  if (currentPlantFragment != null) {
     childFragmentManager.commit {
-      remove(currentPlantFragment)
+      replace(
+        R.id.lifeFlowContainer,
+        TankDetailLivestockFormFragment.newInstance(
+          tankId = tankId,
+          livestock = livestock
+        ),
+        "TANK_DETAIL_LIVESTOCK_FORM_FRAGMENT"
+      )
     }
   }
 
-  binding.plantFlowContainer.isVisible = false
-}
-
-private fun handlePlantFlowBack(): Boolean {
-  if (!binding.plantFlowContainer.isVisible) {
-    return false
-  }
-
-  if (childFragmentManager.backStackEntryCount > 0) {
-    childFragmentManager.popBackStack()
-  } else {
-    closePlantTagFlow()
-  }
-
-  return true
-}
-
-private fun handleLifeFlowBack(): Boolean {
-  if (!binding.lifeFlowContainer.isVisible) {
-    return false
-  }
-
-  closeLivestockFormFlow()
-  return true
-}
-
-private fun activateTab(
-  tabView: TextView
-) {
-  tabView.setTextColor(Color.WHITE)
-  tabView.setTypeface(null, Typeface.BOLD)
-}
-
-private fun moveTabUnderline(
-  tabView: TextView
-) {
-  binding.tabsContainer.post {
-    val underlineWidth = (tabView.width * 0.58f)
-    .toInt()
-    .coerceIn(
-      34.dp(),
-      68.dp()
+  fun closeLivestockFormFlow() {
+    val fragment = childFragmentManager.findFragmentById(
+      R.id.lifeFlowContainer
     )
 
-    val params = binding.tabUnderline.layoutParams
-    params.width = underlineWidth
-    binding.tabUnderline.layoutParams = params
-
-    val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
-
-    binding.tabUnderline.animate()
-    .translationX(targetX)
-    .setDuration(180)
-    .start()
-  }
-}
-
-private fun resetTabs() {
-  val inactiveColor = Color.parseColor("#8FA4BE")
-
-  listOf(
-    binding.tabDevices,
-    binding.tabActivity,
-    binding.tabTank,
-    binding.tabPlants,
-    binding.tabTankLife
-  ).forEach {
-    tab ->
-    tab.setTextColor(inactiveColor)
-    tab.setTypeface(null, Typeface.NORMAL)
-  }
-
-  binding.devicesSection.isVisible = false
-  binding.activitySection.isVisible = false
-  binding.tankSection.isVisible = false
-  binding.plantsSection.isVisible = false
-  binding.tvEmptyTab.isVisible = false
-  binding.tankLifeSection.isVisible = false
-
-  binding.btnAddActivity.isVisible = false
-}
-
-private fun showEmptySection() {
-  binding.devicesSection.isVisible = false
-  binding.activitySection.isVisible = false
-  binding.tankSection.isVisible = false
-  binding.plantsSection.isVisible = false
-  binding.tvEmptyTab.isVisible = true
-  binding.tankLifeSection.isVisible = false
-  binding.btnAddActivity.isVisible = false
-}
-
-private fun getLivestockQuantityText(
-  quantity: Int
-): String {
-  val safeQuantity = quantity.coerceAtLeast(1)
-
-  return if (safeQuantity == 1) {
-    "1 pc"
-  } else {
-    "$safeQuantity pcs"
-  }
-}
-
-private fun getLivestockAddedDateText(
-  addedDateMillis: Long?
-): String {
-  if (addedDateMillis == null || addedDateMillis <= 0L) {
-    return "Added date not set"
-  }
-
-  val formatter = SimpleDateFormat(
-    "dd MMM yyyy",
-    Locale.getDefault()
-  )
-
-  return "Added ${formatter.format(Date(addedDateMillis))}"
-}
-
-private fun getLivestockCategoryIcon(
-  category: String
-): Int {
-  return when (category) {
-    LivestockCategories.FISH -> R.drawable.ic_life_fish_24
-    LivestockCategories.SHRIMP -> R.drawable.ic_life_shrimp_24
-    LivestockCategories.SNAIL -> R.drawable.ic_life_snail_24
-    LivestockCategories.CRAB_CRAYFISH -> R.drawable.ic_life_crab_24
-    LivestockCategories.CORAL -> R.drawable.ic_life_coral_24
-    else -> R.drawable.ic_life_other_24
-  }
-}
-
-private fun getLivestockCategoryColor(
-  category: String
-): String {
-  return when (category) {
-    LivestockCategories.FISH -> "#1C5D8F"
-    LivestockCategories.SHRIMP -> "#8F4A3A"
-    LivestockCategories.SNAIL -> "#3E6B4A"
-    LivestockCategories.CRAB_CRAYFISH -> "#7A4D2D"
-    LivestockCategories.CORAL -> "#7A4E8F"
-    else -> "#3E536B"
-  }
-}
-
-private fun createLifeIconBackground(
-  color: String
-): GradientDrawable {
-  return GradientDrawable().apply {
-    shape = GradientDrawable.RECTANGLE
-    setColor(Color.parseColor(color))
-    cornerRadius = 16.dp().toFloat()
-  }
-}
-
-private fun Int.dp(): Int {
-  return (this * resources.displayMetrics.density).toInt()
-}
-
-private fun readStringProperty(
-  source: Any,
-  fallback: String,
-  vararg names: String
-): String {
-  names.forEach {
-    name ->
-    val value = readPropertyValue(
-      source = source,
-      name = name
-    )
-
-    if (value != null && value.toString().isNotBlank()) {
-      return value.toString()
-    }
-  }
-
-  return fallback
-}
-
-private fun readIntProperty(
-  source: Any,
-  vararg names: String
-): Int? {
-  names.forEach {
-    name ->
-    val value = readPropertyValue(
-      source = source,
-      name = name
-    )
-
-    when (value) {
-      is Int -> {
-        if (value != 0) {
-          return value
-        }
-      }
-
-      is Number -> {
-        val intValue = value.toInt()
-
-        if (intValue != 0) {
-          return intValue
-        }
+    if (fragment != null) {
+      childFragmentManager.commit {
+        remove(fragment)
       }
     }
+
+    binding.lifeFlowContainer.isVisible = false
   }
 
-  return null
-}
+  private fun renderPlantsSection(
+    tank: SavedAquariumTank
+  ) {
+    binding.plantListContainer.removeAllViews()
 
-private fun readPropertyValue(
-  source: Any,
-  name: String
-): Any? {
-  val getterName = "get" + name.replaceFirstChar {
-    if (it.isLowerCase()) {
-      it.titlecase(Locale.getDefault())
+    tank.plants.forEachIndexed {
+      index, plant ->
+      binding.plantListContainer.addView(
+        createPlantCard(
+          index = index,
+          plant = plant
+        )
+      )
+    }
+  }
+
+  private fun createPlantCard(
+    index: Int,
+    plant: SavedAquariumPlant
+  ): View {
+    val card = MaterialCardView(requireContext()).apply {
+      radius = 18.dp().toFloat()
+      strokeWidth = 1.dp()
+      strokeColor = Color.parseColor("#223A57")
+      setCardBackgroundColor(Color.parseColor("#10233A"))
+      cardElevation = 0f
+      useCompatPadding = false
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.bottomMargin = 12.dp()
+      layoutParams = params
+    }
+
+    val row = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(
+        14.dp(),
+        12.dp(),
+        14.dp(),
+        12.dp()
+      )
+    }
+
+    val number = TextView(requireContext()).apply {
+      text = "${index + 1}"
+      gravity = Gravity.CENTER
+      textSize = 13f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.NORMAL)
+      setBackgroundResource(R.drawable.bg_plant_number_circle)
+      includeFontPadding = false
+
+      layoutParams = LinearLayout.LayoutParams(
+        38.dp(),
+        38.dp()
+      )
+    }
+
+    val textBox = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.VERTICAL
+
+      val params = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+      params.marginStart = 14.dp()
+      layoutParams = params
+    }
+
+    val categoryText = TextView(requireContext()).apply {
+      text = plant.category
+      textSize = 12f
+      setTextColor(Color.parseColor("#8FA4BE"))
+      includeFontPadding = false
+    }
+
+    val nameText = TextView(requireContext()).apply {
+      text = plant.plantName
+      textSize = 14f
+      setTextColor(Color.WHITE)
+      setTypeface(null, Typeface.NORMAL)
+      includeFontPadding = false
+      maxLines = 2
+      ellipsize = TextUtils.TruncateAt.END
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 6.dp()
+      layoutParams = params
+    }
+
+    textBox.addView(categoryText)
+    textBox.addView(nameText)
+
+    row.addView(number)
+    row.addView(textBox)
+
+    card.addView(row)
+
+    return card
+  }
+
+  fun openPlantTagFlow() {
+    binding.plantFlowContainer.isVisible = true
+
+    childFragmentManager.commit {
+      replace(
+        R.id.plantFlowContainer,
+        TankDetailPlantTagFragment.newInstance(tankId),
+        "TANK_DETAIL_PLANT_TAG_FRAGMENT"
+      )
+    }
+  }
+
+  fun openPlantPickerFlow() {
+    childFragmentManager.commit {
+      setReorderingAllowed(true)
+      add(
+        R.id.plantFlowContainer,
+        PlantPickerFragment(),
+        "PLANT_PICKER_FRAGMENT"
+      )
+      addToBackStack("PLANT_PICKER_FRAGMENT")
+    }
+  }
+
+  fun closePlantTagFlow() {
+    childFragmentManager.popBackStack(
+      null,
+      FragmentManager.POP_BACK_STACK_INCLUSIVE
+    )
+
+    val currentPlantFragment = childFragmentManager.findFragmentById(
+      R.id.plantFlowContainer
+    )
+
+    if (currentPlantFragment != null) {
+      childFragmentManager.commit {
+        remove(currentPlantFragment)
+      }
+    }
+
+    binding.plantFlowContainer.isVisible = false
+  }
+
+  private fun handlePlantFlowBack(): Boolean {
+    if (!binding.plantFlowContainer.isVisible) {
+      return false
+    }
+
+    if (childFragmentManager.backStackEntryCount > 0) {
+      childFragmentManager.popBackStack()
     } else {
-      it.toString()
+      closePlantTagFlow()
+    }
+
+    return true
+  }
+
+  private fun handleLifeFlowBack(): Boolean {
+    if (!binding.lifeFlowContainer.isVisible) {
+      return false
+    }
+
+    closeLivestockFormFlow()
+    return true
+  }
+
+  private fun activateTab(
+    tabView: TextView
+  ) {
+    tabView.setTextColor(Color.WHITE)
+    tabView.setTypeface(null, Typeface.BOLD)
+  }
+
+  private fun moveTabUnderline(
+    tabView: TextView
+  ) {
+    binding.tabsContainer.post {
+      val underlineWidth = (tabView.width * 0.58f)
+      .toInt()
+      .coerceIn(
+        34.dp(),
+        68.dp()
+      )
+
+      val params = binding.tabUnderline.layoutParams
+      params.width = underlineWidth
+      binding.tabUnderline.layoutParams = params
+
+      val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
+
+      binding.tabUnderline.animate()
+      .translationX(targetX)
+      .setDuration(180)
+      .start()
     }
   }
 
-  source.javaClass.methods.firstOrNull {
-    method ->
-    method.name == getterName && method.parameterTypes.isEmpty()
-  }?.let {
-    method ->
+  private fun resetTabs() {
+    val inactiveColor = Color.parseColor("#8FA4BE")
+
+    listOf(
+      binding.tabDevices,
+      binding.tabActivity,
+      binding.tabTank,
+      binding.tabPlants,
+      binding.tabTankLife
+    ).forEach {
+      tab ->
+      tab.setTextColor(inactiveColor)
+      tab.setTypeface(null, Typeface.NORMAL)
+    }
+
+    binding.devicesSection.isVisible = false
+    binding.activitySection.isVisible = false
+    binding.tankSection.isVisible = false
+    binding.plantsSection.isVisible = false
+    binding.tvEmptyTab.isVisible = false
+    binding.tankLifeSection.isVisible = false
+
+    binding.btnAddActivity.isVisible = false
+  }
+
+  private fun showEmptySection() {
+    binding.devicesSection.isVisible = false
+    binding.activitySection.isVisible = false
+    binding.tankSection.isVisible = false
+    binding.plantsSection.isVisible = false
+    binding.tvEmptyTab.isVisible = true
+    binding.tankLifeSection.isVisible = false
+    binding.btnAddActivity.isVisible = false
+  }
+
+  private fun getLivestockQuantityText(
+    quantity: Int
+  ): String {
+    val safeQuantity = quantity.coerceAtLeast(1)
+
+    return if (safeQuantity == 1) {
+      "1 pc"
+    } else {
+      "$safeQuantity pcs"
+    }
+  }
+
+  private fun getLivestockAddedDateText(
+    addedDateMillis: Long?
+  ): String {
+    if (addedDateMillis == null || addedDateMillis <= 0L) {
+      return "Added date not set"
+    }
+
+    val formatter = SimpleDateFormat(
+      "dd MMM yyyy",
+      Locale.getDefault()
+    )
+
+    return "Added ${formatter.format(Date(addedDateMillis))}"
+  }
+
+  private fun getLivestockCategoryIcon(
+    category: String
+  ): Int {
+    return when (category) {
+      LivestockCategories.FISH -> R.drawable.ic_life_fish_24
+      LivestockCategories.SHRIMP -> R.drawable.ic_life_shrimp_24
+      LivestockCategories.SNAIL -> R.drawable.ic_life_snail_24
+      LivestockCategories.CRAB_CRAYFISH -> R.drawable.ic_life_crab_24
+      LivestockCategories.CORAL -> R.drawable.ic_life_coral_24
+      else -> R.drawable.ic_life_other_24
+    }
+  }
+
+  private fun getLivestockCategoryColor(
+    category: String
+  ): String {
+    return when (category) {
+      LivestockCategories.FISH -> "#1C5D8F"
+      LivestockCategories.SHRIMP -> "#8F4A3A"
+      LivestockCategories.SNAIL -> "#3E6B4A"
+      LivestockCategories.CRAB_CRAYFISH -> "#7A4D2D"
+      LivestockCategories.CORAL -> "#7A4E8F"
+      else -> "#3E536B"
+    }
+  }
+
+  private fun createLifeIconBackground(
+    color: String
+  ): GradientDrawable {
+    return GradientDrawable().apply {
+      shape = GradientDrawable.RECTANGLE
+      setColor(Color.parseColor(color))
+      cornerRadius = 16.dp().toFloat()
+    }
+  }
+
+  private fun Int.dp(): Int {
+    return (this * resources.displayMetrics.density).toInt()
+  }
+
+  private fun readStringProperty(
+    source: Any,
+    fallback: String,
+    vararg names: String
+  ): String {
+    names.forEach {
+      name ->
+      val value = readPropertyValue(
+        source = source,
+        name = name
+      )
+
+      if (value != null && value.toString().isNotBlank()) {
+        return value.toString()
+      }
+    }
+
+    return fallback
+  }
+
+  private fun readIntProperty(
+    source: Any,
+    vararg names: String
+  ): Int? {
+    names.forEach {
+      name ->
+      val value = readPropertyValue(
+        source = source,
+        name = name
+      )
+
+      when (value) {
+        is Int -> {
+          if (value != 0) {
+            return value
+          }
+        }
+
+        is Number -> {
+          val intValue = value.toInt()
+
+          if (intValue != 0) {
+            return intValue
+          }
+        }
+      }
+    }
+
+    return null
+  }
+
+  private fun readPropertyValue(
+    source: Any,
+    name: String
+  ): Any? {
+    val getterName = "get" + name.replaceFirstChar {
+      if (it.isLowerCase()) {
+        it.titlecase(Locale.getDefault())
+      } else {
+        it.toString()
+      }
+    }
+
+    source.javaClass.methods.firstOrNull {
+      method ->
+      method.name == getterName && method.parameterTypes.isEmpty()
+    }?.let {
+      method ->
+      return runCatching {
+        method.invoke(source)
+      }.getOrNull()
+    }
+
     return runCatching {
-      method.invoke(source)
+      source.javaClass.getDeclaredField(name).apply {
+        isAccessible = true
+      }.get(source)
     }.getOrNull()
   }
 
-  return runCatching {
-    source.javaClass.getDeclaredField(name).apply {
-      isAccessible = true
-    }.get(source)
-  }.getOrNull()
-}
+  override fun onSaveInstanceState(outState: Bundle) {
+    super.onSaveInstanceState(outState)
 
-override fun onSaveInstanceState(outState: Bundle) {
-  super.onSaveInstanceState(outState)
+    outState.putString(
+      KEY_SELECTED_TAB,
+      selectedTab.name
+    )
+  }
 
-  outState.putString(
-    KEY_SELECTED_TAB,
-    selectedTab.name
-  )
-}
+  override fun onDestroyView() {
+    super.onDestroyView()
+    _binding = null
+  }
 
-override fun onDestroyView() {
-  super.onDestroyView()
-  _binding = null
-}
+  private enum class TankDetailTab {
+    DEVICES,
+    ACTIVITY,
+    TANK,
+    PLANTS,
+    TANK_LIFE
+  }
 
-private enum class TankDetailTab {
-  DEVICES,
-  ACTIVITY,
-  TANK,
-  PLANTS,
-  TANK_LIFE
-}
+  companion object {
+    private const val ARG_TANK_ID = "tankId"
+    private const val KEY_SELECTED_TAB = "selectedTab"
+    private const val ONLINE_TIMEOUT_MS = 60_000L
 
-companion object {
-  private const val ARG_TANK_ID = "tankId"
-  private const val KEY_SELECTED_TAB = "selectedTab"
-  private const val ONLINE_TIMEOUT_MS = 60_000L
-
-  const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
-  const val CARE_PROFILE_ACTION_PLANTS = "plants"
-  const val CARE_PROFILE_ACTION_LIVESTOCK = "livestock"
-}
+    const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
+    const val CARE_PROFILE_ACTION_PLANTS = "plants"
+    const val CARE_PROFILE_ACTION_LIVESTOCK = "livestock"
+  }
 }
