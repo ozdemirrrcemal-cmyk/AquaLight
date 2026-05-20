@@ -580,7 +580,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     val row = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.TOP
+      gravity = Gravity.CENTER_VERTICAL
 
       setPadding(
         12.dp(),
@@ -595,12 +595,10 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         color = Color.parseColor(task.accentColor)
       )
 
-      val params = LinearLayout.LayoutParams(
+      layoutParams = LinearLayout.LayoutParams(
         38.dp(),
         38.dp()
       )
-      params.topMargin = 2.dp()
-      layoutParams = params
     }
 
     val icon = ImageView(requireContext()).apply {
@@ -625,13 +623,13 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         LinearLayout.LayoutParams.WRAP_CONTENT,
         1f
       )
-      params.marginStart = 11.dp()
+      params.marginStart = 12.dp()
       layoutParams = params
     }
 
     val titleText = TextView(requireContext()).apply {
       text = task.title
-      textSize = 13.2f
+      textSize = 13.4f
       setTextColor(Color.WHITE)
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
@@ -639,28 +637,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       ellipsize = TextUtils.TruncateAt.END
     }
 
-    val metaText = TextView(requireContext()).apply {
-      text = buildActivityMetaText(task)
-      textSize = 11.8f
-      setTextColor(Color.parseColor("#B8C7D9"))
-      includeFontPadding = false
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 6.dp()
-      layoutParams = params
-    }
-
-    val completedText = TextView(requireContext()).apply {
-      text = "Completed"
-      textSize = 11.8f
-      setTextColor(Color.parseColor("#5FD6B4"))
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
+    val bottomRow = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
 
       val params = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
@@ -670,9 +649,42 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       layoutParams = params
     }
 
+    val metaText = TextView(requireContext()).apply {
+      text = buildActivityMetaText(task)
+      textSize = 12f
+      setTextColor(Color.parseColor("#B8C7D9"))
+      includeFontPadding = false
+      maxLines = 1
+      ellipsize = TextUtils.TruncateAt.END
+
+      layoutParams = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+    }
+
+    val completedText = TextView(requireContext()).apply {
+      text = "Completed"
+      textSize = 11.8f
+      setTextColor(Color.parseColor("#5FD6B4"))
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      maxLines = 1
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.marginStart = 10.dp()
+      layoutParams = params
+    }
+
+    bottomRow.addView(metaText)
+    bottomRow.addView(completedText)
+
     textBox.addView(titleText)
-    textBox.addView(metaText)
-    textBox.addView(completedText)
+    textBox.addView(bottomRow)
 
     row.addView(iconBox)
     row.addView(textBox)
