@@ -38,7 +38,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         val manager = CareTaskDataStoreManager.create(context)
 
         val task = manager.taskFlow(taskId).firstOrNull()
-          ?: return@launch
+        ?: return@launch
 
         if (
           task.status != CareTaskStatus.PENDING ||
@@ -53,11 +53,35 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
 
         val typeUi = CareTaskTypeCatalog.get(task.type)
 
-        val title = task.title.ifBlank {
+        val baseTitle = task.title.ifBlank {
           typeUi.title
         }
 
-        val message = "This care task is due now."
+        val title = if (
+          task.waterChangePercent != null &&
+          task.waterChangePercent > 0 &&
+          !baseTitle.contains("%")
+        ) {
+          "$baseTitle (${task.waterChangePercent}%)"
+        } else {
+          baseTitle
+        }
+
+        val message = when {
+          task.note.isNotBlank() -> {
+            task.note
+          }
+
+          task.description.isNotBlank() -> {
+            task.description
+          }
+
+          typeUi.defaultDescription.isNotBlank() -> {
+            typeUi.defaultDescription
+          } else -> {
+            "This care task is due now."
+          }
+        }
 
         NotificationHelper.showCareTaskReminderNotification(
           context = context,

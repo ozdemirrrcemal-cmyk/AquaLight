@@ -15,6 +15,7 @@ import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.aqua.aqualight.ui.main.MainActivity
 import com.aqua.aqualight.R
 
 object NotificationHelper {
@@ -68,7 +69,7 @@ object NotificationHelper {
     context: Context
   ): Boolean {
     return NotificationManagerCompat.from(context)
-      .areNotificationsEnabled()
+    .areNotificationsEnabled()
   }
 
   fun openNotificationSettings(
@@ -167,7 +168,8 @@ object NotificationHelper {
       notificationId = notificationId,
       requestCode = notificationId,
       title = title,
-      message = message
+      message = message,
+      taskId = taskId
     )
   }
 
@@ -186,22 +188,45 @@ object NotificationHelper {
     notificationId: Int,
     requestCode: Int,
     title: String,
-    message: String
+    message: String,
+    taskId: Long? = null
   ) {
-    val launchIntent = context.packageManager
+    val launchIntent = if (taskId != null && taskId > 0L) {
+      Intent(
+        context,
+        MainActivity::class.java
+      ).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+        Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+        putExtra(
+          MainActivity.EXTRA_START_IN_APP,
+          true
+        )
+
+        putExtra(
+          MainActivity.EXTRA_OPEN_CARE_TASK_ID,
+          taskId
+        )
+      }
+    } else {
+      context.packageManager
       .getLaunchIntentForPackage(context.packageName)
       ?.apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-          Intent.FLAG_ACTIVITY_CLEAR_TASK
+        Intent.FLAG_ACTIVITY_CLEAR_TASK
       }
+    }
 
-    val pendingIntent = launchIntent?.let { intent ->
+    val pendingIntent = launchIntent?.let {
+      intent ->
       PendingIntent.getActivity(
         context,
         requestCode,
         intent,
         PendingIntent.FLAG_UPDATE_CURRENT or
-          PendingIntent.FLAG_IMMUTABLE
+        PendingIntent.FLAG_IMMUTABLE
       )
     }
 
@@ -209,14 +234,14 @@ object NotificationHelper {
       context,
       CHANNEL_ID
     )
-      .setSmallIcon(R.drawable.ic_stat_aqualight_soft)
-      .setContentTitle(title)
-      .setContentText(message)
-      .setStyle(
-        NotificationCompat.BigTextStyle().bigText(message)
-      )
-      .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-      .setAutoCancel(true)
+    .setSmallIcon(R.drawable.ic_stat_aqualight_soft)
+    .setContentTitle(title)
+    .setContentText(message)
+    .setStyle(
+      NotificationCompat.BigTextStyle().bigText(message)
+    )
+    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+    .setAutoCancel(true)
 
     if (pendingIntent != null) {
       builder.setContentIntent(pendingIntent)
