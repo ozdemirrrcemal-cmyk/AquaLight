@@ -22,23 +22,24 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeUi
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
 
   private val sheetTitle: String
-    get() = arguments?.getString(ARG_TITLE) ?: DEFAULT_TITLE
+  get() = arguments?.getString(ARG_TITLE) ?: DEFAULT_TITLE
 
   private val resultRequestKey: String
-    get() = arguments?.getString(ARG_RESULT_REQUEST_KEY) ?: REQUEST_KEY_DEFAULT
+  get() = arguments?.getString(ARG_RESULT_REQUEST_KEY) ?: REQUEST_KEY_DEFAULT
 
   private val selectedType: CareTaskType?
-    get() {
-      val typeName = arguments?.getString(ARG_SELECTED_TYPE) ?: return null
+  get() {
+    val typeName = arguments?.getString(ARG_SELECTED_TYPE) ?: return null
 
-      return runCatching {
-        CareTaskType.valueOf(typeName)
-      }.getOrNull()
-    }
+    return runCatching {
+      CareTaskType.valueOf(typeName)
+    }.getOrNull()
+  }
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -72,11 +73,25 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
   override fun onStart() {
     super.onStart()
 
-    val bottomSheet = (dialog as? BottomSheetDialog)?.findViewById<View>(
+    val bottomSheetDialog = dialog as? BottomSheetDialog ?: return
+
+    val bottomSheet = bottomSheetDialog.findViewById<View>(
       com.google.android.material.R.id.design_bottom_sheet
     )
 
     bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+
+    bottomSheet?.layoutParams?.height = (
+      resources.displayMetrics.heightPixels * 0.92f
+    ).toInt()
+
+    bottomSheet?.requestLayout()
+
+    bottomSheetDialog.behavior.apply {
+      state = BottomSheetBehavior.STATE_EXPANDED
+      skipCollapsed = true
+      isDraggable = false
+    }
   }
 
   private fun renderTaskTypesIntoContainer(
