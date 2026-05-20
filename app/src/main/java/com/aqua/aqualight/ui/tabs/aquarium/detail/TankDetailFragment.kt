@@ -52,6 +52,10 @@ import android.graphics.drawable.GradientDrawable
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.ui.tabs.aquarium.model.LivestockCategories
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
+import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
+import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
+import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
+
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
@@ -59,6 +63,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   private val binding get() = _binding!!
 
   private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+
+  private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
   private lateinit var userPrefs: UserPreferencesManager
   private var tankId: Long = 0L
@@ -87,9 +93,11 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     setupClickListeners()
     setupSystemBackButton()
+    setupCareTaskTypeResultListener()
     observeCareProfileActions()
     observeTank()
     observeTankDevices()
+    observeTankActivity()
     selectTab(selectedTab)
   }
 
@@ -176,6 +184,35 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     binding.btnEmptyAddLife.setOnClickListener {
       openLivestockFormFlow()
+    }
+  }
+
+  private fun setupCareTaskTypeResultListener() {
+    childFragmentManager.setFragmentResultListener(
+      CareTaskTypeBottomSheetFragment.REQUEST_KEY_ADD_ACTIVITY,
+      viewLifecycleOwner
+    ) {
+      _, result ->
+
+      val typeName = result.getString(
+        CareTaskTypeBottomSheetFragment.RESULT_TASK_TYPE
+      ) ?: return@setFragmentResultListener
+
+      val selectedType = runCatching {
+        CareTaskType.valueOf(typeName)
+      }.getOrNull() ?: return@setFragmentResultListener
+
+      maintenanceViewModel.addCompletedActivity(
+        tankId = tankId,
+        type = selectedType,
+        completedAtMillis = System.currentTimeMillis()
+      )
+
+      Toast.makeText(
+        requireContext(),
+        "Activity added.",
+        Toast.LENGTH_SHORT
+      ).show()
     }
   }
 
@@ -287,8 +324,12 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
   private fun observeTank() {
     aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
       tanks ->
+
+      maintenanceViewModel.setTanks(tanks)
+
       val tank = tanks.firstOrNull {
-        it.id == tankId
+        tank ->
+        tank.id == tankId
       }
 
       if (tank == null) {
@@ -305,6 +346,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       bindTank(tank)
     }
   }
+
 
   private fun bindTank(
     tank: SavedAquariumTank
@@ -347,6 +389,32 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         }
       }
     }
+  }
+
+  private fun observeTankActivity() {
+    viewLifecycleOwner.lifecycleScope.launch {
+      viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        maintenanceViewModel.tankActivityStateFlow(
+          tankId = tankId
+        ).collect {
+          state ->
+          renderActivitySummary(state)
+        }
+      }
+    }
+  }
+
+  private fun renderActivitySummary(
+    state: TankActivityUiState
+  ) {
+    binding.tvLastTrimValue.text = state.lastTrimText
+    binding.tvLastWaterChangeValue.text = state.lastWaterChangeText
+    binding.tvLastFilterValue.text = state.lastFilterMaintenanceText
+
+    binding.tvNextCareValue.text = state.nextCareTask?.let {
+      task ->
+      "${task.title} • ${state.nextCareText}"
+    } ?: "--"
   }
 
   private fun renderDevicesSection(

@@ -25,7 +25,7 @@ class TimelineAxisView @JvmOverloads constructor(
       invalidate()
     }
 
-  private val axisLineColor = Color.parseColor("#33475D")
+  private val axisLineColor = Color.parseColor("#26384C")
 
   private val todayNodeColor = Color.parseColor("#4FD6C8")
   private val pastNodeColor = Color.parseColor("#45BFAF")

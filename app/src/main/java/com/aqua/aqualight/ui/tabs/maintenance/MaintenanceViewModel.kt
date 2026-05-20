@@ -24,13 +24,23 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
+
+data class TankActivityUiState(
+  val lastTrimText: String = "--",
+  val lastWaterChangeText: String = "--",
+  val lastFilterMaintenanceText: String = "--",
+  val nextCareText: String = "--",
+  val nextCareTask: CareTaskUi? = null,
+  val completedTasks: List<CareTaskUi> = emptyList()
+)
 
 class MaintenanceViewModel(
   application: Application
 ) : AndroidViewModel(application) {
 
   private val careTaskDataStoreManager =
-  CareTaskDataStoreManager.create(application)
+    CareTaskDataStoreManager.create(application)
 
   private val selectedTabFlow = MutableStateFlow(
     MaintenanceTab.ALL
@@ -45,31 +55,31 @@ class MaintenanceViewModel(
   val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
 
   val taskItems: StateFlow<List<CareTaskUi>> =
-  combine(
-    careTaskDataStoreManager.tasksFlow,
-    tanksFlow,
-    selectedTabFlow
-  ) {
-    tasks, tanks, selectedTab ->
-    val filteredTasks = filterTasksByTab(
-      tasks = tasks,
-      tab = selectedTab
-    )
-
-    filteredTasks.map {
-      task ->
-      task.toCareTaskUi(
-        tankName = getTankName(
-          tankId = task.tankId,
-          tanks = tanks
-        )
+    combine(
+      careTaskDataStoreManager.tasksFlow,
+      tanksFlow,
+      selectedTabFlow
+    ) {
+      tasks, tanks, selectedTab ->
+      val filteredTasks = filterTasksByTab(
+        tasks = tasks,
+        tab = selectedTab
       )
-    }
-  }.stateIn(
-    scope = viewModelScope,
-    started = SharingStarted.WhileSubscribed(5_000),
-    initialValue = emptyList()
-  )
+
+      filteredTasks.map {
+        task ->
+        task.toCareTaskUi(
+          tankName = getTankName(
+            tankId = task.tankId,
+            tanks = tanks
+          )
+        )
+      }
+    }.stateIn(
+      scope = viewModelScope,
+      started = SharingStarted.WhileSubscribed(5_000),
+      initialValue = emptyList()
+    )
 
   fun taskByIdFlow(
     taskId: Long
@@ -84,6 +94,84 @@ class MaintenanceViewModel(
           tankId = task.tankId,
           tanks = tanks
         )
+      )
+    }
+  }
+
+  fun tankActivityStateFlow(
+    tankId: Long
+  ): Flow<TankActivityUiState> {
+    return combine(
+      careTaskDataStoreManager.tasksFlow,
+      tanksFlow
+    ) {
+      tasks, tanks ->
+      val tankName = getTankName(
+        tankId = tankId,
+        tanks = tanks
+      )
+
+      val tankTasks = tasks.filter {
+        task ->
+        task.tankId == tankId
+      }
+
+      val completedTasks = tankTasks
+        .filter {
+          task ->
+          task.status == CareTaskStatus.COMPLETED
+        }
+        .sortedByDescending {
+          task ->
+          task.completedAtMillis ?: task.dueAtMillis
+        }
+
+      val pendingTasks = tankTasks
+        .filter {
+          task ->
+          task.status == CareTaskStatus.PENDING
+        }
+        .sortedBy {
+          task ->
+          task.dueAtMillis
+        }
+
+      val completedTaskItems = completedTasks.map {
+        task ->
+        task.toCareTaskUi(
+          tankName = tankName
+        )
+      }
+
+      val nextCareTask = selectNextCareTask(
+        tasks = pendingTasks
+      )
+
+      TankActivityUiState(
+        lastTrimText = getLastCompletedTaskText(
+          tasks = completedTasks,
+          types = setOf(
+            CareTaskType.PLANT_TRIM
+          )
+        ),
+        lastWaterChangeText = getLastCompletedTaskText(
+          tasks = completedTasks,
+          types = setOf(
+            CareTaskType.WATER_CHANGE
+          )
+        ),
+        lastFilterMaintenanceText = getLastCompletedTaskText(
+          tasks = completedTasks,
+          types = getFilterMaintenanceTypes()
+        ),
+        nextCareText = nextCareTask?.let {
+          task ->
+          getNextCareSummaryText(task)
+        } ?: "--",
+        nextCareTask = nextCareTask?.toCareTaskUi(
+          tankName = tankName
+        ),
+        completedTasks = completedTaskItems
       )
     }
   }
@@ -135,6 +223,28 @@ class MaintenanceViewModel(
     viewModelScope.launch {
       careTaskDataStoreManager.deleteTask(
         taskId = taskId
+      )
+    }
+  }
+
+  fun addCompletedActivity(
+    tankId: Long,
+    type: CareTaskType,
+    completedAtMillis: Long = System.currentTimeMillis(),
+    waterChangePercent: Int? = null,
+    note: String = ""
+  ) {
+    viewModelScope.launch {
+      val typeUi = CareTaskTypeCatalog.get(type)
+
+      careTaskDataStoreManager.addCompletedActivity(
+        tankId = tankId,
+        title = typeUi.title,
+        description = typeUi.defaultDescription,
+        type = type,
+        completedAtMillis = completedAtMillis,
+        waterChangePercent = waterChangePercent,
+        note = note
       )
     }
   }
@@ -218,52 +328,52 @@ class MaintenanceViewModel(
     return when (tab) {
       MaintenanceTab.ALL -> {
         tasks
-        .filter {
-          task ->
-          task.status == CareTaskStatus.PENDING
-        }
-        .sortedBy {
-          task ->
-          task.dueAtMillis
-        }
+          .filter {
+            task ->
+            task.status == CareTaskStatus.PENDING
+          }
+          .sortedBy {
+            task ->
+            task.dueAtMillis
+          }
       }
 
       MaintenanceTab.TODAY -> {
         tasks
-        .filter {
-          task ->
-          task.status == CareTaskStatus.PENDING &&
-          task.dueAtMillis < tomorrowStartMillis
-        }
-        .sortedBy {
-          task ->
-          task.dueAtMillis
-        }
+          .filter {
+            task ->
+            task.status == CareTaskStatus.PENDING &&
+              task.dueAtMillis < tomorrowStartMillis
+          }
+          .sortedBy {
+            task ->
+            task.dueAtMillis
+          }
       }
 
       MaintenanceTab.UPCOMING -> {
         tasks
-        .filter {
-          task ->
-          task.status == CareTaskStatus.PENDING &&
-          task.dueAtMillis >= tomorrowStartMillis
-        }
-        .sortedBy {
-          task ->
-          task.dueAtMillis
-        }
+          .filter {
+            task ->
+            task.status == CareTaskStatus.PENDING &&
+              task.dueAtMillis >= tomorrowStartMillis
+          }
+          .sortedBy {
+            task ->
+            task.dueAtMillis
+          }
       }
 
       MaintenanceTab.HISTORY -> {
         tasks
-        .filter {
-          task ->
-          task.status == CareTaskStatus.COMPLETED
-        }
-        .sortedByDescending {
-          task ->
-          task.completedAtMillis ?: 0L
-        }
+          .filter {
+            task ->
+            task.status == CareTaskStatus.COMPLETED
+          }
+          .sortedByDescending {
+            task ->
+            task.completedAtMillis ?: 0L
+          }
       }
     }
   }
@@ -302,7 +412,7 @@ class MaintenanceViewModel(
       iconRes = typeUi.iconRes,
       accentColor = typeUi.accentColor,
       isOverdue = status == CareTaskStatus.PENDING &&
-      dueAtMillis < getTodayStartMillis(),
+        dueAtMillis < getTodayStartMillis(),
       primaryTimeText = getPrimaryTimeText(this),
       secondaryText = getSecondaryText(this)
     )
@@ -357,33 +467,179 @@ class MaintenanceViewModel(
   }
 
   private fun getSecondaryText(
-  task: CareTask
-): String {
-  if (
-    task.source == CareTaskSource.AUTOMATIC &&
-    task.description.isNotBlank()
-  ) {
-    return task.description
+    task: CareTask
+  ): String {
+    if (
+      task.source == CareTaskSource.AUTOMATIC &&
+      task.description.isNotBlank()
+    ) {
+      return task.description
+    }
+
+    return when {
+      task.note.isNotBlank() -> {
+        task.note
+      }
+
+      task.reminderEnabled && task.missedReminderEnabled -> {
+        "Reminder active • repeats ${task.missedReminderDays.coerceAtLeast(1)} days if missed"
+      }
+
+      task.reminderEnabled -> {
+        "Reminder active"
+      }
+
+      else -> {
+        task.description
+      }
+    }
   }
 
-  return when {
-    task.note.isNotBlank() -> {
-      task.note
-    }
+  private fun getLastCompletedTaskText(
+    tasks: List<CareTask>,
+    types: Set<CareTaskType>
+  ): String {
+    val lastTask = tasks
+      .filter {
+        task ->
+        task.type in types
+      }
+      .maxByOrNull {
+        task ->
+        task.completedAtMillis ?: task.dueAtMillis
+      }
 
-    task.reminderEnabled && task.missedReminderEnabled -> {
-      "Reminder active • repeats ${task.missedReminderDays.coerceAtLeast(1)} days if missed"
-    }
+    val completedAt = lastTask?.completedAtMillis ?: lastTask?.dueAtMillis
 
-    task.reminderEnabled -> {
-      "Reminder active"
-    }
-
-    else -> {
-      task.description
+    return if (completedAt == null || completedAt <= 0L) {
+      "--"
+    } else {
+      getDaysAgoText(completedAt)
     }
   }
-}
+
+  private fun getFilterMaintenanceTypes(): Set<CareTaskType> {
+    return setOf(
+      CareTaskType.FILTER_MAINTENANCE,
+      CareTaskType.FILTER_CHANGE,
+      CareTaskType.PRE_FILTER_CLEANING,
+      CareTaskType.PIPE_CLEANING,
+      CareTaskType.DIFFUSER_CLEANING,
+      CareTaskType.HOSE_CLEANING
+    )
+  }
+
+  private fun selectNextCareTask(
+    tasks: List<CareTask>
+  ): CareTask? {
+    if (tasks.isEmpty()) {
+      return null
+    }
+
+    val now = System.currentTimeMillis()
+    val tomorrowStartMillis = getTomorrowStartMillis()
+
+    val overdueTask = tasks
+      .filter {
+        task ->
+        task.dueAtMillis < now
+      }
+      .minByOrNull {
+        task ->
+        task.dueAtMillis
+      }
+
+    if (overdueTask != null) {
+      return overdueTask
+    }
+
+    val todayTask = tasks
+      .filter {
+        task ->
+        task.dueAtMillis < tomorrowStartMillis
+      }
+      .minByOrNull {
+        task ->
+        task.dueAtMillis
+      }
+
+    if (todayTask != null) {
+      return todayTask
+    }
+
+    val smartTask = tasks
+      .filter {
+        task ->
+        task.source == CareTaskSource.AUTOMATIC
+      }
+      .minByOrNull {
+        task ->
+        task.dueAtMillis
+      }
+
+    if (smartTask != null) {
+      return smartTask
+    }
+
+    return tasks.minByOrNull {
+      task ->
+      task.dueAtMillis
+    }
+  }
+
+  private fun getNextCareSummaryText(
+    task: CareTask
+  ): String {
+    val todayStartMillis = getTodayStartMillis()
+    val dueDayStartMillis = getStartOfDayMillis(task.dueAtMillis)
+
+    val daysUntil = TimeUnit.MILLISECONDS.toDays(
+      dueDayStartMillis - todayStartMillis
+    )
+
+    return when {
+      daysUntil < 0L -> {
+        "Overdue"
+      }
+
+      daysUntil == 0L -> {
+        "Today"
+      }
+
+      daysUntil == 1L -> {
+        "Tomorrow"
+      }
+
+      else -> {
+        "$daysUntil days later"
+      }
+    }
+  }
+
+  private fun getDaysAgoText(
+    millis: Long
+  ): String {
+    val todayStartMillis = getTodayStartMillis()
+    val targetStartMillis = getStartOfDayMillis(millis)
+
+    val daysAgo = TimeUnit.MILLISECONDS
+      .toDays(todayStartMillis - targetStartMillis)
+      .coerceAtLeast(0L)
+
+    return when (daysAgo) {
+      0L -> {
+        "Today"
+      }
+
+      1L -> {
+        "1 day ago"
+      }
+
+      else -> {
+        "$daysAgo days ago"
+      }
+    }
+  }
 
   private fun getTankName(
     tankId: Long,
@@ -411,6 +667,18 @@ class MaintenanceViewModel(
       set(Calendar.SECOND, 0)
       set(Calendar.MILLISECOND, 0)
       add(Calendar.DAY_OF_YEAR, 1)
+    }.timeInMillis
+  }
+
+  private fun getStartOfDayMillis(
+    millis: Long
+  ): Long {
+    return Calendar.getInstance().apply {
+      timeInMillis = millis
+      set(Calendar.HOUR_OF_DAY, 0)
+      set(Calendar.MINUTE, 0)
+      set(Calendar.SECOND, 0)
+      set(Calendar.MILLISECOND, 0)
     }.timeInMillis
   }
 

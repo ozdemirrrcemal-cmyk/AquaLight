@@ -179,6 +179,59 @@ class CareTaskDataStoreManager private constructor(
     addTask(task)
   }
 
+  suspend fun addCompletedActivity(
+    tankId: Long,
+    title: String,
+    description: String,
+    type: CareTaskType,
+    completedAtMillis: Long,
+    waterChangePercent: Int?,
+    note: String
+  ) {
+    context.careTasksDataStore.updateData {
+      currentStore ->
+      val now = System.currentTimeMillis()
+
+      val safeCompletedAtMillis = if (completedAtMillis > 0L) {
+        completedAtMillis
+      } else {
+        now
+      }
+
+      val task = CareTask(
+        id = createNextTaskId(
+          currentTasks = currentStore.tasksList
+        ),
+        tankId = tankId,
+        title = title,
+        description = description,
+        type = type,
+        source = CareTaskSource.MANUAL,
+        status = CareTaskStatus.COMPLETED,
+        dueAtMillis = safeCompletedAtMillis,
+        completedAtMillis = safeCompletedAtMillis,
+        repeatEnabled = false,
+        repeatIntervalDays = 1,
+        reminderEnabled = false,
+        missedReminderEnabled = false,
+        missedReminderDays = 1,
+        waterChangePercent = if (type == CareTaskType.WATER_CHANGE) {
+          waterChangePercent
+        } else {
+          null
+        },
+        note = note,
+        generatedRuleKey = "",
+        createdAtMillis = now,
+        updatedAtMillis = now
+      )
+
+      currentStore.toBuilder()
+      .addTasks(task.toStoredCareTask())
+      .build()
+    }
+  }
+
   suspend fun addOrUpdateAutomaticTask(
     task: CareTask
   ) {
