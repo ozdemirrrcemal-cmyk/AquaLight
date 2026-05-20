@@ -137,22 +137,31 @@ class AquariumMaintenanceFragment :
   }
 
   private fun observeCareTasks() {
-    viewLifecycleOwner.lifecycleScope.launch {
-      viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        maintenanceViewModel.taskItems.collect { tasks ->
-          if (currentSelectedTab == MaintenanceTab.HISTORY) {
-            adapter.submitList(emptyList())
-            renderHistoryTimeline(tasks)
-          } else {
-            adapter.submitList(tasks)
-            binding.historyTimelineContainer.removeAllViews()
-          }
+  viewLifecycleOwner.lifecycleScope.launch {
+    viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+      maintenanceViewModel.taskItems.collect { tasks ->
 
-          renderTaskListState(tasks)
+        if (currentSelectedTab == MaintenanceTab.HISTORY) {
+          adapter.submitCareTasks(
+            tasks = emptyList(),
+            showDateHeaders = false
+          )
+
+          renderHistoryTimeline(tasks)
+        } else {
+          adapter.submitCareTasks(
+            tasks = tasks,
+            showDateHeaders = true
+          )
+
+          binding.historyTimelineContainer.removeAllViews()
         }
+
+        renderTaskListState(tasks)
       }
     }
   }
+}
 
   private fun renderTaskListState(
     tasks: List<CareTaskUi>

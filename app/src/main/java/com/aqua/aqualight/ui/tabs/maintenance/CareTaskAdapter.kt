@@ -4,43 +4,197 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemCareTaskBinding
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class CareTaskAdapter(
   private val onCompleteClick: (CareTaskUi) -> Unit,
   private val onTaskClick: (CareTaskUi) -> Unit
-) : ListAdapter<CareTaskUi, CareTaskAdapter.CareTaskViewHolder>(
-  CareTaskDiffCallback
+) : ListAdapter<CareTaskAdapter.CareTaskListItem, RecyclerView.ViewHolder>(
+  CareTaskListDiffCallback
 ) {
+
+  fun submitCareTasks(
+    tasks: List<CareTaskUi>,
+    showDateHeaders: Boolean
+  ) {
+    val rows = if (showDateHeaders) {
+      createRowsWithDateHeaders(tasks)
+    } else {
+      tasks.map { task ->
+        CareTaskListItem.TaskItem(task)
+      }
+    }
+
+    submitList(rows)
+  }
+
+  override fun getItemViewType(
+    position: Int
+  ): Int {
+    return when (getItem(position)) {
+      is CareTaskListItem.DateHeader -> VIEW_TYPE_DATE_HEADER
+      is CareTaskListItem.TaskItem -> VIEW_TYPE_TASK
+    }
+  }
 
   override fun onCreateViewHolder(
     parent: ViewGroup,
     viewType: Int
-  ): CareTaskViewHolder {
-    val binding = ItemCareTaskBinding.inflate(
-      LayoutInflater.from(parent.context),
-      parent,
-      false
-    )
+  ): RecyclerView.ViewHolder {
+    return when (viewType) {
+      VIEW_TYPE_DATE_HEADER -> {
+        val view = LayoutInflater.from(parent.context).inflate(
+          R.layout.item_care_task_date_header,
+          parent,
+          false
+        )
 
-    return CareTaskViewHolder(binding)
+        DateHeaderViewHolder(view)
+      }
+
+      else -> {
+        val binding = ItemCareTaskBinding.inflate(
+          LayoutInflater.from(parent.context),
+          parent,
+          false
+        )
+
+        CareTaskViewHolder(binding)
+      }
+    }
   }
 
   override fun onBindViewHolder(
-    holder: CareTaskViewHolder,
+    holder: RecyclerView.ViewHolder,
     position: Int
   ) {
-    holder.bind(
-      item = getItem(position)
+    when (val item = getItem(position)) {
+      is CareTaskListItem.DateHeader -> {
+        (holder as DateHeaderViewHolder).bind(item.title)
+      }
+
+      is CareTaskListItem.TaskItem -> {
+        (holder as CareTaskViewHolder).bind(item.task)
+      }
+    }
+  }
+
+  private fun createRowsWithDateHeaders(
+    tasks: List<CareTaskUi>
+  ): List<CareTaskListItem> {
+    val rows = mutableListOf<CareTaskListItem>()
+
+    val groupedTasks = tasks
+      .sortedBy { task ->
+        task.createdAtMillis
+      }
+      .groupBy { task ->
+        formatDateKey(task.createdAtMillis)
+      }
+
+    groupedTasks.forEach { (_, dayTasks) ->
+      val firstTask = dayTasks.firstOrNull() ?: return@forEach
+
+      rows.add(
+        CareTaskListItem.DateHeader(
+          key = formatDateKey(firstTask.createdAtMillis),
+          title = formatDateHeaderWithRelative(firstTask.createdAtMillis)
+        )
+      )
+
+      dayTasks.forEach { task ->
+        rows.add(
+          CareTaskListItem.TaskItem(task)
+        )
+      }
+    }
+
+    return rows
+  }
+
+  private fun formatDateHeaderWithRelative(
+    millis: Long
+  ): String {
+    val dateText = SimpleDateFormat(
+      "dd.MM.yyyy",
+      Locale.getDefault()
+    ).format(Date(millis))
+
+    return when {
+      isToday(millis) -> "$dateText (Today)"
+      isYesterday(millis) -> "$dateText (Yesterday)"
+      else -> dateText
+    }
+  }
+
+  private fun formatDateKey(
+    millis: Long
+  ): String {
+    return SimpleDateFormat(
+      "yyyyMMdd",
+      Locale.getDefault()
+    ).format(Date(millis))
+  }
+
+  private fun isToday(
+    millis: Long
+  ): Boolean {
+    val target = Calendar.getInstance().apply {
+      timeInMillis = millis
+    }
+
+    val today = Calendar.getInstance()
+
+    return target.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+      target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+  }
+
+  private fun isYesterday(
+    millis: Long
+  ): Boolean {
+    val target = Calendar.getInstance().apply {
+      timeInMillis = millis
+    }
+
+    val yesterday = Calendar.getInstance().apply {
+      add(Calendar.DAY_OF_YEAR, -1)
+    }
+
+    return target.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
+      target.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR)
+  }
+
+  inner class DateHeaderViewHolder(
+    itemView: View
+  ) : RecyclerView.ViewHolder(itemView) {
+
+    private val titleText: TextView = itemView.findViewById(
+      R.id.tvDateHeaderTitle
     )
+
+    fun bind(
+      title: String
+    ) {
+      titleText.text = title
+      titleText.textSize = 11.5f
+      titleText.setTypeface(null, Typeface.NORMAL)
+      titleText.setTextColor(Color.WHITE)
+    }
   }
 
   inner class CareTaskViewHolder(
@@ -85,7 +239,7 @@ class CareTaskAdapter(
       )
 
       binding.tvTaskMeta.text = buildScheduleText(item)
-      binding.tvTaskMeta.textSize = 11.6f
+      binding.tvTaskMeta.textSize = 11.5f
       binding.tvTaskMeta.setTextColor(
         if (item.isOverdue && item.status == CareTaskStatus.PENDING) {
           Color.parseColor("#D85C5C")
@@ -97,7 +251,7 @@ class CareTaskAdapter(
       binding.tvTaskSecondary.text = item.tankName.ifBlank {
         "Aquarium"
       }
-      binding.tvTaskSecondary.textSize = 11.6f
+      binding.tvTaskSecondary.textSize = 11.5f
       binding.tvTaskSecondary.setTextColor(Color.parseColor("#B8C7D9"))
 
       binding.tvTaskDescription.text = item.description
@@ -203,20 +357,50 @@ class CareTaskAdapter(
     }
   }
 
-  private object CareTaskDiffCallback : DiffUtil.ItemCallback<CareTaskUi>() {
+  sealed class CareTaskListItem {
+
+    data class DateHeader(
+      val key: String,
+      val title: String
+    ) : CareTaskListItem()
+
+    data class TaskItem(
+      val task: CareTaskUi
+    ) : CareTaskListItem()
+  }
+
+  private object CareTaskListDiffCallback :
+    DiffUtil.ItemCallback<CareTaskListItem>() {
 
     override fun areItemsTheSame(
-      oldItem: CareTaskUi,
-      newItem: CareTaskUi
+      oldItem: CareTaskListItem,
+      newItem: CareTaskListItem
     ): Boolean {
-      return oldItem.id == newItem.id
+      return when {
+        oldItem is CareTaskListItem.DateHeader &&
+          newItem is CareTaskListItem.DateHeader -> {
+          oldItem.key == newItem.key
+        }
+
+        oldItem is CareTaskListItem.TaskItem &&
+          newItem is CareTaskListItem.TaskItem -> {
+          oldItem.task.id == newItem.task.id
+        }
+
+        else -> false
+      }
     }
 
     override fun areContentsTheSame(
-      oldItem: CareTaskUi,
-      newItem: CareTaskUi
+      oldItem: CareTaskListItem,
+      newItem: CareTaskListItem
     ): Boolean {
       return oldItem == newItem
     }
+  }
+
+  companion object {
+    private const val VIEW_TYPE_DATE_HEADER = 1
+    private const val VIEW_TYPE_TASK = 2
   }
 }
