@@ -1071,7 +1071,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
       android:layout_width="match_parent"
       android:layout_height="match_parent"
-      android:paddingStart="10dp"
+      android:paddingStart="5dp"
       android:paddingEnd="22dp">
 
       <com.google.android.material.card.MaterialCardView
@@ -1103,8 +1103,7 @@
         android:includeFontPadding="false"
         android:text="Add Activity"
         android:textColor="?attr/colorOnSurface"
-        android:textSize="15sp"
-        android:textStyle="bold"
+        android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/addActivityIconCircle"
