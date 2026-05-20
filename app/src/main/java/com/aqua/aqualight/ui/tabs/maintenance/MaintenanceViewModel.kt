@@ -37,7 +37,7 @@ class MaintenanceViewModel(
   private val tanksFlow = MutableStateFlow<List<SavedAquariumTank>>(
     emptyList()
   )
-  
+
   val tanks: StateFlow<List<SavedAquariumTank>> = tanksFlow
 
   val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
@@ -133,7 +133,6 @@ class MaintenanceViewModel(
     tasks: List<CareTask>,
     tab: MaintenanceTab
   ): List<CareTask> {
-    val todayStartMillis = getTodayStartMillis()
     val tomorrowStartMillis = getTomorrowStartMillis()
 
     return when (tab) {
@@ -185,7 +184,6 @@ class MaintenanceViewModel(
     tankName: String
   ): CareTaskUi {
     val typeUi = CareTaskTypeCatalog.get(type)
-    val now = System.currentTimeMillis()
 
     return CareTaskUi(
       id = id,
@@ -205,6 +203,7 @@ class MaintenanceViewModel(
       status = status,
       dueAtMillis = dueAtMillis,
       completedAtMillis = completedAtMillis,
+      createdAtMillis = createdAtMillis,
       repeatEnabled = repeatEnabled,
       repeatIntervalDays = repeatIntervalDays,
       reminderEnabled = reminderEnabled,
@@ -217,7 +216,7 @@ class MaintenanceViewModel(
       isOverdue = status == CareTaskStatus.PENDING &&
         dueAtMillis < getTodayStartMillis(),
       primaryTimeText = getPrimaryTimeText(this),
-      secondaryText = getSecondaryText(this),
+      secondaryText = getSecondaryText(this)
     )
   }
 

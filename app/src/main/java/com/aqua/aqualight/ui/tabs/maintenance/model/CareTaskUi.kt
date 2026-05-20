@@ -13,6 +13,7 @@ data class CareTaskUi(
   val status: CareTaskStatus,
   val dueAtMillis: Long,
   val completedAtMillis: Long?,
+  val createdAtMillis: Long,
   val repeatEnabled: Boolean,
   val repeatIntervalDays: Int,
   val reminderEnabled: Boolean,
