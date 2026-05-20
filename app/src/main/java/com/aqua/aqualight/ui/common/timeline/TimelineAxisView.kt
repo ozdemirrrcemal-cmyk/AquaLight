@@ -27,16 +27,16 @@ class TimelineAxisView @JvmOverloads constructor(
 
   private val axisLineColor = Color.parseColor("#33475D")
 
-  private val todayNodeColor = Color.parseColor("#45CDBD")
-  private val pastNodeColor = Color.parseColor("#3FB7A9")
+  private val todayNodeColor = Color.parseColor("#4FD6C8")
+  private val pastNodeColor = Color.parseColor("#45BFAF")
   private val upcomingNodeColor = axisLineColor
 
-  private val nodeCoverColor = Color.parseColor("#152B45")
+  private val nodeCoverColor = Color.parseColor("#0B1D33")
 
-  private val axisOffsetX = -3f.dp()
+  private val axisOffsetX = -5f.dp()
 
-  private val nodeOuterRadius = 10f.dp()
   private val nodeCoverRadius = 13f.dp()
+  private val nodeOuterRadius = 10f.dp()
   private val nodeInnerRadius = 8f.dp()
 
   private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

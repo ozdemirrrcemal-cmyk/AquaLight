@@ -509,10 +509,10 @@ class AquariumMaintenanceFragment :
       gravity = Gravity.TOP
 
       setPadding(
-        13.dp(),
         12.dp(),
+        11.dp(),
         12.dp(),
-        12.dp()
+        11.dp()
       )
     }
 
@@ -522,10 +522,10 @@ class AquariumMaintenanceFragment :
       )
 
       val params = LinearLayout.LayoutParams(
-        40.dp(),
-        40.dp()
+        38.dp(),
+        38.dp()
       )
-      params.topMargin = 2.dp()
+      params.topMargin = 3.dp()
       layoutParams = params
     }
 
@@ -534,8 +534,8 @@ class AquariumMaintenanceFragment :
       setColorFilter(Color.WHITE)
 
       val params = FrameLayout.LayoutParams(
-        20.dp(),
-        20.dp(),
+        19.dp(),
+        19.dp(),
         Gravity.CENTER
       )
       layoutParams = params
@@ -543,7 +543,7 @@ class AquariumMaintenanceFragment :
 
     iconBox.addView(icon)
 
-    val textBox = LinearLayout(requireContext()).apply {
+    val contentBox = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.VERTICAL
 
       val params = LinearLayout.LayoutParams(
@@ -551,14 +551,13 @@ class AquariumMaintenanceFragment :
         LinearLayout.LayoutParams.WRAP_CONTENT,
         1f
       )
-      params.marginStart = 12.dp()
-      params.marginEnd = 8.dp()
+      params.marginStart = 11.dp()
       layoutParams = params
     }
 
     val titleText = TextView(requireContext()).apply {
       text = task.title
-      textSize = 14f
+      textSize = 13.2f
       setTextColor(Color.WHITE)
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
@@ -568,7 +567,7 @@ class AquariumMaintenanceFragment :
 
     val metaText = TextView(requireContext()).apply {
       text = buildHistoryMetaText(task)
-      textSize = 12f
+      textSize = 11.8f
       setTextColor(Color.parseColor("#B8C7D9"))
       includeFontPadding = false
       maxLines = 1
@@ -578,39 +577,52 @@ class AquariumMaintenanceFragment :
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
-      params.topMargin = 5.dp()
+      params.topMargin = 6.dp()
       layoutParams = params
     }
 
-    val completedText = TextView(requireContext()).apply {
-      text = "Completed"
-      textSize = 12f
-      setTextColor(Color.parseColor("#5FD6B4"))
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
+    val bottomRow = LinearLayout(requireContext()).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
 
       val params = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
-      params.topMargin = 5.dp()
+      params.topMargin = 7.dp()
       layoutParams = params
     }
 
-    textBox.addView(titleText)
-    textBox.addView(metaText)
-    textBox.addView(completedText)
+    val completedText = TextView(requireContext()).apply {
+      text = "Completed"
+      textSize = 11.8f
+      setTextColor(Color.parseColor("#5FD6B4"))
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
 
-    row.addView(iconBox)
-    row.addView(textBox)
+      layoutParams = LinearLayout.LayoutParams(
+        0,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        1f
+      )
+    }
+
+    bottomRow.addView(completedText)
 
     if (task.sourceLabel.isNotBlank()) {
-      row.addView(
+      bottomRow.addView(
         createHistorySourceBadge(
           sourceLabel = task.sourceLabel
         )
       )
     }
+
+    contentBox.addView(titleText)
+    contentBox.addView(metaText)
+    contentBox.addView(bottomRow)
+
+    row.addView(iconBox)
+    row.addView(contentBox)
 
     card.addView(row)
 
@@ -622,7 +634,7 @@ class AquariumMaintenanceFragment :
   ): View {
     return TextView(requireContext()).apply {
       text = sourceLabel
-      textSize = 11f
+      textSize = 10.4f
       setTextColor(Color.parseColor("#8FE7D5"))
       setTypeface(null, Typeface.BOLD)
       includeFontPadding = false
@@ -639,18 +651,16 @@ class AquariumMaintenanceFragment :
       }
 
       setPadding(
-        10.dp(),
-        5.dp(),
-        10.dp(),
-        5.dp()
+        8.dp(),
+        4.dp(),
+        8.dp(),
+        4.dp()
       )
 
-      val params = LinearLayout.LayoutParams(
+      layoutParams = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
-      params.topMargin = 1.dp()
-      layoutParams = params
     }
   }
 
@@ -776,6 +786,6 @@ class AquariumMaintenanceFragment :
   }
 
   companion object {
-    private const val HISTORY_AXIS_WIDTH_DP = 42
+    private const val HISTORY_AXIS_WIDTH_DP = 36
   }
 }
