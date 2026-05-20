@@ -1052,7 +1052,7 @@
 
   <com.google.android.material.card.MaterialCardView
     android:id="@+id/btnAddActivity"
-    android:layout_width="190dp"
+    android:layout_width="180dp"
     android:layout_height="58dp"
     android:layout_marginBottom="86dp"
     android:clickable="true"

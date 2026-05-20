@@ -151,11 +151,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     binding.btnAddActivity.setOnClickListener {
-      Toast.makeText(
-        requireContext(),
-        "Add activity will be connected later.",
-        Toast.LENGTH_SHORT
-      ).show()
+      showActivityTaskTypeBottomSheet()
     }
 
     binding.tabTank.setOnClickListener {
@@ -623,6 +619,28 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         openDeviceScanScreen()
       }
     }
+
+    dialog.setContentView(contentView)
+
+    dialog.setOnShowListener {
+      val bottomSheet = dialog.findViewById<View>(
+        com.google.android.material.R.id.design_bottom_sheet
+      )
+
+      bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+    }
+
+    dialog.show()
+  }
+
+  private fun showActivityTaskTypeBottomSheet() {
+    val dialog = BottomSheetDialog(requireContext())
+
+    val contentView = LayoutInflater.from(requireContext()).inflate(
+      R.layout.bottom_sheet_care_task_type,
+      null,
+      false
+    )
 
     dialog.setContentView(contentView)
 
