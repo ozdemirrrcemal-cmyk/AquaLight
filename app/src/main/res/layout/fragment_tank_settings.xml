@@ -40,21 +40,24 @@
         app:tint="?attr/colorOnSurface" />
 
     </com.google.android.material.card.MaterialCardView>
-
-    <TextView
-      android:id="@+id/tvTitle"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:text="Tank Settings"
-      android:textColor="?attr/colorOnSurface"
-      android:textSize="18sp"
-      android:textStyle="bold"
-      app:layout_constraintBottom_toBottomOf="@id/btnBack"
-      app:layout_constraintEnd_toStartOf="@id/scoreContainer"
-      app:layout_constraintStart_toEndOf="@id/btnBack"
-      app:layout_constraintTop_toTopOf="@id/btnBack" />
+<TextView
+  android:id="@+id/tvTitle"
+  android:layout_width="0dp"
+  android:layout_height="wrap_content"
+  android:layout_marginStart="54dp"
+  android:layout_marginEnd="54dp"
+  android:ellipsize="end"
+  android:gravity="center"
+  android:includeFontPadding="false"
+  android:maxLines="1"
+  android:text="Tank Settings"
+  android:textColor="?attr/colorOnSurface"
+  android:textSize="18sp"
+  android:textStyle="bold"
+  app:layout_constraintBottom_toBottomOf="@id/btnBack"
+  app:layout_constraintEnd_toEndOf="parent"
+  app:layout_constraintStart_toStartOf="parent"
+  app:layout_constraintTop_toTopOf="@id/btnBack" />
 
     <com.google.android.material.card.MaterialCardView
       android:id="@+id/scoreContainer"

@@ -511,42 +511,51 @@
           android:id="@+id/tvTimelineTitle"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="28dp"
+          android:layout_marginTop="16dp"
           android:includeFontPadding="false"
           android:text="Timeline"
           android:textColor="?attr/colorOnSurface"
-          android:textSize="18sp"
+          android:textSize="20sp"
           android:textStyle="bold" />
 
         <TextView
           android:id="@+id/tvTimelineEmpty"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="18dp"
+          android:layout_marginTop="16dp"
           android:gravity="center"
           android:includeFontPadding="false"
           android:text="No activity yet."
           android:textColor="#8FA4BE"
-          android:textSize="13sp" />
+          android:textSize="15sp" />
 
         <LinearLayout
           android:id="@+id/addActivityButtonContainer"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginTop="56dp"
+          android:layout_marginTop="34dp"
           android:gravity="end">
 
           <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAddActivity"
-            android:layout_width="190dp"
+            android:layout_width="210dp"
             android:layout_height="54dp"
-            android:text="+   Add Activity"
+            android:gravity="center"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:text="Add Activity"
             android:textAllCaps="false"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="14sp"
+            android:textSize="15sp"
             android:textStyle="bold"
             app:backgroundTint="#1C3252"
-            app:cornerRadius="27dp" />
+            app:cornerRadius="27dp"
+            app:icon="@drawable/ic_add_24"
+            app:iconGravity="textStart"
+            app:iconPadding="10dp"
+            app:iconTint="?attr/colorOnSurface" />
 
         </LinearLayout>
 
