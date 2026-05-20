@@ -247,7 +247,7 @@
   <item name="android:background">@drawable/bg_settings_sheet_grid_option</item>
 </style>
 
-<style name="ShapeAppearanceOverlay.Aqua.DockedActivityButton">
+<style name="ShapeAppearanceOverlay.Aqua.DockedActivityButton" parent="">
   <item name="cornerFamily">rounded</item>
   <item name="cornerSizeTopLeft">29dp</item>
   <item name="cornerSizeBottomLeft">29dp</item>
