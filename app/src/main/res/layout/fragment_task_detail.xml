@@ -1,286 +1,303 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/background_color">
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@color/background_color">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/headerContainer"
-        android:layout_width="0dp"
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/headerContainer"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:background="@color/background_color"
+    android:elevation="8dp"
+    android:paddingStart="16dp"
+    android:paddingTop="20dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="12dp"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <ImageButton
+      android:id="@+id/btnBack"
+      android:layout_width="42dp"
+      android:layout_height="42dp"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:contentDescription="Back"
+      android:padding="9dp"
+      android:src="@drawable/ic_back"
+      app:tint="?attr/colorOnSurface"
+      app:layout_constraintBottom_toBottomOf="@id/tvHeaderTitle"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="@id/tvHeaderTitle" />
+    <TextView
+      android:id="@+id/tvHeaderTitle"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="88dp"
+      android:layout_marginEnd="88dp"
+      android:ellipsize="end"
+      android:gravity="center"
+      android:includeFontPadding="false"
+      android:maxLines="1"
+      android:text="Task Detail"
+      android:textColor="@android:color/white"
+      android:textSize="20sp"
+      android:textStyle="bold"
+      app:layout_constraintBottom_toBottomOf="@id/btnBack"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="@id/btnBack" />
+
+    <TextView
+      android:id="@+id/btnEditTask"
+      android:layout_width="wrap_content"
+      android:layout_height="36dp"
+      android:background="@drawable/bg_maintenance_tab_selected"
+      android:gravity="center"
+      android:includeFontPadding="false"
+      android:minWidth="58dp"
+      android:paddingStart="14dp"
+      android:paddingEnd="14dp"
+      android:text="Edit"
+      android:textColor="@android:color/white"
+      android:textSize="12.5sp"
+      android:textStyle="bold"
+      app:layout_constraintBottom_toBottomOf="@id/btnBack"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toTopOf="@id/btnBack" />
+
+  </androidx.constraintlayout.widget.ConstraintLayout>
+
+  <ScrollView
+    android:id="@+id/detailScrollView"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:clipToPadding="false"
+    android:overScrollMode="never"
+    android:paddingStart="16dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="110dp"
+    android:scrollbars="none"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/headerContainer">
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical">
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/summaryCard"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/background_color"
-        android:elevation="8dp"
-        android:paddingStart="16dp"
-        android:paddingTop="20dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="12dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Back"
-            android:padding="9dp"
-            android:src="@drawable/ic_back"
-            app:tint="?attr/colorOnSurface"
-            app:layout_constraintBottom_toBottomOf="@id/tvHeaderTitle"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tvHeaderTitle" />
-
-        <TextView
-            android:id="@+id/tvHeaderTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
-            android:includeFontPadding="false"
-            android:text="Task Detail"
-            android:textColor="@android:color/white"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@id/btnBack"
-            app:layout_constraintEnd_toStartOf="@id/btnEditTask"
-            app:layout_constraintStart_toEndOf="@id/btnBack"
-            app:layout_constraintTop_toTopOf="@id/btnBack" />
-
-        <TextView
-            android:id="@+id/btnEditTask"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:background="@drawable/bg_maintenance_tab_selected"
-            android:gravity="center"
-            android:includeFontPadding="false"
-            android:minWidth="58dp"
-            android:paddingStart="14dp"
-            android:paddingEnd="14dp"
-            android:text="Edit"
-            android:textColor="@android:color/white"
-            android:textSize="12.5sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@id/btnBack"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/btnBack" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <ScrollView
-        android:id="@+id/detailScrollView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:clipToPadding="false"
-        android:overScrollMode="never"
-        android:paddingStart="16dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="110dp"
-        android:scrollbars="none"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/headerContainer">
+        app:cardBackgroundColor="#10233A"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#223A57"
+        app:strokeWidth="1dp">
 
         <LinearLayout
-            android:layout_width="match_parent"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:padding="16dp">
+
+          <FrameLayout
+            android:id="@+id/iconContainer"
+            android:layout_width="48dp"
+            android:layout_height="48dp">
+
+            <ImageView
+              android:id="@+id/ivTaskIcon"
+              android:layout_width="26dp"
+              android:layout_height="26dp"
+              android:layout_gravity="center"
+              android:scaleType="centerInside"
+              app:tint="@android:color/white" />
+
+          </FrameLayout>
+
+          <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/summaryCard"
-                android:layout_width="match_parent"
+            <LinearLayout
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:gravity="center_vertical"
+              android:orientation="horizontal">
+
+              <TextView
+                android:id="@+id/tvTaskTitle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="#10233A"
-                app:cardCornerRadius="22dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#223A57"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="16dp">
-
-                    <FrameLayout
-                        android:id="@+id/iconContainer"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp">
-
-                        <ImageView
-                            android:id="@+id/ivTaskIcon"
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
-                            android:layout_gravity="center"
-                            android:scaleType="centerInside"
-                            app:tint="@android:color/white" />
-
-                    </FrameLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/tvTaskTitle"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:ellipsize="end"
-                                android:includeFontPadding="false"
-                                android:maxLines="1"
-                                android:textColor="@android:color/white"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvSourceBadge"
-                                android:layout_width="wrap_content"
-                                android:layout_height="22dp"
-                                android:layout_marginStart="8dp"
-                                android:gravity="center"
-                                android:includeFontPadding="false"
-                                android:minWidth="46dp"
-                                android:paddingStart="9dp"
-                                android:paddingEnd="9dp"
-                                android:textColor="@android:color/white"
-                                android:textSize="10.5sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/tvStatusValue"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="7dp"
-                            android:includeFontPadding="false"
-                            android:textColor="#8FA4BE"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
                 android:includeFontPadding="false"
-                android:text="Task Information"
+                android:maxLines="1"
                 android:textColor="@android:color/white"
-                android:textSize="13sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
-                android:id="@+id/infoContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="vertical">
-
-                <include layout="@layout/item_task_detail_row" android:id="@+id/rowTaskType" />
-                <include layout="@layout/item_task_detail_row" android:id="@+id/rowAquarium" />
-                <include layout="@layout/item_task_detail_row" android:id="@+id/rowScheduledDate" />
-                <include layout="@layout/item_task_detail_row" android:id="@+id/rowScheduledTime" />
-                <include layout="@layout/item_task_detail_row" android:id="@+id/rowRepeat" />
-                <include layout="@layout/item_task_detail_row" android:id="@+id/rowReminder" />
-                <include layout="@layout/item_task_detail_row" android:id="@+id/rowMissedReminder" />
-                <include layout="@layout/item_task_detail_row" android:id="@+id/rowCreatedDate" />
+              <TextView
+                android:id="@+id/tvSourceBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="22dp"
+                android:layout_marginStart="8dp"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:minWidth="46dp"
+                android:paddingStart="9dp"
+                android:paddingEnd="9dp"
+                android:textColor="@android:color/white"
+                android:textSize="10.5sp"
+                android:textStyle="bold" />
 
             </LinearLayout>
 
             <TextView
-                android:id="@+id/tvDescriptionLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:includeFontPadding="false"
-                android:text="Description"
-                android:textColor="@android:color/white"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+              android:id="@+id/tvStatusValue"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="7dp"
+              android:includeFontPadding="false"
+              android:textColor="#8FA4BE"
+              android:textSize="12sp" />
 
-            <TextView
-                android:id="@+id/tvDescriptionValue"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="9dp"
-                android:background="#10233A"
-                android:includeFontPadding="false"
-                android:lineSpacingExtra="3dp"
-                android:padding="14dp"
-                android:textColor="#B8C7D9"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/tvNoteLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:includeFontPadding="false"
-                android:text="Note"
-                android:textColor="@android:color/white"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvNoteValue"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="9dp"
-                android:background="#10233A"
-                android:includeFontPadding="false"
-                android:lineSpacingExtra="3dp"
-                android:padding="14dp"
-                android:textColor="#B8C7D9"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/tvAutoTaskInfo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="#12382F"
-                android:includeFontPadding="false"
-                android:lineSpacingExtra="3dp"
-                android:padding="14dp"
-                android:text="This is an automatic task generated by AquaLight. It can be completed, but editing and deleting are disabled."
-                android:textColor="#5FD6B4"
-                android:textSize="12sp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/btnDeleteTask"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="18dp"
-                android:background="#2A1F26"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:text="Delete Task"
-                android:textColor="#D85C5C"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+          </LinearLayout>
 
         </LinearLayout>
 
-    </ScrollView>
+      </com.google.android.material.card.MaterialCardView>
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:includeFontPadding="false"
+        android:text="Task Information"
+        android:textColor="@android:color/white"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+      <LinearLayout
+        android:id="@+id/infoContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical">
+
+        <include layout="@layout/item_task_detail_row" android:id="@+id/rowTaskType" />
+        <include layout="@layout/item_task_detail_row" android:id="@+id/rowAquarium" />
+        <include layout="@layout/item_task_detail_row" android:id="@+id/rowScheduledDate" />
+        <include layout="@layout/item_task_detail_row" android:id="@+id/rowScheduledTime" />
+        <include layout="@layout/item_task_detail_row" android:id="@+id/rowRepeat" />
+        <include layout="@layout/item_task_detail_row" android:id="@+id/rowReminder" />
+        <include layout="@layout/item_task_detail_row" android:id="@+id/rowMissedReminder" />
+        <include layout="@layout/item_task_detail_row" android:id="@+id/rowCreatedDate" />
+
+      </LinearLayout>
+
+      <TextView
+        android:id="@+id/tvDescriptionLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:includeFontPadding="false"
+        android:text="Description"
+        android:textColor="@android:color/white"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+      <TextView
+        android:id="@+id/tvDescriptionValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:background="#10233A"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="3dp"
+        android:padding="14dp"
+        android:textColor="#B8C7D9"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/tvNoteLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:includeFontPadding="false"
+        android:text="Note"
+        android:textColor="@android:color/white"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+      <TextView
+        android:id="@+id/tvNoteValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:background="#10233A"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="3dp"
+        android:padding="14dp"
+        android:textColor="#B8C7D9"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/tvAutoTaskInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:background="#12382F"
+        android:includeFontPadding="false"
+        android:lineSpacingExtra="3dp"
+        android:padding="14dp"
+        android:text="This is an automatic task generated by AquaLight. It can be completed, but editing and deleting are disabled."
+        android:textColor="#5FD6B4"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+      <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCompleteTask"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="18dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="Complete Task"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        app:backgroundTint="#2196F3"
+        app:cornerRadius="16dp" />
+
+      <TextView
+        android:id="@+id/btnDeleteTask"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:background="#2A1F26"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="Delete Task"
+        android:textColor="#D85C5C"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    </LinearLayout>
+
+  </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -28,7 +28,7 @@ import java.util.Date
 import java.util.Locale
 
 class TaskDetailFragment :
-  Fragment(R.layout.fragment_task_detail) {
+Fragment(R.layout.fragment_task_detail) {
 
   private var _binding: FragmentTaskDetailBinding? = null
   private val binding get() = _binding!!
@@ -88,10 +88,19 @@ class TaskDetailFragment :
         showDeleteTaskDialog(task)
       }
     }
+
+    binding.btnCompleteTask.setOnClickListener {
+      val task = currentTask ?: return@setOnClickListener
+
+      if (task.status == CareTaskStatus.PENDING) {
+        showCompleteTaskDialog(task)
+      }
+    }
   }
 
   private fun observeTanks() {
-    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+      tanks ->
       maintenanceViewModel.setTanks(tanks)
     }
   }
@@ -99,7 +108,8 @@ class TaskDetailFragment :
   private fun observeTask() {
     viewLifecycleOwner.lifecycleScope.launch {
       viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        maintenanceViewModel.taskByIdFlow(taskId).collect { task ->
+        maintenanceViewModel.taskByIdFlow(taskId).collect {
+          task ->
           if (task == null) {
             return@collect
           }
@@ -217,13 +227,12 @@ class TaskDetailFragment :
     val isManual = task.source == CareTaskSource.MANUAL
     val isPending = task.status == CareTaskStatus.PENDING
 
+    binding.btnCompleteTask.isVisible = isPending
+
     binding.btnEditTask.isVisible = isManual && isPending
     binding.btnDeleteTask.isVisible = isManual
-    binding.tvAutoTaskInfo.isVisible = !isManual
 
-    if (isManual && !isPending) {
-      binding.btnEditTask.isVisible = false
-    }
+    binding.tvAutoTaskInfo.isVisible = !isManual
   }
 
   private fun bindRow(
@@ -280,6 +289,26 @@ class TaskDetailFragment :
       bundleOf(
         "taskId" to task.id
       )
+    )
+  }
+
+  private fun showCompleteTaskDialog(
+    task: CareTaskUi
+  ) {
+    DialogManager.showConfirmDialog(
+      context = requireContext(),
+      type = DialogType.SUCCESS,
+      title = "Complete Task?",
+      message = "\"${task.title}\" will be marked as completed.",
+      confirmTextResId = R.string.confirm,
+      cancelTextResId = R.string.cancel,
+      onConfirm = {
+        maintenanceViewModel.completeTask(
+          taskId = task.id
+        )
+
+        findNavController().popBackStack()
+      }
     )
   }
 
