@@ -14,32 +14,33 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.os.bundleOf
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeUi
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
 
   private val sheetTitle: String
-  get() = arguments?.getString(ARG_TITLE) ?: DEFAULT_TITLE
+    get() = arguments?.getString(ARG_TITLE) ?: DEFAULT_TITLE
 
   private val resultRequestKey: String
-  get() = arguments?.getString(ARG_RESULT_REQUEST_KEY) ?: REQUEST_KEY_DEFAULT
+    get() = arguments?.getString(ARG_RESULT_REQUEST_KEY) ?: REQUEST_KEY_DEFAULT
 
   private val selectedType: CareTaskType?
-  get() {
-    val typeName = arguments?.getString(ARG_SELECTED_TYPE) ?: return null
+    get() {
+      val typeName = arguments?.getString(ARG_SELECTED_TYPE) ?: return null
 
-    return runCatching {
-      CareTaskType.valueOf(typeName)
-    }.getOrNull()
-  }
+      return runCatching {
+        CareTaskType.valueOf(typeName)
+      }.getOrNull()
+    }
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -62,6 +63,12 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
     view.findViewById<TextView>(
       R.id.tvTaskTypeBottomSheetTitle
     ).text = sheetTitle
+
+    val scrollView = view.findViewById<NestedScrollView>(
+      R.id.taskTypeScrollView
+    )
+
+    scrollView.isNestedScrollingEnabled = true
 
     val typeOptionsContainer = view.findViewById<LinearLayout>(
       R.id.typeOptionsContainer
