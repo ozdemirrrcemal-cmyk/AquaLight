@@ -313,15 +313,6 @@
 
       </LinearLayout>
 
-
-
-
-
-
-
-
-
-
       <LinearLayout
         android:id="@+id/activitySection"
         android:layout_width="match_parent"
@@ -1061,7 +1052,7 @@
 
   <com.google.android.material.card.MaterialCardView
     android:id="@+id/btnAddActivity"
-    android:layout_width="260dp"
+    android:layout_width="190dp"
     android:layout_height="58dp"
     android:layout_marginBottom="86dp"
     android:clickable="true"
@@ -1085,8 +1076,8 @@
 
       <com.google.android.material.card.MaterialCardView
         android:id="@+id/addActivityIconCircle"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         app:cardBackgroundColor="#EAF4FF"
         app:cardCornerRadius="22dp"
         app:cardElevation="0dp"
