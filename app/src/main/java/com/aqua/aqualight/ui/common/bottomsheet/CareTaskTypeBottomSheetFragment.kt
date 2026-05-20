@@ -84,20 +84,23 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
 
     val bottomSheet = bottomSheetDialog.findViewById<View>(
       com.google.android.material.R.id.design_bottom_sheet
-    )
+    ) ?: return
 
-    bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
+    bottomSheet.setBackgroundColor(Color.TRANSPARENT)
 
-    bottomSheet?.layoutParams?.height = (
+    val sheetHeight = (
       resources.displayMetrics.heightPixels * 0.92f
     ).toInt()
 
-    bottomSheet?.requestLayout()
+    bottomSheet.layoutParams.height = sheetHeight
+    bottomSheet.requestLayout()
 
     bottomSheetDialog.behavior.apply {
       state = BottomSheetBehavior.STATE_EXPANDED
+      peekHeight = sheetHeight
       skipCollapsed = true
-      isDraggable = false
+      isHideable = true
+      isDraggable = true
     }
   }
 
@@ -133,6 +136,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
 
       items.forEachIndexed {
         itemIndex, item ->
+
         grid.addView(
           createTaskTypeCard(
             item = item,
