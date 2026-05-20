@@ -1072,14 +1072,14 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:paddingStart="2dp"
-      android:paddingEnd="22dp">
+      android:paddingEnd="10dp">
 
       <com.google.android.material.card.MaterialCardView
         android:id="@+id/addActivityIconCircle"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         app:cardBackgroundColor="#EAF4FF"
-        app:cardCornerRadius="22dp"
+        app:cardCornerRadius="20dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -1098,12 +1098,12 @@
       <TextView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
+        android:layout_marginStart="15dp"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:text="Add Activity"
         android:textColor="?attr/colorOnSurface"
-        android:textSize="11sp"
+        android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/addActivityIconCircle"
