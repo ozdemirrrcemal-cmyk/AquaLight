@@ -18,16 +18,21 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
+import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeUi
+import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
@@ -44,6 +49,13 @@ class AddCareTaskFragment :
 
   private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
   private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+
+  private var taskId: Long = -1L
+  private val isEditMode: Boolean
+    get() = taskId > 0L
+
+  private var hasLoadedEditTask = false
+  private var currentEditTask: CareTaskUi? = null
 
   private var selectedType: CareTaskType? = null
   private var selectedTankId: Long = 0L
@@ -69,9 +81,19 @@ class AddCareTaskFragment :
 
     _binding = FragmentAddCareTaskBinding.bind(view)
 
+    taskId = requireArguments().getLong(
+      "taskId",
+      -1L
+    )
+
     setupInitialUi()
     setupClickListeners()
     observeTanks()
+
+    if (isEditMode) {
+      observeEditTask()
+    }
+
     updateDateTimeText()
     updateSelectedTaskTypeUi()
     updateSelectedAquariumUi()
@@ -80,6 +102,18 @@ class AddCareTaskFragment :
   }
 
   private fun setupInitialUi() {
+    binding.tvFormTitle.text = if (isEditMode) {
+      "Edit Care Task"
+    } else {
+      "Add Care Task"
+    }
+
+    binding.btnSaveTask.text = if (isEditMode) {
+      "Update Task"
+    } else {
+      "Save Task"
+    }
+
     binding.switchReminder.isChecked = true
     binding.switchMissedReminder.isChecked = true
     binding.switchRepeat.isChecked = false
@@ -135,6 +169,72 @@ class AddCareTaskFragment :
       updateSelectedAquariumUi()
       updateSaveButtonState()
     }
+  }
+
+  private fun observeEditTask() {
+    viewLifecycleOwner.lifecycleScope.launch {
+      viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        maintenanceViewModel.taskByIdFlow(taskId).collect { task ->
+          if (task == null) {
+            return@collect
+          }
+
+          if (
+            task.source != CareTaskSource.MANUAL ||
+            task.status != CareTaskStatus.PENDING
+          ) {
+            showSnackBar(
+              message = "Only pending manual tasks can be edited.",
+              type = BaseActivity.SnackType.WARNING
+            )
+            closeForm()
+            return@collect
+          }
+
+          currentEditTask = task
+
+          if (!hasLoadedEditTask) {
+            hasLoadedEditTask = true
+            populateEditForm(task)
+          }
+        }
+      }
+    }
+  }
+
+  private fun populateEditForm(
+    task: CareTaskUi
+  ) {
+    selectedType = task.type
+    selectedTankId = task.tankId
+    selectedWaterChangePercent = task.waterChangePercent
+
+    selectedCalendar.timeInMillis = task.dueAtMillis
+
+    binding.switchRepeat.isChecked = task.repeatEnabled
+    binding.etRepeatDays.setText(
+      task.repeatIntervalDays.coerceAtLeast(1).toString()
+    )
+
+    binding.switchReminder.isChecked = task.reminderEnabled
+    binding.switchMissedReminder.isChecked = task.missedReminderEnabled
+    binding.etMissedReminderDays.setText(
+      task.missedReminderDays.coerceAtLeast(1).toString()
+    )
+
+    binding.etNote.setText(task.note)
+
+    if (task.type == CareTaskType.CUSTOM) {
+      binding.etCustomTitle.setText(task.title)
+    } else {
+      binding.etCustomTitle.setText("")
+    }
+
+    updateDateTimeText()
+    updateSelectedTaskTypeUi()
+    updateSelectedAquariumUi()
+    updateDynamicSections()
+    updateSaveButtonState()
   }
 
   private fun showTaskTypeBottomSheet() {
@@ -270,6 +370,10 @@ class AddCareTaskFragment :
           selectedWaterChangePercent = null
         }
 
+        if (item.type != CareTaskType.CUSTOM) {
+          binding.etCustomTitle.setText("")
+        }
+
         updateSelectedTaskTypeUi()
         updateDynamicSections()
         updateSaveButtonState()
@@ -393,17 +497,17 @@ class AddCareTaskFragment :
     container.removeAllViews()
 
     val percentages = listOf(
-  10,
-  20,
-  30,
-  40,
-  50,
-  60,
-  70,
-  80,
-  90,
-  100
-)
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100
+    )
 
     val grid = GridLayout(requireContext()).apply {
       columnCount = 4
@@ -856,28 +960,53 @@ class AddCareTaskFragment :
       typeUi.title
     }
 
+    val description = typeUi.defaultDescription
+
+    val waterPercent = if (type == CareTaskType.WATER_CHANGE) {
+      selectedWaterChangePercent
+    } else {
+      null
+    }
+
     viewLifecycleOwner.lifecycleScope.launch {
-      maintenanceViewModel.addManualTask(
-        tankId = selectedTankId,
-        title = title,
-        description = typeUi.defaultDescription,
-        type = type,
-        dueAtMillis = selectedCalendar.timeInMillis,
-        repeatEnabled = binding.switchRepeat.isChecked,
-        repeatIntervalDays = repeatDays,
-        reminderEnabled = binding.switchReminder.isChecked,
-        missedReminderEnabled = binding.switchReminder.isChecked &&
-          binding.switchMissedReminder.isChecked,
-        missedReminderDays = missedDays,
-        waterChangePercent = if (type == CareTaskType.WATER_CHANGE) {
-          selectedWaterChangePercent
-        } else {
-          null
-        },
-        note = binding.etNote.text
-          .toString()
-          .trim()
-      )
+      if (isEditMode) {
+        maintenanceViewModel.updateManualTask(
+          taskId = taskId,
+          tankId = selectedTankId,
+          title = title,
+          description = description,
+          type = type,
+          dueAtMillis = selectedCalendar.timeInMillis,
+          repeatEnabled = binding.switchRepeat.isChecked,
+          repeatIntervalDays = repeatDays,
+          reminderEnabled = binding.switchReminder.isChecked,
+          missedReminderEnabled = binding.switchReminder.isChecked &&
+            binding.switchMissedReminder.isChecked,
+          missedReminderDays = missedDays,
+          waterChangePercent = waterPercent,
+          note = binding.etNote.text
+            .toString()
+            .trim()
+        )
+      } else {
+        maintenanceViewModel.addManualTask(
+          tankId = selectedTankId,
+          title = title,
+          description = description,
+          type = type,
+          dueAtMillis = selectedCalendar.timeInMillis,
+          repeatEnabled = binding.switchRepeat.isChecked,
+          repeatIntervalDays = repeatDays,
+          reminderEnabled = binding.switchReminder.isChecked,
+          missedReminderEnabled = binding.switchReminder.isChecked &&
+            binding.switchMissedReminder.isChecked,
+          missedReminderDays = missedDays,
+          waterChangePercent = waterPercent,
+          note = binding.etNote.text
+            .toString()
+            .trim()
+        )
+      }
 
       closeForm()
     }
