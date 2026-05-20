@@ -22,6 +22,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentAquariumMaintenanceBinding
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
+import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import com.aqua.aqualight.ui.common.timeline.TimelineAxisView
 import com.aqua.aqualight.ui.common.timeline.TimelineDayResolver
 import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
@@ -39,7 +43,7 @@ import java.util.Date
 import java.util.Locale
 
 class AquariumMaintenanceFragment :
-  Fragment(R.layout.fragment_aquarium_maintenance) {
+Fragment(R.layout.fragment_aquarium_maintenance) {
 
   private var _binding: FragmentAquariumMaintenanceBinding? = null
   private val binding get() = _binding!!
@@ -196,14 +200,14 @@ class AquariumMaintenanceFragment :
     }
 
     val incompleteProfiles = latestTanks
-      .map {
-        tank ->
-        tank to CareProfileCalculator.calculate(tank)
-      }
-      .filter {
-        (_, result) ->
-        result.percent < 100
-      }
+    .map {
+      tank ->
+      tank to CareProfileCalculator.calculate(tank)
+    }
+    .filter {
+      (_, result) ->
+      result.percent < 100
+    }
 
     if (incompleteProfiles.isEmpty()) {
       binding.cardCareProfileWarning.isVisible = false
@@ -226,16 +230,16 @@ class AquariumMaintenanceFragment :
 
     if (incompleteProfiles.size == 1) {
       binding.tvCareProfileWarningTitle.text =
-        "Care profile incomplete"
+      "Care profile incomplete"
 
       binding.tvCareProfileWarningMessage.text =
-        "Improve automatic care tasks"
+      "Improve automatic care tasks"
     } else {
       binding.tvCareProfileWarningTitle.text =
-        "Care profiles incomplete"
+      "Care profiles incomplete"
 
       binding.tvCareProfileWarningMessage.text =
-        "${incompleteProfiles.size} aquariums need more details"
+      "${incompleteProfiles.size} aquariums need more details"
     }
   }
 
@@ -324,25 +328,25 @@ class AquariumMaintenanceFragment :
       MaintenanceTab.ALL -> {
         binding.tvEmptyMaintenanceTitle.text = "No care tasks yet"
         binding.tvEmptyMaintenanceMessage.text =
-          "Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup."
+        "Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup."
       }
 
       MaintenanceTab.TODAY -> {
         binding.tvEmptyMaintenanceTitle.text = "Nothing due today"
         binding.tvEmptyMaintenanceMessage.text =
-          "There are no care tasks scheduled for today."
+        "There are no care tasks scheduled for today."
       }
 
       MaintenanceTab.UPCOMING -> {
         binding.tvEmptyMaintenanceTitle.text = "No upcoming tasks"
         binding.tvEmptyMaintenanceMessage.text =
-          "Future care reminders will appear here."
+        "Future care reminders will appear here."
       }
 
       MaintenanceTab.HISTORY -> {
         binding.tvEmptyMaintenanceTitle.text = "No completed tasks"
         binding.tvEmptyMaintenanceMessage.text =
-          "Completed maintenance tasks will be listed here."
+        "Completed maintenance tasks will be listed here."
       }
     }
   }
@@ -357,16 +361,16 @@ class AquariumMaintenanceFragment :
     }
 
     val groupedTasks = tasks
-      .sortedByDescending {
-        task ->
+    .sortedByDescending {
+      task ->
+      task.completedAtMillis ?: task.dueAtMillis
+    }
+    .groupBy {
+      task ->
+      getHistoryDateKey(
         task.completedAtMillis ?: task.dueAtMillis
-      }
-      .groupBy {
-        task ->
-        getHistoryDateKey(
-          task.completedAtMillis ?: task.dueAtMillis
-        )
-      }
+      )
+    }
 
     groupedTasks.forEach {
       (_, dayTasks) ->
@@ -502,6 +506,10 @@ class AquariumMaintenanceFragment :
       )
       params.bottomMargin = 12.dp()
       layoutParams = params
+    }
+
+    card.setOnClickListener {
+      showHistoryTaskBottomSheet(task)
     }
 
     val row = LinearLayout(requireContext()).apply {
@@ -664,6 +672,65 @@ class AquariumMaintenanceFragment :
     }
   }
 
+  private fun showHistoryTaskBottomSheet(
+    task: CareTaskUi
+  ) {
+    val completedAt = task.completedAtMillis ?: task.dueAtMillis
+
+    GlobalActionBottomSheet.show(
+      context = requireContext(),
+      title = task.title,
+      message = "Completed care record",
+      details = listOf(
+        BottomSheetDetailRow(
+          label = "Aquarium",
+          value = task.tankName
+        ),
+        BottomSheetDetailRow(
+          label = "Completed at",
+          value = formatHistoryDateTime(completedAt)
+        ),
+        BottomSheetDetailRow(
+          label = "Source",
+          value = task.sourceLabel.ifBlank {
+            "Unknown"
+          }
+        ),
+        BottomSheetDetailRow(
+          label = "Status",
+          value = "Completed"
+        )
+      ),
+      actions = listOf(
+        BottomSheetAction(
+          text = "Delete from history",
+          style = BottomSheetActionStyle.DANGER,
+          onClick = {
+            showDeleteHistoryTaskDialog(task)
+          }
+        )
+      )
+    )
+  }
+
+  private fun showDeleteHistoryTaskDialog(
+    task: CareTaskUi
+  ) {
+    DialogManager.showConfirmDialog(
+      context = requireContext(),
+      type = DialogType.ERROR,
+      title = "Delete from history?",
+      message = "\"${task.title}\" will be removed from completed history.",
+      confirmTextResId = R.string.confirm,
+      cancelTextResId = R.string.cancel,
+      onConfirm = {
+        maintenanceViewModel.deleteTask(
+          taskId = task.id
+        )
+      }
+    )
+  }
+
   private fun showCompleteTaskDialog(
     task: CareTaskUi
   ) {
@@ -725,6 +792,15 @@ class AquariumMaintenanceFragment :
   ): String {
     return SimpleDateFormat(
       "HH:mm",
+      Locale.getDefault()
+    ).format(Date(millis))
+  }
+
+  private fun formatHistoryDateTime(
+    millis: Long
+  ): String {
+    return SimpleDateFormat(
+      "dd.MM.yyyy HH:mm",
       Locale.getDefault()
     ).format(Date(millis))
   }
