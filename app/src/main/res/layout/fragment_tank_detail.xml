@@ -313,6 +313,15 @@
 
       </LinearLayout>
 
+
+
+
+
+
+
+
+
+
       <LinearLayout
         android:id="@+id/activitySection"
         android:layout_width="match_parent"
@@ -441,24 +450,25 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="Last Photo"
+                android:text="Next Care"
                 android:textColor="#8FA4BE"
                 android:textSize="12sp" />
 
               <TextView
-                android:id="@+id/tvLastPhotoValue"
+                android:id="@+id/tvNextCareValue"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="9dp"
+                android:ellipsize="end"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="-- days ago"
+                android:maxLines="1"
+                android:text="-- days later"
                 android:textColor="#F2C94C"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             </LinearLayout>
-
           </com.google.android.material.card.MaterialCardView>
 
           <com.google.android.material.card.MaterialCardView
@@ -524,78 +534,7 @@
           android:visibility="gone"
           android:text="No activity yet." />
 
-        <FrameLayout
-          android:id="@+id/addActivityButtonContainer"
-          android:layout_width="match_parent"
-          android:layout_height="64dp"
-          android:layout_marginTop="24dp"
-          android:clipChildren="false"
-          android:clipToPadding="false">
-
-          <com.google.android.material.card.MaterialCardView
-            android:id="@+id/btnAddActivity"
-            android:layout_width="224dp"
-            android:layout_height="56dp"
-            android:layout_gravity="end|center_vertical"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackgroundBorderless"
-            app:cardBackgroundColor="#1C3252"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#2C4B72"
-            app:strokeWidth="1dp">
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:paddingStart="8dp"
-              android:paddingEnd="18dp">
-
-              <com.google.android.material.card.MaterialCardView
-                android:id="@+id/addActivityIconCircle"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                app:cardBackgroundColor="#EAF4FF"
-                app:cardCornerRadius="21dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <ImageView
-                  android:layout_width="22dp"
-                  android:layout_height="22dp"
-                  android:layout_gravity="center"
-                  android:src="@drawable/ic_add_24"
-                  app:tint="#2196F3" />
-
-              </com.google.android.material.card.MaterialCardView>
-
-              <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:gravity="center_vertical"
-                android:includeFontPadding="false"
-                android:text="Add Activity"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/addActivityIconCircle"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-          </com.google.android.material.card.MaterialCardView>
-
-        </FrameLayout>
-
       </LinearLayout>
-
       <LinearLayout
         android:id="@+id/tankSection"
         android:layout_width="match_parent"
@@ -1119,6 +1058,70 @@
     </LinearLayout>
 
   </ScrollView>
+
+  <com.google.android.material.card.MaterialCardView
+    android:id="@+id/btnAddActivity"
+    android:layout_width="260dp"
+    android:layout_height="58dp"
+    android:layout_marginBottom="86dp"
+    android:clickable="true"
+    android:elevation="18dp"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:visibility="gone"
+    app:cardBackgroundColor="#1C3252"
+    app:cardElevation="0dp"
+    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Aqua.DockedActivityButton"
+    app:strokeColor="#2C4B72"
+    app:strokeWidth="1dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:paddingStart="10dp"
+      android:paddingEnd="22dp">
+
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/addActivityIconCircle"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        app:cardBackgroundColor="#EAF4FF"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+          android:layout_width="22dp"
+          android:layout_height="22dp"
+          android:layout_gravity="center"
+          android:src="@drawable/ic_add_24"
+          app:tint="#2196F3" />
+
+      </com.google.android.material.card.MaterialCardView>
+
+      <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
+        android:gravity="center_vertical"
+        android:includeFontPadding="false"
+        android:text="Add Activity"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/addActivityIconCircle"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+  </com.google.android.material.card.MaterialCardView>
 
   <androidx.fragment.app.FragmentContainerView
     android:id="@+id/plantFlowContainer"

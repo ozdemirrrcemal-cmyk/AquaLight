@@ -886,6 +886,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         binding.activitySection.isVisible = true
         binding.tvEmptyTab.isVisible = false
+        binding.btnAddActivity.isVisible = true
       }
 
       TankDetailTab.TANK -> {
@@ -1611,6 +1612,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     binding.plantsSection.isVisible = false
     binding.tvEmptyTab.isVisible = false
     binding.tankLifeSection.isVisible = false
+
+    binding.btnAddActivity.isVisible = false
   }
 
   private fun showEmptySection() {
@@ -1620,6 +1623,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     binding.plantsSection.isVisible = false
     binding.tvEmptyTab.isVisible = true
     binding.tankLifeSection.isVisible = false
+    binding.btnAddActivity.isVisible = false
   }
 
   private fun getLivestockQuantityText(
