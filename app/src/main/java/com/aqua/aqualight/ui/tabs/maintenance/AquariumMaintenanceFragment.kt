@@ -14,7 +14,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -38,7 +37,7 @@ import java.util.Date
 import java.util.Locale
 
 class AquariumMaintenanceFragment :
-  Fragment(R.layout.fragment_aquarium_maintenance) {
+Fragment(R.layout.fragment_aquarium_maintenance) {
 
   private var _binding: FragmentAquariumMaintenanceBinding? = null
   private val binding get() = _binding!!
@@ -69,11 +68,13 @@ class AquariumMaintenanceFragment :
 
   private fun setupRecycler() {
     adapter = CareTaskAdapter(
-      onCompleteClick = { task ->
+      onCompleteClick = {
+        task ->
         showCompleteTaskDialog(task)
       },
-      onTaskClick = { task ->
-        showTaskDetailsPlaceholder(task)
+      onTaskClick = {
+        task ->
+        openTaskDetailScreen(task)
       }
     )
 
@@ -119,7 +120,8 @@ class AquariumMaintenanceFragment :
   }
 
   private fun observeTanks() {
-    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+      tanks ->
       maintenanceViewModel.setTanks(tanks)
     }
   }
@@ -127,7 +129,8 @@ class AquariumMaintenanceFragment :
   private fun observeSelectedTab() {
     viewLifecycleOwner.lifecycleScope.launch {
       viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        maintenanceViewModel.selectedTab.collect { selectedTab ->
+        maintenanceViewModel.selectedTab.collect {
+          selectedTab ->
           currentSelectedTab = selectedTab
           renderSelectedTab(selectedTab)
           renderEmptyText(selectedTab)
@@ -137,31 +140,32 @@ class AquariumMaintenanceFragment :
   }
 
   private fun observeCareTasks() {
-  viewLifecycleOwner.lifecycleScope.launch {
-    viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-      maintenanceViewModel.taskItems.collect { tasks ->
+    viewLifecycleOwner.lifecycleScope.launch {
+      viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+        maintenanceViewModel.taskItems.collect {
+          tasks ->
 
-        if (currentSelectedTab == MaintenanceTab.HISTORY) {
-          adapter.submitCareTasks(
-            tasks = emptyList(),
-            showDateHeaders = false
-          )
+          if (currentSelectedTab == MaintenanceTab.HISTORY) {
+            adapter.submitCareTasks(
+              tasks = emptyList(),
+              showDateHeaders = false
+            )
 
-          renderHistoryTimeline(tasks)
-        } else {
-          adapter.submitCareTasks(
-            tasks = tasks,
-            showDateHeaders = true
-          )
+            renderHistoryTimeline(tasks)
+          } else {
+            adapter.submitCareTasks(
+              tasks = tasks,
+              showDateHeaders = true
+            )
 
-          binding.historyTimelineContainer.removeAllViews()
+            binding.historyTimelineContainer.removeAllViews()
+          }
+
+          renderTaskListState(tasks)
         }
-
-        renderTaskListState(tasks)
       }
     }
   }
-}
 
   private fun renderTaskListState(
     tasks: List<CareTaskUi>
@@ -235,25 +239,25 @@ class AquariumMaintenanceFragment :
       MaintenanceTab.ALL -> {
         binding.tvEmptyMaintenanceTitle.text = "No care tasks yet"
         binding.tvEmptyMaintenanceMessage.text =
-          "Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup."
+        "Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup."
       }
 
       MaintenanceTab.TODAY -> {
         binding.tvEmptyMaintenanceTitle.text = "Nothing due today"
         binding.tvEmptyMaintenanceMessage.text =
-          "There are no care tasks scheduled for today."
+        "There are no care tasks scheduled for today."
       }
 
       MaintenanceTab.UPCOMING -> {
         binding.tvEmptyMaintenanceTitle.text = "No upcoming tasks"
         binding.tvEmptyMaintenanceMessage.text =
-          "Future care reminders will appear here."
+        "Future care reminders will appear here."
       }
 
       MaintenanceTab.HISTORY -> {
         binding.tvEmptyMaintenanceTitle.text = "No completed tasks"
         binding.tvEmptyMaintenanceMessage.text =
-          "Completed maintenance tasks will be listed here."
+        "Completed maintenance tasks will be listed here."
       }
     }
   }
@@ -268,16 +272,19 @@ class AquariumMaintenanceFragment :
     }
 
     val groupedTasks = tasks
-      .sortedByDescending { task ->
+    .sortedByDescending {
+      task ->
+      task.completedAtMillis ?: task.dueAtMillis
+    }
+    .groupBy {
+      task ->
+      getHistoryDateKey(
         task.completedAtMillis ?: task.dueAtMillis
-      }
-      .groupBy { task ->
-        getHistoryDateKey(
-          task.completedAtMillis ?: task.dueAtMillis
-        )
-      }
+      )
+    }
 
-    groupedTasks.forEach { (_, dayTasks) ->
+    groupedTasks.forEach {
+      (_, dayTasks) ->
       val firstTask = dayTasks.firstOrNull() ?: return@forEach
       val dateMillis = firstTask.completedAtMillis ?: firstTask.dueAtMillis
 
@@ -287,7 +294,8 @@ class AquariumMaintenanceFragment :
         )
       )
 
-      dayTasks.forEach { task ->
+      dayTasks.forEach {
+        task ->
         binding.historyTimelineContainer.addView(
           createHistoryTaskRow(task)
         )
@@ -430,327 +438,328 @@ class AquariumMaintenanceFragment :
   private fun createDashedTimelineLine(): View {
     return object : View(requireContext()) {
 
-      private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#3A4654")
-        strokeWidth = 2.dp().toFloat()
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        pathEffect = DashPathEffect(
-          floatArrayOf(
-            8.dp().toFloat(),
-            9.dp().toFloat()
-          ),
-          0f
-        )
-      }
+    private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = Color.parseColor("#3A4654")
+      strokeWidth = 2.dp().toFloat()
+      style = Paint.Style.STROKE
+      strokeCap = Paint.Cap.ROUND
+      pathEffect = DashPathEffect(
+        floatArrayOf(
+          8.dp().toFloat(),
+          9.dp().toFloat()
+        ),
+        0f
+      )
+    }
 
-      override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
+    override fun onDraw(canvas: Canvas) {
+      super.onDraw(canvas)
 
-        val centerX = width / 2f
+      val centerX = width / 2f
 
-        canvas.drawLine(
-          centerX,
-          0f,
-          centerX,
-          height.toFloat(),
-          linePaint
-        )
-      }
+      canvas.drawLine(
+        centerX,
+        0f,
+        centerX,
+        height.toFloat(),
+        linePaint
+      )
     }
   }
+}
 
-  private fun createHistoryTaskCard(
-    task: CareTaskUi
-  ): View {
-    val card = MaterialCardView(requireContext()).apply {
-      radius = 18.dp().toFloat()
-      strokeWidth = 1.dp()
-      strokeColor = Color.parseColor("#2B6F5A")
-      setCardBackgroundColor(Color.parseColor("#12382F"))
-      cardElevation = 0f
-      useCompatPadding = false
+private fun createHistoryTaskCard(
+  task: CareTaskUi
+): View {
+  val card = MaterialCardView(requireContext()).apply {
+    radius = 18.dp().toFloat()
+    strokeWidth = 1.dp()
+    strokeColor = Color.parseColor("#2B6F5A")
+    setCardBackgroundColor(Color.parseColor("#12382F"))
+    cardElevation = 0f
+    useCompatPadding = false
 
-      val params = LinearLayout.LayoutParams(
-        0,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        1f
-      )
-      params.bottomMargin = 12.dp()
-      layoutParams = params
-    }
-
-    val row = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-
-      setPadding(
-        13.dp(),
-        12.dp(),
-        12.dp(),
-        12.dp()
-      )
-    }
-
-    val iconBox = FrameLayout(requireContext()).apply {
-      background = createHistoryIconBackground(
-        color = Color.parseColor(task.accentColor)
-      )
-
-      layoutParams = LinearLayout.LayoutParams(
-        40.dp(),
-        40.dp()
-      )
-    }
-
-    val icon = ImageView(requireContext()).apply {
-      setImageResource(task.iconRes)
-      setColorFilter(Color.WHITE)
-
-      val params = FrameLayout.LayoutParams(
-        20.dp(),
-        20.dp(),
-        Gravity.CENTER
-      )
-      layoutParams = params
-    }
-
-    iconBox.addView(icon)
-
-    val textBox = LinearLayout(requireContext()).apply {
-      orientation = LinearLayout.VERTICAL
-
-      val params = LinearLayout.LayoutParams(
-        0,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        1f
-      )
-      params.marginStart = 12.dp()
-      params.marginEnd = 8.dp()
-      layoutParams = params
-    }
-
-    val titleText = TextView(requireContext()).apply {
-      text = task.title
-      textSize = 14f
-      setTextColor(Color.WHITE)
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-    }
-
-    val metaText = TextView(requireContext()).apply {
-      text = buildHistoryMetaText(task)
-      textSize = 12f
-      setTextColor(Color.parseColor("#B8C7D9"))
-      includeFontPadding = false
-      maxLines = 1
-      ellipsize = TextUtils.TruncateAt.END
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 5.dp()
-      layoutParams = params
-    }
-
-    val completedText = TextView(requireContext()).apply {
-      text = "Completed"
-      textSize = 12f
-      setTextColor(Color.parseColor("#5FD6B4"))
-      setTypeface(null, Typeface.BOLD)
-      includeFontPadding = false
-
-      val params = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-      params.topMargin = 5.dp()
-      layoutParams = params
-    }
-
-    textBox.addView(titleText)
-    textBox.addView(metaText)
-    textBox.addView(completedText)
-
-    val checkBox = FrameLayout(requireContext()).apply {
-      background = GradientDrawable().apply {
-        shape = GradientDrawable.OVAL
-        setColor(Color.TRANSPARENT)
-        setStroke(
-          1.dp(),
-          Color.parseColor("#3FAE87")
-        )
-      }
-
-      layoutParams = LinearLayout.LayoutParams(
-        34.dp(),
-        34.dp()
-      )
-    }
-
-    val checkIcon = ImageView(requireContext()).apply {
-      setImageResource(R.drawable.ic_check_20)
-      setColorFilter(Color.parseColor("#5FD6B4"))
-
-      val params = FrameLayout.LayoutParams(
-        18.dp(),
-        18.dp(),
-        Gravity.CENTER
-      )
-      layoutParams = params
-    }
-
-    checkBox.addView(checkIcon)
-
-    row.addView(iconBox)
-    row.addView(textBox)
-    row.addView(checkBox)
-
-    card.addView(row)
-
-    return card
+    val params = LinearLayout.LayoutParams(
+      0,
+      LinearLayout.LayoutParams.WRAP_CONTENT,
+      1f
+    )
+    params.bottomMargin = 12.dp()
+    layoutParams = params
   }
 
-  private fun showCompleteTaskDialog(
-    task: CareTaskUi
-  ) {
-    DialogManager.showConfirmDialog(
-      context = requireContext(),
-      type = DialogType.SUCCESS,
-      title = "Complete Task?",
-      message = "\"${task.title}\" will be marked as completed.",
-      confirmTextResId = R.string.confirm,
-      cancelTextResId = R.string.cancel,
-      onConfirm = {
-        maintenanceViewModel.completeTask(
-          taskId = task.id
-        )
-      }
+  val row = LinearLayout(requireContext()).apply {
+    orientation = LinearLayout.HORIZONTAL
+    gravity = Gravity.CENTER_VERTICAL
+
+    setPadding(
+      13.dp(),
+      12.dp(),
+      12.dp(),
+      12.dp()
     )
   }
 
-  private fun openAddCareTaskScreen() {
-    findNavController().navigate(
-      R.id.addCareTaskFragment
+  val iconBox = FrameLayout(requireContext()).apply {
+    background = createHistoryIconBackground(
+      color = Color.parseColor(task.accentColor)
+    )
+
+    layoutParams = LinearLayout.LayoutParams(
+      40.dp(),
+      40.dp()
     )
   }
 
-  private fun showTaskDetailsPlaceholder(
-    task: CareTaskUi
-  ) {
-    Toast.makeText(
-      requireContext(),
-      task.title,
-      Toast.LENGTH_SHORT
-    ).show()
+  val icon = ImageView(requireContext()).apply {
+    setImageResource(task.iconRes)
+    setColorFilter(Color.WHITE)
+
+    val params = FrameLayout.LayoutParams(
+      20.dp(),
+      20.dp(),
+      Gravity.CENTER
+    )
+    layoutParams = params
   }
 
-  private fun buildHistoryMetaText(
-    task: CareTaskUi
-  ): String {
-    val completedAt = task.completedAtMillis ?: task.dueAtMillis
+  iconBox.addView(icon)
 
-    return buildString {
-      append(task.tankName)
-      append(" • ")
-      append(formatHistoryTime(completedAt))
+  val textBox = LinearLayout(requireContext()).apply {
+    orientation = LinearLayout.VERTICAL
 
-      if (task.sourceLabel.isNotBlank()) {
-        append(" • ")
-        append(task.sourceLabel)
-      }
-    }
+    val params = LinearLayout.LayoutParams(
+      0,
+      LinearLayout.LayoutParams.WRAP_CONTENT,
+      1f
+    )
+    params.marginStart = 12.dp()
+    params.marginEnd = 8.dp()
+    layoutParams = params
   }
 
-  private fun formatHistoryDate(
-    millis: Long
-  ): String {
-    return SimpleDateFormat(
-      "dd.MM.yyyy",
-      Locale.getDefault()
-    ).format(Date(millis))
+  val titleText = TextView(requireContext()).apply {
+    text = task.title
+    textSize = 14f
+    setTextColor(Color.WHITE)
+    setTypeface(null, Typeface.BOLD)
+    includeFontPadding = false
+    maxLines = 1
+    ellipsize = TextUtils.TruncateAt.END
   }
 
-  private fun formatHistoryTime(
-    millis: Long
-  ): String {
-    return SimpleDateFormat(
-      "HH:mm",
-      Locale.getDefault()
-    ).format(Date(millis))
+  val metaText = TextView(requireContext()).apply {
+    text = buildHistoryMetaText(task)
+    textSize = 12f
+    setTextColor(Color.parseColor("#B8C7D9"))
+    includeFontPadding = false
+    maxLines = 1
+    ellipsize = TextUtils.TruncateAt.END
+
+    val params = LinearLayout.LayoutParams(
+      LinearLayout.LayoutParams.MATCH_PARENT,
+      LinearLayout.LayoutParams.WRAP_CONTENT
+    )
+    params.topMargin = 5.dp()
+    layoutParams = params
   }
 
-  private fun getHistoryDateKey(
-    millis: Long
-  ): String {
-    return SimpleDateFormat(
-      "yyyyMMdd",
-      Locale.getDefault()
-    ).format(Date(millis))
+  val completedText = TextView(requireContext()).apply {
+    text = "Completed"
+    textSize = 12f
+    setTextColor(Color.parseColor("#5FD6B4"))
+    setTypeface(null, Typeface.BOLD)
+    includeFontPadding = false
+
+    val params = LinearLayout.LayoutParams(
+      LinearLayout.LayoutParams.MATCH_PARENT,
+      LinearLayout.LayoutParams.WRAP_CONTENT
+    )
+    params.topMargin = 5.dp()
+    layoutParams = params
   }
 
-  private fun isToday(
-    millis: Long
-  ): Boolean {
-    val target = Calendar.getInstance().apply {
-      timeInMillis = millis
-    }
+  textBox.addView(titleText)
+  textBox.addView(metaText)
+  textBox.addView(completedText)
 
-    val today = Calendar.getInstance()
-
-    return target.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-      target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
-  }
-
-  private fun createHistoryIconBackground(
-    color: Int
-  ): GradientDrawable {
-    return GradientDrawable().apply {
-      shape = GradientDrawable.RECTANGLE
-      cornerRadius = 13.dp().toFloat()
-      setColor(
-        applyAlpha(
-          color = color,
-          alpha = 0.26f
-        )
-      )
+  val checkBox = FrameLayout(requireContext()).apply {
+    background = GradientDrawable().apply {
+      shape = GradientDrawable.OVAL
+      setColor(Color.TRANSPARENT)
       setStroke(
         1.dp(),
-        applyAlpha(
-          color = color,
-          alpha = 0.7f
-        )
+        Color.parseColor("#3FAE87")
       )
     }
-  }
 
-  private fun applyAlpha(
-    color: Int,
-    alpha: Float
-  ): Int {
-    return Color.argb(
-      (255 * alpha).toInt(),
-      Color.red(color),
-      Color.green(color),
-      Color.blue(color)
+    layoutParams = LinearLayout.LayoutParams(
+      34.dp(),
+      34.dp()
     )
   }
 
-  private fun Int.dp(): Int {
-    return (this * resources.displayMetrics.density).toInt()
+  val checkIcon = ImageView(requireContext()).apply {
+    setImageResource(R.drawable.ic_check_20)
+    setColorFilter(Color.parseColor("#5FD6B4"))
+
+    val params = FrameLayout.LayoutParams(
+      18.dp(),
+      18.dp(),
+      Gravity.CENTER
+    )
+    layoutParams = params
   }
 
-  override fun onDestroyView() {
-    binding.rvCareTasks.adapter = null
-    _binding = null
+  checkBox.addView(checkIcon)
 
-    super.onDestroyView()
+  row.addView(iconBox)
+  row.addView(textBox)
+  row.addView(checkBox)
+
+  card.addView(row)
+
+  return card
+}
+
+private fun showCompleteTaskDialog(
+  task: CareTaskUi
+) {
+  DialogManager.showConfirmDialog(
+    context = requireContext(),
+    type = DialogType.SUCCESS,
+    title = "Complete Task?",
+    message = "\"${task.title}\" will be marked as completed.",
+    confirmTextResId = R.string.confirm,
+    cancelTextResId = R.string.cancel,
+    onConfirm = {
+      maintenanceViewModel.completeTask(
+        taskId = task.id
+      )
+    }
+  )
+}
+
+private fun openAddCareTaskScreen() {
+  findNavController().navigate(
+    R.id.addCareTaskFragment
+  )
+}
+
+private fun openTaskDetailScreen(
+  task: CareTaskUi
+) {
+  findNavController().navigate(
+    R.id.action_aquariumMaintenanceFragment_to_taskDetailFragment,
+    androidx.core.os.bundleOf(
+      "taskId" to task.id
+    )
+  )
+}
+
+private fun buildHistoryMetaText(
+  task: CareTaskUi
+): String {
+  val completedAt = task.completedAtMillis ?: task.dueAtMillis
+
+  return buildString {
+    append(task.tankName)
+    append(" • ")
+    append(formatHistoryTime(completedAt))
+
+    if (task.sourceLabel.isNotBlank()) {
+      append(" • ")
+      append(task.sourceLabel)
+    }
+  }
+}
+
+private fun formatHistoryDate(
+  millis: Long
+): String {
+  return SimpleDateFormat(
+    "dd.MM.yyyy",
+    Locale.getDefault()
+  ).format(Date(millis))
+}
+
+private fun formatHistoryTime(
+  millis: Long
+): String {
+  return SimpleDateFormat(
+    "HH:mm",
+    Locale.getDefault()
+  ).format(Date(millis))
+}
+
+private fun getHistoryDateKey(
+  millis: Long
+): String {
+  return SimpleDateFormat(
+    "yyyyMMdd",
+    Locale.getDefault()
+  ).format(Date(millis))
+}
+
+private fun isToday(
+  millis: Long
+): Boolean {
+  val target = Calendar.getInstance().apply {
+    timeInMillis = millis
   }
 
-  companion object {
-    private const val HISTORY_AXIS_WIDTH_DP = 42
+  val today = Calendar.getInstance()
+
+  return target.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+  target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+}
+
+private fun createHistoryIconBackground(
+  color: Int
+): GradientDrawable {
+  return GradientDrawable().apply {
+    shape = GradientDrawable.RECTANGLE
+    cornerRadius = 13.dp().toFloat()
+    setColor(
+      applyAlpha(
+        color = color,
+        alpha = 0.26f
+      )
+    )
+    setStroke(
+      1.dp(),
+      applyAlpha(
+        color = color,
+        alpha = 0.7f
+      )
+    )
   }
+}
+
+private fun applyAlpha(
+  color: Int,
+  alpha: Float
+): Int {
+  return Color.argb(
+    (255 * alpha).toInt(),
+    Color.red(color),
+    Color.green(color),
+    Color.blue(color)
+  )
+}
+
+private fun Int.dp(): Int {
+  return (this * resources.displayMetrics.density).toInt()
+}
+
+override fun onDestroyView() {
+  binding.rvCareTasks.adapter = null
+  _binding = null
+
+  super.onDestroyView()
+}
+
+companion object {
+  private const val HISTORY_AXIS_WIDTH_DP = 42
+}
 }

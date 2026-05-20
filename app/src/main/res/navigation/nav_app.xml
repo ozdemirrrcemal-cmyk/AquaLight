@@ -57,18 +57,51 @@
     </fragment>
 
 
-    <!-- Maintenance Tab -->
-    <fragment
-        android:id="@+id/aquariumMaintenanceFragment"
-        android:name="com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment"
-        android:label="Maintenance"
-        tools:layout="@layout/fragment_aquarium_maintenance" />
+  <!-- Maintenance Tab -->
+<fragment
+    android:id="@+id/aquariumMaintenanceFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment"
+    android:label="Maintenance"
+    tools:layout="@layout/fragment_aquarium_maintenance">
 
-    <fragment
-        android:id="@+id/addCareTaskFragment"
-        android:name="com.aqua.aqualight.ui.tabs.maintenance.AddCareTaskFragment"
-        android:label="Add Care Task"
-        tools:layout="@layout/fragment_add_care_task" />
+    <action
+        android:id="@+id/action_aquariumMaintenanceFragment_to_addCareTaskFragment"
+        app:destination="@id/addCareTaskFragment" />
+
+    <action
+        android:id="@+id/action_aquariumMaintenanceFragment_to_taskDetailFragment"
+        app:destination="@id/taskDetailFragment" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/taskDetailFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.TaskDetailFragment"
+    android:label="Task Detail"
+    tools:layout="@layout/fragment_task_detail">
+
+    <argument
+        android:name="taskId"
+        app:argType="long" />
+
+    <action
+        android:id="@+id/action_taskDetailFragment_to_addCareTaskFragment"
+        app:destination="@id/addCareTaskFragment" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/addCareTaskFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.AddCareTaskFragment"
+    android:label="Add Care Task"
+    tools:layout="@layout/fragment_add_care_task">
+
+    <argument
+        android:name="taskId"
+        app:argType="long"
+        android:defaultValue="-1L" />
+
+</fragment>
 
 
     <!-- 📟 Devices Tab -->

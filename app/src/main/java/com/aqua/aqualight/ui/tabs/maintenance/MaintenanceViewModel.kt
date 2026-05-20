@@ -12,6 +12,7 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -67,6 +68,22 @@ class MaintenanceViewModel(
       initialValue = emptyList()
     )
 
+  fun taskByIdFlow(
+    taskId: Long
+  ): Flow<CareTaskUi?> {
+    return combine(
+      careTaskDataStoreManager.taskFlow(taskId),
+      tanksFlow
+    ) { task, tanks ->
+      task?.toCareTaskUi(
+        tankName = getTankName(
+          tankId = task.tankId,
+          tanks = tanks
+        )
+      )
+    }
+  }
+
   fun setTanks(
     tanks: List<SavedAquariumTank>
   ) {
@@ -99,6 +116,14 @@ class MaintenanceViewModel(
     }
   }
 
+  suspend fun deleteManualTask(
+    taskId: Long
+  ) {
+    careTaskDataStoreManager.deleteManualTask(
+      taskId = taskId
+    )
+  }
+
   suspend fun addManualTask(
     tankId: Long,
     title: String,
@@ -114,6 +139,38 @@ class MaintenanceViewModel(
     note: String
   ) {
     careTaskDataStoreManager.addManualTask(
+      tankId = tankId,
+      title = title,
+      description = description,
+      type = type,
+      dueAtMillis = dueAtMillis,
+      repeatEnabled = repeatEnabled,
+      repeatIntervalDays = repeatIntervalDays,
+      reminderEnabled = reminderEnabled,
+      missedReminderEnabled = missedReminderEnabled,
+      missedReminderDays = missedReminderDays,
+      waterChangePercent = waterChangePercent,
+      note = note
+    )
+  }
+
+  suspend fun updateManualTask(
+    taskId: Long,
+    tankId: Long,
+    title: String,
+    description: String,
+    type: CareTaskType,
+    dueAtMillis: Long,
+    repeatEnabled: Boolean,
+    repeatIntervalDays: Int,
+    reminderEnabled: Boolean,
+    missedReminderEnabled: Boolean,
+    missedReminderDays: Int,
+    waterChangePercent: Int?,
+    note: String
+  ) {
+    careTaskDataStoreManager.updateManualTask(
+      taskId = taskId,
       tankId = tankId,
       title = title,
       description = description,
