@@ -506,7 +506,7 @@ class AquariumMaintenanceFragment :
 
     val row = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
+      gravity = Gravity.TOP
 
       setPadding(
         13.dp(),
@@ -521,10 +521,12 @@ class AquariumMaintenanceFragment :
         color = Color.parseColor(task.accentColor)
       )
 
-      layoutParams = LinearLayout.LayoutParams(
+      val params = LinearLayout.LayoutParams(
         40.dp(),
         40.dp()
       )
+      params.topMargin = 2.dp()
+      layoutParams = params
     }
 
     val icon = ImageView(requireContext()).apply {
@@ -599,43 +601,57 @@ class AquariumMaintenanceFragment :
     textBox.addView(metaText)
     textBox.addView(completedText)
 
-    val checkBox = FrameLayout(requireContext()).apply {
-      background = GradientDrawable().apply {
-        shape = GradientDrawable.OVAL
-        setColor(Color.TRANSPARENT)
-        setStroke(
-          1.dp(),
-          Color.parseColor("#3FAE87")
-        )
-      }
-
-      layoutParams = LinearLayout.LayoutParams(
-        34.dp(),
-        34.dp()
-      )
-    }
-
-    val checkIcon = ImageView(requireContext()).apply {
-      setImageResource(R.drawable.ic_check_20)
-      setColorFilter(Color.parseColor("#5FD6B4"))
-
-      val params = FrameLayout.LayoutParams(
-        18.dp(),
-        18.dp(),
-        Gravity.CENTER
-      )
-      layoutParams = params
-    }
-
-    checkBox.addView(checkIcon)
-
     row.addView(iconBox)
     row.addView(textBox)
-    row.addView(checkBox)
+
+    if (task.sourceLabel.isNotBlank()) {
+      row.addView(
+        createHistorySourceBadge(
+          sourceLabel = task.sourceLabel
+        )
+      )
+    }
 
     card.addView(row)
 
     return card
+  }
+
+  private fun createHistorySourceBadge(
+    sourceLabel: String
+  ): View {
+    return TextView(requireContext()).apply {
+      text = sourceLabel
+      textSize = 11f
+      setTextColor(Color.parseColor("#8FE7D5"))
+      setTypeface(null, Typeface.BOLD)
+      includeFontPadding = false
+      gravity = Gravity.CENTER
+
+      background = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = 999.dp().toFloat()
+        setColor(Color.parseColor("#173F38"))
+        setStroke(
+          1.dp(),
+          Color.parseColor("#2F7D70")
+        )
+      }
+
+      setPadding(
+        10.dp(),
+        5.dp(),
+        10.dp(),
+        5.dp()
+      )
+
+      val params = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      params.topMargin = 1.dp()
+      layoutParams = params
+    }
   }
 
   private fun showCompleteTaskDialog(
@@ -682,11 +698,6 @@ class AquariumMaintenanceFragment :
       append(task.tankName)
       append(" • ")
       append(formatHistoryTime(completedAt))
-
-      if (task.sourceLabel.isNotBlank()) {
-        append(" • ")
-        append(task.sourceLabel)
-      }
     }
   }
 
