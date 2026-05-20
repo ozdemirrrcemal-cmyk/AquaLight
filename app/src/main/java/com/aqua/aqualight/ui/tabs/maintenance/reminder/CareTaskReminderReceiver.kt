@@ -35,23 +35,29 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
 
     CoroutineScope(Dispatchers.IO).launch {
       try {
-        val manager = CareTaskDataStoreManager.create(context)
+        val appContext = context.applicationContext
+
+        val manager = CareTaskDataStoreManager.create(
+          appContext
+        )
 
         val task = manager.taskFlow(taskId).firstOrNull()
-        ?: return@launch
+          ?: return@launch
 
         if (
           task.status != CareTaskStatus.PENDING ||
           !task.reminderEnabled
         ) {
           CareTaskReminderScheduler.cancel(
-            context = context,
+            context = appContext,
             taskId = task.id
           )
           return@launch
         }
 
-        val typeUi = CareTaskTypeCatalog.get(task.type)
+        val typeUi = CareTaskTypeCatalog.get(
+          task.type
+        )
 
         val baseTitle = task.title.ifBlank {
           typeUi.title
@@ -78,13 +84,15 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
 
           typeUi.defaultDescription.isNotBlank() -> {
             typeUi.defaultDescription
-          } else -> {
+          }
+
+          else -> {
             "This care task is due now."
           }
         }
 
         NotificationHelper.showCareTaskReminderNotification(
-          context = context,
+          context = appContext,
           taskId = task.id,
           title = title,
           message = message
@@ -92,7 +100,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
 
         if (task.missedReminderEnabled) {
           CareTaskReminderScheduler.scheduleMissedReminder(
-            context = context,
+            context = appContext,
             task = task
           )
         }
