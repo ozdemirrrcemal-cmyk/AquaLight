@@ -64,11 +64,12 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
       R.id.tvTaskTypeBottomSheetTitle
     ).text = sheetTitle
 
-    val scrollView = view.findViewById<NestedScrollView>(
+    view.findViewById<NestedScrollView>(
       R.id.taskTypeScrollView
-    )
-
-    scrollView.isNestedScrollingEnabled = true
+    ).apply {
+      isNestedScrollingEnabled = true
+      overScrollMode = View.OVER_SCROLL_NEVER
+    }
 
     val typeOptionsContainer = view.findViewById<LinearLayout>(
       R.id.typeOptionsContainer
@@ -92,10 +93,14 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
       resources.displayMetrics.heightPixels * 0.92f
     ).toInt()
 
-    bottomSheet.layoutParams.height = sheetHeight
+    bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
+      height = sheetHeight
+    }
+
     bottomSheet.requestLayout()
 
     bottomSheetDialog.behavior.apply {
+      isFitToContents = true
       state = BottomSheetBehavior.STATE_EXPANDED
       peekHeight = sheetHeight
       skipCollapsed = true
@@ -109,19 +114,20 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
   ) {
     container.removeAllViews()
 
-    CareTaskTypeCatalog.categories.forEachIndexed {
-      categoryIndex, category ->
+    var renderedCategoryCount = 0
+
+    CareTaskTypeCatalog.categories.forEach { category ->
 
       val items = CareTaskTypeCatalog.byCategory(category)
 
       if (items.isEmpty()) {
-        return@forEachIndexed
+        return@forEach
       }
 
       container.addView(
         createCategoryTitle(
           title = category,
-          isFirstCategory = categoryIndex == 0
+          isFirstCategory = renderedCategoryCount == 0
         )
       )
 
@@ -134,9 +140,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
         )
       }
 
-      items.forEachIndexed {
-        itemIndex, item ->
-
+      items.forEachIndexed { itemIndex, item ->
         grid.addView(
           createTaskTypeCard(
             item = item,
@@ -146,6 +150,8 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
       }
 
       container.addView(grid)
+
+      renderedCategoryCount++
     }
   }
 
@@ -236,6 +242,11 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
     val row = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
+
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT
+      )
 
       setPadding(
         9.dp(),

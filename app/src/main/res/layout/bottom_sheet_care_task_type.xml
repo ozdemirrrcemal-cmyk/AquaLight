@@ -36,7 +36,7 @@
         android:layout_weight="1"
         android:layout_marginTop="18dp"
         android:clipToPadding="false"
-        android:fillViewport="false"
+        android:fillViewport="true"
         android:nestedScrollingEnabled="true"
         android:overScrollMode="never"
         android:paddingBottom="8dp"
