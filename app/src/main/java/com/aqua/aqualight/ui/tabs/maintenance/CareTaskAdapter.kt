@@ -65,9 +65,7 @@ class CareTaskAdapter(
         )
 
         DateHeaderViewHolder(view)
-      }
-
-      else -> {
+      } else -> {
         val binding = ItemCareTaskBinding.inflate(
           LayoutInflater.from(parent.context),
           parent,
@@ -100,23 +98,26 @@ class CareTaskAdapter(
     val rows = mutableListOf<CareTaskListItem>()
 
     val groupedTasks = tasks
-      .sortedBy {
-        task ->
-        task.createdAtMillis
-      }
-      .groupBy {
-        task ->
-        formatDateKey(task.createdAtMillis)
-      }
+    .sortedBy {
+      task ->
+      getTaskHeaderMillis(task)
+    }
+    .groupBy {
+      task ->
+      formatDateKey(
+        getTaskHeaderMillis(task)
+      )
+    }
 
     groupedTasks.forEach {
       (_, dayTasks) ->
       val firstTask = dayTasks.firstOrNull() ?: return@forEach
+      val headerMillis = getTaskHeaderMillis(firstTask)
 
       rows.add(
         CareTaskListItem.DateHeader(
-          key = formatDateKey(firstTask.createdAtMillis),
-          title = formatDateHeaderWithRelative(firstTask.createdAtMillis)
+          key = formatDateKey(headerMillis),
+          title = formatDateHeaderWithRelative(headerMillis)
         )
       )
 
@@ -131,6 +132,16 @@ class CareTaskAdapter(
     return rows
   }
 
+  private fun getTaskHeaderMillis(
+    task: CareTaskUi
+  ): Long {
+    return if (task.status == CareTaskStatus.COMPLETED) {
+      task.completedAtMillis ?: task.dueAtMillis
+    } else {
+      task.dueAtMillis
+    }
+  }
+
   private fun formatDateHeaderWithRelative(
     millis: Long
   ): String {
@@ -140,9 +151,19 @@ class CareTaskAdapter(
     ).format(Date(millis))
 
     return when {
-      isToday(millis) -> "$dateText (Today)"
-      isYesterday(millis) -> "$dateText (Yesterday)"
-      else -> dateText
+      isToday(millis) -> {
+        "$dateText · Today"
+      }
+
+      isTomorrow(millis) -> {
+        "$dateText · Tomorrow"
+      }
+
+      isYesterday(millis) -> {
+        "$dateText · Yesterday"
+      } else -> {
+        dateText
+      }
     }
   }
 
@@ -165,7 +186,22 @@ class CareTaskAdapter(
     val today = Calendar.getInstance()
 
     return target.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
-      target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+    target.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+  }
+
+  private fun isTomorrow(
+    millis: Long
+  ): Boolean {
+    val target = Calendar.getInstance().apply {
+      timeInMillis = millis
+    }
+
+    val tomorrow = Calendar.getInstance().apply {
+      add(Calendar.DAY_OF_YEAR, 1)
+    }
+
+    return target.get(Calendar.YEAR) == tomorrow.get(Calendar.YEAR) &&
+    target.get(Calendar.DAY_OF_YEAR) == tomorrow.get(Calendar.DAY_OF_YEAR)
   }
 
   private fun isYesterday(
@@ -180,7 +216,7 @@ class CareTaskAdapter(
     }
 
     return target.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
-      target.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR)
+    target.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR)
   }
 
   inner class DateHeaderViewHolder(
@@ -266,10 +302,10 @@ class CareTaskAdapter(
         Color.parseColor("#8FA4BE")
       )
       binding.tvTaskDescription.isVisible =
-        item.description.isNotBlank()
+      item.description.isNotBlank()
 
       binding.tvCompletedBadge.isVisible =
-        item.status == CareTaskStatus.COMPLETED
+      item.status == CareTaskStatus.COMPLETED
 
       binding.root.setOnClickListener {
         onTaskClick(item)
@@ -369,40 +405,38 @@ class CareTaskAdapter(
     data class TaskItem(
       val task: CareTaskUi
     ) : CareTaskListItem()
-  }
+    }
 
-  private object CareTaskListDiffCallback :
+    private object CareTaskListDiffCallback :
     DiffUtil.ItemCallback<CareTaskListItem>() {
 
-    override fun areItemsTheSame(
-      oldItem: CareTaskListItem,
-      newItem: CareTaskListItem
-    ): Boolean {
-      return when {
-        oldItem is CareTaskListItem.DateHeader &&
+      override fun areItemsTheSame(
+        oldItem: CareTaskListItem,
+        newItem: CareTaskListItem
+      ): Boolean {
+        return when {
+          oldItem is CareTaskListItem.DateHeader &&
           newItem is CareTaskListItem.DateHeader -> {
-          oldItem.key == newItem.key
-        }
+            oldItem.key == newItem.key
+          }
 
-        oldItem is CareTaskListItem.TaskItem &&
+          oldItem is CareTaskListItem.TaskItem &&
           newItem is CareTaskListItem.TaskItem -> {
-          oldItem.task.id == newItem.task.id
+            oldItem.task.id == newItem.task.id
+          } else -> false
         }
+      }
 
-        else -> false
+      override fun areContentsTheSame(
+        oldItem: CareTaskListItem,
+        newItem: CareTaskListItem
+      ): Boolean {
+        return oldItem == newItem
       }
     }
 
-    override fun areContentsTheSame(
-      oldItem: CareTaskListItem,
-      newItem: CareTaskListItem
-    ): Boolean {
-      return oldItem == newItem
+    companion object {
+      private const val VIEW_TYPE_DATE_HEADER = 1
+      private const val VIEW_TYPE_TASK = 2
     }
   }
-
-  companion object {
-    private const val VIEW_TYPE_DATE_HEADER = 1
-    private const val VIEW_TYPE_TASK = 2
-  }
-}
