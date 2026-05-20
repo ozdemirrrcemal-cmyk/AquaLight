@@ -77,16 +77,11 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
 
   private fun setupRecycler() {
     adapter = CareTaskAdapter(
-      onCompleteClick = {
-        task ->
-        showCompleteTaskDialog(task)
-      },
       onTaskClick = {
         task ->
         openTaskDetailScreen(task)
       }
     )
-
     binding.rvCareTasks.layoutManager = LinearLayoutManager(
       requireContext()
     )
@@ -725,24 +720,6 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
       cancelTextResId = R.string.cancel,
       onConfirm = {
         maintenanceViewModel.deleteTask(
-          taskId = task.id
-        )
-      }
-    )
-  }
-
-  private fun showCompleteTaskDialog(
-    task: CareTaskUi
-  ) {
-    DialogManager.showConfirmDialog(
-      context = requireContext(),
-      type = DialogType.SUCCESS,
-      title = "Complete Task?",
-      message = "\"${task.title}\" will be marked as completed.",
-      confirmTextResId = R.string.confirm,
-      cancelTextResId = R.string.cancel,
-      onConfirm = {
-        maintenanceViewModel.completeTask(
           taskId = task.id
         )
       }

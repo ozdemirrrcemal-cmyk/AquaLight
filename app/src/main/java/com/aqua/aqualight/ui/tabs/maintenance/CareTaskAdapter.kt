@@ -22,7 +22,6 @@ import java.util.Date
 import java.util.Locale
 
 class CareTaskAdapter(
-  private val onCompleteClick: (CareTaskUi) -> Unit,
   private val onTaskClick: (CareTaskUi) -> Unit
 ) : ListAdapter<CareTaskAdapter.CareTaskListItem, RecyclerView.ViewHolder>(
   CareTaskListDiffCallback
@@ -35,7 +34,8 @@ class CareTaskAdapter(
     val rows = if (showDateHeaders) {
       createRowsWithDateHeaders(tasks)
     } else {
-      tasks.map { task ->
+      tasks.map {
+        task ->
         CareTaskListItem.TaskItem(task)
       }
     }
@@ -100,14 +100,17 @@ class CareTaskAdapter(
     val rows = mutableListOf<CareTaskListItem>()
 
     val groupedTasks = tasks
-      .sortedBy { task ->
+      .sortedBy {
+        task ->
         task.createdAtMillis
       }
-      .groupBy { task ->
+      .groupBy {
+        task ->
         formatDateKey(task.createdAtMillis)
       }
 
-    groupedTasks.forEach { (_, dayTasks) ->
+    groupedTasks.forEach {
+      (_, dayTasks) ->
       val firstTask = dayTasks.firstOrNull() ?: return@forEach
 
       rows.add(
@@ -117,7 +120,8 @@ class CareTaskAdapter(
         )
       )
 
-      dayTasks.forEach { task ->
+      dayTasks.forEach {
+        task ->
         rows.add(
           CareTaskListItem.TaskItem(task)
         )
@@ -252,22 +256,20 @@ class CareTaskAdapter(
         "Aquarium"
       }
       binding.tvTaskSecondary.textSize = 11.5f
-      binding.tvTaskSecondary.setTextColor(Color.parseColor("#B8C7D9"))
+      binding.tvTaskSecondary.setTextColor(
+        Color.parseColor("#B8C7D9")
+      )
 
       binding.tvTaskDescription.text = item.description
       binding.tvTaskDescription.textSize = 11.4f
-      binding.tvTaskDescription.setTextColor(Color.parseColor("#8FA4BE"))
-      binding.tvTaskDescription.isVisible = item.description.isNotBlank()
-
-      binding.btnCompleteTask.isVisible =
-        item.status == CareTaskStatus.PENDING
+      binding.tvTaskDescription.setTextColor(
+        Color.parseColor("#8FA4BE")
+      )
+      binding.tvTaskDescription.isVisible =
+        item.description.isNotBlank()
 
       binding.tvCompletedBadge.isVisible =
         item.status == CareTaskStatus.COMPLETED
-
-      binding.btnCompleteTask.setOnClickListener {
-        onCompleteClick(item)
-      }
 
       binding.root.setOnClickListener {
         onTaskClick(item)

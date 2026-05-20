@@ -8,6 +8,7 @@
     android:layout_marginBottom="12dp"
     android:clickable="true"
     android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     app:cardBackgroundColor="#10233A"
     app:cardCornerRadius="18dp"
     app:cardElevation="0dp"
@@ -17,17 +18,18 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+        android:gravity="top"
         android:orientation="horizontal"
         android:paddingStart="14dp"
         android:paddingTop="13dp"
-        android:paddingEnd="12dp"
+        android:paddingEnd="14dp"
         android:paddingBottom="13dp">
 
         <FrameLayout
             android:id="@+id/iconContainer"
             android:layout_width="44dp"
-            android:layout_height="44dp">
+            android:layout_height="44dp"
+            android:layout_marginTop="3dp">
 
             <ImageView
                 android:id="@+id/ivTaskIcon"
@@ -44,14 +46,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="13dp"
-            android:layout_marginEnd="10dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
             <LinearLayout
+                android:id="@+id/titleRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
+                android:gravity="top"
                 android:orientation="horizontal">
 
                 <TextView
@@ -63,7 +65,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:textColor="@android:color/white"
-                    android:textSize="13.8sp"
+                    android:textSize="13.2sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -116,41 +118,24 @@
                 android:textColor="#8FA4BE"
                 android:textSize="11.8sp" />
 
+            <TextView
+                android:id="@+id/tvCompletedBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_marginTop="9dp"
+                android:background="@drawable/bg_care_task_completed_badge"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:minWidth="78dp"
+                android:paddingStart="11dp"
+                android:paddingEnd="11dp"
+                android:text="Completed"
+                android:textColor="#5FD6B4"
+                android:textSize="11.5sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
         </LinearLayout>
-
-        <FrameLayout
-            android:id="@+id/btnCompleteTask"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/bg_care_task_check_circle"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:id="@+id/ivCompleteIcon"
-                android:layout_width="19dp"
-                android:layout_height="19dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_check_20"
-                app:tint="#8FA4BE" />
-
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/tvCompletedBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:background="@drawable/bg_care_task_completed_badge"
-            android:gravity="center"
-            android:includeFontPadding="false"
-            android:minWidth="78dp"
-            android:paddingStart="11dp"
-            android:paddingEnd="11dp"
-            android:text="Completed"
-            android:textColor="#5FD6B4"
-            android:textSize="11.5sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
 
     </LinearLayout>
 
