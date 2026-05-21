@@ -24,6 +24,7 @@ import java.util.Locale
 import java.text.DecimalFormatSymbols
 import kotlin.math.roundToInt
 import com.aqua.aqualight.ui.common.bottomsheet.SettingsContentBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
 
 class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment {
 
@@ -109,12 +110,12 @@ private fun showSettingsBottomSheet(
   contentView: View,
   onDialogReady: ((BottomSheetDialog) -> Unit)? = null
 ) {
-  SettingsContentBottomSheet.show(
-    fragment = this,
-    title = title,
-    contentView = contentView,
-    onDialogReady = onDialogReady
-  )
+SettingsContentBottomSheet.show(
+  fragment = this,
+  title = title,
+  contentView = contentView,
+  onDialogReady = onDialogReady
+)
 }
 
 private fun showSetupDateSheet() {
@@ -480,86 +481,24 @@ dialog.dismiss()
 }
 }
 }
+
 private fun showTankTypeSheet() {
-val contentBinding = ContentSheetTankTypeBinding.inflate(
-layoutInflater
-)
-
-var selectedType = viewModel.tankDraft.tankType.ifBlank {
-"Fish"
-}
-
-val options = listOf(
-contentBinding.optionFish to "Fish",
-contentBinding.optionShrimp to "Shrimp",
-contentBinding.optionPlanted to "Planted",
-contentBinding.optionMarine to "Marine",
-contentBinding.optionSofties to "Softies",
-contentBinding.optionMixedReef to "Mixed Reef",
-contentBinding.optionSps to "SPS",
-contentBinding.optionCoral to "Coral",
-contentBinding.optionOther to "Other"
-)
-
-fun renderSelection() {
-options.forEach {
-option ->
-val view = option.first
-val value = option.second
-
-val selected = value.equals(
+TankTypeBottomSheet.show(
+fragment = this,
+currentType = viewModel.tankDraft.tankType,
+onSave = {
 selectedType,
-ignoreCase = true
+dismiss ->
+
+viewModel.updateTankType(
+selectedType
 )
 
-view.setTypeface(
-null,
-if (selected) {
-Typeface.BOLD
-} else {
-Typeface.NORMAL
-}
-)
-
-view.setBackgroundResource(
-if (selected) {
-R.drawable.bg_settings_sheet_grid_option_selected
-} else {
-R.drawable.bg_settings_sheet_grid_option
-}
-)
-}
-}
-
-options.forEach {
-option ->
-val view = option.first
-val value = option.second
-
-view.setOnClickListener {
-selectedType = value
-renderSelection()
-}
-}
-
-renderSelection()
-
-showSettingsBottomSheet(
-title = "Tank Type",
-contentView = contentBinding.root
-) {
-dialog ->
-
-contentBinding.btnCancel.setOnClickListener {
-dialog.dismiss()
-}
-
-contentBinding.btnSave.setOnClickListener {
-viewModel.updateTankType(selectedType)
 renderDetails()
-dialog.dismiss()
+
+dismiss()
 }
-}
+)
 }
 
 private fun showStyleSheet() {
