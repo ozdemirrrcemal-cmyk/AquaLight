@@ -122,9 +122,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
             openTankSettings()
         }
 
-        binding.btnAddDevice.setOnClickListener {
-            showAddDeviceBottomSheet()
-        }
 
         binding.btnAddPlant.setOnClickListener {
             openPlantTagFlow()
