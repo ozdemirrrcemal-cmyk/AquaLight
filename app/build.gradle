@@ -102,6 +102,9 @@ dependencies {
 	// libphonenumber
 	implementation "com.googlecode.libphonenumber:libphonenumber:9.0.18"
 	
+	// Lifecycle
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.10.0"
+
 	// Country Code
 	implementation "com.hbb20:ccp:2.7.3"
 
