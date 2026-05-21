@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTaskDetailBinding
 import com.aqua.aqualight.databinding.ItemTaskDetailRowBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -28,7 +29,7 @@ import java.util.Date
 import java.util.Locale
 
 class TaskDetailFragment :
-Fragment(R.layout.fragment_task_detail) {
+  Fragment(R.layout.fragment_task_detail) {
 
   private var _binding: FragmentTaskDetailBinding? = null
   private val binding get() = _binding!!
@@ -303,11 +304,19 @@ Fragment(R.layout.fragment_task_detail) {
       confirmTextResId = R.string.confirm,
       cancelTextResId = R.string.cancel,
       onConfirm = {
-        maintenanceViewModel.completeTask(
-          taskId = task.id
-        )
+        viewLifecycleOwner.lifecycleScope.launch {
+          try {
+            showGlobalLoading(true)
 
-        findNavController().popBackStack()
+            maintenanceViewModel.completeTask(
+              taskId = task.id
+            ).join()
+
+            findNavController().popBackStack()
+          } finally {
+            showGlobalLoading(false)
+          }
+        }
       }
     )
   }
@@ -324,13 +333,23 @@ Fragment(R.layout.fragment_task_detail) {
       cancelTextResId = R.string.cancel,
       onConfirm = {
         viewLifecycleOwner.lifecycleScope.launch {
-          runCatching {
+          var deleteFailed = false
+
+          try {
+            showGlobalLoading(true)
+
             maintenanceViewModel.deleteManualTask(
               taskId = task.id
             )
-          }.onSuccess {
+
             findNavController().popBackStack()
-          }.onFailure {
+          } catch (_: Exception) {
+            deleteFailed = true
+          } finally {
+            showGlobalLoading(false)
+          }
+
+          if (deleteFailed && _binding != null) {
             DialogManager.showInfoDialog(
               context = requireContext(),
               type = DialogType.ERROR,
@@ -341,6 +360,12 @@ Fragment(R.layout.fragment_task_detail) {
         }
       }
     )
+  }
+
+  private fun showGlobalLoading(
+    show: Boolean
+  ) {
+    (activity as? BaseActivity)?.showLoading(show)
   }
 
   private fun createIconBackground(
