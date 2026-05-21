@@ -64,6 +64,9 @@ import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
 import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import java.util.Calendar
 
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
@@ -533,11 +536,11 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       actions = listOf(
         BottomSheetAction(
           text = "Change date",
-          style = BottomSheetActionStyle.NEUTRAL,
+          style = BottomSheetActionStyle.PRIMARY,
           onClick = {
-            showChangeActivityDateComingSoon()
+            showChangeActivityDatePicker(task)
           }
-        ),
+        )
         BottomSheetAction(
           text = "Delete",
           style = BottomSheetActionStyle.DANGER,
@@ -547,6 +550,97 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         )
       )
     )
+  }
+
+  private fun showChangeActivityDatePicker(
+    task: CareTaskUi
+  ) {
+    val currentMillis = task.completedAtMillis ?: task.dueAtMillis
+
+    val calendar = Calendar.getInstance().apply {
+      timeInMillis = currentMillis
+    }
+
+    DatePickerDialog(
+      requireContext(),
+      {
+        _,
+        year,
+        month,
+        dayOfMonth ->
+
+        calendar.set(
+          Calendar.YEAR,
+          year
+        )
+
+        calendar.set(
+          Calendar.MONTH,
+          month
+        )
+
+        calendar.set(
+          Calendar.DAY_OF_MONTH,
+          dayOfMonth
+        )
+
+        showChangeActivityTimePicker(
+          task = task,
+          calendar = calendar
+        )
+      },
+      calendar.get(Calendar.YEAR),
+      calendar.get(Calendar.MONTH),
+      calendar.get(Calendar.DAY_OF_MONTH)
+    ).show()
+  }
+
+  private fun showChangeActivityTimePicker(
+    task: CareTaskUi,
+    calendar: Calendar
+  ) {
+    TimePickerDialog(
+      requireContext(),
+      {
+        _,
+        hourOfDay,
+        minute ->
+
+        calendar.set(
+          Calendar.HOUR_OF_DAY,
+          hourOfDay
+        )
+
+        calendar.set(
+          Calendar.MINUTE,
+          minute
+        )
+
+        calendar.set(
+          Calendar.SECOND,
+          0
+        )
+
+        calendar.set(
+          Calendar.MILLISECOND,
+          0
+        )
+
+        maintenanceViewModel.updateCompletedTaskDate(
+          taskId = task.id,
+          completedAtMillis = calendar.timeInMillis
+        )
+
+        Toast.makeText(
+          requireContext(),
+          "Activity date updated.",
+          Toast.LENGTH_SHORT
+        ).show()
+      },
+      calendar.get(Calendar.HOUR_OF_DAY),
+      calendar.get(Calendar.MINUTE),
+      true
+    ).show()
   }
 
   private fun showDeleteActivityTaskDialog(
@@ -565,14 +659,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         )
       }
     )
-  }
-
-  private fun showChangeActivityDateComingSoon() {
-    Toast.makeText(
-      requireContext(),
-      "Change date will be added next.",
-      Toast.LENGTH_SHORT
-    ).show()
   }
 
   private fun formatActivityDateTime(

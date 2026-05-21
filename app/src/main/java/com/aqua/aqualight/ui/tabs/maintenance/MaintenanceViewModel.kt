@@ -40,7 +40,7 @@ class MaintenanceViewModel(
 ) : AndroidViewModel(application) {
 
   private val careTaskDataStoreManager =
-    CareTaskDataStoreManager.create(application)
+  CareTaskDataStoreManager.create(application)
 
   private val selectedTabFlow = MutableStateFlow(
     MaintenanceTab.ALL
@@ -55,31 +55,31 @@ class MaintenanceViewModel(
   val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
 
   val taskItems: StateFlow<List<CareTaskUi>> =
-    combine(
-      careTaskDataStoreManager.tasksFlow,
-      tanksFlow,
-      selectedTabFlow
-    ) {
-      tasks, tanks, selectedTab ->
-      val filteredTasks = filterTasksByTab(
-        tasks = tasks,
-        tab = selectedTab
-      )
-
-      filteredTasks.map {
-        task ->
-        task.toCareTaskUi(
-          tankName = getTankName(
-            tankId = task.tankId,
-            tanks = tanks
-          )
-        )
-      }
-    }.stateIn(
-      scope = viewModelScope,
-      started = SharingStarted.WhileSubscribed(5_000),
-      initialValue = emptyList()
+  combine(
+    careTaskDataStoreManager.tasksFlow,
+    tanksFlow,
+    selectedTabFlow
+  ) {
+    tasks, tanks, selectedTab ->
+    val filteredTasks = filterTasksByTab(
+      tasks = tasks,
+      tab = selectedTab
     )
+
+    filteredTasks.map {
+      task ->
+      task.toCareTaskUi(
+        tankName = getTankName(
+          tankId = task.tankId,
+          tanks = tanks
+        )
+      )
+    }
+  }.stateIn(
+    scope = viewModelScope,
+    started = SharingStarted.WhileSubscribed(5_000),
+    initialValue = emptyList()
+  )
 
   fun taskByIdFlow(
     taskId: Long
@@ -117,24 +117,24 @@ class MaintenanceViewModel(
       }
 
       val completedTasks = tankTasks
-        .filter {
-          task ->
-          task.status == CareTaskStatus.COMPLETED
-        }
-        .sortedByDescending {
-          task ->
-          task.completedAtMillis ?: task.dueAtMillis
-        }
+      .filter {
+        task ->
+        task.status == CareTaskStatus.COMPLETED
+      }
+      .sortedByDescending {
+        task ->
+        task.completedAtMillis ?: task.dueAtMillis
+      }
 
       val pendingTasks = tankTasks
-        .filter {
-          task ->
-          task.status == CareTaskStatus.PENDING
-        }
-        .sortedBy {
-          task ->
-          task.dueAtMillis
-        }
+      .filter {
+        task ->
+        task.status == CareTaskStatus.PENDING
+      }
+      .sortedBy {
+        task ->
+        task.dueAtMillis
+      }
 
       val completedTaskItems = completedTasks.map {
         task ->
@@ -223,6 +223,18 @@ class MaintenanceViewModel(
     viewModelScope.launch {
       careTaskDataStoreManager.deleteTask(
         taskId = taskId
+      )
+    }
+  }
+
+  fun updateCompletedTaskDate(
+    taskId: Long,
+    completedAtMillis: Long
+  ) {
+    viewModelScope.launch {
+      careTaskDataStoreManager.updateCompletedTaskDate(
+        taskId = taskId,
+        completedAtMillis = completedAtMillis
       )
     }
   }
@@ -328,52 +340,52 @@ class MaintenanceViewModel(
     return when (tab) {
       MaintenanceTab.ALL -> {
         tasks
-          .filter {
-            task ->
-            task.status == CareTaskStatus.PENDING
-          }
-          .sortedBy {
-            task ->
-            task.dueAtMillis
-          }
+        .filter {
+          task ->
+          task.status == CareTaskStatus.PENDING
+        }
+        .sortedBy {
+          task ->
+          task.dueAtMillis
+        }
       }
 
       MaintenanceTab.TODAY -> {
         tasks
-          .filter {
-            task ->
-            task.status == CareTaskStatus.PENDING &&
-              task.dueAtMillis < tomorrowStartMillis
-          }
-          .sortedBy {
-            task ->
-            task.dueAtMillis
-          }
+        .filter {
+          task ->
+          task.status == CareTaskStatus.PENDING &&
+          task.dueAtMillis < tomorrowStartMillis
+        }
+        .sortedBy {
+          task ->
+          task.dueAtMillis
+        }
       }
 
       MaintenanceTab.UPCOMING -> {
         tasks
-          .filter {
-            task ->
-            task.status == CareTaskStatus.PENDING &&
-              task.dueAtMillis >= tomorrowStartMillis
-          }
-          .sortedBy {
-            task ->
-            task.dueAtMillis
-          }
+        .filter {
+          task ->
+          task.status == CareTaskStatus.PENDING &&
+          task.dueAtMillis >= tomorrowStartMillis
+        }
+        .sortedBy {
+          task ->
+          task.dueAtMillis
+        }
       }
 
       MaintenanceTab.HISTORY -> {
         tasks
-          .filter {
-            task ->
-            task.status == CareTaskStatus.COMPLETED
-          }
-          .sortedByDescending {
-            task ->
-            task.completedAtMillis ?: 0L
-          }
+        .filter {
+          task ->
+          task.status == CareTaskStatus.COMPLETED
+        }
+        .sortedByDescending {
+          task ->
+          task.completedAtMillis ?: 0L
+        }
       }
     }
   }
@@ -412,7 +424,7 @@ class MaintenanceViewModel(
       iconRes = typeUi.iconRes,
       accentColor = typeUi.accentColor,
       isOverdue = status == CareTaskStatus.PENDING &&
-        dueAtMillis < getTodayStartMillis(),
+      dueAtMillis < getTodayStartMillis(),
       primaryTimeText = getPrimaryTimeText(this),
       secondaryText = getSecondaryText(this)
     )
@@ -487,9 +499,7 @@ class MaintenanceViewModel(
 
       task.reminderEnabled -> {
         "Reminder active"
-      }
-
-      else -> {
+      } else -> {
         task.description
       }
     }
@@ -500,14 +510,14 @@ class MaintenanceViewModel(
     types: Set<CareTaskType>
   ): String {
     val lastTask = tasks
-      .filter {
-        task ->
-        task.type in types
-      }
-      .maxByOrNull {
-        task ->
-        task.completedAtMillis ?: task.dueAtMillis
-      }
+    .filter {
+      task ->
+      task.type in types
+    }
+    .maxByOrNull {
+      task ->
+      task.completedAtMillis ?: task.dueAtMillis
+    }
 
     val completedAt = lastTask?.completedAtMillis ?: lastTask?.dueAtMillis
 
@@ -540,42 +550,42 @@ class MaintenanceViewModel(
     val tomorrowStartMillis = getTomorrowStartMillis()
 
     val overdueTask = tasks
-      .filter {
-        task ->
-        task.dueAtMillis < now
-      }
-      .minByOrNull {
-        task ->
-        task.dueAtMillis
-      }
+    .filter {
+      task ->
+      task.dueAtMillis < now
+    }
+    .minByOrNull {
+      task ->
+      task.dueAtMillis
+    }
 
     if (overdueTask != null) {
       return overdueTask
     }
 
     val todayTask = tasks
-      .filter {
-        task ->
-        task.dueAtMillis < tomorrowStartMillis
-      }
-      .minByOrNull {
-        task ->
-        task.dueAtMillis
-      }
+    .filter {
+      task ->
+      task.dueAtMillis < tomorrowStartMillis
+    }
+    .minByOrNull {
+      task ->
+      task.dueAtMillis
+    }
 
     if (todayTask != null) {
       return todayTask
     }
 
     val smartTask = tasks
-      .filter {
-        task ->
-        task.source == CareTaskSource.AUTOMATIC
-      }
-      .minByOrNull {
-        task ->
-        task.dueAtMillis
-      }
+    .filter {
+      task ->
+      task.source == CareTaskSource.AUTOMATIC
+    }
+    .minByOrNull {
+      task ->
+      task.dueAtMillis
+    }
 
     if (smartTask != null) {
       return smartTask
@@ -608,9 +618,7 @@ class MaintenanceViewModel(
 
       daysUntil == 1L -> {
         "Tomorrow"
-      }
-
-      else -> {
+      } else -> {
         "$daysUntil days later"
       }
     }
@@ -623,8 +631,8 @@ class MaintenanceViewModel(
     val targetStartMillis = getStartOfDayMillis(millis)
 
     val daysAgo = TimeUnit.MILLISECONDS
-      .toDays(todayStartMillis - targetStartMillis)
-      .coerceAtLeast(0L)
+    .toDays(todayStartMillis - targetStartMillis)
+    .coerceAtLeast(0L)
 
     return when (daysAgo) {
       0L -> {
@@ -633,9 +641,7 @@ class MaintenanceViewModel(
 
       1L -> {
         "1 day ago"
-      }
-
-      else -> {
+      } else -> {
         "$daysAgo days ago"
       }
     }

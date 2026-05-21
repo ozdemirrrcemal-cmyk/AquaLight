@@ -592,6 +592,42 @@ class CareTaskDataStoreManager private constructor(
     }
   }
 
+  suspend fun updateCompletedTaskDate(
+    taskId: Long,
+    completedAtMillis: Long
+  ) {
+    context.careTasksDataStore.updateData {
+      currentStore ->
+      val currentTasks = currentStore.tasksList
+      val now = System.currentTimeMillis()
+
+      val updatedTasks = currentTasks.map {
+        storedTask ->
+
+        if (storedTask.id != taskId) {
+          storedTask
+        } else {
+          val currentTask = storedTask.toCareTask()
+
+          if (currentTask.status != CareTaskStatus.COMPLETED) {
+            storedTask
+          } else {
+            currentTask.copy(
+              dueAtMillis = completedAtMillis,
+              completedAtMillis = completedAtMillis,
+              updatedAtMillis = now
+            ).toStoredCareTask()
+          }
+        }
+      }
+
+      currentStore.toBuilder()
+      .clearTasks()
+      .addAllTasks(updatedTasks)
+      .build()
+    }
+  }
+
   suspend fun deleteManualTask(
     taskId: Long
   ) {
