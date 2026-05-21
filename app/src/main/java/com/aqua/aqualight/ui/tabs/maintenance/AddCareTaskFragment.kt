@@ -899,50 +899,62 @@ Fragment(R.layout.fragment_add_care_task) {
     }
 
     viewLifecycleOwner.lifecycleScope.launch {
-      if (binding.switchReminder.isChecked) {
-        userPrefs.updateNotificationsEnabled(true)
+      var savedSuccessfully = false
+
+      try {
+        showGlobalLoading(true)
+
+        if (binding.switchReminder.isChecked) {
+          userPrefs.updateNotificationsEnabled(true)
+        }
+
+        if (isEditMode) {
+          maintenanceViewModel.updateManualTask(
+            taskId = taskId,
+            tankId = selectedTankId,
+            title = title,
+            description = description,
+            type = type,
+            dueAtMillis = selectedCalendar.timeInMillis,
+            repeatEnabled = binding.switchRepeat.isChecked,
+            repeatIntervalDays = repeatDays,
+            reminderEnabled = binding.switchReminder.isChecked,
+            missedReminderEnabled = binding.switchReminder.isChecked &&
+            binding.switchMissedReminder.isChecked,
+            missedReminderDays = missedDays,
+            waterChangePercent = waterPercent,
+            note = binding.etNote.text
+            .toString()
+            .trim()
+          )
+        } else {
+          maintenanceViewModel.addManualTask(
+            tankId = selectedTankId,
+            title = title,
+            description = description,
+            type = type,
+            dueAtMillis = selectedCalendar.timeInMillis,
+            repeatEnabled = binding.switchRepeat.isChecked,
+            repeatIntervalDays = repeatDays,
+            reminderEnabled = binding.switchReminder.isChecked,
+            missedReminderEnabled = binding.switchReminder.isChecked &&
+            binding.switchMissedReminder.isChecked,
+            missedReminderDays = missedDays,
+            waterChangePercent = waterPercent,
+            note = binding.etNote.text
+            .toString()
+            .trim()
+          )
+        }
+
+        savedSuccessfully = true
+      } finally {
+        showGlobalLoading(false)
       }
 
-      if (isEditMode) {
-        maintenanceViewModel.updateManualTask(
-          taskId = taskId,
-          tankId = selectedTankId,
-          title = title,
-          description = description,
-          type = type,
-          dueAtMillis = selectedCalendar.timeInMillis,
-          repeatEnabled = binding.switchRepeat.isChecked,
-          repeatIntervalDays = repeatDays,
-          reminderEnabled = binding.switchReminder.isChecked,
-          missedReminderEnabled = binding.switchReminder.isChecked &&
-          binding.switchMissedReminder.isChecked,
-          missedReminderDays = missedDays,
-          waterChangePercent = waterPercent,
-          note = binding.etNote.text
-          .toString()
-          .trim()
-        )
-      } else {
-        maintenanceViewModel.addManualTask(
-          tankId = selectedTankId,
-          title = title,
-          description = description,
-          type = type,
-          dueAtMillis = selectedCalendar.timeInMillis,
-          repeatEnabled = binding.switchRepeat.isChecked,
-          repeatIntervalDays = repeatDays,
-          reminderEnabled = binding.switchReminder.isChecked,
-          missedReminderEnabled = binding.switchReminder.isChecked &&
-          binding.switchMissedReminder.isChecked,
-          missedReminderDays = missedDays,
-          waterChangePercent = waterPercent,
-          note = binding.etNote.text
-          .toString()
-          .trim()
-        )
+      if (savedSuccessfully) {
+        closeForm()
       }
-
-      closeForm()
     }
   }
 
@@ -1024,6 +1036,12 @@ Fragment(R.layout.fragment_add_care_task) {
         Color.parseColor(strokeColor)
       )
     }
+  }
+
+  private fun showGlobalLoading(
+    show: Boolean
+  ) {
+    (activity as? BaseActivity)?.showLoading(show)
   }
 
   private fun applyAlpha(

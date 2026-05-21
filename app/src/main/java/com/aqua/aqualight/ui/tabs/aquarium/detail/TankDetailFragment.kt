@@ -67,8 +67,6 @@ import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import android.app.DatePickerDialog
 import com.aqua.aqualight.base.BaseActivity
 import java.util.Calendar
-import android.app.DatePickerDialog
-import java.util.Calendar
 
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {

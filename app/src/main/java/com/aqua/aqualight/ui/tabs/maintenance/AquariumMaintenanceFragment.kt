@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.aqua.aqualight.base.BaseActivity
 
 class AquariumMaintenanceFragment :
 Fragment(R.layout.fragment_aquarium_maintenance) {
@@ -709,22 +710,36 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
   }
 
   private fun showDeleteHistoryTaskDialog(
-    task: CareTaskUi
-  ) {
-    DialogManager.showConfirmDialog(
-      context = requireContext(),
-      type = DialogType.ERROR,
-      title = "Delete from history?",
-      message = "\"${task.title}\" will be removed from completed history.",
-      confirmTextResId = R.string.confirm,
-      cancelTextResId = R.string.cancel,
-      onConfirm = {
-        maintenanceViewModel.deleteTask(
-          taskId = task.id
-        )
+  task: CareTaskUi
+) {
+  DialogManager.showConfirmDialog(
+    context = requireContext(),
+    type = DialogType.ERROR,
+    title = "Delete from history?",
+    message = "\"${task.title}\" will be removed from completed history.",
+    confirmTextResId = R.string.confirm,
+    cancelTextResId = R.string.cancel,
+    onConfirm = {
+      viewLifecycleOwner.lifecycleScope.launch {
+        try {
+          showGlobalLoading(true)
+
+          maintenanceViewModel.deleteTask(
+            taskId = task.id
+          ).join()
+        } finally {
+          showGlobalLoading(false)
+        }
       }
-    )
-  }
+    }
+  )
+}
+  
+  private fun showGlobalLoading(
+  show: Boolean
+) {
+  (activity as? BaseActivity)?.showLoading(show)
+}
 
   private fun openAddCareTaskScreen() {
     findNavController().navigate(
@@ -841,4 +856,4 @@ Fragment(R.layout.fragment_aquarium_maintenance) {
   companion object {
     private const val HISTORY_AXIS_WIDTH_DP = 36
   }
-}
+} 
