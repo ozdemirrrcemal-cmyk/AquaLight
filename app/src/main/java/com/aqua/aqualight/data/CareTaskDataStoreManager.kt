@@ -382,9 +382,7 @@ class CareTaskDataStoreManager private constructor(
           newTask.toStoredCareTask()
         )
 
-        if (newTask.dueAtMillis > now) {
           tasksToSchedule.add(newTask)
-        }
       }
 
       currentStore.toBuilder()
