@@ -44,7 +44,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         )
 
         val appNotificationsEnabled = userPrefs.notificationsEnabled
-          .firstOrNull() ?: false
+        .firstOrNull() ?: false
 
         if (!appNotificationsEnabled) {
           return@launch
@@ -59,7 +59,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         )
 
         val task = careTaskManager.taskFlow(taskId).firstOrNull()
-          ?: return@launch
+        ?: return@launch
 
         if (
           task.status != CareTaskStatus.PENDING ||
@@ -73,9 +73,10 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         }
 
         val tanks = tankManager.tanksFlow.firstOrNull()
-          .orEmpty()
+        .orEmpty()
 
-        val aquariumName = tanks.firstOrNull { tank ->
+        val aquariumName = tanks.firstOrNull {
+          tank ->
           tank.id == task.tankId
         }?.name.orEmpty()
 
@@ -108,9 +109,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
 
           typeUi.defaultDescription.isNotBlank() -> {
             typeUi.defaultDescription
-          }
-
-          else -> {
+          } else -> {
             "This care task is due now."
           }
         }
@@ -125,7 +124,9 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
           context = appContext,
           taskId = task.id,
           title = title,
-          message = message
+          message = message,
+          largeIconRes = typeUi.iconRes,
+          largeIconColor = typeUi.accentColor
         )
 
         if (task.missedReminderEnabled) {

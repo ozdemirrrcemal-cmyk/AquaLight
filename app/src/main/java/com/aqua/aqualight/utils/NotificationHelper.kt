@@ -9,14 +9,20 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.aqua.aqualight.ui.main.MainActivity
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.main.MainActivity
 
 object NotificationHelper {
 
@@ -30,8 +36,13 @@ object NotificationHelper {
   fun createNotificationChannel(
     context: Context
   ) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-    if (channelCreated) return
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+      return
+    }
+
+    if (channelCreated) {
+      return
+    }
 
     val channel = NotificationChannel(
       CHANNEL_ID,
@@ -69,7 +80,7 @@ object NotificationHelper {
     context: Context
   ): Boolean {
     return NotificationManagerCompat.from(context)
-    .areNotificationsEnabled()
+      .areNotificationsEnabled()
   }
 
   fun openNotificationSettings(
@@ -131,8 +142,13 @@ object NotificationHelper {
     title: String,
     message: String
   ) {
-    if (!hasSystemPermission(context)) return
-    if (!areSystemNotificationsEnabled(context)) return
+    if (!hasSystemPermission(context)) {
+      return
+    }
+
+    if (!areSystemNotificationsEnabled(context)) {
+      return
+    }
 
     createNotificationChannel(context)
 
@@ -154,10 +170,17 @@ object NotificationHelper {
     context: Context,
     taskId: Long,
     title: String,
-    message: String
+    message: String,
+    largeIconRes: Int? = null,
+    largeIconColor: String? = null
   ) {
-    if (!hasSystemPermission(context)) return
-    if (!areSystemNotificationsEnabled(context)) return
+    if (!hasSystemPermission(context)) {
+      return
+    }
+
+    if (!areSystemNotificationsEnabled(context)) {
+      return
+    }
 
     createNotificationChannel(context)
 
@@ -169,7 +192,9 @@ object NotificationHelper {
       requestCode = notificationId,
       title = title,
       message = message,
-      taskId = taskId
+      taskId = taskId,
+      largeIconRes = largeIconRes,
+      largeIconColor = largeIconColor
     )
   }
 
@@ -189,7 +214,9 @@ object NotificationHelper {
     requestCode: Int,
     title: String,
     message: String,
-    taskId: Long? = null
+    taskId: Long? = null,
+    largeIconRes: Int? = null,
+    largeIconColor: String? = null
   ) {
     val launchIntent = if (taskId != null && taskId > 0L) {
       Intent(
@@ -197,8 +224,8 @@ object NotificationHelper {
         MainActivity::class.java
       ).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-        Intent.FLAG_ACTIVITY_CLEAR_TOP or
-        Intent.FLAG_ACTIVITY_SINGLE_TOP
+          Intent.FLAG_ACTIVITY_CLEAR_TOP or
+          Intent.FLAG_ACTIVITY_SINGLE_TOP
 
         putExtra(
           MainActivity.EXTRA_START_IN_APP,
@@ -212,11 +239,11 @@ object NotificationHelper {
       }
     } else {
       context.packageManager
-      .getLaunchIntentForPackage(context.packageName)
-      ?.apply {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-        Intent.FLAG_ACTIVITY_CLEAR_TASK
-      }
+        .getLaunchIntentForPackage(context.packageName)
+        ?.apply {
+          flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
     }
 
     val pendingIntent = launchIntent?.let {
@@ -226,7 +253,7 @@ object NotificationHelper {
         requestCode,
         intent,
         PendingIntent.FLAG_UPDATE_CURRENT or
-        PendingIntent.FLAG_IMMUTABLE
+          PendingIntent.FLAG_IMMUTABLE
       )
     }
 
@@ -234,14 +261,24 @@ object NotificationHelper {
       context,
       CHANNEL_ID
     )
-    .setSmallIcon(R.drawable.ic_stat_aqualight_soft)
-    .setContentTitle(title)
-    .setContentText(message)
-    .setStyle(
-      NotificationCompat.BigTextStyle().bigText(message)
+      .setSmallIcon(R.drawable.ic_stat_aqualight_soft)
+      .setContentTitle(title)
+      .setContentText(message)
+      .setStyle(
+        NotificationCompat.BigTextStyle().bigText(message)
+      )
+      .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+      .setAutoCancel(true)
+
+    val largeIconBitmap = createLargeIconBitmap(
+      context = context,
+      iconRes = largeIconRes,
+      color = largeIconColor
     )
-    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-    .setAutoCancel(true)
+
+    if (largeIconBitmap != null) {
+      builder.setLargeIcon(largeIconBitmap)
+    }
 
     if (pendingIntent != null) {
       builder.setContentIntent(pendingIntent)
@@ -251,6 +288,91 @@ object NotificationHelper {
       notificationId,
       builder.build()
     )
+  }
+
+  private fun createLargeIconBitmap(
+    context: Context,
+    iconRes: Int?,
+    color: String?
+  ): Bitmap? {
+    if (iconRes == null || iconRes <= 0) {
+      return null
+    }
+
+    val size = 48.dp(context)
+    val iconSize = 25.dp(context)
+
+    val bitmap = Bitmap.createBitmap(
+      size,
+      size,
+      Bitmap.Config.ARGB_8888
+    )
+
+    val canvas = Canvas(bitmap)
+
+    val backgroundColor = parseColorOrDefault(
+      color = color,
+      fallback = "#2196F3"
+    )
+
+    val paint = Paint(
+      Paint.ANTI_ALIAS_FLAG
+    ).apply {
+      style = Paint.Style.FILL
+      this.color = backgroundColor
+    }
+
+    canvas.drawCircle(
+      size / 2f,
+      size / 2f,
+      size / 2f,
+      paint
+    )
+
+    val drawable = ContextCompat.getDrawable(
+      context,
+      iconRes
+    ) ?: return bitmap
+
+    val wrappedDrawable = DrawableCompat.wrap(
+      drawable.mutate()
+    )
+
+    DrawableCompat.setTint(
+      wrappedDrawable,
+      Color.WHITE
+    )
+
+    val left = (size - iconSize) / 2
+    val top = (size - iconSize) / 2
+
+    wrappedDrawable.setBounds(
+      left,
+      top,
+      left + iconSize,
+      top + iconSize
+    )
+
+    wrappedDrawable.draw(canvas)
+
+    return bitmap
+  }
+
+  private fun parseColorOrDefault(
+    color: String?,
+    fallback: String
+  ): Int {
+    return runCatching {
+      Color.parseColor(color)
+    }.getOrDefault(
+      Color.parseColor(fallback)
+    )
+  }
+
+  private fun Int.dp(
+    context: Context
+  ): Int {
+    return (this * context.resources.displayMetrics.density).toInt()
   }
 
   private fun getTaskNotificationId(
