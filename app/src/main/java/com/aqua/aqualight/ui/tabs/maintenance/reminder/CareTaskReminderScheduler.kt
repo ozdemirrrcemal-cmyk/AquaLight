@@ -32,15 +32,16 @@ object CareTaskReminderScheduler {
       return
     }
 
-    val triggerAtMillis = maxOf(
-      task.dueAtMillis,
-      System.currentTimeMillis() + 5_000L
-    )
+    val now = System.currentTimeMillis()
+
+    if (task.dueAtMillis <= now) {
+      return
+    }
 
     scheduleAt(
       context = context,
       taskId = task.id,
-      triggerAtMillis = triggerAtMillis
+      triggerAtMillis = task.dueAtMillis
     )
   }
 
