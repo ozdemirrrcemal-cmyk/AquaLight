@@ -869,8 +869,11 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
                 activateTab(binding.tabDevices)
                 moveTabUnderline(binding.tabDevices)
 
-                binding.devicesSection.isVisible = true
+                binding.contentScrollView.isVisible = false
+                binding.devicesFragmentContainer.isVisible = true
                 binding.tvEmptyTab.isVisible = false
+
+                showDevicesFragmentIfNeeded()
             }
 
             TankDetailTab.ACTIVITY -> {
@@ -924,6 +927,30 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
             }
         }
     }
+    
+    private fun showDevicesFragmentIfNeeded() {
+    binding.devicesFragmentContainer.isVisible = true
+
+    val existingFragment = getDevicesFragment()
+
+    if (existingFragment != null) {
+        return
+    }
+
+    childFragmentManager.commit {
+        replace(
+            R.id.devicesFragmentContainer,
+            TankDetailDevicesFragment.newInstance(tankId),
+            TAG_DEVICES_FRAGMENT
+        )
+    }
+}
+
+private fun getDevicesFragment(): TankDetailDevicesFragment? {
+    return childFragmentManager.findFragmentByTag(
+        TAG_DEVICES_FRAGMENT
+    ) as? TankDetailDevicesFragment
+}
 
     private fun showActivityFragmentIfNeeded() {
         binding.activityFragmentContainer.isVisible = true
@@ -1611,39 +1638,42 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     private fun resetTabs() {
-    val inactiveColor = Color.parseColor("#8FA4BE")
+        val inactiveColor = Color.parseColor("#8FA4BE")
 
-    listOf(
-        binding.tabDevices,
-        binding.tabActivity,
-        binding.tabTank,
-        binding.tabPlants,
-        binding.tabTankLife
-    ).forEach { tab ->
-        tab.setTextColor(inactiveColor)
-        tab.setTypeface(null, Typeface.NORMAL)
+        listOf(
+            binding.tabDevices,
+            binding.tabActivity,
+            binding.tabTank,
+            binding.tabPlants,
+            binding.tabTankLife
+        ).forEach {
+            tab ->
+            tab.setTextColor(inactiveColor)
+            tab.setTypeface(null, Typeface.NORMAL)
+        }
+
+        binding.contentScrollView.isVisible = true
+        binding.devicesFragmentContainer.isVisible = false
+        binding.activityFragmentContainer.isVisible = false
+
+        binding.devicesSection.isVisible = false
+        binding.tankSection.isVisible = false
+        binding.plantsSection.isVisible = false
+        binding.tankLifeSection.isVisible = false
+        binding.tvEmptyTab.isVisible = false
     }
 
-    binding.contentScrollView.isVisible = true
-    binding.activityFragmentContainer.isVisible = false
+    private fun showEmptySection() {
+        binding.contentScrollView.isVisible = true
+        binding.devicesFragmentContainer.isVisible = false
+        binding.activityFragmentContainer.isVisible = false
 
-    binding.devicesSection.isVisible = false
-    binding.tankSection.isVisible = false
-    binding.plantsSection.isVisible = false
-    binding.tankLifeSection.isVisible = false
-    binding.tvEmptyTab.isVisible = false
-}
-
-private fun showEmptySection() {
-    binding.contentScrollView.isVisible = true
-    binding.activityFragmentContainer.isVisible = false
-
-    binding.devicesSection.isVisible = false
-    binding.tankSection.isVisible = false
-    binding.plantsSection.isVisible = false
-    binding.tankLifeSection.isVisible = false
-    binding.tvEmptyTab.isVisible = true
-}
+        binding.devicesSection.isVisible = false
+        binding.tankSection.isVisible = false
+        binding.plantsSection.isVisible = false
+        binding.tankLifeSection.isVisible = false
+        binding.tvEmptyTab.isVisible = true
+    }
 
     private fun getLivestockQuantityText(
         quantity: Int
@@ -1738,6 +1768,8 @@ private fun showEmptySection() {
         private const val ARG_TANK_ID = "tankId"
         private const val KEY_SELECTED_TAB = "selectedTab"
         private const val ONLINE_TIMEOUT_MS = 60_000L
+        
+        private const val TAG_DEVICES_FRAGMENT = "TankDetailDevicesFragment"
 
         private const val TAG_ACTIVITY_FRAGMENT = "TankDetailActivityFragment"
 
