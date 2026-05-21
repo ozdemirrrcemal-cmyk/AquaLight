@@ -140,12 +140,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
             selectTab(TankDetailTab.TANK_LIFE)
         }
 
-
-        binding.btnEmptyAddLife.setOnClickListener {
-            openLivestockFormFlow()
-        }
     }
-
 
     private fun observeCareProfileActions() {
         val savedStateHandle = findNavController()
