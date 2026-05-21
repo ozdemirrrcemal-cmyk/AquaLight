@@ -54,7 +54,6 @@ class AquariumTankAdapter(
         ) {
             binding.tvTankName.text = tank.name
             binding.tvTankDay.text = getTankDayText(tank.setupDateMillis)
-            binding.tvTankSubtitle.text = buildTankSubtitle(tank)
 
             if (!tank.photoUri.isNullOrBlank()) {
                 binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {
@@ -71,33 +70,6 @@ class AquariumTankAdapter(
             }
         }
 
-        private fun buildTankSubtitle(
-            tank: SavedAquariumTank
-        ): String {
-            val parts = mutableListOf<String>()
-
-            if (tank.tankStyle.isNotBlank()) {
-                parts.add(tank.tankStyle)
-            }
-
-            if (tank.tankType.isNotBlank()) {
-                parts.add(tank.tankType)
-            }
-
-            if (tank.plants.isNotEmpty()) {
-                parts.add("${tank.plants.size} plants")
-            }
-
-            if (tank.materials.isNotEmpty()) {
-                parts.add("${tank.materials.size} materials")
-            }
-
-            return if (parts.isEmpty()) {
-                "No maintenance record"
-            } else {
-                parts.joinToString(" · ")
-            }
-        }
 
         private fun getTankDayText(
             setupDateMillis: Long?
