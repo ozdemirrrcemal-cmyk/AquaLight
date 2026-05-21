@@ -158,7 +158,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         binding.btnCamera.setOnClickListener {
             PhotoSourceBottomSheet
                 .newInstance(
-                    title = "Aquarium photo"
+                    title = "Aquarium Photo"
                 )
                 .show(
                     childFragmentManager,

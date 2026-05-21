@@ -157,7 +157,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         val openChooser: (View) -> Unit = {
             PhotoSourceBottomSheet
             .newInstance(
-                title = "Profile photo"
+                title = "Profile Photo"
             )
             .show(
                 childFragmentManager,
