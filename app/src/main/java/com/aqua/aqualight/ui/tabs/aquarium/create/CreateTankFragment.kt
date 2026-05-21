@@ -20,6 +20,11 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankMaterialFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment
+import android.widget.Toast
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
+import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import kotlinx.coroutines.launch
 
 class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
@@ -27,6 +32,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     private val binding get() = _binding!!
 
     private val viewModel: CreateTankViewModel by viewModels()
+	private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private val totalSteps = 5
     private var currentStepIndex = 0
@@ -160,13 +166,31 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     }
 
     private fun completeTank() {
-        viewModel.completeTank()
+    binding.btnNext.isEnabled = false
 
-        findNavController().popBackStack(
-            R.id.aquariumFragment,
-            false
-        )
+    viewLifecycleOwner.lifecycleScope.launch {
+        try {
+            aquariumTankViewModel.addTankFromDraft(
+                viewModel.tankDraft
+            )
+
+            findNavController().popBackStack(
+                R.id.aquariumFragment,
+                false
+            )
+        } catch (exception: Exception) {
+            exception.printStackTrace()
+
+            binding.btnNext.isEnabled = true
+
+            Toast.makeText(
+                requireContext(),
+                "Tank could not be saved.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
+}
 
     fun openPlantTagFlow() {
         binding.plantFlowContainer.isVisible = true

@@ -1,0 +1,129 @@
+package com.aqua.aqualight.data.tanks
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.dataStore
+import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+private val Context.aquariumTanksDataStore: DataStore<AquariumTanksStore> by dataStore(
+    fileName = "aquarium_tanks.pb",
+    serializer = AquariumTanksSerializer
+)
+
+class AquariumTankDataStoreManager(
+    private val context: Context
+) {
+
+    val tanksFlow: Flow<List<SavedAquariumTank>> =
+        context.aquariumTanksDataStore.data.map { store ->
+            store.getTanksList()
+                .map { it.toSavedAquariumTank() }
+                .asReversed()
+        }
+
+    suspend fun addTankFromDraft(
+        draft: TankDraft
+    ): Long {
+        val nowMillis = System.currentTimeMillis()
+        val tankId = nowMillis
+
+        val storedTank = draft.toStoredTank(
+            tankId = tankId,
+            createdAtMillis = nowMillis
+        )
+
+        context.aquariumTanksDataStore.updateData { currentStore ->
+            currentStore.toBuilder()
+                .addTanks(storedTank)
+                .build()
+        }
+
+        return tankId
+    }
+
+    private fun TankDraft.toStoredTank(
+        tankId: Long,
+        createdAtMillis: Long
+    ): StoredTank {
+        return StoredTank.newBuilder()
+            .setId(tankId)
+            .setName(name.ifBlank { "Unnamed Aquarium" })
+            .setDescription(description)
+            .setPhotoUri(photoUri.orEmpty())
+            .setSetupDateMillis(setupDateMillis ?: 0L)
+            .setWidthCm(widthCm)
+            .setLengthCm(lengthCm)
+            .setHeightCm(heightCm)
+            .setVolumeUnit(volumeUnit)
+            .setTankType(tankType)
+            .setTankStyle(tankStyle)
+            .setCreatedAtMillis(createdAtMillis)
+            .addAllPlants(
+                plants.map { plant ->
+                    StoredPlantTag.newBuilder()
+                        .setId(plant.id)
+                        .setPlantName(plant.plantName)
+                        .setCategory(plant.category)
+                        .setMarkerX(plant.markerX)
+                        .setMarkerY(plant.markerY)
+                        .build()
+                }
+            )
+            .addAllMaterials(
+                materials.map { material ->
+                    StoredMaterial.newBuilder()
+                        .setId(material.id)
+                        .setProductId(material.productId)
+                        .setCategoryKey(material.categoryKey)
+                        .setCategoryTitle(material.categoryTitle)
+                        .setName(material.name)
+                        .setBrand(material.brand)
+                        .setNote(material.note)
+                        .build()
+                }
+            )
+            .build()
+    }
+
+    private fun StoredTank.toSavedAquariumTank(): SavedAquariumTank {
+        return SavedAquariumTank(
+            id = id,
+            name = name,
+            description = description,
+            photoUri = photoUri.ifBlank { null },
+            setupDateMillis = setupDateMillis.takeIf { it > 0L },
+            widthCm = widthCm,
+            lengthCm = lengthCm,
+            heightCm = heightCm,
+            volumeUnit = volumeUnit,
+            tankType = tankType,
+            tankStyle = tankStyle,
+            createdAtMillis = createdAtMillis,
+            plants = getPlantsList().map { plant ->
+                SavedAquariumPlant(
+                    id = plant.id,
+                    plantName = plant.plantName,
+                    category = plant.category,
+                    markerX = plant.markerX,
+                    markerY = plant.markerY
+                )
+            },
+            materials = getMaterialsList().map { material ->
+                SavedAquariumMaterial(
+                    id = material.id,
+                    productId = material.productId,
+                    categoryKey = material.categoryKey,
+                    categoryTitle = material.categoryTitle,
+                    name = material.name,
+                    brand = material.brand,
+                    note = material.note
+                )
+            }
+        )
+    }
+}

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.tanks";
+option java_multiple_files = true;
+
+message AquariumTanksStore {
+  repeated StoredTank tanks = 1;
+}
+
+message StoredTank {
+  int64 id = 1;
+  string name = 2;
+  string description = 3;
+  string photoUri = 4;
+  int64 setupDateMillis = 5;
+
+  int32 widthCm = 6;
+  int32 lengthCm = 7;
+  int32 heightCm = 8;
+  string volumeUnit = 9;
+  string tankType = 10;
+  string tankStyle = 11;
+  int64 createdAtMillis = 12;
+
+  repeated StoredPlantTag plants = 20;
+  repeated StoredMaterial materials = 30;
+}
+
+message StoredPlantTag {
+  int64 id = 1;
+  string plantName = 2;
+  string category = 3;
+  float markerX = 4;
+  float markerY = 5;
+}
+
+message StoredMaterial {
+  int64 id = 1;
+  string productId = 2;
+  string categoryKey = 3;
+  string categoryTitle = 4;
+  string name = 5;
+  string brand = 6;
+  string note = 7;
+}
