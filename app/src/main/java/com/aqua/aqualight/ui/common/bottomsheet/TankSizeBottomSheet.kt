@@ -23,7 +23,7 @@ object TankSizeBottomSheet {
     currentLengthCm: Int,
     currentHeightCm: Int,
     currentUnit: String,
-    title: String = "Tank Size",
+    title: String = "Size",
     onInvalidInput: () -> Unit,
     onSave: (
       result: TankSizeBottomSheetResult,
@@ -42,7 +42,7 @@ object TankSizeBottomSheet {
       selectedUnit = "cm"
     }
 
-    fun unitText(): String {
+    fun getUnitText(): String {
       return if (selectedUnit == "in") {
         "inches"
       } else {
@@ -50,7 +50,7 @@ object TankSizeBottomSheet {
       }
     }
 
-    fun formatInitialValue(
+    fun formatValueForCurrentUnit(
       cmValue: Int
     ): String {
       val value = if (selectedUnit == "in") {
@@ -62,21 +62,21 @@ object TankSizeBottomSheet {
       return sizeFormatter.format(value)
     }
 
-    fun renderUnit() {
-      contentBinding.tvUnitValue.text = unitText()
+    fun renderUnitOnly() {
+      contentBinding.tvUnitValue.text = getUnitText()
     }
 
     fun fillInitialInputs() {
       contentBinding.inputWidth.setText(
-        formatInitialValue(currentWidthCm)
+        formatValueForCurrentUnit(currentWidthCm)
       )
 
       contentBinding.inputLength.setText(
-        formatInitialValue(currentLengthCm)
+        formatValueForCurrentUnit(currentLengthCm)
       )
 
       contentBinding.inputHeight.setText(
-        formatInitialValue(currentHeightCm)
+        formatValueForCurrentUnit(currentHeightCm)
       )
     }
 
@@ -125,7 +125,7 @@ object TankSizeBottomSheet {
       )
     }
 
-    fun toCm(
+    fun convertInputValueToCm(
       value: Double
     ): Int {
       return if (selectedUnit == "in") {
@@ -135,7 +135,7 @@ object TankSizeBottomSheet {
       }.coerceAtLeast(1)
     }
 
-    renderUnit()
+    renderUnitOnly()
     fillInitialInputs()
 
     contentBinding.unitRow.setOnClickListener {
@@ -146,9 +146,9 @@ object TankSizeBottomSheet {
       }
 
       // Önemli:
-      // Burada input değerlerini çevirmiyoruz.
-      // Sadece unit label değişiyor.
-      renderUnit()
+      // Unit değişince input değerleri değişmeyecek.
+      // Sadece unit yazısı değişecek.
+      renderUnitOnly()
     }
 
     SettingsContentBottomSheet.show(
@@ -166,9 +166,9 @@ object TankSizeBottomSheet {
         val values = readInputValues() ?: return@setOnClickListener
 
         val result = TankSizeBottomSheetResult(
-          widthCm = toCm(values.first),
-          lengthCm = toCm(values.second),
-          heightCm = toCm(values.third),
+          widthCm = convertInputValueToCm(values.first),
+          lengthCm = convertInputValueToCm(values.second),
+          heightCm = convertInputValueToCm(values.third),
           sizeUnit = selectedUnit
         )
 
