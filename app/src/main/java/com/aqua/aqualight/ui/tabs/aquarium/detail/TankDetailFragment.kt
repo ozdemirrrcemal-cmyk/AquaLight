@@ -363,13 +363,11 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
                 activateTab(binding.tabTankLife)
                 moveTabUnderline(binding.tabTankLife)
 
-                binding.tankLifeSection.isVisible = true
+                binding.contentScrollView.isVisible = false
+                binding.tankLifeFragmentContainer.isVisible = true
                 binding.tvEmptyTab.isVisible = false
 
-                currentTank?.let {
-                    tank ->
-                    renderLivestockSection(tank)
-                }
+                showTankLifeFragmentIfNeeded()
             }
         }
     }
@@ -445,6 +443,30 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
             TAG_PLANTS_FRAGMENT
         ) as? TankDetailPlantsFragment
     }
+    
+    private fun showTankLifeFragmentIfNeeded() {
+    binding.tankLifeFragmentContainer.isVisible = true
+
+    val existingFragment = getTankLifeFragment()
+
+    if (existingFragment != null) {
+        return
+    }
+
+    childFragmentManager.commit {
+        replace(
+            R.id.tankLifeFragmentContainer,
+            TankDetailLifeFragment.newInstance(tankId),
+            TAG_TANK_LIFE_FRAGMENT
+        )
+    }
+}
+
+private fun getTankLifeFragment(): TankDetailLifeFragment? {
+    return childFragmentManager.findFragmentByTag(
+        TAG_TANK_LIFE_FRAGMENT
+    ) as? TankDetailLifeFragment
+}
 
     private fun renderTankSection(
         tank: SavedAquariumTank
@@ -870,7 +892,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         return card
     }
 
-    private fun openLivestockFormFlow(
+    fun openLivestockFormFlow(
         livestock: SavedAquariumLivestock? = null
     ) {
         binding.lifeFlowContainer.isVisible = true
@@ -1017,6 +1039,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.devicesFragmentContainer.isVisible = false
         binding.activityFragmentContainer.isVisible = false
         binding.plantsFragmentContainer.isVisible = false
+        binding.tankLifeFragmentContainer.isVisible = false
 
         binding.tankSection.isVisible = false
         binding.tankLifeSection.isVisible = false
@@ -1028,6 +1051,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.devicesFragmentContainer.isVisible = false
         binding.activityFragmentContainer.isVisible = false
         binding.plantsFragmentContainer.isVisible = false
+        binding.tankLifeFragmentContainer.isVisible = false
 
         binding.tankSection.isVisible = false
         binding.tankLifeSection.isVisible = false
@@ -1132,6 +1156,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         private const val TAG_ACTIVITY_FRAGMENT = "TankDetailActivityFragment"
 
         private const val TAG_PLANTS_FRAGMENT = "TankDetailPlantsFragment"
+        
+        private const val TAG_TANK_LIFE_FRAGMENT = "TankDetailLifeFragment"
 
         const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
         const val CARE_PROFILE_ACTION_PLANTS = "plants"
