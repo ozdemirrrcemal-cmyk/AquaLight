@@ -932,29 +932,22 @@ private fun setupClickListeners() {
         }
     }
     
-    private fun showActivityFragmentIfNeeded() {
-  binding.activityFragmentContainer.isVisible = true
+private fun showActivityFragmentIfNeeded() {
+    binding.activityFragmentContainer.isVisible = true
 
-  // Eski Activity view'larını şimdilik saklıyoruz.
-  // Kodları daha sonra güvenli şekilde sileceğiz.
-  binding.activitySummaryGrid.isVisible = false
-  binding.tvTimelineTitle.isVisible = false
-  binding.tvTimelineEmpty.isVisible = false
-  binding.activityTimelineContainer.isVisible = false
+    val existingFragment = getActivityFragment()
 
-  val existingFragment = getActivityFragment()
+    if (existingFragment != null) {
+        return
+    }
 
-  if (existingFragment != null) {
-    return
-  }
-
-  childFragmentManager.commit {
-    replace(
-      R.id.activityFragmentContainer,
-      TankDetailActivityFragment.newInstance(tankId),
-      TAG_ACTIVITY_FRAGMENT
-    )
-  }
+    childFragmentManager.commit {
+        replace(
+            R.id.activityFragmentContainer,
+            TankDetailActivityFragment.newInstance(tankId),
+            TAG_ACTIVITY_FRAGMENT
+        )
+    }
 }
 
 private fun getActivityFragment(): TankDetailActivityFragment? {
