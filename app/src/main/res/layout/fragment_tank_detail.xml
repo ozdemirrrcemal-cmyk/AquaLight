@@ -241,17 +241,24 @@
 
           <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAddDevice"
-            android:layout_width="95dp"
-            android:layout_height="36dp"
+            android:layout_width="78dp"
+            android:layout_height="34dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
             android:insetTop="0dp"
             android:insetBottom="0dp"
+            android:paddingStart="10dp"
+            android:paddingTop="0dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="0dp"
             android:text="+ Add"
             android:textAllCaps="false"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold"
+            android:contentDescription="@string/devices_scan_button_desc"
             app:backgroundTint="#1C3252"
-            app:cornerRadius="21dp" />
+            app:cornerRadius="17dp" />
 
         </LinearLayout>
 
@@ -963,17 +970,24 @@
 
           <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAddLife"
-            android:layout_width="100dp"
-            android:layout_height="42dp"
+            android:layout_width="78dp"
+            android:layout_height="34dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
             android:insetTop="0dp"
             android:insetBottom="0dp"
+            android:paddingStart="10dp"
+            android:paddingTop="0dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="0dp"
             android:text="+ Add"
             android:textAllCaps="false"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold"
+            android:contentDescription="@string/devices_scan_button_desc"
             app:backgroundTint="#1C3252"
-            app:cornerRadius="21dp" />
+            app:cornerRadius="17dp" />
 
         </LinearLayout>
 
