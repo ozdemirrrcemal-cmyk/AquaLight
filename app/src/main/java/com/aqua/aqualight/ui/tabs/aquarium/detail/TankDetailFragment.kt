@@ -1114,7 +1114,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.devicesFragmentContainer.isVisible = false
         binding.activityFragmentContainer.isVisible = false
 
-        binding.devicesSection.isVisible = false
         binding.tankSection.isVisible = false
         binding.plantsSection.isVisible = false
         binding.tankLifeSection.isVisible = false
@@ -1126,7 +1125,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.devicesFragmentContainer.isVisible = false
         binding.activityFragmentContainer.isVisible = false
 
-        binding.devicesSection.isVisible = false
         binding.tankSection.isVisible = false
         binding.plantsSection.isVisible = false
         binding.tankLifeSection.isVisible = false
