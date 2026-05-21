@@ -456,8 +456,7 @@
                 android:maxLines="1"
                 android:text="--"
                 android:textColor="#F2C94C"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                android:textSize="10.6sp" />
 
               <TextView
                 android:id="@+id/tvNextCareValue"
@@ -470,9 +469,7 @@
                 android:maxLines="1"
                 android:text="--"
                 android:textColor="#8FA4BE"
-                android:textSize="9.8sp"
-                android:textStyle="bold" />
-
+                android:textSize="10.4sp" />
             </LinearLayout>
           </com.google.android.material.card.MaterialCardView>
 

@@ -419,14 +419,40 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     if (state.nextCareTask == null) {
       binding.tvNextCareTaskTitle.text = "--"
       binding.tvNextCareValue.text = "No upcoming care"
+      binding.tvNextCareValue.setTextColor(
+        Color.parseColor("#8FA4BE")
+      )
     } else {
       binding.tvNextCareTaskTitle.text = state.nextCareTask.title
       binding.tvNextCareValue.text = state.nextCareText
+      binding.tvNextCareValue.setTextColor(
+        getNextCareStatusColor(state.nextCareText)
+      )
     }
 
     renderActivityTimeline(
       tasks = state.completedTasks
     )
+  }
+
+  private fun getNextCareStatusColor(
+    statusText: String
+  ): Int {
+    return when (statusText) {
+      "Overdue" -> {
+        Color.parseColor("#D85C5C")
+      }
+
+      "Today" -> {
+        Color.parseColor("#F2C94C")
+      }
+
+      "Tomorrow" -> {
+        Color.parseColor("#5FD6B4")
+      } else -> {
+        Color.parseColor("#8FA4BE")
+      }
+    }
   }
 
   private fun renderActivityTimeline(
