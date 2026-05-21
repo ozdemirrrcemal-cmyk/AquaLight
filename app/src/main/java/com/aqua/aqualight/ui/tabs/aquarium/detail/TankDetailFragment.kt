@@ -824,42 +824,39 @@ private fun getTankLifeFragment(): TankDetailLifeFragment? {
     }
 
     private fun resetTabs() {
-        val inactiveColor = Color.parseColor("#8FA4BE")
+    val inactiveColor = Color.parseColor("#8FA4BE")
 
-        listOf(
-            binding.tabDevices,
-            binding.tabActivity,
-            binding.tabTank,
-            binding.tabPlants,
-            binding.tabTankLife
-        ).forEach {
-            tab ->
-            tab.setTextColor(inactiveColor)
-            tab.setTypeface(null, Typeface.NORMAL)
-        }
-
-        binding.contentScrollView.isVisible = true
-        binding.devicesFragmentContainer.isVisible = false
-        binding.activityFragmentContainer.isVisible = false
-        binding.plantsFragmentContainer.isVisible = false
-        binding.tankLifeFragmentContainer.isVisible = false
-
-        binding.tankSection.isVisible = false
-        binding.tankLifeSection.isVisible = false
-        binding.tvEmptyTab.isVisible = false
+    listOf(
+        binding.tabDevices,
+        binding.tabActivity,
+        binding.tabTank,
+        binding.tabPlants,
+        binding.tabTankLife
+    ).forEach { tab ->
+        tab.setTextColor(inactiveColor)
+        tab.setTypeface(null, Typeface.NORMAL)
     }
 
-    private fun showEmptySection() {
-        binding.contentScrollView.isVisible = true
-        binding.devicesFragmentContainer.isVisible = false
-        binding.activityFragmentContainer.isVisible = false
-        binding.plantsFragmentContainer.isVisible = false
-        binding.tankLifeFragmentContainer.isVisible = false
+    binding.contentScrollView.isVisible = true
+    binding.devicesFragmentContainer.isVisible = false
+    binding.activityFragmentContainer.isVisible = false
+    binding.plantsFragmentContainer.isVisible = false
+    binding.tankLifeFragmentContainer.isVisible = false
 
-        binding.tankSection.isVisible = false
-        binding.tankLifeSection.isVisible = false
-        binding.tvEmptyTab.isVisible = true
-    }
+    binding.tankSection.isVisible = false
+    binding.tvEmptyTab.isVisible = false
+}
+
+private fun showEmptySection() {
+    binding.contentScrollView.isVisible = true
+    binding.devicesFragmentContainer.isVisible = false
+    binding.activityFragmentContainer.isVisible = false
+    binding.plantsFragmentContainer.isVisible = false
+    binding.tankLifeFragmentContainer.isVisible = false
+
+    binding.tankSection.isVisible = false
+    binding.tvEmptyTab.isVisible = true
+}
 
     private fun Int.dp(): Int {
         return (this * resources.displayMetrics.density).toInt()
