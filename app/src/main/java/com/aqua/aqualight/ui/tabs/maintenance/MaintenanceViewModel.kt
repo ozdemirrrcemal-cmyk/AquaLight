@@ -36,6 +36,11 @@ data class TankActivityUiState(
   val completedTasks: List<CareTaskUi> = emptyList()
 )
 
+data class TankCareSummaryUi(
+  val lastTrimText: String = "--",
+  val lastWaterChangeText: String = "--"
+)
+
 class MaintenanceViewModel(
   application: Application
 ) : AndroidViewModel(application) {
@@ -54,6 +59,26 @@ class MaintenanceViewModel(
   val tanks: StateFlow<List<SavedAquariumTank>> = tanksFlow
 
   val selectedTab: StateFlow<MaintenanceTab> = selectedTabFlow
+
+  val tankCareSummaryItems: StateFlow<Map<Long, TankCareSummaryUi>> =
+  combine(
+    careTaskDataStoreManager.tasksFlow,
+    tanksFlow
+  ) {
+    tasks, tanks ->
+
+    tanks.associate {
+      tank ->
+      tank.id to buildTankCareSummary(
+        tankId = tank.id,
+        tasks = tasks
+      )
+    }
+  }.stateIn(
+    scope = viewModelScope,
+    started = SharingStarted.WhileSubscribed(5_000),
+    initialValue = emptyMap()
+  )
 
   val taskItems: StateFlow<List<CareTaskUi>> =
   combine(
@@ -389,6 +414,32 @@ class MaintenanceViewModel(
         }
       }
     }
+  }
+
+  private fun buildTankCareSummary(
+    tankId: Long,
+    tasks: List<CareTask>
+  ): TankCareSummaryUi {
+    val completedTasks = tasks.filter {
+      task ->
+      task.tankId == tankId &&
+      task.status == CareTaskStatus.COMPLETED
+    }
+
+    return TankCareSummaryUi(
+      lastTrimText = getLastCompletedTaskText(
+        tasks = completedTasks,
+        types = setOf(
+          CareTaskType.PLANT_TRIM
+        )
+      ),
+      lastWaterChangeText = getLastCompletedTaskText(
+        tasks = completedTasks,
+        types = setOf(
+          CareTaskType.WATER_CHANGE
+        )
+      )
+    )
   }
 
   private fun CareTask.toCareTaskUi(
