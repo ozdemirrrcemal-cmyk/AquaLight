@@ -362,13 +362,11 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
                 activateTab(binding.tabPlants)
                 moveTabUnderline(binding.tabPlants)
 
-                binding.plantsSection.isVisible = true
+                binding.contentScrollView.isVisible = false
+                binding.plantsFragmentContainer.isVisible = true
                 binding.tvEmptyTab.isVisible = false
 
-                currentTank?.let {
-                    tank ->
-                    renderPlantsSection(tank)
-                }
+                showPlantsFragmentIfNeeded()
             }
 
             TankDetailTab.TANK_LIFE -> {
@@ -432,6 +430,30 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         return childFragmentManager.findFragmentByTag(
             TAG_ACTIVITY_FRAGMENT
         ) as? TankDetailActivityFragment
+    }
+
+    private fun showPlantsFragmentIfNeeded() {
+        binding.plantsFragmentContainer.isVisible = true
+
+        val existingFragment = getPlantsFragment()
+
+        if (existingFragment != null) {
+            return
+        }
+
+        childFragmentManager.commit {
+            replace(
+                R.id.plantsFragmentContainer,
+                TankDetailPlantsFragment.newInstance(tankId),
+                TAG_PLANTS_FRAGMENT
+            )
+        }
+    }
+
+    private fun getPlantsFragment(): TankDetailPlantsFragment? {
+        return childFragmentManager.findFragmentByTag(
+            TAG_PLANTS_FRAGMENT
+        ) as? TankDetailPlantsFragment
     }
 
     private fun renderTankSection(
@@ -1113,6 +1135,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.contentScrollView.isVisible = true
         binding.devicesFragmentContainer.isVisible = false
         binding.activityFragmentContainer.isVisible = false
+        binding.plantsFragmentContainer.isVisible = false
 
         binding.tankSection.isVisible = false
         binding.plantsSection.isVisible = false
@@ -1124,6 +1147,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.contentScrollView.isVisible = true
         binding.devicesFragmentContainer.isVisible = false
         binding.activityFragmentContainer.isVisible = false
+        binding.plantsFragmentContainer.isVisible = false
 
         binding.tankSection.isVisible = false
         binding.plantsSection.isVisible = false
@@ -1227,6 +1251,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         private const val TAG_DEVICES_FRAGMENT = "TankDetailDevicesFragment"
 
         private const val TAG_ACTIVITY_FRAGMENT = "TankDetailActivityFragment"
+        
+        private const val TAG_PLANTS_FRAGMENT = "TankDetailPlantsFragment"
 
         const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
         const val CARE_PROFILE_ACTION_PLANTS = "plants"
