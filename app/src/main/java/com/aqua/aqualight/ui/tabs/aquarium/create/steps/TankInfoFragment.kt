@@ -21,6 +21,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
 
 class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment {
 
@@ -114,143 +115,30 @@ class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment
     }
 
     private fun showSetupDateSheet() {
-        val contentBinding = ContentSheetSetupDateBinding.inflate(
-            layoutInflater
-        )
+    val currentYear = Calendar.getInstance().get(
+      Calendar.YEAR
+    )
 
-        val calendar = Calendar.getInstance().apply {
-            viewModel.tankDraft.setupDateMillis?.let {
-                timeInMillis = it
-            }
-        }
+     SetupDateBottomSheet.show(
+    fragment = this,
+    currentMillis = viewModel.tankDraft.setupDateMillis,
+    minYear = 2000,
+    maxYear = currentYear + 10,
+    monthLocale = Locale.ENGLISH,
+    onSave = {
+      selectedMillis,
+      dismiss ->
 
-        val monthNames = arrayOf(
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December"
-        )
+      viewModel.updateSetupDate(
+        selectedMillis
+      )
 
-        contentBinding.dayPicker.apply {
-            wrapSelectorWheel = false
-            minValue = 1
-            maxValue = 31
-            value = calendar.get(Calendar.DAY_OF_MONTH)
-        }
+      renderDetails()
 
-        contentBinding.monthPicker.apply {
-            wrapSelectorWheel = false
-            minValue = 0
-            maxValue = 11
-            displayedValues = monthNames
-            value = calendar.get(Calendar.MONTH)
-        }
-
-        contentBinding.yearPicker.apply {
-            wrapSelectorWheel = false
-
-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-
-            minValue = 2000
-            maxValue = currentYear + 10
-            value = calendar.get(Calendar.YEAR)
-        }
-
-        fun updateDayMax() {
-            val tempCalendar = Calendar.getInstance().apply {
-                set(
-                    Calendar.YEAR,
-                    contentBinding.yearPicker.value
-                )
-                set(
-                    Calendar.MONTH,
-                    contentBinding.monthPicker.value
-                )
-                set(
-                    Calendar.DAY_OF_MONTH,
-                    1
-                )
-            }
-
-            val maxDay = tempCalendar.getActualMaximum(
-                Calendar.DAY_OF_MONTH
-            )
-
-            contentBinding.dayPicker.maxValue = maxDay
-
-            if (contentBinding.dayPicker.value > maxDay) {
-                contentBinding.dayPicker.value = maxDay
-            }
-        }
-
-        contentBinding.monthPicker.setOnValueChangedListener { _, _, _ ->
-            updateDayMax()
-        }
-
-        contentBinding.yearPicker.setOnValueChangedListener { _, _, _ ->
-            updateDayMax()
-        }
-
-        updateDayMax()
-
-        showSettingsBottomSheet(
-            title = "Setup Date",
-            contentView = contentBinding.root
-        ) { dialog ->
-
-            contentBinding.btnCancel.setOnClickListener {
-                dialog.dismiss()
-            }
-
-            contentBinding.btnSave.setOnClickListener {
-                val selectedCalendar = Calendar.getInstance().apply {
-                    set(
-                        Calendar.YEAR,
-                        contentBinding.yearPicker.value
-                    )
-                    set(
-                        Calendar.MONTH,
-                        contentBinding.monthPicker.value
-                    )
-                    set(
-                        Calendar.DAY_OF_MONTH,
-                        contentBinding.dayPicker.value
-                    )
-                    set(
-                        Calendar.HOUR_OF_DAY,
-                        0
-                    )
-                    set(
-                        Calendar.MINUTE,
-                        0
-                    )
-                    set(
-                        Calendar.SECOND,
-                        0
-                    )
-                    set(
-                        Calendar.MILLISECOND,
-                        0
-                    )
-                }
-
-                viewModel.updateSetupDate(
-                    selectedCalendar.timeInMillis
-                )
-
-                renderDetails()
-                dialog.dismiss()
-            }
-        }
+      dismiss()
     }
+  )
+}
 
     private fun showSizeSheet() {
         val contentBinding = ContentSheetTankSizeBinding.inflate(
