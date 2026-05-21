@@ -540,7 +540,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
           onClick = {
             showChangeActivityDatePicker(task)
           }
-        )
+        ),
         BottomSheetAction(
           text = "Delete",
           style = BottomSheetActionStyle.DANGER,
