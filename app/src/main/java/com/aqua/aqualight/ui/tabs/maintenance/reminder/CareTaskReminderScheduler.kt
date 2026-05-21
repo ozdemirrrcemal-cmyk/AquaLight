@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 object CareTaskReminderScheduler {
 
   const val ACTION_CARE_TASK_REMINDER =
-    "com.aqua.aqualight.action.CARE_TASK_REMINDER"
+  "com.aqua.aqualight.action.CARE_TASK_REMINDER"
 
   const val EXTRA_TASK_ID = "extra_task_id"
 
@@ -59,7 +59,7 @@ object CareTaskReminderScheduler {
     val intervalDays = task.missedReminderDays.coerceAtLeast(1)
 
     val triggerAtMillis = System.currentTimeMillis() +
-      TimeUnit.DAYS.toMillis(intervalDays.toLong())
+    TimeUnit.DAYS.toMillis(intervalDays.toLong())
 
     scheduleAt(
       context = context,
@@ -104,6 +104,8 @@ object CareTaskReminderScheduler {
       taskId = taskId
     )
 
+    alarmManager.cancel(pendingIntent)
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       alarmManager.setAndAllowWhileIdle(
         AlarmManager.RTC_WAKEUP,
@@ -139,7 +141,7 @@ object CareTaskReminderScheduler {
       getRequestCode(taskId),
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT or
-        PendingIntent.FLAG_IMMUTABLE
+      PendingIntent.FLAG_IMMUTABLE
     )
   }
 

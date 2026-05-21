@@ -301,6 +301,8 @@ class CareTaskDataStoreManager private constructor(
 
     context.careTasksDataStore.updateData {
       currentStore ->
+      tasksToSchedule.clear()
+
       val now = System.currentTimeMillis()
       val updatedTasks = currentStore.tasksList.toMutableList()
 
@@ -333,11 +335,16 @@ class CareTaskDataStoreManager private constructor(
             title = generatedTask.titleTr,
             description = generatedTask.messageTr,
             type = generatedTask.taskType.toCareTaskType(),
+            dueAtMillis = generatedTask.dueAtMillis,
+            reminderEnabled = true,
             waterChangePercent = generatedTask.waterChangePercent,
             note = "",
             updatedAtMillis = now
           )
+
           updatedTasks[existingExactIndex] = updatedTask.toStoredCareTask()
+
+          tasksToSchedule.add(updatedTask)
 
           return@forEach
         }
@@ -347,7 +354,7 @@ class CareTaskDataStoreManager private constructor(
           ruleId = generatedTask.ruleId
         )
 
-        val hasPendingSameRule = updatedTasks.any {
+        val existingSameRuleIndex = updatedTasks.indexOfFirst {
           storedTask ->
           storedTask.tankId == generatedTask.tankId &&
           storedTask.source == CareTaskSource.AUTOMATIC.name &&
@@ -355,7 +362,11 @@ class CareTaskDataStoreManager private constructor(
           storedTask.generatedRuleKey.startsWith(rulePrefix)
         }
 
-        if (hasPendingSameRule) {
+        if (existingSameRuleIndex >= 0) {
+          val existingSameRuleTask = updatedTasks[existingSameRuleIndex].toCareTask()
+
+          tasksToSchedule.add(existingSameRuleTask)
+
           return@forEach
         }
 
@@ -371,9 +382,7 @@ class CareTaskDataStoreManager private constructor(
           newTask.toStoredCareTask()
         )
 
-        if (newTask.dueAtMillis > now) {
-          tasksToSchedule.add(newTask)
-        }
+        tasksToSchedule.add(newTask)
       }
 
       currentStore.toBuilder()
@@ -382,7 +391,12 @@ class CareTaskDataStoreManager private constructor(
       .build()
     }
 
-    tasksToSchedule.forEach {
+    tasksToSchedule
+    .distinctBy {
+      task ->
+      task.id
+    }
+    .forEach {
       task ->
       CareTaskReminderScheduler.schedule(
         context = context,
