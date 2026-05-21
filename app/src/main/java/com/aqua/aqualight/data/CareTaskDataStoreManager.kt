@@ -257,9 +257,13 @@ class CareTaskDataStoreManager private constructor(
         .addTasks(task.toStoredCareTask())
         .build()
       } else {
+        val existingTask = existingPendingAutoTask.toCareTask()
+
         val updatedTask = task.copy(
-          id = existingPendingAutoTask.id,
-          createdAtMillis = existingPendingAutoTask.createdAtMillis,
+          id = existingTask.id,
+          dueAtMillis = existingTask.dueAtMillis,
+          completedAtMillis = existingTask.completedAtMillis,
+          createdAtMillis = existingTask.createdAtMillis,
           updatedAtMillis = System.currentTimeMillis()
         )
 
@@ -267,7 +271,7 @@ class CareTaskDataStoreManager private constructor(
 
         val updatedTasks = currentTasks.map {
           storedTask ->
-          if (storedTask.id == existingPendingAutoTask.id) {
+          if (storedTask.id == existingTask.id) {
             updatedTask.toStoredCareTask()
           } else {
             storedTask
@@ -335,7 +339,6 @@ class CareTaskDataStoreManager private constructor(
             title = generatedTask.titleTr,
             description = generatedTask.messageTr,
             type = generatedTask.taskType.toCareTaskType(),
-            dueAtMillis = generatedTask.dueAtMillis,
             reminderEnabled = true,
             waterChangePercent = generatedTask.waterChangePercent,
             note = "",
@@ -363,7 +366,8 @@ class CareTaskDataStoreManager private constructor(
         }
 
         if (existingSameRuleIndex >= 0) {
-          val existingSameRuleTask = updatedTasks[existingSameRuleIndex].toCareTask()
+          val existingSameRuleTask =
+          updatedTasks[existingSameRuleIndex].toCareTask()
 
           tasksToSchedule.add(existingSameRuleTask)
 
@@ -382,7 +386,7 @@ class CareTaskDataStoreManager private constructor(
           newTask.toStoredCareTask()
         )
 
-          tasksToSchedule.add(newTask)
+        tasksToSchedule.add(newTask)
       }
 
       currentStore.toBuilder()
