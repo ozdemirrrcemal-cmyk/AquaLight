@@ -456,7 +456,8 @@
                 android:maxLines="1"
                 android:text="--"
                 android:textColor="#F2C94C"
-                android:textSize="10.6sp" />
+                android:textSize="10.6sp"
+                android:textStyle="bold" />
 
               <TextView
                 android:id="@+id/tvNextCareValue"

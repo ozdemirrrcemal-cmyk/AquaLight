@@ -60,6 +60,10 @@ import com.aqua.aqualight.ui.common.timeline.TimelineAxisView
 import com.aqua.aqualight.ui.common.timeline.TimelineDayResolver
 import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
+import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
@@ -501,6 +505,85 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
   }
 
+  private fun showActivityTaskActionBottomSheet(
+    task: CareTaskUi
+  ) {
+    val completedAt = task.completedAtMillis ?: task.dueAtMillis
+
+    GlobalActionBottomSheet.show(
+      context = requireContext(),
+      title = task.title,
+      message = "Completed activity record",
+      details = listOf(
+        BottomSheetDetailRow(
+          label = "Completed at",
+          value = formatActivityDateTime(completedAt)
+        ),
+        BottomSheetDetailRow(
+          label = "Source",
+          value = task.sourceLabel.ifBlank {
+            "-"
+          }
+        ),
+        BottomSheetDetailRow(
+          label = "Status",
+          value = "Completed"
+        )
+      ),
+      actions = listOf(
+        BottomSheetAction(
+          text = "Change date",
+          style = BottomSheetActionStyle.NEUTRAL,
+          onClick = {
+            showChangeActivityDateComingSoon()
+          }
+        ),
+        BottomSheetAction(
+          text = "Delete",
+          style = BottomSheetActionStyle.DANGER,
+          onClick = {
+            showDeleteActivityTaskDialog(task)
+          }
+        )
+      )
+    )
+  }
+
+  private fun showDeleteActivityTaskDialog(
+    task: CareTaskUi
+  ) {
+    DialogManager.showConfirmDialog(
+      context = requireContext(),
+      type = DialogType.WARNING,
+      title = "Delete Activity?",
+      message = "\"${task.title}\" will be removed from this aquarium activity history.",
+      confirmTextResId = R.string.confirm,
+      cancelTextResId = R.string.cancel,
+      onConfirm = {
+        maintenanceViewModel.deleteTask(
+          taskId = task.id
+        )
+      }
+    )
+  }
+
+  private fun showChangeActivityDateComingSoon() {
+    Toast.makeText(
+      requireContext(),
+      "Change date will be added next.",
+      Toast.LENGTH_SHORT
+    ).show()
+  }
+
+  private fun formatActivityDateTime(
+    millis: Long
+  ): String {
+    return SimpleDateFormat(
+      "dd.MM.yyyy HH:mm",
+      Locale.getDefault()
+    ).format(Date(millis))
+  }
+
   private fun createActivityDateHeader(
     millis: Long
   ): View {
@@ -597,6 +680,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       setCardBackgroundColor(Color.parseColor("#10233A"))
       cardElevation = 0f
       useCompatPadding = false
+      isClickable = true
+      isFocusable = true
 
       val params = LinearLayout.LayoutParams(
         0,
@@ -605,8 +690,16 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       )
       params.bottomMargin = 12.dp()
       layoutParams = params
-    }
 
+      setOnClickListener {
+        showActivityTaskActionBottomSheet(task)
+      }
+
+      setOnLongClickListener {
+        showActivityTaskActionBottomSheet(task)
+        true
+      }
+    }
     val row = LinearLayout(requireContext()).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
