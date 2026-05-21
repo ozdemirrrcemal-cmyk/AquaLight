@@ -22,6 +22,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
 
 class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment {
 
@@ -140,226 +141,36 @@ class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment
   )
 }
 
-    private fun showSizeSheet() {
-        val contentBinding = ContentSheetTankSizeBinding.inflate(
-            layoutInflater
-        )
+private fun showSizeSheet() {
+  val draft = viewModel.tankDraft
 
-        val draft = viewModel.tankDraft
+  TankSizeBottomSheet.show(
+    fragment = this,
+    currentWidthCm = draft.widthCm,
+    currentLengthCm = draft.lengthCm,
+    currentHeightCm = draft.heightCm,
+    currentUnit = draft.sizeUnit,
+    title = "Tank Size",
+    onInvalidInput = {
+      // Create ekranında snackbar istemiyorsak boş kalabilir.
+    },
+    onSave = {
+      result,
+      dismiss ->
 
-        var selectedUnit = draft.sizeUnit.ifBlank {
-            "cm"
-        }.lowercase(Locale.US)
+      viewModel.updateTankSize(
+        widthCm = result.widthCm,
+        lengthCm = result.lengthCm,
+        heightCm = result.heightCm,
+        sizeUnit = result.sizeUnit
+      )
 
-        if (selectedUnit != "cm" && selectedUnit != "in") {
-            selectedUnit = "cm"
-        }
+      renderDetails()
 
-        fun unitText(): String {
-            return if (selectedUnit == "in") {
-                "inches"
-            } else {
-                "centimeters"
-            }
-        }
-
-        fun formatInputValueFromCm(
-            cmValue: Int
-        ): String {
-            val value = if (selectedUnit == "in") {
-                cmValue / 2.54
-            } else {
-                cmValue.toDouble()
-            }
-
-            return sizeFormatter.format(value)
-        }
-
-        fun renderUnit() {
-            contentBinding.tvUnitValue.text = unitText()
-        }
-
-        fun fillInputsFromDraft() {
-            contentBinding.inputWidth.setText(
-                formatInputValueFromCm(draft.widthCm)
-            )
-
-            contentBinding.inputLength.setText(
-                formatInputValueFromCm(draft.lengthCm)
-            )
-
-            contentBinding.inputHeight.setText(
-                formatInputValueFromCm(draft.heightCm)
-            )
-        }
-
-        fun readInputValues(): Triple<Double, Double, Double>? {
-            val width = contentBinding.inputWidth.text
-                .toString()
-                .trim()
-                .toDoubleOrNull()
-
-            val length = contentBinding.inputLength.text
-                .toString()
-                .trim()
-                .toDoubleOrNull()
-
-            val height = contentBinding.inputHeight.text
-                .toString()
-                .trim()
-                .toDoubleOrNull()
-
-            var hasError = false
-
-            if (width == null || width <= 0.0) {
-                contentBinding.inputWidth.error = "Required"
-                hasError = true
-            }
-
-            if (length == null || length <= 0.0) {
-                contentBinding.inputLength.error = "Required"
-                hasError = true
-            }
-
-            if (height == null || height <= 0.0) {
-                contentBinding.inputHeight.error = "Required"
-                hasError = true
-            }
-
-            if (hasError) {
-                return null
-            }
-
-            return Triple(
-                width!!,
-                length!!,
-                height!!
-            )
-        }
-
-        fun toCm(
-            value: Double,
-            unit: String
-        ): Double {
-            return if (unit == "in") {
-                value * 2.54
-            } else {
-                value
-            }
-        }
-
-        fun setInputsFromCmValues(
-            widthCm: Double,
-            lengthCm: Double,
-            heightCm: Double
-        ) {
-            val widthValue = if (selectedUnit == "in") {
-                widthCm / 2.54
-            } else {
-                widthCm
-            }
-
-            val lengthValue = if (selectedUnit == "in") {
-                lengthCm / 2.54
-            } else {
-                lengthCm
-            }
-
-            val heightValue = if (selectedUnit == "in") {
-                heightCm / 2.54
-            } else {
-                heightCm
-            }
-
-            contentBinding.inputWidth.setText(
-                sizeFormatter.format(widthValue)
-            )
-
-            contentBinding.inputLength.setText(
-                sizeFormatter.format(lengthValue)
-            )
-
-            contentBinding.inputHeight.setText(
-                sizeFormatter.format(heightValue)
-            )
-        }
-
-        renderUnit()
-        fillInputsFromDraft()
-
-        contentBinding.unitRow.setOnClickListener {
-            val oldUnit = selectedUnit
-            val values = readInputValues() ?: return@setOnClickListener
-
-            val widthCm = toCm(
-                value = values.first,
-                unit = oldUnit
-            )
-
-            val lengthCm = toCm(
-                value = values.second,
-                unit = oldUnit
-            )
-
-            val heightCm = toCm(
-                value = values.third,
-                unit = oldUnit
-            )
-
-            selectedUnit = if (selectedUnit == "in") {
-                "cm"
-            } else {
-                "in"
-            }
-
-            setInputsFromCmValues(
-                widthCm = widthCm,
-                lengthCm = lengthCm,
-                heightCm = heightCm
-            )
-
-            renderUnit()
-        }
-
-        showSettingsBottomSheet(
-            title = "Tank Size",
-            contentView = contentBinding.root
-        ) { dialog ->
-
-            contentBinding.btnCancel.setOnClickListener {
-                dialog.dismiss()
-            }
-
-            contentBinding.btnSave.setOnClickListener {
-                val values = readInputValues() ?: return@setOnClickListener
-
-                val widthCm = toCm(
-                    value = values.first,
-                    unit = selectedUnit
-                ).roundToInt()
-
-                val lengthCm = toCm(
-                    value = values.second,
-                    unit = selectedUnit
-                ).roundToInt()
-
-                val heightCm = toCm(
-                    value = values.third,
-                    unit = selectedUnit
-                ).roundToInt()
-
-                viewModel.updateTankSize(
-                    widthCm = widthCm.coerceAtLeast(1),
-                    lengthCm = lengthCm.coerceAtLeast(1),
-                    heightCm = heightCm.coerceAtLeast(1),
-                    sizeUnit = selectedUnit
-                )
-
-                renderDetails()
-                dialog.dismiss()
-            }
-        }
+      dismiss()
     }
+  )
+}
 
     private fun showTankTypeSheet() {
         TankTypeBottomSheet.show(
