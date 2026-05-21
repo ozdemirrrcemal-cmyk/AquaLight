@@ -105,99 +105,97 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         setupClickListeners()
         setupSystemBackButton()
-        setupCareTaskTypeResultListener()
         observeCareProfileActions()
         observeTank()
         observeTankDevices()
-        observeTankActivity()
         selectTab(selectedTab)
     }
 
-    private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            if (handleLifeFlowBack()) {
-                return@setOnClickListener
-            }
-
-            if (handlePlantFlowBack()) {
-                return@setOnClickListener
-            }
-
-            findNavController().navigateUp()
+private fun setupClickListeners() {
+    binding.btnBack.setOnClickListener {
+        if (handleLifeFlowBack()) {
+            return@setOnClickListener
         }
 
-        binding.btnEdit.setOnClickListener {
-            openTankSettings()
+        if (handlePlantFlowBack()) {
+            return@setOnClickListener
         }
 
-        binding.cardTankValue.setOnClickListener {
-            toggleTankVolumeUnit()
-        }
+        findNavController().navigateUp()
+    }
 
-        binding.cardTankDays.setOnClickListener {
-            openTankSettings()
-        }
+    binding.btnEdit.setOnClickListener {
+        openTankSettings()
+    }
 
-        binding.cardTankSize.setOnClickListener {
-            openTankSettings()
-        }
+    binding.cardTankValue.setOnClickListener {
+        toggleTankVolumeUnit()
+    }
 
-        binding.cardTankType.setOnClickListener {
-            openTankSettings()
-        }
+    binding.cardTankDays.setOnClickListener {
+        openTankSettings()
+    }
 
-        binding.cardTankSetup.setOnClickListener {
-            openTankSettings()
-        }
+    binding.cardTankSize.setOnClickListener {
+        openTankSettings()
+    }
 
-        binding.cardTankStyle.setOnClickListener {
-            openTankSettings()
-        }
+    binding.cardTankType.setOnClickListener {
+        openTankSettings()
+    }
 
-        binding.btnAddDevice.setOnClickListener {
-            showAddDeviceBottomSheet()
-        }
+    binding.cardTankSetup.setOnClickListener {
+        openTankSettings()
+    }
 
-        binding.btnAddPlant.setOnClickListener {
-            openPlantTagFlow()
-        }
+    binding.cardTankStyle.setOnClickListener {
+        openTankSettings()
+    }
 
-        binding.tabDevices.setOnClickListener {
-            selectTab(TankDetailTab.DEVICES)
-        }
+    binding.btnAddDevice.setOnClickListener {
+        showAddDeviceBottomSheet()
+    }
 
-        binding.tabActivity.setOnClickListener {
-            selectTab(TankDetailTab.ACTIVITY)
-        }
+    binding.btnAddPlant.setOnClickListener {
+        openPlantTagFlow()
+    }
 
-        binding.btnAddActivity.setOnClickListener {
-            showActivityFragmentIfNeeded()
+    binding.tabDevices.setOnClickListener {
+        selectTab(TankDetailTab.DEVICES)
+    }
 
-            binding.activityFragmentContainer.post {
-                getActivityFragment()
-                ?.showAddActivitySheet()
-            }
-        }
-        binding.tabTank.setOnClickListener {
-            selectTab(TankDetailTab.TANK)
-        }
+    binding.tabActivity.setOnClickListener {
+        selectTab(TankDetailTab.ACTIVITY)
+    }
 
-        binding.tabPlants.setOnClickListener {
-            selectTab(TankDetailTab.PLANTS)
-        }
+    binding.btnAddActivity.setOnClickListener {
+        showActivityFragmentIfNeeded()
 
-        binding.tabTankLife.setOnClickListener {
-            selectTab(TankDetailTab.TANK_LIFE)
-        }
-
-        binding.btnAddLife.setOnClickListener {
-            openLivestockFormFlow()
-        }
-
-        binding.btnEmptyAddLife.setOnClickListener {
-            openLivestockFormFlow()
+        binding.activityFragmentContainer.post {
+            getActivityFragment()?.showAddActivitySheet()
         }
     }
+
+    binding.tabTank.setOnClickListener {
+        selectTab(TankDetailTab.TANK)
+    }
+
+    binding.tabPlants.setOnClickListener {
+        selectTab(TankDetailTab.PLANTS)
+    }
+
+    binding.tabTankLife.setOnClickListener {
+        selectTab(TankDetailTab.TANK_LIFE)
+    }
+
+    binding.btnAddLife.setOnClickListener {
+        openLivestockFormFlow()
+    }
+
+    binding.btnEmptyAddLife.setOnClickListener {
+        openLivestockFormFlow()
+    }
+}
 
     private fun setupCareTaskTypeResultListener() {
         childFragmentManager.setFragmentResultListener(
