@@ -73,6 +73,7 @@ import kotlin.math.roundToInt
 import java.text.DecimalFormatSymbols
 import com.aqua.aqualight.ui.common.bottomsheet.SettingsContentBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -1597,137 +1598,25 @@ private fun showSetupDateSheet() {
 private fun showStyleSheet() {
   val tank = currentTank ?: return
 
-  val contentBinding = ContentSheetTankStyleBinding.inflate(
-    layoutInflater
-  )
-
-  val currentStyle = tank.tankStyle.ifBlank {
-    "Nature Aquarium"
-  }
-
-  contentBinding.inputStyle.setText(currentStyle)
-
-  val options = listOf(
-    contentBinding.optionNatureAquarium to "Nature Aquarium",
-    contentBinding.optionIwagumi to "Iwagumi",
-    contentBinding.optionDutch to "Dutch",
-    contentBinding.optionJungle to "Jungle",
-    contentBinding.optionBiotope to "Biotope",
-    contentBinding.optionBlackwater to "Blackwater",
-    contentBinding.optionForest to "Forest",
-    contentBinding.optionMountain to "Mountain",
-    contentBinding.optionIsland to "Island"
-  )
-
-  fun renderSelection() {
-    val inputValue = contentBinding.inputStyle.text
-    .toString()
-    .trim()
-
-    options.forEach {
-      option ->
-      val view = option.first
-      val value = option.second
-
-      val selected = value.equals(
-        inputValue,
-        ignoreCase = true
-      )
-
-      view.setTypeface(
-        null,
-        if (selected) Typeface.BOLD else Typeface.NORMAL
-      )
-
-      view.setBackgroundResource(
-        if (selected) {
-          R.drawable.bg_settings_sheet_grid_option_selected
-        } else {
-          R.drawable.bg_settings_sheet_grid_option
-        }
-      )
-    }
-  }
-
-  options.forEach {
-    option ->
-    val view = option.first
-    val value = option.second
-
-    view.setOnClickListener {
-      contentBinding.inputStyle.setText(value)
-      contentBinding.inputStyle.setSelection(
-        contentBinding.inputStyle.text?.length ?: 0
-      )
-      renderSelection()
-    }
-  }
-
-  contentBinding.inputStyle.setOnFocusChangeListener {
-    _, _ ->
-    renderSelection()
-  }
-
-  contentBinding.inputStyle.addTextChangedListener(
-    object : android.text.TextWatcher {
-      override fun beforeTextChanged(
-        s: CharSequence?,
-        start: Int,
-        count: Int,
-        after: Int
-      ) = Unit
-
-      override fun onTextChanged(
-        s: CharSequence?,
-        start: Int,
-        before: Int,
-        count: Int
-      ) {
-        renderSelection()
-      }
-
-      override fun afterTextChanged(
-        s: android.text.Editable?
-      ) = Unit
-    }
-  )
-
-  renderSelection()
-
-  showSettingsBottomSheet(
-    title = "Style",
-    contentView = contentBinding.root
-  ) {
-    dialog ->
-
-    contentBinding.btnCancel.setOnClickListener {
-      dialog.dismiss()
-    }
-
-    contentBinding.btnSave.setOnClickListener {
-      val newStyle = contentBinding.inputStyle.text
-      .toString()
-      .trim()
-
-      if (newStyle.isBlank()) {
-        showSnackBar(
-          message = "Please enter a tank style.",
-          type = BaseActivity.SnackType.WARNING
-        )
-        return@setOnClickListener
-      }
+  TankStyleBottomSheet.show(
+    fragment = this,
+    currentStyle = tank.tankStyle,
+    onSave = {
+      selectedStyle,
+      dismiss ->
 
       viewLifecycleOwner.lifecycleScope.launch {
         aquariumTankViewModel.updateTankStyle(
           tankId = tankId,
-          tankStyle = newStyle
+          tankStyle = selectedStyle
         )
 
-        dialog.dismiss()
+        dismiss()
       }
     }
-  }
+  )
 }
+
 private fun showIdeaSheet() {
   val tank = currentTank ?: return
 
