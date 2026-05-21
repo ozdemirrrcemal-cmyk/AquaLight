@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?> 
- <androidx.constraintlayout.widget.ConstraintLayout
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   android:id="@+id/maintenanceRoot"
@@ -35,17 +35,23 @@
 
     <com.google.android.material.button.MaterialButton
       android:id="@+id/btnAddCareTask"
-      android:layout_width="94dp"
-      android:layout_height="42dp"
+      android:layout_width="78dp"
+      android:layout_height="34dp"
+      android:minWidth="0dp"
+      android:minHeight="0dp"
       android:insetTop="0dp"
       android:insetBottom="0dp"
+      android:paddingStart="10dp"
+      android:paddingTop="0dp"
+      android:paddingEnd="10dp"
+      android:paddingBottom="0dp"
       android:text="+ Add"
       android:textAllCaps="false"
       android:textColor="?attr/colorOnSurface"
-      android:textSize="13sp"
+      android:textSize="12sp"
       android:textStyle="bold"
       app:backgroundTint="#1C3252"
-      app:cornerRadius="21dp"
+      app:cornerRadius="17dp"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintTop_toTopOf="parent" />
 
@@ -262,7 +268,9 @@
       android:layout_height="wrap_content"
       android:orientation="vertical" />
 
-  </ScrollView>  <LinearLayout
+  </ScrollView>
+
+  <LinearLayout
     android:id="@+id/emptyStateContainer"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
@@ -315,26 +323,21 @@
       android:textColor="#8FA4BE"
       android:textSize="13sp" />
 
-  <com.google.android.material.button.MaterialButton
-  android:id="@+id/btnAddCareTask"
-  android:layout_width="78dp"
-  android:layout_height="34dp"
-  android:minWidth="0dp"
-  android:minHeight="0dp"
-  android:insetTop="0dp"
-  android:insetBottom="0dp"
-  android:paddingStart="10dp"
-  android:paddingTop="0dp"
-  android:paddingEnd="10dp"
-  android:paddingBottom="0dp"
-  android:text="+ Add"
-  android:textAllCaps="false"
-  android:textColor="?attr/colorOnSurface"
-  android:textSize="12sp"
-  android:textStyle="bold"
-  app:backgroundTint="#1C3252"
-  app:cornerRadius="17dp"
-  app:layout_constraintEnd_toEndOf="parent"
-  app:layout_constraintTop_toTopOf="parent" />
+    <com.google.android.material.button.MaterialButton
+      android:id="@+id/btnEmptyAddCareTask"
+      android:layout_width="180dp"
+      android:layout_height="46dp"
+      android:layout_marginTop="22dp"
+      android:insetTop="0dp"
+      android:insetBottom="0dp"
+      android:text="+ Add Task"
+      android:textAllCaps="false"
+      android:textColor="@android:color/white"
+      android:textSize="13sp"
+      android:textStyle="bold"
+      app:backgroundTint="#2196F3"
+      app:cornerRadius="23dp" />
 
-  </LinearLayout>  </androidx.constraintlayout.widget.ConstraintLayout>
+  </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
