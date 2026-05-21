@@ -1182,6 +1182,28 @@ private fun showTankNameSheet() {
   }
 }
 
+private fun showTankTypeSheet() {
+  val tank = currentTank ?: return
+
+  TankTypeBottomSheet.show(
+    fragment = this,
+    currentType = tank.tankType,
+    onSave = {
+      selectedType,
+      dismiss ->
+
+      viewLifecycleOwner.lifecycleScope.launch {
+        aquariumTankViewModel.updateTankType(
+          tankId = tankId,
+          tankType = selectedType
+        )
+
+        dismiss()
+      }
+    }
+  )
+}
+
 private fun showTankSizeSheet() {
   val tank = currentTank ?: return
 
