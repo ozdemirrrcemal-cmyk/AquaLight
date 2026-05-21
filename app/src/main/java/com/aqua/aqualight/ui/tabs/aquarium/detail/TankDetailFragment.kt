@@ -65,7 +65,9 @@ import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetDetailRow
 import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import android.app.DatePickerDialog
-import android.app.TimePickerDialog
+import com.aqua.aqualight.base.BaseActivity
+import java.util.Calendar
+import android.app.DatePickerDialog
 import java.util.Calendar
 
 
@@ -214,17 +216,19 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         CareTaskType.valueOf(typeName)
       }.getOrNull() ?: return@setFragmentResultListener
 
-      maintenanceViewModel.addCompletedActivity(
-        tankId = tankId,
-        type = selectedType,
-        completedAtMillis = System.currentTimeMillis()
-      )
+      viewLifecycleOwner.lifecycleScope.launch {
+        try {
+          showGlobalLoading(true)
 
-      Toast.makeText(
-        requireContext(),
-        "Activity added.",
-        Toast.LENGTH_SHORT
-      ).show()
+          maintenanceViewModel.addCompletedActivity(
+            tankId = tankId,
+            type = selectedType,
+            completedAtMillis = System.currentTimeMillis()
+          ).join()
+        } finally {
+          showGlobalLoading(false)
+        }
+      }
     }
   }
 
@@ -345,12 +349,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       }
 
       if (tank == null) {
-        Toast.makeText(
-          requireContext(),
-          "Tank not found.",
-          Toast.LENGTH_SHORT
-        ).show()
-
         findNavController().navigateUp()
         return@observe
       }
@@ -358,7 +356,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       bindTank(tank)
     }
   }
-
 
   private fun bindTank(
     tank: SavedAquariumTank
@@ -584,62 +581,22 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
           dayOfMonth
         )
 
-        showChangeActivityTimePicker(
-          task = task,
-          calendar = calendar
-        )
+        viewLifecycleOwner.lifecycleScope.launch {
+          try {
+            showGlobalLoading(true)
+
+            maintenanceViewModel.updateCompletedTaskDate(
+              taskId = task.id,
+              completedAtMillis = calendar.timeInMillis
+            ).join()
+          } finally {
+            showGlobalLoading(false)
+          }
+        }
       },
       calendar.get(Calendar.YEAR),
       calendar.get(Calendar.MONTH),
       calendar.get(Calendar.DAY_OF_MONTH)
-    ).show()
-  }
-
-  private fun showChangeActivityTimePicker(
-    task: CareTaskUi,
-    calendar: Calendar
-  ) {
-    TimePickerDialog(
-      requireContext(),
-      {
-        _,
-        hourOfDay,
-        minute ->
-
-        calendar.set(
-          Calendar.HOUR_OF_DAY,
-          hourOfDay
-        )
-
-        calendar.set(
-          Calendar.MINUTE,
-          minute
-        )
-
-        calendar.set(
-          Calendar.SECOND,
-          0
-        )
-
-        calendar.set(
-          Calendar.MILLISECOND,
-          0
-        )
-
-        maintenanceViewModel.updateCompletedTaskDate(
-          taskId = task.id,
-          completedAtMillis = calendar.timeInMillis
-        )
-
-        Toast.makeText(
-          requireContext(),
-          "Activity date updated.",
-          Toast.LENGTH_SHORT
-        ).show()
-      },
-      calendar.get(Calendar.HOUR_OF_DAY),
-      calendar.get(Calendar.MINUTE),
-      true
     ).show()
   }
 
@@ -654,9 +611,17 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
       confirmTextResId = R.string.confirm,
       cancelTextResId = R.string.cancel,
       onConfirm = {
-        maintenanceViewModel.deleteTask(
-          taskId = task.id
-        )
+        viewLifecycleOwner.lifecycleScope.launch {
+          try {
+            showGlobalLoading(true)
+
+            maintenanceViewModel.deleteTask(
+              taskId = task.id
+            ).join()
+          } finally {
+            showGlobalLoading(false)
+          }
+        }
       }
     )
   }
@@ -2295,6 +2260,12 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     binding.tvEmptyTab.isVisible = true
     binding.tankLifeSection.isVisible = false
     binding.btnAddActivity.isVisible = false
+  }
+
+  private fun showGlobalLoading(
+    show: Boolean
+  ) {
+    (activity as? BaseActivity)?.showLoading(show)
   }
 
   private fun getLivestockQuantityText(

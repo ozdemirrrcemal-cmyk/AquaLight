@@ -25,6 +25,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Job
 
 data class TankActivityUiState(
   val lastTrimText: String = "--",
@@ -209,8 +210,8 @@ class MaintenanceViewModel(
 
   fun completeTask(
     taskId: Long
-  ) {
-    viewModelScope.launch {
+  ): Job {
+    return viewModelScope.launch {
       careTaskDataStoreManager.completeTask(
         taskId = taskId
       )
@@ -219,8 +220,8 @@ class MaintenanceViewModel(
 
   fun deleteTask(
     taskId: Long
-  ) {
-    viewModelScope.launch {
+  ): Job {
+    return viewModelScope.launch {
       careTaskDataStoreManager.deleteTask(
         taskId = taskId
       )
@@ -230,8 +231,8 @@ class MaintenanceViewModel(
   fun updateCompletedTaskDate(
     taskId: Long,
     completedAtMillis: Long
-  ) {
-    viewModelScope.launch {
+  ): Job {
+    return viewModelScope.launch {
       careTaskDataStoreManager.updateCompletedTaskDate(
         taskId = taskId,
         completedAtMillis = completedAtMillis
@@ -245,8 +246,8 @@ class MaintenanceViewModel(
     completedAtMillis: Long = System.currentTimeMillis(),
     waterChangePercent: Int? = null,
     note: String = ""
-  ) {
-    viewModelScope.launch {
+  ): Job {
+    return viewModelScope.launch {
       val typeUi = CareTaskTypeCatalog.get(type)
 
       careTaskDataStoreManager.addCompletedActivity(
