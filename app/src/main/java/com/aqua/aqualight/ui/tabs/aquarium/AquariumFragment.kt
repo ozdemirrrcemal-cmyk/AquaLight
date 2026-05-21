@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium
 
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
@@ -183,11 +185,37 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
     }
 
     if (isDeleteMode) {
-      binding.btnAdd.setImageResource(R.drawable.ic_delete)
+      binding.btnAdd.text = "Delete"
       binding.btnAdd.contentDescription = "Delete selected aquariums"
+
+      binding.btnAdd.setTextColor(
+        Color.parseColor("#FF8A8A")
+      )
+
+      binding.btnAdd.backgroundTintList = ColorStateList.valueOf(
+        Color.parseColor("#321E2A")
+      )
+
+      binding.btnAdd.strokeWidth = 1.dp()
+      binding.btnAdd.strokeColor = ColorStateList.valueOf(
+        Color.parseColor("#7A3344")
+      )
     } else {
-      binding.btnAdd.setImageResource(R.drawable.ic_add_24)
+      binding.btnAdd.text = "+ Add"
       binding.btnAdd.contentDescription = "Add Aquarium"
+
+      binding.btnAdd.setTextColor(
+        Color.WHITE
+      )
+
+      binding.btnAdd.backgroundTintList = ColorStateList.valueOf(
+        Color.parseColor("#1C3252")
+      )
+
+      binding.btnAdd.strokeWidth = 0
+      binding.btnAdd.strokeColor = ColorStateList.valueOf(
+        Color.TRANSPARENT
+      )
     }
 
     tankAdapter.setDeleteMode(
@@ -275,6 +303,10 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
         baseActivity?.showLoading(false)
       }
     }
+  }
+
+  private fun Int.dp(): Int {
+    return (this * resources.displayMetrics.density).toInt()
   }
 
   override fun onDestroyView() {
