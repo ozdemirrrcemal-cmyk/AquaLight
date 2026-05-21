@@ -34,7 +34,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
-import com.aqua.aqualight.databinding.ContentSheetPhotoSourceBinding
 import com.aqua.aqualight.databinding.ContentSheetSetupDateBinding
 import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
 import com.aqua.aqualight.databinding.ContentSheetTankSizeBinding
@@ -73,6 +72,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -162,6 +162,7 @@ MaterialPickerFragment.MaterialPickerHost {
         userPrefs = UserPreferencesManager.create(requireContext())
 
         setupClickListeners()
+        setupPhotoSourceResultListener()
         setupSystemBackButton()
         setupSwipeBetweenTabs()
         observeTank()
@@ -356,27 +357,34 @@ MaterialPickerFragment.MaterialPickerHost {
     )
 }
 
-private fun showPhotoSourceSheet() {
-    val contentBinding = ContentSheetPhotoSourceBinding.inflate(
-        layoutInflater
-    )
-
-    showSettingsBottomSheet(
-        title = "Aquarium Photo",
-        contentView = contentBinding.root
+private fun setupPhotoSourceResultListener() {
+    childFragmentManager.setFragmentResultListener(
+        PhotoSourceBottomSheet.REQUEST_KEY,
+        viewLifecycleOwner
     ) {
-        dialog ->
+        _, bundle ->
 
-        contentBinding.rowCamera.setOnClickListener {
-            dialog.dismiss()
-            openCamera()
-        }
+        when (bundle.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
+            PhotoSourceBottomSheet.RESULT_CAMERA -> {
+                openCamera()
+            }
 
-        contentBinding.rowGallery.setOnClickListener {
-            dialog.dismiss()
-            openGallery()
+            PhotoSourceBottomSheet.RESULT_GALLERY -> {
+                openGallery()
+            }
         }
     }
+}
+
+private fun showPhotoSourceSheet() {
+    PhotoSourceBottomSheet
+    .newInstance(
+        title = "Aquarium Photo"
+    )
+    .show(
+        childFragmentManager,
+        PhotoSourceBottomSheet.TAG
+    )
 }
 
 private fun openGallery() {

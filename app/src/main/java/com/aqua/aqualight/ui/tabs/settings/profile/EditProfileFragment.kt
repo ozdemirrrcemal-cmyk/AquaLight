@@ -32,7 +32,9 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     private var _binding: FragmentEditProfileBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val userPrefs by lazy {
+        UserPreferencesManager.create(requireContext())
+    }
 
     // Kamera ile çekilecek fotoğraf için geçici URI
     private var cameraImageUri: Uri? = null
@@ -43,7 +45,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     // 📸 Kamera izni isteyici
     private val requestCameraPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted ->
+    ) {
+        granted ->
         if (granted) {
             startCameraCapture()
         } else {
@@ -57,7 +60,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     // 📸 Kamera ile fotoğraf çekme
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
-    ) { success ->
+    ) {
+        success ->
         if (success && cameraImageUri != null) {
             // Kamera’dan gelen resmi kırpmaya gönder
             onPhotoSelected(cameraImageUri!!)
@@ -67,7 +71,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     // 🖼️ Android Photo Picker: yalnızca resim
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
+    ) {
+        uri: Uri? ->
         if (uri != null) {
             // Galeri’den gelen resmi kırpmaya gönder
             onPhotoSelected(uri)
@@ -77,7 +82,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     // ✂️ uCrop sonucu için launcher
     private val uCropLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    ) {
+        result ->
         val data = result.data
         when {
             result.resultCode == Activity.RESULT_OK && data != null -> {
@@ -91,7 +97,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                 showInfoDialog(
                     title = getString(R.string.edit_profile_error_title),
                     message = error?.localizedMessage
-                        ?: getString(R.string.edit_profile_save_photo_error)
+                    ?: getString(R.string.edit_profile_save_photo_error)
                 )
             }
         }
@@ -109,7 +115,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     // 🔄 Mevcut profil fotoğrafını DataStore'dan oku ve göster
     private fun observeCurrentPhoto() {
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.userPrefsFlow.collectLatest { prefs ->
+            userPrefs.userPrefsFlow.collectLatest {
+                prefs ->
                 // Ekranda yeni bir foto seçtiysek, eski veriye göre görüntüyü değiştirme
                 if (selectedPhotoUri != null) return@collectLatest
 
@@ -129,10 +136,11 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     // ⬇️ BottomSheet’ten gelen sonucu dinle
     private fun setupResultListener() {
-        parentFragmentManager.setFragmentResultListener(
+        childFragmentManager.setFragmentResultListener(
             PhotoSourceBottomSheet.REQUEST_KEY,
             viewLifecycleOwner
-        ) { _, bundle ->
+        ) {
+            _, bundle ->
             when (bundle.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
                 PhotoSourceBottomSheet.RESULT_GALLERY -> openGallery()
                 PhotoSourceBottomSheet.RESULT_CAMERA -> checkCameraPermissionAndOpen()
@@ -147,8 +155,14 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         }
 
         val openChooser: (View) -> Unit = {
-            PhotoSourceBottomSheet.newInstance()
-                .show(parentFragmentManager, PhotoSourceBottomSheet.TAG)
+            PhotoSourceBottomSheet
+            .newInstance(
+                title = "Profile photo"
+            )
+            .show(
+                childFragmentManager,
+                PhotoSourceBottomSheet.TAG
+            )
         }
         ivEditProfilePhoto.setOnClickListener(openChooser)
         ivCameraIcon.setOnClickListener(openChooser)
@@ -172,7 +186,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                     showInfoDialog(
                         title = getString(R.string.edit_profile_error_title),
                         message = e.localizedMessage
-                            ?: getString(R.string.edit_profile_save_photo_error)
+                        ?: getString(R.string.edit_profile_save_photo_error)
                     )
                 }
             }
@@ -232,47 +246,47 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     // 🔁 Foto seçildiğinde: uCrop ekranını başlat
     private fun onPhotoSelected(sourceUri: Uri) {
-    val context = requireContext()
+        val context = requireContext()
 
-    // uCrop çıktı dosyası: app'in kendi klasöründe
-    val destFile = File(
-        getProfilePhotosDir(),
-        "profile_cropped_${System.currentTimeMillis()}.jpg"
-    )
-    val destUri = Uri.fromFile(destFile)
+        // uCrop çıktı dosyası: app'in kendi klasöründe
+        val destFile = File(
+            getProfilePhotosDir(),
+            "profile_cropped_${System.currentTimeMillis()}.jpg"
+        )
+        val destUri = Uri.fromFile(destFile)
 
-    val options = UCrop.Options().apply {
-        // 1:1 kare + dairesel avatar
-        setCircleDimmedLayer(true)
-        withAspectRatio(1f, 1f)
+        val options = UCrop.Options().apply {
+            // 1:1 kare + dairesel avatar
+            setCircleDimmedLayer(true)
+            withAspectRatio(1f, 1f)
 
-        // Grid açık, dış kare çerçeve kapalı
-        setShowCropGrid(true)
-        setShowCropFrame(false)
+            // Grid açık, dış kare çerçeve kapalı
+            setShowCropGrid(true)
+            setShowCropFrame(false)
 
-        // 🔻 Alt bardaki Ölçek/Döndür kontrollerini gizle
-        setHideBottomControls(true)
+            // 🔻 Alt bardaki Ölçek/Döndür kontrollerini gizle
+            setHideBottomControls(true)
 
-        // 🔹 Üst bar başlığı
-        setToolbarTitle(getString(R.string.edit_profile_crop_title))
+            // 🔹 Üst bar başlığı
+            setToolbarTitle(getString(R.string.edit_profile_crop_title))
 
-        // 🔹 Üst bar & status bar rengi (#0A192F -> colors.xml: crop_toolbar_bg)
-        val toolbarColor = ContextCompat.getColor(context, R.color.crop_toolbar_bg)
-        setToolbarColor(toolbarColor)
-        
-        // 🔹 Üst bardaki text + ikon rengi (beyaz)
-        setToolbarWidgetColor(Color.WHITE)
+            // 🔹 Üst bar & status bar rengi (#0A192F -> colors.xml: crop_toolbar_bg)
+            val toolbarColor = ContextCompat.getColor(context, R.color.crop_toolbar_bg)
+            setToolbarColor(toolbarColor)
 
-        // 🔹 Soldaki cancel ikonunu geri butonu yap
-        setToolbarCancelDrawable(R.drawable.ic_back)
-        // ✅ Sağdaki check ikonunu DEĞİŞTİRMİYORUZ (orijinal kalsın)
-    }
+            // 🔹 Üst bardaki text + ikon rengi (beyaz)
+            setToolbarWidgetColor(Color.WHITE)
 
-    UCrop.of(sourceUri, destUri)
+            // 🔹 Soldaki cancel ikonunu geri butonu yap
+            setToolbarCancelDrawable(R.drawable.ic_back)
+            // ✅ Sağdaki check ikonunu DEĞİŞTİRMİYORUZ (orijinal kalsın)
+        }
+
+        UCrop.of(sourceUri, destUri)
         .withAspectRatio(1f, 1f)
         .withOptions(options)
         .start(context, uCropLauncher)
-}
+    }
 
     // ✅ uCrop'tan gelen sonucu işler: ImageView'de göster + URI'yi sakla
     private fun handleCroppedImage(croppedFileUri: Uri) {
@@ -299,10 +313,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     private fun showInfoDialog(title: String, message: String) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
+        .setTitle(title)
+        .setMessage(message)
+        .setPositiveButton(android.R.string.ok, null)
+        .show()
     }
 
     override fun onDestroyView() {
