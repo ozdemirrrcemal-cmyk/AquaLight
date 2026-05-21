@@ -31,7 +31,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.model.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.google.android.material.card.MaterialCardView
@@ -120,11 +119,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         binding.cardTankStyle.setOnClickListener {
             openTankSettings()
-        }
-
-
-        binding.btnAddPlant.setOnClickListener {
-            openPlantTagFlow()
         }
 
         binding.tabDevices.setOnClickListener {
@@ -301,10 +295,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         binding.markerContainer.removeAllViews()
         binding.markerContainer.isVisible = false
-
-        if (selectedTab == TankDetailTab.PLANTS) {
-            renderPlantsSection(tank)
-        }
 
         if (selectedTab == TankDetailTab.TANK) {
             renderTankSection(tank)
@@ -909,115 +899,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         }
 
         binding.lifeFlowContainer.isVisible = false
-    }
-
-    private fun renderPlantsSection(
-        tank: SavedAquariumTank
-    ) {
-        binding.plantListContainer.removeAllViews()
-
-        tank.plants.forEachIndexed {
-            index, plant ->
-            binding.plantListContainer.addView(
-                createPlantCard(
-                    index = index,
-                    plant = plant
-                )
-            )
-        }
-    }
-
-    private fun createPlantCard(
-        index: Int,
-        plant: SavedAquariumPlant
-    ): View {
-        val card = MaterialCardView(requireContext()).apply {
-            radius = 18.dp().toFloat()
-            strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
-            cardElevation = 0f
-            useCompatPadding = false
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.bottomMargin = 12.dp()
-            layoutParams = params
-        }
-
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(
-                14.dp(),
-                12.dp(),
-                14.dp(),
-                12.dp()
-            )
-        }
-
-        val number = TextView(requireContext()).apply {
-            text = "${index + 1}"
-            gravity = Gravity.CENTER
-            textSize = 13f
-            setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.NORMAL)
-            setBackgroundResource(R.drawable.bg_plant_number_circle)
-            includeFontPadding = false
-
-            layoutParams = LinearLayout.LayoutParams(
-                38.dp(),
-                38.dp()
-            )
-        }
-
-        val textBox = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-
-            val params = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-            params.marginStart = 14.dp()
-            layoutParams = params
-        }
-
-        val categoryText = TextView(requireContext()).apply {
-            text = plant.category
-            textSize = 12f
-            setTextColor(Color.parseColor("#8FA4BE"))
-            includeFontPadding = false
-        }
-
-        val nameText = TextView(requireContext()).apply {
-            text = plant.plantName
-            textSize = 14f
-            setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.NORMAL)
-            includeFontPadding = false
-            maxLines = 2
-            ellipsize = TextUtils.TruncateAt.END
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.topMargin = 6.dp()
-            layoutParams = params
-        }
-
-        textBox.addView(categoryText)
-        textBox.addView(nameText)
-
-        row.addView(number)
-        row.addView(textBox)
-
-        card.addView(row)
-
-        return card
     }
 
     fun openPlantTagFlow() {
