@@ -65,7 +65,7 @@ object SmartCareRuleCatalog {
 
     SmartCareRule(
       id = "startup_planted_water_change_week_1_4",
-      dayStart = 1,
+      dayStart = 3,
       dayEnd = 28,
       conditions = listOf(
         SmartCareCondition.PLANTED

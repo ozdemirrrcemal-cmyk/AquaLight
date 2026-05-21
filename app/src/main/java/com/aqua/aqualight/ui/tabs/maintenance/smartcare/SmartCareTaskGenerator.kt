@@ -2,8 +2,12 @@ package com.aqua.aqualight.ui.tabs.maintenance.smartcare
 
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 object SmartCareTaskGenerator {
+
+  private const val SMART_TASK_MIN_LEAD_MINUTES = 30
+  private const val CARE_DAY_END_HOUR = 21
 
   fun generateForTanks(
     tanks: List<SavedAquariumTank>,
@@ -30,52 +34,52 @@ object SmartCareTaskGenerator {
     val setupDay = profile.setupDay ?: return emptyList()
 
     return SmartCareRuleCatalog.allRules
-    .filter {
-      rule ->
-      isRuleActiveForDay(
-        rule = rule,
-        setupDay = setupDay
-      )
-    }
-    .filter {
-      rule ->
-      doesProfileMatchRule(
-        profile = profile,
-        rule = rule
-      )
-    }
-    .filter {
-      rule ->
-      isRuleDueToday(
-        rule = rule,
-        setupDay = setupDay
-      )
-    }
-    .map {
-      rule ->
-      createGeneratedTask(
-        tank = tank,
-        profile = profile,
-        rule = rule,
-        nowMillis = nowMillis
-      )
-    }
-    .sortedWith(
-      compareByDescending<SmartCareGeneratedTask> {
-        getPriorityWeight(it.priority)
-      }.thenBy {
-        getTaskTypeWeight(it.taskType)
-      }.thenBy {
-        it.dueAtMillis
+      .filter {
+        rule ->
+        isRuleActiveForDay(
+          rule = rule,
+          setupDay = setupDay
+        )
       }
-    )
-    .let {
-      tasks ->
-      applyTaskDensityPolicy(
-        tasks = tasks,
-        profile = profile
+      .filter {
+        rule ->
+        doesProfileMatchRule(
+          profile = profile,
+          rule = rule
+        )
+      }
+      .filter {
+        rule ->
+        isRuleDueToday(
+          rule = rule,
+          setupDay = setupDay
+        )
+      }
+      .map {
+        rule ->
+        createGeneratedTask(
+          tank = tank,
+          profile = profile,
+          rule = rule,
+          nowMillis = nowMillis
+        )
+      }
+      .sortedWith(
+        compareByDescending<SmartCareGeneratedTask> {
+          getPriorityWeight(it.priority)
+        }.thenBy {
+          getTaskTypeWeight(it.taskType)
+        }.thenBy {
+          it.dueAtMillis
+        }
       )
-    }
+      .let {
+        tasks ->
+        applyTaskDensityPolicy(
+          tasks = tasks,
+          profile = profile
+        )
+      }
   }
 
   private fun isRuleActiveForDay(
@@ -142,8 +146,8 @@ object SmartCareTaskGenerator {
     rule: SmartCareRule,
     nowMillis: Long
   ): SmartCareGeneratedTask {
-    val dueAtMillis = getDueTimeForToday(
-      taskType = rule.taskType,
+    val dueAtMillis = getDueTimeForRule(
+      rule = rule,
       nowMillis = nowMillis
     )
 
@@ -194,11 +198,25 @@ object SmartCareTaskGenerator {
     val setupDay = profile.setupDay ?: return 30
 
     return when {
-      profile.hasActiveSoil && setupDay in 1..7 -> 50
-      profile.hasActiveSoil && setupDay in 8..21 -> 40
-      setupDay in 1..28 -> 30
-      setupDay in 29..90 -> 30
-      else -> 25
+      profile.hasActiveSoil && setupDay in 1..7 -> {
+        50
+      }
+
+      profile.hasActiveSoil && setupDay in 8..21 -> {
+        40
+      }
+
+      setupDay in 1..28 -> {
+        30
+      }
+
+      setupDay in 29..90 -> {
+        30
+      }
+
+      else -> {
+        25
+      }
     }
   }
 
@@ -296,6 +314,7 @@ object SmartCareTaskGenerator {
     )
 
     val productName = fertilizerRule.productName
+
     val frequencyText = getFrequencyText(
       frequency = fertilizerRule.frequency
     )
@@ -348,11 +367,11 @@ object SmartCareTaskGenerator {
       val brandName = rule.brand.name.lowercase()
 
       materialText.contains(productName) ||
-      productName.split(" ").all {
-        token ->
-        token.length <= 2 || materialText.contains(token)
-      } ||
-      materialText.contains(brandName)
+        productName.split(" ").all {
+          token ->
+          token.length <= 2 || materialText.contains(token)
+        } ||
+        materialText.contains(brandName)
     }
   }
 
@@ -360,12 +379,29 @@ object SmartCareTaskGenerator {
     frequency: FertilizerFrequency
   ): String {
     return when (frequency) {
-      FertilizerFrequency.DAILY -> "daily"
-      FertilizerFrequency.WEEKLY -> "weekly"
-      FertilizerFrequency.ONCE_OR_TWICE_WEEKLY -> "once or twice weekly"
-      FertilizerFrequency.TWICE_WEEKLY -> "twice weekly"
-      FertilizerFrequency.TWO_TO_THREE_TIMES_WEEKLY -> "2–3 times weekly"
-      FertilizerFrequency.AS_NEEDED -> "as needed"
+      FertilizerFrequency.DAILY -> {
+        "daily"
+      }
+
+      FertilizerFrequency.WEEKLY -> {
+        "weekly"
+      }
+
+      FertilizerFrequency.ONCE_OR_TWICE_WEEKLY -> {
+        "once or twice weekly"
+      }
+
+      FertilizerFrequency.TWICE_WEEKLY -> {
+        "twice weekly"
+      }
+
+      FertilizerFrequency.TWO_TO_THREE_TIMES_WEEKLY -> {
+        "2–3 times weekly"
+      }
+
+      FertilizerFrequency.AS_NEEDED -> {
+        "as needed"
+      }
     }
   }
 
@@ -389,32 +425,67 @@ object SmartCareTaskGenerator {
     )
 
     return uniqueTasks
-    .take(maxTaskCount)
-    .sortedWith(
-      compareByDescending<SmartCareGeneratedTask> {
-        getPriorityWeight(it.priority)
-      }.thenBy {
-        it.dueAtMillis
-      }
-    )
+      .take(maxTaskCount)
+      .sortedWith(
+        compareByDescending<SmartCareGeneratedTask> {
+          getPriorityWeight(it.priority)
+        }.thenBy {
+          it.dueAtMillis
+        }
+      )
   }
 
   private fun getTaskDensityKey(
     task: SmartCareGeneratedTask
   ): String {
     return when (task.taskType) {
-      SmartCareTaskType.WATER_CHANGE -> "water_change"
-      SmartCareTaskType.WATER_TEST -> "water_test"
-      SmartCareTaskType.LIGHTING -> "lighting"
-      SmartCareTaskType.CO2_CHECK -> "co2_check"
-      SmartCareTaskType.FERTILIZER -> "fertilizer"
-      SmartCareTaskType.PLANT_CHECK -> "plant_check"
-      SmartCareTaskType.PLANT_TRIM -> "plant_trim"
-      SmartCareTaskType.FILTER_CHECK -> "filter_check"
-      SmartCareTaskType.GLASS_CLEANING -> "glass_cleaning"
-      SmartCareTaskType.LIVESTOCK_CHECK -> "livestock_check"
-      SmartCareTaskType.FEEDING -> "feeding"
-      SmartCareTaskType.GENERAL_CHECK -> "general_check"
+      SmartCareTaskType.WATER_CHANGE -> {
+        "water_change"
+      }
+
+      SmartCareTaskType.WATER_TEST -> {
+        "water_test"
+      }
+
+      SmartCareTaskType.LIGHTING -> {
+        "lighting"
+      }
+
+      SmartCareTaskType.CO2_CHECK -> {
+        "co2_check"
+      }
+
+      SmartCareTaskType.FERTILIZER -> {
+        "fertilizer"
+      }
+
+      SmartCareTaskType.PLANT_CHECK -> {
+        "plant_check"
+      }
+
+      SmartCareTaskType.PLANT_TRIM -> {
+        "plant_trim"
+      }
+
+      SmartCareTaskType.FILTER_CHECK -> {
+        "filter_check"
+      }
+
+      SmartCareTaskType.GLASS_CLEANING -> {
+        "glass_cleaning"
+      }
+
+      SmartCareTaskType.LIVESTOCK_CHECK -> {
+        "livestock_check"
+      }
+
+      SmartCareTaskType.FEEDING -> {
+        "feeding"
+      }
+
+      SmartCareTaskType.GENERAL_CHECK -> {
+        "general_check"
+      }
     }
   }
 
@@ -426,10 +497,21 @@ object SmartCareTaskGenerator {
     }
 
     return when (setupDay) {
-      in 1..7 -> 5
-      in 8..30 -> 4
-      in 31..90 -> 3
-      else -> 3
+      in 1..7 -> {
+        5
+      }
+
+      in 8..30 -> {
+        4
+      }
+
+      in 31..90 -> {
+        3
+      }
+
+      else -> {
+        3
+      }
     }
   }
 
@@ -437,92 +519,234 @@ object SmartCareTaskGenerator {
     taskType: SmartCareTaskType
   ): Int {
     return when (taskType) {
-      SmartCareTaskType.WATER_TEST -> 12
-      SmartCareTaskType.WATER_CHANGE -> 11
-      SmartCareTaskType.CO2_CHECK -> 10
-      SmartCareTaskType.FEEDING -> 9
-      SmartCareTaskType.FERTILIZER -> 8
-      SmartCareTaskType.LIGHTING -> 7
-      SmartCareTaskType.LIVESTOCK_CHECK -> 6
-      SmartCareTaskType.PLANT_CHECK -> 5
-      SmartCareTaskType.PLANT_TRIM -> 4
-      SmartCareTaskType.FILTER_CHECK -> 3
-      SmartCareTaskType.GLASS_CLEANING -> 2
-      SmartCareTaskType.GENERAL_CHECK -> 1
+      SmartCareTaskType.WATER_TEST -> {
+        12
+      }
+
+      SmartCareTaskType.WATER_CHANGE -> {
+        11
+      }
+
+      SmartCareTaskType.CO2_CHECK -> {
+        10
+      }
+
+      SmartCareTaskType.FEEDING -> {
+        9
+      }
+
+      SmartCareTaskType.FERTILIZER -> {
+        8
+      }
+
+      SmartCareTaskType.LIGHTING -> {
+        7
+      }
+
+      SmartCareTaskType.LIVESTOCK_CHECK -> {
+        6
+      }
+
+      SmartCareTaskType.PLANT_CHECK -> {
+        5
+      }
+
+      SmartCareTaskType.PLANT_TRIM -> {
+        4
+      }
+
+      SmartCareTaskType.FILTER_CHECK -> {
+        3
+      }
+
+      SmartCareTaskType.GLASS_CLEANING -> {
+        2
+      }
+
+      SmartCareTaskType.GENERAL_CHECK -> {
+        1
+      }
     }
   }
 
-private fun getDueTimeForToday(
-  taskType: SmartCareTaskType,
-  nowMillis: Long
-): Long {
-  val dueTime = when (taskType) {
-    SmartCareTaskType.CO2_CHECK -> {
-      9 to 0
+  private fun getDueTimeForRule(
+    rule: SmartCareRule,
+    nowMillis: Long
+  ): Long {
+    val preferredDueAtMillis = getPreferredDueTimeForDate(
+      taskType = rule.taskType,
+      baseMillis = nowMillis,
+      addDays = 0
+    )
+
+    val minimumAllowedMillis = nowMillis + TimeUnit.MINUTES.toMillis(
+      SMART_TASK_MIN_LEAD_MINUTES.toLong()
+    )
+
+    if (preferredDueAtMillis >= minimumAllowedMillis) {
+      return preferredDueAtMillis
     }
 
-    SmartCareTaskType.LIGHTING -> {
-      9 to 30
-    }
-
-    SmartCareTaskType.GENERAL_CHECK -> {
-      10 to 0
-    }
-
-    SmartCareTaskType.FERTILIZER -> {
-      10 to 30
-    }
-
-    SmartCareTaskType.PLANT_CHECK -> {
-      13 to 0
-    }
-
-    SmartCareTaskType.PLANT_TRIM -> {
-      13 to 0
-    }
-
-    SmartCareTaskType.GLASS_CLEANING -> {
-      15 to 0
-    }
-
-    SmartCareTaskType.FILTER_CHECK -> {
-      15 to 0
-    }
-
-    SmartCareTaskType.WATER_CHANGE -> {
-      18 to 0
-    }
-
-    SmartCareTaskType.WATER_TEST -> {
-      19 to 0
-    }
-
-    SmartCareTaskType.FEEDING -> {
-      19 to 30
-    }
-
-    SmartCareTaskType.LIVESTOCK_CHECK -> {
-      20 to 0
+    return if (rule.repeatMode == SmartCareRepeatMode.ONCE) {
+      getNextAvailableOneTimeSlot(
+        taskType = rule.taskType,
+        nowMillis = nowMillis
+      )
+    } else {
+      getPreferredDueTimeForDate(
+        taskType = rule.taskType,
+        baseMillis = nowMillis,
+        addDays = 1
+      )
     }
   }
 
-  return Calendar.getInstance().apply {
-    timeInMillis = nowMillis
-    set(Calendar.HOUR_OF_DAY, dueTime.first)
-    set(Calendar.MINUTE, dueTime.second)
-    set(Calendar.SECOND, 0)
-    set(Calendar.MILLISECOND, 0)
-  }.timeInMillis
-}
+  private fun getNextAvailableOneTimeSlot(
+    taskType: SmartCareTaskType,
+    nowMillis: Long
+  ): Long {
+    val candidate = roundUpToNextHalfHour(
+      millis = nowMillis + TimeUnit.MINUTES.toMillis(
+        SMART_TASK_MIN_LEAD_MINUTES.toLong()
+      )
+    )
+
+    val candidateCalendar = Calendar.getInstance().apply {
+      timeInMillis = candidate
+    }
+
+    if (candidateCalendar.get(Calendar.HOUR_OF_DAY) >= CARE_DAY_END_HOUR) {
+      return getPreferredDueTimeForDate(
+        taskType = taskType,
+        baseMillis = nowMillis,
+        addDays = 1
+      )
+    }
+
+    return candidate
+  }
+
+  private fun roundUpToNextHalfHour(
+    millis: Long
+  ): Long {
+    val calendar = Calendar.getInstance().apply {
+      timeInMillis = millis
+      set(Calendar.SECOND, 0)
+      set(Calendar.MILLISECOND, 0)
+    }
+
+    val minute = calendar.get(Calendar.MINUTE)
+
+    when {
+      minute == 0 || minute == 30 -> {
+        // keep current minute
+      }
+
+      minute < 30 -> {
+        calendar.set(Calendar.MINUTE, 30)
+      }
+
+      else -> {
+        calendar.add(Calendar.HOUR_OF_DAY, 1)
+        calendar.set(Calendar.MINUTE, 0)
+      }
+    }
+
+    return calendar.timeInMillis
+  }
+
+  private fun getPreferredDueTimeForDate(
+    taskType: SmartCareTaskType,
+    baseMillis: Long,
+    addDays: Int
+  ): Long {
+    val dueTime = getPreferredDueTime(
+      taskType = taskType
+    )
+
+    return Calendar.getInstance().apply {
+      timeInMillis = baseMillis
+      add(Calendar.DAY_OF_YEAR, addDays)
+      set(Calendar.HOUR_OF_DAY, dueTime.first)
+      set(Calendar.MINUTE, dueTime.second)
+      set(Calendar.SECOND, 0)
+      set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+  }
+
+  private fun getPreferredDueTime(
+    taskType: SmartCareTaskType
+  ): Pair<Int, Int> {
+    return when (taskType) {
+      SmartCareTaskType.CO2_CHECK -> {
+        9 to 0
+      }
+
+      SmartCareTaskType.LIGHTING -> {
+        9 to 30
+      }
+
+      SmartCareTaskType.GENERAL_CHECK -> {
+        10 to 0
+      }
+
+      SmartCareTaskType.FERTILIZER -> {
+        10 to 30
+      }
+
+      SmartCareTaskType.PLANT_CHECK -> {
+        13 to 0
+      }
+
+      SmartCareTaskType.PLANT_TRIM -> {
+        13 to 0
+      }
+
+      SmartCareTaskType.GLASS_CLEANING -> {
+        15 to 0
+      }
+
+      SmartCareTaskType.FILTER_CHECK -> {
+        15 to 0
+      }
+
+      SmartCareTaskType.WATER_CHANGE -> {
+        18 to 0
+      }
+
+      SmartCareTaskType.WATER_TEST -> {
+        19 to 0
+      }
+
+      SmartCareTaskType.FEEDING -> {
+        19 to 30
+      }
+
+      SmartCareTaskType.LIVESTOCK_CHECK -> {
+        20 to 0
+      }
+    }
+  }
 
   private fun getPriorityWeight(
     priority: SmartCarePriority
   ): Int {
     return when (priority) {
-      SmartCarePriority.CRITICAL -> 4
-      SmartCarePriority.HIGH -> 3
-      SmartCarePriority.MEDIUM -> 2
-      SmartCarePriority.LOW -> 1
+      SmartCarePriority.CRITICAL -> {
+        4
+      }
+
+      SmartCarePriority.HIGH -> {
+        3
+      }
+
+      SmartCarePriority.MEDIUM -> {
+        2
+      }
+
+      SmartCarePriority.LOW -> {
+        1
+      }
     }
   }
 }
