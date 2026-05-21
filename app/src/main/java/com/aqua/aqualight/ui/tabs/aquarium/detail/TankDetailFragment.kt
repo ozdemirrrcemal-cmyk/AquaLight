@@ -1019,7 +1019,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.plantsFragmentContainer.isVisible = false
 
         binding.tankSection.isVisible = false
-        binding.plantsSection.isVisible = false
         binding.tankLifeSection.isVisible = false
         binding.tvEmptyTab.isVisible = false
     }
@@ -1031,7 +1030,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.plantsFragmentContainer.isVisible = false
 
         binding.tankSection.isVisible = false
-        binding.plantsSection.isVisible = false
         binding.tankLifeSection.isVisible = false
         binding.tvEmptyTab.isVisible = true
     }
@@ -1132,7 +1130,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         private const val TAG_DEVICES_FRAGMENT = "TankDetailDevicesFragment"
 
         private const val TAG_ACTIVITY_FRAGMENT = "TankDetailActivityFragment"
-        
+
         private const val TAG_PLANTS_FRAGMENT = "TankDetailPlantsFragment"
 
         const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
