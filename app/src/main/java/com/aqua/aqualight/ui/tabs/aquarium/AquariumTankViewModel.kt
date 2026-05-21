@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
+import com.aqua.aqualight.data.CareTaskDataStoreManager
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
@@ -16,6 +17,10 @@ class AquariumTankViewModel(
 ) : AndroidViewModel(application) {
 
   private val tankDataStoreManager = AquariumTankDataStoreManager(
+    application.applicationContext
+  )
+
+  private val careTaskDataStoreManager = CareTaskDataStoreManager.create(
     application.applicationContext
   )
 
@@ -39,8 +44,26 @@ class AquariumTankViewModel(
   suspend fun deleteTanks(
     tankIds: List<Long>
   ) {
+    val safeTankIds = tankIds
+      .filter {
+        tankId ->
+        tankId > 0L
+      }
+      .distinct()
+
+    if (safeTankIds.isEmpty()) {
+      return
+    }
+
+    safeTankIds.forEach {
+      tankId ->
+      careTaskDataStoreManager.deleteTasksForTank(
+        tankId = tankId
+      )
+    }
+
     tankDataStoreManager.deleteTanks(
-      tankIds = tankIds
+      tankIds = safeTankIds
     )
   }
 
