@@ -94,91 +94,84 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         selectTab(selectedTab)
     }
 
-private fun setupClickListeners() {
-    binding.btnBack.setOnClickListener {
-        if (handleLifeFlowBack()) {
-            return@setOnClickListener
+    private fun setupClickListeners() {
+        binding.btnBack.setOnClickListener {
+            if (handleLifeFlowBack()) {
+                return@setOnClickListener
+            }
+
+            if (handlePlantFlowBack()) {
+                return@setOnClickListener
+            }
+
+            findNavController().navigateUp()
         }
 
-        if (handlePlantFlowBack()) {
-            return@setOnClickListener
+        binding.btnEdit.setOnClickListener {
+            openTankSettings()
         }
 
-        findNavController().navigateUp()
-    }
+        binding.cardTankValue.setOnClickListener {
+            toggleTankVolumeUnit()
+        }
 
-    binding.btnEdit.setOnClickListener {
-        openTankSettings()
-    }
+        binding.cardTankDays.setOnClickListener {
+            openTankSettings()
+        }
 
-    binding.cardTankValue.setOnClickListener {
-        toggleTankVolumeUnit()
-    }
+        binding.cardTankSize.setOnClickListener {
+            openTankSettings()
+        }
 
-    binding.cardTankDays.setOnClickListener {
-        openTankSettings()
-    }
+        binding.cardTankType.setOnClickListener {
+            openTankSettings()
+        }
 
-    binding.cardTankSize.setOnClickListener {
-        openTankSettings()
-    }
+        binding.cardTankSetup.setOnClickListener {
+            openTankSettings()
+        }
 
-    binding.cardTankType.setOnClickListener {
-        openTankSettings()
-    }
+        binding.cardTankStyle.setOnClickListener {
+            openTankSettings()
+        }
 
-    binding.cardTankSetup.setOnClickListener {
-        openTankSettings()
-    }
+        binding.btnAddDevice.setOnClickListener {
+            showAddDeviceBottomSheet()
+        }
 
-    binding.cardTankStyle.setOnClickListener {
-        openTankSettings()
-    }
+        binding.btnAddPlant.setOnClickListener {
+            openPlantTagFlow()
+        }
 
-    binding.btnAddDevice.setOnClickListener {
-        showAddDeviceBottomSheet()
-    }
+        binding.tabDevices.setOnClickListener {
+            selectTab(TankDetailTab.DEVICES)
+        }
 
-    binding.btnAddPlant.setOnClickListener {
-        openPlantTagFlow()
-    }
+        binding.tabActivity.setOnClickListener {
+            selectTab(TankDetailTab.ACTIVITY)
+        }
 
-    binding.tabDevices.setOnClickListener {
-        selectTab(TankDetailTab.DEVICES)
-    }
 
-    binding.tabActivity.setOnClickListener {
-        selectTab(TankDetailTab.ACTIVITY)
-    }
+        binding.tabTank.setOnClickListener {
+            selectTab(TankDetailTab.TANK)
+        }
 
-    binding.btnAddActivity.setOnClickListener {
-        showActivityFragmentIfNeeded()
+        binding.tabPlants.setOnClickListener {
+            selectTab(TankDetailTab.PLANTS)
+        }
 
-        binding.activityFragmentContainer.post {
-            getActivityFragment()?.showAddActivitySheet()
+        binding.tabTankLife.setOnClickListener {
+            selectTab(TankDetailTab.TANK_LIFE)
+        }
+
+        binding.btnAddLife.setOnClickListener {
+            openLivestockFormFlow()
+        }
+
+        binding.btnEmptyAddLife.setOnClickListener {
+            openLivestockFormFlow()
         }
     }
-
-    binding.tabTank.setOnClickListener {
-        selectTab(TankDetailTab.TANK)
-    }
-
-    binding.tabPlants.setOnClickListener {
-        selectTab(TankDetailTab.PLANTS)
-    }
-
-    binding.tabTankLife.setOnClickListener {
-        selectTab(TankDetailTab.TANK_LIFE)
-    }
-
-    binding.btnAddLife.setOnClickListener {
-        openLivestockFormFlow()
-    }
-
-    binding.btnEmptyAddLife.setOnClickListener {
-        openLivestockFormFlow()
-    }
-}
 
 
     private fun observeCareProfileActions() {
@@ -884,13 +877,13 @@ private fun setupClickListeners() {
                 activateTab(binding.tabActivity)
                 moveTabUnderline(binding.tabActivity)
 
-                binding.activitySection.isVisible = true
+                binding.contentScrollView.isVisible = false
+                binding.activityFragmentContainer.isVisible = true
                 binding.tvEmptyTab.isVisible = false
-                binding.btnAddActivity.isVisible = true
 
                 showActivityFragmentIfNeeded()
             }
-            
+
             TankDetailTab.TANK -> {
                 activateTab(binding.tabTank)
                 moveTabUnderline(binding.tabTank)
@@ -931,30 +924,30 @@ private fun setupClickListeners() {
             }
         }
     }
-    
-private fun showActivityFragmentIfNeeded() {
-    binding.activityFragmentContainer.isVisible = true
 
-    val existingFragment = getActivityFragment()
+    private fun showActivityFragmentIfNeeded() {
+        binding.activityFragmentContainer.isVisible = true
 
-    if (existingFragment != null) {
-        return
+        val existingFragment = getActivityFragment()
+
+        if (existingFragment != null) {
+            return
+        }
+
+        childFragmentManager.commit {
+            replace(
+                R.id.activityFragmentContainer,
+                TankDetailActivityFragment.newInstance(tankId),
+                TAG_ACTIVITY_FRAGMENT
+            )
+        }
     }
 
-    childFragmentManager.commit {
-        replace(
-            R.id.activityFragmentContainer,
-            TankDetailActivityFragment.newInstance(tankId),
+    private fun getActivityFragment(): TankDetailActivityFragment? {
+        return childFragmentManager.findFragmentByTag(
             TAG_ACTIVITY_FRAGMENT
-        )
+        ) as? TankDetailActivityFragment
     }
-}
-
-private fun getActivityFragment(): TankDetailActivityFragment? {
-  return childFragmentManager.findFragmentByTag(
-    TAG_ACTIVITY_FRAGMENT
-  ) as? TankDetailActivityFragment
-}
 
     private fun renderTankSection(
         tank: SavedAquariumTank
@@ -1618,42 +1611,39 @@ private fun getActivityFragment(): TankDetailActivityFragment? {
     }
 
     private fun resetTabs() {
-        val inactiveColor = Color.parseColor("#8FA4BE")
+    val inactiveColor = Color.parseColor("#8FA4BE")
 
-        listOf(
-            binding.tabDevices,
-            binding.tabActivity,
-            binding.tabTank,
-            binding.tabPlants,
-            binding.tabTankLife
-        ).forEach {
-            tab ->
-            tab.setTextColor(inactiveColor)
-            tab.setTypeface(null, Typeface.NORMAL)
-        }
-
-        binding.devicesSection.isVisible = false
-        binding.activitySection.isVisible = false
-        binding.tankSection.isVisible = false
-        binding.plantsSection.isVisible = false
-        binding.tvEmptyTab.isVisible = false
-        binding.tankLifeSection.isVisible = false
-        
-        binding.activityFragmentContainer.isVisible = false
-
-        binding.btnAddActivity.isVisible = false
+    listOf(
+        binding.tabDevices,
+        binding.tabActivity,
+        binding.tabTank,
+        binding.tabPlants,
+        binding.tabTankLife
+    ).forEach { tab ->
+        tab.setTextColor(inactiveColor)
+        tab.setTypeface(null, Typeface.NORMAL)
     }
 
-    private fun showEmptySection() {
-        binding.devicesSection.isVisible = false
-        binding.activitySection.isVisible = false
-        binding.tankSection.isVisible = false
-        binding.plantsSection.isVisible = false
-        binding.tvEmptyTab.isVisible = true
-        binding.tankLifeSection.isVisible = false
-        binding.btnAddActivity.isVisible = false
-        binding.activityFragmentContainer.isVisible = false
-    }
+    binding.contentScrollView.isVisible = true
+    binding.activityFragmentContainer.isVisible = false
+
+    binding.devicesSection.isVisible = false
+    binding.tankSection.isVisible = false
+    binding.plantsSection.isVisible = false
+    binding.tankLifeSection.isVisible = false
+    binding.tvEmptyTab.isVisible = false
+}
+
+private fun showEmptySection() {
+    binding.contentScrollView.isVisible = true
+    binding.activityFragmentContainer.isVisible = false
+
+    binding.devicesSection.isVisible = false
+    binding.tankSection.isVisible = false
+    binding.plantsSection.isVisible = false
+    binding.tankLifeSection.isVisible = false
+    binding.tvEmptyTab.isVisible = true
+}
 
     private fun getLivestockQuantityText(
         quantity: Int
@@ -1748,7 +1738,7 @@ private fun getActivityFragment(): TankDetailActivityFragment? {
         private const val ARG_TANK_ID = "tankId"
         private const val KEY_SELECTED_TAB = "selectedTab"
         private const val ONLINE_TIMEOUT_MS = 60_000L
-        
+
         private const val TAG_ACTIVITY_FRAGMENT = "TankDetailActivityFragment"
 
         const val KEY_CARE_PROFILE_ACTION = "care_profile_action"

@@ -62,8 +62,15 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
 
         _binding = FragmentTankDetailActivityBinding.bind(view)
 
+        setupClickListeners()
         setupCareTaskTypeResultListener()
         observeTankActivity()
+    }
+
+    private fun setupClickListeners() {
+        binding.btnAddActivity.setOnClickListener {
+            showAddActivitySheet()
+        }
     }
 
     fun showAddActivitySheet() {
