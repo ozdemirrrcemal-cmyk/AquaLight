@@ -23,6 +23,7 @@ import java.util.Date
 import java.util.Locale
 import java.text.DecimalFormatSymbols
 import kotlin.math.roundToInt
+import com.aqua.aqualight.ui.common.bottomsheet.SettingsContentBottomSheet
 
 class TankInfoFragment : Fragment(R.layout.fragment_tank_info), TankStepFragment {
 
@@ -108,27 +109,12 @@ private fun showSettingsBottomSheet(
   contentView: View,
   onDialogReady: ((BottomSheetDialog) -> Unit)? = null
 ) {
-val dialog = BottomSheetDialog(requireContext())
-val sheetBinding = DialogSettingsBottomSheetBinding.inflate(layoutInflater)
-
-sheetBinding.tvSheetTitle.text = title
-
-sheetBinding.sheetContentContainer.removeAllViews()
-sheetBinding.sheetContentContainer.addView(contentView)
-
-dialog.setContentView(sheetBinding.root)
-
-dialog.setOnShowListener {
-  val bottomSheet = dialog.findViewById<FrameLayout>(
-    com.google.android.material.R.id.design_bottom_sheet
+  SettingsContentBottomSheet.show(
+    fragment = this,
+    title = title,
+    contentView = contentView,
+    onDialogReady = onDialogReady
   )
-
-  bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-}
-
-onDialogReady?.invoke(dialog)
-
-dialog.show()
 }
 
 private fun showSetupDateSheet() {

@@ -71,6 +71,7 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import java.text.DecimalFormatSymbols
+import com.aqua.aqualight.ui.common.bottomsheet.SettingsContentBottomSheet
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -346,27 +347,12 @@ MaterialPickerFragment.MaterialPickerHost {
     contentView: View,
     onDialogReady: ((BottomSheetDialog) -> Unit)? = null
 ) {
-  val dialog = BottomSheetDialog(requireContext())
-  val sheetBinding = DialogSettingsBottomSheetBinding.inflate(layoutInflater)
-
-  sheetBinding.tvSheetTitle.text = title
-
-  sheetBinding.sheetContentContainer.removeAllViews()
-  sheetBinding.sheetContentContainer.addView(contentView)
-
-  dialog.setContentView(sheetBinding.root)
-
-  dialog.setOnShowListener {
-    val bottomSheet = dialog.findViewById<FrameLayout>(
-      com.google.android.material.R.id.design_bottom_sheet
-    )
-
-    bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-  }
-
-  onDialogReady?.invoke(dialog)
-
-  dialog.show()
+  SettingsContentBottomSheet.show(
+    fragment = this,
+    title = title,
+    contentView = contentView,
+    onDialogReady = onDialogReady
+  )
 }
 
 private fun showPhotoSourceSheet() {
