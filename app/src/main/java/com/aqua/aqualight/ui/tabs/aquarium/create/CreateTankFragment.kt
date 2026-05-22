@@ -35,8 +35,8 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     private val viewModel: CreateTankViewModel by viewModels()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
-    private val totalSteps = 5
-    private var currentStepIndex = 0
+    private var currentStepIndex: Int = 0
+    private var isCompletingTank: Boolean = false
 
     private val steps: List<() -> Fragment> = listOf(
         { TankNameFragment() },
@@ -45,6 +45,9 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
         { TankMaterialFragment() },
         { TankInfoFragment() }
     )
+
+    private val totalSteps: Int
+        get() = steps.size
 
     override fun onViewCreated(
         view: View,
@@ -57,12 +60,31 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
 
         _binding = FragmentCreateTankBinding.bind(view)
 
-        currentStepIndex = savedInstanceState?.getInt(KEY_CURRENT_STEP) ?: 0
+        currentStepIndex = restoreCurrentStepIndex(savedInstanceState)
 
         setupBackButton()
         setupSystemBackButton()
         setupNextButton()
 
+        restoreCurrentStepIfNeeded()
+        restoreOverlayContainersIfNeeded()
+    }
+
+    private fun restoreCurrentStepIndex(
+        savedInstanceState: Bundle?
+    ): Int {
+        val savedIndex = savedInstanceState?.getInt(
+            KEY_CURRENT_STEP,
+            0
+        ) ?: 0
+
+        return savedIndex.coerceIn(
+            0,
+            steps.lastIndex
+        )
+    }
+
+    private fun restoreCurrentStepIfNeeded() {
         val currentChild = childFragmentManager.findFragmentById(
             R.id.stepFragmentContainer
         )
@@ -76,17 +98,21 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
         }
     }
 
+    private fun restoreOverlayContainersIfNeeded() {
+        binding.plantFlowContainer.isVisible =
+            childFragmentManager.findFragmentById(
+                R.id.plantFlowContainer
+            ) != null
+
+        binding.materialFlowContainer.isVisible =
+            childFragmentManager.findFragmentById(
+                R.id.materialFlowContainer
+            ) != null
+    }
+
     private fun setupBackButton() {
         binding.btnBack.setOnClickListener {
-            if (handleMaterialFlowBack()) {
-                return@setOnClickListener
-            }
-
-            if (handlePlantFlowBack()) {
-                return@setOnClickListener
-            }
-
-            goBack()
+            handleBackNavigation()
         }
     }
 
@@ -95,52 +121,70 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (handleMaterialFlowBack()) {
-                        return
-                    }
-
-                    if (handlePlantFlowBack()) {
-                        return
-                    }
-
-                    goBack()
+                    handleBackNavigation()
                 }
             }
         )
     }
 
+    private fun handleBackNavigation() {
+        when {
+            handleMaterialFlowBack() -> Unit
+            handlePlantFlowBack() -> Unit
+            else -> goBack()
+        }
+    }
+
     private fun setupNextButton() {
         binding.btnNext.setOnClickListener {
-            val currentFragment = childFragmentManager.findFragmentById(
-                R.id.stepFragmentContainer
-            )
+            handleNextClick()
+        }
+    }
 
-            if (currentFragment is TankStepFragment) {
-                val isValid = currentFragment.validateAndSave()
+    private fun handleNextClick() {
+        if (isCompletingTank) {
+            return
+        }
 
-                if (!isValid) {
-                    return@setOnClickListener
-                }
-            }
+        val currentFragment = childFragmentManager.findFragmentById(
+            R.id.stepFragmentContainer
+        )
 
-            if (currentStepIndex == totalSteps - 1) {
-                completeTank()
-            } else {
-                showStep(currentStepIndex + 1)
+        if (currentFragment is TankStepFragment) {
+            val isValid = currentFragment.validateAndSave()
+
+            if (!isValid) {
+                return
             }
         }
+
+        if (isLastStep()) {
+            completeTank()
+        } else {
+            showStep(currentStepIndex + 1)
+        }
+    }
+
+    private fun isLastStep(): Boolean {
+        return currentStepIndex == totalSteps - 1
     }
 
     private fun showStep(
         index: Int
     ) {
-        currentStepIndex = index
+        val targetIndex = index.coerceIn(
+            0,
+            steps.lastIndex
+        )
+
+        currentStepIndex = targetIndex
 
         childFragmentManager.commit {
+            setReorderingAllowed(true)
             replace(
                 R.id.stepFragmentContainer,
-                steps[index].invoke(),
-                "STEP_$index"
+                steps[targetIndex].invoke(),
+                stepTag(targetIndex)
             )
         }
 
@@ -159,11 +203,13 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     private fun updateButton() {
-        binding.btnNext.text = if (currentStepIndex == totalSteps - 1) {
+        binding.btnNext.text = if (isLastStep()) {
             "Complete"
         } else {
             "Next"
         }
+
+        binding.btnNext.isEnabled = !isCompletingTank
     }
 
     private fun goBack() {
@@ -175,6 +221,11 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     private fun completeTank() {
+        if (isCompletingTank) {
+            return
+        }
+
+        isCompletingTank = true
         binding.btnNext.isEnabled = false
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -190,7 +241,8 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
-                binding.btnNext.isEnabled = true
+                isCompletingTank = false
+                _binding?.btnNext?.isEnabled = true
 
                 Toast.makeText(
                     requireContext(),
@@ -205,23 +257,36 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
         binding.plantFlowContainer.isVisible = true
 
         childFragmentManager.commit {
+            setReorderingAllowed(true)
             replace(
                 R.id.plantFlowContainer,
                 PlantTagFragment(),
-                "PLANT_TAG_FRAGMENT"
+                TAG_PLANT_TAG_FRAGMENT
             )
         }
     }
 
     fun openPlantPickerFlow() {
+        if (!binding.plantFlowContainer.isVisible) {
+            return
+        }
+
+        val existingPicker = childFragmentManager.findFragmentByTag(
+            TAG_PLANT_PICKER_FRAGMENT
+        )
+
+        if (existingPicker != null) {
+            return
+        }
+
         childFragmentManager.commit {
             setReorderingAllowed(true)
             add(
                 R.id.plantFlowContainer,
                 PlantPickerFragment(),
-                "PLANT_PICKER_FRAGMENT"
+                TAG_PLANT_PICKER_FRAGMENT
             )
-            addToBackStack("PLANT_PICKER_FRAGMENT")
+            addToBackStack(TAG_PLANT_PICKER_FRAGMENT)
         }
     }
 
@@ -237,6 +302,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
 
         if (currentPlantFragment != null) {
             childFragmentManager.commit {
+                setReorderingAllowed(true)
                 remove(currentPlantFragment)
             }
         }
@@ -262,6 +328,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
         categoryKey: String,
         categoryTitle: String
     ) {
+        if (binding.materialFlowContainer.isVisible) {
+            return
+        }
+
         binding.materialFlowContainer.isVisible = true
 
         childFragmentManager.commit {
@@ -272,7 +342,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
                     categoryKey = categoryKey,
                     categoryTitle = categoryTitle
                 ),
-                "MATERIAL_PICKER_FRAGMENT"
+                TAG_MATERIAL_PICKER_FRAGMENT
             )
         }
     }
@@ -284,6 +354,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
 
         if (currentMaterialFragment != null) {
             childFragmentManager.commit {
+                setReorderingAllowed(true)
                 remove(currentMaterialFragment)
             }
         }
@@ -298,6 +369,12 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
 
         closeMaterialPickerFlow()
         return true
+    }
+
+    private fun stepTag(
+        index: Int
+    ): String {
+        return "$TAG_STEP_PREFIX$index"
     }
 
     override fun onSaveInstanceState(
@@ -318,5 +395,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
 
     companion object {
         private const val KEY_CURRENT_STEP = "key_current_step"
+
+        private const val TAG_STEP_PREFIX = "CreateTankStep_"
+        private const val TAG_PLANT_TAG_FRAGMENT = "PlantTagFragment"
+        private const val TAG_PLANT_PICKER_FRAGMENT = "PlantPickerFragment"
+        private const val TAG_MATERIAL_PICKER_FRAGMENT = "MaterialPickerFragment"
     }
 }

@@ -31,6 +31,7 @@ import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.navigation.fragment.findNavController
+import android.text.TextUtils
 
 class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
@@ -272,7 +273,7 @@ private fun createKeywordChip(
     keyword: String
 ): View {
     val chip = MaterialCardView(requireContext()).apply {
-        radius = 14.dp().toFloat()
+        radius = 13.dp().toFloat()
         strokeWidth = 1.dp()
         strokeColor = Color.parseColor("#223A57")
         setCardBackgroundColor(Color.parseColor("#10233A"))
@@ -282,9 +283,9 @@ private fun createKeywordChip(
 
         val params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT,
-            42.dp()
+            36.dp()
         )
-        params.marginEnd = 10.dp()
+        params.marginEnd = 8.dp()
         layoutParams = params
 
         setOnClickListener {
@@ -297,16 +298,21 @@ private fun createKeywordChip(
 
     val text = TextView(requireContext()).apply {
         this.text = keyword.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase() else it.toString()
+            if (it.isLowerCase()) {
+                it.titlecase()
+            } else {
+                it.toString()
+            }
         }
+
         gravity = Gravity.CENTER
         setTextColor(Color.parseColor("#8FA4BE"))
-        textSize = 13f
+        textSize = 12.5f
         includeFontPadding = false
         setPadding(
-            18.dp(),
+            15.dp(),
             0,
-            18.dp(),
+            15.dp(),
             0
         )
     }
@@ -388,14 +394,14 @@ private fun createMaterialCard(
     val isSelected = selectedProductIds.contains(product.id)
 
     val card = MaterialCardView(requireContext()).apply {
-        radius = 18.dp().toFloat()
+        radius = 16.dp().toFloat()
         strokeWidth = 1.dp()
         strokeColor = Color.parseColor(
             if (isSelected) "#2B93F6" else "#223A57"
         )
         setCardBackgroundColor(
             Color.parseColor(
-                if (isSelected) "#143456" else "#10233A"
+                if (isSelected) "#102C49" else "#10233A"
             )
         )
         cardElevation = 0f
@@ -407,16 +413,16 @@ private fun createMaterialCard(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        params.bottomMargin = 12.dp()
+        params.bottomMargin = 9.dp()
         layoutParams = params
 
         setOnClickListener {
             toggleSelection(product.id)
 
             val query = binding.etSearchMaterials.text
-            ?.toString()
-            ?.trim()
-            .orEmpty()
+                ?.toString()
+                ?.trim()
+                .orEmpty()
 
             renderMaterialList(
                 getFilteredProducts(query)
@@ -429,52 +435,59 @@ private fun createMaterialCard(
     val row = LinearLayout(requireContext()).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
+        minimumHeight = 74.dp()
+
         setPadding(
-            18.dp(),
-            15.dp(),
             14.dp(),
-            15.dp()
+            10.dp(),
+            12.dp(),
+            10.dp()
         )
     }
 
     val textBox = LinearLayout(requireContext()).apply {
         orientation = LinearLayout.VERTICAL
+        gravity = Gravity.CENTER_VERTICAL
 
         val params = LinearLayout.LayoutParams(
             0,
             LinearLayout.LayoutParams.WRAP_CONTENT,
             1f
         )
-        params.marginEnd = 14.dp()
+        params.marginEnd = 12.dp()
         layoutParams = params
     }
 
     val category = TextView(requireContext()).apply {
         text = product.categoryTitle
-        setTextColor(Color.parseColor("#8FA4BE"))
-        textSize = 12f
+        setTextColor(Color.parseColor("#7F93AD"))
+        textSize = 11.5f
         includeFontPadding = false
+        maxLines = 1
+        ellipsize = TextUtils.TruncateAt.END
     }
 
     val name = TextView(requireContext()).apply {
         text = product.name
         setTextColor(Color.WHITE)
-        textSize = 14f
+        textSize = 13.5f
+        setTypeface(null, Typeface.NORMAL)
         includeFontPadding = false
-        maxLines = 3
+        maxLines = 2
+        ellipsize = TextUtils.TruncateAt.END
 
         val params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        params.topMargin = 8.dp()
+        params.topMargin = 6.dp()
         layoutParams = params
     }
 
     val check = TextView(requireContext()).apply {
         text = if (isSelected) "✓" else ""
         gravity = Gravity.CENTER
-        textSize = 16f
+        textSize = 12f
         setTypeface(null, Typeface.BOLD)
         setTextColor(Color.WHITE)
         includeFontPadding = false
@@ -487,8 +500,8 @@ private fun createMaterialCard(
         )
 
         layoutParams = LinearLayout.LayoutParams(
-            30.dp(),
-            30.dp()
+            24.dp(),
+            24.dp()
         )
     }
 
@@ -506,19 +519,19 @@ private fun createMaterialCard(
 private fun createNewMaterialButton(): View {
     return MaterialButton(requireContext()).apply {
         text = "New $categoryTitle"
-        textSize = 15f
+        textSize = 14f
         setTextColor(Color.WHITE)
         setTypeface(null, Typeface.BOLD)
         setAllCaps(false)
-        cornerRadius = 16.dp()
+        cornerRadius = 14.dp()
         setBackgroundColor(Color.parseColor("#2196F3"))
 
         val params = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
-            56.dp()
+            48.dp()
         )
-        params.topMargin = 10.dp()
-        params.bottomMargin = 20.dp()
+        params.topMargin = 8.dp()
+        params.bottomMargin = 16.dp()
         layoutParams = params
 
         setOnClickListener {
