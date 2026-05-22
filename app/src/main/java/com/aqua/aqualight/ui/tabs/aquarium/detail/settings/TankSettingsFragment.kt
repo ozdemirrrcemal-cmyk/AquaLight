@@ -1,12 +1,9 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.GestureDetector
@@ -18,29 +15,23 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import coil3.load
-import coil3.request.crossfade
-import coil3.request.error
-import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
-import com.aqua.aqualight.databinding.ContentSheetSetupDateBinding
 import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
-import com.aqua.aqualight.databinding.ContentSheetTankSizeBinding
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 import com.aqua.aqualight.ui.common.bottomsheet.SettingsContentBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -55,14 +46,7 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
-import com.yalantis.ucrop.UCrop
-import java.io.File
-import java.text.DateFormatSymbols
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -70,9 +54,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 MaterialPickerFragment.MaterialPickerHost {
@@ -86,62 +67,9 @@ MaterialPickerFragment.MaterialPickerHost {
     private var tankId: Long = 0L
     private var selectedTab: SettingsTab = SettingsTab.BASIC
     private var currentTank: SavedAquariumTank? = null
-    private var pendingCameraUri: Uri? = null
     private var isDeletingTank: Boolean = false
     private var isDuplicatingTank: Boolean = false
     private var isExportingTank: Boolean = false
-
-    private val sizeFormatter = DecimalFormat(
-        "#0.##",
-        DecimalFormatSymbols(Locale.US)
-    )
-
-    private val galleryLauncher = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) {
-        uri ->
-        if (uri != null) {
-            startImageCrop(uri)
-        }
-    }
-
-    private val cameraLauncher = registerForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) {
-        success ->
-        if (success) {
-            pendingCameraUri?.let {
-                uri ->
-                startImageCrop(uri)
-            }
-        }
-    }
-
-    private val cropLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val outputUri = result.data?.let {
-                intent ->
-                UCrop.getOutput(intent)
-            }
-
-            if (outputUri != null) {
-                saveTankPhoto(outputUri)
-            }
-        } else if (result.resultCode == UCrop.RESULT_ERROR) {
-            val error = result.data?.let {
-                intent ->
-                UCrop.getError(intent)
-            }
-
-            showSnackBar(
-                message = error?.message ?: "Photo could not be cropped.",
-                type = BaseActivity.SnackType.ERROR
-            )
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -162,7 +90,6 @@ MaterialPickerFragment.MaterialPickerHost {
         userPrefs = UserPreferencesManager.create(requireContext())
 
         setupClickListeners()
-        setupPhotoSourceResultListener()
         setupSystemBackButton()
         setupSwipeBetweenTabs()
         observeTank()
@@ -189,43 +116,11 @@ MaterialPickerFragment.MaterialPickerHost {
             selectTab(SettingsTab.OTHERS)
         }
 
-        binding.btnChangePhoto.setOnClickListener {
-            showPhotoSourceSheet()
-        }
-
         binding.scoreContainer.setOnClickListener {
             currentTank?.let {
                 tank ->
                 showCareProfileSheet(tank)
             }
-        }
-
-        binding.rowTankName.setOnClickListener {
-            showTankNameSheet()
-        }
-
-        binding.rowTankType.setOnClickListener {
-            showTankTypeSheet()
-        }
-
-        binding.rowSize.setOnClickListener {
-            showTankSizeSheet()
-        }
-
-        binding.rowVolume.setOnClickListener {
-            toggleVolumeUnit()
-        }
-
-        binding.rowSetupDate.setOnClickListener {
-            showSetupDateSheet()
-        }
-
-        binding.rowStyle.setOnClickListener {
-            showStyleSheet()
-        }
-
-        binding.rowIdea.setOnClickListener {
-            showIdeaSheet()
         }
 
         binding.rowDuplicateTank.setOnClickListener {
@@ -300,36 +195,6 @@ MaterialPickerFragment.MaterialPickerHost {
     ) {
         currentTank = tank
 
-        if (!tank.photoUri.isNullOrBlank()) {
-            binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {
-                placeholder(R.drawable.nature_aquarium)
-                error(R.drawable.nature_aquarium)
-                crossfade(true)
-            }
-        } else {
-            binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
-        }
-
-        binding.tvSettingTankName.text = tank.name
-
-        binding.tvSettingTankType.text = tank.tankType.ifBlank {
-            "-"
-        }
-
-        binding.tvSettingSizeTitle.text = getSizeTitleText(tank)
-        binding.tvSettingSize.text = getSizeText(tank)
-
-        binding.tvSettingVolume.text = getVolumeText(tank)
-        binding.tvSettingSetupDate.text = getSetupDateText(tank.setupDateMillis)
-
-        binding.tvSettingStyle.text = tank.tankStyle.ifBlank {
-            "-"
-        }
-
-        binding.tvSettingIdea.text = tank.description.ifBlank {
-            "No idea added"
-        }
-
         renderMaterials(tank)
         renderCareProfileScore(tank)
     }
@@ -357,154 +222,6 @@ MaterialPickerFragment.MaterialPickerHost {
     )
 }
 
-private fun setupPhotoSourceResultListener() {
-    childFragmentManager.setFragmentResultListener(
-        PhotoSourceBottomSheet.REQUEST_KEY,
-        viewLifecycleOwner
-    ) {
-        _, bundle ->
-
-        when (bundle.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
-            PhotoSourceBottomSheet.RESULT_CAMERA -> {
-                openCamera()
-            }
-
-            PhotoSourceBottomSheet.RESULT_GALLERY -> {
-                openGallery()
-            }
-        }
-    }
-}
-
-private fun showPhotoSourceSheet() {
-    PhotoSourceBottomSheet
-    .newInstance(
-        title = "Aquarium Photo"
-    )
-    .show(
-        childFragmentManager,
-        PhotoSourceBottomSheet.TAG
-    )
-}
-
-private fun openGallery() {
-    galleryLauncher.launch("image/*")
-}
-
-private fun openCamera() {
-    val cameraUri = createTankPhotoUri()
-    pendingCameraUri = cameraUri
-    cameraLauncher.launch(cameraUri)
-}
-
-private fun startImageCrop(
-    sourceUri: Uri
-) {
-    val destinationUri = createTankPhotoCropUri()
-
-    val options = UCrop.Options().apply {
-        setToolbarTitle("Crop aquarium photo")
-        setToolbarColor(Color.parseColor("#081B31"))
-        setToolbarWidgetColor(Color.WHITE)
-        setRootViewBackgroundColor(Color.parseColor("#081B31"))
-        setActiveControlsWidgetColor(Color.parseColor("#2196F3"))
-        setCompressionQuality(90)
-        setFreeStyleCropEnabled(false)
-        setHideBottomControls(true)
-    }
-
-    val cropIntent = UCrop.of(
-        sourceUri,
-        destinationUri
-    )
-    .withAspectRatio(
-        16f,
-        9f
-    )
-    .withMaxResultSize(
-        1600,
-        900
-    )
-    .withOptions(options)
-    .getIntent(requireContext())
-    .apply {
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-    }
-
-    cropLauncher.launch(cropIntent)
-}
-
-private fun saveTankPhoto(
-    photoUri: Uri
-) {
-    binding.imgTankPhoto.load(photoUri) {
-        placeholder(R.drawable.nature_aquarium)
-        error(R.drawable.nature_aquarium)
-        crossfade(true)
-    }
-
-    viewLifecycleOwner.lifecycleScope.launch {
-        try {
-            aquariumTankViewModel.updateTankPhoto(
-                tankId = tankId,
-                photoUri = photoUri.toString()
-            )
-
-            showSnackBar(
-                message = "Photo updated.",
-                type = BaseActivity.SnackType.SUCCESS
-            )
-        } catch (exception: Exception) {
-            exception.printStackTrace()
-
-            showSnackBar(
-                message = "Photo could not be saved.",
-                type = BaseActivity.SnackType.ERROR
-            )
-        }
-    }
-}
-
-private fun createTankPhotoUri(): Uri {
-    val directory = File(
-        requireContext().filesDir,
-        "tank_photos"
-    )
-
-    if (!directory.exists()) {
-        directory.mkdirs()
-    }
-
-    val file = File(
-        directory,
-        "tank_camera_${tankId}_${System.currentTimeMillis()}.jpg"
-    )
-
-    return FileProvider.getUriForFile(
-        requireContext(),
-        "${requireContext().packageName}.fileprovider",
-        file
-    )
-}
-
-private fun createTankPhotoCropUri(): Uri {
-    val directory = File(
-        requireContext().filesDir,
-        "tank_photos"
-    )
-
-    if (!directory.exists()) {
-        directory.mkdirs()
-    }
-
-    val file = File(
-        directory,
-        "tank_crop_${tankId}_${System.currentTimeMillis()}.jpg"
-    )
-
-    return Uri.fromFile(file)
-}
 
 private fun selectTab(
     tab: SettingsTab
@@ -653,7 +370,7 @@ private fun resetTabs() {
         tab.setTextColor(inactiveColor)
         tab.setTypeface(null, Typeface.NORMAL)
     }
-    
+
     binding.contentScrollView.isVisible = true
     binding.basicFragmentContainer.isVisible = false
 
@@ -1567,58 +1284,6 @@ private fun deleteCurrentTank() {
             )
         }
     }
-}
-
-private fun getSizeTitleText(
-    tank: SavedAquariumTank
-): String {
-    return if (tank.sizeUnit.equals("in", ignoreCase = true)) {
-        "Size (in)"
-    } else {
-        "Size (cm)"
-    }
-}
-
-private fun getSizeText(
-    tank: SavedAquariumTank
-): String {
-    return if (tank.sizeUnit.equals("in", ignoreCase = true)) {
-        val widthIn = tank.widthCm / 2.54
-        val lengthIn = tank.lengthCm / 2.54
-        val heightIn = tank.heightCm / 2.54
-
-        "${sizeFormatter.format(widthIn)} W x ${sizeFormatter.format(lengthIn)} L x ${sizeFormatter.format(heightIn)} H"
-    } else {
-        "${tank.widthCm} W x ${tank.lengthCm} L x ${tank.heightCm} H"
-    }
-}
-
-private fun getVolumeText(
-    tank: SavedAquariumTank
-): String {
-    val liter = (tank.widthCm * tank.lengthCm * tank.heightCm) / 1000.0
-
-    return if (tank.volumeUnit.equals("gal", ignoreCase = true)) {
-        val gallon = liter * 0.264172
-        "${gallon.roundToInt()} gal"
-    } else {
-        "${liter.roundToInt()} L"
-    }
-}
-
-private fun getSetupDateText(
-    setupDateMillis: Long?
-): String {
-    if (setupDateMillis == null) {
-        return "-"
-    }
-
-    val formatter = SimpleDateFormat(
-        "dd MMM yyyy",
-        Locale.getDefault()
-    )
-
-    return formatter.format(Date(setupDateMillis))
 }
 
 private fun createRoundedDrawable(
