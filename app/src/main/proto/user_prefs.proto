@@ -1,55 +1,46 @@
 syntax = "proto3";
+
 option java_package = "com.aqua.aqualight.data";
 option java_multiple_files = true;
 
 message UserPreferences {
-string idToken         = 1;
-string email           = 2;
-string username        = 3;
-string profilePhotoUrl = 4;
-bool   isLoggedIn      = 5;
-string fullName        = 6;
-string themeMode       = 7;
-string languageCode    = 8;
-bool   notificationsEnabled = 9;
-bool   autoUpdateEnabled     = 10;
+  string idToken = 1;
+  string email = 2;
+  string username = 3;
+  string profilePhotoUrl = 4;
+  bool isLoggedIn = 5;
+  string fullName = 6;
+  string themeMode = 7;
+  string languageCode = 8;
+  bool notificationsEnabled = 9;
+  bool autoUpdateEnabled = 10;
 
-// Adres bilgileri
-string firstName       = 11;
-string lastName        = 12;
-string city            = 13;
-string addressLine     = 14;
-string postCode        = 15;
-string phoneNumber     = 16;
-string country         = 17;
+  // Address
+  string firstName = 11;
+  string lastName = 12;
+  string city = 13;
+  string addressLine = 14;
+  string postCode = 15;
+  string phoneNumber = 16;
+  string country = 17;
 
-// Login alerts
-bool   loginAlertsEnabled = 18;
+  // Login alerts
+  bool loginAlertsEnabled = 18;
 
-// 2FA
-bool   twoFactorEnabled   = 19;
+  // 2FA
+  bool twoFactorEnabled = 19;
 
-// Usage analytics
-int32  weeklyAutomationCount   = 20;
-int32  weeklyAlertCount        = 21;
-int32  todayAutomationCount    = 22;
-int32  todayManualActionCount  = 23;
-int64  lastEventTimeMillis     = 24;
-string lastEventDescription    = 25;
-string lastUsageDayKey         = 26;
-string lastUsageWeekKey        = 27;
+  // Usage analytics
+  int32 weeklyAutomationCount = 20;
+  int32 weeklyAlertCount = 21;
+  int32 todayAutomationCount = 22;
+  int32 todayManualActionCount = 23;
+  int64 lastEventTimeMillis = 24;
+  string lastEventDescription = 25;
+  string lastUsageDayKey = 26;
+  string lastUsageWeekKey = 27;
 
-// Çoklu cihaz listesi
-repeated DeviceInfo devices = 100;
-
-message DeviceInfo {
-  int64  id             = 1;
-  string aquaName       = 2;
-  string name           = 3;
-  string ip             = 4;
-  string serial         = 5;
-  int64  lastSeenMillis = 6;
-  string firmwareBuild  = 7;
-  int64  tankId         = 8;
-  }
+  // Devices were moved to devices_preferences.proto.
+  reserved 100;
+  reserved "devices";
 }
