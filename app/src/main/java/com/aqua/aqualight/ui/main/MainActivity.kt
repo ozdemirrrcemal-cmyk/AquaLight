@@ -9,8 +9,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.databinding.ActivityMainBinding
-import com.aqua.aqualight.lan.LanMonitor
 
 class MainActivity : BaseActivity() {
 
@@ -47,7 +47,7 @@ class MainActivity : BaseActivity() {
         ) || taskIdFromNotification > 0L
 
         if (startInApp) {
-            LanMonitor.start(
+            DevicePresenceMonitor.start(
                 context = applicationContext
             )
         }
@@ -73,9 +73,16 @@ class MainActivity : BaseActivity() {
 
         setupBottomBar(navController)
 
-        navController.currentDestination?.let {
-            destination ->
-            binding.bottomNav.isVisible = isInAppDest(destination.id)
+        navController.currentDestination?.let { destination ->
+            val inAppDestination = isInAppDest(destination.id)
+
+            binding.bottomNav.isVisible = inAppDestination
+
+            if (inAppDestination) {
+                DevicePresenceMonitor.start(
+                    context = applicationContext
+                )
+            }
         }
 
         binding.navHost.isVisible = true
@@ -135,14 +142,13 @@ class MainActivity : BaseActivity() {
     ) {
         binding.bottomNav.setupWithNavController(navController)
 
-        navController.addOnDestinationChangedListener {
-            _, destination, _ ->
+        navController.addOnDestinationChangedListener { _, destination, _ ->
             val inAppDestination = isInAppDest(destination.id)
 
             binding.bottomNav.isVisible = inAppDestination
 
             if (inAppDestination) {
-                LanMonitor.start(
+                DevicePresenceMonitor.start(
                     context = applicationContext
                 )
             }
