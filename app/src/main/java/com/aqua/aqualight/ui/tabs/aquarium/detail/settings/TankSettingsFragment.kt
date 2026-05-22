@@ -374,7 +374,6 @@ private fun resetTabs() {
     binding.contentScrollView.isVisible = true
     binding.basicFragmentContainer.isVisible = false
 
-    binding.basicSection.isVisible = false
     binding.detailsSection.isVisible = false
     binding.othersSection.isVisible = false
 }
