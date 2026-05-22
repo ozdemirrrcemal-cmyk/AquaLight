@@ -26,7 +26,7 @@ class DevicesDataStoreManager private constructor(
         ): DevicesDataStoreManager {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDataStore(
-                    context.applicationContext
+                    appContext = context.applicationContext
                 ).also { manager ->
                     INSTANCE = manager
                 }
@@ -74,7 +74,7 @@ class DevicesDataStoreManager private constructor(
         val firmwareBuild: String = ""
     )
 
-    val devicesPrefsFlow: Flow<DevicesPreferences> = dataStore.data
+    private val devicesPrefsFlow: Flow<DevicesPreferences> = dataStore.data
         .catch { exception ->
             if (exception is IOException) {
                 emit(DevicesPreferences.getDefaultInstance())
@@ -311,38 +311,6 @@ class DevicesDataStoreManager private constructor(
             prefs.toBuilder()
                 .clearDevices()
                 .addAllDevices(updatedDevices)
-                .build()
-        }
-    }
-
-    suspend fun importDevicesIfEmpty(
-        devices: List<DeviceInfoUi>
-    ) {
-        if (devices.isEmpty()) {
-            return
-        }
-
-        dataStore.updateData { prefs ->
-            if (prefs.devicesList.isNotEmpty()) {
-                return@updateData prefs
-            }
-
-            val importedDevices = devices.map { device ->
-                SavedDeviceInfo.newBuilder()
-                    .setId(device.id)
-                    .setAquaName(device.aquaName)
-                    .setName(device.name)
-                    .setIp(device.ip)
-                    .setSerial(device.serial)
-                    .setFirmwareBuild(device.firmwareBuild)
-                    .setLastSeenMillis(device.lastSeenMillis)
-                    .setTankId(device.tankId ?: 0L)
-                    .build()
-            }
-
-            prefs.toBuilder()
-                .clearDevices()
-                .addAllDevices(importedDevices)
                 .build()
         }
     }

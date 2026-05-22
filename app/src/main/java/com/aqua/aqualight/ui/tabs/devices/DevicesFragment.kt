@@ -12,9 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.DevicesLegacyMigrationManager
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
@@ -28,7 +26,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private var _binding: FragmentDevicesBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var legacyUserPrefs: UserPreferencesManager
     private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DevicesListAdapter
 
@@ -45,8 +42,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         )
 
         _binding = FragmentDevicesBinding.bind(view)
-
-        legacyUserPrefs = UserPreferencesManager.create(requireContext())
         devicesStore = DevicesDataStoreManager.create(requireContext())
 
         setupRecyclerView()
@@ -92,11 +87,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun observeDevicesList() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                DevicesLegacyMigrationManager.migrateIfNeeded(
-                    legacyUserPrefs = legacyUserPrefs,
-                    devicesStore = devicesStore
-                )
-
                 devicesStore.devicesFlow.collect { devices ->
                     if (devices.isEmpty()) {
                         exitSelectionMode()
@@ -236,9 +226,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             binding.btnScanDevices.contentDescription =
                 getString(R.string.devices_scan_button_desc)
 
-            binding.btnScanDevices.setTextColor(
-                Color.WHITE
-            )
+            binding.btnScanDevices.setTextColor(Color.WHITE)
 
             binding.btnScanDevices.backgroundTintList = ColorStateList.valueOf(
                 Color.parseColor("#1C3252")

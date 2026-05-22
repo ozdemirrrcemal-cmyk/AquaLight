@@ -18,7 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
@@ -38,22 +38,30 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
-    private lateinit var userPrefs: UserPreferencesManager
+    private lateinit var devicesStore: DevicesDataStoreManager
 
     private var tankId: Long = 0L
     private var tankName: String = ""
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
         tankId = requireArguments().getLong(ARG_TANK_ID)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentTankDetailDevicesBinding.bind(view)
-        userPrefs = UserPreferencesManager.create(requireContext())
+        devicesStore = DevicesDataStoreManager.create(requireContext())
 
         setupClickListeners()
         observeTankName()
@@ -77,7 +85,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun observeTankDevices() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                userPrefs.devicesForTankFlow(tankId).collect { devices ->
+                devicesStore.devicesForTankFlow(tankId).collect { devices ->
                     renderDevices(devices)
                 }
             }
@@ -85,7 +93,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun renderDevices(
-        devices: List<UserPreferencesManager.DeviceInfoUi>
+        devices: List<DevicesDataStoreManager.DeviceInfoUi>
     ) {
         binding.tankDevicesContainer.removeAllViews()
 
@@ -100,7 +108,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun createAssignedDeviceCard(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ): View {
         val card = MaterialCardView(requireContext()).apply {
             radius = 18.dp().toFloat()
@@ -262,7 +270,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
     private fun showAddDeviceBottomSheet() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val allDevices = userPrefs.devicesFlow.first()
+            val allDevices = devicesStore.devicesFlow.first()
 
             val availableDevices = allDevices.filter { device ->
                 device.tankId == null
@@ -276,7 +284,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun showAvailableDevicesBottomSheet(
-        devices: List<UserPreferencesManager.DeviceInfoUi>,
+        devices: List<DevicesDataStoreManager.DeviceInfoUi>,
         hasAnySavedDevice: Boolean
     ) {
         val dialog = BottomSheetDialog(requireContext())
@@ -387,7 +395,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun createAvailableDeviceCard(
-        device: UserPreferencesManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfoUi,
         dialog: BottomSheetDialog
     ): View {
         val card = MaterialCardView(requireContext()).apply {
@@ -491,11 +499,11 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun assignDeviceToCurrentTank(
-        device: UserPreferencesManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfoUi,
         dialog: BottomSheetDialog
     ) {
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.assignDeviceToTank(
+            devicesStore.assignDeviceToTank(
                 deviceId = device.id,
                 tankId = tankId
             )
@@ -505,7 +513,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun showRemoveDeviceConfirmationDialog(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ) {
         DialogManager.showConfirmDialog(
             context = requireContext(),
@@ -521,17 +529,17 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun removeDeviceFromCurrentTank(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ) {
         viewLifecycleOwner.lifecycleScope.launch {
-            userPrefs.removeDeviceFromTank(
+            devicesStore.removeDeviceFromTank(
                 deviceId = device.id
             )
         }
     }
 
     private fun getDeviceTitle(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
         return device.name.ifBlank {
             device.aquaName.ifBlank {
@@ -541,7 +549,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun getDeviceTypeText(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
         return device.aquaName.ifBlank {
             "Device"
@@ -549,7 +557,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun getDeviceInfoText(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
         val typeText = device.aquaName.ifBlank {
             "AquaLight Device"
@@ -563,7 +571,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun createDeviceShortCode(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
         val source = device.aquaName.ifBlank {
             device.name.ifBlank {
@@ -589,7 +597,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     private fun isDeviceOnline(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ): Boolean {
         if (device.lastSeenMillis <= 0L) {
             return false
