@@ -5,14 +5,10 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.GestureDetector
-import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.os.bundleOf
@@ -36,16 +32,13 @@ import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.card.MaterialCardView
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.abs
@@ -194,8 +187,6 @@ MaterialPickerFragment.MaterialPickerHost {
         tank: SavedAquariumTank
     ) {
         currentTank = tank
-
-        renderMaterials(tank)
         renderCareProfileScore(tank)
     }
 
@@ -661,171 +652,6 @@ private fun colorToHex(
     )
 }
 
-private fun renderMaterials(
-    tank: SavedAquariumTank
-) {
-    binding.bioMaterialsContainer.removeAllViews()
-    binding.hardwareMaterialsContainer.removeAllViews()
-
-    MaterialCategoryCatalog.bioCategories.forEach {
-        category ->
-        val selectedMaterials = tank.materials.filter {
-            material ->
-            material.categoryKey == category.key
-        }
-
-        binding.bioMaterialsContainer.addView(
-            createMaterialCard(
-                categoryKey = category.key,
-                title = category.title,
-                materials = selectedMaterials
-            )
-        )
-    }
-
-    MaterialCategoryCatalog.hardwareCategories.forEach {
-        category ->
-        val selectedMaterials = tank.materials.filter {
-            material ->
-            material.categoryKey == category.key
-        }
-
-        binding.hardwareMaterialsContainer.addView(
-            createMaterialCard(
-                categoryKey = category.key,
-                title = category.title,
-                materials = selectedMaterials
-            )
-        )
-    }
-}
-
-private fun createMaterialCard(
-    categoryKey: String,
-    title: String,
-    materials: List<SavedAquariumMaterial>
-): View {
-    val card = MaterialCardView(requireContext()).apply {
-        radius = 16.dp().toFloat()
-        strokeWidth = 1.dp()
-        strokeColor = Color.parseColor("#223A57")
-        setCardBackgroundColor(Color.parseColor("#10233A"))
-        cardElevation = 0f
-        useCompatPadding = false
-        isClickable = true
-        isFocusable = true
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        params.bottomMargin = 10.dp()
-        layoutParams = params
-    }
-
-    val row = LinearLayout(requireContext()).apply {
-        orientation = LinearLayout.HORIZONTAL
-        gravity = Gravity.CENTER_VERTICAL
-        setPadding(
-            14.dp(),
-            12.dp(),
-            12.dp(),
-            12.dp()
-        )
-    }
-
-    val iconBackground = GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        setColor(Color.parseColor("#263B5A"))
-        cornerRadius = 12.dp().toFloat()
-    }
-
-    val iconBox = TextView(requireContext()).apply {
-        text = title.take(2).uppercase(Locale.getDefault())
-        gravity = Gravity.CENTER
-        textSize = 10f
-        setTextColor(Color.WHITE)
-        setTypeface(null, Typeface.BOLD)
-        background = iconBackground
-        includeFontPadding = false
-
-        layoutParams = LinearLayout.LayoutParams(
-            42.dp(),
-            42.dp()
-        )
-    }
-
-    val textBox = LinearLayout(requireContext()).apply {
-        orientation = LinearLayout.VERTICAL
-
-        val params = LinearLayout.LayoutParams(
-            0,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            1f
-        )
-        params.marginStart = 14.dp()
-        layoutParams = params
-    }
-
-    val titleText = TextView(requireContext()).apply {
-        text = title
-        textSize = 14f
-        setTextColor(Color.WHITE)
-        setTypeface(null, Typeface.BOLD)
-        includeFontPadding = false
-        maxLines = 1
-        ellipsize = TextUtils.TruncateAt.END
-    }
-
-    val summaryText = TextView(requireContext()).apply {
-        text = getMaterialSummary(materials)
-        textSize = 12f
-        setTextColor(Color.parseColor("#8FA4BE"))
-        setLineSpacing(
-            2.dp().toFloat(),
-            1.0f
-        )
-        maxLines = 2
-        ellipsize = TextUtils.TruncateAt.END
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        params.topMargin = 6.dp()
-        layoutParams = params
-    }
-
-    val arrow = ImageView(requireContext()).apply {
-        setImageResource(R.drawable.ic_arrow_right)
-        setColorFilter(Color.parseColor("#8FA4BE"))
-        scaleType = ImageView.ScaleType.CENTER
-
-        layoutParams = LinearLayout.LayoutParams(
-            22.dp(),
-            22.dp()
-        )
-    }
-
-    textBox.addView(titleText)
-    textBox.addView(summaryText)
-
-    row.addView(iconBox)
-    row.addView(textBox)
-    row.addView(arrow)
-
-    card.addView(row)
-
-    card.setOnClickListener {
-        openMaterialPickerFlow(
-            categoryKey = categoryKey,
-            categoryTitle = title
-        )
-    }
-
-    return card
-}
-
 fun openMaterialPickerFlow(
     categoryKey: String,
     categoryTitle: String
@@ -857,20 +683,6 @@ override fun closeMaterialPickerFlow() {
     }
 
     binding.settingsMaterialPickerContainer.isVisible = false
-}
-
-private fun getMaterialSummary(
-    materials: List<SavedAquariumMaterial>
-): String {
-    if (materials.isEmpty()) {
-        return "Not selected"
-    }
-
-    if (materials.size == 1) {
-        return materials.first().name
-    }
-
-    return "${materials.first().name} +${materials.size - 1} more"
 }
 
 private fun showTankNameSheet() {
