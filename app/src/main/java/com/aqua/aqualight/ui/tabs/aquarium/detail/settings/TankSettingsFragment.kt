@@ -12,6 +12,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
@@ -27,8 +28,7 @@ import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlin.math.roundToInt
 
-class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
-    MaterialPickerFragment.MaterialPickerHost {
+class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
     private var _binding: FragmentTankSettingsBinding? = null
     private val binding get() = _binding!!
@@ -59,19 +59,31 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 
         _binding = FragmentTankSettingsBinding.bind(view)
 
+        selectedTab = restoreSelectedTab(savedInstanceState)
+
         setupClickListeners()
         setupSystemBackButton()
         setupSwipeBetweenTabs()
         observeTank()
-        selectTab(getInitialTab())
+        selectTab(selectedTab)
+    }
+
+    private fun restoreSelectedTab(
+        savedInstanceState: Bundle?
+    ): SettingsTab {
+        val savedTab = savedInstanceState
+            ?.getString(KEY_SELECTED_TAB)
+            ?.let { tabName ->
+                runCatching {
+                    SettingsTab.valueOf(tabName)
+                }.getOrNull()
+            }
+
+        return savedTab ?: getInitialTab()
     }
 
     private fun setupClickListeners() {
         binding.btnBack.setOnClickListener {
-            if (handleMaterialPickerBack()) {
-                return@setOnClickListener
-            }
-
             findNavController().navigateUp()
         }
 
@@ -99,10 +111,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (handleMaterialPickerBack()) {
-                        return
-                    }
-
                     findNavController().navigateUp()
                 }
             }
@@ -110,65 +118,40 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
     }
 
     private fun setupSwipeBetweenTabs() {
-        binding.basicFragmentContainer.setOnSwipeLeftListener {
-            moveToNextTab()
-        }
+        listOf(
+            binding.basicFragmentContainer,
+            binding.detailsFragmentContainer,
+            binding.othersFragmentContainer
+        ).forEach { container ->
+            container.setOnSwipeLeftListener {
+                moveTabBy(offset = 1)
+            }
 
-        binding.basicFragmentContainer.setOnSwipeRightListener {
-            moveToPreviousTab()
-        }
-
-        binding.detailsFragmentContainer.setOnSwipeLeftListener {
-            moveToNextTab()
-        }
-
-        binding.detailsFragmentContainer.setOnSwipeRightListener {
-            moveToPreviousTab()
-        }
-
-        binding.othersFragmentContainer.setOnSwipeLeftListener {
-            moveToNextTab()
-        }
-
-        binding.othersFragmentContainer.setOnSwipeRightListener {
-            moveToPreviousTab()
+            container.setOnSwipeRightListener {
+                moveTabBy(offset = -1)
+            }
         }
     }
 
-    private fun setTabSwipeEnabled(
-        enabled: Boolean
+    private fun moveTabBy(
+        offset: Int
     ) {
-        binding.basicFragmentContainer.setSwipeEnabled(enabled)
-        binding.detailsFragmentContainer.setSwipeEnabled(enabled)
-        binding.othersFragmentContainer.setSwipeEnabled(enabled)
-    }
+        val currentIndex = TAB_ORDER.indexOf(selectedTab)
 
-    private fun moveToNextTab() {
-        when (selectedTab) {
-            SettingsTab.BASIC -> {
-                selectTab(SettingsTab.DETAILS)
-            }
-
-            SettingsTab.DETAILS -> {
-                selectTab(SettingsTab.OTHERS)
-            }
-
-            SettingsTab.OTHERS -> Unit
+        if (currentIndex == -1) {
+            return
         }
-    }
 
-    private fun moveToPreviousTab() {
-        when (selectedTab) {
-            SettingsTab.BASIC -> Unit
+        val targetIndex = (currentIndex + offset).coerceIn(
+            0,
+            TAB_ORDER.lastIndex
+        )
 
-            SettingsTab.DETAILS -> {
-                selectTab(SettingsTab.BASIC)
-            }
-
-            SettingsTab.OTHERS -> {
-                selectTab(SettingsTab.DETAILS)
-            }
+        if (targetIndex == currentIndex) {
+            return
         }
+
+        selectTab(TAB_ORDER[targetIndex])
     }
 
     private fun observeTank() {
@@ -210,53 +193,15 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
         isDeletingTank = true
     }
 
-    private fun handleMaterialPickerBack(): Boolean {
-        if (!binding.settingsMaterialPickerContainer.isVisible) {
-            return false
-        }
-
-        closeMaterialPickerFlow()
-        return true
-    }
-
     private fun selectTab(
         tab: SettingsTab
     ) {
         selectedTab = tab
 
         resetTabs()
-
-        when (tab) {
-            SettingsTab.BASIC -> {
-                activateTab(binding.tabBasic)
-                moveTabUnderline(binding.tabBasic)
-
-                binding.contentScrollView.isVisible = false
-                binding.basicFragmentContainer.isVisible = true
-
-                showBasicFragmentIfNeeded()
-            }
-
-            SettingsTab.DETAILS -> {
-                activateTab(binding.tabDetails)
-                moveTabUnderline(binding.tabDetails)
-
-                binding.contentScrollView.isVisible = false
-                binding.detailsFragmentContainer.isVisible = true
-
-                showDetailsFragmentIfNeeded()
-            }
-
-            SettingsTab.OTHERS -> {
-                activateTab(binding.tabOthers)
-                moveTabUnderline(binding.tabOthers)
-
-                binding.contentScrollView.isVisible = false
-                binding.othersFragmentContainer.isVisible = true
-
-                showOthersFragmentIfNeeded()
-            }
-        }
+        activateTab(tabViewFor(tab))
+        moveTabUnderline(tabViewFor(tab))
+        showContentForTab(tab)
 
         binding.contentScrollView.post {
             binding.contentScrollView.scrollTo(
@@ -266,12 +211,73 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
         }
     }
 
+    private fun showContentForTab(
+        tab: SettingsTab
+    ) {
+        binding.contentScrollView.isVisible = false
+
+        when (tab) {
+            SettingsTab.BASIC -> {
+                binding.basicFragmentContainer.isVisible = true
+
+                showFragmentIfNeeded(
+                    containerId = R.id.basicFragmentContainer,
+                    tag = TAG_BASIC_FRAGMENT
+                ) {
+                    TankSettingsBasicFragment.newInstance(tankId)
+                }
+            }
+
+            SettingsTab.DETAILS -> {
+                binding.detailsFragmentContainer.isVisible = true
+
+                showFragmentIfNeeded(
+                    containerId = R.id.detailsFragmentContainer,
+                    tag = TAG_DETAILS_FRAGMENT
+                ) {
+                    TankSettingsDetailsFragment.newInstance(tankId)
+                }
+            }
+
+            SettingsTab.OTHERS -> {
+                binding.othersFragmentContainer.isVisible = true
+
+                showFragmentIfNeeded(
+                    containerId = R.id.othersFragmentContainer,
+                    tag = TAG_OTHERS_FRAGMENT
+                ) {
+                    TankSettingsOthersFragment.newInstance(tankId)
+                }
+            }
+        }
+    }
+
+    private fun showFragmentIfNeeded(
+        containerId: Int,
+        tag: String,
+        fragmentFactory: () -> Fragment
+    ) {
+        val existingFragment = childFragmentManager.findFragmentByTag(tag)
+
+        if (existingFragment != null) {
+            return
+        }
+
+        childFragmentManager.commit {
+            replace(
+                containerId,
+                fragmentFactory(),
+                tag
+            )
+        }
+    }
+
     private fun getInitialTab(): SettingsTab {
-        val startTab = arguments?.getString("startTab")
+        val startTab = arguments?.getString(ARG_START_TAB)
 
         return when (startTab) {
-            "details" -> SettingsTab.DETAILS
-            "others" -> SettingsTab.OTHERS
+            START_TAB_DETAILS -> SettingsTab.DETAILS
+            START_TAB_OTHERS -> SettingsTab.OTHERS
             else -> SettingsTab.BASIC
         }
     }
@@ -279,19 +285,31 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
     private fun resetTabs() {
         val inactiveColor = Color.parseColor("#8FA4BE")
 
-        listOf(
-            binding.tabBasic,
-            binding.tabDetails,
-            binding.tabOthers
-        ).forEach { tab ->
-            tab.setTextColor(inactiveColor)
-            tab.setTypeface(null, Typeface.NORMAL)
+        SettingsTab.values().forEach { tab ->
+            tabViewFor(tab).apply {
+                setTextColor(inactiveColor)
+                setTypeface(null, Typeface.NORMAL)
+            }
         }
 
+        hideAllTabContainers()
+    }
+
+    private fun hideAllTabContainers() {
         binding.contentScrollView.isVisible = true
         binding.basicFragmentContainer.isVisible = false
         binding.detailsFragmentContainer.isVisible = false
         binding.othersFragmentContainer.isVisible = false
+    }
+
+    private fun tabViewFor(
+        tab: SettingsTab
+    ): TextView {
+        return when (tab) {
+            SettingsTab.BASIC -> binding.tabBasic
+            SettingsTab.DETAILS -> binding.tabDetails
+            SettingsTab.OTHERS -> binding.tabOthers
+        }
     }
 
     private fun activateTab(
@@ -557,6 +575,55 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
             )
     }
 
+    private fun openMaterialPickerFlow(
+        categoryKey: String,
+        categoryTitle: String
+    ) {
+        navigateFromTankSettings(
+            actionId = R.id.action_tankSettingsFragment_to_materialPickerFragment,
+            args = Bundle().apply {
+                putString(
+                    MaterialPickerFragment.ARG_MODE,
+                    MaterialPickerFragment.MODE_SETTINGS
+                )
+                putLong(
+                    MaterialPickerFragment.ARG_TANK_ID,
+                    tankId
+                )
+                putString(
+                    MaterialPickerFragment.ARG_CATEGORY_KEY,
+                    categoryKey
+                )
+                putString(
+                    MaterialPickerFragment.ARG_CATEGORY_TITLE,
+                    categoryTitle
+                )
+            }
+        )
+    }
+
+    private fun navigateFromTankSettings(
+        actionId: Int,
+        args: Bundle
+    ) {
+        val navController = findNavController()
+
+        if (navController.currentDestination?.id != R.id.tankSettingsFragment) {
+            return
+        }
+
+        navController.navigate(
+            actionId,
+            args
+        )
+    }
+
+    private fun getBasicFragment(): TankSettingsBasicFragment? {
+        return childFragmentManager.findFragmentByTag(
+            TAG_BASIC_FRAGMENT
+        ) as? TankSettingsBasicFragment
+    }
+
     private fun getCareProfileColor(
         percent: Int
     ): Int {
@@ -574,114 +641,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
             "#%06X",
             0xFFFFFF and color
         )
-    }
-
-    fun openMaterialPickerFlow(
-        categoryKey: String,
-        categoryTitle: String
-    ) {
-        setTabSwipeEnabled(false)
-
-        binding.settingsMaterialPickerContainer.isVisible = true
-
-        childFragmentManager.beginTransaction()
-            .replace(
-                R.id.settingsMaterialPickerContainer,
-                MaterialPickerFragment.newSettingsInstance(
-                    tankId = tankId,
-                    categoryKey = categoryKey,
-                    categoryTitle = categoryTitle
-                ),
-                TAG_MATERIAL_PICKER_FRAGMENT
-            )
-            .commit()
-    }
-
-    override fun closeMaterialPickerFlow() {
-        val fragment = childFragmentManager.findFragmentById(
-            R.id.settingsMaterialPickerContainer
-        )
-
-        if (fragment != null) {
-            childFragmentManager.beginTransaction()
-                .remove(fragment)
-                .commit()
-        }
-
-        binding.settingsMaterialPickerContainer.isVisible = false
-        setTabSwipeEnabled(true)
-    }
-
-    private fun showBasicFragmentIfNeeded() {
-        binding.basicFragmentContainer.isVisible = true
-
-        val existingFragment = getBasicFragment()
-
-        if (existingFragment != null) {
-            return
-        }
-
-        childFragmentManager.beginTransaction()
-            .replace(
-                R.id.basicFragmentContainer,
-                TankSettingsBasicFragment.newInstance(tankId),
-                TAG_BASIC_FRAGMENT
-            )
-            .commit()
-    }
-
-    private fun getBasicFragment(): TankSettingsBasicFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_BASIC_FRAGMENT
-        ) as? TankSettingsBasicFragment
-    }
-
-    private fun showDetailsFragmentIfNeeded() {
-        binding.detailsFragmentContainer.isVisible = true
-
-        val existingFragment = getDetailsFragment()
-
-        if (existingFragment != null) {
-            return
-        }
-
-        childFragmentManager.beginTransaction()
-            .replace(
-                R.id.detailsFragmentContainer,
-                TankSettingsDetailsFragment.newInstance(tankId),
-                TAG_DETAILS_FRAGMENT
-            )
-            .commit()
-    }
-
-    private fun getDetailsFragment(): TankSettingsDetailsFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_DETAILS_FRAGMENT
-        ) as? TankSettingsDetailsFragment
-    }
-
-    private fun showOthersFragmentIfNeeded() {
-        binding.othersFragmentContainer.isVisible = true
-
-        val existingFragment = getOthersFragment()
-
-        if (existingFragment != null) {
-            return
-        }
-
-        childFragmentManager.beginTransaction()
-            .replace(
-                R.id.othersFragmentContainer,
-                TankSettingsOthersFragment.newInstance(tankId),
-                TAG_OTHERS_FRAGMENT
-            )
-            .commit()
-    }
-
-    private fun getOthersFragment(): TankSettingsOthersFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_OTHERS_FRAGMENT
-        ) as? TankSettingsOthersFragment
     }
 
     private fun createRoundedDrawable(
@@ -708,6 +667,17 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
         return (this * resources.displayMetrics.density).toInt()
     }
 
+    override fun onSaveInstanceState(
+        outState: Bundle
+    ) {
+        super.onSaveInstanceState(outState)
+
+        outState.putString(
+            KEY_SELECTED_TAB,
+            selectedTab.name
+        )
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -721,10 +691,21 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
+        private const val ARG_START_TAB = "startTab"
+
+        private const val START_TAB_DETAILS = "details"
+        private const val START_TAB_OTHERS = "others"
+
+        private const val KEY_SELECTED_TAB = "selectedTab"
 
         private const val TAG_BASIC_FRAGMENT = "TankSettingsBasicFragment"
         private const val TAG_DETAILS_FRAGMENT = "TankSettingsDetailsFragment"
         private const val TAG_OTHERS_FRAGMENT = "TankSettingsOthersFragment"
-        private const val TAG_MATERIAL_PICKER_FRAGMENT = "SettingsMaterialPickerFragment"
+
+        private val TAB_ORDER = listOf(
+            SettingsTab.BASIC,
+            SettingsTab.DETAILS,
+            SettingsTab.OTHERS
+        )
     }
 }

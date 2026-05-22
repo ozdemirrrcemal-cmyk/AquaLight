@@ -51,6 +51,32 @@
 
 </fragment>
 
+<fragment
+    android:id="@+id/materialPickerFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment"
+    android:label="Material Picker"
+    tools:layout="@layout/fragment_material_picker">
+
+    <argument
+        android:name="arg_mode"
+        app:argType="string"
+        android:defaultValue="mode_create" />
+
+    <argument
+        android:name="arg_tank_id"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+    <argument
+        android:name="arg_category_key"
+        app:argType="string" />
+
+    <argument
+        android:name="arg_category_title"
+        app:argType="string" />
+
+</fragment>
+
     <fragment
         android:id="@+id/tankSettingsFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.settings.TankSettingsFragment"
@@ -60,6 +86,10 @@
         <argument
             android:name="tankId"
             app:argType="long" />
+			
+	 <action
+    android:id="@+id/action_tankSettingsFragment_to_materialPickerFragment"
+    app:destination="@id/materialPickerFragment" />
 
     </fragment>
 	
