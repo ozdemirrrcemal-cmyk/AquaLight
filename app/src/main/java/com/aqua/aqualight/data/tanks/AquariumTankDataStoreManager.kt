@@ -6,10 +6,10 @@ import androidx.datastore.dataStore
 import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -23,14 +23,13 @@ class AquariumTankDataStoreManager(
 ) {
 
   val tanksFlow: Flow<List<SavedAquariumTank>> =
-  context.aquariumTanksDataStore.data.map {
-    store ->
-    store.getTanksList()
-    .map {
-      it.toSavedAquariumTank()
+    context.aquariumTanksDataStore.data.map { store ->
+      store.getTanksList()
+        .map { storedTank ->
+          storedTank.toSavedAquariumTank()
+        }
+        .asReversed()
     }
-    .asReversed()
-  }
 
   suspend fun addTankFromDraft(
     draft: TankDraft
@@ -43,11 +42,10 @@ class AquariumTankDataStoreManager(
       createdAtMillis = nowMillis
     )
 
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
       currentStore.toBuilder()
-      .addTanks(storedTank)
-      .build()
+        .addTanks(storedTank)
+        .build()
     }
 
     return tankId
@@ -58,15 +56,12 @@ class AquariumTankDataStoreManager(
   ): Long {
     var newTankId = System.currentTimeMillis()
 
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val sourceTank = currentStore.getTanksList().firstOrNull {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val sourceTank = currentStore.getTanksList().firstOrNull { storedTank ->
         storedTank.id == tankId
       } ?: throw IllegalArgumentException("Tank not found.")
 
-      val existingIds = currentStore.getTanksList().map {
-        storedTank ->
+      val existingIds = currentStore.getTanksList().map { storedTank ->
         storedTank.id
       }.toMutableSet()
 
@@ -74,25 +69,24 @@ class AquariumTankDataStoreManager(
         newTankId++
       }
 
-      val existingNames = currentStore.getTanksList().map {
-        storedTank ->
+      val existingNames = currentStore.getTanksList().map { storedTank ->
         storedTank.name
       }.toSet()
 
       val duplicatedTank = sourceTank.toBuilder()
-      .setId(newTankId)
-      .setName(
-        createDuplicateTankName(
-          originalName = sourceTank.name,
-          existingNames = existingNames
+        .setId(newTankId)
+        .setName(
+          createDuplicateTankName(
+            originalName = sourceTank.name,
+            existingNames = existingNames
+          )
         )
-      )
-      .setCreatedAtMillis(System.currentTimeMillis())
-      .build()
+        .setCreatedAtMillis(System.currentTimeMillis())
+        .build()
 
       currentStore.toBuilder()
-      .addTanks(duplicatedTank)
-      .build()
+        .addTanks(duplicatedTank)
+        .build()
     }
 
     return newTankId
@@ -107,18 +101,16 @@ class AquariumTankDataStoreManager(
 
     val idsToDelete = tankIds.toSet()
 
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList()
-      .filterNot {
-        storedTank ->
-        storedTank.id in idsToDelete
-      }
+        .filterNot { storedTank ->
+          storedTank.id in idsToDelete
+        }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -126,23 +118,21 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     photoUri: String?
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .setPhotoUri(photoUri.orEmpty())
-          .build()
+            .setPhotoUri(photoUri.orEmpty())
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -150,23 +140,21 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     tankStyle: String
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .setTankStyle(tankStyle)
-          .build()
+            .setTankStyle(tankStyle)
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -174,23 +162,21 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     description: String
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .setDescription(description)
-          .build()
+            .setDescription(description)
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -198,25 +184,25 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     name: String
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .setName(name.ifBlank {
-            "Unnamed Aquarium"
-          })
-          .build()
+            .setName(
+              name.ifBlank {
+                "Unnamed Aquarium"
+              }
+            )
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -224,23 +210,21 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     tankType: String
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .setTankType(tankType)
-          .build()
+            .setTankType(tankType)
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -251,30 +235,28 @@ class AquariumTankDataStoreManager(
     heightCm: Int,
     sizeUnit: String
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
-
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .setWidthCm(widthCm)
-          .setLengthCm(lengthCm)
-          .setHeightCm(heightCm)
-          .setSizeUnit(sizeUnit.ifBlank {
-            "cm"
-          })
-          .build()
+            .setWidthCm(widthCm)
+            .setLengthCm(lengthCm)
+            .setHeightCm(heightCm)
+            .setSizeUnit(
+              sizeUnit.ifBlank {
+                "cm"
+              }
+            )
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -282,23 +264,21 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     volumeUnit: String
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .setVolumeUnit(volumeUnit)
-          .build()
+            .setVolumeUnit(volumeUnit)
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -306,23 +286,21 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     setupDateMillis: Long
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .setSetupDateMillis(setupDateMillis)
-          .build()
+            .setSetupDateMillis(setupDateMillis)
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -330,35 +308,32 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     plants: List<TankPlantTag>
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .clearPlants()
-          .addAllPlants(
-            plants.map {
-              plant ->
-              StoredPlantTag.newBuilder()
-              .setId(plant.id)
-              .setPlantName(plant.plantName)
-              .setCategory(plant.category)
-              .setMarkerX(plant.markerX)
-              .setMarkerY(plant.markerY)
-              .build()
-            }
-          )
-          .build()
+            .clearPlants()
+            .addAllPlants(
+              plants.map { plant ->
+                StoredPlantTag.newBuilder()
+                  .setId(plant.id)
+                  .setPlantName(plant.plantName)
+                  .setCategory(plant.category)
+                  .setMarkerX(plant.markerX)
+                  .setMarkerY(plant.markerY)
+                  .build()
+              }
+            )
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -367,44 +342,40 @@ class AquariumTankDataStoreManager(
     categoryKey: String,
     materials: List<TankMaterialSelection>
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           val otherMaterials = storedTank.getMaterialsList()
-          .filterNot {
-            material ->
-            material.categoryKey == categoryKey
-          }
+            .filterNot { material ->
+              material.categoryKey == categoryKey
+            }
 
-          val updatedCategoryMaterials = materials.map {
-            material ->
+          val updatedCategoryMaterials = materials.map { material ->
             StoredMaterial.newBuilder()
-            .setId(material.id)
-            .setProductId(material.productId)
-            .setCategoryKey(material.categoryKey)
-            .setCategoryTitle(material.categoryTitle)
-            .setName(material.name)
-            .setBrand(material.brand)
-            .setNote(material.note)
-            .build()
+              .setId(material.id)
+              .setProductId(material.productId)
+              .setCategoryKey(material.categoryKey)
+              .setCategoryTitle(material.categoryTitle)
+              .setName(material.name)
+              .setBrand(material.brand)
+              .setNote(material.note)
+              .build()
           }
 
           storedTank.toBuilder()
-          .clearMaterials()
-          .addAllMaterials(otherMaterials)
-          .addAllMaterials(updatedCategoryMaterials)
-          .build()
+            .clearMaterials()
+            .addAllMaterials(otherMaterials)
+            .addAllMaterials(updatedCategoryMaterials)
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -412,25 +383,23 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     livestock: SavedAquariumLivestock
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           storedTank.toBuilder()
-          .addLivestock(
-            livestock.toStoredLivestock()
-          )
-          .build()
+            .addLivestock(
+              livestock.toStoredLivestock()
+            )
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -438,13 +407,10 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     livestock: SavedAquariumLivestock
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
-          val updatedLivestock = storedTank.getLivestockList().map {
-            storedLivestock ->
+          val updatedLivestock = storedTank.getLivestockList().map { storedLivestock ->
             if (storedLivestock.id == livestock.id) {
               livestock.toStoredLivestock()
             } else {
@@ -453,18 +419,18 @@ class AquariumTankDataStoreManager(
           }
 
           storedTank.toBuilder()
-          .clearLivestock()
-          .addAllLivestock(updatedLivestock)
-          .build()
+            .clearLivestock()
+            .addAllLivestock(updatedLivestock)
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
 
@@ -472,157 +438,138 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     livestockId: Long
   ) {
-    context.aquariumTanksDataStore.updateData {
-      currentStore ->
-      val updatedTanks = currentStore.getTanksList().map {
-        storedTank ->
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId) {
           val updatedLivestock = storedTank.getLivestockList()
-          .filterNot {
-            storedLivestock ->
-            storedLivestock.id == livestockId
-          }
+            .filterNot { storedLivestock ->
+              storedLivestock.id == livestockId
+            }
 
           storedTank.toBuilder()
-          .clearLivestock()
-          .addAllLivestock(updatedLivestock)
-          .build()
+            .clearLivestock()
+            .addAllLivestock(updatedLivestock)
+            .build()
         } else {
           storedTank
         }
       }
 
       currentStore.toBuilder()
-      .clearTanks()
-      .addAllTanks(updatedTanks)
-      .build()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
     }
   }
-  
-  private fun SavedAquariumTank.toStoredTankForRestore(): StoredTank {
-  return StoredTank.newBuilder()
-    .setId(id)
-    .setName(
-      name.ifBlank {
-        "Unnamed Aquarium"
+
+  suspend fun updateSmartCareEnabled(
+    tankId: Long,
+    enabled: Boolean
+  ) {
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
+        if (storedTank.id == tankId) {
+          storedTank.toBuilder()
+            .setSmartCareDisabled(!enabled)
+            .build()
+        } else {
+          storedTank
+        }
       }
-    )
-    .setDescription(description)
-    .setPhotoUri(photoUri.orEmpty())
-    .setSetupDateMillis(setupDateMillis ?: 0L)
-    .setWidthCm(widthCm)
-    .setLengthCm(lengthCm)
-    .setHeightCm(heightCm)
-    .setSizeUnit(
-      sizeUnit.ifBlank {
-        "cm"
+
+      currentStore.toBuilder()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
+    }
+  }
+
+  suspend fun updateCareRemindersEnabled(
+    tankId: Long,
+    enabled: Boolean
+  ) {
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
+        if (storedTank.id == tankId) {
+          storedTank.toBuilder()
+            .setCareRemindersDisabled(!enabled)
+            .build()
+        } else {
+          storedTank
+        }
       }
-    )
-    .setVolumeUnit(volumeUnit)
-    .setTankType(tankType)
-    .setTankStyle(tankStyle)
-    .setCreatedAtMillis(
-      if (createdAtMillis > 0L) {
-        createdAtMillis
-      } else {
-        System.currentTimeMillis()
-      }
-    )
-    .addAllPlants(
-      plants.map {
-        plant ->
-        StoredPlantTag.newBuilder()
-          .setId(plant.id)
-          .setPlantName(plant.plantName)
-          .setCategory(plant.category)
-          .setMarkerX(plant.markerX)
-          .setMarkerY(plant.markerY)
-          .build()
-      }
-    )
-    .addAllMaterials(
-      materials.map {
-        material ->
-        StoredMaterial.newBuilder()
-          .setId(material.id)
-          .setProductId(material.productId)
-          .setCategoryKey(material.categoryKey)
-          .setCategoryTitle(material.categoryTitle)
-          .setName(material.name)
-          .setBrand(material.brand)
-          .setNote(material.note)
-          .build()
-      }
-    )
-    .addAllLivestock(
-      livestock.map {
-        item ->
-        item.toStoredLivestock()
-      }
-    )
-    .build()
-}
+
+      currentStore.toBuilder()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
+    }
+  }
 
   private fun TankDraft.toStoredTank(
     tankId: Long,
     createdAtMillis: Long
   ): StoredTank {
     return StoredTank.newBuilder()
-    .setId(tankId)
-    .setName(name.ifBlank {
-      "Unnamed Aquarium"
-    })
-    .setDescription(description)
-    .setPhotoUri(photoUri.orEmpty())
-    .setSetupDateMillis(setupDateMillis ?: 0L)
-    .setWidthCm(widthCm)
-    .setLengthCm(lengthCm)
-    .setHeightCm(heightCm)
-    .setSizeUnit(sizeUnit.ifBlank {
-      "cm"
-    })
-    .setVolumeUnit(volumeUnit)
-    .setTankType(tankType)
-    .setTankStyle(tankStyle)
-    .setCreatedAtMillis(createdAtMillis)
-    .addAllPlants(
-      plants.map {
-        plant ->
-        StoredPlantTag.newBuilder()
-        .setId(plant.id)
-        .setPlantName(plant.plantName)
-        .setCategory(plant.category)
-        .setMarkerX(plant.markerX)
-        .setMarkerY(plant.markerY)
-        .build()
-      }
-    )
-    .addAllMaterials(
-      materials.map {
-        material ->
-        StoredMaterial.newBuilder()
-        .setId(material.id)
-        .setProductId(material.productId)
-        .setCategoryKey(material.categoryKey)
-        .setCategoryTitle(material.categoryTitle)
-        .setName(material.name)
-        .setBrand(material.brand)
-        .setNote(material.note)
-        .build()
-      }
-    )
-    .build()
+      .setId(tankId)
+      .setName(
+        name.ifBlank {
+          "Unnamed Aquarium"
+        }
+      )
+      .setDescription(description)
+      .setPhotoUri(photoUri.orEmpty())
+      .setSetupDateMillis(setupDateMillis ?: 0L)
+      .setWidthCm(widthCm)
+      .setLengthCm(lengthCm)
+      .setHeightCm(heightCm)
+      .setSizeUnit(
+        sizeUnit.ifBlank {
+          "cm"
+        }
+      )
+      .setVolumeUnit(volumeUnit)
+      .setTankType(tankType)
+      .setTankStyle(tankStyle)
+      .setCreatedAtMillis(createdAtMillis)
+      .setSmartCareDisabled(false)
+      .setCareRemindersDisabled(false)
+      .addAllPlants(
+        plants.map { plant ->
+          StoredPlantTag.newBuilder()
+            .setId(plant.id)
+            .setPlantName(plant.plantName)
+            .setCategory(plant.category)
+            .setMarkerX(plant.markerX)
+            .setMarkerY(plant.markerY)
+            .build()
+        }
+      )
+      .addAllMaterials(
+        materials.map { material ->
+          StoredMaterial.newBuilder()
+            .setId(material.id)
+            .setProductId(material.productId)
+            .setCategoryKey(material.categoryKey)
+            .setCategoryTitle(material.categoryTitle)
+            .setName(material.name)
+            .setBrand(material.brand)
+            .setNote(material.note)
+            .build()
+        }
+      )
+      .build()
   }
 
   private fun SavedAquariumLivestock.toStoredLivestock(): StoredLivestock {
     return StoredLivestock.newBuilder()
-    .setId(id)
-    .setName(name)
-    .setCategory(category)
-    .setQuantity(quantity.coerceAtLeast(1))
-    .setAddedDateMillis(addedDateMillis ?: 0L)
-    .setNote(note)
-    .build()
+      .setId(id)
+      .setName(name)
+      .setCategory(category)
+      .setQuantity(quantity.coerceAtLeast(1))
+      .setAddedDateMillis(addedDateMillis ?: 0L)
+      .setNote(note)
+      .build()
   }
 
   private fun StoredTank.toSavedAquariumTank(): SavedAquariumTank {
@@ -646,8 +593,9 @@ class AquariumTankDataStoreManager(
       tankType = tankType,
       tankStyle = tankStyle,
       createdAtMillis = createdAtMillis,
-      plants = getPlantsList().map {
-        plant ->
+      smartCareEnabled = !smartCareDisabled,
+      careRemindersEnabled = !careRemindersDisabled,
+      plants = getPlantsList().map { plant ->
         SavedAquariumPlant(
           id = plant.id,
           plantName = plant.plantName,
@@ -656,8 +604,7 @@ class AquariumTankDataStoreManager(
           markerY = plant.markerY
         )
       },
-      materials = getMaterialsList().map {
-        material ->
+      materials = getMaterialsList().map { material ->
         SavedAquariumMaterial(
           id = material.id,
           productId = material.productId,
@@ -668,8 +615,7 @@ class AquariumTankDataStoreManager(
           note = material.note
         )
       },
-      livestock = getLivestockList().map {
-        livestock ->
+      livestock = getLivestockList().map { livestock ->
         SavedAquariumLivestock(
           id = livestock.id,
           name = livestock.name,

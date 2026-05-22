@@ -45,8 +45,7 @@ class AquariumTankViewModel(
     tankIds: List<Long>
   ) {
     val safeTankIds = tankIds
-      .filter {
-        tankId ->
+      .filter { tankId ->
         tankId > 0L
       }
       .distinct()
@@ -55,8 +54,7 @@ class AquariumTankViewModel(
       return
     }
 
-    safeTankIds.forEach {
-      tankId ->
+    safeTankIds.forEach { tankId ->
       careTaskDataStoreManager.deleteTasksForTank(
         tankId = tankId
       )
@@ -203,5 +201,35 @@ class AquariumTankViewModel(
       tankId = tankId,
       livestockId = livestockId
     )
+  }
+
+  suspend fun updateSmartCareEnabled(
+    tankId: Long,
+    enabled: Boolean
+  ) {
+    tankDataStoreManager.updateSmartCareEnabled(
+      tankId = tankId,
+      enabled = enabled
+    )
+  }
+
+  suspend fun updateCareRemindersEnabled(
+    tankId: Long,
+    enabled: Boolean
+  ) {
+    tankDataStoreManager.updateCareRemindersEnabled(
+      tankId = tankId,
+      enabled = enabled
+    )
+
+    if (enabled) {
+      careTaskDataStoreManager.reschedulePendingRemindersForTank(
+        tankId = tankId
+      )
+    } else {
+      careTaskDataStoreManager.cancelPendingRemindersForTank(
+        tankId = tankId
+      )
+    }
   }
 }

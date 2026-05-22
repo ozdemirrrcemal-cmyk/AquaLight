@@ -35,6 +35,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     private var isDeletingTank: Boolean = false
     private var isDuplicatingTank: Boolean = false
     private var isExportingTank: Boolean = false
+    private var isUpdatingSwitchesProgrammatically: Boolean = false
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -61,6 +62,38 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     }
 
     private fun setupClickListeners() {
+        binding.rowSmartCareSuggestions.setOnClickListener {
+            binding.switchSmartCareSuggestions.isChecked =
+                !binding.switchSmartCareSuggestions.isChecked
+        }
+
+        binding.switchSmartCareSuggestions.setOnCheckedChangeListener { _, isChecked ->
+            if (!isUpdatingSwitchesProgrammatically) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    aquariumTankViewModel.updateSmartCareEnabled(
+                        tankId = tankId,
+                        enabled = isChecked
+                    )
+                }
+            }
+        }
+
+        binding.rowCareReminderNotifications.setOnClickListener {
+            binding.switchCareReminderNotifications.isChecked =
+                !binding.switchCareReminderNotifications.isChecked
+        }
+
+        binding.switchCareReminderNotifications.setOnCheckedChangeListener { _, isChecked ->
+            if (!isUpdatingSwitchesProgrammatically) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    aquariumTankViewModel.updateCareRemindersEnabled(
+                        tankId = tankId,
+                        enabled = isChecked
+                    )
+                }
+            }
+        }
+
         binding.rowDuplicateTank.setOnClickListener {
             showDuplicateTankConfirmationDialog()
         }
@@ -99,7 +132,19 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
             }
 
             currentTank = tank
+            updateSwitchesFromTank(tank)
         }
+    }
+
+    private fun updateSwitchesFromTank(
+        tank: SavedAquariumTank
+    ) {
+        isUpdatingSwitchesProgrammatically = true
+
+        binding.switchSmartCareSuggestions.isChecked = tank.smartCareEnabled
+        binding.switchCareReminderNotifications.isChecked = tank.careRemindersEnabled
+
+        isUpdatingSwitchesProgrammatically = false
     }
 
     private fun showDuplicateTankConfirmationDialog() {

@@ -14,6 +14,8 @@ data class SavedAquariumTank(
     val tankType: String,
     val tankStyle: String,
     val createdAtMillis: Long,
+    val smartCareEnabled: Boolean = true,
+    val careRemindersEnabled: Boolean = true,
     val plants: List<SavedAquariumPlant>,
     val materials: List<SavedAquariumMaterial>,
     val livestock: List<SavedAquariumLivestock> = emptyList()

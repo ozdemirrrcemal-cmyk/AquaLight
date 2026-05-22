@@ -7,25 +7,26 @@ import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.care.CareTasksStore
 import com.aqua.aqualight.data.care.StoredCareTask
+import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTask
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
+import com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskReminderScheduler
+import com.aqua.aqualight.ui.tabs.maintenance.smartcare.SmartCareGeneratedTask
+import com.aqua.aqualight.ui.tabs.maintenance.smartcare.SmartCareTaskType
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
-import com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskReminderScheduler
-import com.aqua.aqualight.ui.tabs.maintenance.smartcare.SmartCareGeneratedTask
-import com.aqua.aqualight.ui.tabs.maintenance.smartcare.SmartCareTaskType
-import kotlinx.coroutines.flow.first
 
 private object CareTasksSerializer : Serializer<CareTasksStore> {
 
   override val defaultValue: CareTasksStore = CareTasksStore
-  .getDefaultInstance()
+    .getDefaultInstance()
 
   override suspend fun readFrom(
     input: InputStream
@@ -57,67 +58,62 @@ class CareTaskDataStoreManager private constructor(
   private val context: Context
 ) {
 
+  private val tankDataStoreManager = AquariumTankDataStoreManager(
+    context
+  )
+
+  private val userPreferencesManager = UserPreferencesManager.create(
+    context
+  )
+
   val tasksFlow: Flow<List<CareTask>> =
-  context.careTasksDataStore.data.map {
-    store ->
-    store.tasksList.map {
-      storedTask ->
-      storedTask.toCareTask()
+    context.careTasksDataStore.data.map { store ->
+      store.tasksList.map { storedTask ->
+        storedTask.toCareTask()
+      }
     }
-  }
 
   val pendingTasksFlow: Flow<List<CareTask>> =
-  tasksFlow.map {
-    tasks ->
-    tasks
-    .filter {
-      task ->
-      task.status == CareTaskStatus.PENDING
+    tasksFlow.map { tasks ->
+      tasks
+        .filter { task ->
+          task.status == CareTaskStatus.PENDING
+        }
+        .sortedBy { task ->
+          task.dueAtMillis
+        }
     }
-    .sortedBy {
-      task ->
-      task.dueAtMillis
-    }
-  }
 
   val historyTasksFlow: Flow<List<CareTask>> =
-  tasksFlow.map {
-    tasks ->
-    tasks
-    .filter {
-      task ->
-      task.status == CareTaskStatus.COMPLETED
+    tasksFlow.map { tasks ->
+      tasks
+        .filter { task ->
+          task.status == CareTaskStatus.COMPLETED
+        }
+        .sortedByDescending { task ->
+          task.completedAtMillis ?: 0L
+        }
     }
-    .sortedByDescending {
-      task ->
-      task.completedAtMillis ?: 0L
-    }
-  }
 
   fun tasksForTankFlow(
     tankId: Long
   ): Flow<List<CareTask>> {
-    return tasksFlow.map {
-      tasks ->
+    return tasksFlow.map { tasks ->
       tasks
-      .filter {
-        task ->
-        task.tankId == tankId
-      }
-      .sortedBy {
-        task ->
-        task.dueAtMillis
-      }
+        .filter { task ->
+          task.tankId == tankId
+        }
+        .sortedBy { task ->
+          task.dueAtMillis
+        }
     }
   }
 
   fun taskFlow(
     taskId: Long
   ): Flow<CareTask?> {
-    return tasksFlow.map {
-      tasks ->
-      tasks.firstOrNull {
-        task ->
+    return tasksFlow.map { tasks ->
+      tasks.firstOrNull { task ->
         task.id == taskId
       }
     }
@@ -126,17 +122,13 @@ class CareTaskDataStoreManager private constructor(
   suspend fun addTask(
     task: CareTask
   ) {
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       currentStore.toBuilder()
-      .addTasks(task.toStoredCareTask())
-      .build()
+        .addTasks(task.toStoredCareTask())
+        .build()
     }
 
-    CareTaskReminderScheduler.schedule(
-      context = context,
-      task = task
-    )
+    scheduleTaskReminderIfAllowed(task)
   }
 
   suspend fun addManualTask(
@@ -189,8 +181,7 @@ class CareTaskDataStoreManager private constructor(
     waterChangePercent: Int?,
     note: String
   ) {
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       val now = System.currentTimeMillis()
 
       val safeCompletedAtMillis = if (completedAtMillis > 0L) {
@@ -228,35 +219,40 @@ class CareTaskDataStoreManager private constructor(
       )
 
       currentStore.toBuilder()
-      .addTasks(task.toStoredCareTask())
-      .build()
+        .addTasks(task.toStoredCareTask())
+        .build()
     }
   }
 
   suspend fun addOrUpdateAutomaticTask(
     task: CareTask
   ) {
+    if (
+      task.source == CareTaskSource.AUTOMATIC &&
+      !isSmartCareEnabledForTank(task.tankId)
+    ) {
+      return
+    }
+
     var taskToSchedule: CareTask? = null
 
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       val currentTasks = currentStore.tasksList
 
-      val existingPendingAutoTask = currentTasks.firstOrNull {
-        storedTask ->
+      val existingPendingAutoTask = currentTasks.firstOrNull { storedTask ->
         storedTask.tankId == task.tankId &&
-        storedTask.source == CareTaskSource.AUTOMATIC.name &&
-        storedTask.status == CareTaskStatus.PENDING.name &&
-        storedTask.generatedRuleKey == task.generatedRuleKey &&
-        task.generatedRuleKey.isNotBlank()
+          storedTask.source == CareTaskSource.AUTOMATIC.name &&
+          storedTask.status == CareTaskStatus.PENDING.name &&
+          storedTask.generatedRuleKey == task.generatedRuleKey &&
+          task.generatedRuleKey.isNotBlank()
       }
 
       if (existingPendingAutoTask == null) {
         taskToSchedule = task
 
         currentStore.toBuilder()
-        .addTasks(task.toStoredCareTask())
-        .build()
+          .addTasks(task.toStoredCareTask())
+          .build()
       } else {
         val existingTask = existingPendingAutoTask.toCareTask()
 
@@ -270,8 +266,7 @@ class CareTaskDataStoreManager private constructor(
 
         taskToSchedule = updatedTask
 
-        val updatedTasks = currentTasks.map {
-          storedTask ->
+        val updatedTasks = currentTasks.map { storedTask ->
           if (storedTask.id == existingTask.id) {
             updatedTask.toStoredCareTask()
           } else {
@@ -280,32 +275,31 @@ class CareTaskDataStoreManager private constructor(
         }
 
         currentStore.toBuilder()
-        .clearTasks()
-        .addAllTasks(updatedTasks)
-        .build()
+          .clearTasks()
+          .addAllTasks(updatedTasks)
+          .build()
       }
     }
 
-    taskToSchedule?.let {
-      scheduledTask ->
-      CareTaskReminderScheduler.schedule(
-        context = context,
-        task = scheduledTask
-      )
+    taskToSchedule?.let { scheduledTask ->
+      scheduleTaskReminderIfAllowed(scheduledTask)
     }
   }
 
   suspend fun syncAutomaticTasks(
     generatedTasks: List<SmartCareGeneratedTask>
   ) {
-    if (generatedTasks.isEmpty()) {
+    val allowedGeneratedTasks = filterGeneratedTasksBySmartCareSettings(
+      generatedTasks = generatedTasks
+    )
+
+    if (allowedGeneratedTasks.isEmpty()) {
       return
     }
 
     val tasksToSchedule = mutableListOf<CareTask>()
 
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       tasksToSchedule.clear()
 
       val now = System.currentTimeMillis()
@@ -315,18 +309,15 @@ class CareTaskDataStoreManager private constructor(
         currentTasks = updatedTasks
       )
 
-      generatedTasks.forEach {
-        generatedTask ->
-
+      allowedGeneratedTasks.forEach { generatedTask ->
         if (generatedTask.id.isBlank()) {
           return@forEach
         }
 
-        val existingExactIndex = updatedTasks.indexOfFirst {
-          storedTask ->
+        val existingExactIndex = updatedTasks.indexOfFirst { storedTask ->
           storedTask.tankId == generatedTask.tankId &&
-          storedTask.source == CareTaskSource.AUTOMATIC.name &&
-          storedTask.generatedRuleKey == generatedTask.id
+            storedTask.source == CareTaskSource.AUTOMATIC.name &&
+            storedTask.generatedRuleKey == generatedTask.id
         }
 
         if (existingExactIndex >= 0) {
@@ -358,17 +349,16 @@ class CareTaskDataStoreManager private constructor(
           ruleId = generatedTask.ruleId
         )
 
-        val existingSameRuleIndex = updatedTasks.indexOfFirst {
-          storedTask ->
+        val existingSameRuleIndex = updatedTasks.indexOfFirst { storedTask ->
           storedTask.tankId == generatedTask.tankId &&
-          storedTask.source == CareTaskSource.AUTOMATIC.name &&
-          storedTask.status == CareTaskStatus.PENDING.name &&
-          storedTask.generatedRuleKey.startsWith(rulePrefix)
+            storedTask.source == CareTaskSource.AUTOMATIC.name &&
+            storedTask.status == CareTaskStatus.PENDING.name &&
+            storedTask.generatedRuleKey.startsWith(rulePrefix)
         }
 
         if (existingSameRuleIndex >= 0) {
           val existingSameRuleTask =
-          updatedTasks[existingSameRuleIndex].toCareTask()
+            updatedTasks[existingSameRuleIndex].toCareTask()
 
           tasksToSchedule.add(existingSameRuleTask)
 
@@ -391,23 +381,18 @@ class CareTaskDataStoreManager private constructor(
       }
 
       currentStore.toBuilder()
-      .clearTasks()
-      .addAllTasks(updatedTasks)
-      .build()
+        .clearTasks()
+        .addAllTasks(updatedTasks)
+        .build()
     }
 
     tasksToSchedule
-    .distinctBy {
-      task ->
-      task.id
-    }
-    .forEach {
-      task ->
-      CareTaskReminderScheduler.schedule(
-        context = context,
-        task = task
-      )
-    }
+      .distinctBy { task ->
+        task.id
+      }
+      .forEach { task ->
+        scheduleTaskReminderIfAllowed(task)
+      }
   }
 
   suspend fun updateTask(
@@ -417,10 +402,8 @@ class CareTaskDataStoreManager private constructor(
       updatedAtMillis = System.currentTimeMillis()
     )
 
-    context.careTasksDataStore.updateData {
-      currentStore ->
-      val updatedTasks = currentStore.tasksList.map {
-        storedTask ->
+    context.careTasksDataStore.updateData { currentStore ->
+      val updatedTasks = currentStore.tasksList.map { storedTask ->
         if (storedTask.id == task.id) {
           updatedTask.toStoredCareTask()
         } else {
@@ -429,15 +412,12 @@ class CareTaskDataStoreManager private constructor(
       }
 
       currentStore.toBuilder()
-      .clearTasks()
-      .addAllTasks(updatedTasks)
-      .build()
+        .clearTasks()
+        .addAllTasks(updatedTasks)
+        .build()
     }
 
-    CareTaskReminderScheduler.schedule(
-      context = context,
-      task = updatedTask
-    )
+    scheduleTaskReminderIfAllowed(updatedTask)
   }
 
   suspend fun updateManualTask(
@@ -457,16 +437,14 @@ class CareTaskDataStoreManager private constructor(
   ) {
     var taskToSchedule: CareTask? = null
 
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       val currentTasks = currentStore.tasksList
 
       val currentTask = currentTasks
-      .firstOrNull {
-        storedTask ->
-        storedTask.id == taskId
-      }
-      ?.toCareTask()
+        .firstOrNull { storedTask ->
+          storedTask.id == taskId
+        }
+        ?.toCareTask()
 
       if (
         currentTask == null ||
@@ -499,8 +477,7 @@ class CareTaskDataStoreManager private constructor(
 
       taskToSchedule = updatedTask
 
-      val updatedTasks = currentTasks.map {
-        storedTask ->
+      val updatedTasks = currentTasks.map { storedTask ->
         if (storedTask.id == taskId) {
           updatedTask.toStoredCareTask()
         } else {
@@ -509,17 +486,13 @@ class CareTaskDataStoreManager private constructor(
       }
 
       currentStore.toBuilder()
-      .clearTasks()
-      .addAllTasks(updatedTasks)
-      .build()
+        .clearTasks()
+        .addAllTasks(updatedTasks)
+        .build()
     }
 
-    taskToSchedule?.let {
-      scheduledTask ->
-      CareTaskReminderScheduler.schedule(
-        context = context,
-        task = scheduledTask
-      )
+    taskToSchedule?.let { scheduledTask ->
+      scheduleTaskReminderIfAllowed(scheduledTask)
     }
   }
 
@@ -529,17 +502,15 @@ class CareTaskDataStoreManager private constructor(
     var completedTaskId: Long? = null
     var nextTaskToSchedule: CareTask? = null
 
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       val now = System.currentTimeMillis()
       val currentTasks = currentStore.tasksList
 
       val targetTask = currentTasks
-      .firstOrNull {
-        storedTask ->
-        storedTask.id == taskId
-      }
-      ?.toCareTask()
+        .firstOrNull { storedTask ->
+          storedTask.id == taskId
+        }
+        ?.toCareTask()
 
       if (targetTask == null) {
         return@updateData currentStore
@@ -553,8 +524,7 @@ class CareTaskDataStoreManager private constructor(
         updatedAtMillis = now
       )
 
-      val updatedTasks = currentTasks.map {
-        storedTask ->
+      val updatedTasks = currentTasks.map { storedTask ->
         if (storedTask.id == taskId) {
           completedTask.toStoredCareTask()
         } else {
@@ -589,25 +559,20 @@ class CareTaskDataStoreManager private constructor(
       }
 
       currentStore.toBuilder()
-      .clearTasks()
-      .addAllTasks(updatedTasks)
-      .build()
+        .clearTasks()
+        .addAllTasks(updatedTasks)
+        .build()
     }
 
-    completedTaskId?.let {
-      id ->
+    completedTaskId?.let { id ->
       CareTaskReminderScheduler.cancel(
         context = context,
         taskId = id
       )
     }
 
-    nextTaskToSchedule?.let {
-      nextTask ->
-      CareTaskReminderScheduler.schedule(
-        context = context,
-        task = nextTask
-      )
+    nextTaskToSchedule?.let { nextTask ->
+      scheduleTaskReminderIfAllowed(nextTask)
     }
   }
 
@@ -615,14 +580,11 @@ class CareTaskDataStoreManager private constructor(
     taskId: Long,
     completedAtMillis: Long
   ) {
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       val currentTasks = currentStore.tasksList
       val now = System.currentTimeMillis()
 
-      val updatedTasks = currentTasks.map {
-        storedTask ->
-
+      val updatedTasks = currentTasks.map { storedTask ->
         if (storedTask.id != taskId) {
           storedTask
         } else {
@@ -641,9 +603,9 @@ class CareTaskDataStoreManager private constructor(
       }
 
       currentStore.toBuilder()
-      .clearTasks()
-      .addAllTasks(updatedTasks)
-      .build()
+        .clearTasks()
+        .addAllTasks(updatedTasks)
+        .build()
     }
   }
 
@@ -652,14 +614,12 @@ class CareTaskDataStoreManager private constructor(
   ) {
     var deletedTaskId: Long? = null
 
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       val targetTask = currentStore.tasksList
-      .firstOrNull {
-        storedTask ->
-        storedTask.id == taskId
-      }
-      ?.toCareTask()
+        .firstOrNull { storedTask ->
+          storedTask.id == taskId
+        }
+        ?.toCareTask()
 
       if (
         targetTask == null ||
@@ -670,19 +630,17 @@ class CareTaskDataStoreManager private constructor(
 
       deletedTaskId = targetTask.id
 
-      val updatedTasks = currentStore.tasksList.filterNot {
-        storedTask ->
+      val updatedTasks = currentStore.tasksList.filterNot { storedTask ->
         storedTask.id == taskId
       }
 
       currentStore.toBuilder()
-      .clearTasks()
-      .addAllTasks(updatedTasks)
-      .build()
+        .clearTasks()
+        .addAllTasks(updatedTasks)
+        .build()
     }
 
-    deletedTaskId?.let {
-      id ->
+    deletedTaskId?.let { id ->
       CareTaskReminderScheduler.cancel(
         context = context,
         taskId = id
@@ -695,10 +653,8 @@ class CareTaskDataStoreManager private constructor(
   ) {
     var deletedTaskId: Long? = null
 
-    context.careTasksDataStore.updateData {
-      currentStore ->
-      val exists = currentStore.tasksList.any {
-        storedTask ->
+    context.careTasksDataStore.updateData { currentStore ->
+      val exists = currentStore.tasksList.any { storedTask ->
         storedTask.id == taskId
       }
 
@@ -708,19 +664,17 @@ class CareTaskDataStoreManager private constructor(
 
       deletedTaskId = taskId
 
-      val updatedTasks = currentStore.tasksList.filterNot {
-        storedTask ->
+      val updatedTasks = currentStore.tasksList.filterNot { storedTask ->
         storedTask.id == taskId
       }
 
       currentStore.toBuilder()
-      .clearTasks()
-      .addAllTasks(updatedTasks)
-      .build()
+        .clearTasks()
+        .addAllTasks(updatedTasks)
+        .build()
     }
 
-    deletedTaskId?.let {
-      id ->
+    deletedTaskId?.let { id ->
       CareTaskReminderScheduler.cancel(
         context = context,
         taskId = id
@@ -733,12 +687,10 @@ class CareTaskDataStoreManager private constructor(
   ) {
     val deletedTaskIds = mutableListOf<Long>()
 
-    context.careTasksDataStore.updateData {
-      currentStore ->
+    context.careTasksDataStore.updateData { currentStore ->
       deletedTaskIds.clear()
 
-      currentStore.tasksList.forEach {
-        storedTask ->
+      currentStore.tasksList.forEach { storedTask ->
         if (storedTask.tankId == tankId) {
           deletedTaskIds.add(storedTask.id)
         }
@@ -748,26 +700,133 @@ class CareTaskDataStoreManager private constructor(
         return@updateData currentStore
       }
 
-      val updatedTasks = currentStore.tasksList.filterNot {
-        storedTask ->
+      val updatedTasks = currentStore.tasksList.filterNot { storedTask ->
         storedTask.tankId == tankId
       }
 
       currentStore.toBuilder()
-      .clearTasks()
-      .addAllTasks(updatedTasks)
-      .build()
+        .clearTasks()
+        .addAllTasks(updatedTasks)
+        .build()
     }
 
-    deletedTaskIds.forEach {
-      taskId ->
+    deletedTaskIds.forEach { taskId ->
       CareTaskReminderScheduler.cancel(
         context = context,
         taskId = taskId
       )
     }
   }
-  
+
+  suspend fun cancelPendingRemindersForTank(
+    tankId: Long
+  ) {
+    val pendingTasks = pendingTasksFlow.first()
+      .filter { task ->
+        task.tankId == tankId
+      }
+
+    pendingTasks.forEach { task ->
+      CareTaskReminderScheduler.cancel(
+        context = context,
+        taskId = task.id
+      )
+    }
+  }
+
+  suspend fun reschedulePendingRemindersForTank(
+    tankId: Long
+  ) {
+    val pendingTasks = pendingTasksFlow.first()
+      .filter { task ->
+        task.tankId == tankId
+      }
+
+    pendingTasks.forEach { task ->
+      scheduleTaskReminderIfAllowed(task)
+    }
+  }
+
+  private suspend fun scheduleTaskReminderIfAllowed(
+    task: CareTask
+  ) {
+    CareTaskReminderScheduler.cancel(
+      context = context,
+      taskId = task.id
+    )
+
+    if (!shouldScheduleTaskReminder(task)) {
+      return
+    }
+
+    CareTaskReminderScheduler.schedule(
+      context = context,
+      task = task
+    )
+  }
+
+  private suspend fun shouldScheduleTaskReminder(
+    task: CareTask
+  ): Boolean {
+    if (task.status != CareTaskStatus.PENDING) {
+      return false
+    }
+
+    if (!task.reminderEnabled) {
+      return false
+    }
+
+    if (task.tankId <= 0L) {
+      return false
+    }
+
+    val globalNotificationsEnabled =
+      userPreferencesManager.notificationsEnabled.first()
+
+    if (!globalNotificationsEnabled) {
+      return false
+    }
+
+    val tank = tankDataStoreManager.tanksFlow.first()
+      .firstOrNull { savedTank ->
+        savedTank.id == task.tankId
+      } ?: return false
+
+    return tank.careRemindersEnabled
+  }
+
+  private suspend fun isSmartCareEnabledForTank(
+    tankId: Long
+  ): Boolean {
+    if (tankId <= 0L) {
+      return false
+    }
+
+    val tank = tankDataStoreManager.tanksFlow.first()
+      .firstOrNull { savedTank ->
+        savedTank.id == tankId
+      } ?: return false
+
+    return tank.smartCareEnabled
+  }
+
+  private suspend fun filterGeneratedTasksBySmartCareSettings(
+    generatedTasks: List<SmartCareGeneratedTask>
+  ): List<SmartCareGeneratedTask> {
+    if (generatedTasks.isEmpty()) {
+      return emptyList()
+    }
+
+    val tanksById = tankDataStoreManager.tanksFlow.first()
+      .associateBy { tank ->
+        tank.id
+      }
+
+    return generatedTasks.filter { generatedTask ->
+      tanksById[generatedTask.tankId]?.smartCareEnabled == true
+    }
+  }
+
   private fun StoredCareTask.toCareTask(): CareTask {
     return CareTask(
       id = id,
@@ -778,8 +837,7 @@ class CareTaskDataStoreManager private constructor(
       source = parseCareTaskSource(source),
       status = parseCareTaskStatus(status),
       dueAtMillis = dueAtMillis,
-      completedAtMillis = completedAtMillis.takeIf {
-        value ->
+      completedAtMillis = completedAtMillis.takeIf { value ->
         value > 0L
       },
       repeatEnabled = repeatEnabled,
@@ -787,8 +845,7 @@ class CareTaskDataStoreManager private constructor(
       reminderEnabled = reminderEnabled,
       missedReminderEnabled = missedReminderEnabled,
       missedReminderDays = missedReminderDays.coerceAtLeast(1),
-      waterChangePercent = waterChangePercent.takeIf {
-        value ->
+      waterChangePercent = waterChangePercent.takeIf { value ->
         value > 0
       },
       note = note,
@@ -800,26 +857,26 @@ class CareTaskDataStoreManager private constructor(
 
   private fun CareTask.toStoredCareTask(): StoredCareTask {
     return StoredCareTask.newBuilder()
-    .setId(id)
-    .setTankId(tankId)
-    .setTitle(title)
-    .setDescription(description)
-    .setType(type.name)
-    .setSource(source.name)
-    .setStatus(status.name)
-    .setDueAtMillis(dueAtMillis)
-    .setCompletedAtMillis(completedAtMillis ?: 0L)
-    .setRepeatEnabled(repeatEnabled)
-    .setRepeatIntervalDays(repeatIntervalDays.coerceAtLeast(1))
-    .setReminderEnabled(reminderEnabled)
-    .setMissedReminderEnabled(missedReminderEnabled)
-    .setMissedReminderDays(missedReminderDays.coerceAtLeast(1))
-    .setWaterChangePercent(waterChangePercent ?: 0)
-    .setNote(note)
-    .setGeneratedRuleKey(generatedRuleKey)
-    .setCreatedAtMillis(createdAtMillis)
-    .setUpdatedAtMillis(updatedAtMillis)
-    .build()
+      .setId(id)
+      .setTankId(tankId)
+      .setTitle(title)
+      .setDescription(description)
+      .setType(type.name)
+      .setSource(source.name)
+      .setStatus(status.name)
+      .setDueAtMillis(dueAtMillis)
+      .setCompletedAtMillis(completedAtMillis ?: 0L)
+      .setRepeatEnabled(repeatEnabled)
+      .setRepeatIntervalDays(repeatIntervalDays.coerceAtLeast(1))
+      .setReminderEnabled(reminderEnabled)
+      .setMissedReminderEnabled(missedReminderEnabled)
+      .setMissedReminderDays(missedReminderDays.coerceAtLeast(1))
+      .setWaterChangePercent(waterChangePercent ?: 0)
+      .setNote(note)
+      .setGeneratedRuleKey(generatedRuleKey)
+      .setCreatedAtMillis(createdAtMillis)
+      .setUpdatedAtMillis(updatedAtMillis)
+      .build()
   }
 
   private fun parseCareTaskType(
@@ -909,8 +966,7 @@ class CareTaskDataStoreManager private constructor(
   ): Long {
     val now = System.currentTimeMillis()
 
-    val maxExistingId = currentTasks.maxOfOrNull {
-      task ->
+    val maxExistingId = currentTasks.maxOfOrNull { task ->
       task.id
     } ?: 0L
 
