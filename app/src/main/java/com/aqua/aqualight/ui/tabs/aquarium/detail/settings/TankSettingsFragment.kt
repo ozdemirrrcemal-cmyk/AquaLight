@@ -71,7 +71,21 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private fun restoreSelectedTab(
         savedInstanceState: Bundle?
     ): SettingsTab {
-        val savedTab = savedInstanceState
+        val navSavedTab = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.get<String>(KEY_SELECTED_TAB)
+            ?.let { tabName ->
+                runCatching {
+                    SettingsTab.valueOf(tabName)
+                }.getOrNull()
+            }
+
+        if (navSavedTab != null) {
+            return navSavedTab
+        }
+
+        val instanceSavedTab = savedInstanceState
             ?.getString(KEY_SELECTED_TAB)
             ?.let { tabName ->
                 runCatching {
@@ -79,7 +93,19 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 }.getOrNull()
             }
 
-        return savedTab ?: getInitialTab()
+        return instanceSavedTab ?: getInitialTab()
+    }
+
+    private fun saveSelectedTabState(
+        tab: SettingsTab
+    ) {
+        findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                KEY_SELECTED_TAB,
+                tab.name
+            )
     }
 
     private fun setupClickListeners() {
@@ -197,6 +223,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         tab: SettingsTab
     ) {
         selectedTab = tab
+        saveSelectedTabState(tab)
 
         resetTabs()
         activateTab(tabViewFor(tab))
@@ -548,6 +575,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         val navController = findNavController()
         val previousEntry = navController.previousBackStackEntry
 
+        saveSelectedTabState(selectedTab)
+
         if (previousEntry?.destination?.id == R.id.tankDetailFragment) {
             previousEntry.savedStateHandle.set(
                 TankDetailFragment.KEY_CARE_PROFILE_ACTION,
@@ -579,6 +608,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         categoryKey: String,
         categoryTitle: String
     ) {
+        selectTab(SettingsTab.DETAILS)
+
         navigateFromTankSettings(
             actionId = R.id.action_tankSettingsFragment_to_materialPickerFragment,
             args = Bundle().apply {
@@ -611,6 +642,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         if (navController.currentDestination?.id != R.id.tankSettingsFragment) {
             return
         }
+
+        saveSelectedTabState(selectedTab)
 
         navController.navigate(
             actionId,
