@@ -23,6 +23,9 @@ message StoredTank {
   int64 createdAtMillis = 12;
   string sizeUnit = 13;
 
+  bool smartCareDisabled = 14;
+  bool careRemindersDisabled = 15;
+
   repeated StoredPlantTag plants = 20;
   repeated StoredMaterial materials = 30;
   repeated StoredLivestock livestock = 40;

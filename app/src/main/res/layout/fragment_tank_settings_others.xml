@@ -22,10 +22,148 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/tvDataManagementTitle"
+            android:id="@+id/tvAutomationRemindersTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:includeFontPadding="false"
+            android:text="Automation &amp; Reminders"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/rowSmartCareSuggestions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#10233A"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#223A57"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="78dp"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:paddingEnd="12dp">
+
+                    <TextView
+                        android:id="@+id/tvSmartCareSuggestionsTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:text="Smart Care Suggestions"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvSmartCareSuggestionsSubtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:includeFontPadding="false"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Automatically create smart care tasks for this tank."
+                        android:textColor="#8FA4BE"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchSmartCareSuggestions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/rowCareReminderNotifications"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#10233A"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#223A57"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="78dp"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:paddingEnd="12dp">
+
+                    <TextView
+                        android:id="@+id/tvCareReminderNotificationsTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:text="Care Reminder Notifications"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvCareReminderNotificationsSubtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:includeFontPadding="false"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Send reminder notifications for this tank's care tasks."
+                        android:textColor="#8FA4BE"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchCareReminderNotifications"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvDataManagementTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
             android:includeFontPadding="false"
             android:text="Data Management"
             android:textColor="?attr/colorOnSurface"
