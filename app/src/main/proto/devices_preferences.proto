@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.devices";
+option java_multiple_files = true;
+
+message DevicesPreferences {
+  repeated SavedDeviceInfo devices = 1;
+}
+
+message SavedDeviceInfo {
+  int64 id = 1;
+  string aquaName = 2;
+  string name = 3;
+  string ip = 4;
+  string serial = 5;
+  int64 lastSeenMillis = 6;
+  string firmwareBuild = 7;
+  int64 tankId = 8;
+}
