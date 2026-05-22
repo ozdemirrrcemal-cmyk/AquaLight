@@ -244,7 +244,11 @@ private fun selectTab(
         SettingsTab.DETAILS -> {
             activateTab(binding.tabDetails)
             moveTabUnderline(binding.tabDetails)
-            binding.detailsSection.isVisible = true
+
+            binding.contentScrollView.isVisible = false
+            binding.detailsFragmentContainer.isVisible = true
+
+            showDetailsFragmentIfNeeded()
         }
 
         SettingsTab.OTHERS -> {
@@ -373,6 +377,7 @@ private fun resetTabs() {
 
     binding.contentScrollView.isVisible = true
     binding.basicFragmentContainer.isVisible = false
+    binding.detailsFragmentContainer.isVisible = false
 
     binding.detailsSection.isVisible = false
     binding.othersSection.isVisible = false
@@ -1220,6 +1225,30 @@ private fun getBasicFragment(): TankSettingsBasicFragment? {
     ) as? TankSettingsBasicFragment
 }
 
+private fun showDetailsFragmentIfNeeded() {
+    binding.detailsFragmentContainer.isVisible = true
+
+    val existingFragment = getDetailsFragment()
+
+    if (existingFragment != null) {
+        return
+    }
+
+    childFragmentManager.beginTransaction()
+    .replace(
+        R.id.detailsFragmentContainer,
+        TankSettingsDetailsFragment.newInstance(tankId),
+        TAG_DETAILS_FRAGMENT
+    )
+    .commit()
+}
+
+private fun getDetailsFragment(): TankSettingsDetailsFragment? {
+    return childFragmentManager.findFragmentByTag(
+        TAG_DETAILS_FRAGMENT
+    ) as? TankSettingsDetailsFragment
+}
+
 private fun showDeleteTankConfirmationDialog() {
     val tank = currentTank ?: return
 
@@ -1323,5 +1352,6 @@ private enum class SettingsTab {
 companion object {
     private const val ARG_TANK_ID = "tankId"
     private const val TAG_BASIC_FRAGMENT = "TankSettingsBasicFragment"
+    private const val TAG_DETAILS_FRAGMENT = "TankSettingsDetailsFragment"
 }
 }
