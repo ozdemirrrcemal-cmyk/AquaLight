@@ -9,6 +9,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
+import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
@@ -74,12 +76,13 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             showScanningState()
 
             try {
-                val devices = withTimeout(
+                val scanResult = withTimeout(
                     SCAN_TIMEOUT_MS + 1000L
                 ) {
-                    discoverDevices(
+                    DeviceDiscoveryService.scan(
                         context = requireContext(),
-                        timeoutMs = SCAN_TIMEOUT_MS
+                        timeoutMs = SCAN_TIMEOUT_MS,
+                        reason = DeviceScanReason.MANUAL_SCAN
                     )
                 }
 
@@ -87,15 +90,14 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                     return@launch
                 }
 
-                val validDevices = devices
-                    .filter { device ->
-                        isValidDevice(device)
-                    }
-                    .distinctBy { device ->
-                        device.id
-                    }
+                if (scanResult.error != null) {
+                    showErrorState()
+                    return@launch
+                }
 
-                showResultState(validDevices)
+                showResultState(
+                    devices = scanResult.devices
+                )
             } catch (exception: TimeoutCancellationException) {
                 exception.printStackTrace()
 
@@ -244,6 +246,16 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 )
 
                 if (alreadyExists) {
+                    devicesStore.updateDevicesLastSeen(
+                        discovered = listOf(
+                            DevicesDataStoreManager.DeviceLastSeenUpdate(
+                                id = device.id,
+                                ip = device.ip,
+                                firmwareBuild = device.firmwareBuild.orEmpty()
+                            )
+                        )
+                    )
+
                     Toast.makeText(
                         requireContext(),
                         getString(R.string.device_scan_already_added),

@@ -13,13 +13,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
@@ -43,6 +44,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         _binding = FragmentDevicesBinding.bind(view)
         devicesStore = DevicesDataStoreManager.create(requireContext())
+
+        DevicePresenceMonitor.start(
+            context = requireContext()
+        )
 
         setupRecyclerView()
         setupClickListeners()
@@ -87,7 +92,15 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun observeDevicesList() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                devicesStore.devicesFlow.collect { devices ->
+                combine(
+                    devicesStore.devicesFlow,
+                    DevicePresenceMonitor.statuses
+                ) { devices, statuses ->
+                    devices to statuses
+                }.collect { pair ->
+                    val devices = pair.first
+                    val statuses = pair.second
+
                     if (devices.isEmpty()) {
                         exitSelectionMode()
 
@@ -104,8 +117,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     val now = System.currentTimeMillis()
 
                     val uiList = devices.map { device ->
-                        val online = device.lastSeenMillis != 0L &&
-                            now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+                        val presenceState = statuses[device.id]
+
+                        val online = presenceState?.isOnline ?: (
+                            device.lastSeenMillis > 0L &&
+                                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+                            )
 
                         DeviceCardUi(
                             id = device.id,
@@ -113,7 +130,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                                 "Device"
                             },
                             aquaName = device.aquaName,
-                            ip = device.ip,
+                            ip = presenceState?.ip ?: device.ip,
                             serial = device.serial,
                             firmwareBuild = device.firmwareBuild,
                             isOnline = online,
@@ -130,36 +147,20 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun openDeviceMenu(
         device: DeviceCardUi
     ) {
-        if (!device.isOnline) {
-            DialogManager.showInfoDialog(
-                context = requireContext(),
-                type = DialogType.WARNING,
-                title = getString(R.string.device_offline_title),
-                message = getString(R.string.device_offline_message)
-            )
-            return
-        }
-
         viewLifecycleOwner.lifecycleScope.launch {
             showGlobalLoading(true)
 
-            val isActuallyOnline = try {
-                withTimeoutOrNull(LIVE_CHECK_TIMEOUT_MS + 500L) {
-                    val discovered = discoverDevices(
-                        context = requireContext(),
-                        timeoutMs = LIVE_CHECK_TIMEOUT_MS
-                    )
-
-                    discovered.any { discoveredDevice ->
-                        discoveredDevice.id == device.id ||
-                            discoveredDevice.ip == device.ip
-                    }
-                } ?: false
+            val status = try {
+                DevicePresenceMonitor.checkDeviceNow(
+                    context = requireContext(),
+                    deviceId = device.id,
+                    knownIp = device.ip
+                )
             } finally {
                 showGlobalLoading(false)
             }
 
-            if (!isActuallyOnline) {
+            if (status?.isOnline != true) {
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.WARNING,
@@ -173,7 +174,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 putLong("deviceId", device.id)
                 putString("deviceName", device.name)
                 putString("deviceAquaName", device.aquaName)
-                putString("deviceIp", device.ip)
+                putString("deviceIp", status.ip)
                 putString("deviceSerial", device.serial)
                 putBoolean("deviceOnline", true)
             }
@@ -340,7 +341,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private companion object {
-        const val ONLINE_TIMEOUT_MS = 60_000L
-        const val LIVE_CHECK_TIMEOUT_MS = 800L
+        const val ONLINE_TIMEOUT_MS = 90_000L
     }
 }

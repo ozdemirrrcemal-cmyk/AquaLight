@@ -73,7 +73,8 @@ class MainActivity : BaseActivity() {
 
         setupBottomBar(navController)
 
-        navController.currentDestination?.let { destination ->
+        navController.currentDestination?.let {
+            destination ->
             binding.bottomNav.isVisible = isInAppDest(destination.id)
         }
 
@@ -134,8 +135,17 @@ class MainActivity : BaseActivity() {
     ) {
         binding.bottomNav.setupWithNavController(navController)
 
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.bottomNav.isVisible = isInAppDest(destination.id)
+        navController.addOnDestinationChangedListener {
+            _, destination, _ ->
+            val inAppDestination = isInAppDest(destination.id)
+
+            binding.bottomNav.isVisible = inAppDestination
+
+            if (inAppDestination) {
+                LanMonitor.start(
+                    context = applicationContext
+                )
+            }
         }
     }
 }
