@@ -245,8 +245,13 @@ private fun selectTab(
         SettingsTab.OTHERS -> {
             activateTab(binding.tabOthers)
             moveTabUnderline(binding.tabOthers)
-            binding.othersSection.isVisible = true
+
+            binding.contentScrollView.isVisible = false
+            binding.othersFragmentContainer.isVisible = true
+
+            showOthersFragmentIfNeeded()
         }
+
     }
 
     binding.contentScrollView.post {
@@ -369,6 +374,7 @@ private fun resetTabs() {
     binding.contentScrollView.isVisible = true
     binding.basicFragmentContainer.isVisible = false
     binding.detailsFragmentContainer.isVisible = false
+    binding.othersFragmentContainer.isVisible = false
     binding.othersSection.isVisible = false
 }
 
@@ -893,7 +899,7 @@ private fun showIdeaSheet() {
     }
 }
 
-private fun showDuplicateTankConfirmationDialog() {
+fun showDuplicateTankConfirmationDialog() {
     val tank = currentTank ?: return
 
     if (isDuplicatingTank) {
@@ -958,7 +964,7 @@ private fun duplicateCurrentTank() {
     }
 }
 
-private fun exportTankDataAsPdf() {
+fun exportTankDataAsPdf() {
     val tank = currentTank ?: return
 
     if (isExportingTank) {
@@ -1059,7 +1065,31 @@ private fun getDetailsFragment(): TankSettingsDetailsFragment? {
     ) as? TankSettingsDetailsFragment
 }
 
-private fun showDeleteTankConfirmationDialog() {
+private fun showOthersFragmentIfNeeded() {
+    binding.othersFragmentContainer.isVisible = true
+
+    val existingFragment = getOthersFragment()
+
+    if (existingFragment != null) {
+        return
+    }
+
+    childFragmentManager.beginTransaction()
+    .replace(
+        R.id.othersFragmentContainer,
+        TankSettingsOthersFragment.newInstance(tankId),
+        TAG_OTHERS_FRAGMENT
+    )
+    .commit()
+}
+
+private fun getOthersFragment(): TankSettingsOthersFragment? {
+    return childFragmentManager.findFragmentByTag(
+        TAG_OTHERS_FRAGMENT
+    ) as? TankSettingsOthersFragment
+}
+
+fun showDeleteTankConfirmationDialog() {
     val tank = currentTank ?: return
 
     DialogManager.showConfirmDialog(
@@ -1163,5 +1193,6 @@ companion object {
     private const val ARG_TANK_ID = "tankId"
     private const val TAG_BASIC_FRAGMENT = "TankSettingsBasicFragment"
     private const val TAG_DETAILS_FRAGMENT = "TankSettingsDetailsFragment"
+    private const val TAG_OTHERS_FRAGMENT = "TankSettingsOthersFragment"
 }
 }
