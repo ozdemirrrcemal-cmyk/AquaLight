@@ -22,6 +22,8 @@ import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.os.bundleOf
+import androidx.navigation.fragment.findNavController
 
 class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
