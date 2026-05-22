@@ -21,7 +21,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 
@@ -74,10 +73,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     private fun setupClickListeners() {
         binding.btnBack.setOnClickListener {
-            if (handleLifeFlowBack()) {
-                return@setOnClickListener
-            }
-
             if (handlePlantFlowBack()) {
                 return@setOnClickListener
             }
@@ -238,7 +233,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
                             ?.isNotEmpty() == true
 
                         if (!hasLivestock) {
-                            openLivestockFormFlow()
+                            openLivestockFormScreen()
                         }
                     }
                 }
@@ -255,15 +250,23 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         )
     }
 
+    private fun openLivestockFormScreen(
+        livestockId: Long = 0L
+    ) {
+        findNavController().navigate(
+            R.id.action_tankDetailFragment_to_tankDetailLivestockFormFragment,
+            Bundle().apply {
+                putLong("tankId", tankId)
+                putLong("livestockId", livestockId)
+            }
+        )
+    }
+
     private fun setupSystemBackButton() {
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (handleLifeFlowBack()) {
-                        return
-                    }
-
                     if (handlePlantFlowBack()) {
                         return
                     }
@@ -504,40 +507,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         ) as? TankDetailLifeFragment
     }
 
-    fun openLivestockFormFlow(
-        livestock: SavedAquariumLivestock? = null
-    ) {
-        setTabSwipeEnabled(false)
-
-        binding.lifeFlowContainer.isVisible = true
-
-        childFragmentManager.commit {
-            replace(
-                R.id.lifeFlowContainer,
-                TankDetailLivestockFormFragment.newInstance(
-                    tankId = tankId,
-                    livestock = livestock
-                ),
-                TAG_LIVESTOCK_FORM_FRAGMENT
-            )
-        }
-    }
-
-    fun closeLivestockFormFlow() {
-        val fragment = childFragmentManager.findFragmentById(
-            R.id.lifeFlowContainer
-        )
-
-        if (fragment != null) {
-            childFragmentManager.commit {
-                remove(fragment)
-            }
-        }
-
-        binding.lifeFlowContainer.isVisible = false
-        setTabSwipeEnabled(true)
-    }
-
     fun openPlantTagFlow() {
         setTabSwipeEnabled(false)
 
@@ -597,15 +566,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
             closePlantTagFlow()
         }
 
-        return true
-    }
-
-    private fun handleLifeFlowBack(): Boolean {
-        if (!binding.lifeFlowContainer.isVisible) {
-            return false
-        }
-
-        closeLivestockFormFlow()
         return true
     }
 
@@ -701,7 +661,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         private const val TAG_PLANTS_FRAGMENT = "TankDetailPlantsFragment"
         private const val TAG_TANK_LIFE_FRAGMENT = "TankDetailLifeFragment"
 
-        private const val TAG_LIVESTOCK_FORM_FRAGMENT = "TankDetailLivestockFormFragment"
         private const val TAG_PLANT_TAG_FRAGMENT = "TankDetailPlantTagFragment"
         private const val TAG_PLANT_PICKER_FRAGMENT = "PlantPickerFragment"
 

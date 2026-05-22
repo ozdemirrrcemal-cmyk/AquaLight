@@ -28,21 +28,25 @@
         android:label="Create Tank"
         tools:layout="@layout/fragment_create_tank" />
 
-    <fragment
-        android:id="@+id/tankDetailFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment"
-        android:label="Tank Detail"
-        tools:layout="@layout/fragment_tank_detail">
+   <fragment
+    android:id="@+id/tankDetailFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment"
+    android:label="Tank Detail"
+    tools:layout="@layout/fragment_tank_detail">
 
-        <argument
-            android:name="tankId"
-            app:argType="long" />
+    <argument
+        android:name="tankId"
+        app:argType="long" />
 
-        <action
-            android:id="@+id/action_tankDetailFragment_to_tankSettingsFragment"
-            app:destination="@id/tankSettingsFragment" />
+    <action
+        android:id="@+id/action_tankDetailFragment_to_tankSettingsFragment"
+        app:destination="@id/tankSettingsFragment" />
 
-    </fragment>
+    <action
+        android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
+        app:destination="@id/tankDetailLivestockFormFragment" />
+
+</fragment>
 
     <fragment
         android:id="@+id/tankSettingsFragment"
@@ -55,6 +59,23 @@
             app:argType="long" />
 
     </fragment>
+	
+	<fragment
+    android:id="@+id/tankDetailLivestockFormFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailLivestockFormFragment"
+    android:label="Livestock Form"
+    tools:layout="@layout/fragment_tank_livestock_form">
+
+    <argument
+        android:name="tankId"
+        app:argType="long" />
+
+    <argument
+        android:name="livestockId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+</fragment>
 
 
   <!-- Maintenance Tab -->

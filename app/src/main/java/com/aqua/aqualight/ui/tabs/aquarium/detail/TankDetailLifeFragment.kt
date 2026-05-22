@@ -49,19 +49,31 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
     private fun setupClickListeners() {
         binding.btnAddLife.setOnClickListener {
-            (parentFragment as? TankDetailFragment)
-                ?.openLivestockFormFlow()
+            openLivestockForm()
         }
 
         binding.btnEmptyAddLife.setOnClickListener {
-            (parentFragment as? TankDetailFragment)
-                ?.openLivestockFormFlow()
+            openLivestockForm()
         }
     }
 
+    private fun openLivestockForm(
+        livestockId: Long = 0L
+    ) {
+        findNavController().navigate(
+            R.id.action_tankDetailFragment_to_tankDetailLivestockFormFragment,
+            bundleOf(
+                "tankId" to tankId,
+                "livestockId" to livestockId
+            )
+        )
+    }
+
     private fun observeTank() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            val tank = tanks.firstOrNull { tank ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+            tanks ->
+            val tank = tanks.firstOrNull {
+                tank ->
                 tank.id == tankId
             } ?: return@observe
 
@@ -76,7 +88,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     ) {
         binding.tankLifeListContainer.removeAllViews()
 
-        val totalQuantity = livestock.sumOf { item ->
+        val totalQuantity = livestock.sumOf {
+            item ->
             item.quantity.coerceAtLeast(1)
         }
 
@@ -89,7 +102,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         binding.cardTankLifeEmpty.isVisible = livestock.isEmpty()
         binding.tankLifeListContainer.isVisible = livestock.isNotEmpty()
 
-        livestock.forEach { item ->
+        livestock.forEach {
+            item ->
             binding.tankLifeListContainer.addView(
                 createLivestockCard(item)
             )
@@ -117,8 +131,9 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             layoutParams = params
 
             setOnClickListener {
-                (parentFragment as? TankDetailFragment)
-                    ?.openLivestockFormFlow(livestock)
+                openLivestockForm(
+                    livestockId = livestock.id
+                )
             }
         }
 
