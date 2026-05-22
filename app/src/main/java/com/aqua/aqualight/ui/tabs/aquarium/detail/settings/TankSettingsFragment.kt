@@ -575,7 +575,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             )
     }
 
-    private fun openMaterialPickerFlow(
+    fun openMaterialPickerFlow(
         categoryKey: String,
         categoryTitle: String
     ) {
