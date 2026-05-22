@@ -8,63 +8,48 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.UserPreferencesManager
-import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
-import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
-import com.aqua.aqualight.ui.common.bottomsheet.SettingsContentBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
-import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
-import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import java.util.Calendar
-import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
-MaterialPickerFragment.MaterialPickerHost {
+    MaterialPickerFragment.MaterialPickerHost {
 
     private var _binding: FragmentTankSettingsBinding? = null
     private val binding get() = _binding!!
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private lateinit var userPrefs: UserPreferencesManager
 
     private var tankId: Long = 0L
     private var selectedTab: SettingsTab = SettingsTab.BASIC
     private var currentTank: SavedAquariumTank? = null
     private var isDeletingTank: Boolean = false
-    private var isDuplicatingTank: Boolean = false
-    private var isExportingTank: Boolean = false
+    private var swipeLifecycleCallbacks: FragmentManager.FragmentLifecycleCallbacks? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
         tankId = requireArguments().getLong(ARG_TANK_ID)
@@ -80,7 +65,6 @@ MaterialPickerFragment.MaterialPickerHost {
         )
 
         _binding = FragmentTankSettingsBinding.bind(view)
-        userPrefs = UserPreferencesManager.create(requireContext())
 
         setupClickListeners()
         setupSystemBackButton()
@@ -97,6 +81,7 @@ MaterialPickerFragment.MaterialPickerHost {
 
             findNavController().navigateUp()
         }
+
         binding.tabBasic.setOnClickListener {
             selectTab(SettingsTab.BASIC)
         }
@@ -110,22 +95,9 @@ MaterialPickerFragment.MaterialPickerHost {
         }
 
         binding.scoreContainer.setOnClickListener {
-            currentTank?.let {
-                tank ->
+            currentTank?.let { tank ->
                 showCareProfileSheet(tank)
             }
-        }
-
-        binding.rowDuplicateTank.setOnClickListener {
-            showDuplicateTankConfirmationDialog()
-        }
-
-        binding.rowExportTankData.setOnClickListener {
-            exportTankDataAsPdf()
-        }
-
-        binding.rowDeleteTank.setOnClickListener {
-            showDeleteTankConfirmationDialog()
         }
     }
 
@@ -144,20 +116,145 @@ MaterialPickerFragment.MaterialPickerHost {
         )
     }
 
-    private fun handleMaterialPickerBack(): Boolean {
-        if (!binding.settingsMaterialPickerContainer.isVisible) {
-            return false
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupSwipeBetweenTabs() {
+        val gestureDetector = GestureDetector(
+            requireContext(),
+            object : GestureDetector.SimpleOnGestureListener() {
+
+                override fun onDown(
+                    e: MotionEvent
+                ): Boolean {
+                    return true
+                }
+
+                override fun onFling(
+                    e1: MotionEvent?,
+                    e2: MotionEvent,
+                    velocityX: Float,
+                    velocityY: Float
+                ): Boolean {
+                    if (e1 == null) {
+                        return false
+                    }
+
+                    if (binding.settingsMaterialPickerContainer.isVisible) {
+                        return false
+                    }
+
+                    val diffX = e2.x - e1.x
+                    val diffY = e2.y - e1.y
+
+                    val isHorizontalSwipe = abs(diffX) > abs(diffY) * 1.4f
+                    val hasEnoughDistance = abs(diffX) > 90.dp()
+                    val hasEnoughVelocity = abs(velocityX) > 650
+
+                    if (!isHorizontalSwipe || !hasEnoughDistance || !hasEnoughVelocity) {
+                        return false
+                    }
+
+                    if (diffX < 0) {
+                        moveToNextTab()
+                    } else {
+                        moveToPreviousTab()
+                    }
+
+                    return true
+                }
+            }
+        )
+
+        val touchListener = View.OnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            false
         }
 
-        closeMaterialPickerFlow()
-        return true
+        listOf(
+            binding.settingsTabsContainer,
+            binding.contentScrollView,
+            binding.basicFragmentContainer,
+            binding.detailsFragmentContainer,
+            binding.othersFragmentContainer
+        ).forEach { view ->
+            view.setOnTouchListener(touchListener)
+        }
+
+        val callbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
+            override fun onFragmentViewCreated(
+                fm: FragmentManager,
+                fragment: Fragment,
+                view: View,
+                savedInstanceState: Bundle?
+            ) {
+                if (
+                    fragment is TankSettingsBasicFragment ||
+                    fragment is TankSettingsDetailsFragment ||
+                    fragment is TankSettingsOthersFragment
+                ) {
+                    attachSwipeTouchListenerRecursively(
+                        view = view,
+                        touchListener = touchListener
+                    )
+                }
+            }
+        }
+
+        swipeLifecycleCallbacks = callbacks
+
+        childFragmentManager.registerFragmentLifecycleCallbacks(
+            callbacks,
+            false
+        )
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun attachSwipeTouchListenerRecursively(
+        view: View,
+        touchListener: View.OnTouchListener
+    ) {
+        view.setOnTouchListener(touchListener)
+
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) {
+                attachSwipeTouchListenerRecursively(
+                    view = view.getChildAt(index),
+                    touchListener = touchListener
+                )
+            }
+        }
+    }
+
+    private fun moveToNextTab() {
+        when (selectedTab) {
+            SettingsTab.BASIC -> {
+                selectTab(SettingsTab.DETAILS)
+            }
+
+            SettingsTab.DETAILS -> {
+                selectTab(SettingsTab.OTHERS)
+            }
+
+            SettingsTab.OTHERS -> Unit
+        }
+    }
+
+    private fun moveToPreviousTab() {
+        when (selectedTab) {
+            SettingsTab.BASIC -> Unit
+
+            SettingsTab.DETAILS -> {
+                selectTab(SettingsTab.BASIC)
+            }
+
+            SettingsTab.OTHERS -> {
+                selectTab(SettingsTab.DETAILS)
+            }
+        }
     }
 
     private fun observeTank() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-            tanks ->
-            val tank = tanks.firstOrNull {
-                savedTank ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+            val tank = tanks.firstOrNull { savedTank ->
                 savedTank.id == tankId
             }
 
@@ -190,1009 +287,528 @@ MaterialPickerFragment.MaterialPickerHost {
         renderCareProfileScore(tank)
     }
 
-    private fun showSnackBar(
-        message: String,
-        type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
+    fun markTankDeletionInProgress() {
+        isDeletingTank = true
+    }
+
+    private fun handleMaterialPickerBack(): Boolean {
+        if (!binding.settingsMaterialPickerContainer.isVisible) {
+            return false
+        }
+
+        closeMaterialPickerFlow()
+        return true
+    }
+
+    private fun selectTab(
+        tab: SettingsTab
     ) {
-        (activity as? BaseActivity)?.showSnackBar(
-            message = message,
-            type = type
-        )
-    }
+        selectedTab = tab
 
-    private fun showSettingsBottomSheet(
-        title: String,
-        contentView: View,
-        onDialogReady: ((BottomSheetDialog) -> Unit)? = null
-) {
-    SettingsContentBottomSheet.show(
-        fragment = this,
-        title = title,
-        contentView = contentView,
-        onDialogReady = onDialogReady
-    )
-}
+        resetTabs()
 
+        when (tab) {
+            SettingsTab.BASIC -> {
+                activateTab(binding.tabBasic)
+                moveTabUnderline(binding.tabBasic)
 
-private fun selectTab(
-    tab: SettingsTab
-) {
-    selectedTab = tab
+                binding.contentScrollView.isVisible = false
+                binding.basicFragmentContainer.isVisible = true
 
-    resetTabs()
-
-    when (tab) {
-        SettingsTab.BASIC -> {
-            activateTab(binding.tabBasic)
-            moveTabUnderline(binding.tabBasic)
-
-            binding.contentScrollView.isVisible = false
-            binding.basicFragmentContainer.isVisible = true
-
-            showBasicFragmentIfNeeded()
-        }
-
-        SettingsTab.DETAILS -> {
-            activateTab(binding.tabDetails)
-            moveTabUnderline(binding.tabDetails)
-
-            binding.contentScrollView.isVisible = false
-            binding.detailsFragmentContainer.isVisible = true
-
-            showDetailsFragmentIfNeeded()
-        }
-
-        SettingsTab.OTHERS -> {
-            activateTab(binding.tabOthers)
-            moveTabUnderline(binding.tabOthers)
-
-            binding.contentScrollView.isVisible = false
-            binding.othersFragmentContainer.isVisible = true
-
-            showOthersFragmentIfNeeded()
-        }
-
-    }
-
-    binding.contentScrollView.post {
-        binding.contentScrollView.scrollTo(
-            0,
-            0
-        )
-    }
-}
-
-private fun getInitialTab(): SettingsTab {
-    val startTab = arguments?.getString("startTab")
-
-    return when (startTab) {
-        "details" -> SettingsTab.DETAILS
-        "others" -> SettingsTab.OTHERS
-        else -> SettingsTab.BASIC
-    }
-}
-
-@SuppressLint("ClickableViewAccessibility")
-private fun setupSwipeBetweenTabs() {
-    val gestureDetector = GestureDetector(
-        requireContext(),
-        object : GestureDetector.SimpleOnGestureListener() {
-
-            override fun onDown(
-                e: MotionEvent
-            ): Boolean {
-                return true
+                showBasicFragmentIfNeeded()
             }
 
-            override fun onFling(
-                e1: MotionEvent?,
-                e2: MotionEvent,
-                velocityX: Float,
-                velocityY: Float
-            ): Boolean {
-                if (e1 == null) {
-                    return false
-                }
+            SettingsTab.DETAILS -> {
+                activateTab(binding.tabDetails)
+                moveTabUnderline(binding.tabDetails)
 
-                if (binding.settingsMaterialPickerContainer.isVisible) {
-                    return false
-                }
+                binding.contentScrollView.isVisible = false
+                binding.detailsFragmentContainer.isVisible = true
 
-                val diffX = e2.x - e1.x
-                val diffY = e2.y - e1.y
+                showDetailsFragmentIfNeeded()
+            }
 
-                val isHorizontalSwipe = abs(diffX) > abs(diffY)
-                val hasEnoughDistance = abs(diffX) > 70.dp()
-                val hasEnoughVelocity = abs(velocityX) > 500
+            SettingsTab.OTHERS -> {
+                activateTab(binding.tabOthers)
+                moveTabUnderline(binding.tabOthers)
 
-                if (!isHorizontalSwipe || !hasEnoughDistance || !hasEnoughVelocity) {
-                    return false
-                }
+                binding.contentScrollView.isVisible = false
+                binding.othersFragmentContainer.isVisible = true
 
-                if (diffX < 0) {
-                    moveToNextTab()
-                } else {
-                    moveToPreviousTab()
-                }
-
-                return true
+                showOthersFragmentIfNeeded()
             }
         }
-    )
-
-    val swipeTouchListener = View.OnTouchListener {
-        _, event ->
-        gestureDetector.onTouchEvent(event)
-        false
-    }
-
-    binding.contentScrollView.setOnTouchListener(swipeTouchListener)
-    binding.settingsTabsContainer.setOnTouchListener(swipeTouchListener)
-}
-
-private fun moveToNextTab() {
-    when (selectedTab) {
-        SettingsTab.BASIC -> {
-            selectTab(SettingsTab.DETAILS)
-        }
-
-        SettingsTab.DETAILS -> {
-            selectTab(SettingsTab.OTHERS)
-        }
-
-        SettingsTab.OTHERS -> Unit
-    }
-}
-
-private fun moveToPreviousTab() {
-    when (selectedTab) {
-        SettingsTab.BASIC -> Unit
-
-        SettingsTab.DETAILS -> {
-            selectTab(SettingsTab.BASIC)
-        }
-
-        SettingsTab.OTHERS -> {
-            selectTab(SettingsTab.DETAILS)
-        }
-    }
-}
-
-private fun resetTabs() {
-    val inactiveColor = Color.parseColor("#8FA4BE")
-
-    listOf(
-        binding.tabBasic,
-        binding.tabDetails,
-        binding.tabOthers
-    ).forEach {
-        tab ->
-        tab.setTextColor(inactiveColor)
-        tab.setTypeface(null, Typeface.NORMAL)
-    }
-
-    binding.contentScrollView.isVisible = true
-    binding.basicFragmentContainer.isVisible = false
-    binding.detailsFragmentContainer.isVisible = false
-    binding.othersFragmentContainer.isVisible = false
-    binding.othersSection.isVisible = false
-}
-
-private fun activateTab(
-    tabView: TextView
-) {
-    tabView.setTextColor(Color.WHITE)
-    tabView.setTypeface(null, Typeface.BOLD)
-}
-
-private fun moveTabUnderline(
-    tabView: TextView
-) {
-    binding.settingsTabsContainer.post {
-        val textWidth = tabView.paint
-        .measureText(tabView.text.toString())
-        .toInt()
-
-        val underlineWidth = (textWidth * 0.90f)
-        .toInt()
-        .coerceIn(
-            36.dp(),
-            72.dp()
-        )
-
-        val params = binding.tabUnderline.layoutParams
-        params.width = underlineWidth
-        binding.tabUnderline.layoutParams = params
-
-        val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
-
-        binding.tabUnderline.animate()
-        .translationX(targetX)
-        .setDuration(180)
-        .start()
-    }
-}
-
-private fun renderCareProfileScore(
-    tank: SavedAquariumTank
-) {
-    val result = CareProfileCalculator.calculate(tank)
-    val color = getCareProfileColor(result.percent)
-
-    binding.scoreContainer.isVisible = true
-    binding.tvScore.text = result.percent.toString()
-    binding.tvScore.setTextColor(color)
-    binding.scoreContainer.strokeColor = color
-}
-
-private fun showCareProfileSheet(
-    tank: SavedAquariumTank
-) {
-    val result = CareProfileCalculator.calculate(tank)
-    val dialog = BottomSheetDialog(requireContext())
-    val sheetBinding = DialogCareProfileBinding.inflate(layoutInflater)
-
-    val profileColor = getCareProfileColor(result.percent)
-
-    sheetBinding.tvCareProfilePercent.text = "${result.percent}%"
-    sheetBinding.tvCareProfileSummary.text =
-    "${result.completedCount} of ${result.totalCount} care details completed"
-
-    sheetBinding.careProgressTrack.background = createRoundedDrawable(
-        color = "#DDE3EA",
-        radiusPx = 3.dp()
-    )
-
-    sheetBinding.careProgressFill.background = createRoundedDrawable(
-        color = colorToHex(profileColor),
-        radiusPx = 3.dp()
-    )
-
-    sheetBinding.btnCloseCareProfile.setOnClickListener {
-        dialog.dismiss()
-    }
-
-    sheetBinding.careProfileItemsContainer.removeAllViews()
-
-    result.items.forEach {
-        item ->
-        val rowBinding = ItemCareProfileRowBinding.inflate(
-            layoutInflater,
-            sheetBinding.careProfileItemsContainer,
-            false
-        )
-
-        rowBinding.tvCareProfileItemTitle.text = item.title
-        rowBinding.tvCareProfileItemSubtitle.text = item.subtitle
-
-        rowBinding.tvCareProfileItemStatus.text = if (item.completed) {
-            "Complete"
-        } else {
-            "Missing"
-        }
-
-        rowBinding.tvCareProfileItemStatus.setTextColor(
-            if (item.completed) {
-                Color.parseColor("#5FD6B4")
-            } else {
-                Color.parseColor("#E0A84C")
-            }
-        )
-
-        rowBinding.tvCareProfileItemStatus.background = createRoundedDrawable(
-            color = if (item.completed) "#09251D" else "#2A2315",
-            radiusPx = 14.dp(),
-            strokeColor = if (item.completed) "#1E5A48" else "#6A4D1E",
-            strokeWidthPx = 1.dp()
-        )
-
-        rowBinding.root.setOnClickListener {
-            dialog.dismiss()
-            handleCareProfileItemClick(item)
-        }
-
-        sheetBinding.careProfileItemsContainer.addView(rowBinding.root)
-    }
-
-    dialog.setContentView(sheetBinding.root)
-
-    dialog.setOnShowListener {
-        val bottomSheet = dialog.findViewById<FrameLayout>(
-            com.google.android.material.R.id.design_bottom_sheet
-        )
-
-        val maxHeight = (
-            resources.displayMetrics.heightPixels * 0.82f
-        ).roundToInt()
-
-        bottomSheet?.let {
-            sheet ->
-            sheet.setBackgroundColor(Color.TRANSPARENT)
-
-            val params = sheet.layoutParams
-            params.height = maxHeight
-            sheet.layoutParams = params
-        }
-
-        dialog.behavior.peekHeight = maxHeight
-
-        sheetBinding.careProgressTrack.post {
-            val fillWidth = (
-                sheetBinding.careProgressTrack.width * result.percent / 100f
-            ).roundToInt()
-
-            val params = sheetBinding.careProgressFill.layoutParams
-            params.width = fillWidth
-            sheetBinding.careProgressFill.layoutParams = params
-        }
-    }
-
-    dialog.show()
-}
-
-private fun handleCareProfileItemClick(
-    item: CareProfileCalculator.Item
-) {
-    if (
-        item.materialCategoryKey != null &&
-        item.materialCategoryTitle != null
-    ) {
-        selectTab(SettingsTab.DETAILS)
 
         binding.contentScrollView.post {
-            openMaterialPickerFlow(
-                categoryKey = item.materialCategoryKey,
-                categoryTitle = item.materialCategoryTitle
+            binding.contentScrollView.scrollTo(
+                0,
+                0
             )
         }
-
-        return
     }
 
-    when (item.title) {
-        "Tank name" -> {
-            selectTab(SettingsTab.BASIC)
+    private fun getInitialTab(): SettingsTab {
+        val startTab = arguments?.getString("startTab")
 
-            binding.contentScrollView.post {
-                showTankNameSheet()
-            }
+        return when (startTab) {
+            "details" -> SettingsTab.DETAILS
+            "others" -> SettingsTab.OTHERS
+            else -> SettingsTab.BASIC
         }
-
-        "Tank type" -> {
-            selectTab(SettingsTab.BASIC)
-
-            binding.contentScrollView.post {
-                showTankTypeSheet()
-            }
-        }
-
-        "Tank size" -> {
-            selectTab(SettingsTab.BASIC)
-
-            binding.contentScrollView.post {
-                showTankSizeSheet()
-            }
-        }
-
-        "Setup date" -> {
-            selectTab(SettingsTab.BASIC)
-
-            binding.contentScrollView.post {
-                showSetupDateSheet()
-            }
-        }
-
-        "Tank style" -> {
-            selectTab(SettingsTab.BASIC)
-
-            binding.contentScrollView.post {
-                showStyleSheet()
-            }
-        }
-
-        "Plants" -> {
-            openTankDetailCareProfileAction(
-                TankDetailFragment.CARE_PROFILE_ACTION_PLANTS
-            )
-        }
-
-        "Livestock" -> {
-            openTankDetailCareProfileAction(
-                TankDetailFragment.CARE_PROFILE_ACTION_LIVESTOCK
-            )
-        } else -> Unit
     }
-}
 
-private fun openTankDetailCareProfileAction(
-    action: String
-) {
-    val navController = findNavController()
-    val previousEntry = navController.previousBackStackEntry
+    private fun resetTabs() {
+        val inactiveColor = Color.parseColor("#8FA4BE")
 
-    if (previousEntry?.destination?.id == R.id.tankDetailFragment) {
-        previousEntry.savedStateHandle.set(
-            TankDetailFragment.KEY_CARE_PROFILE_ACTION,
-            action
+        listOf(
+            binding.tabBasic,
+            binding.tabDetails,
+            binding.tabOthers
+        ).forEach { tab ->
+            tab.setTextColor(inactiveColor)
+            tab.setTypeface(null, Typeface.NORMAL)
+        }
+
+        binding.contentScrollView.isVisible = true
+        binding.basicFragmentContainer.isVisible = false
+        binding.detailsFragmentContainer.isVisible = false
+        binding.othersFragmentContainer.isVisible = false
+    }
+
+    private fun activateTab(
+        tabView: TextView
+    ) {
+        tabView.setTextColor(Color.WHITE)
+        tabView.setTypeface(null, Typeface.BOLD)
+    }
+
+    private fun moveTabUnderline(
+        tabView: TextView
+    ) {
+        binding.settingsTabsContainer.post {
+            val textWidth = tabView.paint
+                .measureText(tabView.text.toString())
+                .toInt()
+
+            val underlineWidth = (textWidth * 0.90f)
+                .toInt()
+                .coerceIn(
+                    36.dp(),
+                    72.dp()
+                )
+
+            val params = binding.tabUnderline.layoutParams
+            params.width = underlineWidth
+            binding.tabUnderline.layoutParams = params
+
+            val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
+
+            binding.tabUnderline.animate()
+                .translationX(targetX)
+                .setDuration(180)
+                .start()
+        }
+    }
+
+    private fun renderCareProfileScore(
+        tank: SavedAquariumTank
+    ) {
+        val result = CareProfileCalculator.calculate(tank)
+        val color = getCareProfileColor(result.percent)
+
+        binding.scoreContainer.isVisible = true
+        binding.tvScore.text = result.percent.toString()
+        binding.tvScore.setTextColor(color)
+        binding.scoreContainer.strokeColor = color
+    }
+
+    private fun showCareProfileSheet(
+        tank: SavedAquariumTank
+    ) {
+        val result = CareProfileCalculator.calculate(tank)
+        val dialog = BottomSheetDialog(requireContext())
+        val sheetBinding = DialogCareProfileBinding.inflate(layoutInflater)
+
+        val profileColor = getCareProfileColor(result.percent)
+
+        sheetBinding.tvCareProfilePercent.text = "${result.percent}%"
+        sheetBinding.tvCareProfileSummary.text =
+            "${result.completedCount} of ${result.totalCount} care details completed"
+
+        sheetBinding.careProgressTrack.background = createRoundedDrawable(
+            color = "#DDE3EA",
+            radiusPx = 3.dp()
         )
 
-        navController.navigateUp()
-        return
-    }
-
-    navController.popBackStack()
-
-    navController.navigate(
-        R.id.tankDetailFragment,
-        bundleOf(
-            "tankId" to tankId
+        sheetBinding.careProgressFill.background = createRoundedDrawable(
+            color = colorToHex(profileColor),
+            radiusPx = 3.dp()
         )
-    )
 
-    navController.currentBackStackEntry
-    ?.savedStateHandle
-    ?.set(
-        TankDetailFragment.KEY_CARE_PROFILE_ACTION,
-        action
-    )
-}
+        sheetBinding.btnCloseCareProfile.setOnClickListener {
+            dialog.dismiss()
+        }
 
-private fun getCareProfileColor(
-    percent: Int
-): Int {
-    return when {
-        percent < 40 -> Color.parseColor("#D85C5C")
-        percent < 75 -> Color.parseColor("#E0A84C")
-        else -> Color.parseColor("#5FD6B4")
+        sheetBinding.careProfileItemsContainer.removeAllViews()
+
+        result.items.forEach { item ->
+            val rowBinding = ItemCareProfileRowBinding.inflate(
+                layoutInflater,
+                sheetBinding.careProfileItemsContainer,
+                false
+            )
+
+            rowBinding.tvCareProfileItemTitle.text = item.title
+            rowBinding.tvCareProfileItemSubtitle.text = item.subtitle
+
+            rowBinding.tvCareProfileItemStatus.text = if (item.completed) {
+                "Complete"
+            } else {
+                "Missing"
+            }
+
+            rowBinding.tvCareProfileItemStatus.setTextColor(
+                if (item.completed) {
+                    Color.parseColor("#5FD6B4")
+                } else {
+                    Color.parseColor("#E0A84C")
+                }
+            )
+
+            rowBinding.tvCareProfileItemStatus.background = createRoundedDrawable(
+                color = if (item.completed) "#09251D" else "#2A2315",
+                radiusPx = 14.dp(),
+                strokeColor = if (item.completed) "#1E5A48" else "#6A4D1E",
+                strokeWidthPx = 1.dp()
+            )
+
+            rowBinding.root.setOnClickListener {
+                dialog.dismiss()
+                handleCareProfileItemClick(item)
+            }
+
+            sheetBinding.careProfileItemsContainer.addView(rowBinding.root)
+        }
+
+        dialog.setContentView(sheetBinding.root)
+
+        dialog.setOnShowListener {
+            val bottomSheet = dialog.findViewById<FrameLayout>(
+                com.google.android.material.R.id.design_bottom_sheet
+            )
+
+            val maxHeight = (
+                resources.displayMetrics.heightPixels * 0.82f
+            ).roundToInt()
+
+            bottomSheet?.let { sheet ->
+                sheet.setBackgroundColor(Color.TRANSPARENT)
+
+                val params = sheet.layoutParams
+                params.height = maxHeight
+                sheet.layoutParams = params
+            }
+
+            dialog.behavior.peekHeight = maxHeight
+
+            sheetBinding.careProgressTrack.post {
+                val fillWidth = (
+                    sheetBinding.careProgressTrack.width * result.percent / 100f
+                ).roundToInt()
+
+                val params = sheetBinding.careProgressFill.layoutParams
+                params.width = fillWidth
+                sheetBinding.careProgressFill.layoutParams = params
+            }
+        }
+
+        dialog.show()
     }
-}
 
-private fun colorToHex(
-    color: Int
-): String {
-    return String.format(
-        "#%06X",
-        0xFFFFFF and color
-    )
-}
+    private fun handleCareProfileItemClick(
+        item: CareProfileCalculator.Item
+    ) {
+        if (
+            item.materialCategoryKey != null &&
+            item.materialCategoryTitle != null
+        ) {
+            selectTab(SettingsTab.DETAILS)
 
-fun openMaterialPickerFlow(
-    categoryKey: String,
-    categoryTitle: String
-) {
-    binding.settingsMaterialPickerContainer.isVisible = true
+            binding.detailsFragmentContainer.post {
+                openMaterialPickerFlow(
+                    categoryKey = item.materialCategoryKey,
+                    categoryTitle = item.materialCategoryTitle
+                )
+            }
 
-    childFragmentManager.beginTransaction()
-    .replace(
-        R.id.settingsMaterialPickerContainer,
-        MaterialPickerFragment.newSettingsInstance(
-            tankId = tankId,
-            categoryKey = categoryKey,
-            categoryTitle = categoryTitle
-        ),
-        "SETTINGS_MATERIAL_PICKER_FRAGMENT"
-    )
-    .commit()
-}
+            return
+        }
 
-override fun closeMaterialPickerFlow() {
-    val fragment = childFragmentManager.findFragmentById(
-        R.id.settingsMaterialPickerContainer
-    )
+        when (item.title) {
+            "Tank name" -> {
+                openBasicCareProfileAction(
+                    TankSettingsBasicFragment.ACTION_TANK_NAME
+                )
+            }
 
-    if (fragment != null) {
+            "Tank type" -> {
+                openBasicCareProfileAction(
+                    TankSettingsBasicFragment.ACTION_TANK_TYPE
+                )
+            }
+
+            "Tank size" -> {
+                openBasicCareProfileAction(
+                    TankSettingsBasicFragment.ACTION_TANK_SIZE
+                )
+            }
+
+            "Setup date" -> {
+                openBasicCareProfileAction(
+                    TankSettingsBasicFragment.ACTION_SETUP_DATE
+                )
+            }
+
+            "Tank style" -> {
+                openBasicCareProfileAction(
+                    TankSettingsBasicFragment.ACTION_STYLE
+                )
+            }
+
+            "Plants" -> {
+                openTankDetailCareProfileAction(
+                    TankDetailFragment.CARE_PROFILE_ACTION_PLANTS
+                )
+            }
+
+            "Livestock" -> {
+                openTankDetailCareProfileAction(
+                    TankDetailFragment.CARE_PROFILE_ACTION_LIVESTOCK
+                )
+            }
+
+            else -> Unit
+        }
+    }
+
+    private fun openBasicCareProfileAction(
+        action: String
+    ) {
+        selectTab(SettingsTab.BASIC)
+
+        childFragmentManager.executePendingTransactions()
+
+        binding.basicFragmentContainer.post {
+            val basicFragment = getBasicFragment() ?: return@post
+
+            basicFragment.openCareProfileAction(action)
+        }
+    }
+
+    private fun openTankDetailCareProfileAction(
+        action: String
+    ) {
+        val navController = findNavController()
+        val previousEntry = navController.previousBackStackEntry
+
+        if (previousEntry?.destination?.id == R.id.tankDetailFragment) {
+            previousEntry.savedStateHandle.set(
+                TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+                action
+            )
+
+            navController.navigateUp()
+            return
+        }
+
+        navController.popBackStack()
+
+        navController.navigate(
+            R.id.tankDetailFragment,
+            bundleOf(
+                "tankId" to tankId
+            )
+        )
+
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+                action
+            )
+    }
+
+    private fun getCareProfileColor(
+        percent: Int
+    ): Int {
+        return when {
+            percent < 40 -> Color.parseColor("#D85C5C")
+            percent < 75 -> Color.parseColor("#E0A84C")
+            else -> Color.parseColor("#5FD6B4")
+        }
+    }
+
+    private fun colorToHex(
+        color: Int
+    ): String {
+        return String.format(
+            "#%06X",
+            0xFFFFFF and color
+        )
+    }
+
+    fun openMaterialPickerFlow(
+        categoryKey: String,
+        categoryTitle: String
+    ) {
+        binding.settingsMaterialPickerContainer.isVisible = true
+
         childFragmentManager.beginTransaction()
-        .remove(fragment)
-        .commit()
-    }
-
-    binding.settingsMaterialPickerContainer.isVisible = false
-}
-
-private fun showTankNameSheet() {
-    val tank = currentTank ?: return
-
-    val contentBinding = ContentSheetTankNameBinding.inflate(
-        layoutInflater
-    )
-
-    contentBinding.inputTankName.setText(tank.name)
-
-    showSettingsBottomSheet(
-        title = "Tank Name",
-        contentView = contentBinding.root
-    ) {
-        dialog ->
-
-        contentBinding.btnCancel.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        contentBinding.btnSave.setOnClickListener {
-            val newName = contentBinding.inputTankName.text
-            .toString()
-            .trim()
-
-            if (newName.length < 2) {
-                showSnackBar(
-                    message = "Tank name must be at least 2 characters.",
-                    type = BaseActivity.SnackType.WARNING
-                )
-                return@setOnClickListener
-            }
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                aquariumTankViewModel.updateTankName(
+            .replace(
+                R.id.settingsMaterialPickerContainer,
+                MaterialPickerFragment.newSettingsInstance(
                     tankId = tankId,
-                    name = newName
-                )
-
-                dialog.dismiss()
-            }
-        }
-    }
-}
-
-private fun showTankTypeSheet() {
-    val tank = currentTank ?: return
-
-    TankTypeBottomSheet.show(
-        fragment = this,
-        currentType = tank.tankType,
-        onSave = {
-            selectedType,
-            dismiss ->
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                aquariumTankViewModel.updateTankType(
-                    tankId = tankId,
-                    tankType = selectedType
-                )
-
-                dismiss()
-            }
-        }
-    )
-}
-
-private fun showTankSizeSheet() {
-    val tank = currentTank ?: return
-
-    TankSizeBottomSheet.show(
-        fragment = this,
-        currentWidthCm = tank.widthCm,
-        currentLengthCm = tank.lengthCm,
-        currentHeightCm = tank.heightCm,
-        currentUnit = tank.sizeUnit,
-        title = "Size",
-        onInvalidInput = {
-            showSnackBar(
-                message = "Please enter valid tank size.",
-                type = BaseActivity.SnackType.WARNING
+                    categoryKey = categoryKey,
+                    categoryTitle = categoryTitle
+                ),
+                TAG_MATERIAL_PICKER_FRAGMENT
             )
-        },
-        onSave = {
-            result,
-            dismiss ->
+            .commit()
+    }
 
-            viewLifecycleOwner.lifecycleScope.launch {
-                aquariumTankViewModel.updateTankSize(
-                    tankId = tankId,
-                    widthCm = result.widthCm,
-                    lengthCm = result.lengthCm,
-                    heightCm = result.heightCm,
-                    sizeUnit = result.sizeUnit
-                )
-
-                dismiss()
-            }
-        }
-    )
-}
-
-private fun toggleVolumeUnit() {
-    val tank = currentTank ?: return
-
-    val newUnit = if (
-        tank.volumeUnit.equals(
-            "gal",
-            ignoreCase = true
+    override fun closeMaterialPickerFlow() {
+        val fragment = childFragmentManager.findFragmentById(
+            R.id.settingsMaterialPickerContainer
         )
-    ) {
-        "L"
-    } else {
-        "gal"
-    }
 
-    viewLifecycleOwner.lifecycleScope.launch {
-        aquariumTankViewModel.updateTankVolumeUnit(
-            tankId = tankId,
-            volumeUnit = newUnit
-        )
-    }
-}
-
-private fun showSetupDateSheet() {
-    val tank = currentTank ?: return
-
-    val currentYear = Calendar.getInstance().get(
-        Calendar.YEAR
-    )
-
-    SetupDateBottomSheet.show(
-        fragment = this,
-        currentMillis = tank.setupDateMillis,
-        minYear = currentYear - 10,
-        maxYear = currentYear + 10,
-        monthLocale = Locale.getDefault(),
-        onSave = {
-            selectedMillis,
-            dismiss ->
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                aquariumTankViewModel.updateTankSetupDate(
-                    tankId = tankId,
-                    setupDateMillis = selectedMillis
-                )
-
-                dismiss()
-            }
-        }
-    )
-}
-
-private fun showStyleSheet() {
-    val tank = currentTank ?: return
-
-    TankStyleBottomSheet.show(
-        fragment = this,
-        currentStyle = tank.tankStyle,
-        onSave = {
-            selectedStyle,
-            dismiss ->
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                aquariumTankViewModel.updateTankStyle(
-                    tankId = tankId,
-                    tankStyle = selectedStyle
-                )
-
-                dismiss()
-            }
-        }
-    )
-}
-
-private fun showIdeaSheet() {
-    val tank = currentTank ?: return
-
-    val contentBinding = ContentSheetIdeaBinding.inflate(
-        layoutInflater
-    )
-
-    contentBinding.inputIdea.setText(tank.description)
-
-    showSettingsBottomSheet(
-        title = "Idea",
-        contentView = contentBinding.root
-    ) {
-        dialog ->
-
-        contentBinding.btnCancel.setOnClickListener {
-            dialog.dismiss()
+        if (fragment != null) {
+            childFragmentManager.beginTransaction()
+                .remove(fragment)
+                .commit()
         }
 
-        contentBinding.btnSave.setOnClickListener {
-            val newIdea = contentBinding.inputIdea.text
-            .toString()
-            .trim()
+        binding.settingsMaterialPickerContainer.isVisible = false
+    }
 
-            viewLifecycleOwner.lifecycleScope.launch {
-                aquariumTankViewModel.updateTankDescription(
-                    tankId = tankId,
-                    description = newIdea
-                )
+    private fun showBasicFragmentIfNeeded() {
+        binding.basicFragmentContainer.isVisible = true
 
-                dialog.dismiss()
-            }
+        val existingFragment = getBasicFragment()
+
+        if (existingFragment != null) {
+            return
         }
-    }
-}
 
-fun showDuplicateTankConfirmationDialog() {
-    val tank = currentTank ?: return
-
-    if (isDuplicatingTank) {
-        return
-    }
-
-    DialogManager.showConfirmDialog(
-        context = requireContext(),
-        type = DialogType.INFO,
-        title = "Duplicate Tank?",
-        message = "This will create a copy of \"${tank.name}\" with the same tank data, plants and components.",
-        confirmTextResId = R.string.duplicate,
-        cancelTextResId = R.string.cancel,
-        onConfirm = {
-            duplicateCurrentTank()
-        }
-    )
-}
-
-private fun duplicateCurrentTank() {
-    if (isDuplicatingTank) {
-        return
-    }
-
-    isDuplicatingTank = true
-
-    val baseActivity = activity as? BaseActivity
-    baseActivity?.showLoading(true)
-
-    viewLifecycleOwner.lifecycleScope.launch {
-        try {
-            aquariumTankViewModel.duplicateTank(
-                tankId = tankId
+        childFragmentManager.beginTransaction()
+            .replace(
+                R.id.basicFragmentContainer,
+                TankSettingsBasicFragment.newInstance(tankId),
+                TAG_BASIC_FRAGMENT
             )
+            .commit()
+    }
 
-            baseActivity?.showLoading(false)
+    private fun getBasicFragment(): TankSettingsBasicFragment? {
+        return childFragmentManager.findFragmentByTag(
+            TAG_BASIC_FRAGMENT
+        ) as? TankSettingsBasicFragment
+    }
 
-            val popped = findNavController().popBackStack(
-                R.id.aquariumFragment,
-                false
+    private fun showDetailsFragmentIfNeeded() {
+        binding.detailsFragmentContainer.isVisible = true
+
+        val existingFragment = getDetailsFragment()
+
+        if (existingFragment != null) {
+            return
+        }
+
+        childFragmentManager.beginTransaction()
+            .replace(
+                R.id.detailsFragmentContainer,
+                TankSettingsDetailsFragment.newInstance(tankId),
+                TAG_DETAILS_FRAGMENT
             )
+            .commit()
+    }
 
-            if (!popped) {
-                findNavController().navigate(
-                    R.id.aquariumFragment
+    private fun getDetailsFragment(): TankSettingsDetailsFragment? {
+        return childFragmentManager.findFragmentByTag(
+            TAG_DETAILS_FRAGMENT
+        ) as? TankSettingsDetailsFragment
+    }
+
+    private fun showOthersFragmentIfNeeded() {
+        binding.othersFragmentContainer.isVisible = true
+
+        val existingFragment = getOthersFragment()
+
+        if (existingFragment != null) {
+            return
+        }
+
+        childFragmentManager.beginTransaction()
+            .replace(
+                R.id.othersFragmentContainer,
+                TankSettingsOthersFragment.newInstance(tankId),
+                TAG_OTHERS_FRAGMENT
+            )
+            .commit()
+    }
+
+    private fun getOthersFragment(): TankSettingsOthersFragment? {
+        return childFragmentManager.findFragmentByTag(
+            TAG_OTHERS_FRAGMENT
+        ) as? TankSettingsOthersFragment
+    }
+
+    private fun createRoundedDrawable(
+        color: String,
+        radiusPx: Int,
+        strokeColor: String? = null,
+        strokeWidthPx: Int = 0
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.parseColor(color))
+            cornerRadius = radiusPx.toFloat()
+
+            if (strokeColor != null && strokeWidthPx > 0) {
+                setStroke(
+                    strokeWidthPx,
+                    Color.parseColor(strokeColor)
                 )
             }
-
-        } catch (exception: Exception) {
-            exception.printStackTrace()
-
-            isDuplicatingTank = false
-            baseActivity?.showLoading(false)
-
-            DialogManager.showInfoDialog(
-                context = requireContext(),
-                type = DialogType.ERROR,
-                title = "Duplicate Failed",
-                message = "Tank could not be duplicated."
-            )
         }
     }
-}
 
-fun exportTankDataAsPdf() {
-    val tank = currentTank ?: return
-
-    if (isExportingTank) {
-        return
+    private fun Int.dp(): Int {
+        return (this * resources.displayMetrics.density).toInt()
     }
 
-    isExportingTank = true
-
-    val appContext = requireContext().applicationContext
-    val baseActivity = activity as? BaseActivity
-
-    baseActivity?.showLoading(true)
-
-    viewLifecycleOwner.lifecycleScope.launch {
-        try {
-            val pdfUri = withContext(Dispatchers.IO) {
-                val connectedDevices = userPrefs.devicesForTankFlow(
-                    tankId = tankId
-                ).first()
-
-                TankPdfExporter.createTankReportPdf(
-                    context = appContext,
-                    tank = tank,
-                    devices = connectedDevices
-                )
-            }
-            baseActivity?.showLoading(false)
-            isExportingTank = false
-
-            TankPdfExporter.shareTankReportPdf(
-                context = requireContext(),
-                pdfUri = pdfUri,
-                tankName = tank.name
-            )
-
-        } catch (exception: Exception) {
-            exception.printStackTrace()
-
-            isExportingTank = false
-            baseActivity?.showLoading(false)
-
-            DialogManager.showInfoDialog(
-                context = requireContext(),
-                type = DialogType.ERROR,
-                title = "Export Failed",
-                message = "Tank report could not be created."
-            )
+    override fun onDestroyView() {
+        swipeLifecycleCallbacks?.let { callbacks ->
+            childFragmentManager.unregisterFragmentLifecycleCallbacks(callbacks)
         }
-    }
-}
 
+        swipeLifecycleCallbacks = null
 
-private fun showBasicFragmentIfNeeded() {
-    binding.basicFragmentContainer.isVisible = true
-
-    val existingFragment = getBasicFragment()
-
-    if (existingFragment != null) {
-        return
+        super.onDestroyView()
+        _binding = null
     }
 
-    childFragmentManager.beginTransaction()
-    .replace(
-        R.id.basicFragmentContainer,
-        TankSettingsBasicFragment.newInstance(tankId),
-        TAG_BASIC_FRAGMENT
-    )
-    .commit()
-}
-
-private fun getBasicFragment(): TankSettingsBasicFragment? {
-    return childFragmentManager.findFragmentByTag(
-        TAG_BASIC_FRAGMENT
-    ) as? TankSettingsBasicFragment
-}
-
-private fun showDetailsFragmentIfNeeded() {
-    binding.detailsFragmentContainer.isVisible = true
-
-    val existingFragment = getDetailsFragment()
-
-    if (existingFragment != null) {
-        return
+    private enum class SettingsTab {
+        BASIC,
+        DETAILS,
+        OTHERS
     }
 
-    childFragmentManager.beginTransaction()
-    .replace(
-        R.id.detailsFragmentContainer,
-        TankSettingsDetailsFragment.newInstance(tankId),
-        TAG_DETAILS_FRAGMENT
-    )
-    .commit()
-}
+    companion object {
+        private const val ARG_TANK_ID = "tankId"
 
-private fun getDetailsFragment(): TankSettingsDetailsFragment? {
-    return childFragmentManager.findFragmentByTag(
-        TAG_DETAILS_FRAGMENT
-    ) as? TankSettingsDetailsFragment
-}
-
-private fun showOthersFragmentIfNeeded() {
-    binding.othersFragmentContainer.isVisible = true
-
-    val existingFragment = getOthersFragment()
-
-    if (existingFragment != null) {
-        return
+        private const val TAG_BASIC_FRAGMENT = "TankSettingsBasicFragment"
+        private const val TAG_DETAILS_FRAGMENT = "TankSettingsDetailsFragment"
+        private const val TAG_OTHERS_FRAGMENT = "TankSettingsOthersFragment"
+        private const val TAG_MATERIAL_PICKER_FRAGMENT = "SettingsMaterialPickerFragment"
     }
-
-    childFragmentManager.beginTransaction()
-    .replace(
-        R.id.othersFragmentContainer,
-        TankSettingsOthersFragment.newInstance(tankId),
-        TAG_OTHERS_FRAGMENT
-    )
-    .commit()
-}
-
-private fun getOthersFragment(): TankSettingsOthersFragment? {
-    return childFragmentManager.findFragmentByTag(
-        TAG_OTHERS_FRAGMENT
-    ) as? TankSettingsOthersFragment
-}
-
-fun showDeleteTankConfirmationDialog() {
-    val tank = currentTank ?: return
-
-    DialogManager.showConfirmDialog(
-        context = requireContext(),
-        type = DialogType.WARNING,
-        title = "Delete Tank?",
-        message = "This will permanently delete \"${tank.name}\" and all saved tank data.",
-        confirmTextResId = R.string.delete,
-        cancelTextResId = R.string.cancel,
-        onConfirm = {
-            deleteCurrentTank()
-        }
-    )
-}
-
-private fun deleteCurrentTank() {
-    if (isDeletingTank) {
-        return
-    }
-
-    isDeletingTank = true
-
-    val baseActivity = activity as? BaseActivity
-    baseActivity?.showLoading(true)
-
-    viewLifecycleOwner.lifecycleScope.launch {
-        try {
-            userPrefs.unassignDevicesFromTank(
-                tankId = tankId
-            )
-
-            aquariumTankViewModel.deleteTanks(
-                tankIds = listOf(tankId)
-            )
-
-            baseActivity?.showLoading(false)
-
-            val popped = findNavController().popBackStack(
-                R.id.aquariumFragment,
-                false
-            )
-
-            if (!popped) {
-                findNavController().navigate(
-                    R.id.aquariumFragment
-                )
-            }
-
-        } catch (exception: Exception) {
-            exception.printStackTrace()
-
-            isDeletingTank = false
-            baseActivity?.showLoading(false)
-
-            DialogManager.showInfoDialog(
-                context = requireContext(),
-                type = DialogType.ERROR,
-                title = "Delete Failed",
-                message = "Tank could not be deleted."
-            )
-        }
-    }
-}
-
-private fun createRoundedDrawable(
-    color: String,
-    radiusPx: Int,
-    strokeColor: String? = null,
-    strokeWidthPx: Int = 0
-): GradientDrawable {
-    return GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        setColor(Color.parseColor(color))
-        cornerRadius = radiusPx.toFloat()
-
-        if (strokeColor != null && strokeWidthPx > 0) {
-            setStroke(
-                strokeWidthPx,
-                Color.parseColor(strokeColor)
-            )
-        }
-    }
-}
-
-private fun Int.dp(): Int {
-    return (this * resources.displayMetrics.density).toInt()
-}
-
-override fun onDestroyView() {
-    super.onDestroyView()
-    _binding = null
-}
-
-private enum class SettingsTab {
-    BASIC,
-    DETAILS,
-    OTHERS
-}
-
-companion object {
-    private const val ARG_TANK_ID = "tankId"
-    private const val TAG_BASIC_FRAGMENT = "TankSettingsBasicFragment"
-    private const val TAG_DETAILS_FRAGMENT = "TankSettingsDetailsFragment"
-    private const val TAG_OTHERS_FRAGMENT = "TankSettingsOthersFragment"
-}
 }

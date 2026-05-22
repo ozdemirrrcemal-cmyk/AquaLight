@@ -1,358 +1,223 @@
-<?xml version="1.0" encoding="utf-8"?>  <androidx.constraintlayout.widget.ConstraintLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent"
-  android:background="@color/background_color">
-
-  <androidx.constraintlayout.widget.ConstraintLayout
-    android:id="@+id/headerContainer"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@color/background_color"
-    android:paddingStart="16dp"
-    android:paddingTop="18dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="10dp"
-    app:layout_constraintTop_toTopOf="parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
 
-    <com.google.android.material.card.MaterialCardView
-      android:id="@+id/btnBack"
-      android:layout_width="38dp"
-      android:layout_height="38dp"
-      android:clickable="true"
-      android:focusable="true"
-      app:cardBackgroundColor="#10233A"
-      app:cardCornerRadius="19dp"
-      app:cardElevation="0dp"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent"
-      app:strokeWidth="0dp">
-
-      <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:contentDescription="Back"
-        android:padding="9dp"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_back"
-        app:tint="?attr/colorOnSurface" />
-
-    </com.google.android.material.card.MaterialCardView>
-<TextView
-  android:id="@+id/tvTitle"
-  android:layout_width="0dp"
-  android:layout_height="wrap_content"
-  android:layout_marginStart="54dp"
-  android:layout_marginEnd="54dp"
-  android:ellipsize="end"
-  android:gravity="center"
-  android:includeFontPadding="false"
-  android:maxLines="1"
-  android:text="Tank Settings"
-  android:textColor="?attr/colorOnSurface"
-  android:textSize="18sp"
-  android:textStyle="bold"
-  app:layout_constraintBottom_toBottomOf="@id/btnBack"
-  app:layout_constraintEnd_toEndOf="parent"
-  app:layout_constraintStart_toStartOf="parent"
-  app:layout_constraintTop_toTopOf="@id/btnBack" />
-
-    <com.google.android.material.card.MaterialCardView
-      android:id="@+id/scoreContainer"
-      android:layout_width="36dp"
-      android:layout_height="36dp"
-      app:cardBackgroundColor="@android:color/transparent"
-      android:clickable="true"
-      android:focusable="true"
-      android:foreground="?attr/selectableItemBackgroundBorderless"
-      app:cardCornerRadius="18dp"
-      app:cardElevation="0dp"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toTopOf="parent"
-      app:strokeColor="#4CAF50"
-      app:strokeWidth="2dp">
-
-      <TextView
-        android:id="@+id/tvScore"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:text="100"
-        android:textColor="#4CAF50"
-        android:textSize="11sp"
-        android:textStyle="bold" />
-
-    </com.google.android.material.card.MaterialCardView>
-
-  </androidx.constraintlayout.widget.ConstraintLayout>
-
-  <LinearLayout
-    android:id="@+id/settingsTabsContainer"
-    android:layout_width="0dp"
-    android:layout_height="42dp"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="10dp"
-    android:layout_marginEnd="16dp"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/headerContainer">
-
-    <TextView
-      android:id="@+id/tabBasic"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:layout_marginEnd="24dp"
-      android:text="Basic"
-      android:textColor="?attr/colorOnSurface"
-      android:textSize="15sp"
-      android:textStyle="bold" />
-
-    <TextView
-      android:id="@+id/tabDetails"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:layout_marginEnd="24dp"
-      android:text="Details"
-      android:textColor="#8FA4BE"
-      android:textSize="15sp" />
-
-    <TextView
-      android:id="@+id/tabOthers"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:text="Others"
-      android:textColor="#8FA4BE"
-      android:textSize="15sp" />
-
-  </LinearLayout>  <View
-    android:id="@+id/tabUnderline"
-    android:layout_width="60dp"
-    android:layout_height="3dp"
-    android:background="#2196F3"
-    app:layout_constraintStart_toStartOf="@id/settingsTabsContainer"
-    app:layout_constraintTop_toBottomOf="@id/settingsTabsContainer" />
-
-  <ScrollView
-    android:id="@+id/contentScrollView"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:overScrollMode="never"
-    android:paddingStart="16dp"
-    android:paddingTop="12dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="120dp"
-    android:scrollbars="none"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/tabUnderline">
-      
-    <LinearLayout
-      android:id="@+id/contentContainer"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:orientation="vertical">
-        
-      <LinearLayout
-        android:id="@+id/othersSection"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/headerContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <TextView
-          android:id="@+id/tvDataManagementTitle"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="8dp"
-          android:includeFontPadding="false"
-          android:text="Data Management"
-          android:textColor="?attr/colorOnSurface"
-          android:textSize="14sp" />
+        android:background="@color/background_color"
+        android:paddingStart="16dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="10dp"
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowDuplicateTank"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="12dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Duplicate Tank"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
+            android:id="@+id/btnBack"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#10233A"
+            app:cardCornerRadius="19dp"
+            app:cardElevation="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeWidth="0dp">
 
             <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
-
-          </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-          android:id="@+id/rowExportTankData"
-          android:layout_width="match_parent"
-          android:layout_height="60dp"
-          android:layout_marginTop="10dp"
-          android:clickable="true"
-          android:focusable="true"
-          app:cardBackgroundColor="#10233A"
-          app:cardCornerRadius="16dp"
-          app:cardElevation="0dp"
-          app:strokeColor="#223A57"
-          app:strokeWidth="1dp">
-
-          <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp">
-
-            <TextView
-              android:layout_width="0dp"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:includeFontPadding="false"
-              android:text="Export Tank Data"
-              android:textColor="?attr/colorOnSurface"
-              android:textSize="14sp"
-              android:textStyle="bold" />
-
-            <ImageView
-              android:layout_width="22dp"
-              android:layout_height="22dp"
-              android:contentDescription="Open"
-              android:scaleType="center"
-              android:src="@drawable/ic_arrow_right"
-              app:tint="#8FA4BE" />
-
-          </LinearLayout>
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Back"
+                android:padding="9dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_back"
+                app:tint="?attr/colorOnSurface" />
 
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
-          android:id="@+id/tvDangerZoneTitle"
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:layout_marginTop="26dp"
-          android:includeFontPadding="false"
-          android:text="Danger Zone"
-          android:textColor="#E06A6A"
-          android:textSize="14sp" />
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="54dp"
+            android:layout_marginEnd="54dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Tank Settings"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@id/btnBack"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/btnBack" />
 
-        <com.google.android.material.button.MaterialButton
-          android:id="@+id/rowDeleteTank"
-          android:layout_width="match_parent"
-          android:layout_height="56dp"
-          android:layout_marginTop="12dp"
-          android:gravity="center"
-          android:insetTop="0dp"
-          android:insetBottom="0dp"
-          android:minHeight="0dp"
-          android:minWidth="0dp"
-          android:text="Delete Tank"
-          android:textAllCaps="false"
-          android:textColor="@android:color/white"
-          android:textSize="14sp"
-          android:textStyle="bold"
-          app:backgroundTint="#D85C5C"
-          app:cornerRadius="16dp"
-          app:icon="@drawable/ic_delete"
-          app:iconGravity="textEnd"
-          app:iconPadding="8dp"
-          app:iconTint="@android:color/white" />
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/scoreContainer"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="#4CAF50"
+            app:strokeWidth="2dp">
 
-      </LinearLayout>
+            <TextView
+                android:id="@+id/tvScore"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="100"
+                android:textColor="#4CAF50"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:id="@+id/settingsTabsContainer"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerContainer">
+
+        <TextView
+            android:id="@+id/tabBasic"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="24dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="Basic"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tabDetails"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="24dp"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="Details"
+            android:textColor="#8FA4BE"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tabOthers"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="Others"
+            android:textColor="#8FA4BE"
+            android:textSize="15sp" />
 
     </LinearLayout>
 
-  </ScrollView>  
-  
-  <FrameLayout
-    android:id="@+id/basicFragmentContainer"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:background="@color/background_color"
-    android:visibility="gone"
-    app:layout_constraintTop_toBottomOf="@id/tabUnderline"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
-	
-   <FrameLayout
-    android:id="@+id/detailsFragmentContainer"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:background="@color/background_color"
-    android:visibility="gone"
-    app:layout_constraintTop_toBottomOf="@id/tabUnderline"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
-	
-   <FrameLayout
-    android:id="@+id/othersFragmentContainer"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:background="@color/background_color"
-    android:visibility="gone"
-    app:layout_constraintTop_toBottomOf="@id/tabUnderline"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent" />
-	
-  <FrameLayout
-    android:id="@+id/settingsMaterialPickerContainer"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:background="@color/background_color"
-    android:clickable="true"
-    android:elevation="24dp"
-    android:focusable="true"
-    android:visibility="gone"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+    <View
+        android:id="@+id/tabUnderline"
+        android:layout_width="60dp"
+        android:layout_height="3dp"
+        android:background="#2196F3"
+        app:layout_constraintStart_toStartOf="@id/settingsTabsContainer"
+        app:layout_constraintTop_toBottomOf="@id/settingsTabsContainer" />
+
+    <ScrollView
+        android:id="@+id/contentScrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:paddingStart="16dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="120dp"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/tabUnderline"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/contentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+    </ScrollView>
+
+    <FrameLayout
+        android:id="@+id/basicFragmentContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/background_color"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/tabUnderline"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/detailsFragmentContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/background_color"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/tabUnderline"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/othersFragmentContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/background_color"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/tabUnderline"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/settingsMaterialPickerContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/background_color"
+        android:clickable="true"
+        android:elevation="24dp"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

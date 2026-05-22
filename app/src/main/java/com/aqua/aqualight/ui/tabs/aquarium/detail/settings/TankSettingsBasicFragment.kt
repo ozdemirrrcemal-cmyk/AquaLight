@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
@@ -98,14 +97,22 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
         tankId = requireArguments().getLong(ARG_TANK_ID)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentTankSettingsBasicBinding.bind(view)
 
@@ -211,6 +218,32 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
         binding.tvSettingIdea.text = tank.description.ifBlank {
             "No idea added"
+        }
+    }
+
+    fun openCareProfileAction(
+        action: String
+    ) {
+        when (action) {
+            ACTION_TANK_NAME -> {
+                showTankNameSheet()
+            }
+
+            ACTION_TANK_TYPE -> {
+                showTankTypeSheet()
+            }
+
+            ACTION_TANK_SIZE -> {
+                showTankSizeSheet()
+            }
+
+            ACTION_SETUP_DATE -> {
+                showSetupDateSheet()
+            }
+
+            ACTION_STYLE -> {
+                showStyleSheet()
+            }
         }
     }
 
@@ -620,6 +653,12 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
+
+        const val ACTION_TANK_NAME = "tank_name"
+        const val ACTION_TANK_TYPE = "tank_type"
+        const val ACTION_TANK_SIZE = "tank_size"
+        const val ACTION_SETUP_DATE = "setup_date"
+        const val ACTION_STYLE = "style"
 
         fun newInstance(
             tankId: Long
