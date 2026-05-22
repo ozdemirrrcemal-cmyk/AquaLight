@@ -8,7 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.databinding.FragmentTankSettingsOthersBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.export.TankPdfExporter
@@ -27,7 +27,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
-    private lateinit var userPrefs: UserPreferencesManager
+    private lateinit var devicesStore: DevicesDataStoreManager
 
     private var tankId: Long = 0L
     private var currentTank: SavedAquariumTank? = null
@@ -54,7 +54,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         )
 
         _binding = FragmentTankSettingsOthersBinding.bind(view)
-        userPrefs = UserPreferencesManager.create(requireContext())
+        devicesStore = DevicesDataStoreManager.create(requireContext())
 
         setupClickListeners()
         observeTank()
@@ -183,7 +183,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val pdfUri = withContext(Dispatchers.IO) {
-                    val connectedDevices = userPrefs.devicesForTankFlow(
+                    val connectedDevices = devicesStore.devicesForTankFlow(
                         tankId = tankId
                     ).first()
 
@@ -253,7 +253,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                userPrefs.unassignDevicesFromTank(
+                devicesStore.unassignDevicesFromTank(
                     tankId = tankId
                 )
 
@@ -290,8 +290,8 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
         _binding = null
+        super.onDestroyView()
     }
 
     companion object {
