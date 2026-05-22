@@ -14,6 +14,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
 import com.aqua.aqualight.R
@@ -39,13 +40,26 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     private var pendingMarkerX: Float = 0.5f
     private var pendingMarkerY: Float = 0.5f
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    private var hasLoadedTankData: Boolean = false
+    private var isSaving: Boolean = false
+
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
         tankId = requireArguments().getLong(ARG_TANK_ID)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
         _binding = FragmentPlantTagBinding.bind(view)
 
         setupTankData()
@@ -55,7 +69,18 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
     private fun setupTankData() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            val tank = tanks.firstOrNull { it.id == tankId } ?: return@observe
+            if (hasLoadedTankData) {
+                return@observe
+            }
+
+            val tank = tanks.firstOrNull { tank ->
+                tank.id == tankId
+            }
+
+            if (tank == null) {
+                findNavController().navigateUp()
+                return@observe
+            }
 
             photoUri = tank.photoUri
 
@@ -71,6 +96,8 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                     )
                 }
             )
+
+            hasLoadedTankData = true
 
             setupImage()
             renderPlants()
@@ -91,16 +118,25 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun setupResultListener() {
-        parentFragmentManager.setFragmentResultListener(
-            PlantPickerFragment.REQUEST_KEY,
-            viewLifecycleOwner
-        ) { _, bundle ->
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?: return
 
-            val plantName = bundle.getString(PlantPickerFragment.RESULT_PLANT_NAME)
-                ?: return@setFragmentResultListener
+        savedStateHandle.getLiveData<Bundle>(
+            PlantPickerFragment.RESULT_BUNDLE_KEY
+        ).observe(viewLifecycleOwner) { bundle ->
+            savedStateHandle.remove<Bundle>(
+                PlantPickerFragment.RESULT_BUNDLE_KEY
+            )
 
-            val category = bundle.getString(PlantPickerFragment.RESULT_PLANT_CATEGORY)
-                ?: return@setFragmentResultListener
+            val plantName = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_NAME
+            ) ?: return@observe
+
+            val category = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_CATEGORY
+            ) ?: return@observe
 
             selectedPlants.add(
                 TankPlantTag(
@@ -118,25 +154,11 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
     private fun setupClickListeners() {
         binding.btnBack.setOnClickListener {
-            (requireParentFragment() as? TankDetailFragment)
-                ?.closePlantTagFlow()
+            findNavController().navigateUp()
         }
 
         binding.btnConfirm.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch {
-                aquariumTankViewModel.updateTankPlants(
-                    tankId = tankId,
-                    plants = selectedPlants
-                )
-
-                parentFragmentManager.setFragmentResult(
-                    RESULT_KEY,
-                    bundleOf(RESULT_UPDATED to true)
-                )
-
-                (requireParentFragment() as? TankDetailFragment)
-                    ?.closePlantTagFlow()
-            }
+            savePlantsAndClose()
         }
 
         binding.imageTouchArea.setOnTouchListener { touchedView, event ->
@@ -144,14 +166,39 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 pendingMarkerX = event.x / touchedView.width.toFloat()
                 pendingMarkerY = event.y / touchedView.height.toFloat()
 
-                (requireParentFragment() as? TankDetailFragment)
-                    ?.openPlantPickerFlow()
+                openPlantPickerScreen()
 
                 touchedView.performClick()
                 true
             } else {
                 true
             }
+        }
+    }
+
+    private fun openPlantPickerScreen() {
+        findNavController().navigate(
+            R.id.action_tankDetailPlantTagFragment_to_plantPickerFragment,
+            bundleOf(
+                PlantPickerFragment.ARG_USE_NAV_RESULT to true
+            )
+        )
+    }
+
+    private fun savePlantsAndClose() {
+        if (isSaving) {
+            return
+        }
+
+        isSaving = true
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            aquariumTankViewModel.updateTankPlants(
+                tankId = tankId,
+                plants = selectedPlants
+            )
+
+            findNavController().navigateUp()
         }
     }
 
@@ -178,7 +225,12 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(14.dp(), 12.dp(), 12.dp(), 12.dp())
+                setPadding(
+                    14.dp(),
+                    12.dp(),
+                    12.dp(),
+                    12.dp()
+                )
             }
 
             val number = TextView(requireContext()).apply {
@@ -304,10 +356,7 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     companion object {
-        private const val ARG_TANK_ID = "arg_tank_id"
-
-        const val RESULT_KEY = "tank_detail_plant_tag_result"
-        const val RESULT_UPDATED = "tank_detail_plant_tag_updated"
+        private const val ARG_TANK_ID = "tankId"
 
         fun newInstance(
             tankId: Long

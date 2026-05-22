@@ -283,19 +283,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
-
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/plantFlowContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/background_color"
-        android:clickable="true"
-        android:elevation="40dp"
-        android:focusable="true"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
    
 </androidx.constraintlayout.widget.ConstraintLayout>

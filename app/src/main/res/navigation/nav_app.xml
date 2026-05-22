@@ -45,6 +45,9 @@
     <action
         android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
         app:destination="@id/tankDetailLivestockFormFragment" />
+	<action
+    android:id="@+id/action_tankDetailFragment_to_tankDetailPlantTagFragment"
+    app:destination="@id/tankDetailPlantTagFragment" />
 
 </fragment>
 
@@ -77,6 +80,34 @@
 
 </fragment>
 
+<fragment
+    android:id="@+id/tankDetailPlantTagFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailPlantTagFragment"
+    android:label="Plant Tags"
+    tools:layout="@layout/fragment_plant_tag">
+
+    <argument
+        android:name="tankId"
+        app:argType="long" />
+
+    <action
+        android:id="@+id/action_tankDetailPlantTagFragment_to_plantPickerFragment"
+        app:destination="@id/plantPickerFragment" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/plantPickerFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment"
+    android:label="Plant Picker"
+    tools:layout="@layout/fragment_plant_picker">
+
+    <argument
+        android:name="useNavResult"
+        app:argType="boolean"
+        android:defaultValue="false" />
+
+</fragment>
 
   <!-- Maintenance Tab -->
 <fragment

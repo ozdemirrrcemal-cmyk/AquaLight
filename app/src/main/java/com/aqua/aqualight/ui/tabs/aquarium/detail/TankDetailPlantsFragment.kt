@@ -8,8 +8,10 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailPlantsBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -24,15 +26,24 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private var tankId: Long = 0L
+    private var isOpeningPlantTagScreen: Boolean = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
         tankId = requireArguments().getLong(ARG_TANK_ID)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentTankDetailPlantsBinding.bind(view)
 
@@ -40,11 +51,37 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         observeTank()
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        isOpeningPlantTagScreen = false
+    }
+
     private fun setupClickListeners() {
         binding.btnAddPlant.setOnClickListener {
-            (parentFragment as? TankDetailFragment)
-                ?.openPlantTagFlow()
+            openPlantTagScreen()
         }
+    }
+
+    private fun openPlantTagScreen() {
+        if (isOpeningPlantTagScreen) {
+            return
+        }
+
+        val navController = findNavController()
+
+        if (navController.currentDestination?.id != R.id.tankDetailFragment) {
+            return
+        }
+
+        isOpeningPlantTagScreen = true
+
+        navController.navigate(
+            R.id.action_tankDetailFragment_to_tankDetailPlantTagFragment,
+            bundleOf(
+                "tankId" to tankId
+            )
+        )
     }
 
     private fun observeTank() {

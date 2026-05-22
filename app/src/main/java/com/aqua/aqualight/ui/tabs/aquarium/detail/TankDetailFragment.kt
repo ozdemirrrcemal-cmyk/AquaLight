@@ -9,7 +9,6 @@ import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.navigation.fragment.findNavController
@@ -20,7 +19,6 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 
@@ -73,10 +71,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     private fun setupClickListeners() {
         binding.btnBack.setOnClickListener {
-            if (handlePlantFlowBack()) {
-                return@setOnClickListener
-            }
-
             findNavController().navigateUp()
         }
 
@@ -103,6 +97,17 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.tabTankLife.setOnClickListener {
             selectTab(TankDetailTab.TANK_LIFE)
         }
+    }
+
+    private fun setupSystemBackButton() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    findNavController().navigateUp()
+                }
+            }
+        )
     }
 
     private fun setupSwipeBetweenTabs() {
@@ -145,16 +150,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         binding.tankLifeFragmentContainer.setOnSwipeRightListener {
             moveToPreviousTab()
         }
-    }
-
-    private fun setTabSwipeEnabled(
-        enabled: Boolean
-    ) {
-        binding.devicesFragmentContainer.setSwipeEnabled(enabled)
-        binding.activityFragmentContainer.setSwipeEnabled(enabled)
-        binding.tankFragmentContainer.setSwipeEnabled(enabled)
-        binding.plantsFragmentContainer.setSwipeEnabled(enabled)
-        binding.tankLifeFragmentContainer.setSwipeEnabled(enabled)
     }
 
     private fun moveToNextTab() {
@@ -222,7 +217,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
                 when (action) {
                     CARE_PROFILE_ACTION_PLANTS -> {
                         selectTab(TankDetailTab.PLANTS)
-                        openPlantTagFlow()
+                        openPlantTagScreen()
                     }
 
                     CARE_PROFILE_ACTION_LIVESTOCK -> {
@@ -262,17 +257,11 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         )
     }
 
-    private fun setupSystemBackButton() {
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    if (handlePlantFlowBack()) {
-                        return
-                    }
-
-                    findNavController().navigateUp()
-                }
+    private fun openPlantTagScreen() {
+        findNavController().navigate(
+            R.id.action_tankDetailFragment_to_tankDetailPlantTagFragment,
+            Bundle().apply {
+                putLong("tankId", tankId)
             }
         )
     }
@@ -507,68 +496,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         ) as? TankDetailLifeFragment
     }
 
-    fun openPlantTagFlow() {
-        setTabSwipeEnabled(false)
-
-        binding.plantFlowContainer.isVisible = true
-
-        childFragmentManager.commit {
-            replace(
-                R.id.plantFlowContainer,
-                TankDetailPlantTagFragment.newInstance(tankId),
-                TAG_PLANT_TAG_FRAGMENT
-            )
-        }
-    }
-
-    fun openPlantPickerFlow() {
-        setTabSwipeEnabled(false)
-
-        childFragmentManager.commit {
-            setReorderingAllowed(true)
-            add(
-                R.id.plantFlowContainer,
-                PlantPickerFragment(),
-                TAG_PLANT_PICKER_FRAGMENT
-            )
-            addToBackStack(TAG_PLANT_PICKER_FRAGMENT)
-        }
-    }
-
-    fun closePlantTagFlow() {
-        childFragmentManager.popBackStack(
-            null,
-            FragmentManager.POP_BACK_STACK_INCLUSIVE
-        )
-
-        val currentPlantFragment = childFragmentManager.findFragmentById(
-            R.id.plantFlowContainer
-        )
-
-        if (currentPlantFragment != null) {
-            childFragmentManager.commit {
-                remove(currentPlantFragment)
-            }
-        }
-
-        binding.plantFlowContainer.isVisible = false
-        setTabSwipeEnabled(true)
-    }
-
-    private fun handlePlantFlowBack(): Boolean {
-        if (!binding.plantFlowContainer.isVisible) {
-            return false
-        }
-
-        if (childFragmentManager.backStackEntryCount > 0) {
-            childFragmentManager.popBackStack()
-        } else {
-            closePlantTagFlow()
-        }
-
-        return true
-    }
-
     private fun activateTab(
         tabView: TextView
     ) {
@@ -660,9 +587,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         private const val TAG_TANK_FRAGMENT = "TankDetailTankFragment"
         private const val TAG_PLANTS_FRAGMENT = "TankDetailPlantsFragment"
         private const val TAG_TANK_LIFE_FRAGMENT = "TankDetailLifeFragment"
-
-        private const val TAG_PLANT_TAG_FRAGMENT = "TankDetailPlantTagFragment"
-        private const val TAG_PLANT_PICKER_FRAGMENT = "PlantPickerFragment"
 
         const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
         const val CARE_PROFILE_ACTION_PLANTS = "plants"

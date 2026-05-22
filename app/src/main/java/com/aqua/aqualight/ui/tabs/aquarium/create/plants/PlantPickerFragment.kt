@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantPickerBinding
 import com.google.android.material.card.MaterialCardView
@@ -22,7 +23,15 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
     private val plants: List<AquariumPlant> = PlantCatalog.plants
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
         _binding = FragmentPlantPickerBinding.bind(view)
 
         setupClickListeners()
@@ -32,7 +41,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
     private fun setupClickListeners() {
         binding.btnBack.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            closePicker()
         }
 
         binding.btnClearSearch.setOnClickListener {
@@ -67,15 +76,23 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                         plants
                     } else {
                         plants.filter { plant ->
-                            plant.name.contains(query, ignoreCase = true) ||
-                                plant.category.contains(query, ignoreCase = true)
+                            plant.name.contains(
+                                query,
+                                ignoreCase = true
+                            ) ||
+                                plant.category.contains(
+                                    query,
+                                    ignoreCase = true
+                                )
                         }
                     }
 
                     renderPlantList(filteredPlants)
                 }
 
-                override fun afterTextChanged(s: Editable?) = Unit
+                override fun afterTextChanged(
+                    s: Editable?
+                ) = Unit
             }
         )
     }
@@ -210,15 +227,47 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         plantName: String,
         category: String
     ) {
+        val resultBundle = bundleOf(
+            RESULT_PLANT_NAME to plantName,
+            RESULT_PLANT_CATEGORY to category
+        )
+
+        if (usesNavigationResult()) {
+            val navController = findNavController()
+
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(
+                    RESULT_BUNDLE_KEY,
+                    resultBundle
+                )
+
+            navController.navigateUp()
+            return
+        }
+
         parentFragmentManager.setFragmentResult(
             REQUEST_KEY,
-            bundleOf(
-                RESULT_PLANT_NAME to plantName,
-                RESULT_PLANT_CATEGORY to category
-            )
+            resultBundle
         )
 
         parentFragmentManager.popBackStack()
+    }
+
+    private fun closePicker() {
+        if (usesNavigationResult()) {
+            findNavController().navigateUp()
+            return
+        }
+
+        parentFragmentManager.popBackStack()
+    }
+
+    private fun usesNavigationResult(): Boolean {
+        return arguments?.getBoolean(
+            ARG_USE_NAV_RESULT,
+            false
+        ) == true
     }
 
     private fun Int.dp(): Int {
@@ -231,7 +280,11 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
     }
 
     companion object {
+        const val ARG_USE_NAV_RESULT = "useNavResult"
+
         const val REQUEST_KEY = "plant_picker_result"
+        const val RESULT_BUNDLE_KEY = "plant_picker_result_bundle"
+
         const val RESULT_PLANT_NAME = "plant_name"
         const val RESULT_PLANT_CATEGORY = "plant_category"
     }
