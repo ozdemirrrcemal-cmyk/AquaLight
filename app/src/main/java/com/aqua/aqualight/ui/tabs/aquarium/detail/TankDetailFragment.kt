@@ -37,14 +37,22 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     private var selectedTab: TankDetailTab = TankDetailTab.DEVICES
     private var currentTank: SavedAquariumTank? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
         tankId = requireArguments().getLong(ARG_TANK_ID)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentTankDetailBinding.bind(view)
 
@@ -58,6 +66,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         setupClickListeners()
         setupSystemBackButton()
+        setupSwipeBetweenTabs()
         observeCareProfileActions()
         observeTank()
         selectTab(selectedTab)
@@ -98,6 +107,102 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         binding.tabTankLife.setOnClickListener {
             selectTab(TankDetailTab.TANK_LIFE)
+        }
+    }
+
+    private fun setupSwipeBetweenTabs() {
+        binding.devicesFragmentContainer.setOnSwipeLeftListener {
+            moveToNextTab()
+        }
+
+        binding.devicesFragmentContainer.setOnSwipeRightListener {
+            moveToPreviousTab()
+        }
+
+        binding.activityFragmentContainer.setOnSwipeLeftListener {
+            moveToNextTab()
+        }
+
+        binding.activityFragmentContainer.setOnSwipeRightListener {
+            moveToPreviousTab()
+        }
+
+        binding.tankFragmentContainer.setOnSwipeLeftListener {
+            moveToNextTab()
+        }
+
+        binding.tankFragmentContainer.setOnSwipeRightListener {
+            moveToPreviousTab()
+        }
+
+        binding.plantsFragmentContainer.setOnSwipeLeftListener {
+            moveToNextTab()
+        }
+
+        binding.plantsFragmentContainer.setOnSwipeRightListener {
+            moveToPreviousTab()
+        }
+
+        binding.tankLifeFragmentContainer.setOnSwipeLeftListener {
+            moveToNextTab()
+        }
+
+        binding.tankLifeFragmentContainer.setOnSwipeRightListener {
+            moveToPreviousTab()
+        }
+    }
+
+    private fun setTabSwipeEnabled(
+        enabled: Boolean
+    ) {
+        binding.devicesFragmentContainer.setSwipeEnabled(enabled)
+        binding.activityFragmentContainer.setSwipeEnabled(enabled)
+        binding.tankFragmentContainer.setSwipeEnabled(enabled)
+        binding.plantsFragmentContainer.setSwipeEnabled(enabled)
+        binding.tankLifeFragmentContainer.setSwipeEnabled(enabled)
+    }
+
+    private fun moveToNextTab() {
+        when (selectedTab) {
+            TankDetailTab.DEVICES -> {
+                selectTab(TankDetailTab.ACTIVITY)
+            }
+
+            TankDetailTab.ACTIVITY -> {
+                selectTab(TankDetailTab.TANK)
+            }
+
+            TankDetailTab.TANK -> {
+                selectTab(TankDetailTab.PLANTS)
+            }
+
+            TankDetailTab.PLANTS -> {
+                selectTab(TankDetailTab.TANK_LIFE)
+            }
+
+            TankDetailTab.TANK_LIFE -> Unit
+        }
+    }
+
+    private fun moveToPreviousTab() {
+        when (selectedTab) {
+            TankDetailTab.DEVICES -> Unit
+
+            TankDetailTab.ACTIVITY -> {
+                selectTab(TankDetailTab.DEVICES)
+            }
+
+            TankDetailTab.TANK -> {
+                selectTab(TankDetailTab.ACTIVITY)
+            }
+
+            TankDetailTab.PLANTS -> {
+                selectTab(TankDetailTab.TANK)
+            }
+
+            TankDetailTab.TANK_LIFE -> {
+                selectTab(TankDetailTab.PLANTS)
+            }
         }
     }
 
@@ -270,6 +375,13 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
                 showTankLifeFragmentIfNeeded()
             }
         }
+
+        binding.contentScrollView.post {
+            binding.contentScrollView.scrollTo(
+                0,
+                0
+            )
+        }
     }
 
     private fun showDevicesFragmentIfNeeded() {
@@ -395,6 +507,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     fun openLivestockFormFlow(
         livestock: SavedAquariumLivestock? = null
     ) {
+        setTabSwipeEnabled(false)
+
         binding.lifeFlowContainer.isVisible = true
 
         childFragmentManager.commit {
@@ -421,9 +535,12 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         }
 
         binding.lifeFlowContainer.isVisible = false
+        setTabSwipeEnabled(true)
     }
 
     fun openPlantTagFlow() {
+        setTabSwipeEnabled(false)
+
         binding.plantFlowContainer.isVisible = true
 
         childFragmentManager.commit {
@@ -436,6 +553,8 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     fun openPlantPickerFlow() {
+        setTabSwipeEnabled(false)
+
         childFragmentManager.commit {
             setReorderingAllowed(true)
             add(
@@ -464,6 +583,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         }
 
         binding.plantFlowContainer.isVisible = false
+        setTabSwipeEnabled(true)
     }
 
     private fun handlePlantFlowBack(): Boolean {
@@ -547,7 +667,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         return (this * resources.displayMetrics.density).toInt()
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
+    override fun onSaveInstanceState(
+        outState: Bundle
+    ) {
         super.onSaveInstanceState(outState)
 
         outState.putString(

@@ -229,7 +229,7 @@
 
     </ScrollView>
 
-    <FrameLayout
+    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
         android:id="@+id/tankFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -240,7 +240,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
 
-    <FrameLayout
+    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
         android:id="@+id/devicesFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -250,8 +250,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
-
-    <FrameLayout
+		
+    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
         android:id="@+id/activityFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -262,7 +262,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
 
-    <FrameLayout
+    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
         android:id="@+id/plantsFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -273,7 +273,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tabUnderline" />
 
-    <FrameLayout
+    <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
         android:id="@+id/tankLifeFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"

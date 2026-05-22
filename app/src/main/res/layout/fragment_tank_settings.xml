@@ -173,7 +173,7 @@
 
     </ScrollView>
 
-    <FrameLayout
+   <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
         android:id="@+id/basicFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -184,7 +184,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <FrameLayout
+   <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
         android:id="@+id/detailsFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -194,8 +194,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-
-    <FrameLayout
+   <com.aqua.aqualight.ui.common.view.SwipeInterceptFrameLayout
         android:id="@+id/othersFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"

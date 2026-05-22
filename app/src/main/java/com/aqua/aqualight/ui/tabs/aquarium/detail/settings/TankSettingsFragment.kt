@@ -1,21 +1,16 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
-import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -30,7 +25,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
@@ -45,7 +39,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
     private var selectedTab: SettingsTab = SettingsTab.BASIC
     private var currentTank: SavedAquariumTank? = null
     private var isDeletingTank: Boolean = false
-    private var swipeLifecycleCallbacks: FragmentManager.FragmentLifecycleCallbacks? = null
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -116,112 +109,38 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
         )
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     private fun setupSwipeBetweenTabs() {
-        val gestureDetector = GestureDetector(
-            requireContext(),
-            object : GestureDetector.SimpleOnGestureListener() {
-
-                override fun onDown(
-                    e: MotionEvent
-                ): Boolean {
-                    return true
-                }
-
-                override fun onFling(
-                    e1: MotionEvent?,
-                    e2: MotionEvent,
-                    velocityX: Float,
-                    velocityY: Float
-                ): Boolean {
-                    if (e1 == null) {
-                        return false
-                    }
-
-                    if (binding.settingsMaterialPickerContainer.isVisible) {
-                        return false
-                    }
-
-                    val diffX = e2.x - e1.x
-                    val diffY = e2.y - e1.y
-
-                    val isHorizontalSwipe = abs(diffX) > abs(diffY) * 1.4f
-                    val hasEnoughDistance = abs(diffX) > 90.dp()
-                    val hasEnoughVelocity = abs(velocityX) > 650
-
-                    if (!isHorizontalSwipe || !hasEnoughDistance || !hasEnoughVelocity) {
-                        return false
-                    }
-
-                    if (diffX < 0) {
-                        moveToNextTab()
-                    } else {
-                        moveToPreviousTab()
-                    }
-
-                    return true
-                }
-            }
-        )
-
-        val touchListener = View.OnTouchListener { _, event ->
-            gestureDetector.onTouchEvent(event)
-            false
+        binding.basicFragmentContainer.setOnSwipeLeftListener {
+            moveToNextTab()
         }
 
-        listOf(
-            binding.settingsTabsContainer,
-            binding.contentScrollView,
-            binding.basicFragmentContainer,
-            binding.detailsFragmentContainer,
-            binding.othersFragmentContainer
-        ).forEach { view ->
-            view.setOnTouchListener(touchListener)
+        binding.basicFragmentContainer.setOnSwipeRightListener {
+            moveToPreviousTab()
         }
 
-        val callbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
-            override fun onFragmentViewCreated(
-                fm: FragmentManager,
-                fragment: Fragment,
-                view: View,
-                savedInstanceState: Bundle?
-            ) {
-                if (
-                    fragment is TankSettingsBasicFragment ||
-                    fragment is TankSettingsDetailsFragment ||
-                    fragment is TankSettingsOthersFragment
-                ) {
-                    attachSwipeTouchListenerRecursively(
-                        view = view,
-                        touchListener = touchListener
-                    )
-                }
-            }
+        binding.detailsFragmentContainer.setOnSwipeLeftListener {
+            moveToNextTab()
         }
 
-        swipeLifecycleCallbacks = callbacks
+        binding.detailsFragmentContainer.setOnSwipeRightListener {
+            moveToPreviousTab()
+        }
 
-        childFragmentManager.registerFragmentLifecycleCallbacks(
-            callbacks,
-            false
-        )
+        binding.othersFragmentContainer.setOnSwipeLeftListener {
+            moveToNextTab()
+        }
+
+        binding.othersFragmentContainer.setOnSwipeRightListener {
+            moveToPreviousTab()
+        }
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private fun attachSwipeTouchListenerRecursively(
-        view: View,
-        touchListener: View.OnTouchListener
+    private fun setTabSwipeEnabled(
+        enabled: Boolean
     ) {
-        view.setOnTouchListener(touchListener)
-
-        if (view is ViewGroup) {
-            for (index in 0 until view.childCount) {
-                attachSwipeTouchListenerRecursively(
-                    view = view.getChildAt(index),
-                    touchListener = touchListener
-                )
-            }
-        }
+        binding.basicFragmentContainer.setSwipeEnabled(enabled)
+        binding.detailsFragmentContainer.setSwipeEnabled(enabled)
+        binding.othersFragmentContainer.setSwipeEnabled(enabled)
     }
 
     private fun moveToNextTab() {
@@ -661,6 +580,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
         categoryKey: String,
         categoryTitle: String
     ) {
+        setTabSwipeEnabled(false)
+
         binding.settingsMaterialPickerContainer.isVisible = true
 
         childFragmentManager.beginTransaction()
@@ -688,6 +609,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
         }
 
         binding.settingsMaterialPickerContainer.isVisible = false
+        setTabSwipeEnabled(true)
     }
 
     private fun showBasicFragmentIfNeeded() {
@@ -787,12 +709,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings),
     }
 
     override fun onDestroyView() {
-        swipeLifecycleCallbacks?.let { callbacks ->
-            childFragmentManager.unregisterFragmentLifecycleCallbacks(callbacks)
-        }
-
-        swipeLifecycleCallbacks = null
-
         super.onDestroyView()
         _binding = null
     }
