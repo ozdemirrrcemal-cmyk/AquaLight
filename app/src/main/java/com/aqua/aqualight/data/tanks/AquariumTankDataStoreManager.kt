@@ -498,6 +498,70 @@ class AquariumTankDataStoreManager(
       .build()
     }
   }
+  
+  private fun SavedAquariumTank.toStoredTankForRestore(): StoredTank {
+  return StoredTank.newBuilder()
+    .setId(id)
+    .setName(
+      name.ifBlank {
+        "Unnamed Aquarium"
+      }
+    )
+    .setDescription(description)
+    .setPhotoUri(photoUri.orEmpty())
+    .setSetupDateMillis(setupDateMillis ?: 0L)
+    .setWidthCm(widthCm)
+    .setLengthCm(lengthCm)
+    .setHeightCm(heightCm)
+    .setSizeUnit(
+      sizeUnit.ifBlank {
+        "cm"
+      }
+    )
+    .setVolumeUnit(volumeUnit)
+    .setTankType(tankType)
+    .setTankStyle(tankStyle)
+    .setCreatedAtMillis(
+      if (createdAtMillis > 0L) {
+        createdAtMillis
+      } else {
+        System.currentTimeMillis()
+      }
+    )
+    .addAllPlants(
+      plants.map {
+        plant ->
+        StoredPlantTag.newBuilder()
+          .setId(plant.id)
+          .setPlantName(plant.plantName)
+          .setCategory(plant.category)
+          .setMarkerX(plant.markerX)
+          .setMarkerY(plant.markerY)
+          .build()
+      }
+    )
+    .addAllMaterials(
+      materials.map {
+        material ->
+        StoredMaterial.newBuilder()
+          .setId(material.id)
+          .setProductId(material.productId)
+          .setCategoryKey(material.categoryKey)
+          .setCategoryTitle(material.categoryTitle)
+          .setName(material.name)
+          .setBrand(material.brand)
+          .setNote(material.note)
+          .build()
+      }
+    )
+    .addAllLivestock(
+      livestock.map {
+        item ->
+        item.toStoredLivestock()
+      }
+    )
+    .build()
+}
 
   private fun TankDraft.toStoredTank(
     tankId: Long,

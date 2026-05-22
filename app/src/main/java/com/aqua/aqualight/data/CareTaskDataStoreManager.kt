@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 import com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.ui.tabs.maintenance.smartcare.SmartCareGeneratedTask
 import com.aqua.aqualight.ui.tabs.maintenance.smartcare.SmartCareTaskType
+import kotlinx.coroutines.flow.first
 
 private object CareTasksSerializer : Serializer<CareTasksStore> {
 
@@ -766,7 +767,7 @@ class CareTaskDataStoreManager private constructor(
       )
     }
   }
-
+  
   private fun StoredCareTask.toCareTask(): CareTask {
     return CareTask(
       id = id,

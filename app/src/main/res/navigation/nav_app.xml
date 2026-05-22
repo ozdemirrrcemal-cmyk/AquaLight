@@ -346,5 +346,5 @@
         android:id="@+id/openSourceLicensesFragment"
         android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment"
         android:label="@string/open_source_title" />
-
+		
 </navigation>

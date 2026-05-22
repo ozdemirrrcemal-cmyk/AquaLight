@@ -281,7 +281,7 @@ class DevicesDataStoreManager private constructor(
                 .build()
         }
     }
-
+	
     suspend fun updateDevicesLastSeen(
         discovered: List<DeviceLastSeenUpdate>
     ) {

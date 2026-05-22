@@ -269,6 +269,60 @@
                         android:contentDescription="@string/settings_language_arrow_description" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+			
+			<!-- 💾 Backup & Restore -->
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/cardBackupRestore"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    style="@style/Widget.Aqua.CardStyles"
+    android:clickable="true"
+    android:focusable="true"
+    android:contentDescription="@string/settings_backup_restore_section_description">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvBackupRestoreTitle"
+                android:text="@string/settings_backup_restore_title"
+                android:textSize="14sp"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/tvBackupRestoreSubtitle"
+                android:text="@string/settings_backup_restore_subtitle"
+                android:textSize="12sp"
+                android:textColor="@color/settings_text_secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnBackupRestore"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="@color/settings_text_secondary"
+            android:contentDescription="@string/settings_backup_restore_arrow_description" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
 
             <!-- ℹ️ About -->
             <com.google.android.material.card.MaterialCardView

@@ -2,12 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
@@ -213,11 +213,10 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
 
         if (!isValidDevice(device)) {
-            Toast.makeText(
-                requireContext(),
-                getString(R.string.device_scan_invalid_device),
-                Toast.LENGTH_SHORT
-            ).show()
+            showGlobalSnackBar(
+                message = getString(R.string.device_scan_invalid_device),
+                type = BaseActivity.SnackType.WARNING
+            )
 
             return
         }
@@ -256,11 +255,10 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                         )
                     )
 
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.device_scan_already_added),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showGlobalSnackBar(
+                        message = getString(R.string.device_scan_already_added),
+                        type = BaseActivity.SnackType.WARNING
+                    )
 
                     if (_binding != null) {
                         findNavController().popBackStack()
@@ -295,16 +293,25 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 exception.printStackTrace()
 
                 if (_binding != null) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Device could not be saved.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showGlobalSnackBar(
+                        message = "Device could not be saved.",
+                        type = BaseActivity.SnackType.ERROR
+                    )
                 }
             } finally {
                 isSavingDevice = false
             }
         }
+    }
+
+    private fun showGlobalSnackBar(
+        message: String,
+        type: BaseActivity.SnackType
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = type
+        )
     }
 
     private fun isValidDevice(
