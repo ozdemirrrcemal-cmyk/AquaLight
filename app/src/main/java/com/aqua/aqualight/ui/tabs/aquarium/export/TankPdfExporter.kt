@@ -19,7 +19,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.io.FileOutputStream
@@ -44,7 +44,7 @@ object TankPdfExporter {
   fun createTankReportPdf(
     context: Context,
     tank: SavedAquariumTank,
-    devices: List<UserPreferencesManager.DeviceInfoUi> = emptyList()
+    devices: List<DevicesDataStoreManager.DeviceInfoUi> = emptyList()
   ): Uri {
     val document = PdfDocument()
     val writer = PdfWriter(document)
@@ -211,7 +211,7 @@ object TankPdfExporter {
   }
 
   private fun getDeviceNameText(
-    device: UserPreferencesManager.DeviceInfoUi
+    device: DevicesDataStoreManager.DeviceInfoUi
   ): String {
     return device.name.ifBlank {
       "Device"
@@ -219,7 +219,7 @@ object TankPdfExporter {
   }
 
   private fun getDeviceTypeText(
-    device: UserPreferencesManager.DeviceInfoUi
+    device: DevicesDataStoreManager.DeviceInfoUi
   ): String {
     return device.aquaName.ifBlank {
       "Device"
@@ -228,7 +228,7 @@ object TankPdfExporter {
 
 
   private fun getDeviceFirmwareText(
-    device: UserPreferencesManager.DeviceInfoUi
+    device: DevicesDataStoreManager.DeviceInfoUi
   ): String {
     return device.firmwareBuild
     .substringBefore(" (")
