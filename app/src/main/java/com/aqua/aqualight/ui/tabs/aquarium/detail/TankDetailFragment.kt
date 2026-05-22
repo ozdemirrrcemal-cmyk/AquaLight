@@ -53,13 +53,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         _binding = FragmentTankDetailBinding.bind(view)
 
-        selectedTab = savedInstanceState
-            ?.getString(KEY_SELECTED_TAB)
-            ?.let { tabName ->
-                runCatching {
-                    TankDetailTab.valueOf(tabName)
-                }.getOrNull()
-            } ?: selectedTab
+        selectedTab = restoreSelectedTab(savedInstanceState)
 
         setupClickListeners()
         setupSystemBackButton()
@@ -67,6 +61,18 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         observeCareProfileActions()
         observeTank()
         selectTab(selectedTab)
+    }
+
+    private fun restoreSelectedTab(
+        savedInstanceState: Bundle?
+    ): TankDetailTab {
+        return savedInstanceState
+            ?.getString(KEY_SELECTED_TAB)
+            ?.let { tabName ->
+                runCatching {
+                    TankDetailTab.valueOf(tabName)
+                }.getOrNull()
+            } ?: selectedTab
     }
 
     private fun setupClickListeners() {
@@ -111,89 +117,42 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     private fun setupSwipeBetweenTabs() {
-        binding.devicesFragmentContainer.setOnSwipeLeftListener {
-            moveToNextTab()
-        }
+        listOf(
+            binding.devicesFragmentContainer,
+            binding.activityFragmentContainer,
+            binding.tankFragmentContainer,
+            binding.plantsFragmentContainer,
+            binding.tankLifeFragmentContainer
+        ).forEach { container ->
+            container.setOnSwipeLeftListener {
+                moveTabBy(offset = 1)
+            }
 
-        binding.devicesFragmentContainer.setOnSwipeRightListener {
-            moveToPreviousTab()
-        }
-
-        binding.activityFragmentContainer.setOnSwipeLeftListener {
-            moveToNextTab()
-        }
-
-        binding.activityFragmentContainer.setOnSwipeRightListener {
-            moveToPreviousTab()
-        }
-
-        binding.tankFragmentContainer.setOnSwipeLeftListener {
-            moveToNextTab()
-        }
-
-        binding.tankFragmentContainer.setOnSwipeRightListener {
-            moveToPreviousTab()
-        }
-
-        binding.plantsFragmentContainer.setOnSwipeLeftListener {
-            moveToNextTab()
-        }
-
-        binding.plantsFragmentContainer.setOnSwipeRightListener {
-            moveToPreviousTab()
-        }
-
-        binding.tankLifeFragmentContainer.setOnSwipeLeftListener {
-            moveToNextTab()
-        }
-
-        binding.tankLifeFragmentContainer.setOnSwipeRightListener {
-            moveToPreviousTab()
+            container.setOnSwipeRightListener {
+                moveTabBy(offset = -1)
+            }
         }
     }
 
-    private fun moveToNextTab() {
-        when (selectedTab) {
-            TankDetailTab.DEVICES -> {
-                selectTab(TankDetailTab.ACTIVITY)
-            }
+    private fun moveTabBy(
+        offset: Int
+    ) {
+        val currentIndex = TAB_ORDER.indexOf(selectedTab)
 
-            TankDetailTab.ACTIVITY -> {
-                selectTab(TankDetailTab.TANK)
-            }
-
-            TankDetailTab.TANK -> {
-                selectTab(TankDetailTab.PLANTS)
-            }
-
-            TankDetailTab.PLANTS -> {
-                selectTab(TankDetailTab.TANK_LIFE)
-            }
-
-            TankDetailTab.TANK_LIFE -> Unit
+        if (currentIndex == -1) {
+            return
         }
-    }
 
-    private fun moveToPreviousTab() {
-        when (selectedTab) {
-            TankDetailTab.DEVICES -> Unit
+        val targetIndex = (currentIndex + offset).coerceIn(
+            0,
+            TAB_ORDER.lastIndex
+        )
 
-            TankDetailTab.ACTIVITY -> {
-                selectTab(TankDetailTab.DEVICES)
-            }
-
-            TankDetailTab.TANK -> {
-                selectTab(TankDetailTab.ACTIVITY)
-            }
-
-            TankDetailTab.PLANTS -> {
-                selectTab(TankDetailTab.TANK)
-            }
-
-            TankDetailTab.TANK_LIFE -> {
-                selectTab(TankDetailTab.PLANTS)
-            }
+        if (targetIndex == currentIndex) {
+            return
         }
+
+        selectTab(TAB_ORDER[targetIndex])
     }
 
     private fun observeCareProfileActions() {
@@ -222,24 +181,27 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
                     CARE_PROFILE_ACTION_LIVESTOCK -> {
                         selectTab(TankDetailTab.TANK_LIFE)
-
-                        val hasLivestock = currentTank
-                            ?.livestock
-                            ?.isNotEmpty() == true
-
-                        if (!hasLivestock) {
-                            openLivestockFormScreen()
-                        }
+                        openLivestockFormIfNeeded()
                     }
                 }
             }
         }
     }
 
+    private fun openLivestockFormIfNeeded() {
+        val hasLivestock = currentTank
+            ?.livestock
+            ?.isNotEmpty() == true
+
+        if (!hasLivestock) {
+            openLivestockFormScreen()
+        }
+    }
+
     private fun openTankSettings() {
-        findNavController().navigate(
-            R.id.action_tankDetailFragment_to_tankSettingsFragment,
-            Bundle().apply {
+        navigateFromTankDetail(
+            actionId = R.id.action_tankDetailFragment_to_tankSettingsFragment,
+            args = Bundle().apply {
                 putLong("tankId", tankId)
             }
         )
@@ -248,9 +210,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     private fun openLivestockFormScreen(
         livestockId: Long = 0L
     ) {
-        findNavController().navigate(
-            R.id.action_tankDetailFragment_to_tankDetailLivestockFormFragment,
-            Bundle().apply {
+        navigateFromTankDetail(
+            actionId = R.id.action_tankDetailFragment_to_tankDetailLivestockFormFragment,
+            args = Bundle().apply {
                 putLong("tankId", tankId)
                 putLong("livestockId", livestockId)
             }
@@ -258,11 +220,27 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     private fun openPlantTagScreen() {
-        findNavController().navigate(
-            R.id.action_tankDetailFragment_to_tankDetailPlantTagFragment,
-            Bundle().apply {
+        navigateFromTankDetail(
+            actionId = R.id.action_tankDetailFragment_to_tankDetailPlantTagFragment,
+            args = Bundle().apply {
                 putLong("tankId", tankId)
             }
+        )
+    }
+
+    private fun navigateFromTankDetail(
+        actionId: Int,
+        args: Bundle
+    ) {
+        val navController = findNavController()
+
+        if (navController.currentDestination?.id != R.id.tankDetailFragment) {
+            return
+        }
+
+        navController.navigate(
+            actionId,
+            args
         )
     }
 
@@ -310,63 +288,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         selectedTab = tab
 
         resetTabs()
-
-        when (tab) {
-            TankDetailTab.DEVICES -> {
-                activateTab(binding.tabDevices)
-                moveTabUnderline(binding.tabDevices)
-
-                binding.contentScrollView.isVisible = false
-                binding.devicesFragmentContainer.isVisible = true
-                binding.tvEmptyTab.isVisible = false
-
-                showDevicesFragmentIfNeeded()
-            }
-
-            TankDetailTab.ACTIVITY -> {
-                activateTab(binding.tabActivity)
-                moveTabUnderline(binding.tabActivity)
-
-                binding.contentScrollView.isVisible = false
-                binding.activityFragmentContainer.isVisible = true
-                binding.tvEmptyTab.isVisible = false
-
-                showActivityFragmentIfNeeded()
-            }
-
-            TankDetailTab.TANK -> {
-                activateTab(binding.tabTank)
-                moveTabUnderline(binding.tabTank)
-
-                binding.contentScrollView.isVisible = false
-                binding.tankFragmentContainer.isVisible = true
-                binding.tvEmptyTab.isVisible = false
-
-                showTankFragmentIfNeeded()
-            }
-
-            TankDetailTab.PLANTS -> {
-                activateTab(binding.tabPlants)
-                moveTabUnderline(binding.tabPlants)
-
-                binding.contentScrollView.isVisible = false
-                binding.plantsFragmentContainer.isVisible = true
-                binding.tvEmptyTab.isVisible = false
-
-                showPlantsFragmentIfNeeded()
-            }
-
-            TankDetailTab.TANK_LIFE -> {
-                activateTab(binding.tabTankLife)
-                moveTabUnderline(binding.tabTankLife)
-
-                binding.contentScrollView.isVisible = false
-                binding.tankLifeFragmentContainer.isVisible = true
-                binding.tvEmptyTab.isVisible = false
-
-                showTankLifeFragmentIfNeeded()
-            }
-        }
+        activateTab(tabViewFor(tab))
+        moveTabUnderline(tabViewFor(tab))
+        showContentForTab(tab)
 
         binding.contentScrollView.post {
             binding.contentScrollView.scrollTo(
@@ -376,10 +300,76 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         }
     }
 
-    private fun showDevicesFragmentIfNeeded() {
-        binding.devicesFragmentContainer.isVisible = true
+    private fun showContentForTab(
+        tab: TankDetailTab
+    ) {
+        binding.contentScrollView.isVisible = false
+        binding.tvEmptyTab.isVisible = false
 
-        val existingFragment = getDevicesFragment()
+        when (tab) {
+            TankDetailTab.DEVICES -> {
+                binding.devicesFragmentContainer.isVisible = true
+
+                showFragmentIfNeeded(
+                    containerId = R.id.devicesFragmentContainer,
+                    tag = TAG_DEVICES_FRAGMENT
+                ) {
+                    TankDetailDevicesFragment.newInstance(tankId)
+                }
+            }
+
+            TankDetailTab.ACTIVITY -> {
+                binding.activityFragmentContainer.isVisible = true
+
+                showFragmentIfNeeded(
+                    containerId = R.id.activityFragmentContainer,
+                    tag = TAG_ACTIVITY_FRAGMENT
+                ) {
+                    TankDetailActivityFragment.newInstance(tankId)
+                }
+            }
+
+            TankDetailTab.TANK -> {
+                binding.tankFragmentContainer.isVisible = true
+
+                showFragmentIfNeeded(
+                    containerId = R.id.tankFragmentContainer,
+                    tag = TAG_TANK_FRAGMENT
+                ) {
+                    TankDetailTankFragment.newInstance(tankId)
+                }
+            }
+
+            TankDetailTab.PLANTS -> {
+                binding.plantsFragmentContainer.isVisible = true
+
+                showFragmentIfNeeded(
+                    containerId = R.id.plantsFragmentContainer,
+                    tag = TAG_PLANTS_FRAGMENT
+                ) {
+                    TankDetailPlantsFragment.newInstance(tankId)
+                }
+            }
+
+            TankDetailTab.TANK_LIFE -> {
+                binding.tankLifeFragmentContainer.isVisible = true
+
+                showFragmentIfNeeded(
+                    containerId = R.id.tankLifeFragmentContainer,
+                    tag = TAG_TANK_LIFE_FRAGMENT
+                ) {
+                    TankDetailLifeFragment.newInstance(tankId)
+                }
+            }
+        }
+    }
+
+    private fun showFragmentIfNeeded(
+        containerId: Int,
+        tag: String,
+        fragmentFactory: () -> Fragment
+    ) {
+        val existingFragment = childFragmentManager.findFragmentByTag(tag)
 
         if (existingFragment != null) {
             return
@@ -387,113 +377,23 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         childFragmentManager.commit {
             replace(
-                R.id.devicesFragmentContainer,
-                TankDetailDevicesFragment.newInstance(tankId),
-                TAG_DEVICES_FRAGMENT
+                containerId,
+                fragmentFactory(),
+                tag
             )
         }
     }
 
-    private fun getDevicesFragment(): TankDetailDevicesFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_DEVICES_FRAGMENT
-        ) as? TankDetailDevicesFragment
-    }
-
-    private fun showActivityFragmentIfNeeded() {
-        binding.activityFragmentContainer.isVisible = true
-
-        val existingFragment = getActivityFragment()
-
-        if (existingFragment != null) {
-            return
+    private fun tabViewFor(
+        tab: TankDetailTab
+    ): TextView {
+        return when (tab) {
+            TankDetailTab.DEVICES -> binding.tabDevices
+            TankDetailTab.ACTIVITY -> binding.tabActivity
+            TankDetailTab.TANK -> binding.tabTank
+            TankDetailTab.PLANTS -> binding.tabPlants
+            TankDetailTab.TANK_LIFE -> binding.tabTankLife
         }
-
-        childFragmentManager.commit {
-            replace(
-                R.id.activityFragmentContainer,
-                TankDetailActivityFragment.newInstance(tankId),
-                TAG_ACTIVITY_FRAGMENT
-            )
-        }
-    }
-
-    private fun getActivityFragment(): TankDetailActivityFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_ACTIVITY_FRAGMENT
-        ) as? TankDetailActivityFragment
-    }
-
-    private fun showTankFragmentIfNeeded() {
-        binding.tankFragmentContainer.isVisible = true
-
-        val existingFragment = getTankFragment()
-
-        if (existingFragment != null) {
-            return
-        }
-
-        childFragmentManager.commit {
-            replace(
-                R.id.tankFragmentContainer,
-                TankDetailTankFragment.newInstance(tankId),
-                TAG_TANK_FRAGMENT
-            )
-        }
-    }
-
-    private fun getTankFragment(): TankDetailTankFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_TANK_FRAGMENT
-        ) as? TankDetailTankFragment
-    }
-
-    private fun showPlantsFragmentIfNeeded() {
-        binding.plantsFragmentContainer.isVisible = true
-
-        val existingFragment = getPlantsFragment()
-
-        if (existingFragment != null) {
-            return
-        }
-
-        childFragmentManager.commit {
-            replace(
-                R.id.plantsFragmentContainer,
-                TankDetailPlantsFragment.newInstance(tankId),
-                TAG_PLANTS_FRAGMENT
-            )
-        }
-    }
-
-    private fun getPlantsFragment(): TankDetailPlantsFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_PLANTS_FRAGMENT
-        ) as? TankDetailPlantsFragment
-    }
-
-    private fun showTankLifeFragmentIfNeeded() {
-        binding.tankLifeFragmentContainer.isVisible = true
-
-        val existingFragment = getTankLifeFragment()
-
-        if (existingFragment != null) {
-            return
-        }
-
-        childFragmentManager.commit {
-            replace(
-                R.id.tankLifeFragmentContainer,
-                TankDetailLifeFragment.newInstance(tankId),
-                TAG_TANK_LIFE_FRAGMENT
-            )
-        }
-    }
-
-    private fun getTankLifeFragment(): TankDetailLifeFragment? {
-        return childFragmentManager.findFragmentByTag(
-            TAG_TANK_LIFE_FRAGMENT
-        ) as? TankDetailLifeFragment
     }
 
     private fun activateTab(
@@ -530,21 +430,21 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     private fun resetTabs() {
         val inactiveColor = Color.parseColor("#8FA4BE")
 
-        listOf(
-            binding.tabDevices,
-            binding.tabActivity,
-            binding.tabTank,
-            binding.tabPlants,
-            binding.tabTankLife
-        ).forEach { tab ->
-            tab.setTextColor(inactiveColor)
-            tab.setTypeface(null, Typeface.NORMAL)
+        TankDetailTab.values().forEach { tab ->
+            tabViewFor(tab).apply {
+                setTextColor(inactiveColor)
+                setTypeface(null, Typeface.NORMAL)
+            }
         }
 
+        hideAllTabContainers()
+    }
+
+    private fun hideAllTabContainers() {
         binding.contentScrollView.isVisible = true
-        binding.tankFragmentContainer.isVisible = false
         binding.devicesFragmentContainer.isVisible = false
         binding.activityFragmentContainer.isVisible = false
+        binding.tankFragmentContainer.isVisible = false
         binding.plantsFragmentContainer.isVisible = false
         binding.tankLifeFragmentContainer.isVisible = false
         binding.tvEmptyTab.isVisible = false
@@ -587,6 +487,14 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         private const val TAG_TANK_FRAGMENT = "TankDetailTankFragment"
         private const val TAG_PLANTS_FRAGMENT = "TankDetailPlantsFragment"
         private const val TAG_TANK_LIFE_FRAGMENT = "TankDetailLifeFragment"
+
+        private val TAB_ORDER = listOf(
+            TankDetailTab.DEVICES,
+            TankDetailTab.ACTIVITY,
+            TankDetailTab.TANK,
+            TankDetailTab.PLANTS,
+            TankDetailTab.TANK_LIFE
+        )
 
         const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
         const val CARE_PROFILE_ACTION_PLANTS = "plants"
