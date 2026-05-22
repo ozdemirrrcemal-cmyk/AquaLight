@@ -11,7 +11,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
@@ -27,15 +27,11 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
-    private lateinit var userPrefs: UserPreferencesManager
+    private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DeviceStatusAdapter
 
-    private var latestDevices: List<UserPreferencesManager.DeviceInfoUi> = emptyList()
+    private var latestDevices: List<DevicesDataStoreManager.DeviceInfoUi> = emptyList()
     private var latestTanks: List<SavedAquariumTank> = emptyList()
-
-    companion object {
-        private const val ONLINE_TIMEOUT_MS = 60_000L
-    }
 
     override fun onViewCreated(
         view: View,
@@ -47,7 +43,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
         )
 
         _binding = FragmentDeviceStatusBinding.bind(view)
-        userPrefs = UserPreferencesManager.create(requireContext())
+        devicesStore = DevicesDataStoreManager.create(requireContext())
 
         setupRecycler()
         setupClickListeners()
@@ -58,7 +54,10 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     private fun setupRecycler() {
         adapter = DeviceStatusAdapter()
 
-        binding.rvDevices.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvDevices.layoutManager = LinearLayoutManager(
+            requireContext()
+        )
+
         binding.rvDevices.adapter = adapter
     }
 
@@ -78,7 +77,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     private fun observeDevices() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                userPrefs.devicesFlow.collect { devices ->
+                devicesStore.devicesFlow.collect { devices ->
                     latestDevices = devices
                     renderDevices()
                 }
@@ -101,7 +100,9 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
                 now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
 
             val lastSeenText = if (device.lastSeenMillis != 0L) {
-                formatElapsedTime(now - device.lastSeenMillis)
+                formatElapsedTime(
+                    deltaMs = now - device.lastSeenMillis
+                )
             } else {
                 "Never"
             }
@@ -126,13 +127,9 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     }
 
     private fun getTankNameForDevice(
-        device: UserPreferencesManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
-        val connectedTankId = device.tankId
-
-        if (connectedTankId == null) {
-            return "Not connected"
-        }
+        val connectedTankId = device.tankId ?: return "Not connected"
 
         return latestTanks.firstOrNull { tank ->
             tank.id == connectedTankId
@@ -159,5 +156,9 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
         _binding = null
 
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val ONLINE_TIMEOUT_MS = 60_000L
     }
 }
