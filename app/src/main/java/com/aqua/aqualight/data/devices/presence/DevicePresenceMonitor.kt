@@ -38,7 +38,7 @@ object DevicePresenceMonitor {
     )
 
     val statuses: StateFlow<Map<Long, DeviceStatusState>> =
-        _statuses.asStateFlow()
+    _statuses.asStateFlow()
 
     private val missedChecks = mutableMapOf<Long, Int>()
 
@@ -80,10 +80,11 @@ object DevicePresenceMonitor {
         val devicesStore = DevicesDataStoreManager.create(appContext)
 
         val savedDevice = devicesStore.devicesFlow
-            .first()
-            .firstOrNull { device ->
-                device.id == deviceId
-            } ?: return null
+        .first()
+        .firstOrNull {
+            device ->
+            device.id == deviceId
+        } ?: return null
 
         val now = System.currentTimeMillis()
 
@@ -104,9 +105,10 @@ object DevicePresenceMonitor {
         ) {
             null
         } else {
-            result.devices.firstOrNull { discoveredDevice ->
+            result.devices.firstOrNull {
+                discoveredDevice ->
                 discoveredDevice.id == deviceId ||
-                    discoveredDevice.ip == knownIp
+                discoveredDevice.ip == knownIp
             }
         }
 
@@ -196,14 +198,16 @@ object DevicePresenceMonitor {
     ) {
         val now = System.currentTimeMillis()
 
-        val matchedByDeviceId = savedDevices.associate { savedDevice ->
+        val matchedByDeviceId = savedDevices.associate {
+            savedDevice ->
             savedDevice.id to findMatchingDiscoveredDevice(
                 savedDevice = savedDevice,
                 discoveredDevices = discoveredDevices
             )
         }
 
-        val updates = matchedByDeviceId.mapNotNull { entry ->
+        val updates = matchedByDeviceId.mapNotNull {
+            entry ->
             val savedDeviceId = entry.key
             val discoveredDevice = entry.value ?: return@mapNotNull null
 
@@ -220,7 +224,8 @@ object DevicePresenceMonitor {
             )
         }
 
-        val states = savedDevices.associate { savedDevice ->
+        val states = savedDevices.associate {
+            savedDevice ->
             val matchedDevice = matchedByDeviceId[savedDevice.id]
 
             val missedCount = if (matchedDevice != null) {
@@ -255,7 +260,8 @@ object DevicePresenceMonitor {
     ) {
         val now = System.currentTimeMillis()
 
-        val states = savedDevices.associate { savedDevice ->
+        val states = savedDevices.associate {
+            savedDevice ->
             val missedCount = missedChecks.getOrDefault(
                 savedDevice.id,
                 0
@@ -275,12 +281,17 @@ object DevicePresenceMonitor {
         device: DeviceInfoUi,
         now: Long
     ) {
+        val previousState = _statuses.value[device.id]
+
+        val fallbackOnline = device.lastSeenMillis > 0L &&
+        now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+
         val state = DeviceStatusState(
             deviceId = device.id,
-            ip = device.ip,
+            ip = previousState?.ip ?: device.ip,
             status = DeviceConnectionStatus.CHECKING,
-            isOnline = false,
-            lastSeenMillis = device.lastSeenMillis,
+            isOnline = previousState?.isOnline ?: fallbackOnline,
+            lastSeenMillis = previousState?.lastSeenMillis ?: device.lastSeenMillis,
             lastCheckedMillis = now,
             missedChecks = missedChecks.getOrDefault(
                 device.id,
@@ -311,11 +322,9 @@ object DevicePresenceMonitor {
             age <= ONLINE_TIMEOUT_MS -> DeviceConnectionStatus.ONLINE
 
             age <= STALE_TIMEOUT_MS &&
-                missedCount < OFFLINE_AFTER_MISSED_CHECKS -> {
+            missedCount < OFFLINE_AFTER_MISSED_CHECKS -> {
                 DeviceConnectionStatus.STALE
-            }
-
-            else -> DeviceConnectionStatus.OFFLINE
+            } else -> DeviceConnectionStatus.OFFLINE
         }
 
         return DeviceStatusState(
@@ -333,16 +342,18 @@ object DevicePresenceMonitor {
         savedDevice: DeviceInfoUi,
         discoveredDevices: List<DiscoveredDevice>
     ): DiscoveredDevice? {
-        return discoveredDevices.firstOrNull { discoveredDevice ->
+        return discoveredDevices.firstOrNull {
+            discoveredDevice ->
             discoveredDevice.id == savedDevice.id ||
-                discoveredDevice.ip == savedDevice.ip
+            discoveredDevice.ip == savedDevice.ip
         }
     }
 
     private fun upsertStatus(
         state: DeviceStatusState
     ) {
-        _statuses.update { current ->
+        _statuses.update {
+            current ->
             current + (
                 state.deviceId to state
             )

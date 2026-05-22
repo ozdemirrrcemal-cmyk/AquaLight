@@ -19,6 +19,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
@@ -27,6 +29,7 @@ import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -42,6 +45,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
     private var tankId: Long = 0L
     private var tankName: String = ""
+    private var latestStatuses: Map<Long, DeviceStatusState> = emptyMap()
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -62,6 +66,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         _binding = FragmentTankDetailDevicesBinding.bind(view)
         devicesStore = DevicesDataStoreManager.create(requireContext())
+
+        DevicePresenceMonitor.start(
+            context = requireContext()
+        )
 
         setupClickListeners()
         observeTankName()
@@ -85,8 +93,14 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun observeTankDevices() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                devicesStore.devicesForTankFlow(tankId).collect { devices ->
-                    renderDevices(devices)
+                combine(
+                    devicesStore.devicesForTankFlow(tankId),
+                    DevicePresenceMonitor.statuses
+                ) { devices, statuses ->
+                    devices to statuses
+                }.collect { pair ->
+                    latestStatuses = pair.second
+                    renderDevices(pair.first)
                 }
             }
         }
@@ -95,6 +109,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun renderDevices(
         devices: List<DevicesDataStoreManager.DeviceInfoUi>
     ) {
+        if (_binding == null) {
+            return
+        }
+
         binding.tankDevicesContainer.removeAllViews()
 
         binding.cardDevicesEmpty.isVisible = devices.isEmpty()
@@ -200,9 +218,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             layoutParams = params
         }
 
-        val statusText = TextView(requireContext()).apply {
-            val online = isDeviceOnline(device)
+        val online = isDeviceOnline(device)
 
+        val statusText = TextView(requireContext()).apply {
             text = if (online) {
                 "Online"
             } else {
@@ -563,10 +581,13 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             "AquaLight Device"
         }
 
-        return if (device.ip.isBlank()) {
+        val statusState = latestStatuses[device.id]
+        val ipText = statusState?.ip ?: device.ip
+
+        return if (ipText.isBlank()) {
             typeText
         } else {
-            "$typeText • ${device.ip}"
+            "$typeText • $ipText"
         }
     }
 
@@ -599,11 +620,12 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun isDeviceOnline(
         device: DevicesDataStoreManager.DeviceInfoUi
     ): Boolean {
-        if (device.lastSeenMillis <= 0L) {
-            return false
-        }
+        val statusState = latestStatuses[device.id]
 
-        return System.currentTimeMillis() - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+        return statusState?.isOnline ?: (
+            device.lastSeenMillis > 0L &&
+                System.currentTimeMillis() - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+            )
     }
 
     private fun Int.dp(): Int {
@@ -611,13 +633,15 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
+        binding.tankDevicesContainer.removeAllViews()
         _binding = null
+
+        super.onDestroyView()
     }
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
-        private const val ONLINE_TIMEOUT_MS = 60_000L
+        private const val ONLINE_TIMEOUT_MS = 90_000L
 
         fun newInstance(
             tankId: Long

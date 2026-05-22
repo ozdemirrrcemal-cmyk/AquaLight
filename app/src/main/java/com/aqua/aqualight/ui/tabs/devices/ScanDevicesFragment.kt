@@ -56,8 +56,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun setupRecyclerView() {
-        adapter = ScanDevicesAdapter {
-            device ->
+        adapter = ScanDevicesAdapter { device ->
             saveSelectedDevice(device)
         }
 
@@ -224,9 +223,9 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
 
         val aquaName = device.aquaName
-        ?.ifBlank {
-            "-"
-        } ?: "-"
+            ?.ifBlank {
+                "-"
+            } ?: "-"
 
         val name = device.name.ifBlank {
             "Device"
@@ -292,10 +291,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 if (_binding != null) {
                     findNavController().popBackStack()
                 }
-
-                if (_binding != null) {
-                    findNavController().popBackStack()
-                }
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
@@ -339,12 +334,12 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         id: Long
     ): String {
         val aquaInitial = aquaName.firstOrNull()
-        ?.uppercaseChar()
-        ?: 'X'
+            ?.uppercaseChar()
+            ?: 'X'
 
         val nameInitial = name.firstOrNull()
-        ?.uppercaseChar()
-        ?: 'X'
+            ?.uppercaseChar()
+            ?: 'X'
 
         val core = if (id != 0L) {
             id.toString()
@@ -364,12 +359,12 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         scanJob = null
 
         _binding
-        ?.scanAnimation
-        ?.cancelAnimation()
+            ?.scanAnimation
+            ?.cancelAnimation()
 
         _binding
-        ?.rvDevices
-        ?.adapter = null
+            ?.rvDevices
+            ?.adapter = null
 
         _binding = null
 

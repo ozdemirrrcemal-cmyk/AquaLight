@@ -12,11 +12,14 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -32,6 +35,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
     private var latestDevices: List<DevicesDataStoreManager.DeviceInfoUi> = emptyList()
     private var latestTanks: List<SavedAquariumTank> = emptyList()
+    private var latestStatuses: Map<Long, DeviceStatusState> = emptyMap()
 
     override fun onViewCreated(
         view: View,
@@ -44,6 +48,10 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
         _binding = FragmentDeviceStatusBinding.bind(view)
         devicesStore = DevicesDataStoreManager.create(requireContext())
+
+        DevicePresenceMonitor.start(
+            context = requireContext()
+        )
 
         setupRecycler()
         setupClickListeners()
@@ -77,8 +85,15 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     private fun observeDevices() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                devicesStore.devicesFlow.collect { devices ->
-                    latestDevices = devices
+                combine(
+                    devicesStore.devicesFlow,
+                    DevicePresenceMonitor.statuses
+                ) { devices, statuses ->
+                    devices to statuses
+                }.collect { pair ->
+                    latestDevices = pair.first
+                    latestStatuses = pair.second
+
                     renderDevices()
                 }
             }
@@ -86,6 +101,10 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     }
 
     private fun renderDevices() {
+        if (_binding == null) {
+            return
+        }
+
         binding.rvDevices.isVisible = latestDevices.isNotEmpty()
 
         if (latestDevices.isEmpty()) {
@@ -96,12 +115,19 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
         val now = System.currentTimeMillis()
 
         val uiList = latestDevices.map { device ->
-            val online = device.lastSeenMillis != 0L &&
-                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+            val statusState = latestStatuses[device.id]
 
-            val lastSeenText = if (device.lastSeenMillis != 0L) {
+            val lastSeenMillis = statusState?.lastSeenMillis
+                ?: device.lastSeenMillis
+
+            val online = statusState?.isOnline ?: (
+                lastSeenMillis > 0L &&
+                    now - lastSeenMillis <= ONLINE_TIMEOUT_MS
+                )
+
+            val lastSeenText = if (lastSeenMillis > 0L) {
                 formatElapsedTime(
-                    deltaMs = now - device.lastSeenMillis
+                    deltaMs = now - lastSeenMillis
                 )
             } else {
                 "Never"
@@ -114,7 +140,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
                 },
                 aquaName = device.aquaName,
                 tankName = getTankNameForDevice(device),
-                ip = device.ip,
+                ip = statusState?.ip ?: device.ip,
                 serial = device.serial,
                 firmwareBuild = device.firmwareBuild,
                 isOnline = online,
@@ -159,6 +185,6 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     }
 
     private companion object {
-        const val ONLINE_TIMEOUT_MS = 60_000L
+        const val ONLINE_TIMEOUT_MS = 90_000L
     }
 }

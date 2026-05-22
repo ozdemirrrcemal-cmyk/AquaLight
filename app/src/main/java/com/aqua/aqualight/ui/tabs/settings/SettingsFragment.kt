@@ -19,8 +19,10 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.UserPreferencesManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
@@ -46,6 +48,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         )
 
         _binding = FragmentSettingsBinding.bind(view)
+
+        DevicePresenceMonitor.start(
+            context = requireContext()
+        )
 
         observeUserInfo()
         observeActiveDevices()
@@ -88,16 +94,27 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun observeActiveDevices() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                devicesStore.devicesFlow.collectLatest { devices ->
+                combine(
+                    devicesStore.devicesFlow,
+                    DevicePresenceMonitor.statuses
+                ) { devices, statuses ->
+                    devices to statuses
+                }.collectLatest { pair ->
+                    val devices = pair.first
+                    val statuses = pair.second
                     val now = System.currentTimeMillis()
 
-                    val onlineCount = devices.count { device ->
-                        device.lastSeenMillis != 0L &&
-                            now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+                    val activeDeviceCount = devices.count { device ->
+                        val statusState = statuses[device.id]
+
+                        statusState?.isOnline ?: (
+                            device.lastSeenMillis > 0L &&
+                                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+                            )
                     }
 
                     updateActiveDevices(
-                        activeDevices = onlineCount
+                        activeDevices = activeDeviceCount
                     )
                 }
             }
