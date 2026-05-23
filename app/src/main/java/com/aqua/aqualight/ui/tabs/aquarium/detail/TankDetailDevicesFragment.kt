@@ -336,7 +336,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             R.id.tvAddDeviceEmptyMessage
         )
 
-        val scanButton = contentView.findViewById<MaterialButton>(
+        val addButton = contentView.findViewById<MaterialButton>(
             R.id.btnOpenDeviceScan
         )
 
@@ -369,18 +369,18 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             if (hasAnySavedDevice) {
                 messageText.text = "All saved devices are already connected to another aquarium."
                 emptyTitle.text = "No available devices"
-                emptyMessage.text = "Remove a device from another aquarium or manage your saved devices."
-                scanButton.text = "Manage Devices"
+                emptyMessage.text = "Remove a device from another aquarium or add a new device."
+                addButton.text = "Add Device"
             } else {
                 messageText.text = "No saved devices found."
                 emptyTitle.text = "No saved devices"
-                emptyMessage.text = "Scan and save a device first, then connect it to this aquarium."
-                scanButton.text = "Scan Devices"
+                emptyMessage.text = "Add a device first, then connect it to this aquarium."
+                addButton.text = "Add Device"
             }
 
-            scanButton.setOnClickListener {
+            addButton.setOnClickListener {
                 dialog.dismiss()
-                openDeviceScanScreen()
+                openDeviceAddScreen()
             }
         }
 
@@ -397,17 +397,15 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         dialog.show()
     }
 
-    private fun openDeviceScanScreen() {
+    private fun openDeviceAddScreen() {
         runCatching {
             findNavController().navigate(
-                R.id.scanDevicesFragment
+                R.id.deviceAddFragment
             )
         }.onFailure {
-            runCatching {
-                findNavController().navigate(
-                    R.id.devicesFragment
-                )
-            }
+            findNavController().navigate(
+                R.id.devicesFragment
+            )
         }
     }
 
