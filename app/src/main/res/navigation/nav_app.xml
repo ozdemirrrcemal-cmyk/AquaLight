@@ -194,20 +194,36 @@
         tools:layout="@layout/fragment_devices">
 
         <action
-            android:id="@+id/action_devicesFragment_to_scanDevicesFragment"
-            app:destination="@id/scanDevicesFragment" />
+    android:id="@+id/action_devicesFragment_to_deviceAddFragment"
+    app:destination="@id/deviceAddFragment" />
 
         <action
             android:id="@+id/action_devicesFragment_to_deviceMenuFragment"
             app:destination="@id/deviceMenuFragment" />
 
     </fragment>
+	
+	<fragment
+    android:id="@+id/deviceAddFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceAddFragment"
+    android:label="Add Device"
+    tools:layout="@layout/fragment_device_add">
 
-    <fragment
-        android:id="@+id/scanDevicesFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.ScanDevicesFragment"
-        android:label="Scan devices"
-        tools:layout="@layout/fragment_scan_devices" />
+    <action
+        android:id="@+id/action_deviceAddFragment_to_deviceSetupFragment"
+        app:destination="@id/deviceSetupFragment" />
+
+    <action
+        android:id="@+id/action_deviceAddFragment_to_deviceMenuFragment"
+        app:destination="@id/deviceMenuFragment" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceSetupFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.setup.DeviceSetupFragment"
+    android:label="Device Setup"
+    tools:layout="@layout/fragment_device_setup" />
 
     <fragment
         android:id="@+id/deviceMenuFragment"

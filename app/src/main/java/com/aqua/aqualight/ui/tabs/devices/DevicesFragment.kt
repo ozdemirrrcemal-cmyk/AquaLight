@@ -82,11 +82,15 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             if (selectionMode) {
                 showDeleteConfirmDialog()
             } else {
-                findNavController().navigate(
-                    R.id.action_devicesFragment_to_scanDevicesFragment
-                )
+                openAddDeviceScreen()
             }
         }
+    }
+
+    private fun openAddDeviceScreen() {
+        findNavController().navigate(
+            R.id.action_devicesFragment_to_deviceAddFragment
+        )
     }
 
     private fun observeDevicesList() {
@@ -131,10 +135,18 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                         )
 
                         val displayName = definition?.displayName
-                            ?: device.name.ifBlank { "Device" }
+                            ?: device.name.ifBlank {
+                                device.productModel.ifBlank {
+                                    "Device"
+                                }
+                            }
 
                         val familyName = definition?.family?.displayName
-                            ?: device.aquaName.ifBlank { "Unknown" }
+                            ?: device.productFamily.ifBlank {
+                                device.aquaName.ifBlank {
+                                    "Unknown"
+                                }
+                            }
 
                         DeviceCardUi(
                             id = device.id,
@@ -236,9 +248,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             )
         } else {
             binding.btnScanDevices.text = "+ Add"
-            binding.btnScanDevices.contentDescription = getString(
-                R.string.devices_scan_button_desc
-            )
+            binding.btnScanDevices.contentDescription = "Add device"
 
             binding.btnScanDevices.setTextColor(
                 Color.WHITE
