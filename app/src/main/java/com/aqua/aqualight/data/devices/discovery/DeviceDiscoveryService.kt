@@ -91,7 +91,7 @@ object DeviceDiscoveryService {
                 timeoutMs = timeoutMs
             )
                 .filter { device ->
-                    isValidDevice(device)
+                    isValidDevice(device) && device.isSupported
                 }
                 .distinctBy { device ->
                     device.id
