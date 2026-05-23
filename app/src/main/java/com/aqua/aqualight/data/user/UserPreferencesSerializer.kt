@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data
+package com.aqua.aqualight.data.user
 
 import androidx.datastore.core.Serializer
 import java.io.IOException

@@ -17,7 +17,7 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.databinding.FragmentSettingsBinding

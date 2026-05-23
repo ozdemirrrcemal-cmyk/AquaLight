@@ -15,7 +15,7 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserInfoBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

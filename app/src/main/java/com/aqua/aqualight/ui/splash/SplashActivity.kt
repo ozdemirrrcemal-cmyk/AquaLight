@@ -7,7 +7,7 @@ import android.widget.ImageView
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.ui.main.MainActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
