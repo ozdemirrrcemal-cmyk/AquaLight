@@ -8,6 +8,7 @@ import androidx.datastore.dataStore
 import com.aqua.aqualight.data.care.CareTasksStore
 import com.aqua.aqualight.data.care.StoredCareTask
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTask
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
