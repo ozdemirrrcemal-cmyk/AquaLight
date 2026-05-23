@@ -15,10 +15,7 @@ class DeviceAddCandidateLoader(
 ) {
 
     suspend fun loadCandidates(): List<DeviceAddCandidate> = coroutineScope {
-        val savedDeviceIds = devicesStore.devicesFlow
-            .first()
-            .map { device -> device.id }
-            .toSet()
+        val savedDevices = devicesStore.devicesFlow.first()
 
         val setupDeferred = async {
             SetupApScanner.scan(context)
@@ -26,7 +23,7 @@ class DeviceAddCandidateLoader(
 
         val localDeferred = async {
             loadLocalNetworkCandidates(
-                savedDeviceIds = savedDeviceIds
+                savedDevices = savedDevices
             )
         }
 
@@ -35,13 +32,18 @@ class DeviceAddCandidateLoader(
 
         return@coroutineScope mergeCandidates(
             setupCandidates = setupCandidates,
-            localCandidates = localCandidates
+            localCandidates = localCandidates,
+            savedDevices = savedDevices
         )
     }
 
     private suspend fun loadLocalNetworkCandidates(
-        savedDeviceIds: Set<Long>
+        savedDevices: List<DevicesDataStoreManager.DeviceInfoUi>
     ): List<DeviceAddCandidate> {
+        val savedDeviceIds = savedDevices
+            .map { device -> device.id }
+            .toSet()
+
         val result = DeviceDiscoveryService.scan(
             context = context,
             timeoutMs = LOCAL_DISCOVERY_TIMEOUT_MS,
@@ -67,7 +69,7 @@ class DeviceAddCandidateLoader(
                     displayName = definition.displayName,
                     familyName = definition.family.displayName,
                     deviceType = definition.type,
-                    stateText = "Already connected to Wi-Fi",
+                    stateText = "Already connected",
                     actionText = "Add",
                     localDevice = device
                 )
@@ -76,16 +78,43 @@ class DeviceAddCandidateLoader(
 
     private fun mergeCandidates(
         setupCandidates: List<DeviceAddCandidate>,
-        localCandidates: List<DeviceAddCandidate>
+        localCandidates: List<DeviceAddCandidate>,
+        savedDevices: List<DevicesDataStoreManager.DeviceInfoUi>
     ): List<DeviceAddCandidate> {
-        val localKeys = localCandidates
+        val savedShortIds = savedDevices
+            .flatMap { device ->
+                buildList {
+                    add(device.id.toString())
+
+                    val serialSuffix = device.serial
+                        .substringAfterLast(
+                            delimiter = "-",
+                            missingDelimiterValue = ""
+                        )
+                        .trim()
+
+                    if (serialSuffix.isNotBlank()) {
+                        add(serialSuffix)
+                    }
+                }
+            }
+            .toSet()
+
+        val localDeviceIds = localCandidates
             .mapNotNull { candidate ->
-                candidate.setupShortId
+                candidate.localDevice?.id?.toString()
             }
             .toSet()
 
         val filteredSetupCandidates = setupCandidates.filter { candidate ->
-            candidate.setupShortId !in localKeys
+            val shortId = candidate.setupShortId?.trim().orEmpty()
+
+            if (shortId.isBlank()) {
+                return@filter true
+            }
+
+            shortId !in savedShortIds &&
+                shortId !in localDeviceIds
         }
 
         return buildList {
