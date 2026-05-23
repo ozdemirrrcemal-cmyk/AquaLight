@@ -82,16 +82,17 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun requestPermissionsAndLoad() {
-        val permissions = buildList {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                add(Manifest.permission.NEARBY_WIFI_DEVICES)
-            } else {
-                add(Manifest.permission.ACCESS_FINE_LOCATION)
-            }
-        }.toTypedArray()
+    val permissions = buildList {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        } else {
+            add(Manifest.permission.ACCESS_COARSE_LOCATION)
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }.toTypedArray()
 
-        permissionLauncher.launch(permissions)
-    }
+    permissionLauncher.launch(permissions)
+}
 
     private fun loadCandidates() {
         if (isLoading) {
