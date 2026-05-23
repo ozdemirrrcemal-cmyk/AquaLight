@@ -1,10 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -16,6 +18,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidateLoader
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
 import kotlinx.coroutines.launch
@@ -34,8 +37,12 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        loadCandidates()
+    ) { result ->
+        if (hasRequiredPermissionsFromResult(result)) {
+            loadCandidates()
+        } else {
+            showPermissionRequiredState()
+        }
     }
 
     override fun onViewCreated(
@@ -48,7 +55,11 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         )
 
         _binding = FragmentDeviceAddBinding.bind(view)
-        devicesStore = DevicesDataStoreManager.create(requireContext())
+
+        devicesStore = DevicesDataStoreManager.create(
+            requireContext()
+        )
+
         candidateLoader = DeviceAddCandidateLoader(
             context = requireContext(),
             devicesStore = devicesStore
@@ -82,17 +93,77 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun requestPermissionsAndLoad() {
-    val permissions = buildList {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            add(Manifest.permission.NEARBY_WIFI_DEVICES)
-        } else {
+        if (hasRequiredPermissions()) {
+            loadCandidates()
+            return
+        }
+
+        val permissions = buildList {
             add(Manifest.permission.ACCESS_COARSE_LOCATION)
             add(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }.toTypedArray()
 
-    permissionLauncher.launch(permissions)
-}
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.NEARBY_WIFI_DEVICES)
+            }
+        }.toTypedArray()
+
+        permissionLauncher.launch(permissions)
+    }
+
+    private fun hasRequiredPermissions(): Boolean {
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val fineGranted = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val locationGranted = coarseGranted || fineGranted
+
+        val nearbyWifiGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.NEARBY_WIFI_DEVICES
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+
+        return locationGranted && nearbyWifiGranted
+    }
+
+    private fun hasRequiredPermissionsFromResult(
+        result: Map<String, Boolean>
+    ): Boolean {
+        val coarseGranted = result[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        val fineGranted = result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        val locationGranted = coarseGranted || fineGranted
+
+        val nearbyWifiGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            result[Manifest.permission.NEARBY_WIFI_DEVICES] == true ||
+                ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.NEARBY_WIFI_DEVICES
+                ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+
+        return locationGranted && nearbyWifiGranted
+    }
 
     private fun loadCandidates() {
         if (isLoading) {
@@ -125,53 +196,76 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun showLoadingState() {
-    binding.searchingContainer.isVisible = true
-    binding.scanAnimation.isVisible = true
-    binding.scanAnimation.playAnimation()
+        binding.searchingContainer.isVisible = true
+        binding.scanAnimation.isVisible = true
+        binding.scanAnimation.playAnimation()
 
-    binding.rvCandidates.isVisible = false
-    binding.emptyContainer.isVisible = false
+        binding.rvCandidates.isVisible = false
+        binding.emptyContainer.isVisible = false
 
-    binding.btnRetry.isEnabled = false
-    binding.btnRetry.alpha = 0.45f
+        binding.btnRetry.isEnabled = false
+        binding.btnRetry.alpha = 0.45f
 
-    binding.tvTitle.text = "Searching..."
-    binding.tvSubtitle.text = "Looking for nearby Aqua devices."
-}
+        binding.tvTitle.text = "Searching..."
+        binding.tvSubtitle.text = "Looking for nearby Aqua devices."
+    }
 
-private fun showCandidates(
-    candidates: List<DeviceAddCandidate>
-) {
-    binding.scanAnimation.cancelAnimation()
-    binding.searchingContainer.isVisible = false
+    private fun showCandidates(
+        candidates: List<DeviceAddCandidate>
+    ) {
+        binding.scanAnimation.cancelAnimation()
+        binding.searchingContainer.isVisible = false
 
-    binding.rvCandidates.isVisible = true
-    binding.emptyContainer.isVisible = false
+        binding.rvCandidates.isVisible = true
+        binding.emptyContainer.isVisible = false
 
-    binding.btnRetry.isEnabled = true
-    binding.btnRetry.alpha = 1f
+        binding.btnRetry.isEnabled = true
+        binding.btnRetry.alpha = 1f
 
-    binding.tvTitle.text = "Add Device"
-    binding.tvSubtitle.text = "Select your device to continue."
+        binding.tvTitle.text = "Add Device"
+        binding.tvSubtitle.text = "Select your device to continue."
 
-    adapter.submitList(candidates)
-}
+        adapter.submitList(candidates)
+    }
 
-private fun showEmptyState() {
-    binding.scanAnimation.cancelAnimation()
-    binding.searchingContainer.isVisible = false
+    private fun showEmptyState() {
+        binding.scanAnimation.cancelAnimation()
+        binding.searchingContainer.isVisible = false
 
-    binding.rvCandidates.isVisible = false
-    binding.emptyContainer.isVisible = true
+        binding.rvCandidates.isVisible = false
+        binding.emptyContainer.isVisible = true
 
-    binding.btnRetry.isEnabled = true
-    binding.btnRetry.alpha = 1f
+        binding.btnRetry.isEnabled = true
+        binding.btnRetry.alpha = 1f
 
-    binding.tvTitle.text = "Add Device"
-    binding.tvSubtitle.text = "No Aqua devices found nearby."
+        binding.tvTitle.text = "Add Device"
+        binding.tvSubtitle.text = "No Aqua devices found nearby."
 
-    adapter.submitList(emptyList())
-}
+        adapter.submitList(emptyList())
+    }
+
+    private fun showPermissionRequiredState() {
+        isLoading = false
+
+        binding.scanAnimation.cancelAnimation()
+        binding.searchingContainer.isVisible = false
+
+        binding.rvCandidates.isVisible = false
+        binding.emptyContainer.isVisible = true
+
+        binding.btnRetry.isEnabled = true
+        binding.btnRetry.alpha = 1f
+
+        binding.tvTitle.text = "Add Device"
+        binding.tvSubtitle.text = "Permission required."
+
+        adapter.submitList(emptyList())
+
+        (activity as? BaseActivity)?.showSnackBar(
+            message = "Wi-Fi permission is required to find nearby Aqua devices.",
+            type = BaseActivity.SnackType.WARNING
+        )
+    }
 
     private fun handleCandidateClick(
         candidate: DeviceAddCandidate
@@ -255,7 +349,7 @@ private fun showEmptyState() {
             return
         }
 
-        val definition = com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog.findByType(
+        val definition = AquaDeviceCatalog.findByType(
             type = device.deviceType
         ) ?: error("Unsupported device")
 
@@ -349,10 +443,10 @@ private fun showEmptyState() {
     }
 
     override fun onDestroyView() {
-    binding.scanAnimation.cancelAnimation()
-    binding.rvCandidates.adapter = null
-    _binding = null
+        binding.scanAnimation.cancelAnimation()
+        binding.rvCandidates.adapter = null
+        _binding = null
 
-    super.onDestroyView()
-}
+        super.onDestroyView()
+    }
 }
