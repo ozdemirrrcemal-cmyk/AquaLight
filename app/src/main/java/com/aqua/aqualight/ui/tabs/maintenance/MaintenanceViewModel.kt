@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.maintenance
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.CareTaskDataStoreManager
+import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTask
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource

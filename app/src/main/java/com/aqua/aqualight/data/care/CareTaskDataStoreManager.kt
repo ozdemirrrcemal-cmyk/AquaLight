@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data
+package com.aqua.aqualight.data.care
 
 import android.content.Context
 import androidx.datastore.core.CorruptionException

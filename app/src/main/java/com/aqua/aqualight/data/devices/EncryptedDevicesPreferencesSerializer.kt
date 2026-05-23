@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.datastore.core.Serializer
 import androidx.security.crypto.MasterKey
-import com.aqua.aqualight.data.KeyStoreUtils
+import com.aqua.aqualight.data.security.KeyStoreUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream

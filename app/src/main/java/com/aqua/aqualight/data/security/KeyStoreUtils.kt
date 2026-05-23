@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data
+package com.aqua.aqualight.data.security
 
 import android.content.Context
 import androidx.security.crypto.EncryptedFile
