@@ -1,6 +1,9 @@
 package com.aqua.aqualight.data.devices.discovery
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.LinkAddress
+import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.SystemClock
 import android.util.Log
@@ -8,6 +11,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -15,6 +19,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.DatagramPacket
 import java.net.DatagramSocket
+import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketTimeoutException
@@ -36,14 +41,15 @@ object UdpDeviceDiscovery {
         context: Context,
         timeoutMs: Long = 3_000L
     ): List<DiscoveredAquaDevice> = withContext(Dispatchers.IO) {
+        val appContext = context.applicationContext
         val resultMap = linkedMapOf<Long, DiscoveredAquaDevice>()
         val buffer = ByteArray(BUFFER_SIZE)
 
-        val broadcastAddress = getBroadcastAddress(context)
+        val targets = getBroadcastTargets(appContext)
 
         Log.d(
             TAG_DISCOVERY,
-            "Broadcast to: ${broadcastAddress.hostAddress}:$UDP_PORT"
+            "Broadcast targets: ${targets.joinToString { it.hostAddress.orEmpty() }}:$UDP_PORT"
         )
 
         val socket = DatagramSocket(null).apply {
@@ -56,17 +62,10 @@ object UdpDeviceDiscovery {
         try {
             coroutineContext.ensureActive()
 
-            val requestJson = """{"Command":"RefreshUDP","VerUdp":$VER_UDP}"""
-            val sendData = requestJson.toByteArray(StandardCharsets.UTF_8)
-
-            val sendPacket = DatagramPacket(
-                sendData,
-                sendData.size,
-                broadcastAddress,
-                UDP_PORT
+            sendDiscoveryPackets(
+                socket = socket,
+                targets = targets
             )
-
-            socket.send(sendPacket)
 
             val startTime = SystemClock.elapsedRealtime()
 
@@ -104,9 +103,8 @@ object UdpDeviceDiscovery {
                     ) ?: continue
 
                     resultMap[discoveredDevice.id] = discoveredDevice
-                } catch (exception: SocketTimeoutException) {
-                    // Normal durum.
-                    // Küçük timeout cancellation kontrolü için kullanılıyor.
+                } catch (_: SocketTimeoutException) {
+                    // Normal.
                 } catch (exception: Exception) {
                     Log.e(
                         TAG_RECEIVED,
@@ -120,7 +118,33 @@ object UdpDeviceDiscovery {
         }
 
         return@withContext resultMap.values.toList()
+    }
 
+    private suspend fun sendDiscoveryPackets(
+        socket: DatagramSocket,
+        targets: List<InetAddress>
+    ) {
+        val requestJson = """{"Command":"RefreshUDP","VerUdp":$VER_UDP}"""
+        val sendData = requestJson.toByteArray(StandardCharsets.UTF_8)
+
+        repeat(3) {
+            coroutineContext.ensureActive()
+
+            targets.forEach { target ->
+                runCatching {
+                    val sendPacket = DatagramPacket(
+                        sendData,
+                        sendData.size,
+                        target,
+                        UDP_PORT
+                    )
+
+                    socket.send(sendPacket)
+                }
+            }
+
+            delay(120L)
+        }
     }
 
     private fun parseDiscoveredDevice(
@@ -133,6 +157,10 @@ object UdpDeviceDiscovery {
             return null
         }
 
+        if (isSelfRefreshPacket(root)) {
+            return null
+        }
+
         val deviceJson = extractDeviceJson(root) ?: return null
 
         val idRaw = deviceJson.optLong(
@@ -141,10 +169,10 @@ object UdpDeviceDiscovery {
         )
 
         val ip = deviceJson
-        .optString("IP", sourceIp)
-        .ifBlank {
-            sourceIp
-        }
+            .optString("IP", sourceIp)
+            .ifBlank {
+                sourceIp
+            }
 
         val finalId = if (idRaw > 0L) {
             idRaw
@@ -161,64 +189,60 @@ object UdpDeviceDiscovery {
         }
 
         val aquaName = deviceJson
-        .optString("AquaName", "")
-        .ifBlank {
-            ""
-        }
+            .optString("AquaName", "")
+            .ifBlank {
+                ""
+            }
 
         val name = deviceJson
-        .optString("Name", "")
-        .ifBlank {
-            "Aqua_$finalId"
-        }
+            .optString("Name", "")
+            .ifBlank {
+                "Aqua_$finalId"
+            }
 
         if (aquaName.isBlank() && name.isBlank()) {
             return null
         }
 
         val firmwareBuild = deviceJson
-        .optString("FirmwareBuild", "")
-        .ifBlank {
-            ""
-        }
+            .optString("FirmwareBuild", "")
+            .ifBlank {
+                ""
+            }
 
         val udpVersion = root
-        .optNullableInt("VerUdp")
-        ?: deviceJson.optNullableInt("VerUdp")
+            .optNullableInt("VerUdp")
+            ?: deviceJson.optNullableInt("VerUdp")
 
-        /**
- * İleride ESP32 firmware tarafına eklenecek profesyonel alanlar.
- * Şimdilik çoğu null gelecek.
- */
         val productId = deviceJson
-        .optString("ProductId", "")
-        .ifBlank {
-            null
-        }
+            .optString("ProductId", "")
+            .ifBlank {
+                null
+            }
 
         val productFamily = deviceJson
-        .optString("ProductFamily", "")
-        .ifBlank {
-            null
-        }
+            .optString("ProductFamily", "")
+            .ifBlank {
+                null
+            }
 
         val productModel = deviceJson
-        .optString("ProductModel", "")
-        .ifBlank {
-            null
-        }
+            .optString("ProductModel", "")
+            .ifBlank {
+                null
+            }
 
         val hardwareRevision = deviceJson
-        .optString("HardwareRevision", "")
-        .ifBlank {
-            null
-        }
+            .optString("HardwareRevision", "")
+            .ifBlank {
+                null
+            }
 
         val firmwareVersion = deviceJson
-        .optString("FirmwareVersion", "")
-        .ifBlank {
-            null
-        }
+            .optString("FirmwareVersion", "")
+            .ifBlank {
+                null
+            }
 
         val apiVersion = deviceJson.optNullableInt("ApiVersion")
 
@@ -251,6 +275,10 @@ object UdpDeviceDiscovery {
             name = name
         )
 
+        if (resolvedType == AquaDeviceType.UNKNOWN) {
+            return null
+        }
+
         return DiscoveredAquaDevice(
             id = finalId,
             ip = ip,
@@ -280,7 +308,14 @@ object UdpDeviceDiscovery {
 
             deviceType = resolvedType
         )
+    }
 
+    private fun isSelfRefreshPacket(
+        root: JSONObject
+    ): Boolean {
+        return root.optString("Command", "") == "RefreshUDP" &&
+            !root.has("Data") &&
+            !root.has("NetUdp")
     }
 
     private fun resolveDeviceType(
@@ -300,34 +335,117 @@ object UdpDeviceDiscovery {
             aquaName = aquaName,
             name = name
         )
-
     }
 
     private fun extractDeviceJson(
         root: JSONObject
     ): JSONObject? {
         root.optJSONObject("Data")
-        ?.optJSONObject("0")
-        ?.let {
-            return it
-        }
+            ?.optJSONObject("0")
+            ?.let {
+                return it
+            }
 
         root.optJSONObject("NetUdp")
-        ?.optJSONObject("Data")
-        ?.optJSONObject("0")
-        ?.let {
-            return it
-        }
+            ?.optJSONObject("Data")
+            ?.optJSONObject("0")
+            ?.let {
+                return it
+            }
 
         return null
-
     }
 
-    private fun getBroadcastAddress(
+    private fun getBroadcastTargets(
+        context: Context
+    ): List<InetAddress> {
+        val targets = linkedSetOf<InetAddress>()
+
+        getConnectivityBroadcastAddresses(context).forEach { address ->
+            targets.add(address)
+        }
+
+        runCatching {
+            targets.add(getDhcpBroadcastAddress(context))
+        }
+
+        runCatching {
+            targets.add(InetAddress.getByName("255.255.255.255"))
+        }
+
+        return targets.toList()
+    }
+
+    private fun getConnectivityBroadcastAddresses(
+        context: Context
+    ): List<InetAddress> {
+        val connectivityManager = context.getSystemService(
+            Context.CONNECTIVITY_SERVICE
+        ) as ConnectivityManager
+
+        return connectivityManager.allNetworks
+            .filter { network ->
+                val capabilities = connectivityManager.getNetworkCapabilities(network)
+                capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+            }
+            .flatMap { network ->
+                val linkProperties = connectivityManager.getLinkProperties(network)
+                    ?: return@flatMap emptyList()
+
+                linkProperties.linkAddresses
+                    .mapNotNull { linkAddress ->
+                        linkAddress.toBroadcastAddress()
+                    }
+            }
+    }
+
+    private fun LinkAddress.toBroadcastAddress(): InetAddress? {
+        val address = address
+
+        if (address !is Inet4Address) {
+            return null
+        }
+
+        val prefix = prefixLength
+
+        if (prefix !in 1..32) {
+            return null
+        }
+
+        val addressBytes = address.address
+        val ip = bytesToInt(addressBytes)
+        val mask = if (prefix == 32) {
+            -1
+        } else {
+            -1 shl (32 - prefix)
+        }
+
+        val broadcast = ip or mask.inv()
+
+        return InetAddress.getByAddress(
+            byteArrayOf(
+                ((broadcast shr 24) and 0xFF).toByte(),
+                ((broadcast shr 16) and 0xFF).toByte(),
+                ((broadcast shr 8) and 0xFF).toByte(),
+                (broadcast and 0xFF).toByte()
+            )
+        )
+    }
+
+    private fun bytesToInt(
+        bytes: ByteArray
+    ): Int {
+        return ((bytes[0].toInt() and 0xFF) shl 24) or
+            ((bytes[1].toInt() and 0xFF) shl 16) or
+            ((bytes[2].toInt() and 0xFF) shl 8) or
+            (bytes[3].toInt() and 0xFF)
+    }
+
+    private fun getDhcpBroadcastAddress(
         context: Context
     ): InetAddress {
         val wifiManager = context.applicationContext
-        .getSystemService(Context.WIFI_SERVICE) as WifiManager
+            .getSystemService(Context.WIFI_SERVICE) as WifiManager
 
         val dhcp = wifiManager.dhcpInfo
 
@@ -342,8 +460,7 @@ object UdpDeviceDiscovery {
         val ipBytes = dhcp.ipAddress.toLittleEndianBytes()
         val maskBytes = dhcp.netmask.toLittleEndianBytes()
 
-        val broadcastBytes = ByteArray(4) {
-            index ->
+        val broadcastBytes = ByteArray(4) { index ->
             val ip = ipBytes[index].toInt() and 0xFF
             val mask = maskBytes[index].toInt() and 0xFF
             val inverseMask = mask.inv() and 0xFF
@@ -352,7 +469,6 @@ object UdpDeviceDiscovery {
         }
 
         return InetAddress.getByAddress(broadcastBytes)
-
     }
 
     private fun Int.toLittleEndianBytes(): ByteArray {
@@ -386,7 +502,6 @@ object UdpDeviceDiscovery {
         } catch (exception: Exception) {
             null
         }
-
     }
 
     private fun JSONObject.optFlexibleBoolean(
@@ -405,12 +520,13 @@ object UdpDeviceDiscovery {
                         "1", "true", "yes", "on" -> true
                         else -> false
                     }
-                } else -> false
+                }
+
+                else -> false
             }
         } catch (exception: Exception) {
             false
         }
-
     }
 
     private fun JSONObject.readStringSet(
@@ -426,7 +542,7 @@ object UdpDeviceDiscovery {
                     buildSet {
                         for (index in 0 until value.length()) {
                             val item = value.optString(index, "")
-                            .trim()
+                                .trim()
 
                             if (item.isNotBlank()) {
                                 add(item)
@@ -437,19 +553,19 @@ object UdpDeviceDiscovery {
 
                 is String -> {
                     value.split(",")
-                    .map {
-                        item -> item.trim()
-                    }
-                    .filter {
-                        item -> item.isNotBlank()
-                    }
-                    .toSet()
-                } else -> emptySet()
+                        .map { item ->
+                            item.trim()
+                        }
+                        .filter { item ->
+                            item.isNotBlank()
+                        }
+                        .toSet()
+                }
+
+                else -> emptySet()
             }
         } catch (exception: Exception) {
             emptySet()
         }
-
     }
-
 }

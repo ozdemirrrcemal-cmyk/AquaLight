@@ -1,16 +1,21 @@
 package com.aqua.aqualight.data.devices.discovery
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.LinkAddress
+import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.DatagramPacket
 import java.net.DatagramSocket
+import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketTimeoutException
@@ -25,23 +30,28 @@ object UdpDiscoveryDiagnostics {
     private const val BUFFER_SIZE = 4096
 
     data class Result(
-        val broadcastIp: String,
+        val broadcastIps: List<String>,
         val port: Int,
-        val sent: Boolean,
+        val sentCount: Int,
         val rawResponses: List<RawResponse>,
         val acceptedDevices: List<AcceptedDevice>,
         val rejectedResponses: List<RejectedResponse>,
+        val ignoredResponses: List<IgnoredResponse>,
         val error: String?
     ) {
         fun toDisplayText(): String {
             return buildString {
                 appendLine("UDP Discovery Diagnostics")
                 appendLine()
-                appendLine("Broadcast: $broadcastIp:$port")
-                appendLine("Packet sent: $sent")
+                appendLine("Broadcast targets:")
+                broadcastIps.forEach { ip ->
+                    appendLine("- $ip:$port")
+                }
+                appendLine("Packets sent: $sentCount")
                 appendLine("Raw responses: ${rawResponses.size}")
                 appendLine("Accepted devices: ${acceptedDevices.size}")
                 appendLine("Rejected responses: ${rejectedResponses.size}")
+                appendLine("Ignored responses: ${ignoredResponses.size}")
 
                 if (!error.isNullOrBlank()) {
                     appendLine()
@@ -57,6 +67,14 @@ object UdpDiscoveryDiagnostics {
                         appendLine("  id=${device.id}")
                         appendLine("  ip=${device.ip}")
                         appendLine("  type=${device.deviceType}")
+                    }
+                }
+
+                if (ignoredResponses.isNotEmpty()) {
+                    appendLine()
+                    appendLine("Ignored:")
+                    ignoredResponses.forEachIndexed { index, ignored ->
+                        appendLine("${index + 1}. ${ignored.reason}")
                     }
                 }
 
@@ -99,18 +117,25 @@ object UdpDiscoveryDiagnostics {
         val raw: String
     )
 
+    data class IgnoredResponse(
+        val reason: String
+    )
+
     suspend fun run(
         context: Context,
         timeoutMs: Long = 3_000L
     ): Result = withContext(Dispatchers.IO) {
+        val appContext = context.applicationContext
+
         val rawResponses = mutableListOf<RawResponse>()
         val acceptedDevices = mutableListOf<AcceptedDevice>()
         val rejectedResponses = mutableListOf<RejectedResponse>()
+        val ignoredResponses = mutableListOf<IgnoredResponse>()
 
-        val broadcastAddress = getBroadcastAddress(context)
+        val targets = getBroadcastTargets(appContext)
         val buffer = ByteArray(BUFFER_SIZE)
 
-        var sent = false
+        var sentCount = 0
         var error: String? = null
 
         val socket = try {
@@ -122,12 +147,13 @@ object UdpDiscoveryDiagnostics {
             }
         } catch (exception: Exception) {
             return@withContext Result(
-                broadcastIp = broadcastAddress.hostAddress.orEmpty(),
+                broadcastIps = targets.map { it.hostAddress.orEmpty() },
                 port = UDP_PORT,
-                sent = false,
+                sentCount = 0,
                 rawResponses = emptyList(),
                 acceptedDevices = emptyList(),
                 rejectedResponses = emptyList(),
+                ignoredResponses = emptyList(),
                 error = "Socket open failed: ${exception.message}"
             )
         }
@@ -135,18 +161,10 @@ object UdpDiscoveryDiagnostics {
         try {
             coroutineContext.ensureActive()
 
-            val requestJson = """{"Command":"RefreshUDP","VerUdp":$VER_UDP}"""
-            val sendData = requestJson.toByteArray(StandardCharsets.UTF_8)
-
-            val sendPacket = DatagramPacket(
-                sendData,
-                sendData.size,
-                broadcastAddress,
-                UDP_PORT
+            sentCount = sendDiscoveryPackets(
+                socket = socket,
+                targets = targets
             )
-
-            socket.send(sendPacket)
-            sent = true
 
             val startTime = android.os.SystemClock.elapsedRealtime()
 
@@ -185,15 +203,27 @@ object UdpDiscoveryDiagnostics {
                         sourceIp = sourceIp
                     )
 
-                    if (parsed.accepted != null) {
-                        acceptedDevices.add(parsed.accepted)
-                    } else {
-                        rejectedResponses.add(
-                            RejectedResponse(
-                                reason = parsed.rejectReason ?: "Unknown reject reason",
-                                raw = body
+                    when {
+                        parsed.accepted != null -> {
+                            acceptedDevices.add(parsed.accepted)
+                        }
+
+                        parsed.ignoredReason != null -> {
+                            ignoredResponses.add(
+                                IgnoredResponse(
+                                    reason = parsed.ignoredReason
+                                )
                             )
-                        )
+                        }
+
+                        else -> {
+                            rejectedResponses.add(
+                                RejectedResponse(
+                                    reason = parsed.rejectReason ?: "Unknown reject reason",
+                                    raw = body
+                                )
+                            )
+                        }
                     }
                 } catch (_: SocketTimeoutException) {
                     // Normal.
@@ -213,19 +243,53 @@ object UdpDiscoveryDiagnostics {
         }
 
         return@withContext Result(
-            broadcastIp = broadcastAddress.hostAddress.orEmpty(),
+            broadcastIps = targets.map { it.hostAddress.orEmpty() },
             port = UDP_PORT,
-            sent = sent,
+            sentCount = sentCount,
             rawResponses = rawResponses,
             acceptedDevices = acceptedDevices,
             rejectedResponses = rejectedResponses,
+            ignoredResponses = ignoredResponses,
             error = error
         )
     }
 
+    private suspend fun sendDiscoveryPackets(
+        socket: DatagramSocket,
+        targets: List<InetAddress>
+    ): Int {
+        val requestJson = """{"Command":"RefreshUDP","VerUdp":$VER_UDP}"""
+        val sendData = requestJson.toByteArray(StandardCharsets.UTF_8)
+
+        var sentCount = 0
+
+        repeat(3) {
+            coroutineContext.ensureActive()
+
+            targets.forEach { target ->
+                runCatching {
+                    val sendPacket = DatagramPacket(
+                        sendData,
+                        sendData.size,
+                        target,
+                        UDP_PORT
+                    )
+
+                    socket.send(sendPacket)
+                    sentCount++
+                }
+            }
+
+            delay(120L)
+        }
+
+        return sentCount
+    }
+
     private data class ParseResult(
         val accepted: AcceptedDevice?,
-        val rejectReason: String?
+        val rejectReason: String?,
+        val ignoredReason: String?
     )
 
     private fun parseRawResponse(
@@ -237,14 +301,24 @@ object UdpDiscoveryDiagnostics {
         } catch (exception: Exception) {
             return ParseResult(
                 accepted = null,
-                rejectReason = "Invalid JSON"
+                rejectReason = "Invalid JSON",
+                ignoredReason = null
+            )
+        }
+
+        if (isSelfRefreshPacket(root)) {
+            return ParseResult(
+                accepted = null,
+                rejectReason = null,
+                ignoredReason = "Ignored self RefreshUDP echo"
             )
         }
 
         val deviceJson = extractDeviceJson(root)
             ?: return ParseResult(
                 accepted = null,
-                rejectReason = "Device JSON not found. Expected Data.0 or NetUdp.Data.0"
+                rejectReason = "Device JSON not found. Expected Data.0 or NetUdp.Data.0",
+                ignoredReason = null
             )
 
         val idRaw = deviceJson.optLong(
@@ -265,14 +339,16 @@ object UdpDiscoveryDiagnostics {
         if (finalId <= 0L) {
             return ParseResult(
                 accepted = null,
-                rejectReason = "Invalid device id"
+                rejectReason = "Invalid device id",
+                ignoredReason = null
             )
         }
 
         if (ip.isBlank()) {
             return ParseResult(
                 accepted = null,
-                rejectReason = "Blank device ip"
+                rejectReason = "Blank device ip",
+                ignoredReason = null
             )
         }
 
@@ -293,7 +369,8 @@ object UdpDiscoveryDiagnostics {
         if (aquaName.isBlank() && name.isBlank() && productId.isNullOrBlank()) {
             return ParseResult(
                 accepted = null,
-                rejectReason = "Missing AquaName, Name and ProductId"
+                rejectReason = "Missing AquaName, Name and ProductId",
+                ignoredReason = null
             )
         }
 
@@ -313,7 +390,8 @@ object UdpDiscoveryDiagnostics {
         if (resolvedType == AquaDeviceType.UNKNOWN) {
             return ParseResult(
                 accepted = null,
-                rejectReason = "Unsupported identity. AquaName=$aquaName, Name=$name, ProductId=$productId"
+                rejectReason = "Unsupported identity. AquaName=$aquaName, Name=$name, ProductId=$productId",
+                ignoredReason = null
             )
         }
 
@@ -325,8 +403,17 @@ object UdpDiscoveryDiagnostics {
                 name = name,
                 deviceType = resolvedType
             ),
-            rejectReason = null
+            rejectReason = null,
+            ignoredReason = null
         )
+    }
+
+    private fun isSelfRefreshPacket(
+        root: JSONObject
+    ): Boolean {
+        return root.optString("Command", "") == "RefreshUDP" &&
+            !root.has("Data") &&
+            !root.has("NetUdp")
     }
 
     private fun extractDeviceJson(
@@ -344,7 +431,92 @@ object UdpDiscoveryDiagnostics {
         return null
     }
 
-    private fun getBroadcastAddress(
+    private fun getBroadcastTargets(
+        context: Context
+    ): List<InetAddress> {
+        val targets = linkedSetOf<InetAddress>()
+
+        getConnectivityBroadcastAddresses(context).forEach { address ->
+            targets.add(address)
+        }
+
+        runCatching {
+            targets.add(getDhcpBroadcastAddress(context))
+        }
+
+        runCatching {
+            targets.add(InetAddress.getByName("255.255.255.255"))
+        }
+
+        return targets.toList()
+    }
+
+    private fun getConnectivityBroadcastAddresses(
+        context: Context
+    ): List<InetAddress> {
+        val connectivityManager = context.getSystemService(
+            Context.CONNECTIVITY_SERVICE
+        ) as ConnectivityManager
+
+        return connectivityManager.allNetworks
+            .filter { network ->
+                val capabilities = connectivityManager.getNetworkCapabilities(network)
+                capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+            }
+            .flatMap { network ->
+                val linkProperties = connectivityManager.getLinkProperties(network)
+                    ?: return@flatMap emptyList()
+
+                linkProperties.linkAddresses
+                    .mapNotNull { linkAddress ->
+                        linkAddress.toBroadcastAddress()
+                    }
+            }
+    }
+
+    private fun LinkAddress.toBroadcastAddress(): InetAddress? {
+        val address = address
+
+        if (address !is Inet4Address) {
+            return null
+        }
+
+        val prefix = prefixLength
+
+        if (prefix !in 1..32) {
+            return null
+        }
+
+        val addressBytes = address.address
+        val ip = bytesToInt(addressBytes)
+        val mask = if (prefix == 32) {
+            -1
+        } else {
+            -1 shl (32 - prefix)
+        }
+
+        val broadcast = ip or mask.inv()
+
+        return InetAddress.getByAddress(
+            byteArrayOf(
+                ((broadcast shr 24) and 0xFF).toByte(),
+                ((broadcast shr 16) and 0xFF).toByte(),
+                ((broadcast shr 8) and 0xFF).toByte(),
+                (broadcast and 0xFF).toByte()
+            )
+        )
+    }
+
+    private fun bytesToInt(
+        bytes: ByteArray
+    ): Int {
+        return ((bytes[0].toInt() and 0xFF) shl 24) or
+            ((bytes[1].toInt() and 0xFF) shl 16) or
+            ((bytes[2].toInt() and 0xFF) shl 8) or
+            (bytes[3].toInt() and 0xFF)
+    }
+
+    private fun getDhcpBroadcastAddress(
         context: Context
     ): InetAddress {
         val wifiManager = context.applicationContext
