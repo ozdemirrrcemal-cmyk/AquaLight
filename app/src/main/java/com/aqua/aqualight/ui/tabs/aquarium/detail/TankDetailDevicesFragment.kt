@@ -19,11 +19,12 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -157,14 +158,12 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         val iconBox = ImageView(requireContext()).apply {
             setImageResource(
-                DeviceType.fromName(device.aquaName).iconRes
+                DeviceIconMapper.iconFor(device.deviceType)
             )
 
             setBackgroundResource(R.drawable.bg_material_icon_box)
             scaleType = ImageView.ScaleType.CENTER_INSIDE
-            contentDescription = device.aquaName.ifBlank {
-                "Device"
-            }
+            contentDescription = getDeviceTitle(device)
 
             layoutParams = LinearLayout.LayoutParams(
                 46.dp(),
@@ -559,27 +558,37 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun getDeviceTitle(
         device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
-        return device.name.ifBlank {
-            device.aquaName.ifBlank {
-                "Device"
+        val definition = AquaDeviceCatalog.findByType(
+            type = device.deviceType
+        )
+
+        return definition?.displayName
+            ?: device.name.ifBlank {
+                device.productModel.ifBlank {
+                    "Device"
+                }
             }
-        }
     }
 
     private fun getDeviceTypeText(
         device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
-        return device.aquaName.ifBlank {
-            "Device"
-        }
+        val definition = AquaDeviceCatalog.findByType(
+            type = device.deviceType
+        )
+
+        return definition?.family?.displayName
+            ?: device.productFamily.ifBlank {
+                device.aquaName.ifBlank {
+                    "Device"
+                }
+            }
     }
 
     private fun getDeviceInfoText(
         device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
-        val typeText = device.aquaName.ifBlank {
-            "AquaLight Device"
-        }
+        val typeText = getDeviceTypeText(device)
 
         val statusState = latestStatuses[device.id]
         val ipText = statusState?.ip ?: device.ip
@@ -594,8 +603,8 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     private fun createDeviceShortCode(
         device: DevicesDataStoreManager.DeviceInfoUi
     ): String {
-        val source = device.aquaName.ifBlank {
-            device.name.ifBlank {
+        val source = getDeviceTitle(device).ifBlank {
+            getDeviceTypeText(device).ifBlank {
                 "DV"
             }
         }

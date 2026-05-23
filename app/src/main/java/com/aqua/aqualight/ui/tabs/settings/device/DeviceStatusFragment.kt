@@ -12,13 +12,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
@@ -133,19 +133,35 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
                 "Never"
             }
 
+            val definition = AquaDeviceCatalog.findByType(
+                type = device.deviceType
+            )
+
+            val displayName = definition?.displayName
+                ?: device.name.ifBlank {
+                    device.productModel.ifBlank {
+                        "Device"
+                    }
+                }
+
+            val familyName = definition?.family?.displayName
+                ?: device.productFamily.ifBlank {
+                    device.aquaName.ifBlank {
+                        "Unknown"
+                    }
+                }
+
             DeviceCardUi(
                 id = device.id,
-                name = device.name.ifBlank {
-                    "Device"
-                },
-                aquaName = device.aquaName,
+                displayName = displayName,
+                familyName = familyName,
                 tankName = getTankNameForDevice(device),
                 ip = statusState?.ip ?: device.ip,
                 serial = device.serial,
                 firmwareBuild = device.firmwareBuild,
                 isOnline = online,
                 lastSeenText = lastSeenText,
-                type = DeviceType.fromName(device.aquaName)
+                deviceType = device.deviceType
             )
         }
 
