@@ -9,8 +9,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
+import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
@@ -45,16 +47,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         startScan()
     }
 
-    private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
-
-        binding.btnRescan.setOnClickListener {
-            startScan()
-        }
-    }
-
     private fun setupRecyclerView() {
         adapter = ScanDevicesAdapter { device ->
             saveSelectedDevice(device)
@@ -67,6 +59,16 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         binding.rvDevices.adapter = adapter
     }
 
+    private fun setupClickListeners() {
+        binding.btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
+
+        binding.btnRescan.setOnClickListener {
+            startScan()
+        }
+    }
+
     private fun startScan() {
         if (scanJob?.isActive == true) {
             return
@@ -77,7 +79,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
             try {
                 val scanResult = withTimeout(
-                    SCAN_TIMEOUT_MS + 1000L
+                    SCAN_TIMEOUT_MS + SCAN_TIMEOUT_BUFFER_MS
                 ) {
                     DeviceDiscoveryService.scan(
                         context = requireContext(),
@@ -132,7 +134,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun showResultState(
-        devices: List<DiscoveredDevice>
+        devices: List<DiscoveredAquaDevice>
     ) {
         binding.tvTitle.text = getString(
             R.string.device_scan_header_list
@@ -152,12 +154,13 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             )
 
             adapter.submitList(emptyList())
-        } else {
-            binding.rvDevices.visibility = View.VISIBLE
-            binding.tvNoDevices.visibility = View.GONE
-
-            adapter.submitList(devices)
+            return
         }
+
+        binding.rvDevices.visibility = View.VISIBLE
+        binding.tvNoDevices.visibility = View.GONE
+
+        adapter.submitList(devices)
     }
 
     private fun showTimeoutState() {
@@ -206,7 +209,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun saveSelectedDevice(
-        device: DiscoveredDevice
+        device: DiscoveredAquaDevice
     ) {
         if (isSavingDevice) {
             return
@@ -217,22 +220,40 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 message = getString(R.string.device_scan_invalid_device),
                 type = BaseActivity.SnackType.WARNING
             )
-
             return
         }
 
-        val aquaName = device.aquaName
-            ?.ifBlank {
-                "-"
-            } ?: "-"
+        if (!device.isSupported) {
+            showGlobalSnackBar(
+                message = "This device is not supported by this app version.",
+                type = BaseActivity.SnackType.WARNING
+            )
+            return
+        }
 
-        val name = device.name.ifBlank {
-            "Device"
+        val definition = AquaDeviceCatalog.findByType(
+            type = device.deviceType
+        )
+
+        if (definition == null) {
+            showGlobalSnackBar(
+                message = "This device is not supported by this app version.",
+                type = BaseActivity.SnackType.WARNING
+            )
+            return
+        }
+
+        val savedAquaName = definition.family.displayName.ifBlank {
+            device.aquaName.ifBlank { "-" }
+        }
+
+        val savedName = definition.displayName.ifBlank {
+            device.name.ifBlank { "Device" }
         }
 
         val serial = buildSerial(
-            aquaName = aquaName,
-            name = name,
+            aquaName = savedAquaName,
+            name = savedName,
             id = device.id
         )
 
@@ -247,11 +268,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 if (alreadyExists) {
                     devicesStore.updateDevicesLastSeen(
                         discovered = listOf(
-                            DevicesDataStoreManager.DeviceLastSeenUpdate(
-                                id = device.id,
-                                ip = device.ip,
-                                firmwareBuild = device.firmwareBuild.orEmpty()
-                            )
+                            device.toLastSeenUpdate()
                         )
                     )
 
@@ -269,20 +286,36 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
                 devicesStore.addDevice(
                     id = device.id,
-                    aquaName = aquaName,
-                    name = name,
+                    aquaName = savedAquaName,
+                    name = savedName,
                     ip = device.ip,
                     serial = serial,
-                    firmwareBuild = device.firmwareBuild.orEmpty()
+                    firmwareBuild = device.firmwareBuild,
+
+                    deviceType = device.deviceType,
+
+                    udpVersion = device.udpVersion,
+                    tabLight = device.tabLight,
+                    tabTimer = device.tabTimer,
+                    tabTemperature = device.tabTemperature,
+
+                    productId = device.productId.orEmpty(),
+                    productFamily = device.productFamily.orEmpty(),
+                    productModel = device.productModel.orEmpty(),
+                    hardwareRevision = device.hardwareRevision.orEmpty(),
+                    firmwareVersion = device.firmwareVersion.orEmpty(),
+                    apiVersion = device.apiVersion,
+
+                    channelCount = device.channelCount,
+                    sensorCount = device.sensorCount,
+
+                    supportedFeatures = device.supportedFeatures,
+                    supportedScreens = device.supportedScreens
                 )
 
                 devicesStore.updateDevicesLastSeen(
                     discovered = listOf(
-                        DevicesDataStoreManager.DeviceLastSeenUpdate(
-                            id = device.id,
-                            ip = device.ip,
-                            firmwareBuild = device.firmwareBuild.orEmpty()
-                        )
+                        device.toLastSeenUpdate()
                     )
                 )
 
@@ -304,18 +337,36 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
     }
 
-    private fun showGlobalSnackBar(
-        message: String,
-        type: BaseActivity.SnackType
-    ) {
-        (activity as? BaseActivity)?.showSnackBar(
-            message = message,
-            type = type
+    private fun DiscoveredAquaDevice.toLastSeenUpdate(): DevicesDataStoreManager.DeviceLastSeenUpdate {
+        return DevicesDataStoreManager.DeviceLastSeenUpdate(
+            id = id,
+            ip = ip,
+            firmwareBuild = firmwareBuild,
+
+            deviceType = deviceType,
+
+            udpVersion = udpVersion,
+            tabLight = tabLight,
+            tabTimer = tabTimer,
+            tabTemperature = tabTemperature,
+
+            productId = productId,
+            productFamily = productFamily,
+            productModel = productModel,
+            hardwareRevision = hardwareRevision,
+            firmwareVersion = firmwareVersion,
+            apiVersion = apiVersion,
+
+            channelCount = channelCount,
+            sensorCount = sensorCount,
+
+            supportedFeatures = supportedFeatures,
+            supportedScreens = supportedScreens
         )
     }
 
     private fun isValidDevice(
-        device: DiscoveredDevice
+        device: DiscoveredAquaDevice
     ): Boolean {
         if (device.id <= 0L) {
             return false
@@ -327,7 +378,8 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
         if (
             device.name.isBlank() &&
-            device.aquaName.isNullOrBlank()
+            device.aquaName.isBlank() &&
+            device.productId.isNullOrBlank()
         ) {
             return false
         }
@@ -361,6 +413,16 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
     }
 
+    private fun showGlobalSnackBar(
+        message: String,
+        type: BaseActivity.SnackType
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = type
+        )
+    }
+
     override fun onDestroyView() {
         scanJob?.cancel()
         scanJob = null
@@ -378,7 +440,8 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         super.onDestroyView()
     }
 
-    companion object {
-        private const val SCAN_TIMEOUT_MS = 3000L
+    private companion object {
+        const val SCAN_TIMEOUT_MS = 3_000L
+        const val SCAN_TIMEOUT_BUFFER_MS = 1_000L
     }
 }

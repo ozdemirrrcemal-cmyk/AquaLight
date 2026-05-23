@@ -5,58 +5,133 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.databinding.ItemScanDeviceBinding
 
 class ScanDevicesAdapter(
-    private val onClick: (DiscoveredDevice) -> Unit
-) : ListAdapter<DiscoveredDevice, ScanDevicesAdapter.DeviceViewHolder>(DiffCallback) {
+    private val onClick: (DiscoveredAquaDevice) -> Unit
+) : ListAdapter<DiscoveredAquaDevice, ScanDevicesAdapter.DeviceViewHolder>(DiffCallback) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): DeviceViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        val binding = ItemScanDeviceBinding.inflate(inflater, parent, false)
+
+        val binding = ItemScanDeviceBinding.inflate(
+            inflater,
+            parent,
+            false
+        )
+
         return DeviceViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
-        holder.bind(getItem(position))
+    override fun onBindViewHolder(
+        holder: DeviceViewHolder,
+        position: Int
+    ) {
+        holder.bind(
+            device = getItem(position)
+        )
     }
 
     inner class DeviceViewHolder(
         private val binding: ItemScanDeviceBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(device: DiscoveredDevice) {
-            val aqua = device.aquaName?.takeIf { it.isNotBlank() } ?: "-"
-            val name = device.name.ifBlank { "Device" }
+        fun bind(
+            device: DiscoveredAquaDevice
+        ) {
+            val definition = AquaDeviceCatalog.findByType(
+                type = device.deviceType
+            )
 
-            binding.tvAquaName.text = aqua
-            binding.tvName.text = name
+            val displayName = definition?.displayName
+                ?: device.productModel
+                ?: device.name.ifBlank { "Unsupported Device" }
 
-            // Seri formatı: AN-NNNNN
-            binding.tvId.text = buildSerial(aqua, name, device.id)
+            val familyName = definition?.family?.displayName
+                ?: device.productFamily
+                ?: device.aquaName.ifBlank { "Unknown" }
 
-            binding.root.setOnClickListener { onClick(device) }
+            binding.tvAquaName.text = familyName
+            binding.tvName.text = displayName
+
+            binding.tvId.text = if (device.isSupported) {
+                buildSupportedInfo(
+                    device = device,
+                    displayName = displayName,
+                    familyName = familyName
+                )
+            } else {
+                "Unsupported • Update app required"
+            }
+
+            binding.root.alpha = if (device.isSupported) {
+                1f
+            } else {
+                0.55f
+            }
+
+            binding.root.setOnClickListener {
+                onClick(device)
+            }
         }
 
-        private fun buildSerial(aqua: String, name: String, id: Long): String {
-            val a = aqua.firstOrNull()?.uppercaseChar() ?: 'X'
-            val n = name.firstOrNull()?.uppercaseChar() ?: 'X'
-            return "$a$n-$id"
+        private fun buildSupportedInfo(
+            device: DiscoveredAquaDevice,
+            displayName: String,
+            familyName: String
+        ): String {
+            val serial = buildSerial(
+                aquaName = familyName,
+                name = displayName,
+                id = device.id
+            )
+
+            val firmware = device.firmwareBuild
+                .takeIf { value -> value.isNotBlank() }
+                ?: "Firmware unknown"
+
+            return "$serial • ${device.ip} • $firmware"
+        }
+
+        private fun buildSerial(
+            aquaName: String,
+            name: String,
+            id: Long
+        ): String {
+            val aquaInitial = aquaName.firstOrNull()
+                ?.uppercaseChar()
+                ?: 'X'
+
+            val nameInitial = name.firstOrNull()
+                ?.uppercaseChar()
+                ?: 'X'
+
+            return "$aquaInitial$nameInitial-$id"
         }
     }
 
     companion object {
-        private val DiffCallback = object : DiffUtil.ItemCallback<DiscoveredDevice>() {
+        private val DiffCallback = object : DiffUtil.ItemCallback<DiscoveredAquaDevice>() {
+
             override fun areItemsTheSame(
-                oldItem: DiscoveredDevice,
-                newItem: DiscoveredDevice
-            ): Boolean =
-                oldItem.id == newItem.id && oldItem.ip == newItem.ip
+                oldItem: DiscoveredAquaDevice,
+                newItem: DiscoveredAquaDevice
+            ): Boolean {
+                return oldItem.id == newItem.id &&
+                    oldItem.ip == newItem.ip
+            }
 
             override fun areContentsTheSame(
-                oldItem: DiscoveredDevice,
-                newItem: DiscoveredDevice
-            ): Boolean = oldItem == newItem
+                oldItem: DiscoveredAquaDevice,
+                newItem: DiscoveredAquaDevice
+            ): Boolean {
+                return oldItem == newItem
+            }
         }
     }
 }

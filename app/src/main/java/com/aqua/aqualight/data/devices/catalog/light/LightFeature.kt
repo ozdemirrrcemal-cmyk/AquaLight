@@ -1,0 +1,16 @@
+package com.aqua.aqualight.data.devices.catalog.light
+
+enum class LightFeature {
+    MANUAL_POWER,
+    GLOBAL_BRIGHTNESS,
+    CHANNEL_CONTROL,
+    LIGHT_SCHEDULE,
+    PRESETS,
+    TEMPERATURE_PROTECTION,
+    DAY_SIMULATION,
+    CLOUD_SIMULATION,
+    MOONLIGHT,
+    ACCLIMATION_MODE,
+    SPECTRUM_EDITOR,
+    MATRIX_EDITOR
+}

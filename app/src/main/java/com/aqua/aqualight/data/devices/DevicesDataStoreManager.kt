@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -65,13 +67,53 @@ class DevicesDataStoreManager private constructor(
         val serial: String,
         val firmwareBuild: String,
         val lastSeenMillis: Long,
-        val tankId: Long? = null
+        val tankId: Long? = null,
+
+        val deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN,
+
+        val udpVersion: Int? = null,
+        val tabLight: Boolean = false,
+        val tabTimer: Boolean = false,
+        val tabTemperature: Boolean = false,
+
+        val productId: String = "",
+        val productFamily: String = "",
+        val productModel: String = "",
+        val hardwareRevision: String = "",
+        val firmwareVersion: String = "",
+        val apiVersion: Int? = null,
+
+        val channelCount: Int? = null,
+        val sensorCount: Int? = null,
+
+        val supportedFeatures: Set<String> = emptySet(),
+        val supportedScreens: Set<String> = emptySet()
     )
 
     data class DeviceLastSeenUpdate(
         val id: Long,
         val ip: String,
-        val firmwareBuild: String = ""
+        val firmwareBuild: String = "",
+
+        val deviceType: AquaDeviceType? = null,
+
+        val udpVersion: Int? = null,
+        val tabLight: Boolean? = null,
+        val tabTimer: Boolean? = null,
+        val tabTemperature: Boolean? = null,
+
+        val productId: String? = null,
+        val productFamily: String? = null,
+        val productModel: String? = null,
+        val hardwareRevision: String? = null,
+        val firmwareVersion: String? = null,
+        val apiVersion: Int? = null,
+
+        val channelCount: Int? = null,
+        val sensorCount: Int? = null,
+
+        val supportedFeatures: Set<String>? = null,
+        val supportedScreens: Set<String>? = null
     )
 
     private val devicesPrefsFlow: Flow<DevicesPreferences> = dataStore.data
@@ -121,7 +163,27 @@ class DevicesDataStoreManager private constructor(
         name: String,
         ip: String,
         serial: String,
-        firmwareBuild: String
+        firmwareBuild: String,
+
+        deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN,
+
+        udpVersion: Int? = null,
+        tabLight: Boolean = false,
+        tabTimer: Boolean = false,
+        tabTemperature: Boolean = false,
+
+        productId: String = "",
+        productFamily: String = "",
+        productModel: String = "",
+        hardwareRevision: String = "",
+        firmwareVersion: String = "",
+        apiVersion: Int? = null,
+
+        channelCount: Int? = null,
+        sensorCount: Int? = null,
+
+        supportedFeatures: Set<String> = emptySet(),
+        supportedScreens: Set<String> = emptySet()
     ) {
         dataStore.updateData { prefs ->
             if (prefs.devicesList.any { device -> device.id == id }) {
@@ -129,6 +191,13 @@ class DevicesDataStoreManager private constructor(
             }
 
             val now = System.currentTimeMillis()
+
+            val resolvedType = resolveDeviceType(
+                explicitType = deviceType,
+                aquaName = aquaName,
+                name = name,
+                productId = productId
+            )
 
             val device = SavedDeviceInfo.newBuilder()
                 .setId(id)
@@ -139,6 +208,34 @@ class DevicesDataStoreManager private constructor(
                 .setFirmwareBuild(firmwareBuild)
                 .setLastSeenMillis(now)
                 .setTankId(0L)
+                .setDeviceType(resolvedType.storageKey)
+                .setTabLight(tabLight)
+                .setTabTimer(tabTimer)
+                .setTabTemperature(tabTemperature)
+                .setProductId(productId)
+                .setProductFamily(productFamily)
+                .setProductModel(productModel)
+                .setHardwareRevision(hardwareRevision)
+                .setFirmwareVersion(firmwareVersion)
+                .addAllSupportedFeatures(supportedFeatures)
+                .addAllSupportedScreens(supportedScreens)
+                .apply {
+                    udpVersion?.let { value ->
+                        setUdpVersion(value)
+                    }
+
+                    apiVersion?.let { value ->
+                        setApiVersion(value)
+                    }
+
+                    channelCount?.let { value ->
+                        setChannelCount(value)
+                    }
+
+                    sensorCount?.let { value ->
+                        setSensorCount(value)
+                    }
+                }
                 .build()
 
             prefs.toBuilder()
@@ -153,7 +250,8 @@ class DevicesDataStoreManager private constructor(
         name: String? = null,
         ip: String? = null,
         serial: String? = null,
-        firmwareBuild: String? = null
+        firmwareBuild: String? = null,
+        deviceType: AquaDeviceType? = null
     ) {
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
@@ -180,6 +278,10 @@ class DevicesDataStoreManager private constructor(
 
                     firmwareBuild?.let { value ->
                         setFirmwareBuild(value)
+                    }
+
+                    deviceType?.let { value ->
+                        setDeviceType(value.storageKey)
                     }
                 }.build()
             }
@@ -281,7 +383,7 @@ class DevicesDataStoreManager private constructor(
                 .build()
         }
     }
-	
+
     suspend fun updateDevicesLastSeen(
         discovered: List<DeviceLastSeenUpdate>
     ) {
@@ -299,10 +401,76 @@ class DevicesDataStoreManager private constructor(
                 }
 
                 if (match != null) {
-                    device.toBuilder()
-                        .setLastSeenMillis(now)
-                        .setFirmwareBuild(match.firmwareBuild)
-                        .build()
+                    device.toBuilder().apply {
+                        setIp(match.ip)
+                        setLastSeenMillis(now)
+
+                        if (match.firmwareBuild.isNotBlank()) {
+                            setFirmwareBuild(match.firmwareBuild)
+                        }
+
+                        match.deviceType?.let { value ->
+                            setDeviceType(value.storageKey)
+                        }
+
+                        match.udpVersion?.let { value ->
+                            setUdpVersion(value)
+                        }
+
+                        match.tabLight?.let { value ->
+                            setTabLight(value)
+                        }
+
+                        match.tabTimer?.let { value ->
+                            setTabTimer(value)
+                        }
+
+                        match.tabTemperature?.let { value ->
+                            setTabTemperature(value)
+                        }
+
+                        match.productId?.let { value ->
+                            setProductId(value)
+                        }
+
+                        match.productFamily?.let { value ->
+                            setProductFamily(value)
+                        }
+
+                        match.productModel?.let { value ->
+                            setProductModel(value)
+                        }
+
+                        match.hardwareRevision?.let { value ->
+                            setHardwareRevision(value)
+                        }
+
+                        match.firmwareVersion?.let { value ->
+                            setFirmwareVersion(value)
+                        }
+
+                        match.apiVersion?.let { value ->
+                            setApiVersion(value)
+                        }
+
+                        match.channelCount?.let { value ->
+                            setChannelCount(value)
+                        }
+
+                        match.sensorCount?.let { value ->
+                            setSensorCount(value)
+                        }
+
+                        match.supportedFeatures?.let { values ->
+                            clearSupportedFeatures()
+                            addAllSupportedFeatures(values)
+                        }
+
+                        match.supportedScreens?.let { values ->
+                            clearSupportedScreens()
+                            addAllSupportedScreens(values)
+                        }
+                    }.build()
                 } else {
                     device
                 }
@@ -316,6 +484,21 @@ class DevicesDataStoreManager private constructor(
     }
 
     private fun SavedDeviceInfo.toUi(): DeviceInfoUi {
+        val fallbackType = AquaDeviceCatalog.resolveTypeByLegacyIdentity(
+            aquaName = aquaName,
+            name = name
+        )
+
+        val parsedType = AquaDeviceType.fromStorageKey(
+            value = deviceType
+        )
+
+        val resolvedType = if (parsedType != AquaDeviceType.UNKNOWN) {
+            parsedType
+        } else {
+            fallbackType
+        }
+
         return DeviceInfoUi(
             id = id,
             aquaName = aquaName,
@@ -326,7 +509,59 @@ class DevicesDataStoreManager private constructor(
             lastSeenMillis = lastSeenMillis,
             tankId = tankId.takeIf { value ->
                 value > 0L
-            }
+            },
+
+            deviceType = resolvedType,
+
+            udpVersion = udpVersion.takeIf { value ->
+                value > 0
+            },
+            tabLight = tabLight,
+            tabTimer = tabTimer,
+            tabTemperature = tabTemperature,
+
+            productId = productId,
+            productFamily = productFamily,
+            productModel = productModel,
+            hardwareRevision = hardwareRevision,
+            firmwareVersion = firmwareVersion,
+            apiVersion = apiVersion.takeIf { value ->
+                value > 0
+            },
+
+            channelCount = channelCount.takeIf { value ->
+                value > 0
+            },
+            sensorCount = sensorCount.takeIf { value ->
+                value > 0
+            },
+
+            supportedFeatures = supportedFeaturesList.toSet(),
+            supportedScreens = supportedScreensList.toSet()
+        )
+    }
+
+    private fun resolveDeviceType(
+        explicitType: AquaDeviceType,
+        aquaName: String,
+        name: String,
+        productId: String
+    ): AquaDeviceType {
+        if (explicitType != AquaDeviceType.UNKNOWN) {
+            return explicitType
+        }
+
+        val byProductId = AquaDeviceCatalog.resolveTypeByProductId(
+            productId = productId
+        )
+
+        if (byProductId != AquaDeviceType.UNKNOWN) {
+            return byProductId
+        }
+
+        return AquaDeviceCatalog.resolveTypeByLegacyIdentity(
+            aquaName = aquaName,
+            name = name
         )
     }
 }

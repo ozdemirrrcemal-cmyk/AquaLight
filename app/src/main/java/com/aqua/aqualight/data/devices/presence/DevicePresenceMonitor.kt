@@ -5,7 +5,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager.DeviceInfoUi
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
-import com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice
+import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,7 +38,7 @@ object DevicePresenceMonitor {
     )
 
     val statuses: StateFlow<Map<Long, DeviceStatusState>> =
-    _statuses.asStateFlow()
+        _statuses.asStateFlow()
 
     private val missedChecks = mutableMapOf<Long, Int>()
 
@@ -80,11 +80,10 @@ object DevicePresenceMonitor {
         val devicesStore = DevicesDataStoreManager.create(appContext)
 
         val savedDevice = devicesStore.devicesFlow
-        .first()
-        .firstOrNull {
-            device ->
-            device.id == deviceId
-        } ?: return null
+            .first()
+            .firstOrNull { device ->
+                device.id == deviceId
+            } ?: return null
 
         val now = System.currentTimeMillis()
 
@@ -105,10 +104,9 @@ object DevicePresenceMonitor {
         ) {
             null
         } else {
-            result.devices.firstOrNull {
-                discoveredDevice ->
+            result.devices.firstOrNull { discoveredDevice ->
                 discoveredDevice.id == deviceId ||
-                discoveredDevice.ip == knownIp
+                    discoveredDevice.ip == knownIp
             }
         }
 
@@ -120,7 +118,7 @@ object DevicePresenceMonitor {
                     DevicesDataStoreManager.DeviceLastSeenUpdate(
                         id = savedDevice.id,
                         ip = matchedDevice.ip,
-                        firmwareBuild = matchedDevice.firmwareBuild.orEmpty()
+                        firmwareBuild = matchedDevice.firmwareBuild
                     )
                 )
             )
@@ -194,27 +192,25 @@ object DevicePresenceMonitor {
     private suspend fun applyDiscoveryResult(
         devicesStore: DevicesDataStoreManager,
         savedDevices: List<DeviceInfoUi>,
-        discoveredDevices: List<DiscoveredDevice>
+        discoveredDevices: List<DiscoveredAquaDevice>
     ) {
         val now = System.currentTimeMillis()
 
-        val matchedByDeviceId = savedDevices.associate {
-            savedDevice ->
+        val matchedByDeviceId = savedDevices.associate { savedDevice ->
             savedDevice.id to findMatchingDiscoveredDevice(
                 savedDevice = savedDevice,
                 discoveredDevices = discoveredDevices
             )
         }
 
-        val updates = matchedByDeviceId.mapNotNull {
-            entry ->
+        val updates = matchedByDeviceId.mapNotNull { entry ->
             val savedDeviceId = entry.key
             val discoveredDevice = entry.value ?: return@mapNotNull null
 
             DevicesDataStoreManager.DeviceLastSeenUpdate(
                 id = savedDeviceId,
                 ip = discoveredDevice.ip,
-                firmwareBuild = discoveredDevice.firmwareBuild.orEmpty()
+                firmwareBuild = discoveredDevice.firmwareBuild
             )
         }
 
@@ -224,8 +220,7 @@ object DevicePresenceMonitor {
             )
         }
 
-        val states = savedDevices.associate {
-            savedDevice ->
+        val states = savedDevices.associate { savedDevice ->
             val matchedDevice = matchedByDeviceId[savedDevice.id]
 
             val missedCount = if (matchedDevice != null) {
@@ -260,8 +255,7 @@ object DevicePresenceMonitor {
     ) {
         val now = System.currentTimeMillis()
 
-        val states = savedDevices.associate {
-            savedDevice ->
+        val states = savedDevices.associate { savedDevice ->
             val missedCount = missedChecks.getOrDefault(
                 savedDevice.id,
                 0
@@ -284,7 +278,7 @@ object DevicePresenceMonitor {
         val previousState = _statuses.value[device.id]
 
         val fallbackOnline = device.lastSeenMillis > 0L &&
-        now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+            now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
 
         val state = DeviceStatusState(
             deviceId = device.id,
@@ -310,6 +304,7 @@ object DevicePresenceMonitor {
         ipOverride: String? = null
     ): DeviceStatusState {
         val lastSeen = lastSeenOverride ?: device.lastSeenMillis
+
         val age = if (lastSeen > 0L) {
             now - lastSeen
         } else {
@@ -317,14 +312,22 @@ object DevicePresenceMonitor {
         }
 
         val status = when {
-            lastSeen <= 0L -> DeviceConnectionStatus.UNKNOWN
+            lastSeen <= 0L -> {
+                DeviceConnectionStatus.UNKNOWN
+            }
 
-            age <= ONLINE_TIMEOUT_MS -> DeviceConnectionStatus.ONLINE
+            age <= ONLINE_TIMEOUT_MS -> {
+                DeviceConnectionStatus.ONLINE
+            }
 
             age <= STALE_TIMEOUT_MS &&
-            missedCount < OFFLINE_AFTER_MISSED_CHECKS -> {
+                missedCount < OFFLINE_AFTER_MISSED_CHECKS -> {
                 DeviceConnectionStatus.STALE
-            } else -> DeviceConnectionStatus.OFFLINE
+            }
+
+            else -> {
+                DeviceConnectionStatus.OFFLINE
+            }
         }
 
         return DeviceStatusState(
@@ -340,23 +343,19 @@ object DevicePresenceMonitor {
 
     private fun findMatchingDiscoveredDevice(
         savedDevice: DeviceInfoUi,
-        discoveredDevices: List<DiscoveredDevice>
-    ): DiscoveredDevice? {
-        return discoveredDevices.firstOrNull {
-            discoveredDevice ->
+        discoveredDevices: List<DiscoveredAquaDevice>
+    ): DiscoveredAquaDevice? {
+        return discoveredDevices.firstOrNull { discoveredDevice ->
             discoveredDevice.id == savedDevice.id ||
-            discoveredDevice.ip == savedDevice.ip
+                discoveredDevice.ip == savedDevice.ip
         }
     }
 
     private fun upsertStatus(
         state: DeviceStatusState
     ) {
-        _statuses.update {
-            current ->
-            current + (
-                state.deviceId to state
-            )
+        _statuses.update { current ->
+            current + (state.deviceId to state)
         }
     }
 

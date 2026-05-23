@@ -9,11 +9,30 @@ message DevicesPreferences {
 
 message SavedDeviceInfo {
   int64 id = 1;
-  string aquaName = 2;
+  string aqua_name = 2;
   string name = 3;
   string ip = 4;
   string serial = 5;
-  int64 lastSeenMillis = 6;
-  string firmwareBuild = 7;
-  int64 tankId = 8;
+  string firmware_build = 6;
+  int64 last_seen_millis = 7;
+  int64 tank_id = 8;
+
+  string device_type = 9;
+  int32 udp_version = 10;
+  bool tab_light = 11;
+  bool tab_timer = 12;
+  bool tab_temperature = 13;
+
+  string product_id = 14;
+  string product_family = 15;
+  string product_model = 16;
+  string hardware_revision = 17;
+  string firmware_version = 18;
+  int32 api_version = 19;
+
+  int32 channel_count = 20;
+  int32 sensor_count = 21;
+
+  repeated string supported_features = 22;
+  repeated string supported_screens = 23;
 }

@@ -2,8 +2,7 @@ package com.aqua.aqualight.data.devices.discovery
 
 import android.content.Context
 import android.os.SystemClock
-import com.aqua.aqualight.ui.tabs.devices.DiscoveredDevice
-import com.aqua.aqualight.ui.tabs.devices.discoverDevices
+import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -14,7 +13,7 @@ object DeviceDiscoveryService {
     private val scanMutex = Mutex()
 
     data class ScanResult(
-        val devices: List<DiscoveredDevice>,
+        val devices: List<DiscoveredAquaDevice>,
         val startedAtMillis: Long,
         val finishedAtMillis: Long,
         val reason: DeviceScanReason,
@@ -87,7 +86,7 @@ object DeviceDiscoveryService {
         val startedAt = SystemClock.elapsedRealtime()
 
         try {
-            val devices = discoverDevices(
+            val devices = UdpDeviceDiscovery.discover(
                 context = context,
                 timeoutMs = timeoutMs
             )
@@ -116,7 +115,7 @@ object DeviceDiscoveryService {
     }
 
     private fun isValidDevice(
-        device: DiscoveredDevice
+        device: DiscoveredAquaDevice
     ): Boolean {
         if (device.id <= 0L) {
             return false
@@ -128,7 +127,8 @@ object DeviceDiscoveryService {
 
         if (
             device.name.isBlank() &&
-            device.aquaName.isNullOrBlank()
+            device.aquaName.isBlank() &&
+            device.productId.isNullOrBlank()
         ) {
             return false
         }

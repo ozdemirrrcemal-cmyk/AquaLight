@@ -1,0 +1,19 @@
+package com.aqua.aqualight.data.devices.catalog
+
+enum class AquaDeviceUiController {
+    GENERIC_LIGHT,
+    GENERIC_TIMER,
+    GENERIC_COOLING,
+
+    FULL_CONTROLLER,
+
+    CUSTOM_LIGHT_ADVANCED,
+    CUSTOM_LIGHT_MATRIX,
+
+    CUSTOM_TIMER_MULTI_CONTROL,
+    CUSTOM_TIMER_SCENE_PRO,
+
+    CUSTOM_COOLING_ADVANCED,
+
+    UNSUPPORTED
+}

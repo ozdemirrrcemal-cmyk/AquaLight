@@ -13,10 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceType
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.flow.combine
@@ -91,7 +91,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private fun observeDevicesList() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
                 combine(
                     devicesStore.devicesFlow,
                     DevicePresenceMonitor.statuses
@@ -124,17 +126,27 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                                 now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
                             )
 
+                        val definition = AquaDeviceCatalog.findByType(
+                            type = device.deviceType
+                        )
+
+                        val displayName = definition?.displayName
+                            ?: device.name.ifBlank { "Device" }
+
+                        val familyName = definition?.family?.displayName
+                            ?: device.aquaName.ifBlank { "Unknown" }
+
                         DeviceCardUi(
                             id = device.id,
-                            name = device.name.ifBlank {
-                                "Device"
-                            },
-                            aquaName = device.aquaName,
+                            displayName = displayName,
+                            familyName = familyName,
+                            tankName = "",
                             ip = presenceState?.ip ?: device.ip,
                             serial = device.serial,
                             firmwareBuild = device.firmwareBuild,
                             isOnline = online,
-                            type = DeviceType.fromName(device.aquaName)
+                            lastSeenText = "",
+                            deviceType = device.deviceType
                         )
                     }
 
@@ -172,8 +184,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
             val args = Bundle().apply {
                 putLong("deviceId", device.id)
-                putString("deviceName", device.name)
-                putString("deviceAquaName", device.aquaName)
+                putString("deviceName", device.displayName)
+                putString("deviceAquaName", device.familyName)
                 putString("deviceIp", status.ip)
                 putString("deviceSerial", device.serial)
                 putBoolean("deviceOnline", true)
@@ -224,10 +236,13 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             )
         } else {
             binding.btnScanDevices.text = "+ Add"
-            binding.btnScanDevices.contentDescription =
-                getString(R.string.devices_scan_button_desc)
+            binding.btnScanDevices.contentDescription = getString(
+                R.string.devices_scan_button_desc
+            )
 
-            binding.btnScanDevices.setTextColor(Color.WHITE)
+            binding.btnScanDevices.setTextColor(
+                Color.WHITE
+            )
 
             binding.btnScanDevices.backgroundTintList = ColorStateList.valueOf(
                 Color.parseColor("#1C3252")

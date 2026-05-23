@@ -1,14 +1,16 @@
 package com.aqua.aqualight.ui.tabs.devices.model
 
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+
 data class DeviceCardUi(
     val id: Long,
-    val name: String,
-    val aquaName: String,
-    val tankName: String = "",          // <-- Yeni alan eklendi
+    val displayName: String,
+    val familyName: String,
+    val tankName: String = "",
     val ip: String,
     val serial: String,
     val firmwareBuild: String,
     val isOnline: Boolean,
     val lastSeenText: String = "",
-    val type: DeviceType = DeviceType.fromName(aquaName)
+    val deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN
 )
