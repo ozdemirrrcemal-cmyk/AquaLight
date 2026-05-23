@@ -1,92 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/cardCandidate"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rowCandidate"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="20dp"
-    android:layout_marginBottom="12dp"
+    android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="#10233A"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="0dp"
-    app:strokeColor="#223A57"
-    app:strokeWidth="1dp">
+    android:paddingStart="22dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="18dp"
+    android:paddingBottom="16dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingTop="14dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="14dp">
+    <FrameLayout
+        android:id="@+id/deviceImageContainer"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:background="@drawable/bg_device_add_image_box"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/ivDeviceIcon"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:background="@drawable/bg_material_icon_box"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:layout_gravity="center"
             android:contentDescription="Device"
-            android:padding="8dp"
-            android:scaleType="centerInside" />
+            android:padding="4dp"
+            android:scaleType="centerInside"
+            tools:src="@drawable/ic_device_light" />
 
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+    </FrameLayout>
 
-            <TextView
-                android:id="@+id/tvDeviceName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:includeFontPadding="false"
-                android:maxLines="1"
-                android:text="WRGB Pro2"
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+    <TextView
+        android:id="@+id/tvDeviceName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="12dp"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@android:color/white"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/tvChevron"
+        app:layout_constraintStart_toEndOf="@id/deviceImageContainer"
+        app:layout_constraintTop_toTopOf="@id/deviceImageContainer"
+        tools:text="WRGB Pro2" />
 
-            <TextView
-                android:id="@+id/tvDeviceFamily"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:ellipsize="end"
-                android:includeFontPadding="false"
-                android:maxLines="1"
-                android:text="AquaLight"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="13sp" />
+    <TextView
+        android:id="@+id/tvDeviceFamily"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/settings_text_secondary"
+        android:textSize="13sp"
+        app:layout_constraintEnd_toEndOf="@id/tvDeviceName"
+        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+        app:layout_constraintTop_toBottomOf="@id/tvDeviceName"
+        tools:text="AquaLight" />
 
-            <TextView
-                android:id="@+id/tvDeviceState"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="7dp"
-                android:ellipsize="end"
-                android:includeFontPadding="false"
-                android:maxLines="1"
-                android:text="Ready for setup"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+    <TextView
+        android:id="@+id/tvDeviceState"
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/bg_device_add_status_setup"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:paddingStart="11dp"
+        android:paddingEnd="11dp"
+        android:textColor="#2D7BFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+        app:layout_constraintTop_toBottomOf="@id/tvDeviceFamily"
+        tools:text="● Ready for setup" />
 
-        </LinearLayout>
+    <TextView
+        android:id="@+id/tvConnectionInfo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/settings_text_secondary"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@id/tvDeviceName"
+        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+        app:layout_constraintTop_toBottomOf="@id/tvDeviceState"
+        tools:text="AquaLight-WRGBPro2-7872" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCandidateAction"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:minWidth="76dp"
-            android:text="Add"
-            android:textSize="12sp" />
+    <TextView
+        android:id="@+id/tvAction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:includeFontPadding="false"
+        android:textColor="#2D7BFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/tvConnectionInfo"
+        app:layout_constraintEnd_toStartOf="@id/tvChevron"
+        tools:text="Set up" />
 
-    </LinearLayout>
+    <TextView
+        android:id="@+id/tvChevron"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="›"
+        android:textColor="@color/settings_text_secondary"
+        android:textSize="32sp"
+        app:layout_constraintBottom_toBottomOf="@id/deviceImageContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/deviceImageContainer" />
 
-</com.google.android.material.card.MaterialCardView>
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="88dp"
+        android:background="#1E3552"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

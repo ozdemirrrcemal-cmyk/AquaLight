@@ -6,10 +6,11 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.databinding.ItemDeviceAddCandidateBinding
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
+import com.aqua.aqualight.databinding.ItemDeviceAddCandidateBinding
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 
 class DeviceAddAdapter(
     private val onCandidateClick: (DeviceAddCandidate) -> Unit
@@ -48,24 +49,82 @@ class DeviceAddAdapter(
                 DeviceIconMapper.iconFor(item.deviceType)
             )
 
+            binding.ivDeviceIcon.contentDescription = item.displayName
+
             binding.tvDeviceName.text = item.displayName
             binding.tvDeviceFamily.text = item.familyName
-            binding.tvDeviceState.text = item.stateText
-            binding.btnCandidateAction.text = item.actionText
+            binding.tvDeviceState.text = getStateText(item)
+            binding.tvConnectionInfo.text = getConnectionInfo(item)
+            binding.tvAction.text = item.actionText
 
-            val stateColor = when (item.source) {
-                DeviceAddSource.SETUP_AP -> Color.parseColor("#6EA8FF")
-                DeviceAddSource.LOCAL_NETWORK -> Color.parseColor("#5FD6B4")
-            }
+            applySourceStyle(item)
 
-            binding.tvDeviceState.setTextColor(stateColor)
-
-            binding.root.setOnClickListener {
+            binding.rowCandidate.setOnClickListener {
                 onCandidateClick(item)
             }
+        }
 
-            binding.btnCandidateAction.setOnClickListener {
-                onCandidateClick(item)
+        private fun applySourceStyle(
+            item: DeviceAddCandidate
+        ) {
+            when (item.source) {
+                DeviceAddSource.SETUP_AP -> {
+                    binding.tvDeviceState.setBackgroundResource(
+                        R.drawable.bg_device_add_status_setup
+                    )
+
+                    binding.tvDeviceState.setTextColor(
+                        Color.parseColor("#2D7BFF")
+                    )
+
+                    binding.tvAction.setTextColor(
+                        Color.parseColor("#2D7BFF")
+                    )
+                }
+
+                DeviceAddSource.LOCAL_NETWORK -> {
+                    binding.tvDeviceState.setBackgroundResource(
+                        R.drawable.bg_device_add_status_connected
+                    )
+
+                    binding.tvDeviceState.setTextColor(
+                        Color.parseColor("#67D982")
+                    )
+
+                    binding.tvAction.setTextColor(
+                        Color.parseColor("#67D982")
+                    )
+                }
+            }
+        }
+
+        private fun getStateText(
+            item: DeviceAddCandidate
+        ): String {
+            return when (item.source) {
+                DeviceAddSource.SETUP_AP -> {
+                    "● Ready for setup"
+                }
+
+                DeviceAddSource.LOCAL_NETWORK -> {
+                    "● Already connected"
+                }
+            }
+        }
+
+        private fun getConnectionInfo(
+            item: DeviceAddCandidate
+        ): String {
+            return when (item.source) {
+                DeviceAddSource.SETUP_AP -> {
+                    item.setupSsid.orEmpty()
+                }
+
+                DeviceAddSource.LOCAL_NETWORK -> {
+                    item.localDevice?.ip.orEmpty()
+                }
+            }.ifBlank {
+                item.familyName
             }
         }
     }
