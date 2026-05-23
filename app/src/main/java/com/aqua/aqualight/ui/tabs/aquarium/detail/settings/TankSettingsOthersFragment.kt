@@ -141,8 +141,11 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     ) {
         isUpdatingSwitchesProgrammatically = true
 
-        binding.switchSmartCareSuggestions.isChecked = tank.smartCareEnabled
-        binding.switchCareReminderNotifications.isChecked = tank.careRemindersEnabled
+        binding.switchSmartCareSuggestions.isChecked =
+            tank.smartCareEnabled
+
+        binding.switchCareReminderNotifications.isChecked =
+            tank.careRemindersEnabled
 
         isUpdatingSwitchesProgrammatically = false
     }
@@ -298,10 +301,6 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                devicesStore.unassignDevicesFromTank(
-                    tankId = tankId
-                )
-
                 aquariumTankViewModel.deleteTanks(
                     tankIds = listOf(tankId)
                 )

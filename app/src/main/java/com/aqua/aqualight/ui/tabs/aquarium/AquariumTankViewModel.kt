@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import com.aqua.aqualight.data.CareTaskDataStoreManager
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
@@ -16,12 +17,18 @@ class AquariumTankViewModel(
   application: Application
 ) : AndroidViewModel(application) {
 
+  private val appContext = application.applicationContext
+
   private val tankDataStoreManager = AquariumTankDataStoreManager(
-    application.applicationContext
+    appContext
   )
 
   private val careTaskDataStoreManager = CareTaskDataStoreManager.create(
-    application.applicationContext
+    appContext
+  )
+
+  private val devicesDataStoreManager = DevicesDataStoreManager.create(
+    appContext
   )
 
   val tanks: LiveData<List<SavedAquariumTank>> =
@@ -30,7 +37,9 @@ class AquariumTankViewModel(
   suspend fun addTankFromDraft(
     draft: TankDraft
   ): Long {
-    return tankDataStoreManager.addTankFromDraft(draft)
+    return tankDataStoreManager.addTankFromDraft(
+      draft = draft
+    )
   }
 
   suspend fun duplicateTank(
@@ -55,7 +64,12 @@ class AquariumTankViewModel(
     }
 
     safeTankIds.forEach { tankId ->
+
       careTaskDataStoreManager.deleteTasksForTank(
+        tankId = tankId
+      )
+
+      devicesDataStoreManager.unassignDevicesFromTank(
         tankId = tankId
       )
     }
