@@ -125,37 +125,53 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun showLoadingState() {
-        binding.progressLoading.isVisible = true
-        binding.rvCandidates.isVisible = false
-        binding.emptyContainer.isVisible = false
-        binding.btnRetry.isEnabled = false
+    binding.searchingContainer.isVisible = true
+    binding.scanAnimation.isVisible = true
+    binding.scanAnimation.playAnimation()
 
-        binding.tvSubtitle.text = "Searching for nearby Aqua devices..."
-    }
+    binding.rvCandidates.isVisible = false
+    binding.emptyContainer.isVisible = false
 
-    private fun showCandidates(
-        candidates: List<DeviceAddCandidate>
-    ) {
-        binding.progressLoading.isVisible = false
-        binding.rvCandidates.isVisible = true
-        binding.emptyContainer.isVisible = false
-        binding.btnRetry.isEnabled = true
+    binding.btnRetry.isEnabled = false
+    binding.btnRetry.alpha = 0.45f
 
-        binding.tvSubtitle.text = "Select your device to continue."
+    binding.tvTitle.text = "Searching..."
+    binding.tvSubtitle.text = "Looking for nearby Aqua devices."
+}
 
-        adapter.submitList(candidates)
-    }
+private fun showCandidates(
+    candidates: List<DeviceAddCandidate>
+) {
+    binding.scanAnimation.cancelAnimation()
+    binding.searchingContainer.isVisible = false
 
-    private fun showEmptyState() {
-        binding.progressLoading.isVisible = false
-        binding.rvCandidates.isVisible = false
-        binding.emptyContainer.isVisible = true
-        binding.btnRetry.isEnabled = true
+    binding.rvCandidates.isVisible = true
+    binding.emptyContainer.isVisible = false
 
-        binding.tvSubtitle.text = "No Aqua devices found nearby."
+    binding.btnRetry.isEnabled = true
+    binding.btnRetry.alpha = 1f
 
-        adapter.submitList(emptyList())
-    }
+    binding.tvTitle.text = "Add Device"
+    binding.tvSubtitle.text = "Select your device to continue."
+
+    adapter.submitList(candidates)
+}
+
+private fun showEmptyState() {
+    binding.scanAnimation.cancelAnimation()
+    binding.searchingContainer.isVisible = false
+
+    binding.rvCandidates.isVisible = false
+    binding.emptyContainer.isVisible = true
+
+    binding.btnRetry.isEnabled = true
+    binding.btnRetry.alpha = 1f
+
+    binding.tvTitle.text = "Add Device"
+    binding.tvSubtitle.text = "No Aqua devices found nearby."
+
+    adapter.submitList(emptyList())
+}
 
     private fun handleCandidateClick(
         candidate: DeviceAddCandidate
@@ -333,9 +349,10 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     override fun onDestroyView() {
-        binding.rvCandidates.adapter = null
-        _binding = null
+    binding.scanAnimation.cancelAnimation()
+    binding.rvCandidates.adapter = null
+    _binding = null
 
-        super.onDestroyView()
-    }
+    super.onDestroyView()
+}
 }

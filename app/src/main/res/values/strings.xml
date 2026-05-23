@@ -1268,4 +1268,5 @@ Delete Failed
 <string name="settings_backup_restore_subtitle">Export or restore your aquarium data</string>
 <string name="settings_backup_restore_section_description">Backup and restore aquarium data section</string>
 <string name="settings_backup_restore_arrow_description">Open backup and restore settings</string>
+<string name="back">Back</string>
 </resources>
