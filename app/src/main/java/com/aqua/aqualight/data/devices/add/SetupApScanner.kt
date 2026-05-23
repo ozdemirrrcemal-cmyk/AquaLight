@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.add
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
@@ -11,6 +12,7 @@ import kotlinx.coroutines.withContext
 
 object SetupApScanner {
 
+    @SuppressLint("MissingPermission")
     suspend fun scan(
         context: Context
     ): List<DeviceAddCandidate> = withContext(Dispatchers.IO) {
@@ -20,15 +22,23 @@ object SetupApScanner {
             return@withContext emptyList()
         }
 
-        val wifiManager = appContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val wifiManager = appContext.getSystemService(
+            Context.WIFI_SERVICE
+        ) as WifiManager
 
-        runCatching {
-            wifiManager.startScan()
+        val scanResults = try {
+            runCatching {
+                wifiManager.startScan()
+            }
+
+            wifiManager.scanResults.orEmpty()
+        } catch (exception: SecurityException) {
+            exception.printStackTrace()
+            emptyList()
+        } catch (exception: Exception) {
+            exception.printStackTrace()
+            emptyList()
         }
-
-        val scanResults = runCatching {
-            wifiManager.scanResults
-        }.getOrDefault(emptyList())
 
         return@withContext scanResults
             .asSequence()
@@ -50,20 +60,24 @@ object SetupApScanner {
     fun hasWifiScanPermission(
         context: Context
     ): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val hasFineLocation = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val hasNearbyWifi = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.NEARBY_WIFI_DEVICES
-            ) == PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            false
+        }
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            hasNearbyWifi || hasFineLocation
+        } else {
+            hasFineLocation
         }
     }
 }
