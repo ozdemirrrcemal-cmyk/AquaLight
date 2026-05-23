@@ -6,7 +6,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.DialogThemeSelectionBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.first

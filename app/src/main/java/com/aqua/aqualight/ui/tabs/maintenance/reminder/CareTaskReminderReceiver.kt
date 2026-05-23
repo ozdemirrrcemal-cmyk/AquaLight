@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.aqua.aqualight.data.CareTaskDataStoreManager
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog

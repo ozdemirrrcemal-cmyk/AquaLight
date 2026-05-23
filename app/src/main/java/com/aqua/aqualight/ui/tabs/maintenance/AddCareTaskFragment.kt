@@ -40,7 +40,7 @@ import java.util.Locale
 import android.Manifest
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
-import com.aqua.aqualight.data.UserPreferencesManager
+import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.ui.tabs.settings.app.NotificationsBottomSheet
 import com.aqua.aqualight.utils.NotificationHelper
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
