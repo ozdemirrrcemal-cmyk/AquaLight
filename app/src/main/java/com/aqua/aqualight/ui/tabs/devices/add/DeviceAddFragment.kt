@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.Manifest
-import android.app.AlertDialog
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -17,8 +16,6 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidateLoader
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
-import com.aqua.aqualight.data.devices.discovery.UdpDiscoveryDiagnostics
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
 import kotlinx.coroutines.launch
@@ -51,11 +48,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         )
 
         _binding = FragmentDeviceAddBinding.bind(view)
-
-        devicesStore = DevicesDataStoreManager.create(
-            context = requireContext()
-        )
-
+        devicesStore = DevicesDataStoreManager.create(requireContext())
         candidateLoader = DeviceAddCandidateLoader(
             context = requireContext(),
             devicesStore = devicesStore
@@ -86,25 +79,20 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnRetry.setOnClickListener {
             requestPermissionsAndLoad()
         }
-
-        binding.btnRetry.setOnLongClickListener {
-            runDiscoveryDiagnostics()
-            true
-        }
     }
 
     private fun requestPermissionsAndLoad() {
-        val permissions = buildList {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                add(Manifest.permission.NEARBY_WIFI_DEVICES)
-            } else {
-                add(Manifest.permission.ACCESS_COARSE_LOCATION)
-                add(Manifest.permission.ACCESS_FINE_LOCATION)
-            }
-        }.toTypedArray()
+    val permissions = buildList {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        } else {
+            add(Manifest.permission.ACCESS_COARSE_LOCATION)
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }.toTypedArray()
 
-        permissionLauncher.launch(permissions)
-    }
+    permissionLauncher.launch(permissions)
+}
 
     private fun loadCandidates() {
         if (isLoading) {
@@ -137,85 +125,53 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun showLoadingState() {
-        binding.searchingContainer.isVisible = true
-        binding.scanAnimation.isVisible = true
-        binding.scanAnimation.playAnimation()
+    binding.searchingContainer.isVisible = true
+    binding.scanAnimation.isVisible = true
+    binding.scanAnimation.playAnimation()
 
-        binding.rvCandidates.isVisible = false
-        binding.emptyContainer.isVisible = false
+    binding.rvCandidates.isVisible = false
+    binding.emptyContainer.isVisible = false
 
-        binding.btnRetry.isEnabled = false
-        binding.btnRetry.alpha = 0.45f
+    binding.btnRetry.isEnabled = false
+    binding.btnRetry.alpha = 0.45f
 
-        binding.tvTitle.text = "Searching..."
-        binding.tvSubtitle.text = "Looking for nearby Aqua devices."
-    }
+    binding.tvTitle.text = "Searching..."
+    binding.tvSubtitle.text = "Looking for nearby Aqua devices."
+}
 
-    private fun showCandidates(
-        candidates: List<DeviceAddCandidate>
-    ) {
-        binding.scanAnimation.cancelAnimation()
-        binding.searchingContainer.isVisible = false
+private fun showCandidates(
+    candidates: List<DeviceAddCandidate>
+) {
+    binding.scanAnimation.cancelAnimation()
+    binding.searchingContainer.isVisible = false
 
-        binding.rvCandidates.isVisible = true
-        binding.emptyContainer.isVisible = false
+    binding.rvCandidates.isVisible = true
+    binding.emptyContainer.isVisible = false
 
-        binding.btnRetry.isEnabled = true
-        binding.btnRetry.alpha = 1f
+    binding.btnRetry.isEnabled = true
+    binding.btnRetry.alpha = 1f
 
-        binding.tvTitle.text = "Add Device"
-        binding.tvSubtitle.text = "Select your device to continue."
+    binding.tvTitle.text = "Add Device"
+    binding.tvSubtitle.text = "Select your device to continue."
 
-        adapter.submitList(candidates)
-    }
+    adapter.submitList(candidates)
+}
 
-    private fun showEmptyState() {
-        binding.scanAnimation.cancelAnimation()
-        binding.searchingContainer.isVisible = false
+private fun showEmptyState() {
+    binding.scanAnimation.cancelAnimation()
+    binding.searchingContainer.isVisible = false
 
-        binding.rvCandidates.isVisible = false
-        binding.emptyContainer.isVisible = true
+    binding.rvCandidates.isVisible = false
+    binding.emptyContainer.isVisible = true
 
-        binding.btnRetry.isEnabled = true
-        binding.btnRetry.alpha = 1f
+    binding.btnRetry.isEnabled = true
+    binding.btnRetry.alpha = 1f
 
-        binding.tvTitle.text = "Add Device"
-        binding.tvSubtitle.text = "No Aqua devices found nearby."
+    binding.tvTitle.text = "Add Device"
+    binding.tvSubtitle.text = "No Aqua devices found nearby."
 
-        adapter.submitList(emptyList())
-    }
-
-    private fun runDiscoveryDiagnostics() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            binding.btnRetry.isEnabled = false
-            binding.btnRetry.alpha = 0.45f
-
-            val result = runCatching {
-                UdpDiscoveryDiagnostics.run(
-                    context = requireContext(),
-                    timeoutMs = 3_000L
-                )
-            }.getOrElse { exception ->
-                null
-            }
-
-            if (_binding == null) {
-                return@launch
-            }
-
-            binding.btnRetry.isEnabled = true
-            binding.btnRetry.alpha = 1f
-
-            val message = result?.toDisplayText()
-                ?: "Discovery diagnostics failed."
-
-            AlertDialog.Builder(requireContext())
-                .setTitle("Discovery Diagnostics")
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show()
-        }
-    }
+    adapter.submitList(emptyList())
+}
 
     private fun handleCandidateClick(
         candidate: DeviceAddCandidate
@@ -299,7 +255,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             return
         }
 
-        val definition = AquaDeviceCatalog.findByType(
+        val definition = com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog.findByType(
             type = device.deviceType
         ) ?: error("Unsupported device")
 
@@ -393,10 +349,10 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     override fun onDestroyView() {
-        binding.scanAnimation.cancelAnimation()
-        binding.rvCandidates.adapter = null
-        _binding = null
+    binding.scanAnimation.cancelAnimation()
+    binding.rvCandidates.adapter = null
+    _binding = null
 
-        super.onDestroyView()
-    }
+    super.onDestroyView()
+}
 }
