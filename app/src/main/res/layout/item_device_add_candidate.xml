@@ -5,67 +5,66 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rowCandidate"
     android:layout_width="match_parent"
-    android:layout_height="78dp"
+    android:layout_height="58dp"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
     android:paddingStart="34dp"
-    android:paddingEnd="30dp">
+    android:paddingEnd="34dp">
+
+    <ImageView
+        android:id="@+id/ivDeviceIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@string/device_add_title"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="#B8C6D6"
+        tools:src="@drawable/ic_device_temperature" />
 
     <TextView
         android:id="@+id/tvDeviceName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
+        android:layout_marginStart="56dp"
+        android:layout_marginEnd="18dp"
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:textColor="@android:color/white"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/tvDeviceMeta"
-        app:layout_constraintEnd_toStartOf="@id/tvChevron"
+        android:textColor="#DDE7F2"
+        android:textSize="14sp"
+        android:textStyle="normal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tvDeviceSerial"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed"
         tools:text="CoolPro" />
 
     <TextView
-        android:id="@+id/tvDeviceMeta"
-        android:layout_width="0dp"
+        android:id="@+id/tvDeviceSerial"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="7dp"
         android:ellipsize="end"
+        android:gravity="end"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:textColor="@color/settings_text_secondary"
+        android:textColor="#C3CEDA"
         android:textSize="13sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/tvDeviceName"
-        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
-        app:layout_constraintTop_toBottomOf="@id/tvDeviceName"
-        tools:text="AquaCool · AC-7872" />
-
-    <TextView
-        android:id="@+id/tvChevron"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:text="›"
-        android:textColor="#5F728A"
-        android:textSize="30sp"
+        android:textStyle="normal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="AC-7872" />
 
     <View
         android:id="@+id/divider"
         android:layout_width="0dp"
         android:layout_height="1dp"
-        android:background="#142944"
+        android:background="#1B314B"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/tvChevron"
-        app:layout_constraintStart_toStartOf="@id/tvDeviceName" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

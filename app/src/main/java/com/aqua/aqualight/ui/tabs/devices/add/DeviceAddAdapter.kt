@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
 import com.aqua.aqualight.databinding.ItemDeviceAddCandidateBinding
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 
 class DeviceAddAdapter(
     private val onCandidateClick: (DeviceAddCandidate) -> Unit
@@ -45,27 +46,23 @@ class DeviceAddAdapter(
         fun bind(
             item: DeviceAddCandidate
         ) {
+            binding.ivDeviceIcon.setImageResource(
+                DeviceIconMapper.iconFor(item.deviceType)
+            )
+
+            binding.ivDeviceIcon.contentDescription = item.displayName
+
             binding.tvDeviceName.text = item.displayName.ifBlank {
                 "Device"
             }
 
-            binding.tvDeviceMeta.text = buildDeviceMeta(
+            binding.tvDeviceSerial.text = visibleSerial(
                 item = item
             )
 
             binding.rowCandidate.setOnClickListener {
                 onCandidateClick(item)
             }
-        }
-
-        private fun buildDeviceMeta(
-            item: DeviceAddCandidate
-        ): String {
-            val familyName = item.familyName.ifBlank {
-                "Aqua device"
-            }
-
-            return "$familyName · ${visibleSerial(item)}"
         }
 
         private fun visibleSerial(
