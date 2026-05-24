@@ -24,11 +24,11 @@ object DeviceSerialFormatter {
             name = name
         )
 
-        val shortId = shortId(
+        val cleanId = cleanId(
             rawId = rawId
         )
 
-        return "$prefix-$shortId"
+        return "$prefix-$cleanId"
     }
 
     fun displaySerial(
@@ -38,21 +38,7 @@ object DeviceSerialFormatter {
             return ""
         }
 
-        val prefix = serial.substringBefore(
-            delimiter = "-",
-            missingDelimiterValue = ""
-        ).trim()
-
-        val rawId = serial.substringAfter(
-            delimiter = "-",
-            missingDelimiterValue = ""
-        ).trim()
-
-        if (prefix.isBlank() || rawId.isBlank()) {
-            return serial
-        }
-
-        return "$prefix-${shortId(rawId)}"
+        return serial.trim()
     }
 
     private fun buildPrefix(
@@ -70,14 +56,13 @@ object DeviceSerialFormatter {
         return "$aquaInitial$nameInitial"
     }
 
-    private fun shortId(
+    private fun cleanId(
         rawId: String
     ): String {
         return rawId
             .filter { char ->
                 char.isDigit()
             }
-            .takeLast(4)
             .ifBlank {
                 "0000"
             }
