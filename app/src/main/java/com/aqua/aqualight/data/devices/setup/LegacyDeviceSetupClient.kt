@@ -49,7 +49,9 @@ class LegacyDeviceSetupClient {
             readTimeoutMs = 15_000
         )
 
-        parseWifiScanResponse(responseText)
+        parseWifiScanResponse(
+            responseText = responseText
+        )
     }
 
     suspend fun readDeviceWifiStatus(
@@ -65,6 +67,8 @@ class LegacyDeviceSetupClient {
                     put("ClientEnabled", 0)
                     put("ClientSSID", 0)
                     put("ClientPassword", 0)
+                    put("ClientIP", 0)
+                    put("ClientStatus", 0)
                 }
             )
         }
@@ -76,7 +80,9 @@ class LegacyDeviceSetupClient {
             readTimeoutMs = 8_000
         )
 
-        parseDeviceWifiStatus(responseText)
+        parseDeviceWifiStatus(
+            responseText = responseText
+        )
     }
 
     fun parseDeviceWifiStatus(
@@ -115,9 +121,11 @@ class LegacyDeviceSetupClient {
             rootIp
         }
 
-        val clientEnabled = wifiObject?.optBoolean("ClientEnabled", true) ?: true
+        val clientEnabled = wifiObject
+            ?.optBoolean("ClientEnabled", true)
+            ?: true
 
-        val statusText = wifiObject
+        val statusTextFromDevice = wifiObject
             ?.optString("ClientStatus", "")
             ?.trim()
             .orEmpty()
@@ -127,16 +135,19 @@ class LegacyDeviceSetupClient {
             clientIp != "192.168.4.1" &&
             !clientIp.startsWith("192.168.4.")
 
+        val connected = hasValidClientIp && clientEnabled
+
+        val statusText = when {
+            connected -> "Connected"
+            statusTextFromDevice.isNotBlank() -> statusTextFromDevice
+            clientIp.isNotBlank() -> "IP=$clientIp"
+            else -> "Not connected"
+        }
+
         return DeviceWifiStatus(
-            connected = hasValidClientIp && clientEnabled,
+            connected = connected,
             clientIp = clientIp,
-            statusText = statusText.ifBlank {
-                if (hasValidClientIp) {
-                    "Connected"
-                } else {
-                    "Not connected"
-                }
-            }
+            statusText = statusText
         )
     }
 
@@ -170,7 +181,9 @@ class LegacyDeviceSetupClient {
             )
         }
 
-        val body = buildRawFormBody(json)
+        val body = buildRawSetBody(
+            json = json
+        )
 
         var connection: HttpURLConnection? = null
 
@@ -183,9 +196,11 @@ class LegacyDeviceSetupClient {
             connection.connectTimeout = 8_000
             connection.readTimeout = 8_000
             connection.doOutput = true
+
+            // ESP GetSetHttp.ino içindeki SetParamHTTP(), server.arg(0) üzerinden raw body bekliyor.
             connection.setRequestProperty(
                 "Content-Type",
-                "application/x-www-form-urlencoded; charset=utf-8"
+                "text/plain; charset=utf-8"
             )
 
             BufferedWriter(
@@ -234,7 +249,11 @@ class LegacyDeviceSetupClient {
     ): String {
         val url = buildString {
             append("$BASE_URL/get?")
-            append(buildEncodedFormBody(requestJson))
+            append(
+                buildEncodedGetBody(
+                    json = requestJson
+                )
+            )
         }
 
         val connection = network.openConnection(
@@ -257,7 +276,7 @@ class LegacyDeviceSetupClient {
         }
     }
 
-    private fun buildRawFormBody(
+    private fun buildRawSetBody(
         json: JSONObject
     ): String {
         val sRet = JSONObject().apply {
@@ -272,7 +291,7 @@ class LegacyDeviceSetupClient {
         }
     }
 
-    private fun buildEncodedFormBody(
+    private fun buildEncodedGetBody(
         json: JSONObject
     ): String {
         val sRet = JSONObject().apply {
@@ -314,7 +333,8 @@ class LegacyDeviceSetupClient {
             val keys = scanObject.keys()
 
             while (keys.hasNext()) {
-                val ssid = keys.next().trim()
+                val ssid = keys.next()
+                    .trim()
 
                 if (ssid.isBlank()) {
                     continue
