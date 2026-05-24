@@ -31,16 +31,18 @@ class DeviceStoreWriter(
         val savedAquaName = definition.family.displayName
         val savedName = definition.displayName
 
+        val serial = DeviceSerialFormatter.buildSerial(
+            aquaName = savedAquaName,
+            name = savedName,
+            id = device.id
+        )
+
         devicesStore.addDevice(
             id = device.id,
             aquaName = savedAquaName,
             name = savedName,
             ip = device.ip,
-            serial = buildSerial(
-                aquaName = savedAquaName,
-                name = savedName,
-                id = device.id
-            ),
+            serial = serial,
             firmwareBuild = device.firmwareBuild,
 
             deviceType = device.deviceType,
@@ -99,21 +101,5 @@ class DeviceStoreWriter(
             supportedFeatures = supportedFeatures,
             supportedScreens = supportedScreens
         )
-    }
-
-    private fun buildSerial(
-        aquaName: String,
-        name: String,
-        id: Long
-    ): String {
-        val aquaInitial = aquaName.firstOrNull()
-            ?.uppercaseChar()
-            ?: 'X'
-
-        val nameInitial = name.firstOrNull()
-            ?.uppercaseChar()
-            ?: 'X'
-
-        return "$aquaInitial$nameInitial-$id"
     }
 }

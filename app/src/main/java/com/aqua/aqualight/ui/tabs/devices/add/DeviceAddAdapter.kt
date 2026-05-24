@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
 import com.aqua.aqualight.databinding.ItemDeviceAddCandidateBinding
@@ -52,17 +53,20 @@ class DeviceAddAdapter(
             binding.ivDeviceIcon.contentDescription = item.displayName
 
             binding.tvDeviceName.text = item.displayName
-            binding.tvDeviceId.text = shortDeviceId(item)
+
+            binding.tvDeviceId.text = visibleSerial(
+                item = item
+            )
 
             binding.rowCandidate.setOnClickListener {
                 onCandidateClick(item)
             }
         }
 
-        private fun shortDeviceId(
+        private fun visibleSerial(
             item: DeviceAddCandidate
         ): String {
-            return when (item.source) {
+            val rawId = when (item.source) {
                 DeviceAddSource.LOCAL_NETWORK -> {
                     item.localDevice
                         ?.id
@@ -80,8 +84,14 @@ class DeviceAddAdapter(
                         .trim()
                 }
             }.ifBlank {
-                item.key.takeLast(4)
+                item.key
             }
+
+            return DeviceSerialFormatter.buildSerial(
+                aquaName = item.familyName,
+                name = item.displayName,
+                rawId = rawId
+            )
         }
     }
 

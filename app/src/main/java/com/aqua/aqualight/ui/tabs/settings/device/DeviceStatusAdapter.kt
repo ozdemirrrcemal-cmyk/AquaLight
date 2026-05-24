@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
@@ -46,7 +47,9 @@ class DeviceStatusAdapter(
                 "Unknown"
             }
 
-            binding.tvSerial.text = item.serial.ifBlank {
+            binding.tvSerial.text = DeviceSerialFormatter.displaySerial(
+                serial = item.serial
+            ).ifBlank {
                 "Unknown"
             }
 
@@ -62,17 +65,21 @@ class DeviceStatusAdapter(
 
             if (item.isOnline) {
                 binding.tvStatus.text = "ONLINE"
+
                 binding.tvStatus.setTextColor(
                     Color.parseColor("#39D353")
                 )
+
                 binding.viewStatusDot.setBackgroundResource(
                     R.drawable.bg_online_dot
                 )
             } else {
                 binding.tvStatus.text = "OFFLINE"
+
                 binding.tvStatus.setTextColor(
                     Color.parseColor("#F44336")
                 )
+
                 binding.viewStatusDot.setBackgroundResource(
                     R.drawable.bg_offline_dot
                 )
@@ -94,7 +101,9 @@ class DeviceStatusAdapter(
             false
         )
 
-        return DeviceViewHolder(binding)
+        return DeviceViewHolder(
+            binding = binding
+        )
     }
 
     override fun onBindViewHolder(
