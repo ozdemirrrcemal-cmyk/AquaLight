@@ -18,6 +18,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private val repository = CoolingDeviceRepository()
 
     private var temperatureChartRenderer: TemperatureChartRenderer? = null
+    private var coolingManagementRenderer: CoolingManagementRenderer? = null
 
     private val deviceIp: String
         get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
@@ -42,11 +43,20 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             renderer.setup()
         }
 
+        coolingManagementRenderer = CoolingManagementRenderer(
+            binding = binding
+        )
+
         binding.btnRefreshTemperature.setOnClickListener {
-            loadTemperatureGraph()
+            loadCoolingDashboard()
         }
 
-        loadTemperatureGraph()
+        binding.cardCoolingManagement.setOnClickListener {
+            // Sonraki adımda burada edit bottom sheet açacağız.
+            // showCoolingSettingsBottomSheet()
+        }
+
+        loadCoolingDashboard()
     }
 
     private fun applyCoolingVisualStyle() {
@@ -59,7 +69,18 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         binding.cardTemperatureGraph.strokeColor =
             visualSpec.cardStrokeColor
 
+        binding.cardCoolingManagement.setCardBackgroundColor(
+            visualSpec.cardBackgroundColor
+        )
+
+        binding.cardCoolingManagement.strokeColor =
+            visualSpec.cardStrokeColor
+
         binding.viewGraphAccent.setBackgroundColor(
+            visualSpec.accentColor
+        )
+
+        binding.viewCoolingAccent.setBackgroundColor(
             visualSpec.accentColor
         )
 
@@ -73,11 +94,12 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
     }
 
-    private fun loadTemperatureGraph() {
+    private fun loadCoolingDashboard() {
         val currentBinding = _binding ?: return
 
         if (deviceIp.isBlank()) {
             temperatureChartRenderer?.clear()
+            coolingManagementRenderer?.clear()
             return
         }
 
@@ -85,7 +107,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
-                repository.fetchTemperatureData(
+                repository.fetchCoolingDashboardData(
                     ipAddress = deviceIp
                 )
             }
@@ -98,8 +120,13 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 temperatureChartRenderer?.render(
                     sensors = data.sensors
                 )
+
+                coolingManagementRenderer?.render(
+                    data = data
+                )
             }.onFailure {
                 temperatureChartRenderer?.clear()
+                coolingManagementRenderer?.clear()
             }
 
             _binding?.btnRefreshTemperature?.isEnabled = true
@@ -108,6 +135,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
     override fun onDestroyView() {
         temperatureChartRenderer = null
+        coolingManagementRenderer = null
         _binding = null
 
         super.onDestroyView()
