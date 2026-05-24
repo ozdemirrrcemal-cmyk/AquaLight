@@ -468,8 +468,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                     status = "Sending home Wi-Fi settings..."
                 )
 
-                val setupResult = setupClient.sendHomeWifiCredentials(
+                val setupResultval setupResult = setupClient.sendHomeWifiCredentials(
                     network = connection.network,
+                    setupSsid = setupSsid,
+                    setupPassword = SETUP_AP_PASSWORD,
                     homeSsid = homeSsid,
                     homePassword = homePassword,
                     disableSetupAccessPoint = false
@@ -512,6 +514,8 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
                 val closeApResult = setupClient.sendHomeWifiCredentials(
                     network = connection.network,
+                    setupSsid = setupSsid,
+                    setupPassword = SETUP_AP_PASSWORD,
                     homeSsid = homeSsid,
                     homePassword = homePassword,
                     disableSetupAccessPoint = true

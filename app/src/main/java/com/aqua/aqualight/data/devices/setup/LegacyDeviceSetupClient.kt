@@ -49,7 +49,9 @@ class LegacyDeviceSetupClient {
             readTimeoutMs = 15_000
         )
 
-        parseWifiScanResponse(responseText)
+        parseWifiScanResponse(
+            responseText = responseText
+        )
     }
 
     suspend fun readDeviceWifiStatus(
@@ -73,11 +75,15 @@ class LegacyDeviceSetupClient {
             readTimeoutMs = 8_000
         )
 
-        parseDeviceWifiStatusResponse(responseText)
+        parseDeviceWifiStatusResponse(
+            responseText = responseText
+        )
     }
 
     suspend fun sendHomeWifiCredentials(
         network: Network,
+        setupSsid: String,
+        setupPassword: String,
         homeSsid: String,
         homePassword: String,
         disableSetupAccessPoint: Boolean = true
@@ -87,13 +93,12 @@ class LegacyDeviceSetupClient {
                 "WiFiSC",
                 JSONObject().apply {
                     put("ServerEnabled", if (disableSetupAccessPoint) 0 else 1)
+                    put("ServerSSID", setupSsid)
+                    put("ServerPassword", setupPassword)
+
                     put("ClientEnabled", 1)
                     put("ClientSSID", homeSsid)
                     put("ClientPassword", homePassword)
-
-                    if (!disableSetupAccessPoint) {
-                        put("Connect", 0)
-                    }
                 }
             )
 
@@ -130,8 +135,7 @@ class LegacyDeviceSetupClient {
                     connection.outputStream,
                     Charsets.UTF_8
                 )
-            ).use {
-                writer ->
+            ).use { writer ->
                 writer.write(body)
                 writer.flush()
             }
@@ -140,11 +144,10 @@ class LegacyDeviceSetupClient {
 
             val responseText = runCatching {
                 connection.inputStream
-                .bufferedReader()
-                .use {
-                    reader ->
-                    reader.readText()
-                }
+                    .bufferedReader()
+                    .use { reader ->
+                        reader.readText()
+                    }
             }.getOrNull()
 
             SetupResult(
@@ -173,7 +176,11 @@ class LegacyDeviceSetupClient {
     ): String {
         val url = buildString {
             append("$BASE_URL/get?")
-            append(buildFormBody(requestJson))
+            append(
+                buildFormBody(
+                    json = requestJson
+                )
+            )
         }
 
         val connection = network.openConnection(
@@ -187,11 +194,10 @@ class LegacyDeviceSetupClient {
             connection.doInput = true
 
             connection.inputStream
-            .bufferedReader()
-            .use {
-                reader ->
-                reader.readText()
-            }
+                .bufferedReader()
+                .use { reader ->
+                    reader.readText()
+                }
         } finally {
             connection.disconnect()
         }
@@ -230,17 +236,17 @@ class LegacyDeviceSetupClient {
         val root = JSONObject(responseText)
 
         val scanObject = root
-        .optJSONObject("WiFiSC")
-        ?.optJSONObject("Scan")
-        ?: root.optJSONObject("Scan")
-        ?: return emptyList()
+            .optJSONObject("WiFiSC")
+            ?.optJSONObject("Scan")
+            ?: root.optJSONObject("Scan")
+            ?: return emptyList()
 
         return buildList {
             val keys = scanObject.keys()
 
             while (keys.hasNext()) {
                 val ssid = keys.next()
-                .trim()
+                    .trim()
 
                 if (ssid.isBlank()) {
                     continue
@@ -259,14 +265,12 @@ class LegacyDeviceSetupClient {
                 )
             }
         }
-        .distinctBy {
-            network ->
-            network.ssid
-        }
-        .sortedByDescending {
-            network ->
-            network.rssi
-        }
+            .distinctBy { network ->
+                network.ssid
+            }
+            .sortedByDescending { network ->
+                network.rssi
+            }
     }
 
     private fun parseDeviceWifiStatusResponse(
@@ -275,21 +279,27 @@ class LegacyDeviceSetupClient {
         val root = JSONObject(responseText)
 
         val wifiObject = root.optJSONObject("WiFiSC")
-        ?: root
 
-        val statusText = wifiObject
-        .optString("ClientStatus", "")
-        .orEmpty()
+        val rootIp = root
+            .optString("IP", "")
+            .trim()
 
         val clientIp = wifiObject
-        .optString("ClientIP", "")
-        .orEmpty()
-        .trim()
+            ?.optString("ClientIP", "")
+            ?.trim()
+            .orEmpty()
+            .ifBlank {
+                rootIp
+            }
+
+        val statusText = wifiObject
+            ?.optString("ClientStatus", "")
+            .orEmpty()
 
         val hasValidClientIp = clientIp.isNotBlank() &&
-        clientIp != "0.0.0.0" &&
-        clientIp != "192.168.4.1" &&
-        !clientIp.startsWith("192.168.4.")
+            clientIp != "0.0.0.0" &&
+            clientIp != "192.168.4.1" &&
+            !clientIp.startsWith("192.168.4.")
 
         return DeviceWifiStatus(
             connected = hasValidClientIp,
