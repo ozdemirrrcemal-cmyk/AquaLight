@@ -24,6 +24,12 @@ class LegacyDeviceSetupClient {
         val rssi: Int
     )
 
+    data class DeviceWifiStatus(
+        val connected: Boolean,
+        val clientIp: String,
+        val statusText: String
+    )
+
     suspend fun scanHomeWifiNetworks(
         network: Network
     ): List<HomeWifiNetwork> = withContext(Dispatchers.IO) {
@@ -36,48 +42,38 @@ class LegacyDeviceSetupClient {
             )
         }
 
-        val sRet = JSONObject().apply {
-            put("iPostCount", System.currentTimeMillis() % 100000)
-        }
+        val responseText = performGetRequest(
+            network = network,
+            requestJson = requestJson,
+            connectTimeoutMs = 12_000,
+            readTimeoutMs = 15_000
+        )
 
-        val url = buildString {
-            append("http://192.168.4.1/get?")
-            append("Json=")
-            append(
-                URLEncoder.encode(
-                    requestJson.toString(),
-                    "UTF-8"
-                )
-            )
-            append("&sRet=")
-            append(
-                URLEncoder.encode(
-                    sRet.toString(),
-                    "UTF-8"
-                )
-            )
-        }
+        parseWifiScanResponse(responseText)
+    }
 
-        val connection = network.openConnection(
-            URL(url)
-        ) as HttpURLConnection
-
-        return@withContext try {
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 12_000
-            connection.readTimeout = 15_000
-            connection.doInput = true
-
-            val responseText = connection.inputStream
-                .bufferedReader()
-                .use { reader ->
-                    reader.readText()
+    suspend fun readDeviceWifiStatus(
+        network: Network
+    ): DeviceWifiStatus = withContext(Dispatchers.IO) {
+        val requestJson = JSONObject().apply {
+            put(
+                "WiFiSC",
+                JSONObject().apply {
+                    put("ClientStatus", 0)
+                    put("ClientIP", 0)
+                    put("ClientSSID", 0)
                 }
-
-            parseWifiScanResponse(responseText)
-        } finally {
-            connection.disconnect()
+            )
         }
+
+        val responseText = performGetRequest(
+            network = network,
+            requestJson = requestJson,
+            connectTimeoutMs = 8_000,
+            readTimeoutMs = 8_000
+        )
+
+        parseDeviceWifiStatusResponse(responseText)
     }
 
     suspend fun sendHomeWifiCredentials(
@@ -105,32 +101,13 @@ class LegacyDeviceSetupClient {
             )
         }
 
-        val sRet = JSONObject().apply {
-            put("iPostCount", System.currentTimeMillis() % 100000)
-        }
-
-        val body = buildString {
-            append("Json=")
-            append(
-                URLEncoder.encode(
-                    json.toString(),
-                    "UTF-8"
-                )
-            )
-
-            append("&sRet=")
-
-            append(
-                URLEncoder.encode(
-                    sRet.toString(),
-                    "UTF-8"
-                )
-            )
-        }
+        val body = buildFormBody(
+            json = json
+        )
 
         return@withContext try {
             val connection = network.openConnection(
-                URL("http://192.168.4.1/set?")
+                URL("$BASE_URL/set?")
             ) as HttpURLConnection
 
             connection.requestMethod = "POST"
@@ -180,6 +157,64 @@ class LegacyDeviceSetupClient {
         }
     }
 
+    private fun performGetRequest(
+        network: Network,
+        requestJson: JSONObject,
+        connectTimeoutMs: Int,
+        readTimeoutMs: Int
+    ): String {
+        val url = buildString {
+            append("$BASE_URL/get?")
+            append(buildFormBody(requestJson))
+        }
+
+        val connection = network.openConnection(
+            URL(url)
+        ) as HttpURLConnection
+
+        return try {
+            connection.requestMethod = "GET"
+            connection.connectTimeout = connectTimeoutMs
+            connection.readTimeout = readTimeoutMs
+            connection.doInput = true
+
+            connection.inputStream
+                .bufferedReader()
+                .use { reader ->
+                    reader.readText()
+                }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun buildFormBody(
+        json: JSONObject
+    ): String {
+        val sRet = JSONObject().apply {
+            put("iPostCount", System.currentTimeMillis() % 100000)
+        }
+
+        return buildString {
+            append("Json=")
+            append(
+                URLEncoder.encode(
+                    json.toString(),
+                    "UTF-8"
+                )
+            )
+
+            append("&sRet=")
+
+            append(
+                URLEncoder.encode(
+                    sRet.toString(),
+                    "UTF-8"
+                )
+            )
+        }
+    }
+
     private fun parseWifiScanResponse(
         responseText: String
     ): List<HomeWifiNetwork> {
@@ -221,5 +256,40 @@ class LegacyDeviceSetupClient {
             .sortedByDescending { network ->
                 network.rssi
             }
+    }
+
+    private fun parseDeviceWifiStatusResponse(
+        responseText: String
+    ): DeviceWifiStatus {
+        val root = JSONObject(responseText)
+
+        val wifiObject = root.optJSONObject("WiFiSC")
+
+        val statusText = wifiObject
+            ?.optString("ClientStatus", "")
+            .orEmpty()
+
+        val clientIp = wifiObject
+            ?.optString("ClientIP", "")
+            .orEmpty()
+
+        val hasValidClientIp = clientIp.isNotBlank() &&
+            clientIp != "0.0.0.0" &&
+            clientIp != "192.168.4.1"
+
+        val isConnectedStatus = statusText.equals(
+            "Connected",
+            ignoreCase = true
+        )
+
+        return DeviceWifiStatus(
+            connected = isConnectedStatus && hasValidClientIp,
+            clientIp = clientIp,
+            statusText = statusText
+        )
+    }
+
+    private companion object {
+        const val BASE_URL = "http://192.168.4.1"
     }
 }

@@ -17,14 +17,20 @@ class HomeWifiConnectionWaiter(
 
     suspend fun waitUntilHomeWifiReady(
         expectedSsid: String,
-        timeoutMs: Long = 60_000L
+        setupSsid: String,
+        timeoutMs: Long = 75_000L
     ): Boolean {
         val deadline = SystemClock.elapsedRealtime() + timeoutMs
 
-        delay(3_000L)
+        delay(5_000L)
 
         while (SystemClock.elapsedRealtime() < deadline) {
-            if (isHomeWifiReady(expectedSsid)) {
+            if (
+                isConnectedToExpectedHomeWifi(
+                    expectedSsid = expectedSsid,
+                    setupSsid = setupSsid
+                )
+            ) {
                 return true
             }
 
@@ -34,49 +40,56 @@ class HomeWifiConnectionWaiter(
         return false
     }
 
-    private fun isHomeWifiReady(
-        expectedSsid: String
+    private fun isConnectedToExpectedHomeWifi(
+        expectedSsid: String,
+        setupSsid: String
     ): Boolean {
         val connectivityManager = appContext.getSystemService(
             Context.CONNECTIVITY_SERVICE
         ) as ConnectivityManager
 
-        val wifiNetworkReady = connectivityManager.allNetworks.any { network ->
-            val capabilities = connectivityManager.getNetworkCapabilities(network)
-                ?: return@any false
+        val activeNetwork = connectivityManager.activeNetwork
+            ?: return false
 
-            val isWifi = capabilities.hasTransport(
-                NetworkCapabilities.TRANSPORT_WIFI
-            )
+        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+            ?: return false
 
-            if (!isWifi) {
-                return@any false
-            }
-
-            val ssid = readSsidFromCapabilities(capabilities)
-                ?: readSsidFromWifiManager()
-
-            if (ssid.isNullOrBlank() || ssid == UNKNOWN_SSID) {
-                return@any true
-            }
-
-            ssid == expectedSsid
+        if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+            return false
         }
 
-        return wifiNetworkReady
+        val currentSsid = readCurrentSsid(
+            capabilities = capabilities
+        )
+
+        if (!currentSsid.isNullOrBlank() && currentSsid != UNKNOWN_SSID) {
+            return currentSsid == expectedSsid &&
+                currentSsid != setupSsid
+        }
+
+        val currentIp = readCurrentWifiIp()
+
+        return currentIp.isNotBlank() &&
+            currentIp != "0.0.0.0" &&
+            !currentIp.startsWith("192.168.4.")
     }
 
-    private fun readSsidFromCapabilities(
+    private fun readCurrentSsid(
         capabilities: NetworkCapabilities
     ): String? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            return null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val wifiInfo = capabilities.transportInfo as? WifiInfo
+
+            val ssidFromCapabilities = cleanSsid(
+                wifiInfo?.ssid
+            )
+
+            if (!ssidFromCapabilities.isNullOrBlank()) {
+                return ssidFromCapabilities
+            }
         }
 
-        val wifiInfo = capabilities.transportInfo as? WifiInfo
-            ?: return null
-
-        return cleanSsid(wifiInfo.ssid)
+        return readSsidFromWifiManager()
     }
 
     @Suppress("DEPRECATION")
@@ -88,6 +101,22 @@ class HomeWifiConnectionWaiter(
         return cleanSsid(
             wifiManager.connectionInfo?.ssid
         )
+    }
+
+    @Suppress("DEPRECATION")
+    private fun readCurrentWifiIp(): String {
+        val wifiManager = appContext.getSystemService(
+            Context.WIFI_SERVICE
+        ) as WifiManager
+
+        val ip = wifiManager.connectionInfo?.ipAddress ?: return ""
+
+        return listOf(
+            ip and 0xFF,
+            ip shr 8 and 0xFF,
+            ip shr 16 and 0xFF,
+            ip shr 24 and 0xFF
+        ).joinToString(".")
     }
 
     private fun cleanSsid(
