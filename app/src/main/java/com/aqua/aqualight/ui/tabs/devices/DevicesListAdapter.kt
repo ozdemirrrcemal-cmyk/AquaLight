@@ -33,7 +33,9 @@ class DevicesListAdapter(
             false
         )
 
-        return DeviceViewHolder(binding)
+        return DeviceViewHolder(
+            binding = binding
+        )
     }
 
     override fun onBindViewHolder(
@@ -55,17 +57,27 @@ class DevicesListAdapter(
             val context = binding.root.context
             val isSelected = selectedIds.contains(item.id)
 
-            binding.tvDeviceName.text = item.displayName.ifBlank {
+            val deviceName = item.displayName.ifBlank {
                 "Device"
             }
 
-            binding.root.contentDescription = buildString {
-                append(item.displayName.ifBlank { "Device" })
+            val tankName = item.tankName.ifBlank {
+                "Not assigned to a tank"
+            }
 
-                if (item.familyName.isNotBlank()) {
-                    append(", ")
-                    append(item.familyName)
-                }
+            binding.tvDeviceName.text = deviceName
+            binding.tvTankName.text = tankName
+
+            binding.ivDeviceIcon.setImageResource(
+                DeviceIconMapper.iconFor(item.deviceType)
+            )
+
+            binding.ivDeviceIcon.contentDescription = deviceName
+
+            binding.root.contentDescription = buildString {
+                append(deviceName)
+                append(", ")
+                append(tankName)
 
                 append(
                     if (item.isOnline) {
@@ -75,10 +87,6 @@ class DevicesListAdapter(
                     }
                 )
             }
-
-            binding.ivDeviceIcon.setImageResource(
-                DeviceIconMapper.iconFor(item.deviceType)
-            )
 
             val statusColorRes = if (item.isOnline) {
                 R.color.dialog_icon_success
@@ -96,6 +104,7 @@ class DevicesListAdapter(
 
             if (isSelected) {
                 binding.root.alpha = 1f
+
                 binding.card.strokeWidth = SELECTED_STROKE_WIDTH
                 binding.card.strokeColor = ContextCompat.getColor(
                     context,
@@ -103,16 +112,19 @@ class DevicesListAdapter(
                 )
             } else {
                 binding.root.alpha = DEFAULT_CARD_ALPHA
-                binding.card.strokeWidth = 0
+
+                binding.card.strokeWidth = DEFAULT_STROKE_WIDTH
                 binding.card.strokeColor = ContextCompat.getColor(
                     context,
-                    android.R.color.transparent
+                    R.color.settings_card_stroke
                 )
             }
 
             binding.root.setOnClickListener {
                 if (isSelectionMode) {
-                    toggleSelection(item)
+                    toggleSelection(
+                        item = item
+                    )
                 } else {
                     onDeviceClick(item)
                 }
@@ -121,7 +133,9 @@ class DevicesListAdapter(
             binding.root.setOnLongClickListener {
                 val firstSelection = selectedIds.isEmpty()
 
-                toggleSelection(item)
+                toggleSelection(
+                    item = item
+                )
 
                 if (firstSelection) {
                     isSelectionMode = true
@@ -142,7 +156,10 @@ class DevicesListAdapter(
             selectedIds.add(item.id)
         }
 
-        onSelectionChanged(selectedIds.size)
+        onSelectionChanged(
+            selectedIds.size
+        )
+
         notifyDataSetChanged()
     }
 
@@ -157,8 +174,9 @@ class DevicesListAdapter(
     }
 
     private companion object {
-        const val DEFAULT_CARD_ALPHA = 0.88f
-        const val SELECTED_STROKE_WIDTH = 4
+        const val DEFAULT_CARD_ALPHA = 1f
+        const val DEFAULT_STROKE_WIDTH = 1
+        const val SELECTED_STROKE_WIDTH = 3
 
         val DiffCallback = object : DiffUtil.ItemCallback<DeviceCardUi>() {
             override fun areItemsTheSame(
