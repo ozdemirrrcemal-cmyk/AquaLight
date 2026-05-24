@@ -8,6 +8,8 @@ import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
 import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.Legend
+import com.github.mikephil.charting.components.LegendEntry
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
@@ -68,17 +70,29 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
         chart.setDrawGridBackground(false)
         chart.setDrawBorders(false)
+        chart.setBackgroundColor(Color.TRANSPARENT)
+
         chart.setTouchEnabled(true)
         chart.isDragEnabled = true
         chart.setScaleEnabled(true)
         chart.setPinchZoom(true)
 
-        chart.setBackgroundColor(Color.TRANSPARENT)
+        chart.setHighlightPerTapEnabled(false)
+        chart.setHighlightPerDragEnabled(false)
 
-        chart.legend.isEnabled = true
-        chart.legend.textColor = Color.parseColor("#D7E1EF")
-        chart.legend.textSize = 11f
-        chart.legend.formSize = 10f
+        chart.legend.apply {
+            isEnabled = true
+            textColor = Color.parseColor("#D7E1EF")
+            textSize = 11f
+            form = Legend.LegendForm.SQUARE
+            formSize = 10f
+            xEntrySpace = 10f
+            yEntrySpace = 6f
+            verticalAlignment = Legend.LegendVerticalAlignment.BOTTOM
+            horizontalAlignment = Legend.LegendHorizontalAlignment.LEFT
+            orientation = Legend.LegendOrientation.HORIZONTAL
+            setDrawInside(false)
+        }
 
         chart.axisRight.isEnabled = false
 
@@ -88,40 +102,66 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             gridColor = Color.parseColor("#243A57")
             axisLineColor = Color.parseColor("#3B5578")
             setDrawZeroLine(false)
-        }
-
-        chart.xAxis.apply {
-            position = XAxis.XAxisPosition.BOTTOM
-            textColor = Color.parseColor("#AAB6C5")
-            textSize = 10f
-            gridColor = Color.parseColor("#243A57")
-            axisLineColor = Color.parseColor("#3B5578")
-            granularity = 72f
-            setDrawAxisLine(true)
             setDrawGridLines(true)
+            setDrawAxisLine(false)
 
             valueFormatter = object : ValueFormatter() {
                 override fun getFormattedValue(
                     value: Float
                 ): String {
-                    val totalMinutes = value.toInt() * 5
-                    val hour = (totalMinutes / 60).coerceIn(0, 24)
+                    return String.format(
+                        Locale.US,
+                        "%.0f°",
+                        value
+                    )
+                }
+            }
+        }
 
-                    return when (hour) {
-                        0 -> "00"
-                        6 -> "06"
-                        12 -> "12"
-                        18 -> "18"
-                        24 -> "24"
+        chart.xAxis.apply {
+            position = XAxis.XAxisPosition.BOTTOM
+
+            textColor = Color.parseColor("#AAB6C5")
+            textSize = 10f
+
+            gridColor = Color.parseColor("#243A57")
+            axisLineColor = Color.parseColor("#3B5578")
+
+            setDrawAxisLine(false)
+            setDrawGridLines(true)
+            setAvoidFirstLastClipping(true)
+
+            axisMinimum = 0f
+            axisMaximum = 288f
+
+            granularity = 72f
+            setLabelCount(
+                5,
+                true
+            )
+
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(
+                    value: Float
+                ): String {
+                    return when (value.toInt()) {
+                        0 -> "00:00"
+                        72 -> "06:00"
+                        144 -> "12:00"
+                        216 -> "18:00"
+                        288 -> "24:00"
                         else -> ""
                     }
                 }
             }
         }
 
-        chart.extraBottomOffset = 8f
+        chart.minOffset = 0f
+        chart.extraTopOffset = 8f
+        chart.extraBottomOffset = 12f
         chart.extraLeftOffset = 4f
-        chart.extraRightOffset = 12f
+        chart.extraRightOffset = 10f
+
         chart.invalidate()
     }
 
@@ -196,40 +236,56 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private fun renderTemperatureChart(
         sensors: List<CoolingDeviceRepository.TemperatureSensorData>
     ) {
-        val dataSets = sensors.mapNotNull { sensor ->
-            val entries = sensor.history
-                .mapIndexedNotNull { index, value ->
-                    if (value != null && value > -100f && value < 200f) {
-                        Entry(
-                            index.toFloat(),
-                            value
-                        )
-                    } else {
-                        null
-                    }
-                }
+        val safeBinding = _binding ?: return
 
-            if (entries.isEmpty()) {
-                return@mapNotNull null
+        val dataSets = mutableListOf<LineDataSet>()
+        val legendEntries = mutableListOf<LegendEntry>()
+
+        sensors.forEach { sensor ->
+            val segments = buildContinuousSegments(
+                history = sensor.history
+            )
+
+            if (segments.isEmpty()) {
+                return@forEach
             }
 
-            LineDataSet(
-                entries,
-                sensor.name
-            ).apply {
-                color = sensor.color
-                lineWidth = 2.4f
+            legendEntries.add(
+                LegendEntry(
+                    sensor.name,
+                    Legend.LegendForm.SQUARE,
+                    10f,
+                    2f,
+                    null,
+                    sensor.color
+                )
+            )
 
-                setDrawCircles(false)
-                setDrawValues(false)
+            segments.forEach { entries ->
+                if (entries.isEmpty()) {
+                    return@forEach
+                }
 
-                mode = LineDataSet.Mode.CUBIC_BEZIER
-                cubicIntensity = 0.18f
+                val dataSet = LineDataSet(
+                    entries,
+                    sensor.name
+                ).apply {
+                    color = sensor.color
+                    lineWidth = 2.6f
 
-                highLightColor = Color.WHITE
-                highlightLineWidth = 1f
+                    setDrawCircles(false)
+                    setDrawValues(false)
+                    setDrawFilled(false)
 
-                setDrawFilled(false)
+                    mode = LineDataSet.Mode.CUBIC_BEZIER
+                    cubicIntensity = 0.15f
+
+                    setHighlightEnabled(false)
+                    setDrawHorizontalHighlightIndicator(false)
+                    setDrawVerticalHighlightIndicator(false)
+                }
+
+                dataSets.add(dataSet)
             }
         }
 
@@ -238,20 +294,60 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             return
         }
 
-        binding.temperatureChartView.data = LineData(
+        safeBinding.temperatureChartView.legend.setCustom(
+            legendEntries
+        )
+
+        safeBinding.temperatureChartView.data = LineData(
             dataSets
         ).apply {
             setValueTextColor(Color.TRANSPARENT)
         }
 
-        binding.temperatureChartView.animateX(450)
-        binding.temperatureChartView.invalidate()
+        safeBinding.temperatureChartView.notifyDataSetChanged()
+        safeBinding.temperatureChartView.invalidate()
+    }
+
+    private fun buildContinuousSegments(
+        history: List<Float?>
+    ): List<List<Entry>> {
+        val segments = mutableListOf<List<Entry>>()
+        val currentSegment = mutableListOf<Entry>()
+
+        history.forEachIndexed { index, value ->
+            val validValue = value != null && value > -100f && value < 200f
+
+            if (validValue) {
+                currentSegment.add(
+                    Entry(
+                        index.toFloat(),
+                        value ?: return@forEachIndexed
+                    )
+                )
+            } else {
+                if (currentSegment.isNotEmpty()) {
+                    segments.add(
+                        currentSegment.toList()
+                    )
+                    currentSegment.clear()
+                }
+            }
+        }
+
+        if (currentSegment.isNotEmpty()) {
+            segments.add(
+                currentSegment.toList()
+            )
+        }
+
+        return segments
     }
 
     private fun clearTemperatureChart() {
         val safeBinding = _binding ?: return
 
         safeBinding.temperatureChartView.clear()
+        safeBinding.temperatureChartView.legend.resetCustom()
         safeBinding.temperatureChartView.invalidate()
     }
 
