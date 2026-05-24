@@ -96,8 +96,8 @@ dependencies {
 	// Lottie animasyon için
     implementation "com.airbnb.android:lottie:6.7.1"
 	
-	// Charts - Vico
-    implementation "com.patrykandpatrick.vico:views:3.1.0"
+	// Charts - MPAndroidChart
+    implementation "com.github.PhilJay:MPAndroidChart:v3.1.0"
 
     // BlurView
     implementation "com.github.Dimezis:BlurView:version-2.0.6"

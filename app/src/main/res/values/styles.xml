@@ -255,12 +255,5 @@
   <item name="cornerSizeBottomRight">0dp</item>
 </style>
 
-<style name="AquaTemperatureChartStyle">
-    <item name="layers">line</item>
-    <item name="showBottomAxis">true</item>
-    <item name="showStartAxis">true</item>
-    <item name="scrollEnabled">false</item>
-    <item name="zoomEnabled">false</item>
-</style>
 
 </resources>

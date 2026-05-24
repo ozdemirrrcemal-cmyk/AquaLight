@@ -1,13 +1,18 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
-import com.patrykandpatrick.vico.views.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.views.cartesian.data.lineSeries
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -17,7 +22,6 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private val binding get() = _binding!!
 
     private val repository = CoolingDeviceRepository()
-    private val chartModelProducer = CartesianChartModelProducer()
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
@@ -36,7 +40,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
         _binding = FragmentDeviceCoolingBinding.bind(view)
 
-        binding.temperatureChartView.modelProducer = chartModelProducer
+        setupTemperatureChart(
+            chart = binding.temperatureChartView
+        )
 
         binding.tvControllerTitle.text = "Cooling Controller"
 
@@ -53,17 +59,79 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         loadTemperatureGraph()
     }
 
+    private fun setupTemperatureChart(
+        chart: LineChart
+    ) {
+        chart.description.isEnabled = false
+        chart.setNoDataText("No temperature data")
+        chart.setNoDataTextColor(Color.parseColor("#AAB6C5"))
+
+        chart.setDrawGridBackground(false)
+        chart.setDrawBorders(false)
+        chart.setTouchEnabled(true)
+        chart.isDragEnabled = true
+        chart.setScaleEnabled(true)
+        chart.setPinchZoom(true)
+
+        chart.setBackgroundColor(Color.TRANSPARENT)
+
+        chart.legend.isEnabled = true
+        chart.legend.textColor = Color.parseColor("#D7E1EF")
+        chart.legend.textSize = 11f
+        chart.legend.formSize = 10f
+
+        chart.axisRight.isEnabled = false
+
+        chart.axisLeft.apply {
+            textColor = Color.parseColor("#AAB6C5")
+            textSize = 10f
+            gridColor = Color.parseColor("#243A57")
+            axisLineColor = Color.parseColor("#3B5578")
+            setDrawZeroLine(false)
+        }
+
+        chart.xAxis.apply {
+            position = XAxis.XAxisPosition.BOTTOM
+            textColor = Color.parseColor("#AAB6C5")
+            textSize = 10f
+            gridColor = Color.parseColor("#243A57")
+            axisLineColor = Color.parseColor("#3B5578")
+            granularity = 72f
+            setDrawAxisLine(true)
+            setDrawGridLines(true)
+
+            valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(
+                    value: Float
+                ): String {
+                    val totalMinutes = value.toInt() * 5
+                    val hour = (totalMinutes / 60).coerceIn(0, 24)
+
+                    return when (hour) {
+                        0 -> "00"
+                        6 -> "06"
+                        12 -> "12"
+                        18 -> "18"
+                        24 -> "24"
+                        else -> ""
+                    }
+                }
+            }
+        }
+
+        chart.extraBottomOffset = 8f
+        chart.extraLeftOffset = 4f
+        chart.extraRightOffset = 12f
+        chart.invalidate()
+    }
+
     private fun loadTemperatureGraph() {
         val currentBinding = _binding ?: return
 
         if (deviceIp.isBlank()) {
             currentBinding.tvGraphStatus.text = "Device IP is missing."
             currentBinding.tvCurrentTemperature.text = "Current: -- °C"
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                clearTemperatureChart()
-            }
-
+            clearTemperatureChart()
             return
         }
 
@@ -125,47 +193,66 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         }
     }
 
-    private suspend fun renderTemperatureChart(
+    private fun renderTemperatureChart(
         sensors: List<CoolingDeviceRepository.TemperatureSensorData>
     ) {
-        val validSensorSeries = sensors.mapNotNull { sensor ->
-            val points = sensor.history
+        val dataSets = sensors.mapNotNull { sensor ->
+            val entries = sensor.history
                 .mapIndexedNotNull { index, value ->
                     if (value != null && value > -100f && value < 200f) {
-                        index to value
+                        Entry(
+                            index.toFloat(),
+                            value
+                        )
                     } else {
                         null
                     }
                 }
 
-            if (points.isEmpty()) {
-                null
-            } else {
-                points
+            if (entries.isEmpty()) {
+                return@mapNotNull null
+            }
+
+            LineDataSet(
+                entries,
+                sensor.name
+            ).apply {
+                color = sensor.color
+                lineWidth = 2.4f
+
+                setDrawCircles(false)
+                setDrawValues(false)
+
+                mode = LineDataSet.Mode.CUBIC_BEZIER
+                cubicIntensity = 0.18f
+
+                highLightColor = Color.WHITE
+                highlightLineWidth = 1f
+
+                setDrawFilled(false)
             }
         }
 
-        if (validSensorSeries.isEmpty()) {
+        if (dataSets.isEmpty()) {
             clearTemperatureChart()
             return
         }
 
-        chartModelProducer.runTransaction {
-            lineSeries {
-                validSensorSeries.forEach { points ->
-                    series(
-                        points.map { point -> point.first },
-                        points.map { point -> point.second }
-                    )
-                }
-            }
+        binding.temperatureChartView.data = LineData(
+            dataSets
+        ).apply {
+            setValueTextColor(Color.TRANSPARENT)
         }
+
+        binding.temperatureChartView.animateX(450)
+        binding.temperatureChartView.invalidate()
     }
 
-    private suspend fun clearTemperatureChart() {
-        chartModelProducer.runTransaction {
-            // Empty transaction clears the chart model.
-        }
+    private fun clearTemperatureChart() {
+        val safeBinding = _binding ?: return
+
+        safeBinding.temperatureChartView.clear()
+        safeBinding.temperatureChartView.invalidate()
     }
 
     override fun onDestroyView() {
