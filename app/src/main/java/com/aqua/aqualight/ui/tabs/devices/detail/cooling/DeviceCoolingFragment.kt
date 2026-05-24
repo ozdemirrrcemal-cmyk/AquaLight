@@ -15,6 +15,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -25,9 +26,6 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
     private val repository = CoolingDeviceRepository()
 
-    private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
-
     private val deviceIp: String
         get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
@@ -35,13 +33,16 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentDeviceCoolingBinding.bind(view)
 
-        setupTemperatureChart(binding.temperatureChartView)
-
-        binding.tvControllerTitle.text = "Cooling Controller"
+        setupTemperatureChart(
+            chart = binding.temperatureChartView
+        )
 
         binding.btnRefreshTemperature.setOnClickListener {
             loadTemperatureGraph()
@@ -50,7 +51,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         loadTemperatureGraph()
     }
 
-    private fun setupTemperatureChart(chart: LineChart) {
+    private fun setupTemperatureChart(
+        chart: LineChart
+    ) {
         chart.description.isEnabled = false
         chart.setNoDataText("No temperature data")
         chart.setNoDataTextColor(Color.parseColor("#AAB6C5"))
@@ -88,13 +91,20 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             textSize = 10f
             gridColor = Color.parseColor("#243A57")
             axisLineColor = Color.parseColor("#3B5578")
+
             setDrawZeroLine(false)
             setDrawGridLines(true)
             setDrawAxisLine(false)
 
             valueFormatter = object : ValueFormatter() {
-                override fun getFormattedValue(value: Float): String {
-                    return String.format(Locale.US, "%.0f°", value)
+                override fun getFormattedValue(
+                    value: Float
+                ): String {
+                    return String.format(
+                        Locale.US,
+                        "%.0f°",
+                        value
+                    )
                 }
             }
         }
@@ -116,10 +126,16 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             axisMaximum = 288f
 
             granularity = 72f
-            setLabelCount(5, true)
+
+            setLabelCount(
+                5,
+                true
+            )
 
             valueFormatter = object : ValueFormatter() {
-                override fun getFormattedValue(value: Float): String {
+                override fun getFormattedValue(
+                    value: Float
+                ): String {
                     return when (value.toInt()) {
                         0 -> "00:00"
                         72 -> "06:00"
@@ -153,7 +169,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
-                repository.fetchTemperatureData(deviceIp)
+                repository.fetchTemperatureData(
+                    ipAddress = deviceIp
+                )
             }
 
             val safeBinding = _binding ?: return@launch
@@ -175,11 +193,13 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     ) {
         val safeBinding = _binding ?: return
 
-        val dataSets = mutableListOf<LineDataSet>()
+        val dataSets = mutableListOf<ILineDataSet>()
         val legendEntries = mutableListOf<LegendEntry>()
 
         sensors.forEach { sensor ->
-            val segments = buildContinuousSegments(sensor.history)
+            val segments = buildContinuousSegments(
+                history = sensor.history
+            )
 
             if (segments.isEmpty()) {
                 return@forEach
@@ -229,9 +249,13 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             return
         }
 
-        safeBinding.temperatureChartView.legend.setCustom(legendEntries)
+        safeBinding.temperatureChartView.legend.setCustom(
+            legendEntries
+        )
 
-        safeBinding.temperatureChartView.data = LineData(dataSets).apply {
+        safeBinding.temperatureChartView.data = LineData(
+            dataSets
+        ).apply {
             setValueTextColor(Color.TRANSPARENT)
         }
 
@@ -250,18 +274,25 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
             if (validValue) {
                 currentSegment.add(
-                    Entry(index.toFloat(), value ?: return@forEachIndexed)
+                    Entry(
+                        index.toFloat(),
+                        value ?: return@forEachIndexed
+                    )
                 )
             } else {
                 if (currentSegment.isNotEmpty()) {
-                    segments.add(currentSegment.toList())
+                    segments.add(
+                        currentSegment.toList()
+                    )
                     currentSegment.clear()
                 }
             }
         }
 
         if (currentSegment.isNotEmpty()) {
-            segments.add(currentSegment.toList())
+            segments.add(
+                currentSegment.toList()
+            )
         }
 
         return segments
@@ -290,8 +321,14 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         ): DeviceCoolingFragment {
             return DeviceCoolingFragment().apply {
                 arguments = Bundle().apply {
-                    putLong(ARG_DEVICE_ID, deviceId)
-                    putString(ARG_DEVICE_IP, deviceIp)
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
+                    putString(
+                        ARG_DEVICE_IP,
+                        deviceIp
+                    )
                 }
             }
         }
