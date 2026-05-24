@@ -90,6 +90,10 @@ class LegacyDeviceSetupClient {
                     put("ClientEnabled", 1)
                     put("ClientSSID", homeSsid)
                     put("ClientPassword", homePassword)
+
+                    if (!disableSetupAccessPoint) {
+                        put("Connect", 0)
+                    }
                 }
             )
 
@@ -105,8 +109,10 @@ class LegacyDeviceSetupClient {
             json = json
         )
 
+        var connection: HttpURLConnection? = null
+
         return@withContext try {
-            val connection = network.openConnection(
+            connection = network.openConnection(
                 URL("$BASE_URL/set?")
             ) as HttpURLConnection
 
@@ -139,8 +145,6 @@ class LegacyDeviceSetupClient {
                     }
             }.getOrNull()
 
-            connection.disconnect()
-
             SetupResult(
                 success = responseCode in 200..299,
                 responseCode = responseCode,
@@ -154,6 +158,8 @@ class LegacyDeviceSetupClient {
                 responseBody = null,
                 errorMessage = exception.message ?: exception.toString()
             )
+        } finally {
+            connection?.disconnect()
         }
     }
 
