@@ -26,15 +26,6 @@
             android:textSize="22sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvControllerDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Temperature graph and cooling data"
-            android:textColor="@color/settings_text_secondary"
-            android:textSize="14sp" />
-
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardTemperatureGraph"
             android:layout_width="match_parent"
@@ -65,29 +56,11 @@
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tvCurrentTemperature"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Current: -- °C"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="14sp" />
-
-               <com.github.mikephil.charting.charts.LineChart
+                <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/temperatureChartView"
                     android:layout_width="match_parent"
                     android:layout_height="210dp"
-                    android:layout_marginTop="14dp" />
-
-                <TextView
-                    android:id="@+id/tvGraphStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="Waiting for device data..."
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
+                    android:layout_marginTop="16dp" />
 
             </LinearLayout>
 
@@ -100,7 +73,7 @@
             android:layout_marginTop="20dp"
             android:text="Refresh"
             android:textAllCaps="false"
-            android:textSize="10sp"
+            android:textSize="16sp"
             app:cornerRadius="18dp" />
 
     </LinearLayout>

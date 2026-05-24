@@ -35,24 +35,13 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceCoolingBinding.bind(view)
 
-        setupTemperatureChart(
-            chart = binding.temperatureChartView
-        )
+        setupTemperatureChart(binding.temperatureChartView)
 
         binding.tvControllerTitle.text = "Cooling Controller"
-
-        binding.tvControllerDescription.text = if (deviceIp.isBlank()) {
-            "Device ID: $deviceId"
-        } else {
-            "Device ID: $deviceId • IP: $deviceIp"
-        }
 
         binding.btnRefreshTemperature.setOnClickListener {
             loadTemperatureGraph()
@@ -61,9 +50,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         loadTemperatureGraph()
     }
 
-    private fun setupTemperatureChart(
-        chart: LineChart
-    ) {
+    private fun setupTemperatureChart(chart: LineChart) {
         chart.description.isEnabled = false
         chart.setNoDataText("No temperature data")
         chart.setNoDataTextColor(Color.parseColor("#AAB6C5"))
@@ -106,14 +93,8 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             setDrawAxisLine(false)
 
             valueFormatter = object : ValueFormatter() {
-                override fun getFormattedValue(
-                    value: Float
-                ): String {
-                    return String.format(
-                        Locale.US,
-                        "%.0f°",
-                        value
-                    )
+                override fun getFormattedValue(value: Float): String {
+                    return String.format(Locale.US, "%.0f°", value)
                 }
             }
         }
@@ -135,15 +116,10 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             axisMaximum = 288f
 
             granularity = 72f
-            setLabelCount(
-                5,
-                true
-            )
+            setLabelCount(5, true)
 
             valueFormatter = object : ValueFormatter() {
-                override fun getFormattedValue(
-                    value: Float
-                ): String {
+                override fun getFormattedValue(value: Float): String {
                     return when (value.toInt()) {
                         0 -> "00:00"
                         72 -> "06:00"
@@ -169,13 +145,10 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         val currentBinding = _binding ?: return
 
         if (deviceIp.isBlank()) {
-            currentBinding.tvGraphStatus.text = "Device IP is missing."
-            currentBinding.tvCurrentTemperature.text = "Current: -- °C"
             clearTemperatureChart()
             return
         }
 
-        currentBinding.tvGraphStatus.text = "Loading temperature data..."
         currentBinding.btnRefreshTemperature.isEnabled = false
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -186,46 +159,10 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             val safeBinding = _binding ?: return@launch
 
             result.onSuccess { data ->
-                val sensors = data.sensors
-
-                if (sensors.isEmpty()) {
-                    safeBinding.tvCurrentTemperature.text = "Current: -- °C"
-                    safeBinding.tvGraphStatus.text = "No temperature sensor found."
-                    clearTemperatureChart()
-                    safeBinding.btnRefreshTemperature.isEnabled = true
-                    return@onSuccess
-                }
-
-                val hottestSensor = sensors
-                    .filter { sensor ->
-                        sensor.currentTemperature != null
-                    }
-                    .maxByOrNull { sensor ->
-                        sensor.currentTemperature ?: -999f
-                    }
-
-                val currentText = hottestSensor?.currentTemperature?.let { value ->
-                    String.format(
-                        Locale.US,
-                        "Current: %.1f °C • %s",
-                        value,
-                        hottestSensor.name
-                    )
-                } ?: "Current: -- °C"
-
-                safeBinding.tvCurrentTemperature.text = currentText
-
                 renderTemperatureChart(
-                    sensors = sensors
+                    sensors = data.sensors
                 )
-
-                safeBinding.tvGraphStatus.text =
-                    "Loaded ${sensors.size} sensor(s) from ${data.ip ?: deviceIp}"
-            }.onFailure { error ->
-                safeBinding.tvCurrentTemperature.text = "Current: -- °C"
-                safeBinding.tvGraphStatus.text =
-                    "Could not read temperature data: ${error.message}"
-
+            }.onFailure {
                 clearTemperatureChart()
             }
 
@@ -242,9 +179,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         val legendEntries = mutableListOf<LegendEntry>()
 
         sensors.forEach { sensor ->
-            val segments = buildContinuousSegments(
-                history = sensor.history
-            )
+            val segments = buildContinuousSegments(sensor.history)
 
             if (segments.isEmpty()) {
                 return@forEach
@@ -294,13 +229,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             return
         }
 
-        safeBinding.temperatureChartView.legend.setCustom(
-            legendEntries
-        )
+        safeBinding.temperatureChartView.legend.setCustom(legendEntries)
 
-        safeBinding.temperatureChartView.data = LineData(
-            dataSets
-        ).apply {
+        safeBinding.temperatureChartView.data = LineData(dataSets).apply {
             setValueTextColor(Color.TRANSPARENT)
         }
 
@@ -319,25 +250,18 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
             if (validValue) {
                 currentSegment.add(
-                    Entry(
-                        index.toFloat(),
-                        value ?: return@forEachIndexed
-                    )
+                    Entry(index.toFloat(), value ?: return@forEachIndexed)
                 )
             } else {
                 if (currentSegment.isNotEmpty()) {
-                    segments.add(
-                        currentSegment.toList()
-                    )
+                    segments.add(currentSegment.toList())
                     currentSegment.clear()
                 }
             }
         }
 
         if (currentSegment.isNotEmpty()) {
-            segments.add(
-                currentSegment.toList()
-            )
+            segments.add(currentSegment.toList())
         }
 
         return segments
