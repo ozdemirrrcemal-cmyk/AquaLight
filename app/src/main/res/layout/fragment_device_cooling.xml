@@ -1,29 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/tvControllerTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Cooling Controller"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="22sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tvControllerDescription"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:gravity="center"
-        android:text="Light controls will be added here."
-        android:textColor="@color/settings_text_secondary"
-        android:textSize="14sp" />
+        android:orientation="vertical"
+        android:padding="20dp">
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/tvControllerTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cooling Controller"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvControllerDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Temperature graph and cooling data"
+            android:textColor="@color/settings_text_secondary"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvGraphTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Temperature Data"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCurrentTemperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Current: -- °C"
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="14sp" />
+
+            <com.aqua.aqualight.ui.tabs.devices.detail.cooling.TemperatureChartView
+                android:id="@+id/temperatureChartView"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:layout_marginTop="18dp" />
+
+            <TextView
+                android:id="@+id/tvGraphStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Waiting for device data..."
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnRefreshTemperature"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="20dp"
+            android:text="Refresh" />
+
+    </LinearLayout>
+
+</ScrollView>
