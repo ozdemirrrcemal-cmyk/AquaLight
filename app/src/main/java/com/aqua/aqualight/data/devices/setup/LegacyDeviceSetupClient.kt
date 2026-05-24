@@ -37,7 +37,7 @@ class LegacyDeviceSetupClient {
     ): List<HomeWifiNetwork> = withContext(Dispatchers.IO) {
         val requestJson = JSONObject().apply {
             put(
-                "WiFiSC",
+                WIFI_SC,
                 JSONObject().apply {
                     put("Scan", 0)
                 }
@@ -51,9 +51,7 @@ class LegacyDeviceSetupClient {
             readTimeoutMs = 15_000
         )
 
-        parseWifiScanResponse(
-            responseText = responseText
-        )
+        parseWifiScanResponse(responseText)
     }
 
     suspend fun readDeviceWifiStatus(
@@ -61,7 +59,7 @@ class LegacyDeviceSetupClient {
     ): DeviceWifiStatus = withContext(Dispatchers.IO) {
         val requestJson = JSONObject().apply {
             put(
-                "WiFiSC",
+                WIFI_SC,
                 JSONObject().apply {
                     put("ServerEnabled", 0)
                     put("ServerSSID", 0)
@@ -82,9 +80,7 @@ class LegacyDeviceSetupClient {
             readTimeoutMs = 8_000
         )
 
-        parseDeviceWifiStatus(
-            responseText = responseText
-        )
+        parseDeviceWifiStatus(responseText)
     }
 
     fun parseDeviceWifiStatus(
@@ -108,20 +104,17 @@ class LegacyDeviceSetupClient {
             )
         }
 
-        val wifiObject = root.optJSONObject("WiFiSC")
+        val wifiObject = root.optJSONObject(WIFI_SC)
 
         val rootIp = root
             .optString("IP", "")
             .trim()
 
-        val clientIpFromWifi = wifiObject
+        val clientIp = wifiObject
             ?.optString("ClientIP", "")
             ?.trim()
             .orEmpty()
-
-        val clientIp = clientIpFromWifi.ifBlank {
-            rootIp
-        }
+            .ifBlank { rootIp }
 
         val clientEnabled = wifiObject
             ?.optBoolean("ClientEnabled", true)
@@ -132,11 +125,7 @@ class LegacyDeviceSetupClient {
             ?.trim()
             .orEmpty()
 
-        val hasValidClientIp = clientIp.isNotBlank() &&
-            clientIp != "0.0.0.0" &&
-            clientIp != "192.168.4.1" &&
-            !clientIp.startsWith("192.168.4.")
-
+        val hasValidClientIp = isValidHomeNetworkIp(clientIp)
         val connected = hasValidClientIp && clientEnabled
 
         val statusText = when {
@@ -161,9 +150,9 @@ class LegacyDeviceSetupClient {
         homePassword: String,
         disableSetupAccessPoint: Boolean = true
     ): SetupResult = withContext(Dispatchers.IO) {
-        val json = JSONObject().apply {
+        val requestJson = JSONObject().apply {
             put(
-                "WiFiSC",
+                WIFI_SC,
                 JSONObject().apply {
                     put("ServerEnabled", if (disableSetupAccessPoint) 0 else 1)
                     put("ServerSSID", setupSsid)
@@ -183,39 +172,38 @@ class LegacyDeviceSetupClient {
             )
         }
 
-        val body = buildRawSetBody(
-            json = json
+        performSetRequest(
+            network = network,
+            requestJson = requestJson,
+            disableSetupAccessPoint = disableSetupAccessPoint
         )
+    }
+
+    private fun performSetRequest(
+        network: Network,
+        requestJson: JSONObject,
+        disableSetupAccessPoint: Boolean
+    ): SetupResult {
+        val body = buildRawSetBody(requestJson)
 
         var connection: HttpURLConnection? = null
         var bodySent = false
 
-        return@withContext try {
+        return try {
             connection = network.openConnection(
                 URL("$BASE_URL/set?")
             ) as HttpURLConnection
 
             connection.requestMethod = "POST"
             connection.connectTimeout = 10_000
-
-            /**
-             * ESP tarafında ClientRun() 30 saniyeye kadar bekleyebiliyor.
-             * Hatalı şifrede Test() tekrar bağlantı deneyebiliyor.
-             * Bu yüzden ilk /set için kısa timeout kullanmıyoruz.
-             */
             connection.readTimeout = if (disableSetupAccessPoint) {
                 15_000
             } else {
                 75_000
             }
-
             connection.doOutput = true
             connection.useCaches = false
 
-            /**
-             * ESP GetSetHttp.ino /set tarafı raw body bekliyor:
-             * Json={...}&sRet={...}
-             */
             connection.setRequestProperty(
                 "Content-Type",
                 "text/plain; charset=utf-8"
@@ -246,7 +234,13 @@ class LegacyDeviceSetupClient {
                     .use { reader ->
                         reader.readText()
                     }
-            }.getOrNull()
+            }.getOrElse {
+                connection.errorStream
+                    ?.bufferedReader()
+                    ?.use { reader ->
+                        reader.readText()
+                    }
+            }
 
             SetupResult(
                 success = responseCode in 200..299,
@@ -255,19 +249,8 @@ class LegacyDeviceSetupClient {
                 errorMessage = null
             )
         } catch (exception: Exception) {
-            /**
-             * Body gönderildikten sonra timeout/socket kopması olursa bu her zaman
-             * gerçek başarısızlık değildir:
-             *
-             * - İlk /set sırasında ESP Wi-Fi bağlantısını uzun sürede tamamlayabilir.
-             * - İkinci /set sırasında setup AP kapanacağı için bağlantı kopabilir.
-             *
-             * Bu durumda üst akış zaten readDeviceWifiStatus / UDP discovery ile
-             * gerçek sonucu kontrol ediyor.
-             */
-            val requestWasLikelyAccepted = bodySent && isExpectedNetworkTransitionException(
-                exception = exception
-            )
+            val requestWasLikelyAccepted = bodySent &&
+                isExpectedNetworkTransitionException(exception)
 
             if (requestWasLikelyAccepted) {
                 SetupResult(
@@ -297,11 +280,7 @@ class LegacyDeviceSetupClient {
     ): String {
         val url = buildString {
             append("$BASE_URL/get?")
-            append(
-                buildEncodedGetBody(
-                    json = requestJson
-                )
-            )
+            append(buildEncodedGetBody(requestJson))
         }
 
         val connection = network.openConnection(
@@ -328,9 +307,7 @@ class LegacyDeviceSetupClient {
     private fun buildRawSetBody(
         json: JSONObject
     ): String {
-        val sRet = JSONObject().apply {
-            put("iPostCount", System.currentTimeMillis() % 100000)
-        }
+        val sRet = buildReturnObject()
 
         return buildString {
             append("Json=")
@@ -343,9 +320,7 @@ class LegacyDeviceSetupClient {
     private fun buildEncodedGetBody(
         json: JSONObject
     ): String {
-        val sRet = JSONObject().apply {
-            put("iPostCount", System.currentTimeMillis() % 100000)
-        }
+        val sRet = buildReturnObject()
 
         return buildString {
             append("Json=")
@@ -367,13 +342,19 @@ class LegacyDeviceSetupClient {
         }
     }
 
+    private fun buildReturnObject(): JSONObject {
+        return JSONObject().apply {
+            put("iPostCount", System.currentTimeMillis() % 100000)
+        }
+    }
+
     private fun parseWifiScanResponse(
         responseText: String
     ): List<HomeWifiNetwork> {
         val root = JSONObject(responseText)
 
         val scanObject = root
-            .optJSONObject("WiFiSC")
+            .optJSONObject(WIFI_SC)
             ?.optJSONObject("Scan")
             ?: root.optJSONObject("Scan")
             ?: return emptyList()
@@ -410,6 +391,15 @@ class LegacyDeviceSetupClient {
             }
     }
 
+    private fun isValidHomeNetworkIp(
+        ip: String
+    ): Boolean {
+        return ip.isNotBlank() &&
+            ip != "0.0.0.0" &&
+            ip != "192.168.4.1" &&
+            !ip.startsWith("192.168.4.")
+    }
+
     private fun isExpectedNetworkTransitionException(
         exception: Exception
     ): Boolean {
@@ -437,5 +427,6 @@ class LegacyDeviceSetupClient {
 
     private companion object {
         const val BASE_URL = "http://192.168.4.1"
+        const val WIFI_SC = "WiFiSC"
     }
 }
