@@ -35,6 +35,7 @@ class DeviceSetupWifiConnector(
 
     suspend fun connectToSetupNetwork(
         ssid: String,
+        password: String,
         timeoutMs: Long = 30_000L
     ): SetupConnection {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -45,9 +46,14 @@ class DeviceSetupWifiConnector(
             Context.CONNECTIVITY_SERVICE
         ) as ConnectivityManager
 
-        val wifiSpecifier = WifiNetworkSpecifier.Builder()
+        val specifierBuilder = WifiNetworkSpecifier.Builder()
             .setSsid(ssid)
-            .build()
+
+        if (password.isNotBlank()) {
+            specifierBuilder.setWpa2Passphrase(password)
+        }
+
+        val wifiSpecifier = specifierBuilder.build()
 
         val request = NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
@@ -89,14 +95,16 @@ class DeviceSetupWifiConnector(
                     resumed = true
 
                     continuation.resumeWithException(
-                        IllegalStateException("Setup network connection was not approved or timed out.")
+                        IllegalStateException(
+                            "Setup network connection was not approved or timed out."
+                        )
                     )
                 }
 
                 override fun onLost(
                     network: Network
                 ) {
-                    // Kurulum tamamlanınca cihaz AP kapanabilir. Bu normal.
+                    // Kurulum bitince cihaz setup AP kapatabilir. Bu normal.
                 }
             }
 

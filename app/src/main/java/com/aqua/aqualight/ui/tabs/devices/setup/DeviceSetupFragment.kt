@@ -77,7 +77,8 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             ""
         )
 
-        expectedDeviceType = AquaDeviceType.entries.firstOrNull { type ->
+        expectedDeviceType = AquaDeviceType.entries.firstOrNull {
+            type ->
             type.storageKey == deviceTypeKey
         } ?: AquaDeviceType.UNKNOWN
     }
@@ -88,7 +89,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         binding.tvSetupSsid.text = setupSsid
 
         binding.tvDescription.text =
-            "Enter your home Wi-Fi details. AquaLight will connect to the device, send the network settings, then find it on your home network."
+        "Enter your home Wi-Fi details. AquaLight will connect to the device, send the network settings, then find it on your home network."
 
         binding.tvStatus.text = "Ready to connect."
     }
@@ -111,13 +112,13 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         }
 
         val homeSsid = binding.etHomeWifiSsid.text
-            ?.toString()
-            ?.trim()
-            .orEmpty()
+        ?.toString()
+        ?.trim()
+        .orEmpty()
 
         val homePassword = binding.etHomeWifiPassword.text
-            ?.toString()
-            .orEmpty()
+        ?.toString()
+        .orEmpty()
 
         if (setupSsid.isBlank()) {
             showError("Device setup network is missing.")
@@ -150,9 +151,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             try {
                 setupConnection = wifiConnector.connectToSetupNetwork(
                     ssid = setupSsid,
+                    password = SETUP_AP_PASSWORD,
                     timeoutMs = 30_000L
                 )
-
                 if (_binding == null) {
                     return@launch
                 }
@@ -175,7 +176,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 if (!setupResult.success) {
                     throw IllegalStateException(
                         setupResult.errorMessage
-                            ?: "Device did not accept Wi-Fi settings."
+                        ?: "Device did not accept Wi-Fi settings."
                     )
                 }
 
@@ -236,11 +237,11 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
     private suspend fun waitForDeviceOnHomeNetwork(): DiscoveredAquaDevice? {
         val setupShortId = setupSsid
-            .substringAfterLast(
-                delimiter = "-",
-                missingDelimiterValue = ""
-            )
-            .trim()
+        .substringAfterLast(
+            delimiter = "-",
+            missingDelimiterValue = ""
+        )
+        .trim()
 
         repeat(10) {
             val result = DeviceDiscoveryService.scan(
@@ -249,7 +250,8 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 reason = DeviceScanReason.MANUAL_SCAN
             )
 
-            val match = result.devices.firstOrNull { device ->
+            val match = result.devices.firstOrNull {
+                device ->
                 isExpectedDevice(
                     device = device,
                     setupShortId = setupShortId
@@ -271,7 +273,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         setupShortId: String
     ): Boolean {
         val typeMatches = expectedDeviceType == AquaDeviceType.UNKNOWN ||
-            device.deviceType == expectedDeviceType
+        device.deviceType == expectedDeviceType
 
         if (!typeMatches) {
             return false
@@ -285,10 +287,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         val deviceIdText = device.id.toString()
 
         return deviceIdText.endsWith(setupShortId) ||
-            (
-                normalizedShortId.isNotBlank() &&
-                    deviceIdText.endsWith(normalizedShortId)
-                )
+        (
+            normalizedShortId.isNotBlank() &&
+            deviceIdText.endsWith(normalizedShortId)
+        )
     }
 
     private suspend fun saveDiscoveredDevice(
@@ -390,12 +392,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         id: Long
     ): String {
         val aquaInitial = aquaName.firstOrNull()
-            ?.uppercaseChar()
-            ?: 'X'
+        ?.uppercaseChar()
+        ?: 'X'
 
         val nameInitial = name.firstOrNull()
-            ?.uppercaseChar()
-            ?: 'X'
+        ?.uppercaseChar()
+        ?: 'X'
 
         return "$aquaInitial$nameInitial-$id"
     }
@@ -444,6 +446,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             message = message,
             type = BaseActivity.SnackType.ERROR
         )
+    }
+
+    private companion object {
+        const val SETUP_AP_PASSWORD = "adminadmin"
     }
 
     override fun onDestroyView() {
