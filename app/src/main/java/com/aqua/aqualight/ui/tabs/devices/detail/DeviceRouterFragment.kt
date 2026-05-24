@@ -42,6 +42,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         _binding = FragmentDeviceRouterBinding.bind(view)
         devicesStore = DevicesDataStoreManager.create(requireContext())
 
+        binding.tvSubtitle.visibility = View.GONE
+
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
@@ -54,7 +56,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         if (deviceId <= 0L) {
             showUnavailableState(
                 title = "Device",
-                subtitle = "Unavailable",
                 message = "Device information could not be found."
             )
             return
@@ -88,7 +89,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             if (device == null) {
                 showUnavailableState(
                     title = "Device Not Found",
-                    subtitle = "Unavailable",
                     message = "This device is no longer available."
                 )
                 return@launch
@@ -100,8 +100,11 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
             if (definition == null) {
                 showUnavailableState(
-                    title = device.name.ifBlank { "Unsupported Device" },
-                    subtitle = "Unsupported",
+                    title = device.name.ifBlank {
+                        device.productModel.ifBlank {
+                            "Unsupported Device"
+                        }
+                    },
                     message = "This device is not supported by this app version."
                 )
                 return@launch
@@ -114,12 +117,19 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                     device.ip
                 }
 
-            binding.tvTitle.text = definition.displayName
-            binding.tvSubtitle.text = definition.family.displayName
+            val deviceTitle = device.name.ifBlank {
+                device.productModel.ifBlank {
+                    definition.displayName
+                }
+            }
+
+            binding.tvTitle.text = deviceTitle
+            binding.tvSubtitle.visibility = View.GONE
 
             routeToController(
                 deviceId = device.id,
                 deviceIp = deviceIp,
+                deviceTitle = deviceTitle,
                 definition = definition
             )
         }
@@ -128,6 +138,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
     private fun routeToController(
         deviceId: Long,
         deviceIp: String,
+        deviceTitle: String,
         definition: AquaDeviceDefinition
     ) {
         val controllerFragment = when (definition.uiController) {
@@ -163,8 +174,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
         if (controllerFragment == null) {
             showUnavailableState(
-                title = definition.displayName,
-                subtitle = definition.family.displayName,
+                title = deviceTitle,
                 message = "This device controller is not available in this app version."
             )
             return
@@ -180,7 +190,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     private fun showUnavailableState(
         title: String,
-        subtitle: String,
         message: String
     ) {
         if (_binding == null) {
@@ -188,7 +197,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         }
 
         binding.tvTitle.text = title
-        binding.tvSubtitle.text = subtitle
+        binding.tvSubtitle.visibility = View.GONE
 
         binding.deviceControllerContainer.removeAllViews()
 
