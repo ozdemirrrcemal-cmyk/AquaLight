@@ -1338,4 +1338,5 @@ Delete Failed
 
 <string name="device_setup_status_title">Connection status</string>
 <string name="device_setup_button_connect">Connect device</string>
+<string name="wifi_signal">Wi-Fi signal</string>
 </resources>

@@ -32,7 +32,7 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
             return ssids.mapIndexed { index, ssid ->
                 HomeWifiNetworkItem(
                     ssid = ssid,
-                    rssi = rssis.getOrNull(index) ?: -100
+                    rssi = rssis.getOrNull(index) ?: DEFAULT_RSSI
                 )
             }
         }
@@ -41,7 +41,10 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = BottomSheetHomeWifiNetworksBinding.bind(view)
 
@@ -66,7 +69,7 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
         bottomSheet.setBackgroundColor(Color.TRANSPARENT)
 
         val sheetHeight = (
-            resources.displayMetrics.heightPixels * 0.92f
+            resources.displayMetrics.heightPixels * SHEET_HEIGHT_RATIO
         ).toInt()
 
         bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
@@ -90,7 +93,9 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
 
         networks.forEach { network ->
             binding.homeWifiNetworksContainer.addView(
-                createNetworkRow(network)
+                createNetworkRow(
+                    network = network
+                )
             )
         }
     }
@@ -105,7 +110,16 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
         )
 
         itemBinding.tvWifiSsid.text = network.ssid
-        itemBinding.tvWifiSignal.text = signalLabel(network.rssi)
+
+        itemBinding.tvWifiSignal.text = signalLabel(
+            rssi = network.rssi
+        )
+
+        itemBinding.ivWifiSignalIcon.setImageResource(
+            signalIcon(
+                rssi = network.rssi
+            )
+        )
 
         itemBinding.root.setOnClickListener {
             parentFragmentManager.setFragmentResult(
@@ -125,15 +139,27 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
         rssi: Int
     ): String {
         return when {
-            rssi >= -55 -> getString(R.string.wifi_signal_excellent)
-            rssi >= -67 -> getString(R.string.wifi_signal_strong)
-            rssi >= -75 -> getString(R.string.wifi_signal_good)
+            rssi >= EXCELLENT_RSSI -> getString(R.string.wifi_signal_excellent)
+            rssi >= STRONG_RSSI -> getString(R.string.wifi_signal_strong)
+            rssi >= GOOD_RSSI -> getString(R.string.wifi_signal_good)
             else -> getString(R.string.wifi_signal_weak)
+        }
+    }
+
+    private fun signalIcon(
+        rssi: Int
+    ): Int {
+        return when {
+            rssi >= EXCELLENT_RSSI -> R.drawable.ic_wifi_signal_4
+            rssi >= STRONG_RSSI -> R.drawable.ic_wifi_signal_3
+            rssi >= GOOD_RSSI -> R.drawable.ic_wifi_signal_2
+            else -> R.drawable.ic_wifi_signal_1
         }
     }
 
     override fun onDestroyView() {
         _binding = null
+
         super.onDestroyView()
     }
 
@@ -142,6 +168,14 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
 
         private const val ARG_SSIDS = "ssids"
         private const val ARG_RSSIS = "rssis"
+
+        private const val DEFAULT_RSSI = -100
+
+        private const val EXCELLENT_RSSI = -55
+        private const val STRONG_RSSI = -67
+        private const val GOOD_RSSI = -75
+
+        private const val SHEET_HEIGHT_RATIO = 0.92f
 
         const val REQUEST_KEY = "home_wifi_network_result"
         const val RESULT_SSID = "ssid"
@@ -156,8 +190,12 @@ class HomeWifiNetworksBottomSheetFragment : BottomSheetDialogFragment(
 
             HomeWifiNetworksBottomSheetFragment().apply {
                 arguments = bundleOf(
-                    ARG_SSIDS to networks.map { it.ssid }.toTypedArray(),
-                    ARG_RSSIS to networks.map { it.rssi }.toIntArray()
+                    ARG_SSIDS to networks.map { network ->
+                        network.ssid
+                    }.toTypedArray(),
+                    ARG_RSSIS to networks.map { network ->
+                        network.rssi
+                    }.toIntArray()
                 )
             }.show(
                 fragmentManager,
