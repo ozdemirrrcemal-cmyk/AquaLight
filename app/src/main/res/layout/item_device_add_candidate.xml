@@ -5,68 +5,59 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rowCandidate"
     android:layout_width="match_parent"
-    android:layout_height="72dp"
+    android:layout_height="78dp"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:paddingStart="24dp"
-    android:paddingEnd="24dp">
-
-    <FrameLayout
-        android:id="@+id/deviceImageContainer"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
-        android:background="@drawable/bg_device_add_image_box"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/ivDeviceIcon"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_gravity="center"
-            android:padding="2dp"
-            android:scaleType="centerInside"
-            tools:src="@drawable/ic_device_temperature" />
-
-    </FrameLayout>
+    android:paddingStart="34dp"
+    android:paddingEnd="30dp">
 
     <TextView
         android:id="@+id/tvDeviceName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="18dp"
-        android:layout_marginEnd="14dp"
+        android:layout_marginEnd="16dp"
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:maxLines="1"
         android:textColor="@android:color/white"
-        android:textSize="17sp"
+        android:textSize="18sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@id/deviceImageContainer"
-        app:layout_constraintEnd_toStartOf="@id/tvDeviceId"
-        app:layout_constraintStart_toEndOf="@id/deviceImageContainer"
-        app:layout_constraintTop_toTopOf="@id/deviceImageContainer"
+        app:layout_constraintBottom_toTopOf="@id/tvDeviceMeta"
+        app:layout_constraintEnd_toStartOf="@id/tvChevron"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
         tools:text="CoolPro" />
 
     <TextView
-        android:id="@+id/tvDeviceId"
-        android:layout_width="wrap_content"
-        android:layout_height="30dp"
-        android:background="@drawable/bg_device_serial_chip"
+        android:id="@+id/tvDeviceMeta"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:ellipsize="end"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:textColor="@color/settings_text_secondary"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/tvDeviceName"
+        app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+        app:layout_constraintTop_toBottomOf="@id/tvDeviceName"
+        tools:text="AquaCool · AC-7872" />
+
+    <TextView
+        android:id="@+id/tvChevron"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:minWidth="78dp"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textColor="#8FA4BE"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@id/deviceImageContainer"
+        android:text="›"
+        android:textColor="#5F728A"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/deviceImageContainer"
-        tools:text="AC-7872" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <View
         android:id="@+id/divider"
@@ -74,7 +65,7 @@
         android:layout_height="1dp"
         android:background="#142944"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/tvDeviceId"
+        app:layout_constraintEnd_toEndOf="@id/tvChevron"
         app:layout_constraintStart_toStartOf="@id/tvDeviceName" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
