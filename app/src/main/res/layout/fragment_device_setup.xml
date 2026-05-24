@@ -60,6 +60,8 @@
         android:paddingTop="18dp"
         android:paddingEnd="20dp"
         android:paddingBottom="26dp"
+		android:scrollbars="none"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
