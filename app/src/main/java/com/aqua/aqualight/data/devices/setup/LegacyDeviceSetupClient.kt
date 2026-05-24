@@ -81,13 +81,13 @@ class LegacyDeviceSetupClient {
     }
 
     suspend fun sendHomeWifiCredentials(
-        network: Network,
-        setupSsid: String,
-        setupPassword: String,
-        homeSsid: String,
-        homePassword: String,
-        disableSetupAccessPoint: Boolean = true
-    ): SetupResult = withContext(Dispatchers.IO) {
+    network: Network,
+    setupSsid: String,
+    setupPassword: String,
+    homeSsid: String,
+    homePassword: String,
+    disableSetupAccessPoint: Boolean = true
+): SetupResult = withContext(Dispatchers.IO) {
         val json = JSONObject().apply {
             put(
                 "WiFiSC",
