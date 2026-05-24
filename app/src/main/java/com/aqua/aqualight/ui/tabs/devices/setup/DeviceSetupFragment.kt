@@ -21,6 +21,7 @@ import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.data.devices.setup.DeviceSetupWifiConnector
+import com.aqua.aqualight.data.devices.setup.HomeWifiConnectionWaiter
 import com.aqua.aqualight.data.devices.setup.LegacyDeviceSetupClient
 import com.aqua.aqualight.databinding.FragmentDeviceSetupBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
@@ -37,6 +38,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var wifiConnector: DeviceSetupWifiConnector
     private lateinit var setupClient: LegacyDeviceSetupClient
+    private lateinit var homeWifiWaiter: HomeWifiConnectionWaiter
 
     private var setupConnection: DeviceSetupWifiConnector.SetupConnection? = null
 
@@ -63,6 +65,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         devicesStore = DevicesDataStoreManager.create(requireContext())
         wifiConnector = DeviceSetupWifiConnector(requireContext())
         setupClient = LegacyDeviceSetupClient()
+        homeWifiWaiter = HomeWifiConnectionWaiter(requireContext())
 
         readArgs()
         renderInitialState()
@@ -421,7 +424,6 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         val homePassword = binding.etHomeWifiPassword.text
             ?.toString()
-            ?.orEmpty()
             .orEmpty()
 
         if (setupSsid.isBlank()) {
@@ -485,10 +487,28 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
                 setBusy(
                     busy = true,
-                    status = "Waiting for device on your home network..."
+                    status = "Device is joining your home Wi-Fi..."
                 )
 
-                delay(4_000L)
+                val homeWifiReady = homeWifiWaiter.waitUntilHomeWifiReady(
+                    expectedSsid = homeSsid,
+                    timeoutMs = 60_000L
+                )
+
+                if (!homeWifiReady) {
+                    throw IllegalStateException(
+                        "Your phone did not return to $homeSsid. Connect to your home Wi-Fi and try again."
+                    )
+                }
+
+                if (_binding == null) {
+                    return@launch
+                }
+
+                setBusy(
+                    busy = true,
+                    status = "Finding device on your home network..."
+                )
 
                 val discoveredDevice = waitForDeviceOnHomeNetwork()
 
@@ -543,7 +563,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             )
             .trim()
 
-        repeat(10) {
+        repeat(15) {
             val result = DeviceDiscoveryService.scan(
                 context = requireContext(),
                 timeoutMs = 3_000L,
@@ -561,7 +581,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 return match
             }
 
-            delay(2_000L)
+            delay(3_000L)
         }
 
         return null
