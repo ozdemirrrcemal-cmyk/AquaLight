@@ -112,22 +112,6 @@
             app:layout_constraintTop_toTopOf="@id/deviceImageContainer"
             tools:text="Set up" />
 
-        <TextView
-            android:id="@+id/tvConnectionInfo"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="@id/tvDeviceName"
-            app:layout_constraintTop_toBottomOf="@id/tvDeviceState"
-            tools:text="hidden" />
-
-        <TextView
-            android:id="@+id/tvChevron"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone"
-            tools:text="›" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>

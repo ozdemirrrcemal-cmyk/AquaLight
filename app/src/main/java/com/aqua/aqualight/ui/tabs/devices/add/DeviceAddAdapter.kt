@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.graphics.Color
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -61,8 +60,6 @@ class DeviceAddAdapter(
                 item = item
             )
 
-            hideLegacyViews()
-
             binding.rowCandidate.setOnClickListener {
                 onCandidateClick(item)
             }
@@ -114,11 +111,6 @@ class DeviceAddAdapter(
                     )
                 }
             }
-        }
-
-        private fun hideLegacyViews() {
-            binding.tvConnectionInfo.visibility = View.GONE
-            binding.tvChevron.visibility = View.GONE
         }
     }
 
