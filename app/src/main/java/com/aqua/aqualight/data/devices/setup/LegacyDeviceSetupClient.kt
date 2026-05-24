@@ -49,9 +49,7 @@ class LegacyDeviceSetupClient {
             readTimeoutMs = 15_000
         )
 
-        parseWifiScanResponse(
-            responseText = responseText
-        )
+        parseWifiScanResponse(responseText)
     }
 
     suspend fun readDeviceWifiStatus(
@@ -61,9 +59,12 @@ class LegacyDeviceSetupClient {
             put(
                 "WiFiSC",
                 JSONObject().apply {
-                    put("ClientStatus", 0)
-                    put("ClientIP", 0)
+                    put("ServerEnabled", 0)
+                    put("ServerSSID", 0)
+                    put("ServerPassword", 0)
+                    put("ClientEnabled", 0)
                     put("ClientSSID", 0)
+                    put("ClientPassword", 0)
                 }
             )
         }
@@ -75,19 +76,78 @@ class LegacyDeviceSetupClient {
             readTimeoutMs = 8_000
         )
 
-        parseDeviceWifiStatusResponse(
-            responseText = responseText
+        parseDeviceWifiStatus(responseText)
+    }
+
+    fun parseDeviceWifiStatus(
+        responseText: String?
+    ): DeviceWifiStatus {
+        if (responseText.isNullOrBlank()) {
+            return DeviceWifiStatus(
+                connected = false,
+                clientIp = "",
+                statusText = "Empty response"
+            )
+        }
+
+        val root = try {
+            JSONObject(responseText)
+        } catch (exception: Exception) {
+            return DeviceWifiStatus(
+                connected = false,
+                clientIp = "",
+                statusText = "Invalid JSON"
+            )
+        }
+
+        val wifiObject = root.optJSONObject("WiFiSC")
+
+        val rootIp = root
+            .optString("IP", "")
+            .trim()
+
+        val clientIpFromWifi = wifiObject
+            ?.optString("ClientIP", "")
+            ?.trim()
+            .orEmpty()
+
+        val clientIp = clientIpFromWifi.ifBlank {
+            rootIp
+        }
+
+        val clientEnabled = wifiObject?.optBoolean("ClientEnabled", true) ?: true
+
+        val statusText = wifiObject
+            ?.optString("ClientStatus", "")
+            ?.trim()
+            .orEmpty()
+
+        val hasValidClientIp = clientIp.isNotBlank() &&
+            clientIp != "0.0.0.0" &&
+            clientIp != "192.168.4.1" &&
+            !clientIp.startsWith("192.168.4.")
+
+        return DeviceWifiStatus(
+            connected = hasValidClientIp && clientEnabled,
+            clientIp = clientIp,
+            statusText = statusText.ifBlank {
+                if (hasValidClientIp) {
+                    "Connected"
+                } else {
+                    "Not connected"
+                }
+            }
         )
     }
 
     suspend fun sendHomeWifiCredentials(
-    network: Network,
-    setupSsid: String,
-    setupPassword: String,
-    homeSsid: String,
-    homePassword: String,
-    disableSetupAccessPoint: Boolean = true
-): SetupResult = withContext(Dispatchers.IO) {
+        network: Network,
+        setupSsid: String,
+        setupPassword: String,
+        homeSsid: String,
+        homePassword: String,
+        disableSetupAccessPoint: Boolean = true
+    ): SetupResult = withContext(Dispatchers.IO) {
         val json = JSONObject().apply {
             put(
                 "WiFiSC",
@@ -110,9 +170,7 @@ class LegacyDeviceSetupClient {
             )
         }
 
-        val body = buildFormBody(
-            json = json
-        )
+        val body = buildRawFormBody(json)
 
         var connection: HttpURLConnection? = null
 
@@ -176,11 +234,7 @@ class LegacyDeviceSetupClient {
     ): String {
         val url = buildString {
             append("$BASE_URL/get?")
-            append(
-                buildFormBody(
-                    json = requestJson
-                )
-            )
+            append(buildEncodedFormBody(requestJson))
         }
 
         val connection = network.openConnection(
@@ -203,7 +257,22 @@ class LegacyDeviceSetupClient {
         }
     }
 
-    private fun buildFormBody(
+    private fun buildRawFormBody(
+        json: JSONObject
+    ): String {
+        val sRet = JSONObject().apply {
+            put("iPostCount", System.currentTimeMillis() % 100000)
+        }
+
+        return buildString {
+            append("Json=")
+            append(json.toString())
+            append("&sRet=")
+            append(sRet.toString())
+        }
+    }
+
+    private fun buildEncodedFormBody(
         json: JSONObject
     ): String {
         val sRet = JSONObject().apply {
@@ -245,8 +314,7 @@ class LegacyDeviceSetupClient {
             val keys = scanObject.keys()
 
             while (keys.hasNext()) {
-                val ssid = keys.next()
-                    .trim()
+                val ssid = keys.next().trim()
 
                 if (ssid.isBlank()) {
                     continue
@@ -271,41 +339,6 @@ class LegacyDeviceSetupClient {
             .sortedByDescending { network ->
                 network.rssi
             }
-    }
-
-    private fun parseDeviceWifiStatusResponse(
-        responseText: String
-    ): DeviceWifiStatus {
-        val root = JSONObject(responseText)
-
-        val wifiObject = root.optJSONObject("WiFiSC")
-
-        val rootIp = root
-            .optString("IP", "")
-            .trim()
-
-        val clientIp = wifiObject
-            ?.optString("ClientIP", "")
-            ?.trim()
-            .orEmpty()
-            .ifBlank {
-                rootIp
-            }
-
-        val statusText = wifiObject
-            ?.optString("ClientStatus", "")
-            .orEmpty()
-
-        val hasValidClientIp = clientIp.isNotBlank() &&
-            clientIp != "0.0.0.0" &&
-            clientIp != "192.168.4.1" &&
-            !clientIp.startsWith("192.168.4.")
-
-        return DeviceWifiStatus(
-            connected = hasValidClientIp,
-            clientIp = clientIp,
-            statusText = statusText
-        )
     }
 
     private companion object {
