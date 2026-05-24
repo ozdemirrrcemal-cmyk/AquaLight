@@ -1,12 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
 import com.aqua.aqualight.databinding.ItemDeviceAddCandidateBinding
@@ -54,62 +52,35 @@ class DeviceAddAdapter(
             binding.ivDeviceIcon.contentDescription = item.displayName
 
             binding.tvDeviceName.text = item.displayName
-            binding.tvDeviceFamily.text = item.familyName
-
-            bindSourceState(
-                item = item
-            )
+            binding.tvDeviceId.text = shortDeviceId(item)
 
             binding.rowCandidate.setOnClickListener {
                 onCandidateClick(item)
             }
         }
 
-        private fun bindSourceState(
+        private fun shortDeviceId(
             item: DeviceAddCandidate
-        ) {
-            when (item.source) {
-                DeviceAddSource.SETUP_AP -> {
-                    binding.tvDeviceState.text = "● Setup mode"
-                    binding.tvAction.text = "Set up"
-
-                    binding.tvDeviceState.setBackgroundResource(
-                        R.drawable.bg_device_add_status_setup
-                    )
-
-                    binding.tvAction.setBackgroundResource(
-                        R.drawable.bg_device_add_status_setup
-                    )
-
-                    binding.tvDeviceState.setTextColor(
-                        Color.parseColor("#6CB7FF")
-                    )
-
-                    binding.tvAction.setTextColor(
-                        Color.parseColor("#6CB7FF")
-                    )
-                }
-
+        ): String {
+            return when (item.source) {
                 DeviceAddSource.LOCAL_NETWORK -> {
-                    binding.tvDeviceState.text = "● Online"
-                    binding.tvAction.text = "Add"
-
-                    binding.tvDeviceState.setBackgroundResource(
-                        R.drawable.bg_device_add_status_connected
-                    )
-
-                    binding.tvAction.setBackgroundResource(
-                        R.drawable.bg_device_add_status_connected
-                    )
-
-                    binding.tvDeviceState.setTextColor(
-                        Color.parseColor("#67D982")
-                    )
-
-                    binding.tvAction.setTextColor(
-                        Color.parseColor("#67D982")
-                    )
+                    item.localDevice
+                        ?.id
+                        ?.toString()
+                        .orEmpty()
                 }
+
+                DeviceAddSource.SETUP_AP -> {
+                    item.setupSsid
+                        .orEmpty()
+                        .substringAfterLast(
+                            delimiter = "-",
+                            missingDelimiterValue = ""
+                        )
+                        .trim()
+                }
+            }.ifBlank {
+                item.key.takeLast(4)
             }
         }
     }

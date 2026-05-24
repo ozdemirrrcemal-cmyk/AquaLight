@@ -49,11 +49,16 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentDeviceAddBinding.bind(view)
 
-        val devicesStore = DevicesDataStoreManager.create(requireContext())
+        val devicesStore = DevicesDataStoreManager.create(
+            requireContext()
+        )
 
         candidateLoader = DeviceAddCandidateLoader(
             context = requireContext(),
@@ -71,10 +76,15 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
     private fun setupRecycler() {
         adapter = DeviceAddAdapter { candidate ->
-            handleCandidateClick(candidate)
+            handleCandidateClick(
+                candidate = candidate
+            )
         }
 
-        binding.rvCandidates.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvCandidates.layoutManager = LinearLayoutManager(
+            requireContext()
+        )
+
         binding.rvCandidates.adapter = adapter
     }
 
@@ -94,7 +104,9 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             return
         }
 
-        permissionLauncher.launch(requiredPermissions())
+        permissionLauncher.launch(
+            requiredPermissions()
+        )
     }
 
     private fun requiredPermissions(): Array<String> {
@@ -116,7 +128,9 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         )
 
         val nearbyWifiGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            isPermissionGranted(Manifest.permission.NEARBY_WIFI_DEVICES)
+            isPermissionGranted(
+                Manifest.permission.NEARBY_WIFI_DEVICES
+            )
         } else {
             true
         }
@@ -164,7 +178,9 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
             val candidates = runCatching {
                 candidateLoader.loadCandidates()
-            }.getOrDefault(emptyList())
+            }.getOrDefault(
+                emptyList()
+            )
 
             if (_binding == null) {
                 return@launch
@@ -175,12 +191,16 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             if (candidates.isEmpty()) {
                 showEmptyState()
             } else {
-                showCandidates(candidates)
+                showCandidates(
+                    candidates = candidates
+                )
             }
         }
     }
 
     private fun showLoadingState() {
+        binding.tvSubtitle.isVisible = true
+
         binding.searchingContainer.isVisible = true
         binding.scanAnimation.isVisible = true
         binding.scanAnimation.playAnimation()
@@ -191,8 +211,13 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnRetry.isEnabled = false
         binding.btnRetry.alpha = 0.45f
 
-        binding.tvTitle.text = getString(R.string.device_add_searching_title)
-        binding.tvSubtitle.text = getString(R.string.device_add_searching_subtitle)
+        binding.tvTitle.text = getString(
+            R.string.device_add_searching_title
+        )
+
+        binding.tvSubtitle.text = getString(
+            R.string.device_add_searching_subtitle
+        )
     }
 
     private fun showCandidates(
@@ -201,19 +226,26 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.scanAnimation.cancelAnimation()
         binding.searchingContainer.isVisible = false
 
+        binding.tvSubtitle.isVisible = false
+
         binding.rvCandidates.isVisible = true
         binding.emptyContainer.isVisible = false
 
         binding.btnRetry.isEnabled = true
         binding.btnRetry.alpha = 1f
 
-        binding.tvTitle.text = getString(R.string.device_add_title)
-        binding.tvSubtitle.text = getString(R.string.device_add_select_subtitle)
+        binding.tvTitle.text = getString(
+            R.string.device_add_title
+        )
 
-        adapter.submitList(candidates)
+        adapter.submitList(
+            candidates
+        )
     }
 
     private fun showEmptyState() {
+        binding.tvSubtitle.isVisible = true
+
         binding.scanAnimation.cancelAnimation()
         binding.searchingContainer.isVisible = false
 
@@ -223,15 +255,24 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnRetry.isEnabled = true
         binding.btnRetry.alpha = 1f
 
-        binding.tvTitle.text = getString(R.string.device_add_title)
-        binding.tvSubtitle.text = getString(R.string.device_add_empty_subtitle)
+        binding.tvTitle.text = getString(
+            R.string.device_add_title
+        )
 
-        adapter.submitList(emptyList())
+        binding.tvSubtitle.text = getString(
+            R.string.device_add_empty_subtitle
+        )
+
+        adapter.submitList(
+            emptyList()
+        )
     }
 
     private fun showPermissionRequiredState() {
         isLoading = false
 
+        binding.tvSubtitle.isVisible = true
+
         binding.scanAnimation.cancelAnimation()
         binding.searchingContainer.isVisible = false
 
@@ -241,10 +282,17 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnRetry.isEnabled = true
         binding.btnRetry.alpha = 1f
 
-        binding.tvTitle.text = getString(R.string.device_add_title)
-        binding.tvSubtitle.text = getString(R.string.device_add_permission_required)
+        binding.tvTitle.text = getString(
+            R.string.device_add_title
+        )
 
-        adapter.submitList(emptyList())
+        binding.tvSubtitle.text = getString(
+            R.string.device_add_permission_required
+        )
+
+        adapter.submitList(
+            emptyList()
+        )
 
         (activity as? BaseActivity)?.showSnackBar(
             message = getString(R.string.device_add_permission_message),
@@ -257,11 +305,15 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     ) {
         when (candidate.source) {
             DeviceAddSource.LOCAL_NETWORK -> {
-                saveLocalNetworkDevice(candidate)
+                saveLocalNetworkDevice(
+                    candidate = candidate
+                )
             }
 
             DeviceAddSource.SETUP_AP -> {
-                openSetupFlow(candidate)
+                openSetupFlow(
+                    candidate = candidate
+                )
             }
         }
     }
@@ -279,9 +331,13 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val deviceId = deviceStoreWriter.saveDiscoveredDevice(device)
+                val deviceId = deviceStoreWriter.saveDiscoveredDevice(
+                    device = device
+                )
 
-                openDeviceMenu(deviceId)
+                openDeviceMenu(
+                    deviceId = deviceId
+                )
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
