@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.add
 
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -26,7 +27,9 @@ class DeviceAddAdapter(
             false
         )
 
-        return DeviceAddViewHolder(binding)
+        return DeviceAddViewHolder(
+            binding = binding
+        )
     }
 
     override fun onBindViewHolder(
@@ -53,37 +56,52 @@ class DeviceAddAdapter(
 
             binding.tvDeviceName.text = item.displayName
             binding.tvDeviceFamily.text = item.familyName
-            binding.tvDeviceState.text = getStateText(item)
-            binding.tvConnectionInfo.text = getConnectionInfo(item)
-            binding.tvAction.text = item.actionText
 
-            applySourceStyle(item)
+            bindSourceState(
+                item = item
+            )
+
+            hideLegacyViews()
 
             binding.rowCandidate.setOnClickListener {
                 onCandidateClick(item)
             }
         }
 
-        private fun applySourceStyle(
+        private fun bindSourceState(
             item: DeviceAddCandidate
         ) {
             when (item.source) {
                 DeviceAddSource.SETUP_AP -> {
+                    binding.tvDeviceState.text = "● Setup mode"
+                    binding.tvAction.text = "Set up"
+
                     binding.tvDeviceState.setBackgroundResource(
                         R.drawable.bg_device_add_status_setup
                     )
 
+                    binding.tvAction.setBackgroundResource(
+                        R.drawable.bg_device_add_status_setup
+                    )
+
                     binding.tvDeviceState.setTextColor(
-                        Color.parseColor("#2D7BFF")
+                        Color.parseColor("#6CB7FF")
                     )
 
                     binding.tvAction.setTextColor(
-                        Color.parseColor("#2D7BFF")
+                        Color.parseColor("#6CB7FF")
                     )
                 }
 
                 DeviceAddSource.LOCAL_NETWORK -> {
+                    binding.tvDeviceState.text = "● Online"
+                    binding.tvAction.text = "Add"
+
                     binding.tvDeviceState.setBackgroundResource(
+                        R.drawable.bg_device_add_status_connected
+                    )
+
+                    binding.tvAction.setBackgroundResource(
                         R.drawable.bg_device_add_status_connected
                     )
 
@@ -98,34 +116,9 @@ class DeviceAddAdapter(
             }
         }
 
-        private fun getStateText(
-            item: DeviceAddCandidate
-        ): String {
-            return when (item.source) {
-                DeviceAddSource.SETUP_AP -> {
-                    "● Ready for setup"
-                }
-
-                DeviceAddSource.LOCAL_NETWORK -> {
-                    "● Already connected"
-                }
-            }
-        }
-
-        private fun getConnectionInfo(
-            item: DeviceAddCandidate
-        ): String {
-            return when (item.source) {
-                DeviceAddSource.SETUP_AP -> {
-                    item.setupSsid.orEmpty()
-                }
-
-                DeviceAddSource.LOCAL_NETWORK -> {
-                    item.localDevice?.ip.orEmpty()
-                }
-            }.ifBlank {
-                item.familyName
-            }
+        private fun hideLegacyViews() {
+            binding.tvConnectionInfo.visibility = View.GONE
+            binding.tvChevron.visibility = View.GONE
         }
     }
 
