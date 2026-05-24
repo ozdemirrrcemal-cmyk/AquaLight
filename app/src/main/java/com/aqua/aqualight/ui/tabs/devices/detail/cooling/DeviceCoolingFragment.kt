@@ -6,6 +6,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
+import com.patrykandpatrick.vico.views.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.views.cartesian.data.lineSeries
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -15,6 +17,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private val binding get() = _binding!!
 
     private val repository = CoolingDeviceRepository()
+    private val chartModelProducer = CartesianChartModelProducer()
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
@@ -32,6 +35,8 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         _binding = FragmentDeviceCoolingBinding.bind(view)
+
+        binding.temperatureChartView.modelProducer = chartModelProducer
 
         binding.tvControllerTitle.text = "Cooling Controller"
 
@@ -54,7 +59,11 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         if (deviceIp.isBlank()) {
             currentBinding.tvGraphStatus.text = "Device IP is missing."
             currentBinding.tvCurrentTemperature.text = "Current: -- °C"
-            currentBinding.temperatureChartView.setTemperatureSeries(emptyList())
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                clearTemperatureChart()
+            }
+
             return
         }
 
@@ -74,7 +83,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 if (sensors.isEmpty()) {
                     safeBinding.tvCurrentTemperature.text = "Current: -- °C"
                     safeBinding.tvGraphStatus.text = "No temperature sensor found."
-                    safeBinding.temperatureChartView.setTemperatureSeries(emptyList())
+                    clearTemperatureChart()
                     safeBinding.btnRefreshTemperature.isEnabled = true
                     return@onSuccess
                 }
@@ -98,14 +107,8 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
                 safeBinding.tvCurrentTemperature.text = currentText
 
-                safeBinding.temperatureChartView.setTemperatureSeries(
-                    sensors.map { sensor ->
-                        TemperatureChartView.TemperatureSeries(
-                            name = sensor.name,
-                            values = sensor.history,
-                            color = sensor.color
-                        )
-                    }
+                renderTemperatureChart(
+                    sensors = sensors
                 )
 
                 safeBinding.tvGraphStatus.text =
@@ -114,10 +117,54 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 safeBinding.tvCurrentTemperature.text = "Current: -- °C"
                 safeBinding.tvGraphStatus.text =
                     "Could not read temperature data: ${error.message}"
-                safeBinding.temperatureChartView.setTemperatureSeries(emptyList())
+
+                clearTemperatureChart()
             }
 
             safeBinding.btnRefreshTemperature.isEnabled = true
+        }
+    }
+
+    private suspend fun renderTemperatureChart(
+        sensors: List<CoolingDeviceRepository.TemperatureSensorData>
+    ) {
+        val validSensorSeries = sensors.mapNotNull { sensor ->
+            val points = sensor.history
+                .mapIndexedNotNull { index, value ->
+                    if (value != null && value > -100f && value < 200f) {
+                        index to value
+                    } else {
+                        null
+                    }
+                }
+
+            if (points.isEmpty()) {
+                null
+            } else {
+                points
+            }
+        }
+
+        if (validSensorSeries.isEmpty()) {
+            clearTemperatureChart()
+            return
+        }
+
+        chartModelProducer.runTransaction {
+            lineSeries {
+                validSensorSeries.forEach { points ->
+                    series(
+                        points.map { point -> point.first },
+                        points.map { point -> point.second }
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun clearTemperatureChart() {
+        chartModelProducer.runTransaction {
+            // Empty transaction clears the chart model.
         }
     }
 
