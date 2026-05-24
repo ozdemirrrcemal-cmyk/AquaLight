@@ -19,6 +19,67 @@ class LegacyDeviceSetupClient {
         val errorMessage: String?
     )
 
+    data class HomeWifiNetwork(
+        val ssid: String,
+        val rssi: Int
+    )
+
+    suspend fun scanHomeWifiNetworks(
+        network: Network
+    ): List<HomeWifiNetwork> = withContext(Dispatchers.IO) {
+        val requestJson = JSONObject().apply {
+            put(
+                "WiFiSC",
+                JSONObject().apply {
+                    put("Scan", 0)
+                }
+            )
+        }
+
+        val sRet = JSONObject().apply {
+            put("iPostCount", System.currentTimeMillis() % 100000)
+        }
+
+        val url = buildString {
+            append("http://192.168.4.1/get?")
+            append("Json=")
+            append(
+                URLEncoder.encode(
+                    requestJson.toString(),
+                    "UTF-8"
+                )
+            )
+            append("&sRet=")
+            append(
+                URLEncoder.encode(
+                    sRet.toString(),
+                    "UTF-8"
+                )
+            )
+        }
+
+        val connection = network.openConnection(
+            URL(url)
+        ) as HttpURLConnection
+
+        return@withContext try {
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 12_000
+            connection.readTimeout = 15_000
+            connection.doInput = true
+
+            val responseText = connection.inputStream
+                .bufferedReader()
+                .use { reader ->
+                    reader.readText()
+                }
+
+            parseWifiScanResponse(responseText)
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     suspend fun sendHomeWifiCredentials(
         network: Network,
         homeSsid: String,
@@ -86,8 +147,7 @@ class LegacyDeviceSetupClient {
                     connection.outputStream,
                     Charsets.UTF_8
                 )
-            ).use {
-                writer ->
+            ).use { writer ->
                 writer.write(body)
                 writer.flush()
             }
@@ -96,11 +156,10 @@ class LegacyDeviceSetupClient {
 
             val responseText = runCatching {
                 connection.inputStream
-                .bufferedReader()
-                .use {
-                    reader ->
-                    reader.readText()
-                }
+                    .bufferedReader()
+                    .use { reader ->
+                        reader.readText()
+                    }
             }.getOrNull()
 
             connection.disconnect()
@@ -119,5 +178,48 @@ class LegacyDeviceSetupClient {
                 errorMessage = exception.message ?: exception.toString()
             )
         }
+    }
+
+    private fun parseWifiScanResponse(
+        responseText: String
+    ): List<HomeWifiNetwork> {
+        val root = JSONObject(responseText)
+
+        val scanObject = root
+            .optJSONObject("WiFiSC")
+            ?.optJSONObject("Scan")
+            ?: root.optJSONObject("Scan")
+            ?: return emptyList()
+
+        return buildList {
+            val keys = scanObject.keys()
+
+            while (keys.hasNext()) {
+                val ssid = keys.next()
+                    .trim()
+
+                if (ssid.isBlank()) {
+                    continue
+                }
+
+                val rssi = scanObject.optInt(
+                    ssid,
+                    -100
+                )
+
+                add(
+                    HomeWifiNetwork(
+                        ssid = ssid,
+                        rssi = rssi
+                    )
+                )
+            }
+        }
+            .distinctBy { network ->
+                network.ssid
+            }
+            .sortedByDescending { network ->
+                network.rssi
+            }
     }
 }

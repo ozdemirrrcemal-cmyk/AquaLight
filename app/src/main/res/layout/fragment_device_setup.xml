@@ -55,7 +55,7 @@
         android:clipToPadding="false"
         android:fillViewport="true"
         android:paddingStart="24dp"
-        android:paddingTop="28dp"
+        android:paddingTop="26dp"
         android:paddingEnd="24dp"
         android:paddingBottom="28dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -69,14 +69,31 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
+            <FrameLayout
+                android:id="@+id/deviceImageContainer"
+                android:layout_width="108dp"
+                android:layout_height="108dp"
+                android:background="@drawable/bg_device_add_image_box">
+
+                <ImageView
+                    android:id="@+id/ivDeviceImage"
+                    android:layout_width="78dp"
+                    android:layout_height="78dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Device"
+                    android:scaleType="centerInside"
+                    tools:src="@drawable/ic_device_light" />
+
+            </FrameLayout>
+
             <TextView
                 android:id="@+id/tvTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
                 android:gravity="center"
-                android:text="Device"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="28sp"
+                android:textSize="30sp"
                 android:textStyle="bold"
                 tools:text="WRGB Pro2" />
 
@@ -84,9 +101,8 @@
                 android:id="@+id/tvSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="5dp"
                 android:gravity="center"
-                android:text="Aqua device"
                 android:textColor="@color/settings_text_secondary"
                 android:textSize="15sp"
                 tools:text="AquaLight" />
@@ -109,7 +125,6 @@
                     android:padding="20dp">
 
                     <TextView
-                        android:id="@+id/tvSetupSsidLabel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Device setup network"
@@ -120,7 +135,7 @@
                         android:id="@+id/tvSetupSsid"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_marginTop="7dp"
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:textColor="@android:color/white"
@@ -134,7 +149,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
                         android:lineSpacingExtra="3dp"
-                        android:text="Enter your home Wi-Fi details. AquaLight will connect to the device, send the network settings, then find it on your home network."
+                        android:text="First connect to your Aqua device, then choose the home Wi-Fi network the device should use."
                         android:textColor="@color/settings_text_secondary"
                         android:textSize="14sp" />
 
@@ -147,20 +162,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:hint="Home Wi-Fi name"
+                android:hint="Select home Wi-Fi"
                 app:boxBackgroundColor="#10233A"
                 app:boxCornerRadiusBottomEnd="18dp"
                 app:boxCornerRadiusBottomStart="18dp"
                 app:boxCornerRadiusTopEnd="18dp"
                 app:boxCornerRadiusTopStart="18dp"
                 app:boxStrokeColor="#243D5C"
+                app:endIconDrawable="@drawable/ic_radar"
+                app:endIconMode="custom"
                 app:hintTextColor="@color/settings_text_secondary">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etHomeWifiSsid"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:focusable="false"
+                    android:inputType="none"
                     android:maxLines="1"
                     android:textColor="@android:color/white"
                     android:textColorHint="@color/settings_text_secondary" />
@@ -208,7 +228,7 @@
                 android:layout_marginTop="14dp"
                 android:gravity="center"
                 android:lineSpacingExtra="3dp"
-                android:text="Ready to connect."
+                android:text="Choose your home Wi-Fi network to continue."
                 android:textColor="@color/settings_text_secondary"
                 android:textSize="14sp" />
 
