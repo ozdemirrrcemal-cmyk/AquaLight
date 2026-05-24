@@ -1317,4 +1317,25 @@ Delete Failed
 <string name="wifi_signal_strong">Strong signal</string>
 <string name="wifi_signal_good">Good signal</string>
 <string name="wifi_signal_weak">Weak signal</string>
+
+<string name="device_setup_header_title">Set up device</string>
+<string name="device_setup_ready_chip">Ready for setup</string>
+<string name="device_setup_network_label">Setup network</string>
+
+<string name="device_setup_step_1">1</string>
+<string name="device_setup_step_2">2</string>
+<string name="device_setup_step_3">3</string>
+<string name="device_setup_step_4">4</string>
+<string name="device_setup_step_device">Device</string>
+<string name="device_setup_step_wifi">Wi-Fi</string>
+<string name="device_setup_step_connect">Connect</string>
+<string name="device_setup_step_done">Done</string>
+
+<string name="device_setup_home_wifi_title">Home Wi-Fi</string>
+<string name="device_setup_home_wifi_subtitle">Choose the network your Aqua device will use.</string>
+<string name="device_setup_select_wifi_hint">Select home Wi-Fi</string>
+<string name="device_setup_password_hint">Wi-Fi password</string>
+
+<string name="device_setup_status_title">Connection status</string>
+<string name="device_setup_button_connect">Connect device</string>
 </resources>

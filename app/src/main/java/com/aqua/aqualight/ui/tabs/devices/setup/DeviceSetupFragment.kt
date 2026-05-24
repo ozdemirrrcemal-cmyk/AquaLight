@@ -57,6 +57,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         val password: String
     )
 
+    private enum class SetupUiStep {
+        WIFI,
+        CONNECT,
+        DONE
+    }
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -65,7 +71,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         _binding = FragmentDeviceSetupBinding.bind(view)
 
-        val devicesStore = DevicesDataStoreManager.create(requireContext())
+        val devicesStore = DevicesDataStoreManager.create(
+            requireContext()
+        )
 
         wifiConnector = DeviceSetupWifiConnector(requireContext())
         setupClient = LegacyDeviceSetupClient()
@@ -78,11 +86,25 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private fun readArgs() {
-        displayName = requireArguments().getString("displayName", "Device")
-        familyName = requireArguments().getString("familyName", "Aqua device")
-        setupSsid = requireArguments().getString("setupSsid", "")
+        displayName = requireArguments().getString(
+            "displayName",
+            "Device"
+        )
 
-        val deviceTypeKey = requireArguments().getString("deviceType", "")
+        familyName = requireArguments().getString(
+            "familyName",
+            "Aqua device"
+        )
+
+        setupSsid = requireArguments().getString(
+            "setupSsid",
+            ""
+        )
+
+        val deviceTypeKey = requireArguments().getString(
+            "deviceType",
+            ""
+        )
 
         expectedDeviceType = AquaDeviceType.entries.firstOrNull { type ->
             type.storageKey == deviceTypeKey
@@ -101,6 +123,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         )
 
         binding.ivDeviceImage.contentDescription = displayName
+
+        renderSetupProgress(
+            activeStep = SetupUiStep.WIFI
+        )
     }
 
     private fun setupClickListeners() {
@@ -129,11 +155,17 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         }
 
         if (setupSsid.isBlank()) {
-            showError(getString(R.string.device_setup_missing_setup_network))
+            showError(
+                getString(R.string.device_setup_missing_setup_network)
+            )
             return
         }
 
         isScanningNetworks = true
+
+        renderSetupProgress(
+            activeStep = SetupUiStep.WIFI
+        )
 
         setBusy(
             busy = true,
@@ -165,7 +197,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 }
 
                 if (networks.isEmpty()) {
-                    showError(getString(R.string.device_setup_no_networks_found))
+                    showError(
+                        getString(R.string.device_setup_no_networks_found)
+                    )
 
                     setBusy(
                         busy = false,
@@ -175,7 +209,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                     return@launch
                 }
 
-                showWifiNetworksBottomSheet(networks)
+                showWifiNetworksBottomSheet(
+                    networks = networks
+                )
 
                 setBusy(
                     busy = false,
@@ -230,6 +266,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         isSettingUp = true
 
+        renderSetupProgress(
+            activeStep = SetupUiStep.CONNECT
+        )
+
         setBusy(
             busy = true,
             status = getString(R.string.device_setup_preparing)
@@ -237,7 +277,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                runSetupFlow(input)
+                runSetupFlow(
+                    input = input
+                )
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
@@ -275,7 +317,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             .orEmpty()
 
         if (setupSsid.isBlank()) {
-            showError(getString(R.string.device_setup_missing_setup_network))
+            showError(
+                getString(R.string.device_setup_missing_setup_network)
+            )
             return null
         }
 
@@ -311,6 +355,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         if (!isViewReady()) {
             return
         }
+
+        renderSetupProgress(
+            activeStep = SetupUiStep.CONNECT
+        )
 
         setBusy(
             busy = true,
@@ -395,11 +443,17 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 getString(R.string.device_setup_device_not_found)
             )
 
-        deviceStoreWriter.saveDiscoveredDevice(discoveredDevice)
+        deviceStoreWriter.saveDiscoveredDevice(
+            device = discoveredDevice
+        )
 
         if (!isViewReady()) {
             return
         }
+
+        renderSetupProgress(
+            activeStep = SetupUiStep.DONE
+        )
 
         setBusy(
             busy = true,
@@ -408,14 +462,18 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         delay(700L)
 
-        openDeviceMenu(discoveredDevice.id)
+        openDeviceMenu(
+            deviceId = discoveredDevice.id
+        )
     }
 
     private suspend fun waitForDeviceClientConnection(
         connection: DeviceSetupWifiConnector.SetupConnection,
         firstResponseBody: String?
     ): Boolean {
-        val firstStatus = setupClient.parseDeviceWifiStatus(firstResponseBody)
+        val firstStatus = setupClient.parseDeviceWifiStatus(
+            responseText = firstResponseBody
+        )
 
         if (firstStatus.connected) {
             return true
@@ -538,13 +596,22 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         val root = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(22.dp(), 12.dp(), 22.dp(), 24.dp())
+            setPadding(
+                22.dp(),
+                12.dp(),
+                22.dp(),
+                24.dp()
+            )
             setBackgroundColor(Color.TRANSPARENT)
         }
 
         val handle = View(requireContext()).apply {
             setBackgroundColor(Color.parseColor("#4A5E75"))
-            layoutParams = LinearLayout.LayoutParams(42.dp(), 4.dp()).apply {
+
+            layoutParams = LinearLayout.LayoutParams(
+                42.dp(),
+                4.dp()
+            ).apply {
                 gravity = Gravity.CENTER_HORIZONTAL
                 bottomMargin = 18.dp()
             }
@@ -563,7 +630,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             textSize = 14f
             setTextColor(Color.parseColor("#8FA4BE"))
             includeFontPadding = false
-            setPadding(0, 10.dp(), 0, 18.dp())
+            setPadding(
+                0,
+                10.dp(),
+                0,
+                18.dp()
+            )
         }
 
         root.addView(handle)
@@ -619,6 +691,11 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                     R.string.device_setup_selected_network,
                     network.ssid
                 )
+
+                renderSetupProgress(
+                    activeStep = SetupUiStep.WIFI
+                )
+
                 dialog.dismiss()
             }
         }
@@ -626,7 +703,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         val row = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(16.dp(), 14.dp(), 16.dp(), 14.dp())
+            setPadding(
+                16.dp(),
+                14.dp(),
+                16.dp(),
+                14.dp()
+            )
         }
 
         val iconBox = TextView(requireContext()).apply {
@@ -638,11 +720,15 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             setBackgroundResource(R.drawable.bg_device_add_image_box)
             includeFontPadding = false
 
-            layoutParams = LinearLayout.LayoutParams(44.dp(), 44.dp())
+            layoutParams = LinearLayout.LayoutParams(
+                44.dp(),
+                44.dp()
+            )
         }
 
         val textBox = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
+
             layoutParams = LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -667,7 +753,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             textSize = 12f
             setTextColor(Color.parseColor("#8FA4BE"))
             includeFontPadding = false
-            setPadding(0, 6.dp(), 0, 0)
+            setPadding(
+                0,
+                6.dp(),
+                0,
+                0
+            )
         }
 
         val chevron = TextView(requireContext()).apply {
@@ -688,6 +779,86 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         card.addView(row)
 
         return card
+    }
+
+    private fun renderSetupProgress(
+        activeStep: SetupUiStep
+    ) {
+        styleStep(
+            card = binding.cardStepDevice,
+            number = binding.tvStepDeviceNumber,
+            label = binding.tvStepDeviceLabel,
+            completed = true,
+            active = false
+        )
+
+        styleStep(
+            card = binding.cardStepWifi,
+            number = binding.tvStepWifiNumber,
+            label = binding.tvStepWifiLabel,
+            completed = activeStep == SetupUiStep.CONNECT ||
+                activeStep == SetupUiStep.DONE,
+            active = activeStep == SetupUiStep.WIFI
+        )
+
+        styleStep(
+            card = binding.cardStepConnect,
+            number = binding.tvStepConnectNumber,
+            label = binding.tvStepConnectLabel,
+            completed = activeStep == SetupUiStep.DONE,
+            active = activeStep == SetupUiStep.CONNECT
+        )
+
+        styleStep(
+            card = binding.cardStepDone,
+            number = binding.tvStepDoneNumber,
+            label = binding.tvStepDoneLabel,
+            completed = activeStep == SetupUiStep.DONE,
+            active = activeStep == SetupUiStep.DONE
+        )
+
+        if (activeStep == SetupUiStep.DONE) {
+            binding.statusDot.setBackgroundResource(R.drawable.bg_status_dot_green)
+        } else {
+            binding.statusDot.setBackgroundResource(R.drawable.bg_setup_dot_blue)
+        }
+    }
+
+    private fun styleStep(
+        card: MaterialCardView,
+        number: TextView,
+        label: TextView,
+        completed: Boolean,
+        active: Boolean
+    ) {
+        val backgroundColor: Int
+        val strokeColor: Int
+        val textColor: Int
+
+        when {
+            completed -> {
+                backgroundColor = Color.parseColor("#123526")
+                strokeColor = Color.parseColor("#31D07E")
+                textColor = Color.parseColor("#31D07E")
+            }
+
+            active -> {
+                backgroundColor = Color.parseColor("#143A5F")
+                strokeColor = Color.parseColor("#2B95F6")
+                textColor = Color.parseColor("#6CB7FF")
+            }
+
+            else -> {
+                backgroundColor = Color.parseColor("#10233A")
+                strokeColor = Color.parseColor("#243D5C")
+                textColor = Color.parseColor("#8FA4BE")
+            }
+        }
+
+        card.setCardBackgroundColor(backgroundColor)
+        card.strokeColor = strokeColor
+        number.setTextColor(textColor)
+        label.setTextColor(textColor)
     }
 
     private fun openDeviceMenu(
@@ -726,7 +897,11 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         binding.etHomeWifiPassword.isEnabled = enabled
         binding.btnStartSetup.isEnabled = enabled
         binding.btnBack.isEnabled = enabled
-        binding.btnStartSetup.alpha = if (enabled) 1f else 0.55f
+        binding.btnStartSetup.alpha = if (enabled) {
+            1f
+        } else {
+            0.55f
+        }
     }
 
     private fun closeSetupConnection() {
@@ -765,6 +940,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     override fun onDestroyView() {
         closeSetupConnection()
         _binding = null
+
         super.onDestroyView()
     }
 
