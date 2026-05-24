@@ -159,12 +159,12 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Cooling Active"
+                            android:text="Fan Mode"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="14sp" />
 
                         <TextView
-                            android:id="@+id/tvCoolingActiveValue"
+                            android:id="@+id/tvFanModeValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="--"
@@ -184,12 +184,12 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Fan Mode"
+                            android:text="Automation Status"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="14sp" />
 
                         <TextView
-                            android:id="@+id/tvFanModeValue"
+                            android:id="@+id/tvAutomationStatusValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="--"
@@ -240,6 +240,31 @@
 
                         <TextView
                             android:id="@+id/tvFullPowerValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="6dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Power Range"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tvFanPowerRangeValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="--"

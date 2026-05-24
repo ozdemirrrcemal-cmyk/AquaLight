@@ -21,24 +21,30 @@ class CoolingManagementRenderer(
         }
 
         binding.tvFanOutputValue.text = formatFanOutput(
-            fan?.vNow
+            value = fan?.vNow
         )
-
-        binding.tvCoolingActiveValue.text = if (rule.enabled) {
-            "On"
-        } else {
-            "Off"
-        }
 
         binding.tvFanModeValue.text = fan?.regime?.displayName ?: "--"
 
+        binding.tvAutomationStatusValue.text = resolveAutomationStatus(
+            rule = rule,
+            fan = fan,
+            usedSensorCount = usedSensors.size
+        )
+
         binding.tvStartCoolingValue.text = formatTemperature(
-            rule.tMin
+            value = rule.tMin
         )
 
         binding.tvFullPowerValue.text = formatTemperature(
-            rule.tMax
+            value = rule.tMax
         )
+
+        binding.tvFanPowerRangeValue.text = if (fan == null) {
+            "--"
+        } else {
+            "${formatPercent(fan.vMin)} - ${formatPercent(fan.vMax)}"
+        }
 
         binding.tvUsedSensorsValue.text = if (usedSensors.isEmpty()) {
             "No sensor selected"
@@ -53,11 +59,40 @@ class CoolingManagementRenderer(
 
     fun clear() {
         binding.tvFanOutputValue.text = "--"
-        binding.tvCoolingActiveValue.text = "--"
         binding.tvFanModeValue.text = "--"
+        binding.tvAutomationStatusValue.text = "--"
         binding.tvStartCoolingValue.text = "--"
         binding.tvFullPowerValue.text = "--"
+        binding.tvFanPowerRangeValue.text = "--"
         binding.tvUsedSensorsValue.text = "--"
+    }
+
+    private fun resolveAutomationStatus(
+        rule: CoolingDeviceRepository.CoolRuleData,
+        fan: CoolingDeviceRepository.FanChannelData?,
+        usedSensorCount: Int
+    ): String {
+        if (fan == null) {
+            return "No fan"
+        }
+
+        return when (fan.regime) {
+            CoolingDeviceRepository.FanRegime.OFF -> {
+                "Off"
+            }
+
+            CoolingDeviceRepository.FanRegime.ON -> {
+                "Manual On"
+            }
+
+            CoolingDeviceRepository.FanRegime.AUTO -> {
+                when {
+                    !rule.enabled -> "Disabled"
+                    usedSensorCount <= 0 -> "No sensor"
+                    else -> "Active"
+                }
+            }
+        }
     }
 
     private fun formatFanOutput(
@@ -67,12 +102,29 @@ class CoolingManagementRenderer(
             return "--"
         }
 
-        val percent = (value.coerceIn(
-            0f,
-            1f
-        ) * 100f).roundToInt()
+        return "${normalizePercent(value).roundToInt()}%"
+    }
 
-        return "$percent%"
+    private fun formatPercent(
+        value: Float
+    ): String {
+        return "${normalizePercent(value).roundToInt()}%"
+    }
+
+    private fun normalizePercent(
+        value: Float
+    ): Float {
+        return if (value <= 1f) {
+            value.coerceIn(
+                0f,
+                1f
+            ) * 100f
+        } else {
+            value.coerceIn(
+                0f,
+                100f
+            )
+        }
     }
 
     private fun formatTemperature(
