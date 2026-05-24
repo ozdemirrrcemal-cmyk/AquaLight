@@ -606,7 +606,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private suspend fun waitUntilDeviceReportsHomeWifiConnected(
         connection: DeviceSetupWifiConnector.SetupConnection
     ): Boolean {
-        repeat(12) {
+        repeat(15) {
             val status = runCatching {
                 setupClient.readDeviceWifiStatus(
                     network = connection.network
@@ -618,7 +618,19 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             }
 
             if (_binding != null) {
-                binding.tvStatus.text = "Device is joining your home Wi-Fi..."
+                val ipText = status?.clientIp.orEmpty()
+                val stateText = status?.statusText.orEmpty()
+
+                binding.tvStatus.text = when {
+                    ipText.isNotBlank() && ipText != "0.0.0.0" ->
+                    "Device reported IP $ipText. Waiting for connection..."
+
+                    stateText.isNotBlank() ->
+                    "Device Wi-Fi status: $stateText"
+
+                    else ->
+                    "Device is joining your home Wi-Fi..."
+                }
             }
 
             delay(3_000L)
