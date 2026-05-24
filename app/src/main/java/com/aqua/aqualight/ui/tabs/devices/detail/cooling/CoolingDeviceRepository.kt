@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
+import android.graphics.Color
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -34,9 +35,9 @@ class CoolingDeviceRepository {
                 value: String
             ): FanRegime {
                 return when (value.trim().lowercase()) {
-                    "auto" -> AUTO
-                    "on" -> ON
-                    "off" -> OFF
+                    "auto", "0" -> AUTO
+                    "on", "1" -> ON
+                    "off", "2" -> OFF
                     else -> OFF
                 }
             }
@@ -81,8 +82,25 @@ class CoolingDeviceRepository {
                 return null
             }
 
+            val ruleGpio = rule.gpioPwm.trim()
+
+            if (ruleGpio.isBlank() || ruleGpio == "-") {
+                return if (fanChannels.size == 1) {
+                    fanChannels.first()
+                } else {
+                    null
+                }
+            }
+
             return fanChannels.firstOrNull { fan ->
-                fan.gpioPwm == rule.gpioPwm
+                fan.gpioPwm.trim().equals(
+                    ruleGpio,
+                    ignoreCase = true
+                )
+            } ?: if (fanChannels.size == 1) {
+                fanChannels.first()
+            } else {
+                null
             }
         }
 
@@ -93,9 +111,9 @@ class CoolingDeviceRepository {
                 return emptyList()
             }
 
-            return sensors.filterIndexed { index, _ ->
+            return sensors.filter { sensor ->
                 rule.selectedTemperatureFlags.getOrNull(
-                    index
+                    sensor.index
                 ) == true
             }
         }
@@ -247,7 +265,9 @@ class CoolingDeviceRepository {
                 val name = sensorJson.optString(
                     "Name",
                     "Sensor ${index + 1}"
-                )
+                ).ifBlank {
+                    "Sensor ${index + 1}"
+                }
 
                 val temperature = sensorJson.optDouble(
                     "Temperature",
@@ -267,23 +287,15 @@ class CoolingDeviceRepository {
                     )
                 )
 
-                val colorFromDevice = sensorJson.optLong(
-                    "Color",
-                    0L
-                ).toInt()
-
                 TemperatureSensorData(
                     index = index,
                     name = name,
                     currentTemperature = temperature,
                     history = history,
-                    color = if (colorFromDevice != 0) {
-                        colorFromDevice
-                    } else {
-                        defaultSensorColor(
-                            index = index
-                        )
-                    }
+                    color = normalizeDeviceColor(
+                        rawColor = sensorJson.opt("Color"),
+                        fallbackIndex = index
+                    )
                 )
             }
             .sortedBy { sensor ->
@@ -313,11 +325,13 @@ class CoolingDeviceRepository {
                     name = ruleJson.optString(
                         "Name",
                         "Cooling ${index + 1}"
-                    ),
+                    ).ifBlank {
+                        "Cooling ${index + 1}"
+                    },
                     gpioPwm = ruleJson.optString(
                         "GPIO_PWM",
                         "-"
-                    ),
+                    ).trim(),
                     selectedTemperatureFlags = parseBooleanArray(
                         array = ruleJson.optJSONArray("LbT")
                     ),
@@ -360,11 +374,13 @@ class CoolingDeviceRepository {
                     name = fanJson.optString(
                         "Name",
                         "Fan ${index + 1}"
-                    ),
+                    ).ifBlank {
+                        "Fan ${index + 1}"
+                    },
                     gpioPwm = fanJson.optString(
                         "GPIO_PWM",
                         "-"
-                    ),
+                    ).trim(),
                     regime = FanRegime.fromRaw(
                         value = fanJson.optString(
                             "Regime",
@@ -410,10 +426,15 @@ class CoolingDeviceRepository {
             when (value) {
                 is Boolean -> value
                 is Number -> value.toInt() != 0
-                is String -> value == "1" || value.equals(
-                    "true",
-                    ignoreCase = true
-                )
+                is String -> value == "1" ||
+                    value.equals(
+                        "true",
+                        ignoreCase = true
+                    ) ||
+                    value.equals(
+                        "on",
+                        ignoreCase = true
+                    )
                 else -> false
             }
         }
@@ -473,6 +494,70 @@ class CoolingDeviceRepository {
         }
 
         return result
+    }
+
+    private fun normalizeDeviceColor(
+        rawColor: Any?,
+        fallbackIndex: Int
+    ): Int {
+        val colorValue = when (rawColor) {
+            null,
+            JSONObject.NULL -> null
+
+            is Number -> rawColor.toLong()
+
+            is String -> parseColorStringToLong(
+                value = rawColor
+            )
+
+            else -> null
+        }
+
+        if (colorValue == null || colorValue == 0L) {
+            return defaultSensorColor(
+                index = fallbackIndex
+            )
+        }
+
+        val color = colorValue.toInt()
+
+        return if ((color ushr 24) == 0) {
+            0xFF000000.toInt() or (color and 0x00FFFFFF)
+        } else {
+            color
+        }
+    }
+
+    private fun parseColorStringToLong(
+        value: String
+    ): Long? {
+        val trimmed = value.trim()
+
+        if (trimmed.isBlank()) {
+            return null
+        }
+
+        return runCatching {
+            when {
+                trimmed.startsWith("#") -> {
+                    Color.parseColor(trimmed).toLong()
+                }
+
+                trimmed.startsWith("0x", ignoreCase = true) -> {
+                    trimmed.removePrefix("0x")
+                        .removePrefix("0X")
+                        .toLong(16)
+                }
+
+                trimmed.all { char -> char.isDigit() } -> {
+                    trimmed.toLong()
+                }
+
+                else -> {
+                    trimmed.toLong(16)
+                }
+            }
+        }.getOrNull()
     }
 
     private fun JSONObject.optFloatCompat(

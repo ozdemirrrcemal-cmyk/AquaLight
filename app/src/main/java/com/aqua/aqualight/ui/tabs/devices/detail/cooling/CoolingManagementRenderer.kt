@@ -20,6 +20,8 @@ class CoolingManagementRenderer(
             return
         }
 
+        binding.tvControlledFanValue.text = fan?.name ?: "No fan"
+
         binding.tvFanOutputValue.text = formatFanOutput(
             value = fan?.vNow
         )
@@ -46,6 +48,10 @@ class CoolingManagementRenderer(
             "${formatPercent(fan.vMin)} - ${formatPercent(fan.vMax)}"
         }
 
+        binding.tvFanChannelsValue.text = formatFanChannels(
+            fans = data.fanChannels
+        )
+
         binding.tvUsedSensorsValue.text = if (usedSensors.isEmpty()) {
             "No sensor selected"
         } else {
@@ -58,12 +64,14 @@ class CoolingManagementRenderer(
     }
 
     fun clear() {
+        binding.tvControlledFanValue.text = "--"
         binding.tvFanOutputValue.text = "--"
         binding.tvFanModeValue.text = "--"
         binding.tvAutomationStatusValue.text = "--"
         binding.tvStartCoolingValue.text = "--"
         binding.tvFullPowerValue.text = "--"
         binding.tvFanPowerRangeValue.text = "--"
+        binding.tvFanChannelsValue.text = "--"
         binding.tvUsedSensorsValue.text = "--"
     }
 
@@ -92,6 +100,20 @@ class CoolingManagementRenderer(
                     else -> "Active"
                 }
             }
+        }
+    }
+
+    private fun formatFanChannels(
+        fans: List<CoolingDeviceRepository.FanChannelData>
+    ): String {
+        if (fans.isEmpty()) {
+            return "No fan channel"
+        }
+
+        return fans.joinToString(
+            separator = "\n"
+        ) { fan ->
+            "${fan.name}: ${fan.regime.displayName} • ${formatFanOutput(fan.vNow)}"
         }
     }
 
