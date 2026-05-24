@@ -28,8 +28,7 @@ class LegacyDeviceSetupClient {
 
     data class DeviceWifiStatus(
         val connected: Boolean,
-        val clientIp: String,
-        val statusText: String
+        val clientIp: String
     )
 
     suspend fun scanHomeWifiNetworks(
@@ -44,14 +43,14 @@ class LegacyDeviceSetupClient {
             )
         }
 
-        val responseText = performGetRequest(
-            network = network,
-            requestJson = requestJson,
-            connectTimeoutMs = 12_000,
-            readTimeoutMs = 15_000
+        parseWifiScanResponse(
+            responseText = performGetRequest(
+                network = network,
+                requestJson = requestJson,
+                connectTimeoutMs = 12_000,
+                readTimeoutMs = 15_000
+            )
         )
-
-        parseWifiScanResponse(responseText)
     }
 
     suspend fun readDeviceWifiStatus(
@@ -61,26 +60,22 @@ class LegacyDeviceSetupClient {
             put(
                 WIFI_SC,
                 JSONObject().apply {
-                    put("ServerEnabled", 0)
-                    put("ServerSSID", 0)
-                    put("ServerPassword", 0)
                     put("ClientEnabled", 0)
                     put("ClientSSID", 0)
-                    put("ClientPassword", 0)
                     put("ClientIP", 0)
                     put("ClientStatus", 0)
                 }
             )
         }
 
-        val responseText = performGetRequest(
-            network = network,
-            requestJson = requestJson,
-            connectTimeoutMs = 8_000,
-            readTimeoutMs = 8_000
+        parseDeviceWifiStatus(
+            responseText = performGetRequest(
+                network = network,
+                requestJson = requestJson,
+                connectTimeoutMs = 8_000,
+                readTimeoutMs = 8_000
+            )
         )
-
-        parseDeviceWifiStatus(responseText)
     }
 
     fun parseDeviceWifiStatus(
@@ -89,20 +84,16 @@ class LegacyDeviceSetupClient {
         if (responseText.isNullOrBlank()) {
             return DeviceWifiStatus(
                 connected = false,
-                clientIp = "",
-                statusText = "Empty response"
+                clientIp = ""
             )
         }
 
-        val root = try {
+        val root = runCatching {
             JSONObject(responseText)
-        } catch (exception: Exception) {
-            return DeviceWifiStatus(
-                connected = false,
-                clientIp = "",
-                statusText = "Invalid JSON"
-            )
-        }
+        }.getOrNull() ?: return DeviceWifiStatus(
+            connected = false,
+            clientIp = ""
+        )
 
         val wifiObject = root.optJSONObject(WIFI_SC)
 
@@ -120,25 +111,9 @@ class LegacyDeviceSetupClient {
             ?.optBoolean("ClientEnabled", true)
             ?: true
 
-        val statusTextFromDevice = wifiObject
-            ?.optString("ClientStatus", "")
-            ?.trim()
-            .orEmpty()
-
-        val hasValidClientIp = isValidHomeNetworkIp(clientIp)
-        val connected = hasValidClientIp && clientEnabled
-
-        val statusText = when {
-            connected -> "Connected"
-            statusTextFromDevice.isNotBlank() -> statusTextFromDevice
-            clientIp.isNotBlank() -> "IP=$clientIp"
-            else -> "Not connected"
-        }
-
         return DeviceWifiStatus(
-            connected = connected,
-            clientIp = clientIp,
-            statusText = statusText
+            connected = isValidHomeNetworkIp(clientIp) && clientEnabled,
+            clientIp = clientIp
         )
     }
 
@@ -148,7 +123,7 @@ class LegacyDeviceSetupClient {
         setupPassword: String,
         homeSsid: String,
         homePassword: String,
-        disableSetupAccessPoint: Boolean = true
+        disableSetupAccessPoint: Boolean
     ): SetupResult = withContext(Dispatchers.IO) {
         val requestJson = JSONObject().apply {
             put(
@@ -184,8 +159,6 @@ class LegacyDeviceSetupClient {
         requestJson: JSONObject,
         disableSetupAccessPoint: Boolean
     ): SetupResult {
-        val body = buildRawSetBody(requestJson)
-
         var connection: HttpURLConnection? = null
         var bodySent = false
 
@@ -201,18 +174,11 @@ class LegacyDeviceSetupClient {
             } else {
                 75_000
             }
+
             connection.doOutput = true
             connection.useCaches = false
-
-            connection.setRequestProperty(
-                "Content-Type",
-                "text/plain; charset=utf-8"
-            )
-
-            connection.setRequestProperty(
-                "Connection",
-                "close"
-            )
+            connection.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
+            connection.setRequestProperty("Connection", "close")
 
             BufferedWriter(
                 OutputStreamWriter(
@@ -220,7 +186,11 @@ class LegacyDeviceSetupClient {
                     Charsets.UTF_8
                 )
             ).use { writer ->
-                writer.write(body)
+                writer.write(
+                    buildRawSetBody(
+                        json = requestJson
+                    )
+                )
                 writer.flush()
             }
 
@@ -228,7 +198,7 @@ class LegacyDeviceSetupClient {
 
             val responseCode = connection.responseCode
 
-            val responseText = runCatching {
+            val responseBody = runCatching {
                 connection.inputStream
                     .bufferedReader()
                     .use { reader ->
@@ -245,14 +215,14 @@ class LegacyDeviceSetupClient {
             SetupResult(
                 success = responseCode in 200..299,
                 responseCode = responseCode,
-                responseBody = responseText,
+                responseBody = responseBody,
                 errorMessage = null
             )
         } catch (exception: Exception) {
-            val requestWasLikelyAccepted = bodySent &&
+            val acceptedByDevice = bodySent &&
                 isExpectedNetworkTransitionException(exception)
 
-            if (requestWasLikelyAccepted) {
+            if (acceptedByDevice) {
                 SetupResult(
                     success = true,
                     responseCode = null,
@@ -280,7 +250,11 @@ class LegacyDeviceSetupClient {
     ): String {
         val url = buildString {
             append("$BASE_URL/get?")
-            append(buildEncodedGetBody(requestJson))
+            append(
+                buildEncodedGetBody(
+                    json = requestJson
+                )
+            )
         }
 
         val connection = network.openConnection(
@@ -330,9 +304,7 @@ class LegacyDeviceSetupClient {
                     "UTF-8"
                 )
             )
-
             append("&sRet=")
-
             append(
                 URLEncoder.encode(
                     sRet.toString(),
@@ -370,15 +342,13 @@ class LegacyDeviceSetupClient {
                     continue
                 }
 
-                val rssi = scanObject.optInt(
-                    ssid,
-                    -100
-                )
-
                 add(
                     HomeWifiNetwork(
                         ssid = ssid,
-                        rssi = rssi
+                        rssi = scanObject.optInt(
+                            ssid,
+                            -100
+                        )
                     )
                 )
             }
@@ -407,22 +377,10 @@ class LegacyDeviceSetupClient {
 
         return exception is SocketTimeoutException ||
             exception is SocketException ||
-            message.contains(
-                other = "timeout",
-                ignoreCase = true
-            ) ||
-            message.contains(
-                other = "closed",
-                ignoreCase = true
-            ) ||
-            message.contains(
-                other = "unreachable",
-                ignoreCase = true
-            ) ||
-            message.contains(
-                other = "failed to connect",
-                ignoreCase = true
-            )
+            message.contains("timeout", ignoreCase = true) ||
+            message.contains("closed", ignoreCase = true) ||
+            message.contains("unreachable", ignoreCase = true) ||
+            message.contains("failed to connect", ignoreCase = true)
     }
 
     private companion object {

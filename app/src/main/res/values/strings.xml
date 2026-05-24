@@ -1269,4 +1269,52 @@ Delete Failed
 <string name="settings_backup_restore_section_description">Backup and restore aquarium data section</string>
 <string name="settings_backup_restore_arrow_description">Open backup and restore settings</string>
 <string name="back">Back</string>
+<!-- Device add -->
+<string name="device_add_title">Add Device</string>
+<string name="device_add_searching_title">Searching...</string>
+<string name="device_add_searching_subtitle">Looking for nearby Aqua devices.</string>
+<string name="device_add_select_subtitle">Select your device to continue.</string>
+<string name="device_add_empty_subtitle">No Aqua devices found nearby.</string>
+<string name="device_add_permission_required">Permission required.</string>
+<string name="device_add_permission_message">Wi-Fi permission is required to find nearby Aqua devices.</string>
+<string name="device_add_save_error">Device could not be added.</string>
+
+<!-- Device setup -->
+<string name="device_setup_choose_home_wifi">Choose your home Wi-Fi network to continue.</string>
+<string name="device_setup_missing_setup_network">Device setup network is missing.</string>
+<string name="device_setup_connecting_to_setup">Connecting to %1$s to scan Wi-Fi networks...</string>
+<string name="device_setup_scanning_home_networks">Scanning home Wi-Fi networks...</string>
+<string name="device_setup_no_networks_found">No Wi-Fi networks found near the device.</string>
+<string name="device_setup_no_networks_status">No Wi-Fi networks found. Keep the device close to your router and try again.</string>
+<string name="device_setup_select_home_wifi_status">Select your home Wi-Fi network.</string>
+<string name="device_setup_scan_failed">Could not scan networks. Make sure the setup network is active and try again.</string>
+<string name="device_setup_scan_error">Could not scan Wi-Fi networks.</string>
+
+<string name="device_setup_sheet_title">Select home Wi-Fi</string>
+<string name="device_setup_sheet_message">Choose the Wi-Fi network your Aqua device should connect to.</string>
+<string name="device_setup_selected_network">Selected %1$s. Enter the Wi-Fi password to continue.</string>
+
+<string name="device_setup_validation_select_wifi">Select your home Wi-Fi network.</string>
+<string name="device_setup_validation_password">Enter your home Wi-Fi password.</string>
+
+<string name="device_setup_preparing">Preparing device setup...</string>
+<string name="device_setup_sending_credentials">Sending home Wi-Fi settings...</string>
+<string name="device_setup_not_accepted">Device did not accept Wi-Fi settings.</string>
+<string name="device_setup_checking_connection">Checking device Wi-Fi connection...</string>
+<string name="device_setup_joining_home_wifi">Device is joining your home Wi-Fi...</string>
+<string name="device_setup_connection_failed">Device could not connect to the selected Wi-Fi network. Check the Wi-Fi password and make sure the network is 2.4 GHz.</string>
+<string name="device_setup_closing_setup_network">Device connected. Closing setup network...</string>
+<string name="device_setup_close_ap_failed">Device connected, but setup network could not be closed.</string>
+<string name="device_setup_waiting_phone_home_wifi">Waiting for your phone to return to home Wi-Fi...</string>
+<string name="device_setup_phone_not_home_wifi">Your phone did not return to %1$s. Connect to your home Wi-Fi and try again.</string>
+<string name="device_setup_finding_device">Finding device on your home network...</string>
+<string name="device_setup_device_not_found">Device setup was sent, but the device was not found on your home network.</string>
+<string name="device_setup_success">Device added successfully.</string>
+<string name="device_setup_failed">Setup failed. Check your Wi-Fi password and try again.</string>
+<string name="device_setup_generic_failed">Device setup failed.</string>
+
+<string name="wifi_signal_excellent">Excellent signal</string>
+<string name="wifi_signal_strong">Strong signal</string>
+<string name="wifi_signal_good">Good signal</string>
+<string name="wifi_signal_weak">Weak signal</string>
 </resources>

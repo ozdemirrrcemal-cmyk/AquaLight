@@ -11,15 +11,15 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.navOptions
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.DeviceStoreWriter
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidateLoader
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
-import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
 import kotlinx.coroutines.launch
 
@@ -28,12 +28,12 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     private var _binding: FragmentDeviceAddBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DeviceAddAdapter
     private lateinit var candidateLoader: DeviceAddCandidateLoader
+    private lateinit var deviceStoreWriter: DeviceStoreWriter
 
-    private var isLoading: Boolean = false
-    private var isSaving: Boolean = false
+    private var isLoading = false
+    private var isSaving = false
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -49,19 +49,18 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceAddBinding.bind(view)
 
-        devicesStore = DevicesDataStoreManager.create(
-            requireContext()
-        )
+        val devicesStore = DevicesDataStoreManager.create(requireContext())
 
         candidateLoader = DeviceAddCandidateLoader(
             context = requireContext(),
+            devicesStore = devicesStore
+        )
+
+        deviceStoreWriter = DeviceStoreWriter(
             devicesStore = devicesStore
         )
 
@@ -75,10 +74,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             handleCandidateClick(candidate)
         }
 
-        binding.rvCandidates.layoutManager = LinearLayoutManager(
-            requireContext()
-        )
-
+        binding.rvCandidates.layoutManager = LinearLayoutManager(requireContext())
         binding.rvCandidates.adapter = adapter
     }
 
@@ -98,7 +94,11 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             return
         }
 
-        val permissions = buildList {
+        permissionLauncher.launch(requiredPermissions())
+    }
+
+    private fun requiredPermissions(): Array<String> {
+        return buildList {
             add(Manifest.permission.ACCESS_COARSE_LOCATION)
             add(Manifest.permission.ACCESS_FINE_LOCATION)
 
@@ -106,28 +106,17 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 add(Manifest.permission.NEARBY_WIFI_DEVICES)
             }
         }.toTypedArray()
-
-        permissionLauncher.launch(permissions)
     }
 
     private fun hasRequiredPermissions(): Boolean {
-        val coarseGranted = ContextCompat.checkSelfPermission(
-            requireContext(),
+        val locationGranted = isPermissionGranted(
             Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val fineGranted = ContextCompat.checkSelfPermission(
-            requireContext(),
+        ) || isPermissionGranted(
             Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val locationGranted = coarseGranted || fineGranted
+        )
 
         val nearbyWifiGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.NEARBY_WIFI_DEVICES
-            ) == PackageManager.PERMISSION_GRANTED
+            isPermissionGranted(Manifest.permission.NEARBY_WIFI_DEVICES)
         } else {
             true
         }
@@ -138,31 +127,29 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     private fun hasRequiredPermissionsFromResult(
         result: Map<String, Boolean>
     ): Boolean {
-        val coarseGranted = result[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
-            ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-        val fineGranted = result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-        val locationGranted = coarseGranted || fineGranted
+        val locationGranted =
+            result[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
+                result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION) ||
+                isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION)
 
         val nearbyWifiGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             result[Manifest.permission.NEARBY_WIFI_DEVICES] == true ||
-                ContextCompat.checkSelfPermission(
-                    requireContext(),
-                    Manifest.permission.NEARBY_WIFI_DEVICES
-                ) == PackageManager.PERMISSION_GRANTED
+                isPermissionGranted(Manifest.permission.NEARBY_WIFI_DEVICES)
         } else {
             true
         }
 
         return locationGranted && nearbyWifiGranted
+    }
+
+    private fun isPermissionGranted(
+        permission: String
+    ): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(),
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun loadCandidates() {
@@ -188,9 +175,7 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             if (candidates.isEmpty()) {
                 showEmptyState()
             } else {
-                showCandidates(
-                    candidates = candidates
-                )
+                showCandidates(candidates)
             }
         }
     }
@@ -206,8 +191,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnRetry.isEnabled = false
         binding.btnRetry.alpha = 0.45f
 
-        binding.tvTitle.text = "Searching..."
-        binding.tvSubtitle.text = "Looking for nearby Aqua devices."
+        binding.tvTitle.text = getString(R.string.device_add_searching_title)
+        binding.tvSubtitle.text = getString(R.string.device_add_searching_subtitle)
     }
 
     private fun showCandidates(
@@ -222,8 +207,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnRetry.isEnabled = true
         binding.btnRetry.alpha = 1f
 
-        binding.tvTitle.text = "Add Device"
-        binding.tvSubtitle.text = "Select your device to continue."
+        binding.tvTitle.text = getString(R.string.device_add_title)
+        binding.tvSubtitle.text = getString(R.string.device_add_select_subtitle)
 
         adapter.submitList(candidates)
     }
@@ -238,8 +223,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnRetry.isEnabled = true
         binding.btnRetry.alpha = 1f
 
-        binding.tvTitle.text = "Add Device"
-        binding.tvSubtitle.text = "No Aqua devices found nearby."
+        binding.tvTitle.text = getString(R.string.device_add_title)
+        binding.tvSubtitle.text = getString(R.string.device_add_empty_subtitle)
 
         adapter.submitList(emptyList())
     }
@@ -256,13 +241,13 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.btnRetry.isEnabled = true
         binding.btnRetry.alpha = 1f
 
-        binding.tvTitle.text = "Add Device"
-        binding.tvSubtitle.text = "Permission required."
+        binding.tvTitle.text = getString(R.string.device_add_title)
+        binding.tvSubtitle.text = getString(R.string.device_add_permission_required)
 
         adapter.submitList(emptyList())
 
         (activity as? BaseActivity)?.showSnackBar(
-            message = "Wi-Fi permission is required to find nearby Aqua devices.",
+            message = getString(R.string.device_add_permission_message),
             type = BaseActivity.SnackType.WARNING
         )
     }
@@ -294,21 +279,14 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                saveDiscoveredDevice(device)
+                val deviceId = deviceStoreWriter.saveDiscoveredDevice(device)
 
-                val args = Bundle().apply {
-                    putLong("deviceId", device.id)
-                }
-
-                findNavController().navigate(
-                    R.id.action_deviceAddFragment_to_deviceMenuFragment,
-                    args
-                )
+                openDeviceMenu(deviceId)
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
                 (activity as? BaseActivity)?.showSnackBar(
-                    message = "Device could not be added.",
+                    message = getString(R.string.device_add_save_error),
                     type = BaseActivity.SnackType.ERROR
                 )
             } finally {
@@ -333,113 +311,24 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         )
     }
 
-    private suspend fun saveDiscoveredDevice(
-        device: DiscoveredAquaDevice
+    private fun openDeviceMenu(
+        deviceId: Long
     ) {
-        val alreadyExists = devicesStore.deviceExists(
-            id = device.id
-        )
-
-        if (alreadyExists) {
-            devicesStore.updateDevicesLastSeen(
-                discovered = listOf(
-                    device.toLastSeenUpdate()
-                )
-            )
-            return
+        val args = Bundle().apply {
+            putLong("deviceId", deviceId)
         }
 
-        val definition = AquaDeviceCatalog.findByType(
-            type = device.deviceType
-        ) ?: error("Unsupported device")
+        findNavController().navigate(
+            R.id.deviceMenuFragment,
+            args,
+            navOptions {
+                popUpTo(R.id.devicesFragment) {
+                    inclusive = false
+                }
 
-        val savedAquaName = definition.family.displayName
-        val savedName = definition.displayName
-
-        val serial = buildSerial(
-            aquaName = savedAquaName,
-            name = savedName,
-            id = device.id
+                launchSingleTop = true
+            }
         )
-
-        devicesStore.addDevice(
-            id = device.id,
-            aquaName = savedAquaName,
-            name = savedName,
-            ip = device.ip,
-            serial = serial,
-            firmwareBuild = device.firmwareBuild,
-
-            deviceType = device.deviceType,
-
-            udpVersion = device.udpVersion,
-            tabLight = device.tabLight,
-            tabTimer = device.tabTimer,
-            tabTemperature = device.tabTemperature,
-
-            productId = device.productId.orEmpty(),
-            productFamily = device.productFamily.orEmpty(),
-            productModel = device.productModel.orEmpty(),
-            hardwareRevision = device.hardwareRevision.orEmpty(),
-            firmwareVersion = device.firmwareVersion.orEmpty(),
-            apiVersion = device.apiVersion,
-
-            channelCount = device.channelCount,
-            sensorCount = device.sensorCount,
-
-            supportedFeatures = device.supportedFeatures,
-            supportedScreens = device.supportedScreens
-        )
-
-        devicesStore.updateDevicesLastSeen(
-            discovered = listOf(
-                device.toLastSeenUpdate()
-            )
-        )
-    }
-
-    private fun DiscoveredAquaDevice.toLastSeenUpdate(): DevicesDataStoreManager.DeviceLastSeenUpdate {
-        return DevicesDataStoreManager.DeviceLastSeenUpdate(
-            id = id,
-            ip = ip,
-            firmwareBuild = firmwareBuild,
-
-            deviceType = deviceType,
-
-            udpVersion = udpVersion,
-            tabLight = tabLight,
-            tabTimer = tabTimer,
-            tabTemperature = tabTemperature,
-
-            productId = productId,
-            productFamily = productFamily,
-            productModel = productModel,
-            hardwareRevision = hardwareRevision,
-            firmwareVersion = firmwareVersion,
-            apiVersion = apiVersion,
-
-            channelCount = channelCount,
-            sensorCount = sensorCount,
-
-            supportedFeatures = supportedFeatures,
-            supportedScreens = supportedScreens
-        )
-    }
-
-    private fun buildSerial(
-        aquaName: String,
-        name: String,
-        id: Long
-    ): String {
-        val aquaInitial = aquaName.firstOrNull()
-            ?.uppercaseChar()
-            ?: 'X'
-
-        val nameInitial = name.firstOrNull()
-            ?.uppercaseChar()
-            ?: 'X'
-
-        return "$aquaInitial$nameInitial-$id"
     }
 
     override fun onDestroyView() {
