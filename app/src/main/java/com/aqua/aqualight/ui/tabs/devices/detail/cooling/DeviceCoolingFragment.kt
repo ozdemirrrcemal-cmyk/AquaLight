@@ -34,7 +34,12 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         _binding = FragmentDeviceCoolingBinding.bind(view)
 
         binding.tvControllerTitle.text = "Cooling Controller"
-        binding.tvControllerDescription.text = "Device ID: $deviceId"
+
+        binding.tvControllerDescription.text = if (deviceIp.isBlank()) {
+            "Device ID: $deviceId"
+        } else {
+            "Device ID: $deviceId • IP: $deviceIp"
+        }
 
         binding.btnRefreshTemperature.setOnClickListener {
             loadTemperatureGraph()
@@ -44,30 +49,43 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     }
 
     private fun loadTemperatureGraph() {
+        val currentBinding = _binding ?: return
+
         if (deviceIp.isBlank()) {
-            binding.tvGraphStatus.text = "Device IP is missing."
+            currentBinding.tvGraphStatus.text = "Device IP is missing."
+            currentBinding.tvCurrentTemperature.text = "Current: -- °C"
+            currentBinding.temperatureChartView.setTemperatureSeries(emptyList())
             return
         }
 
-        binding.tvGraphStatus.text = "Loading temperature data..."
-        binding.btnRefreshTemperature.isEnabled = false
+        currentBinding.tvGraphStatus.text = "Loading temperature data..."
+        currentBinding.btnRefreshTemperature.isEnabled = false
 
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            val result = runCatching {
                 repository.fetchTemperatureData(deviceIp)
-            }.onSuccess { data ->
+            }
+
+            val safeBinding = _binding ?: return@launch
+
+            result.onSuccess { data ->
                 val sensors = data.sensors
 
                 if (sensors.isEmpty()) {
-                    binding.tvCurrentTemperature.text = "Current: -- °C"
-                    binding.tvGraphStatus.text = "No temperature sensor found."
-                    binding.temperatureChartView.setTemperatureSeries(emptyList())
+                    safeBinding.tvCurrentTemperature.text = "Current: -- °C"
+                    safeBinding.tvGraphStatus.text = "No temperature sensor found."
+                    safeBinding.temperatureChartView.setTemperatureSeries(emptyList())
+                    safeBinding.btnRefreshTemperature.isEnabled = true
                     return@onSuccess
                 }
 
                 val hottestSensor = sensors
-                    .filter { it.currentTemperature != null }
-                    .maxByOrNull { it.currentTemperature ?: -999f }
+                    .filter { sensor ->
+                        sensor.currentTemperature != null
+                    }
+                    .maxByOrNull { sensor ->
+                        sensor.currentTemperature ?: -999f
+                    }
 
                 val currentText = hottestSensor?.currentTemperature?.let { value ->
                     String.format(
@@ -78,9 +96,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                     )
                 } ?: "Current: -- °C"
 
-                binding.tvCurrentTemperature.text = currentText
+                safeBinding.tvCurrentTemperature.text = currentText
 
-                binding.temperatureChartView.setTemperatureSeries(
+                safeBinding.temperatureChartView.setTemperatureSeries(
                     sensors.map { sensor ->
                         TemperatureChartView.TemperatureSeries(
                             name = sensor.name,
@@ -90,14 +108,16 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                     }
                 )
 
-                binding.tvGraphStatus.text =
+                safeBinding.tvGraphStatus.text =
                     "Loaded ${sensors.size} sensor(s) from ${data.ip ?: deviceIp}"
             }.onFailure { error ->
-                binding.tvGraphStatus.text =
+                safeBinding.tvCurrentTemperature.text = "Current: -- °C"
+                safeBinding.tvGraphStatus.text =
                     "Could not read temperature data: ${error.message}"
+                safeBinding.temperatureChartView.setTemperatureSeries(emptyList())
             }
 
-            binding.btnRefreshTemperature.isEnabled = true
+            safeBinding.btnRefreshTemperature.isEnabled = true
         }
     }
 

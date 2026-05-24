@@ -107,11 +107,19 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 return@launch
             }
 
+            val deviceIp = requireArguments()
+                .getString(ARG_DEVICE_IP)
+                .orEmpty()
+                .ifBlank {
+                    device.ip
+                }
+
             binding.tvTitle.text = definition.displayName
             binding.tvSubtitle.text = definition.family.displayName
 
             routeToController(
                 deviceId = device.id,
+                deviceIp = deviceIp,
                 definition = definition
             )
         }
@@ -119,6 +127,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     private fun routeToController(
         deviceId: Long,
+        deviceIp: String,
         definition: AquaDeviceDefinition
     ) {
         val controllerFragment = when (definition.uiController) {
@@ -136,7 +145,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
             AquaDeviceUiController.GENERIC_COOLING -> {
                 DeviceCoolingFragment.newInstance(
-                    deviceId = deviceId
+                    deviceId = deviceId,
+                    deviceIp = deviceIp
                 )
             }
 
@@ -271,6 +281,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
+        const val ARG_DEVICE_IP = "deviceIp"
+
         private const val INVALID_DEVICE_ID = -1L
     }
 }
