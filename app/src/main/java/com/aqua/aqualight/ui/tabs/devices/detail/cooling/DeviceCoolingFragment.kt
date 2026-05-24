@@ -1,11 +1,13 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.DeviceVisualSpecs
 import kotlinx.coroutines.launch
 
 class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
@@ -31,8 +33,11 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
         _binding = FragmentDeviceCoolingBinding.bind(view)
 
+        applyCoolingVisualStyle()
+
         temperatureChartRenderer = TemperatureChartRenderer(
-            chart = binding.temperatureChartView
+            chart = binding.temperatureChartView,
+            visualSpec = DeviceVisualSpecs.Cooling
         ).also { renderer ->
             renderer.setup()
         }
@@ -42,6 +47,30 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         }
 
         loadTemperatureGraph()
+    }
+
+    private fun applyCoolingVisualStyle() {
+        val visualSpec = DeviceVisualSpecs.Cooling
+
+        binding.cardTemperatureGraph.setCardBackgroundColor(
+            visualSpec.cardBackgroundColor
+        )
+
+        binding.cardTemperatureGraph.strokeColor =
+            visualSpec.cardStrokeColor
+
+        binding.viewGraphAccent.setBackgroundColor(
+            visualSpec.accentColor
+        )
+
+        binding.btnRefreshTemperature.backgroundTintList =
+            ColorStateList.valueOf(
+                visualSpec.buttonColor
+            )
+
+        binding.btnRefreshTemperature.setTextColor(
+            visualSpec.buttonTextColor
+        )
     }
 
     private fun loadTemperatureGraph() {
@@ -80,6 +109,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     override fun onDestroyView() {
         temperatureChartRenderer = null
         _binding = null
+
         super.onDestroyView()
     }
 

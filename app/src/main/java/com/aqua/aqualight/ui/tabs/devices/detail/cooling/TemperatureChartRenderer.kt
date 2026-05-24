@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.widget.TextView
+import com.aqua.aqualight.ui.tabs.devices.detail.DeviceVisualSpec
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.LegendEntry
@@ -19,13 +20,14 @@ import com.github.mikephil.charting.utils.MPPointF
 import java.util.Locale
 
 class TemperatureChartRenderer(
-    private val chart: LineChart
+    private val chart: LineChart,
+    private val visualSpec: DeviceVisualSpec
 ) {
 
     fun setup() {
         chart.description.isEnabled = false
         chart.setNoDataText("No temperature data")
-        chart.setNoDataTextColor(Color.parseColor("#AAB6C5"))
+        chart.setNoDataTextColor(visualSpec.chartTextColor)
 
         chart.setDrawGridBackground(false)
         chart.setDrawBorders(false)
@@ -45,7 +47,7 @@ class TemperatureChartRenderer(
 
         chart.legend.apply {
             isEnabled = true
-            textColor = Color.parseColor("#D7E1EF")
+            textColor = visualSpec.chartTextColor
             textSize = 11f
             form = Legend.LegendForm.SQUARE
             formSize = 10f
@@ -60,10 +62,10 @@ class TemperatureChartRenderer(
         chart.axisRight.isEnabled = false
 
         chart.axisLeft.apply {
-            textColor = Color.parseColor("#AAB6C5")
+            textColor = visualSpec.chartTextColor
             textSize = 10f
-            gridColor = Color.parseColor("#243A57")
-            axisLineColor = Color.parseColor("#3B5578")
+            gridColor = visualSpec.chartGridColor
+            axisLineColor = visualSpec.cardStrokeColor
 
             setDrawZeroLine(false)
             setDrawGridLines(true)
@@ -85,11 +87,11 @@ class TemperatureChartRenderer(
         chart.xAxis.apply {
             position = XAxis.XAxisPosition.BOTTOM
 
-            textColor = Color.parseColor("#AAB6C5")
+            textColor = visualSpec.chartTextColor
             textSize = 9f
 
-            gridColor = Color.parseColor("#1E314B")
-            axisLineColor = Color.parseColor("#3B5578")
+            gridColor = visualSpec.chartGridColor
+            axisLineColor = visualSpec.cardStrokeColor
 
             setDrawAxisLine(false)
             setDrawGridLines(true)
@@ -99,7 +101,7 @@ class TemperatureChartRenderer(
             axisMaximum = 288f
 
             // ESP32: 1 point = 5 min. 12 point = 1 hour.
-            // This gives hourly vertical grid lines.
+            // This gives hourly vertical grid positions.
             granularity = 12f
 
             setLabelCount(
@@ -180,8 +182,9 @@ class TemperatureChartRenderer(
                     mode = LineDataSet.Mode.CUBIC_BEZIER
                     cubicIntensity = 0.08f
 
-                    highLightColor = Color.parseColor("#D7E1EF")
+                    highLightColor = visualSpec.accentColor
                     highlightLineWidth = 0.8f
+
                     setDrawHorizontalHighlightIndicator(false)
                     setDrawVerticalHighlightIndicator(true)
                 }
@@ -259,7 +262,9 @@ class TemperatureChartRenderer(
         android.R.layout.simple_list_item_1
     ) {
 
-        private val textView: TextView = findViewById(android.R.id.text1)
+        private val textView: TextView = findViewById(
+            android.R.id.text1
+        )
 
         init {
             textView.setTextColor(Color.WHITE)
@@ -272,7 +277,9 @@ class TemperatureChartRenderer(
             )
 
             background = GradientDrawable().apply {
-                setColor(Color.parseColor("#182A43"))
+                setColor(
+                    Color.parseColor("#182A43")
+                )
                 cornerRadius = 18f
                 setStroke(
                     1,

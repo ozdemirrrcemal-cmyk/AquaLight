@@ -17,24 +17,14 @@
         android:paddingEnd="16dp"
         android:paddingBottom="24dp">
 
-        <TextView
-            android:id="@+id/tvControllerTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cooling Controller"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardTemperatureGraph"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            app:cardBackgroundColor="#101D31"
+            app:cardBackgroundColor="#0F1B2D"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
-            app:strokeColor="#20324D"
+            app:strokeColor="#2A5366"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -47,14 +37,29 @@
                 android:paddingEnd="14dp"
                 android:paddingBottom="16dp">
 
-                <TextView
-                    android:id="@+id/tvGraphTitle"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Temperature Data"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:id="@+id/viewGraphAccent"
+                        android:layout_width="4dp"
+                        android:layout_height="28dp"
+                        android:background="#5BA7B8" />
+
+                    <TextView
+                        android:id="@+id/tvGraphTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="Temperature Data"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/temperatureChartView"
@@ -74,6 +79,7 @@
             android:text="Refresh"
             android:textAllCaps="false"
             android:textSize="16sp"
+            app:backgroundTint="#1F6E7A"
             app:cornerRadius="18dp" />
 
     </LinearLayout>
