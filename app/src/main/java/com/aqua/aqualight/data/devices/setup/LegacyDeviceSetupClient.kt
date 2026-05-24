@@ -7,6 +7,8 @@ import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
+import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.URLEncoder
 
@@ -186,6 +188,7 @@ class LegacyDeviceSetupClient {
         )
 
         var connection: HttpURLConnection? = null
+        var bodySent = false
 
         return@withContext try {
             connection = network.openConnection(
@@ -193,14 +196,34 @@ class LegacyDeviceSetupClient {
             ) as HttpURLConnection
 
             connection.requestMethod = "POST"
-            connection.connectTimeout = 8_000
-            connection.readTimeout = 8_000
-            connection.doOutput = true
+            connection.connectTimeout = 10_000
 
-            // ESP GetSetHttp.ino içindeki SetParamHTTP(), server.arg(0) üzerinden raw body bekliyor.
+            /**
+             * ESP tarafında ClientRun() 30 saniyeye kadar bekleyebiliyor.
+             * Hatalı şifrede Test() tekrar bağlantı deneyebiliyor.
+             * Bu yüzden ilk /set için kısa timeout kullanmıyoruz.
+             */
+            connection.readTimeout = if (disableSetupAccessPoint) {
+                15_000
+            } else {
+                75_000
+            }
+
+            connection.doOutput = true
+            connection.useCaches = false
+
+            /**
+             * ESP GetSetHttp.ino /set tarafı raw body bekliyor:
+             * Json={...}&sRet={...}
+             */
             connection.setRequestProperty(
                 "Content-Type",
                 "text/plain; charset=utf-8"
+            )
+
+            connection.setRequestProperty(
+                "Connection",
+                "close"
             )
 
             BufferedWriter(
@@ -212,6 +235,8 @@ class LegacyDeviceSetupClient {
                 writer.write(body)
                 writer.flush()
             }
+
+            bodySent = true
 
             val responseCode = connection.responseCode
 
@@ -230,12 +255,35 @@ class LegacyDeviceSetupClient {
                 errorMessage = null
             )
         } catch (exception: Exception) {
-            SetupResult(
-                success = false,
-                responseCode = null,
-                responseBody = null,
-                errorMessage = exception.message ?: exception.toString()
+            /**
+             * Body gönderildikten sonra timeout/socket kopması olursa bu her zaman
+             * gerçek başarısızlık değildir:
+             *
+             * - İlk /set sırasında ESP Wi-Fi bağlantısını uzun sürede tamamlayabilir.
+             * - İkinci /set sırasında setup AP kapanacağı için bağlantı kopabilir.
+             *
+             * Bu durumda üst akış zaten readDeviceWifiStatus / UDP discovery ile
+             * gerçek sonucu kontrol ediyor.
+             */
+            val requestWasLikelyAccepted = bodySent && isExpectedNetworkTransitionException(
+                exception = exception
             )
+
+            if (requestWasLikelyAccepted) {
+                SetupResult(
+                    success = true,
+                    responseCode = null,
+                    responseBody = null,
+                    errorMessage = null
+                )
+            } else {
+                SetupResult(
+                    success = false,
+                    responseCode = null,
+                    responseBody = null,
+                    errorMessage = exception.message ?: exception.toString()
+                )
+            }
         } finally {
             connection?.disconnect()
         }
@@ -265,6 +313,7 @@ class LegacyDeviceSetupClient {
             connection.connectTimeout = connectTimeoutMs
             connection.readTimeout = readTimeoutMs
             connection.doInput = true
+            connection.useCaches = false
 
             connection.inputStream
                 .bufferedReader()
@@ -359,6 +408,31 @@ class LegacyDeviceSetupClient {
             .sortedByDescending { network ->
                 network.rssi
             }
+    }
+
+    private fun isExpectedNetworkTransitionException(
+        exception: Exception
+    ): Boolean {
+        val message = exception.message.orEmpty()
+
+        return exception is SocketTimeoutException ||
+            exception is SocketException ||
+            message.contains(
+                other = "timeout",
+                ignoreCase = true
+            ) ||
+            message.contains(
+                other = "closed",
+                ignoreCase = true
+            ) ||
+            message.contains(
+                other = "unreachable",
+                ignoreCase = true
+            ) ||
+            message.contains(
+                other = "failed to connect",
+                ignoreCase = true
+            )
     }
 
     private companion object {
