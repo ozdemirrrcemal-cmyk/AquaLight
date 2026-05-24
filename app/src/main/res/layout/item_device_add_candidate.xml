@@ -42,7 +42,6 @@
                 android:layout_width="42dp"
                 android:layout_height="42dp"
                 android:layout_gravity="center"
-                android:contentDescription="@string/device"
                 android:padding="3dp"
                 android:scaleType="centerInside"
                 tools:src="@drawable/ic_device_light" />
