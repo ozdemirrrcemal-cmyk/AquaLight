@@ -100,7 +100,7 @@
             android:layout_marginTop="20dp"
             android:text="Refresh"
             android:textAllCaps="false"
-            android:textSize="16sp"
+            android:textSize="10sp"
             app:cornerRadius="18dp" />
 
     </LinearLayout>
