@@ -1,15 +1,21 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 
+import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.widget.TextView
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.LegendEntry
+import com.github.mikephil.charting.components.MarkerView
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
+import com.github.mikephil.charting.utils.MPPointF
 import java.util.Locale
 
 class TemperatureChartRenderer(
@@ -30,8 +36,12 @@ class TemperatureChartRenderer(
         chart.setScaleEnabled(true)
         chart.setPinchZoom(true)
 
-        chart.setHighlightPerTapEnabled(false)
-        chart.setHighlightPerDragEnabled(false)
+        chart.setHighlightPerTapEnabled(true)
+        chart.setHighlightPerDragEnabled(true)
+
+        chart.marker = TemperatureMarkerView(
+            context = chart.context
+        )
 
         chart.legend.apply {
             isEnabled = true
@@ -76,9 +86,9 @@ class TemperatureChartRenderer(
             position = XAxis.XAxisPosition.BOTTOM
 
             textColor = Color.parseColor("#AAB6C5")
-            textSize = 10f
+            textSize = 9f
 
-            gridColor = Color.parseColor("#243A57")
+            gridColor = Color.parseColor("#1E314B")
             axisLineColor = Color.parseColor("#3B5578")
 
             setDrawAxisLine(false)
@@ -88,9 +98,12 @@ class TemperatureChartRenderer(
             axisMinimum = 0f
             axisMaximum = 288f
 
-            granularity = 72f
+            // ESP32: 1 point = 5 min. 12 point = 1 hour.
+            // This gives hourly vertical grid lines.
+            granularity = 12f
+
             setLabelCount(
-                5,
+                25,
                 true
             )
 
@@ -100,9 +113,11 @@ class TemperatureChartRenderer(
                 ): String {
                     return when (value.toInt()) {
                         0 -> "00:00"
-                        72 -> "06:00"
+                        48 -> "04:00"
+                        96 -> "08:00"
                         144 -> "12:00"
-                        216 -> "18:00"
+                        192 -> "16:00"
+                        240 -> "20:00"
                         288 -> "24:00"
                         else -> ""
                     }
@@ -127,7 +142,8 @@ class TemperatureChartRenderer(
 
         sensors.forEach { sensor ->
             val segments = buildContinuousSegments(
-                history = sensor.history
+                history = sensor.history,
+                sensorName = sensor.name
             )
 
             if (segments.isEmpty()) {
@@ -155,18 +171,19 @@ class TemperatureChartRenderer(
                     sensor.name
                 ).apply {
                     color = sensor.color
-                    lineWidth = 2.6f
+                    lineWidth = 1.8f
 
                     setDrawCircles(false)
                     setDrawValues(false)
                     setDrawFilled(false)
 
                     mode = LineDataSet.Mode.CUBIC_BEZIER
-                    cubicIntensity = 0.15f
+                    cubicIntensity = 0.08f
 
-                    setHighlightEnabled(false)
+                    highLightColor = Color.parseColor("#D7E1EF")
+                    highlightLineWidth = 0.8f
                     setDrawHorizontalHighlightIndicator(false)
-                    setDrawVerticalHighlightIndicator(false)
+                    setDrawVerticalHighlightIndicator(true)
                 }
 
                 dataSets.add(dataSet)
@@ -199,7 +216,8 @@ class TemperatureChartRenderer(
     }
 
     private fun buildContinuousSegments(
-        history: List<Float?>
+        history: List<Float?>,
+        sensorName: String
     ): List<List<Entry>> {
         val segments = mutableListOf<List<Entry>>()
         val currentSegment = mutableListOf<Entry>()
@@ -211,7 +229,8 @@ class TemperatureChartRenderer(
                 currentSegment.add(
                     Entry(
                         index.toFloat(),
-                        value ?: return@forEachIndexed
+                        value ?: return@forEachIndexed,
+                        sensorName
                     )
                 )
             } else {
@@ -231,5 +250,97 @@ class TemperatureChartRenderer(
         }
 
         return segments
+    }
+
+    private class TemperatureMarkerView(
+        context: Context
+    ) : MarkerView(
+        context,
+        android.R.layout.simple_list_item_1
+    ) {
+
+        private val textView: TextView = findViewById(android.R.id.text1)
+
+        init {
+            textView.setTextColor(Color.WHITE)
+            textView.textSize = 12f
+            textView.setPadding(
+                18,
+                12,
+                18,
+                12
+            )
+
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#182A43"))
+                cornerRadius = 18f
+                setStroke(
+                    1,
+                    Color.parseColor("#2D4567")
+                )
+            }
+        }
+
+        override fun refreshContent(
+            e: Entry?,
+            highlight: Highlight?
+        ) {
+            if (e == null) {
+                super.refreshContent(
+                    e,
+                    highlight
+                )
+                return
+            }
+
+            val timeText = formatTimeFromIndex(
+                index = e.x.toInt()
+            )
+
+            val temperatureText = String.format(
+                Locale.US,
+                "%.1f °C",
+                e.y
+            )
+
+            val sensorName = e.data as? String ?: ""
+
+            textView.text = if (sensorName.isBlank()) {
+                "$timeText\n$temperatureText"
+            } else {
+                "$timeText\n$temperatureText\n$sensorName"
+            }
+
+            super.refreshContent(
+                e,
+                highlight
+            )
+        }
+
+        override fun getOffset(): MPPointF {
+            return MPPointF(
+                -(width / 2f),
+                -height.toFloat() - 18f
+            )
+        }
+
+        private fun formatTimeFromIndex(
+            index: Int
+        ): String {
+            val totalMinutes = (index * 5).coerceIn(
+                0,
+                24 * 60
+            )
+
+            val hour = totalMinutes / 60
+            val minute = totalMinutes % 60
+
+            return String.format(
+                Locale.US,
+                "%02d:%02d",
+                hour,
+                minute
+            )
+        }
     }
 }
