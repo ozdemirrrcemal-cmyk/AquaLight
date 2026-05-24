@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rowCandidate"
     android:layout_width="match_parent"
-    android:layout_height="76dp"
+    android:layout_height="72dp"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
@@ -14,8 +14,8 @@
 
     <FrameLayout
         android:id="@+id/deviceImageContainer"
-        android:layout_width="46dp"
-        android:layout_height="46dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:background="@drawable/bg_device_add_image_box"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -23,12 +23,12 @@
 
         <ImageView
             android:id="@+id/ivDeviceIcon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:layout_gravity="center"
             android:padding="2dp"
             android:scaleType="centerInside"
-            tools:src="@drawable/ic_device_light" />
+            tools:src="@drawable/ic_device_temperature" />
 
     </FrameLayout>
 
@@ -36,8 +36,8 @@
         android:id="@+id/tvDeviceName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="14dp"
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:maxLines="1"
@@ -53,23 +53,28 @@
     <TextView
         android:id="@+id/tvDeviceId"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="30dp"
+        android:background="@drawable/bg_device_serial_chip"
+        android:gravity="center"
         android:includeFontPadding="false"
-        android:textColor="@color/settings_text_secondary"
-        android:textSize="14sp"
+        android:minWidth="78dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="#8FA4BE"
+        android:textSize="13sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/deviceImageContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/deviceImageContainer"
-        tools:text="7872" />
+        tools:text="AC-7872" />
 
     <View
         android:id="@+id/divider"
         android:layout_width="0dp"
         android:layout_height="1dp"
-        android:background="#1E3552"
+        android:background="#142944"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/tvDeviceId"
         app:layout_constraintStart_toStartOf="@id/tvDeviceName" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
