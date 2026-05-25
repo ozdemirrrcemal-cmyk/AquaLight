@@ -63,6 +63,16 @@ class TimerOutletSettingsBottomSheet(
                         true
                     )
                 }
+
+                if (days.none { enabled -> enabled }) {
+                    days.clear()
+
+                    repeat(7) {
+                        days.add(
+                            true
+                        )
+                    }
+                }
             }
 
     private var isSaving: Boolean = false
@@ -185,6 +195,7 @@ class TimerOutletSettingsBottomSheet(
                 minMinutes = 1
             ) { minutes ->
                 selectedRunDurationMinutes = minutes
+
                 binding.etRunDuration.setText(
                     formatDurationForUi(
                         minutes = minutes
@@ -200,6 +211,7 @@ class TimerOutletSettingsBottomSheet(
                 minMinutes = 1
             ) { minutes ->
                 selectedRunDurationMinutes = minutes
+
                 binding.etRunDuration.setText(
                     formatDurationForUi(
                         minutes = minutes
@@ -215,6 +227,7 @@ class TimerOutletSettingsBottomSheet(
                 minMinutes = 0
             ) { minutes ->
                 selectedOffDurationMinutes = minutes
+
                 binding.etOffDuration.setText(
                     formatDurationForUi(
                         minutes = minutes
@@ -230,6 +243,7 @@ class TimerOutletSettingsBottomSheet(
                 minMinutes = 0
             ) { minutes ->
                 selectedOffDurationMinutes = minutes
+
                 binding.etOffDuration.setText(
                     formatDurationForUi(
                         minutes = minutes
@@ -577,57 +591,135 @@ class TimerOutletSettingsBottomSheet(
         binding.tvRepeatCount.text =
             selectedRepeatCount.toString()
 
+        val canDecrease = selectedRepeatCount > MIN_REPEAT_COUNT
+        val canIncrease = selectedRepeatCount < MAX_REPEAT_COUNT
+
         binding.btnRepeatMinus.alpha =
-            if (selectedRepeatCount <= MIN_REPEAT_COUNT) {
-                0.45f
-            } else {
-                1f
-            }
+            if (canDecrease) 1f else 0.38f
 
         binding.btnRepeatPlus.alpha =
-            if (selectedRepeatCount >= MAX_REPEAT_COUNT) {
-                0.45f
-            } else {
-                1f
-            }
+            if (canIncrease) 1f else 0.38f
+
+        binding.btnRepeatMinus.isEnabled =
+            canDecrease && !isSaving
+
+        binding.btnRepeatPlus.isEnabled =
+            canIncrease && !isSaving
     }
 
     private fun renderMode() {
         renderModeButton(
             button = binding.btnModeAuto,
-            selected = selectedRegime == TimerDeviceRepository.OutletRegime.AUTO
+            selected = selectedRegime == TimerDeviceRepository.OutletRegime.AUTO,
+            selectedBackground = "#6E63E8",
+            selectedStroke = "#8B7CFF",
+            selectedText = "#FFFFFF",
+            idleBackground = "#171D39",
+            idleStroke = "#3D3477",
+            idleText = "#A7A2D8"
         )
 
         renderModeButton(
             button = binding.btnModeOn,
-            selected = selectedRegime == TimerDeviceRepository.OutletRegime.ON
+            selected = selectedRegime == TimerDeviceRepository.OutletRegime.ON,
+            selectedBackground = "#2EAE74",
+            selectedStroke = "#52D99A",
+            selectedText = "#FFFFFF",
+            idleBackground = "#122A24",
+            idleStroke = "#245D47",
+            idleText = "#93DAB8"
         )
 
         renderModeButton(
             button = binding.btnModeOff,
-            selected = selectedRegime == TimerDeviceRepository.OutletRegime.OFF
+            selected = selectedRegime == TimerDeviceRepository.OutletRegime.OFF,
+            selectedBackground = "#3C465F",
+            selectedStroke = "#AFC1D6",
+            selectedText = "#FFFFFF",
+            idleBackground = "#1D263F",
+            idleStroke = "#2D385C",
+            idleText = "#9FAABB"
         )
     }
 
     private fun renderModeButton(
         button: MaterialButton,
-        selected: Boolean
+        selected: Boolean,
+        selectedBackground: String,
+        selectedStroke: String,
+        selectedText: String,
+        idleBackground: String,
+        idleStroke: String,
+        idleText: String
     ) {
+        button.backgroundTintList = ColorStateList.valueOf(
+            Color.parseColor(
+                if (selected) {
+                    selectedBackground
+                } else {
+                    idleBackground
+                }
+            )
+        )
+
+        button.strokeColor = ColorStateList.valueOf(
+            Color.parseColor(
+                if (selected) {
+                    selectedStroke
+                } else {
+                    idleStroke
+                }
+            )
+        )
+
+        button.strokeWidth =
+            if (selected) {
+                2.dp(
+                    context = button.context
+                )
+            } else {
+                1.dp(
+                    context = button.context
+                )
+            }
+
+        button.setTextColor(
+            Color.parseColor(
+                if (selected) {
+                    selectedText
+                } else {
+                    idleText
+                }
+            )
+        )
+
         button.alpha = if (selected) {
             1f
         } else {
-            0.45f
+            0.72f
         }
     }
 
     private fun renderDays() {
+        val labels = listOf(
+            "S",
+            "M",
+            "T",
+            "W",
+            "T",
+            "F",
+            "S"
+        )
+
         dayButtons().forEachIndexed { index, button ->
             val selected = selectedDays.getOrNull(index) == true
+
+            button.text = labels[index]
 
             button.backgroundTintList = ColorStateList.valueOf(
                 Color.parseColor(
                     if (selected) {
-                        "#29264A"
+                        "#6E63E8"
                     } else {
                         "#131C34"
                     }
@@ -637,7 +729,7 @@ class TimerOutletSettingsBottomSheet(
             button.setTextColor(
                 Color.parseColor(
                     if (selected) {
-                        "#CFC8FF"
+                        "#FFFFFF"
                     } else {
                         "#9FAABB"
                     }
@@ -647,16 +739,29 @@ class TimerOutletSettingsBottomSheet(
             button.strokeColor = ColorStateList.valueOf(
                 Color.parseColor(
                     if (selected) {
-                        "#5F55C8"
+                        "#8B7CFF"
                     } else {
                         "#2D385C"
                     }
                 )
             )
 
-            button.strokeWidth = 1.dp(
-                context = button.context
-            )
+            button.strokeWidth =
+                if (selected) {
+                    2.dp(
+                        context = button.context
+                    )
+                } else {
+                    1.dp(
+                        context = button.context
+                    )
+                }
+
+            button.alpha = if (selected) {
+                1f
+            } else {
+                0.68f
+            }
         }
     }
 
