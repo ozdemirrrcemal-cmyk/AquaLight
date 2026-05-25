@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceTimerBinding
 import kotlinx.coroutines.launch
 
@@ -15,7 +16,12 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
     private val repository = TimerDeviceRepository()
 
+    private lateinit var devicesStore: DevicesDataStoreManager
+
     private var renderer: TimerDashboardRenderer? = null
+
+    private var currentUserDeviceName: String = ""
+    private var currentDisplayedTitle: String = ""
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
@@ -25,6 +31,18 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
     private val deviceTitle: String
         get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
+
+    private val canEditDeviceName: Boolean
+        get() = requireArguments().getBoolean(
+            ARG_CAN_EDIT_DEVICE_NAME,
+            false
+        )
+
+    private val userDeviceName: String
+        get() = requireArguments().getString(ARG_USER_DEVICE_NAME).orEmpty()
+
+    private val defaultDeviceTitle: String
+        get() = requireArguments().getString(ARG_DEFAULT_DEVICE_TITLE).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -37,6 +55,10 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
         _binding = FragmentDeviceTimerBinding.bind(view)
 
+        devicesStore = DevicesDataStoreManager.create(
+            requireContext()
+        )
+
         renderer = TimerDashboardRenderer(
             binding = binding
         )
@@ -47,14 +69,31 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     }
 
     private fun bindStaticScreen() {
-        binding.tvTimerTitle.text = deviceTitle.ifBlank {
-            "Timer Controller"
+        currentUserDeviceName = userDeviceName
+
+        currentDisplayedTitle = deviceTitle.ifBlank {
+            defaultDeviceTitle.ifBlank {
+                "Timer Controller"
+            }
         }
 
+        binding.tvTimerTitle.text = currentDisplayedTitle
         binding.tvTimerSubtitle.text = "4 channel smart timer"
+
+        binding.cardTimerDeviceSummary.isClickable =
+            canEditDeviceName
+
+        binding.cardTimerDeviceSummary.isFocusable =
+            canEditDeviceName
     }
 
     private fun bindClicks() {
+        binding.cardTimerDeviceSummary.setOnClickListener {
+            if (canEditDeviceName) {
+                showDeviceNameBottomSheet()
+            }
+        }
+
         binding.cardOutlet1.setOnClickListener {
             // Sonraki adım: Outlet 1 ayar bottom sheet.
         }
@@ -85,6 +124,56 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
         binding.cardOutlet4Power.setOnClickListener {
             // Sonraki adım: Outlet 4 hızlı ON/OFF.
+        }
+    }
+
+    private fun showDeviceNameBottomSheet() {
+        TimerDeviceNameBottomSheet(
+            fragment = this,
+            currentName = currentUserDeviceName.ifBlank {
+                currentDisplayedTitle
+            },
+            fallbackName = defaultDeviceTitle.ifBlank {
+                "Timer Controller"
+            },
+            onSave = {
+                newName, sheet ->
+                saveDeviceName(
+                    newName = newName,
+                    sheet = sheet
+                )
+            }
+        ).show()
+    }
+
+    private fun saveDeviceName(
+        newName: String,
+        sheet: TimerDeviceNameBottomSheet
+    ) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = runCatching {
+                devicesStore.updateDevice(
+                    id = deviceId,
+                    name = newName
+                )
+            }
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            result.onSuccess {
+                currentUserDeviceName = newName
+                currentDisplayedTitle = newName
+
+                binding.tvTimerTitle.text = newName
+
+                sheet.closeAfterSave()
+            }.onFailure {
+                sheet.showSaveError(
+                    message = "Device name could not be saved."
+                )
+            }
         }
     }
 
@@ -132,11 +221,17 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"
         private const val ARG_DEVICE_TITLE = "deviceTitle"
+        private const val ARG_CAN_EDIT_DEVICE_NAME = "canEditDeviceName"
+        private const val ARG_USER_DEVICE_NAME = "userDeviceName"
+        private const val ARG_DEFAULT_DEVICE_TITLE = "defaultDeviceTitle"
 
         fun newInstance(
             deviceId: Long,
             deviceIp: String,
-            deviceTitle: String
+            deviceTitle: String,
+            canEditDeviceName: Boolean,
+            userDeviceName: String,
+            defaultDeviceTitle: String
         ): DeviceTimerFragment {
             return DeviceTimerFragment().apply {
                 arguments = Bundle().apply {
@@ -154,6 +249,21 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                         ARG_DEVICE_TITLE,
                         deviceTitle
                     )
+
+                    putBoolean(
+                        ARG_CAN_EDIT_DEVICE_NAME,
+                        canEditDeviceName
+                    )
+
+                    putString(
+                        ARG_USER_DEVICE_NAME,
+                        userDeviceName
+                    )
+
+                    putString(
+                        ARG_DEFAULT_DEVICE_TITLE,
+                        defaultDeviceTitle
+                    )
                 }
             }
         }
@@ -164,7 +274,10 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             return newInstance(
                 deviceId = deviceId,
                 deviceIp = "",
-                deviceTitle = ""
+                deviceTitle = "",
+                canEditDeviceName = false,
+                userDeviceName = "",
+                defaultDeviceTitle = ""
             )
         }
     }

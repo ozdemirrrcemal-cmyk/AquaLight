@@ -109,10 +109,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
             if (definition == null) {
                 showUnavailableState(
-                    title = device.name.ifBlank {
-                        device.productModel.ifBlank {
-                            "Unsupported Device"
-                        }
+                    title = device.productModel.ifBlank {
+                        "Unsupported Device"
                     },
                     message = "This device is not supported by this app version."
                 )
@@ -134,15 +132,15 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                     device.ip
                 }
 
-            val routerTitle = resolveDeviceOwnTitle(
-                userDeviceName = device.name,
+            val routerTitle = resolveRouterTitle(
                 productModel = device.productModel,
                 definition = definition
             )
 
             val controllerTitle = resolveControllerTitle(
                 assignedTankName = assignedTankName,
-                deviceOwnTitle = routerTitle
+                userDeviceName = device.name,
+                fallbackDeviceTitle = routerTitle
             )
 
             binding.tvTitle.text = routerTitle
@@ -153,31 +151,34 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 deviceIp = deviceIp,
                 routerTitle = routerTitle,
                 controllerTitle = controllerTitle,
+                canEditDeviceName = assignedTankName.isBlank(),
+                userDeviceName = device.name,
+                defaultDeviceTitle = routerTitle,
                 definition = definition
             )
         }
     }
 
-    private fun resolveDeviceOwnTitle(
-        userDeviceName: String,
+    private fun resolveRouterTitle(
         productModel: String,
         definition: AquaDeviceDefinition
     ): String {
-        return userDeviceName.ifBlank {
-            productModel.ifBlank {
-                definition.displayName.ifBlank {
-                    "Device"
-                }
+        return productModel.ifBlank {
+            definition.displayName.ifBlank {
+                "Device"
             }
         }
     }
 
     private fun resolveControllerTitle(
         assignedTankName: String,
-        deviceOwnTitle: String
+        userDeviceName: String,
+        fallbackDeviceTitle: String
     ): String {
         return assignedTankName.ifBlank {
-            deviceOwnTitle
+            userDeviceName.ifBlank {
+                fallbackDeviceTitle
+            }
         }
     }
 
@@ -186,6 +187,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         deviceIp: String,
         routerTitle: String,
         controllerTitle: String,
+        canEditDeviceName: Boolean,
+        userDeviceName: String,
+        defaultDeviceTitle: String,
         definition: AquaDeviceDefinition
     ) {
         val controllerFragment = when (definition.uiController) {
@@ -201,7 +205,10 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 DeviceTimerFragment.newInstance(
                     deviceId = deviceId,
                     deviceIp = deviceIp,
-                    deviceTitle = controllerTitle
+                    deviceTitle = controllerTitle,
+                    canEditDeviceName = canEditDeviceName,
+                    userDeviceName = userDeviceName,
+                    defaultDeviceTitle = defaultDeviceTitle
                 )
             }
 
