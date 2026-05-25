@@ -67,36 +67,40 @@ object TimerNextEventResolver {
         )
 
         val nowMinuteOfDay =
-            now.get(Calendar.HOUR_OF_DAY) * 60 +
-                now.get(Calendar.MINUTE)
+        now.get(Calendar.HOUR_OF_DAY) * 60 +
+        now.get(Calendar.MINUTE)
 
         return data.timerRules
-            .filter { rule ->
-                rule.isUsable() &&
-                    parseMinuteOfDay(
-                        value = rule.timeStart
-                    ) != null
-            }
-            .flatMap { rule ->
-                buildOccurrencesForRule(
-                    data = data,
-                    rule = rule,
-                    nowDayIndex = nowDayIndex,
-                    nowMinuteOfDay = nowMinuteOfDay
-                )
-            }
-            .sortedWith(
-                compareBy<TimerNextEvent> {
-                    it.minutesUntil
-                }.thenBy {
-                    it.rule.index
-                }
+        .filter {
+            rule ->
+            rule.isUsable() &&
+            parseMinuteOfDay(
+                value = rule.timeStart
+            ) != null
+        }
+        .flatMap {
+            rule ->
+            buildOccurrencesForRule(
+                data = data,
+                rule = rule,
+                nowDayIndex = nowDayIndex,
+                nowMinuteOfDay = nowMinuteOfDay
             )
-            .take(
-                limit.coerceAtLeast(
-                    1
-                )
+        }
+        .sortedWith(
+            compareBy<NextTimerEvent> {
+                event ->
+                event.minutesUntil
+            }.thenBy {
+                event ->
+                event.rule.index
+            }
+        )
+        .take(
+            limit.coerceAtLeast(
+                1
             )
+        )
     }
 
     private fun buildOccurrencesForRule(
@@ -113,7 +117,8 @@ object TimerNextEventResolver {
             return emptyList()
         }
 
-        val outlet = data.outlets.firstOrNull { item ->
+        val outlet = data.outlets.firstOrNull {
+            item ->
             item.gpioPwm.trim().equals(
                 rule.gpioPwm.trim(),
                 ignoreCase = true
@@ -130,18 +135,19 @@ object TimerNextEventResolver {
             val candidateDayIndex = (nowDayIndex + dayOffset) % 7
 
             if (!isAllowedDay(
-                    rule = rule,
-                    dayIndex = candidateDayIndex
-                )
+                rule = rule,
+                dayIndex = candidateDayIndex
+            )
             ) {
                 continue
             }
 
-            occurrenceMinutes.forEach { occurrenceMinute ->
+            occurrenceMinutes.forEach {
+                occurrenceMinute ->
                 val minutesUntil =
-                    dayOffset * MINUTES_PER_DAY +
-                        occurrenceMinute -
-                        nowMinuteOfDay
+                dayOffset * MINUTES_PER_DAY +
+                occurrenceMinute -
+                nowMinuteOfDay
 
                 if (minutesUntil >= 0) {
                     events.add(
@@ -192,22 +198,25 @@ object TimerNextEventResolver {
         }
 
         return (0 until count)
-            .map { index ->
-                startMinute + index * cycleMinutes
-            }
-            .filter { minute ->
-                minute in 0 until MINUTES_PER_DAY
-            }
+        .map {
+            index ->
+            startMinute + index * cycleMinutes
+        }
+        .filter {
+            minute ->
+            minute in 0 until MINUTES_PER_DAY
+        }
     }
 
     private fun parseMinuteOfDay(
         value: String
     ): Int? {
         val parts = value.trim()
-            .split(":")
-            .mapNotNull { part ->
-                part.toIntOrNull()
-            }
+        .split(":")
+        .mapNotNull {
+            part ->
+            part.toIntOrNull()
+        }
 
         if (parts.size < 2) {
             return null
@@ -230,10 +239,11 @@ object TimerNextEventResolver {
         value: String
     ): Int {
         val parts = value.trim()
-            .split(":")
-            .mapNotNull { part ->
-                part.toIntOrNull()
-            }
+        .split(":")
+        .mapNotNull {
+            part ->
+            part.toIntOrNull()
+        }
 
         if (parts.isEmpty()) {
             return 0
@@ -242,16 +252,14 @@ object TimerNextEventResolver {
         val totalSeconds = when (parts.size) {
             3 -> {
                 parts[0] * 3600 +
-                    parts[1] * 60 +
-                    parts[2]
+                parts[1] * 60 +
+                parts[2]
             }
 
             2 -> {
                 parts[0] * 60 +
-                    parts[1]
-            }
-
-            else -> {
+                parts[1]
+            } else -> {
                 parts[0]
             }
         }
@@ -275,9 +283,10 @@ object TimerNextEventResolver {
             return true
         }
 
-        if (days.none { enabled ->
-                enabled
-            }
+        if (days.none {
+            enabled ->
+            enabled
+        }
         ) {
             return true
         }
