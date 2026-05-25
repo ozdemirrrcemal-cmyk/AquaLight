@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -22,7 +23,6 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.util.Locale
 import kotlin.math.roundToInt
-import android.view.ViewGroup
 
 class CoolingFanSettingsBottomSheet(
     private val fragment: Fragment,
@@ -39,6 +39,7 @@ class CoolingFanSettingsBottomSheet(
     data class CoolingFanSettingsDraft(
         val fanIndex: Int,
         val ruleIndex: Int?,
+        val fanName: String,
         val fanMode: CoolingDeviceRepository.FanRegime,
         val startCooling: Float,
         val fullPower: Float,
@@ -101,8 +102,7 @@ class CoolingFanSettingsBottomSheet(
                 Color.TRANSPARENT
             )
 
-            bottomSheet?.let {
-                sheet ->
+            bottomSheet?.let { sheet ->
                 val behavior = BottomSheetBehavior.from(
                     sheet
                 )
@@ -140,8 +140,7 @@ class CoolingFanSettingsBottomSheet(
 
         val flags = rule?.selectedTemperatureFlags.orEmpty()
 
-        sensors.forEach {
-            sensor ->
+        sensors.forEach { sensor ->
             if (flags.getOrNull(sensor.index) == true) {
                 selectedSensorIndexes.add(
                     sensor.index
@@ -151,14 +150,12 @@ class CoolingFanSettingsBottomSheet(
     }
 
     private fun applyVisualStyle() {
-        val context = fragment.requireContext()
-
         binding.sheetCard.setCardBackgroundColor(
             Color.parseColor("#0B1727")
         )
 
         binding.sheetCard.strokeColor =
-        visualSpec.cardStrokeColor
+            visualSpec.cardStrokeColor
 
         binding.viewSheetAccent.setBackgroundColor(
             visualSpec.accentColor
@@ -167,7 +164,11 @@ class CoolingFanSettingsBottomSheet(
         binding.tvFanOutputChip.background = roundedDrawable(
             color = visualSpec.buttonColor,
             radiusDp = 100,
-            context = context
+            context = fragment.requireContext()
+        )
+
+        binding.cardFanName.setCardBackgroundColor(
+            Color.parseColor("#101F33")
         )
 
         binding.cardFanMode.setCardBackgroundColor(
@@ -184,6 +185,14 @@ class CoolingFanSettingsBottomSheet(
 
         binding.cardSensors.setCardBackgroundColor(
             Color.parseColor("#101F33")
+        )
+
+        binding.etFanName.setTextColor(
+            Color.parseColor("#E8EEF7")
+        )
+
+        binding.etFanName.setHintTextColor(
+            Color.parseColor("#92A1B4")
         )
 
         styleSmallRoundButton(
@@ -214,9 +223,11 @@ class CoolingFanSettingsBottomSheet(
         binding.btnCancel.backgroundTintList = ColorStateList.valueOf(
             Color.parseColor("#15263A")
         )
+
         binding.btnCancel.setTextColor(
             Color.parseColor("#D5DEEA")
         )
+
         binding.btnCancel.strokeColor = ColorStateList.valueOf(
             Color.parseColor("#2A3E59")
         )
@@ -224,6 +235,7 @@ class CoolingFanSettingsBottomSheet(
         binding.btnSave.backgroundTintList = ColorStateList.valueOf(
             visualSpec.buttonColor
         )
+
         binding.btnSave.setTextColor(
             visualSpec.buttonTextColor
         )
@@ -232,8 +244,17 @@ class CoolingFanSettingsBottomSheet(
     private fun bindInitialTexts() {
         binding.tvSheetTitle.text = "${fan.name} Cooling"
         binding.tvSheetSubtitle.text = "Fan automation settings"
+
         binding.tvFanOutputChip.text = formatFanOutput(
             value = fan.vNow
+        )
+
+        binding.etFanName.setText(
+            fan.name
+        )
+
+        binding.etFanName.setSelection(
+            binding.etFanName.text?.length ?: 0
         )
     }
 
@@ -244,8 +265,7 @@ class CoolingFanSettingsBottomSheet(
             )
         )
 
-        binding.modeToggleGroup.addOnButtonCheckedListener {
-            _, checkedId, isChecked ->
+        binding.modeToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) {
                 return@addOnButtonCheckedListener
             }
@@ -431,8 +451,7 @@ class CoolingFanSettingsBottomSheet(
             return
         }
 
-        sensors.forEach {
-            sensor ->
+        sensors.forEach { sensor ->
             binding.sensorsContainer.addView(
                 createSensorOption(
                     context = fragment.requireContext(),
@@ -575,6 +594,18 @@ class CoolingFanSettingsBottomSheet(
 
         binding.tvSheetError.visibility = View.GONE
 
+        val fanName = binding.etFanName.text
+            ?.toString()
+            ?.trim()
+            .orEmpty()
+
+        if (fanName.isBlank()) {
+            showError(
+                text = "Fan name cannot be empty."
+            )
+            return
+        }
+
         if (fullPower <= startCooling) {
             showError(
                 text = "Full Power must be higher than Start Cooling."
@@ -607,6 +638,7 @@ class CoolingFanSettingsBottomSheet(
             CoolingFanSettingsDraft(
                 fanIndex = fan.index,
                 ruleIndex = rule?.index,
+                fanName = fanName,
                 fanMode = selectedMode,
                 startCooling = startCooling,
                 fullPower = fullPower,

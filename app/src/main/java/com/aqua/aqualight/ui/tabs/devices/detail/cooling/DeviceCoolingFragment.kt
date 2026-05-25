@@ -218,6 +218,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                     currentData = dashboardData,
                     fanIndex = draft.fanIndex,
                     ruleIndex = draft.ruleIndex,
+                    fanName = draft.fanName,
                     fanMode = draft.fanMode,
                     startCooling = draft.startCooling,
                     fullPower = draft.fullPower,

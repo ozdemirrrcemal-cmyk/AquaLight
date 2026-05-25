@@ -92,7 +92,8 @@ class CoolingDeviceRepository {
                 }
             }
 
-            return fanChannels.firstOrNull { fan ->
+            return fanChannels.firstOrNull {
+                fan ->
                 fan.gpioPwm.trim().equals(
                     ruleGpio,
                     ignoreCase = true
@@ -111,7 +112,8 @@ class CoolingDeviceRepository {
                 return emptyList()
             }
 
-            return sensors.filter { sensor ->
+            return sensors.filter {
+                sensor ->
                 rule.selectedTemperatureFlags.getOrNull(
                     sensor.index
                 ) == true
@@ -217,7 +219,8 @@ class CoolingDeviceRepository {
 
             val response = BufferedReader(
                 InputStreamReader(connection.inputStream)
-            ).use { reader ->
+            ).use {
+                reader ->
                 reader.readText()
             }
 
@@ -253,162 +256,169 @@ class CoolingDeviceRepository {
         root: JSONObject
     ): List<TemperatureSensorData> {
         val data = root.optJSONObject("LTemperature")
-            ?.optJSONObject("Data")
-            ?: return emptyList()
+        ?.optJSONObject("Data")
+        ?: return emptyList()
 
         return data.keys()
-            .asSequence()
-            .mapNotNull { key ->
-                val index = key.toIntOrNull() ?: return@mapNotNull null
-                val sensorJson = data.optJSONObject(key) ?: return@mapNotNull null
+        .asSequence()
+        .mapNotNull {
+            key ->
+            val index = key.toIntOrNull() ?: return@mapNotNull null
+            val sensorJson = data.optJSONObject(key) ?: return@mapNotNull null
 
-                val name = sensorJson.optString(
-                    "Name",
-                    "Sensor ${index + 1}"
-                ).ifBlank {
-                    "Sensor ${index + 1}"
-                }
-
-                val temperature = sensorJson.optDouble(
-                    "Temperature",
-                    Double.NaN
-                ).let { value ->
-                    if (value.isNaN() || value < -100.0 || value > 200.0) {
-                        null
-                    } else {
-                        value.toFloat()
-                    }
-                }
-
-                val history = decodeTemperatureHistory(
-                    encoded = sensorJson.optString(
-                        "LT",
-                        ""
-                    )
-                )
-
-                TemperatureSensorData(
-                    index = index,
-                    name = name,
-                    currentTemperature = temperature,
-                    history = history,
-                    color = normalizeDeviceColor(
-                        rawColor = sensorJson.opt("Color"),
-                        fallbackIndex = index
-                    )
-                )
+            val name = sensorJson.optString(
+                "Name",
+                "Sensor ${index + 1}"
+            ).ifBlank {
+                "Sensor ${index + 1}"
             }
-            .sortedBy { sensor ->
-                sensor.index
+
+            val temperature = sensorJson.optDouble(
+                "Temperature",
+                Double.NaN
+            ).let {
+                value ->
+                if (value.isNaN() || value < -100.0 || value > 200.0) {
+                    null
+                } else {
+                    value.toFloat()
+                }
             }
-            .toList()
+
+            val history = decodeTemperatureHistory(
+                encoded = sensorJson.optString(
+                    "LT",
+                    ""
+                )
+            )
+
+            TemperatureSensorData(
+                index = index,
+                name = name,
+                currentTemperature = temperature,
+                history = history,
+                color = normalizeDeviceColor(
+                    rawColor = sensorJson.opt("Color"),
+                    fallbackIndex = index
+                )
+            )
+        }
+        .sortedBy {
+            sensor ->
+            sensor.index
+        }
+        .toList()
     }
 
     private fun parseCoolRules(
         root: JSONObject
     ): List<CoolRuleData> {
         val data = root.optJSONObject("LCool")
-            ?.optJSONObject("Data")
-            ?: return emptyList()
+        ?.optJSONObject("Data")
+        ?: return emptyList()
 
         return data.keys()
-            .asSequence()
-            .mapNotNull { key ->
-                val index = key.toIntOrNull() ?: return@mapNotNull null
-                val ruleJson = data.optJSONObject(key) ?: return@mapNotNull null
+        .asSequence()
+        .mapNotNull {
+            key ->
+            val index = key.toIntOrNull() ?: return@mapNotNull null
+            val ruleJson = data.optJSONObject(key) ?: return@mapNotNull null
 
-                CoolRuleData(
-                    index = index,
-                    enabled = ruleJson.optBooleanCompat(
-                        name = "Enabled"
-                    ),
-                    name = ruleJson.optString(
-                        "Name",
-                        "Cooling ${index + 1}"
-                    ).ifBlank {
-                        "Cooling ${index + 1}"
-                    },
-                    gpioPwm = ruleJson.optString(
-                        "GPIO_PWM",
-                        "-"
-                    ).trim(),
-                    selectedTemperatureFlags = parseBooleanArray(
-                        array = ruleJson.optJSONArray("LbT")
-                    ),
-                    tMin = ruleJson.optFloatCompat(
-                        name = "TMin",
-                        defaultValue = 0f
-                    ),
-                    tMax = ruleJson.optFloatCompat(
-                        name = "TMax",
-                        defaultValue = 0f
-                    )
+            CoolRuleData(
+                index = index,
+                enabled = ruleJson.optBooleanCompat(
+                    name = "Enabled"
+                ),
+                name = ruleJson.optString(
+                    "Name",
+                    "Cooling ${index + 1}"
+                ).ifBlank {
+                    "Cooling ${index + 1}"
+                },
+                gpioPwm = ruleJson.optString(
+                    "GPIO_PWM",
+                    "-"
+                ).trim(),
+                selectedTemperatureFlags = parseBooleanArray(
+                    array = ruleJson.optJSONArray("LbT")
+                ),
+                tMin = ruleJson.optFloatCompat(
+                    name = "TMin",
+                    defaultValue = 0f
+                ),
+                tMax = ruleJson.optFloatCompat(
+                    name = "TMax",
+                    defaultValue = 0f
                 )
-            }
-            .sortedBy { rule ->
-                rule.index
-            }
-            .toList()
+            )
+        }
+        .sortedBy {
+            rule ->
+            rule.index
+        }
+        .toList()
     }
 
     private fun parseFanChannels(
         root: JSONObject
     ): List<FanChannelData> {
         val data = root.optJSONObject("LPWMChanelFan")
-            ?.optJSONObject("Data")
-            ?: return emptyList()
+        ?.optJSONObject("Data")
+        ?: return emptyList()
 
         return data.keys()
-            .asSequence()
-            .mapNotNull { key ->
-                val index = key.toIntOrNull() ?: return@mapNotNull null
-                val fanJson = data.optJSONObject(key) ?: return@mapNotNull null
+        .asSequence()
+        .mapNotNull {
+            key ->
+            val index = key.toIntOrNull() ?: return@mapNotNull null
+            val fanJson = data.optJSONObject(key) ?: return@mapNotNull null
 
-                val rawVNow = fanJson.optDouble(
-                    "VNow",
-                    Double.NaN
-                )
+            val rawVNow = fanJson.optDouble(
+                "VNow",
+                Double.NaN
+            )
 
-                FanChannelData(
-                    index = index,
-                    name = fanJson.optString(
-                        "Name",
-                        "Fan ${index + 1}"
-                    ).ifBlank {
-                        "Fan ${index + 1}"
-                    },
-                    gpioPwm = fanJson.optString(
-                        "GPIO_PWM",
-                        "-"
-                    ).trim(),
-                    regime = FanRegime.fromRaw(
-                        value = fanJson.optString(
-                            "Regime",
-                            "Off"
-                        )
-                    ),
-                    vMin = fanJson.optFloatCompat(
-                        name = "VMin",
-                        defaultValue = 0f
-                    ),
-                    vMax = fanJson.optFloatCompat(
-                        name = "VMax",
-                        defaultValue = 1f
-                    ),
-                    vNow = if (rawVNow.isNaN() || rawVNow < 0.0) {
-                        null
-                    } else {
-                        rawVNow.toFloat()
-                    },
-                    invert = fanJson.optBooleanCompat(
-                        name = "Invert"
+            FanChannelData(
+                index = index,
+                name = fanJson.optString(
+                    "Name",
+                    "Fan ${index + 1}"
+                ).ifBlank {
+                    "Fan ${index + 1}"
+                },
+                gpioPwm = fanJson.optString(
+                    "GPIO_PWM",
+                    "-"
+                ).trim(),
+                regime = FanRegime.fromRaw(
+                    value = fanJson.optString(
+                        "Regime",
+                        "Off"
                     )
+                ),
+                vMin = fanJson.optFloatCompat(
+                    name = "VMin",
+                    defaultValue = 0f
+                ),
+                vMax = fanJson.optFloatCompat(
+                    name = "VMax",
+                    defaultValue = 1f
+                ),
+                vNow = if (rawVNow.isNaN() || rawVNow < 0.0) {
+                    null
+                } else {
+                    rawVNow.toFloat()
+                },
+                invert = fanJson.optBooleanCompat(
+                    name = "Invert"
                 )
-            }
-            .sortedBy { fan ->
-                fan.index
-            }
-            .toList()
+            )
+        }
+        .sortedBy {
+            fan ->
+            fan.index
+        }
+        .toList()
     }
 
     private fun parseBooleanArray(
@@ -420,21 +430,22 @@ class CoolingDeviceRepository {
 
         return List(
             size = array.length()
-        ) { index ->
+        ) {
+            index ->
             val value = array.opt(index)
 
             when (value) {
                 is Boolean -> value
                 is Number -> value.toInt() != 0
                 is String -> value == "1" ||
-                    value.equals(
-                        "true",
-                        ignoreCase = true
-                    ) ||
-                    value.equals(
-                        "on",
-                        ignoreCase = true
-                    )
+                value.equals(
+                    "true",
+                    ignoreCase = true
+                ) ||
+                value.equals(
+                    "on",
+                    ignoreCase = true
+                )
                 else -> false
             }
         }
@@ -481,7 +492,8 @@ class CoolingDeviceRepository {
     ): Int {
         var result = 0
 
-        value.forEach { char ->
+        value.forEach {
+            char ->
             val digit = BASE_41_DIGITS.indexOf(
                 char
             )
@@ -545,15 +557,15 @@ class CoolingDeviceRepository {
 
                 trimmed.startsWith("0x", ignoreCase = true) -> {
                     trimmed.removePrefix("0x")
-                        .removePrefix("0X")
-                        .toLong(16)
+                    .removePrefix("0X")
+                    .toLong(16)
                 }
 
-                trimmed.all { char -> char.isDigit() } -> {
+                trimmed.all {
+                    char -> char.isDigit()
+                } -> {
                     trimmed.toLong()
-                }
-
-                else -> {
+                } else -> {
                     trimmed.toLong(16)
                 }
             }
@@ -583,14 +595,14 @@ class CoolingDeviceRepository {
             is Boolean -> value
             is Number -> value.toInt() != 0
             is String -> value == "1" ||
-                value.equals(
-                    "true",
-                    ignoreCase = true
-                ) ||
-                value.equals(
-                    "on",
-                    ignoreCase = true
-                )
+            value.equals(
+                "true",
+                ignoreCase = true
+            ) ||
+            value.equals(
+                "on",
+                ignoreCase = true
+            )
             else -> defaultValue
         }
     }
@@ -606,244 +618,262 @@ class CoolingDeviceRepository {
             else -> 0xFF8E24AA.toInt()
         }
     }
-    
+
     suspend fun saveCoolingFanSettings(
-    ipAddress: String,
-    currentData: CoolingDashboardData,
-    fanIndex: Int,
-    ruleIndex: Int?,
-    fanMode: FanRegime,
-    startCooling: Float,
-    fullPower: Float,
-    minimumPowerPercent: Int,
-    maximumPowerPercent: Int,
-    selectedSensorIndexes: List<Int>
-) = withContext(Dispatchers.IO) {
-    val fan = currentData.fanChannels.firstOrNull { item ->
-        item.index == fanIndex
-    } ?: throw IllegalStateException(
-        "Fan channel could not be found."
-    )
-
-    if (fan.gpioPwm.isBlank() || fan.gpioPwm == "-") {
-        throw IllegalStateException(
-            "Fan channel is not assigned to hardware."
+        ipAddress: String,
+        currentData: CoolingDashboardData,
+        fanIndex: Int,
+        ruleIndex: Int?,
+        fanName: String,
+        fanMode: FanRegime,
+        startCooling: Float,
+        fullPower: Float,
+        minimumPowerPercent: Int,
+        maximumPowerPercent: Int,
+        selectedSensorIndexes: List<Int>
+    ) = withContext(Dispatchers.IO) {
+        val fan = currentData.fanChannels.firstOrNull {
+            item ->
+            item.index == fanIndex
+        } ?: throw IllegalStateException(
+            "Fan channel could not be found."
         )
-    }
 
-    val targetRuleIndex = ruleIndex ?: nextCoolRuleIndex(
-        currentData = currentData
-    )
+        if (fan.gpioPwm.isBlank() || fan.gpioPwm == "-") {
+            throw IllegalStateException(
+                "Fan channel is not assigned to hardware."
+            )
+        }
 
-    val existingRule = currentData.coolRules.firstOrNull { rule ->
-        rule.index == targetRuleIndex
-    }
-
-    val ruleName = existingRule?.name?.ifBlank {
-        "${fan.name} Cooling"
-    } ?: "${fan.name} Cooling"
-
-    val setJson = JSONObject().apply {
-        put(
-            "LPWMChanelFan",
-            JSONObject().apply {
-                put(
-                    "Data",
-                    JSONObject().apply {
-                        put(
-                            fan.index.toString(),
-                            JSONObject().apply {
-                                put(
-                                    "Regime",
-                                    fanMode.displayName
-                                )
-                                put(
-                                    "VMin",
-                                    minimumPowerPercent.coerceIn(
-                                        0,
-                                        100
-                                    ) / 100f
-                                )
-                                put(
-                                    "VMax",
-                                    maximumPowerPercent.coerceIn(
-                                        0,
-                                        100
-                                    ) / 100f
-                                )
-                            }
-                        )
-                    }
-                )
+        val cleanFanName = fanName.trim().ifBlank {
+            fan.name.ifBlank {
+                "Fan ${fan.index + 1}"
             }
+        }
+
+        val targetRuleIndex = ruleIndex ?: nextCoolRuleIndex(
+            currentData = currentData
         )
 
-        put(
-            "LCool",
-            JSONObject().apply {
-                put(
-                    "Data",
-                    JSONObject().apply {
-                        put(
-                            targetRuleIndex.toString(),
-                            JSONObject().apply {
-                                put(
-                                    "Enabled",
-                                    1
-                                )
-                                put(
-                                    "Name",
-                                    ruleName
-                                )
-                                put(
-                                    "GPIO_PWM",
-                                    fan.gpioPwm
-                                )
-                                put(
-                                    "TMin",
-                                    startCooling
-                                )
-                                put(
-                                    "TMax",
-                                    fullPower
-                                )
-                                put(
-                                    "LbT",
-                                    buildSensorFlagsJsonArray(
-                                        currentData = currentData,
-                                        selectedSensorIndexes = selectedSensorIndexes
-                                    )
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-        )
-    }
+        val ruleName = "$cleanFanName Cooling"
 
-    postSetJson(
-        ipAddress = ipAddress,
-        json = setJson,
-        sRet = "cooling_settings"
-    )
-
-    postSetJson(
-        ipAddress = ipAddress,
-        json = JSONObject().apply {
+        val setJson = JSONObject().apply {
             put(
-                "Main",
+                "LPWMChanelFan",
                 JSONObject().apply {
                     put(
-                        "SaveCool",
-                        1
+                        "Data",
+                        JSONObject().apply {
+                            put(
+                                fan.index.toString(),
+                                JSONObject().apply {
+                                    put(
+                                        "Name",
+                                        cleanFanName
+                                    )
+
+                                    put(
+                                        "Regime",
+                                        fanMode.displayName
+                                    )
+
+                                    put(
+                                        "VMin",
+                                        minimumPowerPercent.coerceIn(
+                                            0,
+                                            100
+                                        ) / 100f
+                                    )
+
+                                    put(
+                                        "VMax",
+                                        maximumPowerPercent.coerceIn(
+                                            0,
+                                            100
+                                        ) / 100f
+                                    )
+                                }
+                            )
+                        }
                     )
                 }
             )
-        },
-        sRet = "save_cool"
-    )
-}
 
-private fun nextCoolRuleIndex(
-    currentData: CoolingDashboardData
-): Int {
-    return currentData.coolRules.maxOfOrNull { rule ->
-        rule.index
-    }?.plus(
-        1
-    ) ?: 0
-}
-
-private fun buildSensorFlagsJsonArray(
-    currentData: CoolingDashboardData,
-    selectedSensorIndexes: List<Int>
-): JSONArray {
-    val selectedSet = selectedSensorIndexes.toSet()
-
-    val maxSensorIndex = currentData.sensors.maxOfOrNull { sensor ->
-        sensor.index
-    } ?: -1
-
-    val maxSelectedIndex = selectedSensorIndexes.maxOrNull() ?: -1
-
-    val maxIndex = maxOf(
-        maxSensorIndex,
-        maxSelectedIndex
-    )
-
-    return JSONArray().apply {
-        for (index in 0..maxIndex) {
             put(
-                if (selectedSet.contains(index)) {
-                    1
-                } else {
-                    0
+                "LCool",
+                JSONObject().apply {
+                    put(
+                        "Data",
+                        JSONObject().apply {
+                            put(
+                                targetRuleIndex.toString(),
+                                JSONObject().apply {
+                                    put(
+                                        "Enabled",
+                                        1
+                                    )
+
+                                    put(
+                                        "Name",
+                                        ruleName
+                                    )
+
+                                    put(
+                                        "GPIO_PWM",
+                                        fan.gpioPwm
+                                    )
+
+                                    put(
+                                        "TMin",
+                                        startCooling
+                                    )
+
+                                    put(
+                                        "TMax",
+                                        fullPower
+                                    )
+
+                                    put(
+                                        "LbT",
+                                        buildSensorFlagsJsonArray(
+                                            currentData = currentData,
+                                            selectedSensorIndexes = selectedSensorIndexes
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                    )
                 }
             )
         }
-    }
-}
 
-private fun postSetJson(
-    ipAddress: String,
-    json: JSONObject,
-    sRet: String
-) {
-    val encodedJson = URLEncoder.encode(
-        json.toString(),
-        StandardCharsets.UTF_8.name()
-    )
+        postSetJson(
+            ipAddress = ipAddress,
+            json = setJson,
+            sRet = "cooling_settings"
+        )
 
-    val encodedRet = URLEncoder.encode(
-        sRet,
-        StandardCharsets.UTF_8.name()
-    )
-
-    val body = "Json=$encodedJson&sRet=$encodedRet"
-
-    val url = URL(
-        "http://$ipAddress/set"
-    )
-
-    val connection = url.openConnection() as HttpURLConnection
-    connection.requestMethod = "POST"
-    connection.connectTimeout = 5000
-    connection.readTimeout = 5000
-    connection.doOutput = true
-
-    connection.setRequestProperty(
-        "Content-Type",
-        "text/plain; charset=UTF-8"
-    )
-
-    try {
-        connection.outputStream.use { outputStream ->
-            outputStream.write(
-                body.toByteArray(
-                    StandardCharsets.UTF_8
+        postSetJson(
+            ipAddress = ipAddress,
+            json = JSONObject().apply {
+                put(
+                    "Main",
+                    JSONObject().apply {
+                        put(
+                            "SaveCool",
+                            1
+                        )
+                    }
                 )
-            )
-        }
-
-        val code = connection.responseCode
-
-        if (code !in 200..299) {
-            throw IllegalStateException(
-                "Device returned HTTP $code"
-            )
-        }
-
-        connection.inputStream.use { inputStream ->
-            inputStream.readBytes()
-        }
-    } finally {
-        connection.disconnect()
+            },
+            sRet = "save_cool"
+        )
     }
-}
+
+    private fun nextCoolRuleIndex(
+        currentData: CoolingDashboardData
+    ): Int {
+        return currentData.coolRules.maxOfOrNull {
+            rule ->
+            rule.index
+        }?.plus(
+            1
+        ) ?: 0
+    }
+
+    private fun buildSensorFlagsJsonArray(
+        currentData: CoolingDashboardData,
+        selectedSensorIndexes: List<Int>
+    ): JSONArray {
+        val selectedSet = selectedSensorIndexes.toSet()
+
+        val maxSensorIndex = currentData.sensors.maxOfOrNull {
+            sensor ->
+            sensor.index
+        } ?: -1
+
+        val maxSelectedIndex = selectedSensorIndexes.maxOrNull() ?: -1
+
+        val maxIndex = maxOf(
+            maxSensorIndex,
+            maxSelectedIndex
+        )
+
+        return JSONArray().apply {
+            for (index in 0..maxIndex) {
+                put(
+                    if (selectedSet.contains(index)) {
+                        1
+                    } else {
+                        0
+                    }
+                )
+            }
+        }
+    }
+
+    private fun postSetJson(
+        ipAddress: String,
+        json: JSONObject,
+        sRet: String
+    ) {
+        val encodedJson = URLEncoder.encode(
+            json.toString(),
+            StandardCharsets.UTF_8.name()
+        )
+
+        val encodedRet = URLEncoder.encode(
+            sRet,
+            StandardCharsets.UTF_8.name()
+        )
+
+        val body = "Json=$encodedJson&sRet=$encodedRet"
+
+        val url = URL(
+            "http://$ipAddress/set"
+        )
+
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        connection.doOutput = true
+
+        connection.setRequestProperty(
+            "Content-Type",
+            "text/plain; charset=UTF-8"
+        )
+
+        try {
+            connection.outputStream.use {
+                outputStream ->
+                outputStream.write(
+                    body.toByteArray(
+                        StandardCharsets.UTF_8
+                    )
+                )
+            }
+
+            val code = connection.responseCode
+
+            if (code !in 200..299) {
+                throw IllegalStateException(
+                    "Device returned HTTP $code"
+                )
+            }
+
+            connection.inputStream.use {
+                inputStream ->
+                inputStream.readBytes()
+            }
+        } finally {
+            connection.disconnect()
+        }
+    }
 
     companion object {
         private const val BASE_41_DIGITS =
-            "0123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+        "0123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     }
 }
