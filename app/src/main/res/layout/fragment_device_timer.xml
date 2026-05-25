@@ -153,8 +153,7 @@
                             android:maxLines="1"
                             android:text="18:30 · Outlet 1"
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="15sp"
-                            android:textStyle="bold" />
+                            android:textSize="12sp" />
 
                     </LinearLayout>
 

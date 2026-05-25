@@ -13,11 +13,38 @@ object TimerNextEventResolver {
         val minutesUntil: Int,
         val eventTime: String
     ) {
+
+        fun topCardText(): String {
+            val firstLine = when (dayOffset) {
+                0 -> {
+                    eventTime
+                }
+
+                1 -> {
+                    "Tomorrow $eventTime"
+                }
+
+                else -> {
+                    "${dayNameShort(dayIndex)} $eventTime"
+                }
+            }
+
+            return "$firstLine\n$outletName"
+        }
+
         fun shortText(): String {
             val prefix = when (dayOffset) {
-                0 -> ""
-                1 -> "Tomorrow "
-                else -> "${dayNameShort(dayIndex)} "
+                0 -> {
+                    ""
+                }
+
+                1 -> {
+                    "Tomorrow "
+                }
+
+                else -> {
+                    "${dayNameShort(dayIndex)} "
+                }
             }
 
             return "$prefix$eventTime · $outletName"
@@ -25,9 +52,17 @@ object TimerNextEventResolver {
 
         fun detailText(): String {
             val dayText = when (dayOffset) {
-                0 -> "today"
-                1 -> "tomorrow"
-                else -> "on ${dayNameLong(dayIndex)}"
+                0 -> {
+                    "today"
+                }
+
+                1 -> {
+                    "tomorrow"
+                }
+
+                else -> {
+                    "on ${dayNameLong(dayIndex)}"
+                }
             }
 
             val repeatText = if (rule.count > 1) {
@@ -41,9 +76,17 @@ object TimerNextEventResolver {
 
         fun rowTimeText(): String {
             val dayText = when (dayOffset) {
-                0 -> "Today"
-                1 -> "Tomorrow"
-                else -> dayNameShort(dayIndex)
+                0 -> {
+                    "Today"
+                }
+
+                1 -> {
+                    "Tomorrow"
+                }
+
+                else -> {
+                    dayNameShort(dayIndex)
+                }
             }
 
             val repeatText = if (rule.count > 1) {
