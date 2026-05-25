@@ -10,6 +10,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.DeviceVisualSpecs
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.base.BaseActivity
 
 class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
@@ -25,7 +26,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private var isSavingCoolingSettings: Boolean = false
 
     private val deviceIp: String
-        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -43,14 +44,16 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         temperatureChartRenderer = TemperatureChartRenderer(
             chart = binding.temperatureChartView,
             visualSpec = DeviceVisualSpecs.Cooling
-        ).also { renderer ->
+        ).also {
+            renderer ->
             renderer.setup()
         }
 
         coolingManagementRenderer = CoolingManagementRenderer(
             container = binding.fanCardsContainer,
             visualSpec = DeviceVisualSpecs.Cooling,
-            onFanCardClick = { fan, rule ->
+            onFanCardClick = {
+                fan, rule ->
                 showCoolingFanSettingsBottomSheet(
                     fan = fan,
                     rule = rule
@@ -73,14 +76,14 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         binding.cardTemperatureGraph.strokeColor =
-            visualSpec.cardStrokeColor
+        visualSpec.cardStrokeColor
 
         binding.cardCoolingManagement.setCardBackgroundColor(
             visualSpec.cardBackgroundColor
         )
 
         binding.cardCoolingManagement.strokeColor =
-            visualSpec.cardStrokeColor
+        visualSpec.cardStrokeColor
 
         binding.viewGraphAccent.setBackgroundColor(
             visualSpec.accentColor
@@ -91,9 +94,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         binding.btnRefreshTemperature.backgroundTintList =
-            ColorStateList.valueOf(
-                visualSpec.buttonColor
-            )
+        ColorStateList.valueOf(
+            visualSpec.buttonColor
+        )
 
         binding.btnRefreshTemperature.setTextColor(
             visualSpec.buttonTextColor
@@ -123,7 +126,8 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 return@launch
             }
 
-            result.onSuccess { data ->
+            result.onSuccess {
+                data ->
                 latestCoolingDashboardData = data
 
                 temperatureChartRenderer?.render(
@@ -133,7 +137,8 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 coolingManagementRenderer?.render(
                     data = data
                 )
-            }.onFailure { error ->
+            }.onFailure {
+                error ->
                 latestCoolingDashboardData = null
 
                 temperatureChartRenderer?.clear()
@@ -164,24 +169,46 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             fan = fan,
             rule = rule,
             sensors = dashboardData.sensors,
-            onSave = { draft ->
+            onSave = {
+                draft, sheet ->
                 saveCoolingFanSettings(
-                    draft = draft
+                    draft = draft,
+                    sheet = sheet
                 )
             }
         ).show()
     }
 
     private fun saveCoolingFanSettings(
-        draft: CoolingFanSettingsBottomSheet.CoolingFanSettingsDraft
+        draft: CoolingFanSettingsBottomSheet.CoolingFanSettingsDraft,
+        sheet: CoolingFanSettingsBottomSheet
     ) {
-        val dashboardData = latestCoolingDashboardData ?: return
+        val dashboardData = latestCoolingDashboardData
 
-        if (deviceIp.isBlank() || isSavingCoolingSettings) {
+        if (dashboardData == null) {
+            sheet.showSaveError(
+                message = "Cooling data is not ready."
+            )
+            return
+        }
+
+        if (deviceIp.isBlank()) {
+            sheet.showSaveError(
+                message = "Device IP is missing."
+            )
+            return
+        }
+
+        if (isSavingCoolingSettings) {
             return
         }
 
         isSavingCoolingSettings = true
+
+        showGlobalLoading(
+            show = true
+        )
+
         _binding?.btnRefreshTemperature?.isEnabled = false
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -201,17 +228,26 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             }
 
             if (_binding == null) {
+                isSavingCoolingSettings = false
+
+                showGlobalLoading(
+                    show = false
+                )
+
                 return@launch
             }
 
             result.onSuccess {
+                sheet.closeAfterSave()
+
                 showShortMessage(
                     message = "Cooling settings saved."
                 )
 
                 loadCoolingDashboard()
-            }.onFailure { error ->
-                showShortMessage(
+            }.onFailure {
+                error ->
+                sheet.showSaveError(
                     message = "Cooling settings could not be saved: ${error.message}"
                 )
 
@@ -219,6 +255,10 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             }
 
             isSavingCoolingSettings = false
+
+            showGlobalLoading(
+                show = false
+            )
         }
     }
 
@@ -230,6 +270,14 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             message,
             Toast.LENGTH_SHORT
         ).show()
+    }
+
+    private fun showGlobalLoading(
+        show: Boolean
+    ) {
+        (activity as? BaseActivity)?.showLoading(
+            show
+        )
     }
 
     override fun onDestroyView() {

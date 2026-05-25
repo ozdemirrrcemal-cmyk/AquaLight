@@ -22,6 +22,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.util.Locale
 import kotlin.math.roundToInt
+import android.view.ViewGroup
 
 class CoolingFanSettingsBottomSheet(
     private val fragment: Fragment,
@@ -30,7 +31,8 @@ class CoolingFanSettingsBottomSheet(
     private val rule: CoolingDeviceRepository.CoolRuleData?,
     private val sensors: List<CoolingDeviceRepository.TemperatureSensorData>,
     private val onSave: (
-        draft: CoolingFanSettingsDraft
+        draft: CoolingFanSettingsDraft,
+        sheet: CoolingFanSettingsBottomSheet
     ) -> Unit
 ) {
 
@@ -62,6 +64,8 @@ class CoolingFanSettingsBottomSheet(
     ).roundToInt()
 
     private val selectedSensorIndexes = mutableSetOf<Int>()
+
+    private var isSaving: Boolean = false
 
     fun show() {
         val context = fragment.requireContext()
@@ -97,7 +101,8 @@ class CoolingFanSettingsBottomSheet(
                 Color.TRANSPARENT
             )
 
-            bottomSheet?.let { sheet ->
+            bottomSheet?.let {
+                sheet ->
                 val behavior = BottomSheetBehavior.from(
                     sheet
                 )
@@ -135,7 +140,8 @@ class CoolingFanSettingsBottomSheet(
 
         val flags = rule?.selectedTemperatureFlags.orEmpty()
 
-        sensors.forEach { sensor ->
+        sensors.forEach {
+            sensor ->
             if (flags.getOrNull(sensor.index) == true) {
                 selectedSensorIndexes.add(
                     sensor.index
@@ -152,7 +158,7 @@ class CoolingFanSettingsBottomSheet(
         )
 
         binding.sheetCard.strokeColor =
-            visualSpec.cardStrokeColor
+        visualSpec.cardStrokeColor
 
         binding.viewSheetAccent.setBackgroundColor(
             visualSpec.accentColor
@@ -238,7 +244,8 @@ class CoolingFanSettingsBottomSheet(
             )
         )
 
-        binding.modeToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+        binding.modeToggleGroup.addOnButtonCheckedListener {
+            _, checkedId, isChecked ->
             if (!isChecked) {
                 return@addOnButtonCheckedListener
             }
@@ -424,7 +431,8 @@ class CoolingFanSettingsBottomSheet(
             return
         }
 
-        sensors.forEach { sensor ->
+        sensors.forEach {
+            sensor ->
             binding.sensorsContainer.addView(
                 createSensorOption(
                     context = fragment.requireContext(),
@@ -561,6 +569,10 @@ class CoolingFanSettingsBottomSheet(
     }
 
     private fun save() {
+        if (isSaving) {
+            return
+        }
+
         binding.tvSheetError.visibility = View.GONE
 
         if (fullPower <= startCooling) {
@@ -587,6 +599,10 @@ class CoolingFanSettingsBottomSheet(
             return
         }
 
+        setSaving(
+            saving = true
+        )
+
         onSave(
             CoolingFanSettingsDraft(
                 fanIndex = fan.index,
@@ -597,10 +613,9 @@ class CoolingFanSettingsBottomSheet(
                 minimumPowerPercent = minimumPowerPercent,
                 maximumPowerPercent = maximumPowerPercent,
                 selectedSensorIndexes = selectedSensorIndexes.sorted()
-            )
+            ),
+            this
         )
-
-        dialog.dismiss()
     }
 
     private fun showError(
@@ -608,6 +623,66 @@ class CoolingFanSettingsBottomSheet(
     ) {
         binding.tvSheetError.text = text
         binding.tvSheetError.visibility = View.VISIBLE
+    }
+
+    fun showSaveError(
+        message: String
+    ) {
+        setSaving(
+            saving = false
+        )
+
+        showError(
+            text = message
+        )
+    }
+
+    fun closeAfterSave() {
+        dialog.dismiss()
+    }
+
+    private fun setSaving(
+        saving: Boolean
+    ) {
+        isSaving = saving
+
+        dialog.setCancelable(
+            !saving
+        )
+
+        dialog.setCanceledOnTouchOutside(
+            !saving
+        )
+
+        setChildrenEnabled(
+            view = binding.sheetRoot,
+            enabled = !saving
+        )
+
+        binding.btnSave.isEnabled = !saving
+        binding.btnCancel.isEnabled = !saving
+
+        binding.btnSave.text = if (saving) {
+            "Saving..."
+        } else {
+            "Save"
+        }
+    }
+
+    private fun setChildrenEnabled(
+        view: View,
+        enabled: Boolean
+    ) {
+        view.isEnabled = enabled
+
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) {
+                setChildrenEnabled(
+                    view = view.getChildAt(index),
+                    enabled = enabled
+                )
+            }
+        }
     }
 
     private fun modeId(
