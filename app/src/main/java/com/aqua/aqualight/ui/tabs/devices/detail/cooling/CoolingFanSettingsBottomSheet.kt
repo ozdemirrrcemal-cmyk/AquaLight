@@ -102,13 +102,20 @@ class CoolingFanSettingsBottomSheet(
                 Color.TRANSPARENT
             )
 
-            bottomSheet?.let { sheet ->
+            bottomSheet?.layoutParams?.height =
+            ViewGroup.LayoutParams.MATCH_PARENT
+
+            bottomSheet?.requestLayout()
+
+            bottomSheet?.let {
+                sheet ->
                 val behavior = BottomSheetBehavior.from(
                     sheet
                 )
 
                 behavior.state = BottomSheetBehavior.STATE_EXPANDED
                 behavior.skipCollapsed = true
+                behavior.isDraggable = true
             }
         }
 
@@ -140,7 +147,8 @@ class CoolingFanSettingsBottomSheet(
 
         val flags = rule?.selectedTemperatureFlags.orEmpty()
 
-        sensors.forEach { sensor ->
+        sensors.forEach {
+            sensor ->
             if (flags.getOrNull(sensor.index) == true) {
                 selectedSensorIndexes.add(
                     sensor.index
@@ -155,7 +163,7 @@ class CoolingFanSettingsBottomSheet(
         )
 
         binding.sheetCard.strokeColor =
-            visualSpec.cardStrokeColor
+        visualSpec.cardStrokeColor
 
         binding.viewSheetAccent.setBackgroundColor(
             visualSpec.accentColor
@@ -265,7 +273,8 @@ class CoolingFanSettingsBottomSheet(
             )
         )
 
-        binding.modeToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+        binding.modeToggleGroup.addOnButtonCheckedListener {
+            _, checkedId, isChecked ->
             if (!isChecked) {
                 return@addOnButtonCheckedListener
             }
@@ -451,7 +460,8 @@ class CoolingFanSettingsBottomSheet(
             return
         }
 
-        sensors.forEach { sensor ->
+        sensors.forEach {
+            sensor ->
             binding.sensorsContainer.addView(
                 createSensorOption(
                     context = fragment.requireContext(),
@@ -595,9 +605,9 @@ class CoolingFanSettingsBottomSheet(
         binding.tvSheetError.visibility = View.GONE
 
         val fanName = binding.etFanName.text
-            ?.toString()
-            ?.trim()
-            .orEmpty()
+        ?.toString()
+        ?.trim()
+        .orEmpty()
 
         if (fanName.isBlank()) {
             showError(

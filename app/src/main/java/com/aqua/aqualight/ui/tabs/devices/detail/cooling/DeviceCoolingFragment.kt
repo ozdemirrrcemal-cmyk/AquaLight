@@ -7,10 +7,16 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.DeviceVisualSpecs
 import kotlinx.coroutines.launch
-import com.aqua.aqualight.base.BaseActivity
+import java.io.IOException
+import java.net.ConnectException
+import java.net.NoRouteToHostException
+import java.net.SocketException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
@@ -26,7 +32,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private var isSavingCoolingSettings: Boolean = false
 
     private val deviceIp: String
-    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -44,16 +50,14 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         temperatureChartRenderer = TemperatureChartRenderer(
             chart = binding.temperatureChartView,
             visualSpec = DeviceVisualSpecs.Cooling
-        ).also {
-            renderer ->
+        ).also { renderer ->
             renderer.setup()
         }
 
         coolingManagementRenderer = CoolingManagementRenderer(
             container = binding.fanCardsContainer,
             visualSpec = DeviceVisualSpecs.Cooling,
-            onFanCardClick = {
-                fan, rule ->
+            onFanCardClick = { fan, rule ->
                 showCoolingFanSettingsBottomSheet(
                     fan = fan,
                     rule = rule
@@ -76,14 +80,14 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         binding.cardTemperatureGraph.strokeColor =
-        visualSpec.cardStrokeColor
+            visualSpec.cardStrokeColor
 
         binding.cardCoolingManagement.setCardBackgroundColor(
             visualSpec.cardBackgroundColor
         )
 
         binding.cardCoolingManagement.strokeColor =
-        visualSpec.cardStrokeColor
+            visualSpec.cardStrokeColor
 
         binding.viewGraphAccent.setBackgroundColor(
             visualSpec.accentColor
@@ -94,9 +98,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         binding.btnRefreshTemperature.backgroundTintList =
-        ColorStateList.valueOf(
-            visualSpec.buttonColor
-        )
+            ColorStateList.valueOf(
+                visualSpec.buttonColor
+            )
 
         binding.btnRefreshTemperature.setTextColor(
             visualSpec.buttonTextColor
@@ -110,6 +114,11 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             latestCoolingDashboardData = null
             temperatureChartRenderer?.clear()
             coolingManagementRenderer?.clear()
+
+            showUserErrorMessage(
+                message = "Device address is missing. Please reconnect the device."
+            )
+
             return
         }
 
@@ -126,8 +135,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 return@launch
             }
 
-            result.onSuccess {
-                data ->
+            result.onSuccess { data ->
                 latestCoolingDashboardData = data
 
                 temperatureChartRenderer?.render(
@@ -137,15 +145,17 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 coolingManagementRenderer?.render(
                     data = data
                 )
-            }.onFailure {
-                error ->
+            }.onFailure { error ->
                 latestCoolingDashboardData = null
 
                 temperatureChartRenderer?.clear()
                 coolingManagementRenderer?.clear()
 
-                showShortMessage(
-                    message = "Cooling data could not be loaded: ${error.message}"
+                showUserErrorMessage(
+                    message = createDeviceConnectionMessage(
+                        action = DeviceAction.LOAD,
+                        error = error
+                    )
                 )
             }
 
@@ -169,8 +179,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             fan = fan,
             rule = rule,
             sensors = dashboardData.sensors,
-            onSave = {
-                draft, sheet ->
+            onSave = { draft, sheet ->
                 saveCoolingFanSettings(
                     draft = draft,
                     sheet = sheet
@@ -187,14 +196,14 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
         if (dashboardData == null) {
             sheet.showSaveError(
-                message = "Cooling data is not ready."
+                message = "Device data is not ready yet. Please refresh and try again."
             )
             return
         }
 
         if (deviceIp.isBlank()) {
             sheet.showSaveError(
-                message = "Device IP is missing."
+                message = "Device address is missing. Please reconnect the device."
             )
             return
         }
@@ -238,10 +247,12 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 return@launch
             }
 
-            saveResult.onFailure {
-                error ->
+            saveResult.onFailure { error ->
                 sheet.showSaveError(
-                    message = "Cooling settings could not be saved: ${error.message}"
+                    message = createDeviceConnectionMessage(
+                        action = DeviceAction.SAVE,
+                        error = error
+                    )
                 )
 
                 _binding?.btnRefreshTemperature?.isEnabled = true
@@ -273,8 +284,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 return@launch
             }
 
-            refreshResult.onSuccess {
-                data ->
+            refreshResult.onSuccess { data ->
                 latestCoolingDashboardData = data
 
                 temperatureChartRenderer?.render(
@@ -283,6 +293,10 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
                 coolingManagementRenderer?.render(
                     data = data
+                )
+            }.onFailure {
+                showUserErrorMessage(
+                    message = "Settings were saved, but the latest device data could not be refreshed."
                 )
             }
 
@@ -296,14 +310,106 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         }
     }
 
-    private fun showShortMessage(
+    private enum class DeviceAction {
+        LOAD,
+        SAVE
+    }
+
+    private fun createDeviceConnectionMessage(
+        action: DeviceAction,
+        error: Throwable
+    ): String {
+        val rootError = findRootCause(
+            error = error
+        )
+
+        return when (rootError) {
+            is SocketTimeoutException,
+            is ConnectException,
+            is NoRouteToHostException -> {
+                when (action) {
+                    DeviceAction.LOAD -> {
+                        "Device is not responding. Make sure your phone and the device are on the same Wi-Fi network."
+                    }
+
+                    DeviceAction.SAVE -> {
+                        "Settings could not be saved. Make sure the device is online and connected to the same Wi-Fi network."
+                    }
+                }
+            }
+
+            is UnknownHostException -> {
+                "Device address could not be found. Please scan or reconnect the device."
+            }
+
+            is SocketException,
+            is IOException -> {
+                when (action) {
+                    DeviceAction.LOAD -> {
+                        "Could not connect to the device. Check your Wi-Fi connection and try again."
+                    }
+
+                    DeviceAction.SAVE -> {
+                        "Settings could not be saved. Check your Wi-Fi connection and try again."
+                    }
+                }
+            }
+
+            is IllegalStateException -> {
+                when (action) {
+                    DeviceAction.LOAD -> {
+                        "The device did not return valid cooling data. Please try again."
+                    }
+
+                    DeviceAction.SAVE -> {
+                        "The device did not accept the settings. Please try again."
+                    }
+                }
+            }
+
+            else -> {
+                when (action) {
+                    DeviceAction.LOAD -> {
+                        "Cooling data could not be loaded. Please try again."
+                    }
+
+                    DeviceAction.SAVE -> {
+                        "Settings could not be saved. Please try again."
+                    }
+                }
+            }
+        }
+    }
+
+    private fun findRootCause(
+        error: Throwable
+    ): Throwable {
+        var current: Throwable = error
+
+        while (current.cause != null && current.cause !== current) {
+            current = current.cause ?: break
+        }
+
+        return current
+    }
+
+    private fun showUserErrorMessage(
         message: String
     ) {
-        Toast.makeText(
-            requireContext(),
-            message,
-            Toast.LENGTH_SHORT
-        ).show()
+        val baseActivity = activity as? BaseActivity
+
+        if (baseActivity != null) {
+            baseActivity.showSnackBar(
+                message = message,
+                type = BaseActivity.SnackType.ERROR
+            )
+        } else {
+            Toast.makeText(
+                requireContext(),
+                message,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     private fun showGlobalLoading(

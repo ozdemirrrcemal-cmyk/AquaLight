@@ -3,16 +3,28 @@ package com.aqua.aqualight.ui.tabs.devices.detail.timer
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceTimerBinding
+import kotlinx.coroutines.launch
 
 class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
     private var _binding: FragmentDeviceTimerBinding? = null
     private val binding get() = _binding!!
 
+    private val repository = TimerDeviceRepository()
+
+    private var renderer: TimerDashboardRenderer? = null
+
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
+
+    private val deviceIp: String
+        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+
+    private val deviceTitle: String
+        get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -25,27 +37,135 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
         _binding = FragmentDeviceTimerBinding.bind(view)
 
-        binding.tvControllerTitle.text = "Timer Controller"
-        binding.tvControllerDescription.text =
-            "Timer controls will be added here. Device ID: $deviceId"
+        renderer = TimerDashboardRenderer(
+            binding = binding
+        )
+
+        bindStaticScreen()
+        bindClicks()
+        loadTimerDashboard()
+    }
+
+    private fun bindStaticScreen() {
+        binding.tvTimerTitle.text = deviceTitle.ifBlank {
+            "Timer Controller"
+        }
+
+        binding.tvTimerSubtitle.text = "4 channel smart timer"
+    }
+
+    private fun bindClicks() {
+        binding.cardOutlet1.setOnClickListener {
+            // Sonraki adım: Outlet 1 ayar bottom sheet.
+        }
+
+        binding.cardOutlet2.setOnClickListener {
+            // Sonraki adım: Outlet 2 ayar bottom sheet.
+        }
+
+        binding.cardOutlet3.setOnClickListener {
+            // Sonraki adım: Outlet 3 ayar bottom sheet.
+        }
+
+        binding.cardOutlet4.setOnClickListener {
+            // Sonraki adım: Outlet 4 ayar bottom sheet.
+        }
+
+        binding.cardOutlet1Power.setOnClickListener {
+            // Sonraki adım: Outlet 1 hızlı ON/OFF.
+        }
+
+        binding.cardOutlet2Power.setOnClickListener {
+            // Sonraki adım: Outlet 2 hızlı ON/OFF.
+        }
+
+        binding.cardOutlet3Power.setOnClickListener {
+            // Sonraki adım: Outlet 3 hızlı ON/OFF.
+        }
+
+        binding.cardOutlet4Power.setOnClickListener {
+            // Sonraki adım: Outlet 4 hızlı ON/OFF.
+        }
+    }
+
+    private fun loadTimerDashboard() {
+        if (
+            deviceIp.isBlank() ||
+            deviceIp == "0.0.0.0"
+        ) {
+            return
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = runCatching {
+                repository.fetchTimerDashboardData(
+                    ipAddress = deviceIp
+                )
+            }
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            result.onSuccess { data ->
+                binding.tvTimerOnlineStatus.text = "Online"
+
+                renderer?.render(
+                    data = data
+                )
+            }.onFailure {
+                binding.tvTimerOnlineStatus.text = "Offline"
+
+                renderer?.clear()
+            }
+        }
     }
 
     override fun onDestroyView() {
+        renderer = null
         _binding = null
+
         super.onDestroyView()
     }
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
+        private const val ARG_DEVICE_IP = "deviceIp"
+        private const val ARG_DEVICE_TITLE = "deviceTitle"
+
+        fun newInstance(
+            deviceId: Long,
+            deviceIp: String,
+            deviceTitle: String
+        ): DeviceTimerFragment {
+            return DeviceTimerFragment().apply {
+                arguments = Bundle().apply {
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
+
+                    putString(
+                        ARG_DEVICE_IP,
+                        deviceIp
+                    )
+
+                    putString(
+                        ARG_DEVICE_TITLE,
+                        deviceTitle
+                    )
+                }
+            }
+        }
 
         fun newInstance(
             deviceId: Long
         ): DeviceTimerFragment {
-            return DeviceTimerFragment().apply {
-                arguments = Bundle().apply {
-                    putLong(ARG_DEVICE_ID, deviceId)
-                }
-            }
+            return newInstance(
+                deviceId = deviceId,
+                deviceIp = "",
+                deviceTitle = ""
+            )
         }
     }
 }

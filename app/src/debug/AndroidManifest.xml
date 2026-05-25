@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <provider
+            android:name="com.aqua.aqualight.debug.DebugAppInitializer"
+            android:authorities="${applicationId}.debug-app-initializer"
+            android:exported="false"
+            android:initOrder="100" />
+    </application>
+
+</manifest>

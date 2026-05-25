@@ -14,6 +14,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
+import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceRouterBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment
@@ -27,6 +28,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
     private val binding get() = _binding!!
 
     private lateinit var devicesStore: DevicesDataStoreManager
+    private lateinit var tankStore: AquariumTankDataStoreManager
 
     private var routedDeviceId: Long? = null
 
@@ -40,7 +42,14 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         )
 
         _binding = FragmentDeviceRouterBinding.bind(view)
-        devicesStore = DevicesDataStoreManager.create(requireContext())
+
+        devicesStore = DevicesDataStoreManager.create(
+            requireContext()
+        )
+
+        tankStore = AquariumTankDataStoreManager(
+            requireContext().applicationContext
+        )
 
         binding.tvSubtitle.visibility = View.GONE
 
@@ -110,6 +119,14 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 return@launch
             }
 
+            val tanks = tankStore.tanksFlow.first()
+
+            val assignedTankName = device.tankId?.let { tankId ->
+                tanks.firstOrNull { tank ->
+                    tank.id == tankId
+                }?.name
+            }.orEmpty()
+
             val deviceIp = requireArguments()
                 .getString(ARG_DEVICE_IP)
                 .orEmpty()
@@ -117,28 +134,58 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                     device.ip
                 }
 
-            val deviceTitle = device.name.ifBlank {
-                device.productModel.ifBlank {
-                    definition.displayName
-                }
-            }
+            val routerTitle = resolveDeviceOwnTitle(
+                userDeviceName = device.name,
+                productModel = device.productModel,
+                definition = definition
+            )
 
-            binding.tvTitle.text = deviceTitle
+            val controllerTitle = resolveControllerTitle(
+                assignedTankName = assignedTankName,
+                deviceOwnTitle = routerTitle
+            )
+
+            binding.tvTitle.text = routerTitle
             binding.tvSubtitle.visibility = View.GONE
 
             routeToController(
                 deviceId = device.id,
                 deviceIp = deviceIp,
-                deviceTitle = deviceTitle,
+                routerTitle = routerTitle,
+                controllerTitle = controllerTitle,
                 definition = definition
             )
+        }
+    }
+
+    private fun resolveDeviceOwnTitle(
+        userDeviceName: String,
+        productModel: String,
+        definition: AquaDeviceDefinition
+    ): String {
+        return userDeviceName.ifBlank {
+            productModel.ifBlank {
+                definition.displayName.ifBlank {
+                    "Device"
+                }
+            }
+        }
+    }
+
+    private fun resolveControllerTitle(
+        assignedTankName: String,
+        deviceOwnTitle: String
+    ): String {
+        return assignedTankName.ifBlank {
+            deviceOwnTitle
         }
     }
 
     private fun routeToController(
         deviceId: Long,
         deviceIp: String,
-        deviceTitle: String,
+        routerTitle: String,
+        controllerTitle: String,
         definition: AquaDeviceDefinition
     ) {
         val controllerFragment = when (definition.uiController) {
@@ -148,9 +195,13 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 )
             }
 
-            AquaDeviceUiController.GENERIC_TIMER -> {
+            AquaDeviceUiController.GENERIC_TIMER,
+            AquaDeviceUiController.CUSTOM_TIMER_MULTI_CONTROL,
+            AquaDeviceUiController.CUSTOM_TIMER_SCENE_PRO -> {
                 DeviceTimerFragment.newInstance(
-                    deviceId = deviceId
+                    deviceId = deviceId,
+                    deviceIp = deviceIp,
+                    deviceTitle = controllerTitle
                 )
             }
 
@@ -164,8 +215,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             AquaDeviceUiController.FULL_CONTROLLER,
             AquaDeviceUiController.CUSTOM_LIGHT_ADVANCED,
             AquaDeviceUiController.CUSTOM_LIGHT_MATRIX,
-            AquaDeviceUiController.CUSTOM_TIMER_MULTI_CONTROL,
-            AquaDeviceUiController.CUSTOM_TIMER_SCENE_PRO,
             AquaDeviceUiController.CUSTOM_COOLING_ADVANCED,
             AquaDeviceUiController.UNSUPPORTED -> {
                 null
@@ -174,7 +223,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
         if (controllerFragment == null) {
             showUnavailableState(
-                title = deviceTitle,
+                title = routerTitle,
                 message = "This device controller is not available in this app version."
             )
             return
@@ -275,11 +324,13 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         attr: Int
     ): Int {
         val typedValue = android.util.TypedValue()
+
         theme.resolveAttribute(
             attr,
             typedValue,
             true
         )
+
         return typedValue.data
     }
 
