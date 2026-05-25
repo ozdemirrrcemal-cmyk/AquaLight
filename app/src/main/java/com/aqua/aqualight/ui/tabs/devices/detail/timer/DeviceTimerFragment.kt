@@ -147,11 +147,6 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             )
         }
 
-        binding.tvOutletPanelHint.setOnClickListener {
-            showOutletSettings(
-                outletPosition = 0
-            )
-        }
     }
 
     private fun showDeviceNameBottomSheet() {
@@ -488,7 +483,6 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         binding.cardOutlet3Power.isEnabled = enabled
         binding.cardOutlet4Power.isEnabled = enabled
 
-        binding.tvOutletPanelHint.isEnabled = enabled
     }
 
     private fun durationToMinutes(

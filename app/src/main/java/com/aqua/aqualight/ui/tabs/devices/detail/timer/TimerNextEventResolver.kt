@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.timer
 
 import java.util.Calendar
-import kotlin.math.ceil
 
 object TimerNextEventResolver {
 
@@ -11,7 +10,8 @@ object TimerNextEventResolver {
         val outletName: String,
         val dayIndex: Int,
         val dayOffset: Int,
-        val minutesUntil: Int
+        val minutesUntil: Int,
+        val eventTime: String
     ) {
         fun shortText(): String {
             val prefix = when (dayOffset) {
@@ -20,7 +20,7 @@ object TimerNextEventResolver {
                 else -> "${dayNameShort(dayIndex)} "
             }
 
-            return "$prefix${rule.timeStart} · $outletName"
+            return "$prefix$eventTime · $outletName"
         }
 
         fun detailText(): String {
@@ -30,15 +30,29 @@ object TimerNextEventResolver {
                 else -> "on ${dayNameLong(dayIndex)}"
             }
 
-            return "$outletName will run $dayText at ${rule.timeStart} for ${rule.durationText()}."
+            val repeatText = if (rule.count > 1) {
+                " It repeats ${rule.count} times."
+            } else {
+                ""
+            }
+
+            return "$outletName will run $dayText at $eventTime for ${rule.durationText()}.$repeatText"
         }
 
         fun rowTimeText(): String {
-            return when (dayOffset) {
-                0 -> "Today ${rule.timeStart}"
-                1 -> "Tomorrow ${rule.timeStart}"
-                else -> "${dayNameShort(dayIndex)} ${rule.timeStart}"
+            val dayText = when (dayOffset) {
+                0 -> "Today"
+                1 -> "Tomorrow"
+                else -> dayNameShort(dayIndex)
             }
+
+            val repeatText = if (rule.count > 1) {
+                " · x${rule.count}"
+            } else {
+                ""
+            }
+
+            return "$dayText $eventTime$repeatText"
         }
 
         fun rowDurationText(): String {
@@ -67,58 +81,49 @@ object TimerNextEventResolver {
         )
 
         val nowMinuteOfDay =
-        now.get(Calendar.HOUR_OF_DAY) * 60 +
-        now.get(Calendar.MINUTE)
+            now.get(Calendar.HOUR_OF_DAY) * 60 +
+                now.get(Calendar.MINUTE)
 
         return data.timerRules
-        .filter {
-            rule ->
-            rule.isUsable() &&
-            parseMinuteOfDay(
-                value = rule.timeStart
-            ) != null
-        }
-        .flatMap {
-            rule ->
-            buildOccurrencesForRule(
-                data = data,
-                rule = rule,
-                nowDayIndex = nowDayIndex,
-                nowMinuteOfDay = nowMinuteOfDay
-            )
-        }
-        .sortedWith(
-            compareBy<NextTimerEvent> {
-                event ->
-                event.minutesUntil
-            }.thenBy {
-                event ->
-                event.rule.index
+            .filter { rule ->
+                rule.isUsable() &&
+                    parseMinuteOfDay(
+                        value = rule.timeStart
+                    ) != null
             }
-        )
-        .take(
-            limit.coerceAtLeast(
-                1
+            .mapNotNull { rule ->
+                buildNextStartEventForRule(
+                    data = data,
+                    rule = rule,
+                    nowDayIndex = nowDayIndex,
+                    nowMinuteOfDay = nowMinuteOfDay
+                )
+            }
+            .sortedWith(
+                compareBy<NextTimerEvent> { event ->
+                    event.minutesUntil
+                }.thenBy { event ->
+                    event.rule.index
+                }
             )
-        )
+            .take(
+                limit.coerceAtLeast(
+                    1
+                )
+            )
     }
 
-    private fun buildOccurrencesForRule(
+    private fun buildNextStartEventForRule(
         data: TimerDeviceRepository.TimerDashboardData,
         rule: TimerDeviceRepository.TimerRuleData,
         nowDayIndex: Int,
         nowMinuteOfDay: Int
-    ): List<NextTimerEvent> {
-        val occurrenceMinutes = occurrenceMinutesForRule(
-            rule = rule
-        )
+    ): NextTimerEvent? {
+        val startMinute = parseMinuteOfDay(
+            value = rule.timeStart
+        ) ?: return null
 
-        if (occurrenceMinutes.isEmpty()) {
-            return emptyList()
-        }
-
-        val outlet = data.outlets.firstOrNull {
-            item ->
+        val outlet = data.outlets.firstOrNull { item ->
             item.gpioPwm.trim().equals(
                 rule.gpioPwm.trim(),
                 ignoreCase = true
@@ -129,94 +134,48 @@ object TimerNextEventResolver {
             rule.name
         } ?: rule.name
 
-        val events = mutableListOf<NextTimerEvent>()
-
         for (dayOffset in 0..6) {
-            val candidateDayIndex = (nowDayIndex + dayOffset) % 7
+            val candidateDayIndex =
+                (nowDayIndex + dayOffset) % 7
 
-            if (!isAllowedDay(
-                rule = rule,
-                dayIndex = candidateDayIndex
-            )
+            if (
+                !isAllowedDay(
+                    rule = rule,
+                    dayIndex = candidateDayIndex
+                )
             ) {
                 continue
             }
 
-            occurrenceMinutes.forEach {
-                occurrenceMinute ->
-                val minutesUntil =
+            val minutesUntil =
                 dayOffset * MINUTES_PER_DAY +
-                occurrenceMinute -
-                nowMinuteOfDay
+                    startMinute -
+                    nowMinuteOfDay
 
-                if (minutesUntil >= 0) {
-                    events.add(
-                        NextTimerEvent(
-                            rule = rule,
-                            outlet = outlet,
-                            outletName = outletName,
-                            dayIndex = candidateDayIndex,
-                            dayOffset = dayOffset,
-                            minutesUntil = minutesUntil
-                        )
-                    )
-                }
+            if (minutesUntil >= 0) {
+                return NextTimerEvent(
+                    rule = rule,
+                    outlet = outlet,
+                    outletName = outletName,
+                    dayIndex = candidateDayIndex,
+                    dayOffset = dayOffset,
+                    minutesUntil = minutesUntil,
+                    eventTime = rule.timeStart
+                )
             }
         }
 
-        return events
-    }
-
-    private fun occurrenceMinutesForRule(
-        rule: TimerDeviceRepository.TimerRuleData
-    ): List<Int> {
-        val startMinute = parseMinuteOfDay(
-            value = rule.timeStart
-        ) ?: return emptyList()
-
-        val count = rule.count.coerceAtLeast(
-            1
-        )
-
-        val onMinutes = parseDurationToMinutes(
-            value = rule.intervalOn
-        )
-
-        val offMinutes = parseDurationToMinutes(
-            value = rule.intervalOff
-        )
-
-        val cycleMinutes = onMinutes + offMinutes
-
-        if (
-            count <= 1 ||
-            cycleMinutes <= 0
-        ) {
-            return listOf(
-                startMinute
-            )
-        }
-
-        return (0 until count)
-        .map {
-            index ->
-            startMinute + index * cycleMinutes
-        }
-        .filter {
-            minute ->
-            minute in 0 until MINUTES_PER_DAY
-        }
+        return null
     }
 
     private fun parseMinuteOfDay(
         value: String
     ): Int? {
         val parts = value.trim()
-        .split(":")
-        .mapNotNull {
-            part ->
-            part.toIntOrNull()
-        }
+            .split(":")
+            .mapNotNull { part ->
+                part.toIntOrNull()
+            }
 
         if (parts.size < 2) {
             return null
@@ -235,44 +194,6 @@ object TimerNextEventResolver {
         return hour * 60 + minute
     }
 
-    private fun parseDurationToMinutes(
-        value: String
-    ): Int {
-        val parts = value.trim()
-        .split(":")
-        .mapNotNull {
-            part ->
-            part.toIntOrNull()
-        }
-
-        if (parts.isEmpty()) {
-            return 0
-        }
-
-        val totalSeconds = when (parts.size) {
-            3 -> {
-                parts[0] * 3600 +
-                parts[1] * 60 +
-                parts[2]
-            }
-
-            2 -> {
-                parts[0] * 60 +
-                parts[1]
-            } else -> {
-                parts[0]
-            }
-        }
-
-        if (totalSeconds <= 0) {
-            return 0
-        }
-
-        return ceil(
-            totalSeconds / 60.0
-        ).toInt()
-    }
-
     private fun isAllowedDay(
         rule: TimerDeviceRepository.TimerRuleData,
         dayIndex: Int
@@ -283,10 +204,9 @@ object TimerNextEventResolver {
             return true
         }
 
-        if (days.none {
-            enabled ->
-            enabled
-        }
+        if (days.none { enabled ->
+                enabled
+            }
         ) {
             return true
         }

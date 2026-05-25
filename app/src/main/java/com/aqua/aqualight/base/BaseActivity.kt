@@ -1,13 +1,18 @@
 package com.aqua.aqualight.base
 
+import android.app.Dialog
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.FrameLayout
-import android.widget.TextView
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
@@ -18,20 +23,12 @@ import kotlinx.coroutines.SupervisorJob
 
 open class BaseActivity : AppCompatActivity() {
 
-    // ---------------------------------------------------
-    // SNACKBAR TYPES
-    // ---------------------------------------------------
-
     enum class SnackType {
         NORMAL,
         SUCCESS,
         ERROR,
         WARNING
     }
-
-    // ---------------------------------------------------
-    // COROUTINE SCOPE
-    // ---------------------------------------------------
 
     private val activityJob =
         SupervisorJob()
@@ -41,125 +38,134 @@ open class BaseActivity : AppCompatActivity() {
             Dispatchers.Main.immediate + activityJob
         )
 
-    // ---------------------------------------------------
-    // LOADING OVERLAY
-    // ---------------------------------------------------
-
-    private var loadingOverlay: FrameLayout? =
-        null
-
-    private var loadingLogo: ImageView? =
-        null
-
-    // ---------------------------------------------------
-    // ON CREATE
-    // ---------------------------------------------------
+    private var loadingDialog: Dialog? = null
+    private var loadingLogo: ImageView? = null
+    private var loadingRequestCount: Int = 0
 
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
-
         super.onCreate(savedInstanceState)
     }
-
-    // ---------------------------------------------------
-    // CONTENT CHANGED
-    // ---------------------------------------------------
-
-    override fun onContentChanged() {
-
-        super.onContentChanged()
-
-        ensureLoadingOverlay()
-    }
-
-    // ---------------------------------------------------
-    // ENSURE LOADING OVERLAY
-    // ---------------------------------------------------
-
-    private fun ensureLoadingOverlay() {
-
-        val rootView =
-            findViewById<ViewGroup>(
-                android.R.id.content
-            )
-
-        if (
-            loadingOverlay == null &&
-            rootView != null
-        ) {
-
-            val overlay =
-                LayoutInflater.from(this)
-                    .inflate(
-                        R.layout.loading_overlay,
-                        rootView,
-                        false
-                    ) as FrameLayout
-
-            rootView.addView(overlay)
-
-            loadingOverlay = overlay
-
-            loadingLogo =
-                overlay.findViewById(
-                    R.id.loadingLogo
-                )
-        }
-    }
-
-    // ---------------------------------------------------
-    // SHOW LOADING
-    // ---------------------------------------------------
 
     fun showLoading(
         show: Boolean
     ) {
-
-        val overlay =
-            loadingOverlay ?: return
-
-        val logo =
-            loadingLogo ?: return
-
         if (show) {
+            loadingRequestCount++
 
-            if (overlay.visibility != View.VISIBLE) {
-
-                overlay.visibility =
-                    View.VISIBLE
-
-                val anim =
-                    AnimationUtils.loadAnimation(
-                        this,
-                        R.anim.rotate_pulse_logo
-                    )
-
-                logo.startAnimation(anim)
-            }
-
+            showLoadingDialog()
         } else {
+            loadingRequestCount =
+                (loadingRequestCount - 1).coerceAtLeast(
+                    0
+                )
 
-            logo.clearAnimation()
-
-            overlay.visibility =
-                View.GONE
+            if (loadingRequestCount == 0) {
+                hideLoadingDialog()
+            }
         }
     }
 
-    // ---------------------------------------------------
-    // GLOBAL SNACKBAR
-    // ---------------------------------------------------
+    private fun showLoadingDialog() {
+        if (
+            isFinishing ||
+            isDestroyed
+        ) {
+            return
+        }
+
+        if (
+            loadingDialog?.isShowing == true
+        ) {
+            return
+        }
+
+        val dialog = Dialog(
+            this
+        ).apply {
+            requestWindowFeature(
+                Window.FEATURE_NO_TITLE
+            )
+
+            setCancelable(
+                false
+            )
+
+            setCanceledOnTouchOutside(
+                false
+            )
+        }
+
+        val overlay = LayoutInflater.from(this)
+            .inflate(
+                R.layout.loading_overlay,
+                null,
+                false
+            ) as FrameLayout
+
+        overlay.visibility =
+            View.VISIBLE
+
+        val logo = overlay.findViewById<ImageView>(
+            R.id.loadingLogo
+        )
+
+        dialog.setContentView(
+            overlay
+        )
+
+        loadingDialog = dialog
+        loadingLogo = logo
+
+        dialog.setOnShowListener {
+            dialog.window?.apply {
+                setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+
+                setBackgroundDrawable(
+                    ColorDrawable(
+                        Color.TRANSPARENT
+                    )
+                )
+
+                clearFlags(
+                    WindowManager.LayoutParams.FLAG_DIM_BEHIND
+                )
+            }
+
+            val anim = AnimationUtils.loadAnimation(
+                this,
+                R.anim.rotate_pulse_logo
+            )
+
+            logo.startAnimation(
+                anim
+            )
+        }
+
+        dialog.show()
+    }
+
+    private fun hideLoadingDialog() {
+        loadingLogo?.clearAnimation()
+
+        loadingDialog?.dismiss()
+
+        loadingDialog = null
+        loadingLogo = null
+    }
 
     fun showSnackBar(
         message: String,
         type: SnackType = SnackType.NORMAL
     ) {
-
         val root =
             findViewById<View>(
                 android.R.id.content
-            )
+            ) ?: return
 
         val snackbar =
             Snackbar.make(
@@ -168,15 +174,9 @@ open class BaseActivity : AppCompatActivity() {
                 Snackbar.LENGTH_LONG
             )
 
-        // ---------------------------------------------------
-        // COLORS
-        // ---------------------------------------------------
-
         val backgroundColor =
             when (type) {
-
                 SnackType.SUCCESS -> {
-
                     ContextCompat.getColor(
                         this,
                         R.color.snackbar_success
@@ -184,7 +184,6 @@ open class BaseActivity : AppCompatActivity() {
                 }
 
                 SnackType.ERROR -> {
-
                     ContextCompat.getColor(
                         this,
                         R.color.snackbar_error
@@ -192,7 +191,6 @@ open class BaseActivity : AppCompatActivity() {
                 }
 
                 SnackType.WARNING -> {
-
                     ContextCompat.getColor(
                         this,
                         R.color.snackbar_warning
@@ -200,7 +198,6 @@ open class BaseActivity : AppCompatActivity() {
                 }
 
                 SnackType.NORMAL -> {
-
                     ContextCompat.getColor(
                         this,
                         R.color.aqua_button_blue
@@ -225,17 +222,12 @@ open class BaseActivity : AppCompatActivity() {
         val snackView =
             snackbar.view
 
-        // ---------------------------------------------------
-        // TEXT VIEW
-        // ---------------------------------------------------
-
         val textView =
             snackView.findViewById<TextView>(
                 com.google.android.material.R.id.snackbar_text
             )
 
         textView.textSize = 15f
-
         textView.maxLines = 2
 
         textView.setPadding(
@@ -245,33 +237,22 @@ open class BaseActivity : AppCompatActivity() {
             0
         )
 
-        // ---------------------------------------------------
-        // MARGINS
-        // ---------------------------------------------------
-
         val params =
             snackView.layoutParams
-                as FrameLayout.LayoutParams
 
-        params.setMargins(
-            24,
-            0,
-            24,
-            24
-        )
+        if (params is ViewGroup.MarginLayoutParams) {
+            params.setMargins(
+                24,
+                0,
+                24,
+                24
+            )
 
-        snackView.layoutParams =
-            params
-
-        // ---------------------------------------------------
-        // ELEVATION
-        // ---------------------------------------------------
+            snackView.layoutParams =
+                params
+        }
 
         snackView.elevation = 8f
-
-        // ---------------------------------------------------
-        // BACKGROUND
-        // ---------------------------------------------------
 
         snackView.background =
             ContextCompat.getDrawable(
@@ -282,16 +263,11 @@ open class BaseActivity : AppCompatActivity() {
         snackbar.show()
     }
 
-    // ---------------------------------------------------
-    // ERROR LOG
-    // ---------------------------------------------------
-
     protected fun logError(
         tag: String,
         message: String?,
         throwable: Throwable? = null
     ) {
-
         android.util.Log.e(
             tag,
             message,
@@ -299,19 +275,12 @@ open class BaseActivity : AppCompatActivity() {
         )
     }
 
-    // ---------------------------------------------------
-    // DESTROY
-    // ---------------------------------------------------
-
     override fun onDestroy() {
-
         activityJob.cancel()
 
-        loadingLogo?.clearAnimation()
+        loadingRequestCount = 0
 
-        loadingLogo = null
-
-        loadingOverlay = null
+        hideLoadingDialog()
 
         super.onDestroy()
     }

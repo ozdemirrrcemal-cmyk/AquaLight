@@ -202,14 +202,6 @@
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvOutletPanelHint"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Edit outlets"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="11sp" />
-
                 </LinearLayout>
 
                 <LinearLayout
