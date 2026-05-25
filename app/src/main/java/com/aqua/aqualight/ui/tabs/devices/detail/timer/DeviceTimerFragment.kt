@@ -34,6 +34,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     private var isQuickActionRunning: Boolean = false
     private var isDeviceWriteRunning: Boolean = false
 
+    private var isInitialOpenLoadingFinished: Boolean = false
+
     private val deviceId: Long
     get() = requireArguments().getLong(ARG_DEVICE_ID)
 
@@ -238,6 +240,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             latestDashboardData = null
 
             if (_binding == null) {
+                finishInitialOpenLoading()
                 return
             }
 
@@ -250,6 +253,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                     enabled = false
                 )
             }
+
+            finishInitialOpenLoading()
 
             return
         }
@@ -277,6 +282,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             setOutletCardsEnabled(
                 enabled = true
             )
+            finishInitialOpenLoading()
         }.onFailure {
             binding.tvTimerOnlineStatus.text = "Offline"
 
@@ -292,6 +298,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                     enabled = false
                 )
             }
+            
+            finishInitialOpenLoading()
         }
     }
 
@@ -703,6 +711,16 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         )
     }
 
+    private fun finishInitialOpenLoading() {
+        if (isInitialOpenLoadingFinished) {
+            return
+        }
+
+        isInitialOpenLoadingFinished = true
+
+        hideGlobalLoading()
+    }
+
     private fun hideGlobalLoading() {
         (activity as? BaseActivity)?.showLoading(
             show = false
@@ -721,6 +739,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     override fun onDestroyView() {
         isDeviceWriteRunning = false
         isQuickActionRunning = false
+        isInitialOpenLoadingFinished = false
 
         hideGlobalLoading()
 

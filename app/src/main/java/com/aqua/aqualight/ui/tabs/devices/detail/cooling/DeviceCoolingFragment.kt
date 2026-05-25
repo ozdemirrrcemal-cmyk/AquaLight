@@ -10,8 +10,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.DeviceVisualSpecs
-import com.aqua.aqualight.ui.tabs.devices.detail.initial.DeviceControllerInitialData
-import com.aqua.aqualight.ui.tabs.devices.detail.initial.DeviceControllerInitialDataStore
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.ConnectException
@@ -32,9 +30,6 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
     private var latestCoolingDashboardData: CoolingDeviceRepository.CoolingDashboardData? = null
     private var isSavingCoolingSettings: Boolean = false
-
-    private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceIp: String
         get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
@@ -74,36 +69,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             loadCoolingDashboard()
         }
 
-        val hasInitialData = renderInitialCoolingDataIfAvailable()
-
-        if (!hasInitialData) {
-            temperatureChartRenderer?.clear()
-            coolingManagementRenderer?.clear()
-
-            loadCoolingDashboard()
-        }
-    }
-
-    private fun renderInitialCoolingDataIfAvailable(): Boolean {
-        val initialData = DeviceControllerInitialDataStore.consume(
-            deviceId = deviceId
-        )
-
-        val coolingData = initialData as? DeviceControllerInitialData.CoolingDashboard
-            ?: return false
-
-        latestCoolingDashboardData =
-            coolingData.dashboardData
-
-        temperatureChartRenderer?.render(
-            sensors = coolingData.dashboardData.sensors
-        )
-
-        coolingManagementRenderer?.render(
-            data = coolingData.dashboardData
-        )
-
-        return true
+        loadCoolingDashboard()
     }
 
     private fun applyCoolingVisualStyle() {

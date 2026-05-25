@@ -21,7 +21,6 @@ import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
-import com.aqua.aqualight.ui.tabs.devices.open.DeviceOpenCoordinator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.flow.combine
@@ -76,12 +75,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             onSelectionModeStart = {
                 enterSelectionMode()
             },
-            onSelectionChanged = { count ->
+            onSelectionChanged = {
+                count ->
                 if (count == 0) {
                     exitSelectionMode()
                 }
             },
-            onDeviceClick = { device ->
+            onDeviceClick = {
+                device ->
                 openDeviceMenu(
                     device = device
                 )
@@ -106,7 +107,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun observeTanks() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+            tanks ->
             latestTanks = tanks
             renderDevices()
         }
@@ -120,9 +122,11 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 combine(
                     devicesStore.devicesFlow,
                     DevicePresenceMonitor.statuses
-                ) { devices, statuses ->
+                ) {
+                    devices, statuses ->
                     devices to statuses
-                }.collect { pair ->
+                }.collect {
+                    pair ->
                     latestDevices = pair.first
                     latestStatuses = pair.second
 
@@ -155,31 +159,32 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         val now = System.currentTimeMillis()
 
-        val uiList = latestDevices.map { device ->
+        val uiList = latestDevices.map {
+            device ->
             val presenceState = latestStatuses[device.id]
 
             val online = presenceState?.isOnline ?: (
                 device.lastSeenMillis > 0L &&
-                    now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
-                )
+                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+            )
 
             val definition = AquaDeviceCatalog.findByType(
                 type = device.deviceType
             )
 
             val displayName = definition?.displayName
-                ?: device.name.ifBlank {
-                    device.productModel.ifBlank {
-                        "Device"
-                    }
+            ?: device.name.ifBlank {
+                device.productModel.ifBlank {
+                    "Device"
                 }
+            }
 
             val familyName = definition?.family?.displayName
-                ?: device.productFamily.ifBlank {
-                    device.aquaName.ifBlank {
-                        "Unknown"
-                    }
+            ?: device.productFamily.ifBlank {
+                device.aquaName.ifBlank {
+                    "Unknown"
                 }
+            }
 
             DeviceCardUi(
                 id = device.id,
@@ -207,15 +212,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     ): String {
         val connectedTankId = device.tankId ?: return ""
 
-        return latestTanks.firstOrNull { tank ->
+        return latestTanks.firstOrNull {
+            tank ->
             tank.id == connectedTankId
         }?.name ?: "Unknown aquarium"
-    }
-
-    private fun openAddDeviceScreen() {
-        findNavController().navigate(
-            R.id.action_devicesFragment_to_deviceAddFragment
-        )
     }
 
     private fun openDeviceMenu(
@@ -232,86 +232,102 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 show = true
             )
 
-            val result = try {
-                DeviceOpenCoordinator.open(
+            val status = runCatching {
+                DevicePresenceMonitor.checkDeviceNow(
                     context = requireContext(),
-                    device = device
+                    deviceId = device.id,
+                    knownIp = device.ip
                 )
-            } finally {
+            }.getOrElse {
+                isOpeningDevice = false
+
                 showGlobalLoading(
                     show = false
                 )
+
+                DialogManager.showInfoDialog(
+                    context = requireContext(),
+                    type = DialogType.WARNING,
+                    title = getString(R.string.device_offline_title),
+                    message = getString(R.string.device_offline_message)
+                )
+
+                return@launch
             }
 
             if (_binding == null) {
                 isOpeningDevice = false
+
+                showGlobalLoading(
+                    show = false
+                )
+
                 return@launch
             }
 
-            when (result) {
-                is DeviceOpenCoordinator.Result.Ready -> {
-                    isOpeningDevice = false
+            if (status?.isOnline != true) {
+                isOpeningDevice = false
 
-                    navigateToDeviceMenu(
-                        device = device,
-                        ip = result.ip
-                    )
-                }
+                showGlobalLoading(
+                    show = false
+                )
 
-                DeviceOpenCoordinator.Result.Offline -> {
-                    isOpeningDevice = false
+                DialogManager.showInfoDialog(
+                    context = requireContext(),
+                    type = DialogType.WARNING,
+                    title = getString(R.string.device_offline_title),
+                    message = getString(R.string.device_offline_message)
+                )
 
-                    DialogManager.showInfoDialog(
-                        context = requireContext(),
-                        type = DialogType.WARNING,
-                        title = getString(R.string.device_offline_title),
-                        message = getString(R.string.device_offline_message)
-                    )
-                }
+                return@launch
             }
+
+            val resolvedIp = status.ip.ifBlank {
+                device.ip
+            }
+
+            val args = Bundle().apply {
+                putLong(
+                    "deviceId",
+                    device.id
+                )
+
+                putString(
+                    "deviceName",
+                    device.displayName
+                )
+
+                putString(
+                    "deviceAquaName",
+                    device.familyName
+                )
+
+                putString(
+                    "deviceIp",
+                    resolvedIp
+                )
+
+                putString(
+                    "deviceSerial",
+                    device.serial
+                )
+
+                putBoolean(
+                    "deviceOnline",
+                    true
+                )
+            }
+
+            findNavController().navigate(
+                R.id.action_devicesFragment_to_deviceMenuFragment,
+                args
+            )
+
+            isOpeningDevice = false
+
+            // Burada loading kapatılmıyor.
+            // Açılan controller ekranı ilk gerçek veriyi alınca kapatacak.
         }
-    }
-
-    private fun navigateToDeviceMenu(
-        device: DeviceCardUi,
-        ip: String
-    ) {
-        val args = Bundle().apply {
-            putLong(
-                "deviceId",
-                device.id
-            )
-
-            putString(
-                "deviceName",
-                device.displayName
-            )
-
-            putString(
-                "deviceAquaName",
-                device.familyName
-            )
-
-            putString(
-                "deviceIp",
-                ip
-            )
-
-            putString(
-                "deviceSerial",
-                device.serial
-            )
-
-            putBoolean(
-                "deviceOnline",
-                true
-            )
-        }
-
-        findNavController().navigate(
-            R.id.action_devicesFragment_to_deviceMenuFragment,
-            args
-        )
     }
 
     private fun enterSelectionMode() {
@@ -347,7 +363,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             )
 
             binding.btnScanDevices.strokeWidth = 1.dp()
-
             binding.btnScanDevices.strokeColor = ColorStateList.valueOf(
                 Color.parseColor("#7A3344")
             )
@@ -364,7 +379,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             )
 
             binding.btnScanDevices.strokeWidth = 0
-
             binding.btnScanDevices.strokeColor = ColorStateList.valueOf(
                 Color.TRANSPARENT
             )
@@ -466,9 +480,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun showGlobalLoading(
         show: Boolean
     ) {
-        (activity as? BaseActivity)?.showLoading(
-            show = show
-        )
+        (activity as? BaseActivity)?.showLoading(show)
     }
 
     private fun Int.dp(): Int {
@@ -477,7 +489,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     override fun onDestroyView() {
         isOpeningDevice = false
-
         binding.rvSelectedDevices.adapter = null
         _binding = null
 
