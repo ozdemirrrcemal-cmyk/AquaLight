@@ -9,14 +9,14 @@
     android:paddingStart="16dp"
     android:paddingTop="12dp"
     android:paddingEnd="16dp"
-    android:paddingBottom="18dp">
+    android:paddingBottom="16dp">
 
     <View
         android:id="@+id/dragHandle"
         android:layout_width="36dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="14dp"
         android:background="@drawable/bg_bottomsheet_timer_handle" />
 
     <TextView
@@ -29,25 +29,25 @@
         android:maxLines="1"
         android:text="Outlet Settings"
         android:textColor="#E8EEF7"
-        android:textSize="20sp"
+        android:textSize="19sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvSheetSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="7dp"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:text="Configure outlet mode, schedule and repeat cycle."
+        android:text="Outlet mode, schedule and repeat cycle."
         android:textColor="#9FAABB"
-        android:textSize="13sp" />
+        android:textSize="12sp" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/sheetScroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="16dp"
         android:layout_weight="1"
         android:clipToPadding="false"
         android:fillViewport="false"
@@ -64,15 +64,15 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/inputOutletNameLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="58dp"
                 android:hint="Outlet name"
                 app:boxBackgroundColor="#131C34"
                 app:boxBackgroundMode="outline"
-                app:boxCornerRadiusBottomEnd="18dp"
-                app:boxCornerRadiusBottomStart="18dp"
-                app:boxCornerRadiusTopEnd="18dp"
-                app:boxCornerRadiusTopStart="18dp"
-                app:boxStrokeColor="#5F55C8"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxStrokeColor="#3B466A"
                 app:boxStrokeWidth="1dp"
                 app:boxStrokeWidthFocused="2dp"
                 app:endIconMode="clear_text"
@@ -82,30 +82,34 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etOutletName"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:imeOptions="actionDone"
                     android:inputType="textCapWords"
                     android:maxLength="24"
+                    android:paddingTop="0dp"
+                    android:paddingBottom="0dp"
                     android:singleLine="true"
                     android:textColor="#E8EEF7"
                     android:textColorHint="#9FAABB"
-                    android:textSize="16sp" />
+                    android:textSize="15sp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
+                android:id="@+id/tvModeSectionTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="18dp"
+                android:includeFontPadding="false"
                 android:text="Mode"
                 android:textColor="#E8EEF7"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:id="@+id/modeContainer"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="44dp"
                 android:layout_marginTop="10dp"
                 android:orientation="horizontal">
 
@@ -115,22 +119,35 @@
                     android:layout_height="match_parent"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
                     android:text="Auto"
                     android:textAllCaps="false"
-                    android:textSize="15sp"
-                    app:cornerRadius="18dp"
+                    android:textSize="14sp"
+                    app:cornerRadius="16dp"
                     app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnModeOn"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginHorizontal="6dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
                     android:text="On"
                     android:textAllCaps="false"
-                    android:textSize="15sp"
-                    app:cornerRadius="18dp"
+                    android:textSize="14sp"
+                    app:cornerRadius="16dp"
                     app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -139,10 +156,16 @@
                     android:layout_height="match_parent"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
                     android:text="Off"
                     android:textAllCaps="false"
-                    android:textSize="15sp"
-                    app:cornerRadius="18dp"
+                    android:textSize="14sp"
+                    app:cornerRadius="16dp"
                     app:strokeWidth="1dp" />
 
             </LinearLayout>
@@ -150,13 +173,13 @@
             <LinearLayout
                 android:id="@+id/timerEnabledRow"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:layout_marginTop="18dp"
+                android:layout_height="58dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/bg_timer_upcoming_item"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp">
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -170,7 +193,7 @@
                         android:includeFontPadding="false"
                         android:text="Timer enabled"
                         android:textColor="#E8EEF7"
-                        android:textSize="15sp"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -178,7 +201,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:includeFontPadding="false"
-                        android:text="Use automatic schedule for this outlet"
+                        android:text="Use automatic schedule"
                         android:textColor="#9FAABB"
                         android:textSize="11sp" />
 
@@ -192,58 +215,78 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/tvScheduleSectionTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="18dp"
+                android:includeFontPadding="false"
                 android:text="Schedule"
                 android:textColor="#E8EEF7"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <LinearLayout
+                android:id="@+id/scheduleFirstRow"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="64dp"
                 android:layout_marginTop="10dp"
                 android:orientation="horizontal">
 
-                <com.google.android.material.textfield.TextInputLayout
+                <LinearLayout
                     android:id="@+id/inputStartTimeLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:hint="Start time"
-                    app:boxBackgroundColor="#131C34"
-                    app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusBottomEnd="18dp"
-                    app:boxCornerRadiusBottomStart="18dp"
-                    app:boxCornerRadiusTopEnd="18dp"
-                    app:boxCornerRadiusTopStart="18dp"
-                    app:boxStrokeColor="#5F55C8"
-                    app:endIconDrawable="@drawable/ic_edit"
-                    app:endIconMode="custom"
-                    app:endIconTint="#9FAABB"
-                    app:hintTextColor="#9FAABB">
+                    android:background="@drawable/bg_timer_upcoming_item"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="12dp">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etStartTime"
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:cursorVisible="false"
-                        android:focusable="false"
-                        android:focusableInTouchMode="false"
-                        android:inputType="none"
-                        android:singleLine="true"
-                        android:textColor="#E8EEF7"
-                        android:textSize="16sp" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                </com.google.android.material.textfield.TextInputLayout>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="Start time"
+                            android:textColor="#9FAABB"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/etStartTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="7dp"
+                            android:includeFontPadding="false"
+                            android:text="20:30"
+                            android:textColor="#E8EEF7"
+                            android:textSize="17sp" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/ivStartTimeEdit"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="Edit start time"
+                        android:src="@drawable/ic_edit"
+                        app:tint="#9FAABB" />
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/repeatCounterCard"
                     android:layout_width="0dp"
-                    android:layout_height="64dp"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_timer_upcoming_item"
@@ -254,8 +297,8 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRepeatMinus"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
                         android:insetLeft="0dp"
                         android:insetTop="0dp"
                         android:insetRight="0dp"
@@ -266,9 +309,9 @@
                         android:text="−"
                         android:textAllCaps="false"
                         android:textColor="@android:color/white"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         app:backgroundTint="#25304D"
-                        app:cornerRadius="20dp"
+                        app:cornerRadius="18dp"
                         app:strokeColor="#3C4A6F"
                         app:strokeWidth="1dp" />
 
@@ -291,19 +334,19 @@
                             android:id="@+id/tvRepeatCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="6dp"
                             android:includeFontPadding="false"
                             android:text="1"
                             android:textColor="#E8EEF7"
-                            android:textSize="20sp"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
 
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRepeatPlus"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
                         android:insetLeft="0dp"
                         android:insetTop="0dp"
                         android:insetRight="0dp"
@@ -314,9 +357,9 @@
                         android:text="+"
                         android:textAllCaps="false"
                         android:textColor="@android:color/white"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         app:backgroundTint="#6E63E8"
-                        app:cornerRadius="20dp"
+                        app:cornerRadius="18dp"
                         app:strokeColor="#8B7CFF"
                         app:strokeWidth="1dp" />
 
@@ -325,98 +368,131 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/scheduleSecondRow"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_height="64dp"
+                android:layout_marginTop="12dp"
                 android:orientation="horizontal">
 
-                <com.google.android.material.textfield.TextInputLayout
+                <LinearLayout
                     android:id="@+id/inputRunDurationLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:hint="Run duration"
-                    app:boxBackgroundColor="#131C34"
-                    app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusBottomEnd="18dp"
-                    app:boxCornerRadiusBottomStart="18dp"
-                    app:boxCornerRadiusTopEnd="18dp"
-                    app:boxCornerRadiusTopStart="18dp"
-                    app:boxStrokeColor="#5F55C8"
-                    app:endIconDrawable="@drawable/ic_edit"
-                    app:endIconMode="custom"
-                    app:endIconTint="#9FAABB"
-                    app:helperText="HH:MM"
-                    app:helperTextTextColor="#6F7E94"
-                    app:hintTextColor="#9FAABB">
+                    android:background="@drawable/bg_timer_upcoming_item"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="12dp">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etRunDuration"
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:cursorVisible="false"
-                        android:focusable="false"
-                        android:focusableInTouchMode="false"
-                        android:inputType="none"
-                        android:singleLine="true"
-                        android:textColor="#E8EEF7"
-                        android:textSize="16sp" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                </com.google.android.material.textfield.TextInputLayout>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="Run duration"
+                            android:textColor="#9FAABB"
+                            android:textSize="11sp" />
 
-                <com.google.android.material.textfield.TextInputLayout
+                        <TextView
+                            android:id="@+id/etRunDuration"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="7dp"
+                            android:includeFontPadding="false"
+                            android:text="00:01"
+                            android:textColor="#E8EEF7"
+                            android:textSize="17sp" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/ivRunDurationEdit"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="Edit run duration"
+                        android:src="@drawable/ic_edit"
+                        app:tint="#9FAABB" />
+
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/inputOffDurationLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:hint="Off interval"
-                    app:boxBackgroundColor="#131C34"
-                    app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusBottomEnd="18dp"
-                    app:boxCornerRadiusBottomStart="18dp"
-                    app:boxCornerRadiusTopEnd="18dp"
-                    app:boxCornerRadiusTopStart="18dp"
-                    app:boxStrokeColor="#5F55C8"
-                    app:endIconDrawable="@drawable/ic_edit"
-                    app:endIconMode="custom"
-                    app:endIconTint="#9FAABB"
-                    app:helperText="HH:MM"
-                    app:helperTextTextColor="#6F7E94"
-                    app:hintTextColor="#9FAABB">
+                    android:background="@drawable/bg_timer_upcoming_item"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="12dp">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etOffDuration"
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:cursorVisible="false"
-                        android:focusable="false"
-                        android:focusableInTouchMode="false"
-                        android:inputType="none"
-                        android:singleLine="true"
-                        android:textColor="#E8EEF7"
-                        android:textSize="16sp" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                </com.google.android.material.textfield.TextInputLayout>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="Off interval"
+                            android:textColor="#9FAABB"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/etOffDuration"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="7dp"
+                            android:includeFontPadding="false"
+                            android:text="00:01"
+                            android:textColor="#E8EEF7"
+                            android:textSize="17sp" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/ivOffDurationEdit"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="Edit off interval"
+                        android:src="@drawable/ic_edit"
+                        app:tint="#9FAABB" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
             <TextView
+                android:id="@+id/tvActiveDaysSectionTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="18dp"
+                android:includeFontPadding="false"
                 android:text="Active days"
                 android:textColor="#E8EEF7"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:id="@+id/daysContainer"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="38dp"
                 android:layout_marginTop="10dp"
                 android:orientation="horizontal">
 
@@ -435,14 +511,15 @@
                     android:padding="0dp"
                     android:text="S"
                     android:textAllCaps="false"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayMon"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginHorizontal="3dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp"
                     android:layout_weight="1"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
@@ -453,14 +530,15 @@
                     android:padding="0dp"
                     android:text="M"
                     android:textAllCaps="false"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayTue"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginHorizontal="3dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp"
                     android:layout_weight="1"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
@@ -471,14 +549,15 @@
                     android:padding="0dp"
                     android:text="T"
                     android:textAllCaps="false"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayWed"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginHorizontal="3dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp"
                     android:layout_weight="1"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
@@ -489,14 +568,15 @@
                     android:padding="0dp"
                     android:text="W"
                     android:textAllCaps="false"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayThu"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginHorizontal="3dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp"
                     android:layout_weight="1"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
@@ -507,14 +587,15 @@
                     android:padding="0dp"
                     android:text="T"
                     android:textAllCaps="false"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayFri"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_marginHorizontal="3dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp"
                     android:layout_weight="1"
                     android:insetLeft="0dp"
                     android:insetTop="0dp"
@@ -525,7 +606,7 @@
                     android:padding="0dp"
                     android:text="F"
                     android:textAllCaps="false"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -543,7 +624,7 @@
                     android:padding="0dp"
                     android:text="S"
                     android:textAllCaps="false"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     app:cornerRadius="14dp" />
 
             </LinearLayout>
@@ -554,7 +635,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:textColor="#F18B9B"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:visibility="gone" />
 
         </LinearLayout>
@@ -564,8 +645,8 @@
     <LinearLayout
         android:id="@+id/buttonsContainer"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginTop="14dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
@@ -577,7 +658,7 @@
             android:text="Cancel"
             android:textAllCaps="false"
             android:textColor="#D5DEEA"
-            android:textSize="15sp"
+            android:textSize="14sp"
             app:backgroundTint="#131C34"
             app:cornerRadius="18dp"
             app:strokeColor="#2D385C"
@@ -592,7 +673,7 @@
             android:text="Save"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
-            android:textSize="15sp"
+            android:textSize="14sp"
             app:backgroundTint="#6E63E8"
             app:cornerRadius="18dp" />
 

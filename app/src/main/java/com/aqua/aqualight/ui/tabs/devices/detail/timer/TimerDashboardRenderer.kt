@@ -23,10 +23,10 @@ class TimerDashboardRenderer(
         data: TimerDeviceRepository.TimerDashboardData
     ) {
         binding.tvActiveOutletCount.text =
-            "${data.activeOutletCount()} / ${data.outlets.size.coerceAtLeast(4)}"
+        "${data.activeOutletCount()} / ${data.outlets.size.coerceAtLeast(4)}"
 
         binding.tvNextTimerEvent.text =
-            data.nextEventText()
+        data.nextEventText()
 
         renderUpcomingTimers(
             data = data
@@ -39,7 +39,8 @@ class TimerDashboardRenderer(
         renderOutlet(
             holder = outlet1(),
             outlet = outlets.getOrNull(0),
-            rule = outlets.getOrNull(0)?.let { outlet ->
+            rule = outlets.getOrNull(0)?.let {
+                outlet ->
                 data.ruleForOutlet(
                     outlet = outlet
                 )
@@ -50,7 +51,8 @@ class TimerDashboardRenderer(
         renderOutlet(
             holder = outlet2(),
             outlet = outlets.getOrNull(1),
-            rule = outlets.getOrNull(1)?.let { outlet ->
+            rule = outlets.getOrNull(1)?.let {
+                outlet ->
                 data.ruleForOutlet(
                     outlet = outlet
                 )
@@ -61,7 +63,8 @@ class TimerDashboardRenderer(
         renderOutlet(
             holder = outlet3(),
             outlet = outlets.getOrNull(2),
-            rule = outlets.getOrNull(2)?.let { outlet ->
+            rule = outlets.getOrNull(2)?.let {
+                outlet ->
                 data.ruleForOutlet(
                     outlet = outlet
                 )
@@ -72,7 +75,8 @@ class TimerDashboardRenderer(
         renderOutlet(
             holder = outlet4(),
             outlet = outlets.getOrNull(3),
-            rule = outlets.getOrNull(3)?.let { outlet ->
+            rule = outlets.getOrNull(3)?.let {
+                outlet ->
                 data.ruleForOutlet(
                     outlet = outlet
                 )
@@ -81,8 +85,45 @@ class TimerDashboardRenderer(
         )
     }
 
+    fun renderLoading() {
+        binding.tvActiveOutletCount.text = "-- / 4"
+        binding.tvNextTimerEvent.text = "Loading...\n--"
+
+        binding.upcomingTimersContainer.removeAllViews()
+        binding.tvUpcomingTimer.visibility = View.VISIBLE
+        binding.tvUpcomingTimer.text = "Loading timer data..."
+
+        renderOutlet(
+            holder = outlet1(),
+            outlet = null,
+            rule = null,
+            fallbackName = "Outlet 1"
+        )
+
+        renderOutlet(
+            holder = outlet2(),
+            outlet = null,
+            rule = null,
+            fallbackName = "Outlet 2"
+        )
+
+        renderOutlet(
+            holder = outlet3(),
+            outlet = null,
+            rule = null,
+            fallbackName = "Outlet 3"
+        )
+
+        renderOutlet(
+            holder = outlet4(),
+            outlet = null,
+            rule = null,
+            fallbackName = "Outlet 4"
+        )
+    }
+
     fun clear() {
-        binding.tvActiveOutletCount.text = "--"
+        binding.tvActiveOutletCount.text = "-- / 4"
         binding.tvNextTimerEvent.text = "--"
 
         binding.upcomingTimersContainer.removeAllViews()
@@ -138,7 +179,8 @@ class TimerDashboardRenderer(
 
         binding.tvUpcomingTimer.visibility = View.GONE
 
-        events.forEach { event ->
+        events.forEach {
+            event ->
             val itemBinding = ItemTimerUpcomingEventBinding.inflate(
                 LayoutInflater.from(context),
                 container,
@@ -146,13 +188,13 @@ class TimerDashboardRenderer(
             )
 
             itemBinding.tvUpcomingName.text =
-                event.outletName
+            event.outletName
 
             itemBinding.tvUpcomingTime.text =
-                event.rowTimeText()
+            event.rowTimeText()
 
             itemBinding.tvUpcomingDuration.text =
-                event.rowDurationText()
+            event.rowDurationText()
 
             container.addView(
                 itemBinding.root
@@ -219,9 +261,7 @@ class TimerDashboardRenderer(
 
             currentlyOn -> {
                 Color.parseColor("#5F55C8")
-            }
-
-            else -> {
+            } else -> {
                 Color.parseColor("#2D385C")
             }
         }
@@ -259,16 +299,16 @@ class TimerDashboardRenderer(
         )
 
         holder.card.strokeColor =
-            cardStrokeColor
+        cardStrokeColor
 
         holder.powerCard.setCardBackgroundColor(
             powerCircleColor
         )
 
         holder.powerIcon.imageTintList =
-            ColorStateList.valueOf(
-                powerIconColor
-            )
+        ColorStateList.valueOf(
+            powerIconColor
+        )
 
         holder.mode.background = roundedDrawable(
             color = modeBackgroundColor,
@@ -281,9 +321,9 @@ class TimerDashboardRenderer(
         )
 
         holder.powerCard.foreground =
-            selectableForeground(
-                context = context
-            )
+        selectableForeground(
+            context = context
+        )
     }
 
     private fun buildScheduleText(

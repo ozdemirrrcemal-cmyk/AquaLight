@@ -39,12 +39,12 @@ class TimerOutletSettingsBottomSheet(
 
     private var selectedRunDurationMinutes: Int =
         initialState.runDurationMinutes.coerceAtLeast(
-            1
+            MIN_RUN_DURATION_MINUTES
         )
 
     private var selectedOffDurationMinutes: Int =
         initialState.offDurationMinutes.coerceAtLeast(
-            0
+            MIN_OFF_DURATION_MINUTES
         )
 
     private var selectedRepeatCount: Int =
@@ -64,7 +64,10 @@ class TimerOutletSettingsBottomSheet(
                     )
                 }
 
-                if (days.none { enabled -> enabled }) {
+                if (days.none { enabled ->
+                        enabled
+                    }
+                ) {
                     days.clear()
 
                     repeat(7) {
@@ -124,21 +127,18 @@ class TimerOutletSettingsBottomSheet(
             initialState.outletName
         )
 
-        binding.etStartTime.setText(
+        binding.etStartTime.text =
             selectedStartTime
-        )
 
-        binding.etRunDuration.setText(
+        binding.etRunDuration.text =
             formatDurationForUi(
                 minutes = selectedRunDurationMinutes
             )
-        )
 
-        binding.etOffDuration.setText(
+        binding.etOffDuration.text =
             formatDurationForUi(
                 minutes = selectedOffDurationMinutes
             )
-        )
 
         binding.switchTimerEnabled.isChecked =
             initialState.timerEnabled
@@ -162,105 +162,77 @@ class TimerOutletSettingsBottomSheet(
         }
 
         binding.btnModeAuto.setOnClickListener {
-            selectedRegime = TimerDeviceRepository.OutletRegime.AUTO
-            renderMode()
+            if (!isSaving) {
+                selectedRegime = TimerDeviceRepository.OutletRegime.AUTO
+                renderMode()
+            }
         }
 
         binding.btnModeOn.setOnClickListener {
-            selectedRegime = TimerDeviceRepository.OutletRegime.ON
-            renderMode()
+            if (!isSaving) {
+                selectedRegime = TimerDeviceRepository.OutletRegime.ON
+                renderMode()
+            }
         }
 
         binding.btnModeOff.setOnClickListener {
-            selectedRegime = TimerDeviceRepository.OutletRegime.OFF
-            renderMode()
-        }
-
-        binding.etStartTime.setOnClickListener {
-            showStartTimePicker()
-        }
-
-        binding.inputStartTimeLayout.setEndIconOnClickListener {
-            showStartTimePicker()
+            if (!isSaving) {
+                selectedRegime = TimerDeviceRepository.OutletRegime.OFF
+                renderMode()
+            }
         }
 
         binding.inputStartTimeLayout.setOnClickListener {
             showStartTimePicker()
         }
 
-        binding.etRunDuration.setOnClickListener {
-            showDurationPicker(
-                title = "Run duration",
-                currentMinutes = selectedRunDurationMinutes,
-                minMinutes = 1
-            ) { minutes ->
-                selectedRunDurationMinutes = minutes
-
-                binding.etRunDuration.setText(
-                    formatDurationForUi(
-                        minutes = minutes
-                    )
-                )
-            }
+        binding.etStartTime.setOnClickListener {
+            showStartTimePicker()
         }
 
-        binding.inputRunDurationLayout.setEndIconOnClickListener {
-            showDurationPicker(
-                title = "Run duration",
-                currentMinutes = selectedRunDurationMinutes,
-                minMinutes = 1
-            ) { minutes ->
-                selectedRunDurationMinutes = minutes
+        binding.ivStartTimeEdit.setOnClickListener {
+            showStartTimePicker()
+        }
 
-                binding.etRunDuration.setText(
-                    formatDurationForUi(
-                        minutes = minutes
-                    )
-                )
-            }
+        binding.inputRunDurationLayout.setOnClickListener {
+            showRunDurationPicker()
+        }
+
+        binding.etRunDuration.setOnClickListener {
+            showRunDurationPicker()
+        }
+
+        binding.ivRunDurationEdit.setOnClickListener {
+            showRunDurationPicker()
+        }
+
+        binding.inputOffDurationLayout.setOnClickListener {
+            showOffDurationPicker()
         }
 
         binding.etOffDuration.setOnClickListener {
-            showDurationPicker(
-                title = "Off interval",
-                currentMinutes = selectedOffDurationMinutes,
-                minMinutes = 0
-            ) { minutes ->
-                selectedOffDurationMinutes = minutes
-
-                binding.etOffDuration.setText(
-                    formatDurationForUi(
-                        minutes = minutes
-                    )
-                )
-            }
+            showOffDurationPicker()
         }
 
-        binding.inputOffDurationLayout.setEndIconOnClickListener {
-            showDurationPicker(
-                title = "Off interval",
-                currentMinutes = selectedOffDurationMinutes,
-                minMinutes = 0
-            ) { minutes ->
-                selectedOffDurationMinutes = minutes
-
-                binding.etOffDuration.setText(
-                    formatDurationForUi(
-                        minutes = minutes
-                    )
-                )
-            }
+        binding.ivOffDurationEdit.setOnClickListener {
+            showOffDurationPicker()
         }
 
         binding.btnRepeatMinus.setOnClickListener {
-            if (selectedRepeatCount > MIN_REPEAT_COUNT) {
+            if (
+                !isSaving &&
+                selectedRepeatCount > MIN_REPEAT_COUNT
+            ) {
                 selectedRepeatCount--
                 renderRepeatCount()
             }
         }
 
         binding.btnRepeatPlus.setOnClickListener {
-            if (selectedRepeatCount < MAX_REPEAT_COUNT) {
+            if (
+                !isSaving &&
+                selectedRepeatCount < MAX_REPEAT_COUNT
+            ) {
                 selectedRepeatCount++
                 renderRepeatCount()
             }
@@ -268,9 +240,41 @@ class TimerOutletSettingsBottomSheet(
 
         dayButtons().forEachIndexed { index, button ->
             button.setOnClickListener {
-                selectedDays[index] = !selectedDays[index]
-                renderDays()
+                if (!isSaving) {
+                    selectedDays[index] = !selectedDays[index]
+                    renderDays()
+                }
             }
+        }
+    }
+
+    private fun showRunDurationPicker() {
+        showDurationPicker(
+            title = "Run duration",
+            currentMinutes = selectedRunDurationMinutes,
+            minMinutes = MIN_RUN_DURATION_MINUTES
+        ) { minutes ->
+            selectedRunDurationMinutes = minutes
+
+            binding.etRunDuration.text =
+                formatDurationForUi(
+                    minutes = minutes
+                )
+        }
+    }
+
+    private fun showOffDurationPicker() {
+        showDurationPicker(
+            title = "Off interval",
+            currentMinutes = selectedOffDurationMinutes,
+            minMinutes = MIN_OFF_DURATION_MINUTES
+        ) { minutes ->
+            selectedOffDurationMinutes = minutes
+
+            binding.etOffDuration.text =
+                formatDurationForUi(
+                    minutes = minutes
+                )
         }
     }
 
@@ -300,9 +304,16 @@ class TimerOutletSettingsBottomSheet(
             return
         }
 
-        if (selectedRunDurationMinutes <= 0) {
+        if (selectedRunDurationMinutes < MIN_RUN_DURATION_MINUTES) {
             showError(
                 message = "Run duration must be greater than 0."
+            )
+            return
+        }
+
+        if (selectedOffDurationMinutes < MIN_OFF_DURATION_MINUTES) {
+            showError(
+                message = "Off interval cannot be negative."
             )
             return
         }
@@ -314,7 +325,10 @@ class TimerOutletSettingsBottomSheet(
             return
         }
 
-        if (selectedDays.none { enabled -> enabled }) {
+        if (selectedDays.none { enabled ->
+                enabled
+            }
+        ) {
             showError(
                 message = "Select at least one active day."
             )
@@ -379,21 +393,49 @@ class TimerOutletSettingsBottomSheet(
         binding.btnCancel.isEnabled = !saving
 
         binding.etOutletName.isEnabled = !saving
+        binding.inputOutletNameLayout.isEnabled = !saving
+
+        binding.inputStartTimeLayout.isEnabled = !saving
         binding.etStartTime.isEnabled = !saving
+        binding.ivStartTimeEdit.isEnabled = !saving
+
+        binding.inputRunDurationLayout.isEnabled = !saving
         binding.etRunDuration.isEnabled = !saving
+        binding.ivRunDurationEdit.isEnabled = !saving
+
+        binding.inputOffDurationLayout.isEnabled = !saving
         binding.etOffDuration.isEnabled = !saving
+        binding.ivOffDurationEdit.isEnabled = !saving
+
         binding.switchTimerEnabled.isEnabled = !saving
 
-        binding.btnRepeatMinus.isEnabled = !saving
-        binding.btnRepeatPlus.isEnabled = !saving
+        binding.btnModeAuto.isEnabled = !saving
+        binding.btnModeOn.isEnabled = !saving
+        binding.btnModeOff.isEnabled = !saving
 
         dayButtons().forEach { button ->
             button.isEnabled = !saving
         }
 
-        binding.btnModeAuto.isEnabled = !saving
-        binding.btnModeOn.isEnabled = !saving
-        binding.btnModeOff.isEnabled = !saving
+        renderRepeatCount()
+        renderSavingAlpha()
+    }
+
+    private fun renderSavingAlpha() {
+        val alpha = if (isSaving) {
+            0.55f
+        } else {
+            1f
+        }
+
+        binding.inputOutletNameLayout.alpha = alpha
+        binding.modeContainer.alpha = alpha
+        binding.timerEnabledRow.alpha = alpha
+        binding.inputStartTimeLayout.alpha = alpha
+        binding.repeatCounterCard.alpha = alpha
+        binding.inputRunDurationLayout.alpha = alpha
+        binding.inputOffDurationLayout.alpha = alpha
+        binding.daysContainer.alpha = alpha
     }
 
     private fun showStartTimePicker() {
@@ -423,9 +465,8 @@ class TimerOutletSettingsBottomSheet(
                     minute
                 )
 
-                binding.etStartTime.setText(
+                binding.etStartTime.text =
                     selectedStartTime
-                )
             },
             currentHour,
             currentMinute,
@@ -445,8 +486,8 @@ class TimerOutletSettingsBottomSheet(
 
         val context = fragment.requireContext()
 
-        val currentHours = currentMinutes / 60
-        val currentMins = currentMinutes % 60
+        val currentHours = currentMinutes / MINUTES_PER_HOUR
+        val currentMins = currentMinutes % MINUTES_PER_HOUR
 
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -545,32 +586,42 @@ class TimerOutletSettingsBottomSheet(
             pickerRow
         )
 
-        MaterialAlertDialogBuilder(context)
+        val pickerDialog = MaterialAlertDialogBuilder(context)
             .setTitle(title)
             .setView(root)
             .setNegativeButton("Cancel", null)
-            .setPositiveButton("Apply") { _, _ ->
+            .setPositiveButton("Apply", null)
+            .create()
+
+        pickerDialog.setOnShowListener {
+            pickerDialog.getButton(
+                android.app.AlertDialog.BUTTON_POSITIVE
+            ).setOnClickListener {
                 val selectedMinutes =
-                    hourPicker.value * 60 +
+                    hourPicker.value * MINUTES_PER_HOUR +
                         minutePicker.value
 
                 if (selectedMinutes < minMinutes) {
                     showError(
-                        message = if (minMinutes == 1) {
+                        message = if (minMinutes == MIN_RUN_DURATION_MINUTES) {
                             "Duration must be greater than 0."
                         } else {
                             "Duration cannot be negative."
                         }
                     )
 
-                    return@setPositiveButton
+                    return@setOnClickListener
                 }
 
                 onSelected(
                     selectedMinutes
                 )
+
+                pickerDialog.dismiss()
             }
-            .show()
+        }
+
+        pickerDialog.show()
     }
 
     private fun createPickerLabel(
@@ -591,14 +642,31 @@ class TimerOutletSettingsBottomSheet(
         binding.tvRepeatCount.text =
             selectedRepeatCount.toString()
 
-        val canDecrease = selectedRepeatCount > MIN_REPEAT_COUNT
-        val canIncrease = selectedRepeatCount < MAX_REPEAT_COUNT
+        val canDecrease =
+            selectedRepeatCount > MIN_REPEAT_COUNT
+
+        val canIncrease =
+            selectedRepeatCount < MAX_REPEAT_COUNT
 
         binding.btnRepeatMinus.alpha =
-            if (canDecrease) 1f else 0.38f
+            if (
+                canDecrease &&
+                !isSaving
+            ) {
+                1f
+            } else {
+                0.38f
+            }
 
         binding.btnRepeatPlus.alpha =
-            if (canIncrease) 1f else 0.38f
+            if (
+                canIncrease &&
+                !isSaving
+            ) {
+                1f
+            } else {
+                0.38f
+            }
 
         binding.btnRepeatMinus.isEnabled =
             canDecrease && !isSaving
@@ -712,7 +780,9 @@ class TimerOutletSettingsBottomSheet(
         )
 
         dayButtons().forEachIndexed { index, button ->
-            val selected = selectedDays.getOrNull(index) == true
+            val selected = selectedDays.getOrNull(
+                index = index
+            ) == true
 
             button.text = labels[index]
 
@@ -757,11 +827,12 @@ class TimerOutletSettingsBottomSheet(
                     )
                 }
 
-            button.alpha = if (selected) {
-                1f
-            } else {
-                0.68f
-            }
+            button.alpha =
+                if (selected) {
+                    1f
+                } else {
+                    0.68f
+                }
         }
     }
 
@@ -828,8 +899,8 @@ class TimerOutletSettingsBottomSheet(
             0
         )
 
-        val hours = safeMinutes / 60
-        val mins = safeMinutes % 60
+        val hours = safeMinutes / MINUTES_PER_HOUR
+        val mins = safeMinutes % MINUTES_PER_HOUR
 
         return "%02d:%02d".format(
             hours,
@@ -846,5 +917,10 @@ class TimerOutletSettingsBottomSheet(
     companion object {
         private const val MIN_REPEAT_COUNT = 1
         private const val MAX_REPEAT_COUNT = 99
+
+        private const val MIN_RUN_DURATION_MINUTES = 1
+        private const val MIN_OFF_DURATION_MINUTES = 0
+
+        private const val MINUTES_PER_HOUR = 60
     }
 }
