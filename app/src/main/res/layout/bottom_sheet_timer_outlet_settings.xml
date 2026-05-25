@@ -23,8 +23,10 @@
         android:id="@+id/tvSheetTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
         android:gravity="center"
         android:includeFontPadding="false"
+        android:maxLines="1"
         android:text="Outlet Settings"
         android:textColor="#E8EEF7"
         android:textSize="18sp"
@@ -50,6 +52,7 @@
         android:clipToPadding="false"
         android:fillViewport="false"
         android:overScrollMode="never"
+        android:paddingBottom="10dp"
         android:scrollbars="none">
 
         <LinearLayout
@@ -197,49 +200,101 @@
                     app:boxCornerRadiusTopEnd="16dp"
                     app:boxCornerRadiusTopStart="16dp"
                     app:boxStrokeColor="#5F55C8"
+                    app:endIconDrawable="@drawable/ic_edit"
+                    app:endIconMode="custom"
+                    app:endIconTint="#9FAABB"
                     app:hintTextColor="#9FAABB">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etStartTime"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="20:30"
-                        android:inputType="time"
-                        android:maxLength="5"
+                        android:clickable="true"
+                        android:cursorVisible="false"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:inputType="none"
                         android:singleLine="true"
                         android:textColor="#E8EEF7"
                         android:textSize="15sp" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/inputRepeatCountLayout"
+                <LinearLayout
+                    android:id="@+id/repeatCounterCard"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="64dp"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:hint="Repeat"
-                    app:boxBackgroundColor="#131C34"
-                    app:boxBackgroundMode="outline"
-                    app:boxCornerRadiusBottomEnd="16dp"
-                    app:boxCornerRadiusBottomStart="16dp"
-                    app:boxCornerRadiusTopEnd="16dp"
-                    app:boxCornerRadiusTopStart="16dp"
-                    app:boxStrokeColor="#5F55C8"
-                    app:hintTextColor="#9FAABB">
+                    android:background="@drawable/bg_timer_upcoming_item"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etRepeatCount"
-                        android:layout_width="match_parent"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRepeatMinus"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:text="-"
+                        android:textAllCaps="false"
+                        android:textColor="#D5DEEA"
+                        android:textSize="20sp"
+                        app:backgroundTint="#131C34"
+                        app:cornerRadius="18dp"
+                        app:strokeColor="#2D385C"
+                        app:strokeWidth="1dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:hint="1"
-                        android:inputType="number"
-                        android:maxLength="2"
-                        android:singleLine="true"
-                        android:textColor="#E8EEF7"
-                        android:textSize="15sp" />
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical">
 
-                </com.google.android.material.textfield.TextInputLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="Repeat"
+                            android:textColor="#9FAABB"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvRepeatCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:includeFontPadding="false"
+                            android:text="1"
+                            android:textColor="#E8EEF7"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRepeatPlus"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:text="+"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="20sp"
+                        app:backgroundTint="#29264A"
+                        app:cornerRadius="18dp"
+                        app:strokeColor="#5F55C8"
+                        app:strokeWidth="1dp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -255,7 +310,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:hint="Run min"
+                    android:hint="Run duration"
                     app:boxBackgroundColor="#131C34"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusBottomEnd="16dp"
@@ -263,15 +318,20 @@
                     app:boxCornerRadiusTopEnd="16dp"
                     app:boxCornerRadiusTopStart="16dp"
                     app:boxStrokeColor="#5F55C8"
+                    app:endIconDrawable="@drawable/ic_edit"
+                    app:endIconMode="custom"
+                    app:endIconTint="#9FAABB"
                     app:hintTextColor="#9FAABB">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etRunDuration"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="4"
-                        android:inputType="number"
-                        android:maxLength="4"
+                        android:clickable="true"
+                        android:cursorVisible="false"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:inputType="none"
                         android:singleLine="true"
                         android:textColor="#E8EEF7"
                         android:textSize="15sp" />
@@ -284,7 +344,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:hint="Off min"
+                    android:hint="Off interval"
                     app:boxBackgroundColor="#131C34"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusBottomEnd="16dp"
@@ -292,15 +352,20 @@
                     app:boxCornerRadiusTopEnd="16dp"
                     app:boxCornerRadiusTopStart="16dp"
                     app:boxStrokeColor="#5F55C8"
+                    app:endIconDrawable="@drawable/ic_edit"
+                    app:endIconMode="custom"
+                    app:endIconTint="#9FAABB"
                     app:hintTextColor="#9FAABB">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etOffDuration"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="10"
-                        android:inputType="number"
-                        android:maxLength="4"
+                        android:clickable="true"
+                        android:cursorVisible="false"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:inputType="none"
                         android:singleLine="true"
                         android:textColor="#E8EEF7"
                         android:textSize="15sp" />
@@ -327,73 +392,101 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDaySun"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="3dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
                     android:text="S"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayMon"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="3dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
                     android:text="M"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayTue"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="3dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
                     android:text="T"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayWed"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="3dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
                     android:text="W"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayThu"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="3dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
                     android:text="T"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDayFri"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginHorizontal="3dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
                     android:text="F"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDaySat"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="3dp"
                     android:layout_weight="1"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
                     android:text="S"
-                    android:textAllCaps="false" />
+                    android:textAllCaps="false"
+                    app:cornerRadius="14dp" />
 
             </LinearLayout>
 
