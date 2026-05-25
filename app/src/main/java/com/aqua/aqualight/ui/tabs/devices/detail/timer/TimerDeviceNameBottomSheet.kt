@@ -1,22 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.timer
 
-import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.GradientDrawable
-import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.aqua.aqualight.databinding.BottomSheetTimerDeviceNameBinding
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 
 class TimerDeviceNameBottomSheet(
     private val fragment: Fragment,
@@ -29,29 +19,27 @@ class TimerDeviceNameBottomSheet(
 ) {
 
     private lateinit var dialog: BottomSheetDialog
-    private lateinit var root: LinearLayout
-    private lateinit var inputLayout: TextInputLayout
-    private lateinit var editText: TextInputEditText
-    private lateinit var errorText: TextView
-    private lateinit var btnCancel: MaterialButton
-    private lateinit var btnSave: MaterialButton
+    private lateinit var binding: BottomSheetTimerDeviceNameBinding
 
     private var isSaving: Boolean = false
 
     fun show() {
         val context = fragment.requireContext()
 
+        binding = BottomSheetTimerDeviceNameBinding.inflate(
+            fragment.layoutInflater
+        )
+
         dialog = BottomSheetDialog(
             context
         )
 
-        root = createContent(
-            context = context
+        dialog.setContentView(
+            binding.root
         )
 
-        dialog.setContentView(
-            root
-        )
+        bindInitialState()
+        bindActions()
 
         dialog.setOnShowListener {
             val bottomSheet = dialog.findViewById<View>(
@@ -62,8 +50,7 @@ class TimerDeviceNameBottomSheet(
                 Color.TRANSPARENT
             )
 
-            bottomSheet?.let {
-                sheet ->
+            bottomSheet?.let { sheet ->
                 val behavior = BottomSheetBehavior.from(
                     sheet
                 )
@@ -77,283 +64,31 @@ class TimerDeviceNameBottomSheet(
         dialog.show()
     }
 
-    private fun createContent(
-        context: Context
-    ): LinearLayout {
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(
-                22.dp(context),
-                12.dp(context),
-                22.dp(context),
-                22.dp(context)
-            )
-
-            background = roundedDrawable(
-                color = Color.parseColor("#0B1727"),
-                radiusDp = 28,
-                context = context
-            )
-
-            addView(
-                createHandle(
-                    context = context
-                )
-            )
-
-            addView(
-                createTitle(
-                    context = context
-                )
-            )
-
-            addView(
-                createSubtitle(
-                    context = context
-                )
-            )
-
-            addView(
-                createInput(
-                    context = context
-                )
-            )
-
-            addView(
-                createErrorText(
-                    context = context
-                )
-            )
-
-            addView(
-                createButtons(
-                    context = context
-                )
-            )
+    private fun bindInitialState() {
+        binding.inputDeviceNameLayout.hint = fallbackName.ifBlank {
+            "Device name"
         }
+
+        binding.etDeviceName.setText(
+            currentName
+        )
+
+        binding.etDeviceName.setSelection(
+            binding.etDeviceName.text?.length ?: 0
+        )
+
+        binding.tvSheetError.visibility = View.GONE
     }
 
-    private fun createHandle(
-        context: Context
-    ): View {
-        return View(context).apply {
-            background = roundedDrawable(
-                color = Color.parseColor("#31445F"),
-                radiusDp = 100,
-                context = context
-            )
-
-            layoutParams = LinearLayout.LayoutParams(
-                54.dp(context),
-                5.dp(context)
-            ).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = 20.dp(context)
-            }
-        }
-    }
-
-    private fun createTitle(
-        context: Context
-    ): TextView {
-        return TextView(context).apply {
-            text = "Device Name"
-            setTextColor(
-                Color.parseColor("#E8EEF7")
-            )
-            textSize = 22f
-            typeface = Typeface.DEFAULT_BOLD
-        }
-    }
-
-    private fun createSubtitle(
-        context: Context
-    ): TextView {
-        return TextView(context).apply {
-            text = "This name is used only in the app."
-            setTextColor(
-                Color.parseColor("#9FAABB")
-            )
-            textSize = 13f
-
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = 6.dp(context)
-            }
-        }
-    }
-
-    private fun createInput(
-        context: Context
-    ): TextInputLayout {
-        val inputEditText = TextInputEditText(context).apply {
-            setText(
-                currentName
-            )
-
-            setSelection(
-                text?.length ?: 0
-            )
-
-            setSingleLine(
-                true
-            )
-
-            setTextColor(
-                Color.parseColor("#E8EEF7")
-            )
-
-            setHintTextColor(
-                Color.parseColor("#92A1B4")
-            )
-
-            textSize = 16f
-        }
-
-        editText = inputEditText
-
-        inputLayout = TextInputLayout(context).apply {
-            hint = fallbackName.ifBlank {
-                "Device name"
-            }
-
-            boxBackgroundMode =
-            TextInputLayout.BOX_BACKGROUND_OUTLINE
-
-            boxBackgroundColor =
-            Color.parseColor("#101F33")
-
-            boxStrokeColor =
-            Color.parseColor("#5F55C8")
-
-            setBoxCornerRadii(
-                18.dp(context).toFloat(),
-                18.dp(context).toFloat(),
-                18.dp(context).toFloat(),
-                18.dp(context).toFloat()
-            )
-
-            hintTextColor = ColorStateList.valueOf(
-                Color.parseColor("#9FAABB")
-            )
-
-            addView(
-                inputEditText,
-                ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            )
-
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = 20.dp(context)
-            }
-        }
-
-        return inputLayout
-    }
-
-    private fun createErrorText(
-        context: Context
-    ): TextView {
-        errorText = TextView(context).apply {
-            visibility = View.GONE
-            setTextColor(
-                Color.parseColor("#F18B9B")
-            )
-            textSize = 13f
-
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = 10.dp(context)
-            }
-        }
-
-        return errorText
-    }
-
-    private fun createButtons(
-        context: Context
-    ): LinearLayout {
-        btnCancel = MaterialButton(context).apply {
-            text = "Cancel"
-            isAllCaps = false
-
-            backgroundTintList = ColorStateList.valueOf(
-                Color.parseColor("#15263A")
-            )
-
-            setTextColor(
-                Color.parseColor("#D5DEEA")
-            )
-
-            strokeColor = ColorStateList.valueOf(
-                Color.parseColor("#2A3E59")
-            )
-
-            strokeWidth = 1.dp(context)
-
-            setOnClickListener {
+    private fun bindActions() {
+        binding.btnCancel.setOnClickListener {
+            if (!isSaving) {
                 dialog.dismiss()
             }
         }
 
-        btnSave = MaterialButton(context).apply {
-            text = "Save"
-            isAllCaps = false
-
-            backgroundTintList = ColorStateList.valueOf(
-                Color.parseColor("#6E63E8")
-            )
-
-            setTextColor(
-                Color.WHITE
-            )
-
-            setOnClickListener {
-                save()
-            }
-        }
-
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                52.dp(context)
-            ).apply {
-                topMargin = 22.dp(context)
-            }
-
-            addView(
-                btnCancel,
-                LinearLayout.LayoutParams(
-                    0,
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    1f
-                ).apply {
-                    rightMargin = 8.dp(context)
-                }
-            )
-
-            addView(
-                btnSave,
-                LinearLayout.LayoutParams(
-                    0,
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    1f
-                ).apply {
-                    leftMargin = 8.dp(context)
-                }
-            )
+        binding.btnSave.setOnClickListener {
+            save()
         }
     }
 
@@ -362,12 +97,12 @@ class TimerDeviceNameBottomSheet(
             return
         }
 
-        errorText.visibility = View.GONE
+        binding.tvSheetError.visibility = View.GONE
 
-        val newName = editText.text
-        ?.toString()
-        ?.trim()
-        .orEmpty()
+        val newName = binding.etDeviceName.text
+            ?.toString()
+            ?.trim()
+            .orEmpty()
 
         if (newName.isBlank()) {
             showError(
@@ -405,8 +140,8 @@ class TimerDeviceNameBottomSheet(
     private fun showError(
         message: String
     ) {
-        errorText.text = message
-        errorText.visibility = View.VISIBLE
+        binding.tvSheetError.text = message
+        binding.tvSheetError.visibility = View.VISIBLE
     }
 
     private fun setSaving(
@@ -422,36 +157,15 @@ class TimerDeviceNameBottomSheet(
             !saving
         )
 
-        editText.isEnabled = !saving
-        btnCancel.isEnabled = !saving
-        btnSave.isEnabled = !saving
+        binding.etDeviceName.isEnabled = !saving
+        binding.inputDeviceNameLayout.isEnabled = !saving
+        binding.btnCancel.isEnabled = !saving
+        binding.btnSave.isEnabled = !saving
 
-        btnSave.text = if (saving) {
+        binding.btnSave.text = if (saving) {
             "Saving..."
         } else {
             "Save"
         }
-    }
-
-    private fun roundedDrawable(
-        color: Int,
-        radiusDp: Int,
-        context: Context
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            setColor(
-                color
-            )
-
-            cornerRadius = radiusDp.dp(
-                context = context
-            ).toFloat()
-        }
-    }
-
-    private fun Int.dp(
-        context: Context
-    ): Int {
-        return (this * context.resources.displayMetrics.density).toInt()
     }
 }
