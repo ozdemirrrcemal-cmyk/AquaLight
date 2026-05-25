@@ -62,7 +62,8 @@ class TimerDeviceNameBottomSheet(
                 Color.TRANSPARENT
             )
 
-            bottomSheet?.let { sheet ->
+            bottomSheet?.let {
+                sheet ->
                 val behavior = BottomSheetBehavior.from(
                     sheet
                 )
@@ -187,7 +188,7 @@ class TimerDeviceNameBottomSheet(
     private fun createInput(
         context: Context
     ): TextInputLayout {
-        editText = TextInputEditText(context).apply {
+        val inputEditText = TextInputEditText(context).apply {
             setText(
                 currentName
             )
@@ -211,25 +212,27 @@ class TimerDeviceNameBottomSheet(
             textSize = 16f
         }
 
+        editText = inputEditText
+
         inputLayout = TextInputLayout(context).apply {
             hint = fallbackName.ifBlank {
                 "Device name"
             }
 
             boxBackgroundMode =
-                TextInputLayout.BOX_BACKGROUND_OUTLINE
+            TextInputLayout.BOX_BACKGROUND_OUTLINE
 
             boxBackgroundColor =
-                Color.parseColor("#101F33")
+            Color.parseColor("#101F33")
 
             boxStrokeColor =
-                Color.parseColor("#5F55C8")
+            Color.parseColor("#5F55C8")
 
             setBoxCornerRadii(
-                18f,
-                18f,
-                18f,
-                18f
+                18.dp(context).toFloat(),
+                18.dp(context).toFloat(),
+                18.dp(context).toFloat(),
+                18.dp(context).toFloat()
             )
 
             hintTextColor = ColorStateList.valueOf(
@@ -237,7 +240,7 @@ class TimerDeviceNameBottomSheet(
             )
 
             addView(
-                editText,
+                inputEditText,
                 ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -362,9 +365,9 @@ class TimerDeviceNameBottomSheet(
         errorText.visibility = View.GONE
 
         val newName = editText.text
-            ?.toString()
-            ?.trim()
-            .orEmpty()
+        ?.toString()
+        ?.trim()
+        .orEmpty()
 
         if (newName.isBlank()) {
             showError(
