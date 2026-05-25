@@ -4,7 +4,7 @@
     android:id="@+id/sheetRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_bottomsheet_rounded"
+    android:background="@drawable/bg_bottomsheet_timer_rounded"
     android:orientation="vertical"
     android:paddingStart="16dp"
     android:paddingTop="12dp"
@@ -17,7 +17,7 @@
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_bottomsheet_handle" />
+        android:background="@drawable/bg_bottomsheet_timer_handle" />
 
     <TextView
         android:id="@+id/tvSheetTitle"
@@ -28,7 +28,7 @@
         android:includeFontPadding="false"
         android:maxLines="2"
         android:text="Device Name"
-        android:textColor="@android:color/white"
+        android:textColor="#E8EEF7"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -40,7 +40,7 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:text="This name is used only in the app."
-        android:textColor="#AFC1D6"
+        android:textColor="#9FAABB"
         android:textSize="13sp" />
 
     <com.google.android.material.textfield.TextInputLayout
@@ -49,7 +49,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:hint="Device name"
-        app:boxBackgroundColor="#101F33"
+        app:boxBackgroundColor="#131C34"
         app:boxBackgroundMode="outline"
         app:boxCornerRadiusBottomEnd="16dp"
         app:boxCornerRadiusBottomStart="16dp"
@@ -57,8 +57,10 @@
         app:boxCornerRadiusTopStart="16dp"
         app:boxStrokeColor="#5F55C8"
         app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="2dp"
         app:endIconMode="clear_text"
-        app:hintTextColor="#AFC1D6">
+        app:endIconTint="#9FAABB"
+        app:hintTextColor="#9FAABB">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etDeviceName"
@@ -68,8 +70,8 @@
             android:inputType="textCapWords"
             android:maxLength="32"
             android:singleLine="true"
-            android:textColor="@android:color/white"
-            android:textColorHint="#AFC1D6"
+            android:textColor="#E8EEF7"
+            android:textColorHint="#9FAABB"
             android:textSize="15sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -102,9 +104,9 @@
             android:textAllCaps="false"
             android:textColor="#D5DEEA"
             android:textSize="15sp"
-            app:backgroundTint="#15263A"
+            app:backgroundTint="#131C34"
             app:cornerRadius="18dp"
-            app:strokeColor="#2A3E59"
+            app:strokeColor="#2D385C"
             app:strokeWidth="1dp" />
 
         <com.google.android.material.button.MaterialButton
