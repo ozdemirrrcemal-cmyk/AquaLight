@@ -31,6 +31,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
     private var isQuickActionRunning: Boolean = false
     private var isDeviceWriteRunning: Boolean = false
+    private var isInitialDashboardLoadFinished: Boolean = false
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
@@ -64,6 +65,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
         _binding = FragmentDeviceTimerBinding.bind(view)
 
+        hideTimerContentUntilFirstData()
+
         devicesStore = DevicesDataStoreManager.create(
             requireContext()
         )
@@ -73,8 +76,6 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         )
 
         bindStaticScreen()
-
-        renderer?.renderLoading()
 
         binding.tvTimerOnlineStatus.text = "Connecting"
 
@@ -104,6 +105,34 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
         binding.cardTimerDeviceSummary.isFocusable =
             canEditDeviceName
+    }
+
+    private fun hideTimerContentUntilFirstData() {
+        binding.root.alpha = 0f
+        binding.root.visibility = View.INVISIBLE
+
+        showGlobalLoading()
+    }
+
+    private fun revealTimerContentAfterFirstData() {
+        if (
+            _binding == null ||
+            isInitialDashboardLoadFinished
+        ) {
+            return
+        }
+
+        isInitialDashboardLoadFinished = true
+
+        hideGlobalLoading()
+
+        binding.root.visibility = View.VISIBLE
+        binding.root.alpha = 0f
+
+        binding.root.animate()
+            .alpha(1f)
+            .setDuration(FIRST_LOAD_FADE_DURATION_MS)
+            .start()
     }
 
     private fun bindClicks() {
@@ -208,6 +237,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                 )
             }
 
+            revealTimerContentAfterFirstData()
+
             return
         }
 
@@ -233,6 +264,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             setOutletCardsEnabled(
                 enabled = true
             )
+
+            revealTimerContentAfterFirstData()
         }.onFailure {
             binding.tvTimerOnlineStatus.text = "Offline"
 
@@ -248,6 +281,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                     enabled = false
                 )
             }
+
+            revealTimerContentAfterFirstData()
         }
     }
 
@@ -673,6 +708,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     override fun onDestroyView() {
         isDeviceWriteRunning = false
         isQuickActionRunning = false
+        isInitialDashboardLoadFinished = false
 
         hideGlobalLoading()
 
@@ -692,6 +728,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         private const val ARG_DEFAULT_DEVICE_TITLE = "defaultDeviceTitle"
 
         private const val DASHBOARD_REFRESH_INTERVAL_MS = 1000L
+        private const val FIRST_LOAD_FADE_DURATION_MS = 160L
 
         fun newInstance(
             deviceId: Long,

@@ -45,7 +45,9 @@ open class BaseActivity : AppCompatActivity() {
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
-        super.onCreate(savedInstanceState)
+        super.onCreate(
+            savedInstanceState
+        )
     }
 
     fun showLoading(
@@ -75,14 +77,13 @@ open class BaseActivity : AppCompatActivity() {
             return
         }
 
-        if (
-            loadingDialog?.isShowing == true
-        ) {
+        if (loadingDialog?.isShowing == true) {
             return
         }
 
         val dialog = Dialog(
-            this
+            this,
+            android.R.style.Theme_Translucent_NoTitleBar
         ).apply {
             requestWindowFeature(
                 Window.FEATURE_NO_TITLE
@@ -104,49 +105,62 @@ open class BaseActivity : AppCompatActivity() {
                 false
             ) as FrameLayout
 
-        overlay.visibility =
-            View.VISIBLE
+        overlay.visibility = View.VISIBLE
+        overlay.isClickable = true
+        overlay.isFocusable = true
 
         val logo = overlay.findViewById<ImageView>(
             R.id.loadingLogo
         )
 
         dialog.setContentView(
-            overlay
+            overlay,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
         )
 
         loadingDialog = dialog
         loadingLogo = logo
 
-        dialog.setOnShowListener {
-            dialog.window?.apply {
-                setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
+        dialog.show()
 
-                setBackgroundDrawable(
-                    ColorDrawable(
-                        Color.TRANSPARENT
-                    )
-                )
+        dialog.window?.apply {
+            setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
 
-                clearFlags(
-                    WindowManager.LayoutParams.FLAG_DIM_BEHIND
+            setBackgroundDrawable(
+                ColorDrawable(
+                    Color.TRANSPARENT
                 )
+            )
+
+            clearFlags(
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND
+            )
+
+            setDimAmount(
+                0f
+            )
+
+            attributes = attributes.apply {
+                width = ViewGroup.LayoutParams.MATCH_PARENT
+                height = ViewGroup.LayoutParams.MATCH_PARENT
+                windowAnimations = 0
             }
-
-            val anim = AnimationUtils.loadAnimation(
-                this,
-                R.anim.rotate_pulse_logo
-            )
-
-            logo.startAnimation(
-                anim
-            )
         }
 
-        dialog.show()
+        val anim = AnimationUtils.loadAnimation(
+            this,
+            R.anim.rotate_pulse_logo
+        )
+
+        logo.startAnimation(
+            anim
+        )
     }
 
     private fun hideLoadingDialog() {

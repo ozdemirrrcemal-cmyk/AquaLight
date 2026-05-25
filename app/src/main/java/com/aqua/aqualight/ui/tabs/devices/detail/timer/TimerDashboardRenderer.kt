@@ -85,43 +85,6 @@ class TimerDashboardRenderer(
         )
     }
 
-    fun renderLoading() {
-        binding.tvActiveOutletCount.text = "-- / 4"
-        binding.tvNextTimerEvent.text = "Loading...\n--"
-
-        binding.upcomingTimersContainer.removeAllViews()
-        binding.tvUpcomingTimer.visibility = View.VISIBLE
-        binding.tvUpcomingTimer.text = "Loading timer data..."
-
-        renderOutlet(
-            holder = outlet1(),
-            outlet = null,
-            rule = null,
-            fallbackName = "Outlet 1"
-        )
-
-        renderOutlet(
-            holder = outlet2(),
-            outlet = null,
-            rule = null,
-            fallbackName = "Outlet 2"
-        )
-
-        renderOutlet(
-            holder = outlet3(),
-            outlet = null,
-            rule = null,
-            fallbackName = "Outlet 3"
-        )
-
-        renderOutlet(
-            holder = outlet4(),
-            outlet = null,
-            rule = null,
-            fallbackName = "Outlet 4"
-        )
-    }
-
     fun clear() {
         binding.tvActiveOutletCount.text = "-- / 4"
         binding.tvNextTimerEvent.text = "--"
