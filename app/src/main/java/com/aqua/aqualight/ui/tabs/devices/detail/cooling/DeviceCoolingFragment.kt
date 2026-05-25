@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
@@ -21,6 +22,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private var coolingManagementRenderer: CoolingManagementRenderer? = null
 
     private var latestCoolingDashboardData: CoolingDeviceRepository.CoolingDashboardData? = null
+    private var isSavingCoolingSettings: Boolean = false
 
     private val deviceIp: String
         get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
@@ -131,11 +133,15 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 coolingManagementRenderer?.render(
                     data = data
                 )
-            }.onFailure {
+            }.onFailure { error ->
                 latestCoolingDashboardData = null
 
                 temperatureChartRenderer?.clear()
                 coolingManagementRenderer?.clear()
+
+                showShortMessage(
+                    message = "Cooling data could not be loaded: ${error.message}"
+                )
             }
 
             _binding?.btnRefreshTemperature?.isEnabled = true
@@ -148,6 +154,10 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     ) {
         val dashboardData = latestCoolingDashboardData ?: return
 
+        if (isSavingCoolingSettings) {
+            return
+        }
+
         CoolingFanSettingsBottomSheet(
             fragment = this,
             visualSpec = DeviceVisualSpecs.Cooling,
@@ -155,33 +165,78 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             rule = rule,
             sensors = dashboardData.sensors,
             onSave = { draft ->
-                handleCoolingFanSettingsDraft(
+                saveCoolingFanSettings(
                     draft = draft
                 )
             }
         ).show()
     }
 
-    private fun handleCoolingFanSettingsDraft(
+    private fun saveCoolingFanSettings(
         draft: CoolingFanSettingsBottomSheet.CoolingFanSettingsDraft
     ) {
-        // Sonraki adımda ESP32 /set bağlantısı burada yapılacak.
-        // Şimdilik bottom sheet doğru fanı, rule'u ve sensörleri alıyor mu diye test edeceğiz.
+        val dashboardData = latestCoolingDashboardData ?: return
 
-        // draft.fanIndex
-        // draft.ruleIndex
-        // draft.fanMode
-        // draft.startCooling
-        // draft.fullPower
-        // draft.minimumPowerPercent
-        // draft.maximumPowerPercent
-        // draft.selectedSensorIndexes
+        if (deviceIp.isBlank() || isSavingCoolingSettings) {
+            return
+        }
+
+        isSavingCoolingSettings = true
+        _binding?.btnRefreshTemperature?.isEnabled = false
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = runCatching {
+                repository.saveCoolingFanSettings(
+                    ipAddress = deviceIp,
+                    currentData = dashboardData,
+                    fanIndex = draft.fanIndex,
+                    ruleIndex = draft.ruleIndex,
+                    fanMode = draft.fanMode,
+                    startCooling = draft.startCooling,
+                    fullPower = draft.fullPower,
+                    minimumPowerPercent = draft.minimumPowerPercent,
+                    maximumPowerPercent = draft.maximumPowerPercent,
+                    selectedSensorIndexes = draft.selectedSensorIndexes
+                )
+            }
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            result.onSuccess {
+                showShortMessage(
+                    message = "Cooling settings saved."
+                )
+
+                loadCoolingDashboard()
+            }.onFailure { error ->
+                showShortMessage(
+                    message = "Cooling settings could not be saved: ${error.message}"
+                )
+
+                _binding?.btnRefreshTemperature?.isEnabled = true
+            }
+
+            isSavingCoolingSettings = false
+        }
+    }
+
+    private fun showShortMessage(
+        message: String
+    ) {
+        Toast.makeText(
+            requireContext(),
+            message,
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     override fun onDestroyView() {
         temperatureChartRenderer = null
         coolingManagementRenderer = null
         latestCoolingDashboardData = null
+        isSavingCoolingSettings = false
         _binding = null
 
         super.onDestroyView()

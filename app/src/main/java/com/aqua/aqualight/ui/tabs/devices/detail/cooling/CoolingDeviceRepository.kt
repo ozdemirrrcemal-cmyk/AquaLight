@@ -606,6 +606,241 @@ class CoolingDeviceRepository {
             else -> 0xFF8E24AA.toInt()
         }
     }
+    
+    suspend fun saveCoolingFanSettings(
+    ipAddress: String,
+    currentData: CoolingDashboardData,
+    fanIndex: Int,
+    ruleIndex: Int?,
+    fanMode: FanRegime,
+    startCooling: Float,
+    fullPower: Float,
+    minimumPowerPercent: Int,
+    maximumPowerPercent: Int,
+    selectedSensorIndexes: List<Int>
+) = withContext(Dispatchers.IO) {
+    val fan = currentData.fanChannels.firstOrNull { item ->
+        item.index == fanIndex
+    } ?: throw IllegalStateException(
+        "Fan channel could not be found."
+    )
+
+    if (fan.gpioPwm.isBlank() || fan.gpioPwm == "-") {
+        throw IllegalStateException(
+            "Fan channel is not assigned to hardware."
+        )
+    }
+
+    val targetRuleIndex = ruleIndex ?: nextCoolRuleIndex(
+        currentData = currentData
+    )
+
+    val existingRule = currentData.coolRules.firstOrNull { rule ->
+        rule.index == targetRuleIndex
+    }
+
+    val ruleName = existingRule?.name?.ifBlank {
+        "${fan.name} Cooling"
+    } ?: "${fan.name} Cooling"
+
+    val setJson = JSONObject().apply {
+        put(
+            "LPWMChanelFan",
+            JSONObject().apply {
+                put(
+                    "Data",
+                    JSONObject().apply {
+                        put(
+                            fan.index.toString(),
+                            JSONObject().apply {
+                                put(
+                                    "Regime",
+                                    fanMode.displayName
+                                )
+                                put(
+                                    "VMin",
+                                    minimumPowerPercent.coerceIn(
+                                        0,
+                                        100
+                                    ) / 100f
+                                )
+                                put(
+                                    "VMax",
+                                    maximumPowerPercent.coerceIn(
+                                        0,
+                                        100
+                                    ) / 100f
+                                )
+                            }
+                        )
+                    }
+                )
+            }
+        )
+
+        put(
+            "LCool",
+            JSONObject().apply {
+                put(
+                    "Data",
+                    JSONObject().apply {
+                        put(
+                            targetRuleIndex.toString(),
+                            JSONObject().apply {
+                                put(
+                                    "Enabled",
+                                    1
+                                )
+                                put(
+                                    "Name",
+                                    ruleName
+                                )
+                                put(
+                                    "GPIO_PWM",
+                                    fan.gpioPwm
+                                )
+                                put(
+                                    "TMin",
+                                    startCooling
+                                )
+                                put(
+                                    "TMax",
+                                    fullPower
+                                )
+                                put(
+                                    "LbT",
+                                    buildSensorFlagsJsonArray(
+                                        currentData = currentData,
+                                        selectedSensorIndexes = selectedSensorIndexes
+                                    )
+                                )
+                            }
+                        )
+                    }
+                )
+            }
+        )
+    }
+
+    postSetJson(
+        ipAddress = ipAddress,
+        json = setJson,
+        sRet = "cooling_settings"
+    )
+
+    postSetJson(
+        ipAddress = ipAddress,
+        json = JSONObject().apply {
+            put(
+                "Main",
+                JSONObject().apply {
+                    put(
+                        "SaveCool",
+                        1
+                    )
+                }
+            )
+        },
+        sRet = "save_cool"
+    )
+}
+
+private fun nextCoolRuleIndex(
+    currentData: CoolingDashboardData
+): Int {
+    return currentData.coolRules.maxOfOrNull { rule ->
+        rule.index
+    }?.plus(
+        1
+    ) ?: 0
+}
+
+private fun buildSensorFlagsJsonArray(
+    currentData: CoolingDashboardData,
+    selectedSensorIndexes: List<Int>
+): JSONArray {
+    val selectedSet = selectedSensorIndexes.toSet()
+
+    val maxSensorIndex = currentData.sensors.maxOfOrNull { sensor ->
+        sensor.index
+    } ?: -1
+
+    val maxSelectedIndex = selectedSensorIndexes.maxOrNull() ?: -1
+
+    val maxIndex = maxOf(
+        maxSensorIndex,
+        maxSelectedIndex
+    )
+
+    return JSONArray().apply {
+        for (index in 0..maxIndex) {
+            put(
+                if (selectedSet.contains(index)) {
+                    1
+                } else {
+                    0
+                }
+            )
+        }
+    }
+}
+
+private fun postSetJson(
+    ipAddress: String,
+    json: JSONObject,
+    sRet: String
+) {
+    val encodedJson = URLEncoder.encode(
+        json.toString(),
+        StandardCharsets.UTF_8.name()
+    )
+
+    val encodedRet = URLEncoder.encode(
+        sRet,
+        StandardCharsets.UTF_8.name()
+    )
+
+    val body = "Json=$encodedJson&sRet=$encodedRet"
+
+    val url = URL(
+        "http://$ipAddress/set"
+    )
+
+    val connection = url.openConnection() as HttpURLConnection
+    connection.requestMethod = "POST"
+    connection.connectTimeout = 5000
+    connection.readTimeout = 5000
+    connection.doOutput = true
+
+    connection.setRequestProperty(
+        "Content-Type",
+        "text/plain; charset=UTF-8"
+    )
+
+    try {
+        connection.outputStream.use { outputStream ->
+            outputStream.write(
+                body.toByteArray(
+                    StandardCharsets.UTF_8
+                )
+            )
+        }
+
+        val code = connection.responseCode
+
+        if (code !in 200..299) {
+            throw IllegalStateException(
+                "Device returned HTTP $code"
+            )
+        }
+
+        connection.inputStream.use { inputStream ->
+            inputStream.readBytes()
+        }
+    } finally {
+        connection.disconnect()
+    }
+}
 
     companion object {
         private const val BASE_41_DIGITS =
