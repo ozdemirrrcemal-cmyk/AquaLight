@@ -6,11 +6,13 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.databinding.FragmentDeviceTimerBinding
+import com.aqua.aqualight.databinding.ItemTimerUpcomingEventBinding
 import com.google.android.material.card.MaterialCardView
 
 class TimerDashboardRenderer(
@@ -26,8 +28,9 @@ class TimerDashboardRenderer(
         binding.tvNextTimerEvent.text =
             data.nextEventText()
 
-        binding.tvUpcomingTimer.text =
-    data.nextTimerDescription()
+        renderUpcomingTimers(
+            data = data
+        )
 
         val outlets = data.outlets.take(
             4
@@ -81,6 +84,9 @@ class TimerDashboardRenderer(
     fun clear() {
         binding.tvActiveOutletCount.text = "--"
         binding.tvNextTimerEvent.text = "--"
+
+        binding.upcomingTimersContainer.removeAllViews()
+        binding.tvUpcomingTimer.visibility = View.VISIBLE
         binding.tvUpcomingTimer.text = "Timer data is not available."
 
         renderOutlet(
@@ -110,6 +116,48 @@ class TimerDashboardRenderer(
             rule = null,
             fallbackName = "Outlet 4"
         )
+    }
+
+    private fun renderUpcomingTimers(
+        data: TimerDeviceRepository.TimerDashboardData
+    ) {
+        val container = binding.upcomingTimersContainer
+        val context = container.context
+
+        container.removeAllViews()
+
+        val events = data.upcomingEvents(
+            limit = 3
+        )
+
+        if (events.isEmpty()) {
+            binding.tvUpcomingTimer.visibility = View.VISIBLE
+            binding.tvUpcomingTimer.text = "No scheduled timer."
+            return
+        }
+
+        binding.tvUpcomingTimer.visibility = View.GONE
+
+        events.forEach { event ->
+            val itemBinding = ItemTimerUpcomingEventBinding.inflate(
+                LayoutInflater.from(context),
+                container,
+                false
+            )
+
+            itemBinding.tvUpcomingName.text =
+                event.outletName
+
+            itemBinding.tvUpcomingTime.text =
+                event.rowTimeText()
+
+            itemBinding.tvUpcomingDuration.text =
+                event.rowDurationText()
+
+            container.addView(
+                itemBinding.root
+            )
+        }
     }
 
     private fun renderOutlet(

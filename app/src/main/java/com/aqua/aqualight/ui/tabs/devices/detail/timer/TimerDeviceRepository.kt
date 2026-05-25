@@ -171,6 +171,15 @@ class TimerDeviceRepository {
             )
         }
 
+        fun upcomingEvents(
+            limit: Int = 3
+        ): List<TimerNextEventResolver.NextTimerEvent> {
+            return TimerNextEventResolver.resolveUpcoming(
+                data = this,
+                limit = limit
+            )
+        }
+
         fun nextRule(): TimerRuleData? {
             return nextEvent()?.rule
         }
