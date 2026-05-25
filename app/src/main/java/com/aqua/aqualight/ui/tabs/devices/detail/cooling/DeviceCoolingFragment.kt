@@ -21,7 +21,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private var coolingManagementRenderer: CoolingManagementRenderer? = null
 
     private val deviceIp: String
-        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -39,12 +39,19 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         temperatureChartRenderer = TemperatureChartRenderer(
             chart = binding.temperatureChartView,
             visualSpec = DeviceVisualSpecs.Cooling
-        ).also { renderer ->
+        ).also {
+            renderer ->
             renderer.setup()
         }
 
         coolingManagementRenderer = CoolingManagementRenderer(
-            binding = binding
+            container = binding.fanCardsContainer,
+            visualSpec = DeviceVisualSpecs.Cooling,
+            onFanCardClick = {
+                fan, rule ->
+                // Sonraki adımda burada fan özel edit bottom sheet açılacak.
+                // showCoolingFanSettingsBottomSheet(fan = fan, rule = rule)
+            }
         )
 
         binding.btnRefreshTemperature.setOnClickListener {
@@ -67,14 +74,14 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         binding.cardTemperatureGraph.strokeColor =
-            visualSpec.cardStrokeColor
+        visualSpec.cardStrokeColor
 
         binding.cardCoolingManagement.setCardBackgroundColor(
             visualSpec.cardBackgroundColor
         )
 
         binding.cardCoolingManagement.strokeColor =
-            visualSpec.cardStrokeColor
+        visualSpec.cardStrokeColor
 
         binding.viewGraphAccent.setBackgroundColor(
             visualSpec.accentColor
@@ -85,9 +92,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         binding.btnRefreshTemperature.backgroundTintList =
-            ColorStateList.valueOf(
-                visualSpec.buttonColor
-            )
+        ColorStateList.valueOf(
+            visualSpec.buttonColor
+        )
 
         binding.btnRefreshTemperature.setTextColor(
             visualSpec.buttonTextColor
@@ -116,7 +123,8 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 return@launch
             }
 
-            result.onSuccess { data ->
+            result.onSuccess {
+                data ->
                 temperatureChartRenderer?.render(
                     sensors = data.sensors
                 )
