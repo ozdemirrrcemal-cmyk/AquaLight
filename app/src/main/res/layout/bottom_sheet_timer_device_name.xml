@@ -27,7 +27,7 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:maxLines="2"
-        android:text="Device Name"
+        android:text="Custom Device Name"
         android:textColor="#E8EEF7"
         android:textSize="18sp"
         android:textStyle="bold" />
@@ -39,7 +39,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:text="This name is used only in the app."
+        android:text="This name helps you identify this device in the app."
         android:textColor="#9FAABB"
         android:textSize="13sp" />
 

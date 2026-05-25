@@ -27,9 +27,7 @@ class TimerDashboardRenderer(
             data.nextEventText()
 
         binding.tvUpcomingTimer.text =
-            buildNextTimerDescription(
-                data = data
-            )
+    data.nextTimerDescription()
 
         val outlets = data.outlets.take(
             4
@@ -257,27 +255,6 @@ class TimerDashboardRenderer(
                 rule?.compactScheduleText() ?: "No schedule"
             }
         }
-    }
-
-    private fun buildNextTimerDescription(
-        data: TimerDeviceRepository.TimerDashboardData
-    ): String {
-        val nextRule = data.nextRule()
-            ?: return "No scheduled timer."
-
-        val outlet = data.outlets.firstOrNull { item ->
-            item.gpioPwm.trim().equals(
-                nextRule.gpioPwm.trim(),
-                ignoreCase = true
-            )
-        }
-
-        val outletName = outlet?.name ?: nextRule.name
-        val duration = nextRule.intervalOn.ifBlank {
-            "--"
-        }
-
-        return "$outletName will run at ${nextRule.timeStart} for $duration."
     }
 
     private fun outlet1(): OutletViewHolder {

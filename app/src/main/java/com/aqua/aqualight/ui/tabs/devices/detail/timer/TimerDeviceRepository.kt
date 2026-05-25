@@ -68,9 +68,9 @@ class TimerDeviceRepository {
     ) {
         fun isUsable(): Boolean {
             return enabled &&
-                gpioPwm.isNotBlank() &&
-                gpioPwm != "-" &&
-                count > 0
+            gpioPwm.isNotBlank() &&
+            gpioPwm != "-" &&
+            count > 0
         }
 
         fun compactScheduleText(): String {
@@ -85,13 +85,20 @@ class TimerDeviceRepository {
             return "$timeStart · ${compactDuration(intervalOn)}"
         }
 
+        fun durationText(): String {
+            return compactDuration(
+                value = intervalOn
+            )
+        }
+
         private fun compactDuration(
             value: String
         ): String {
             val parts = value.split(":")
-                .mapNotNull { part ->
-                    part.toIntOrNull()
-                }
+            .mapNotNull {
+                part ->
+                part.toIntOrNull()
+            }
 
             if (parts.isEmpty()) {
                 return value
@@ -112,9 +119,7 @@ class TimerDeviceRepository {
                     hours = 0
                     minutes = parts[0]
                     seconds = parts[1]
-                }
-
-                else -> {
+                } else -> {
                     hours = 0
                     minutes = 0
                     seconds = parts[0]
@@ -144,7 +149,8 @@ class TimerDeviceRepository {
                 return null
             }
 
-            return timerRules.firstOrNull { rule ->
+            return timerRules.firstOrNull {
+                rule ->
                 rule.gpioPwm.trim().equals(
                     outletGpio,
                     ignoreCase = true
@@ -153,30 +159,28 @@ class TimerDeviceRepository {
         }
 
         fun activeOutletCount(): Int {
-            return outlets.count { outlet ->
+            return outlets.count {
+                outlet ->
                 outlet.isCurrentlyOn()
             }
         }
 
+        fun nextEvent(): TimerNextEventResolver.NextTimerEvent? {
+            return TimerNextEventResolver.resolve(
+                data = this
+            )
+        }
+
         fun nextRule(): TimerRuleData? {
-            return timerRules.firstOrNull { rule ->
-                rule.isUsable()
-            }
+            return nextEvent()?.rule
         }
 
         fun nextEventText(): String {
-            val nextRule = nextRule() ?: return "--"
+            return nextEvent()?.shortText() ?: "--"
+        }
 
-            val outlet = outlets.firstOrNull { item ->
-                item.gpioPwm.trim().equals(
-                    nextRule.gpioPwm.trim(),
-                    ignoreCase = true
-                )
-            }
-
-            val outletName = outlet?.name ?: nextRule.name
-
-            return "${nextRule.timeStart} · $outletName"
+        fun nextTimerDescription(): String {
+            return nextEvent()?.detailText() ?: "No scheduled timer."
         }
     }
 
@@ -261,7 +265,8 @@ class TimerDeviceRepository {
 
             val response = BufferedReader(
                 InputStreamReader(connection.inputStream)
-            ).use { reader ->
+            ).use {
+                reader ->
                 reader.readText()
             }
 
@@ -280,9 +285,10 @@ class TimerDeviceRepository {
 
         return TimerDashboardData(
             ip = root.optString("IP")
-                .takeIf { value ->
-                    value.isNotBlank()
-                },
+            .takeIf {
+                value ->
+                value.isNotBlank()
+            },
             outlets = parseTimerOutlets(
                 root = root
             ),
@@ -296,130 +302,134 @@ class TimerDeviceRepository {
         root: JSONObject
     ): List<TimerOutletData> {
         val data = root.optJSONObject("LPWMChanelTimer")
-            ?.optJSONObject("Data")
-            ?: return emptyList()
+        ?.optJSONObject("Data")
+        ?: return emptyList()
 
         return data.keys()
-            .asSequence()
-            .mapNotNull { key ->
-                val index = key.toIntOrNull() ?: return@mapNotNull null
-                val outletJson = data.optJSONObject(key) ?: return@mapNotNull null
+        .asSequence()
+        .mapNotNull {
+            key ->
+            val index = key.toIntOrNull() ?: return@mapNotNull null
+            val outletJson = data.optJSONObject(key) ?: return@mapNotNull null
 
-                val rawVNow = outletJson.optDouble(
-                    "VNow",
-                    Double.NaN
-                )
+            val rawVNow = outletJson.optDouble(
+                "VNow",
+                Double.NaN
+            )
 
-                val rawRest = outletJson.optDouble(
-                    "Rest",
-                    Double.NaN
-                )
+            val rawRest = outletJson.optDouble(
+                "Rest",
+                Double.NaN
+            )
 
-                TimerOutletData(
-                    index = index,
-                    name = outletJson.optString(
-                        "Name",
-                        "Outlet ${index + 1}"
-                    ).ifBlank {
-                        "Outlet ${index + 1}"
-                    },
-                    gpioPwm = outletJson.optString(
-                        "GPIO_PWM",
-                        "-"
-                    ).trim(),
-                    regime = OutletRegime.fromRaw(
-                        value = outletJson.optString(
-                            "Regime",
-                            "Off"
-                        )
-                    ),
-                    vNow = if (rawVNow.isNaN() || rawVNow < 0.0) {
-                        null
-                    } else {
-                        rawVNow.toFloat()
-                    },
-                    dimension = outletJson.optString(
-                        "Dimension",
-                        ""
-                    ).trim(),
-                    ye = outletJson.optFloatCompat(
-                        name = "YE",
-                        defaultValue = -1f
-                    ),
-                    rest = if (rawRest.isNaN() || rawRest < 0.0) {
-                        null
-                    } else {
-                        rawRest.toFloat()
-                    }
-                )
-            }
-            .sortedBy { outlet ->
-                outlet.index
-            }
-            .toList()
+            TimerOutletData(
+                index = index,
+                name = outletJson.optString(
+                    "Name",
+                    "Outlet ${index + 1}"
+                ).ifBlank {
+                    "Outlet ${index + 1}"
+                },
+                gpioPwm = outletJson.optString(
+                    "GPIO_PWM",
+                    "-"
+                ).trim(),
+                regime = OutletRegime.fromRaw(
+                    value = outletJson.optString(
+                        "Regime",
+                        "Off"
+                    )
+                ),
+                vNow = if (rawVNow.isNaN() || rawVNow < 0.0) {
+                    null
+                } else {
+                    rawVNow.toFloat()
+                },
+                dimension = outletJson.optString(
+                    "Dimension",
+                    ""
+                ).trim(),
+                ye = outletJson.optFloatCompat(
+                    name = "YE",
+                    defaultValue = -1f
+                ),
+                rest = if (rawRest.isNaN() || rawRest < 0.0) {
+                    null
+                } else {
+                    rawRest.toFloat()
+                }
+            )
+        }
+        .sortedBy {
+            outlet ->
+            outlet.index
+        }
+        .toList()
     }
 
     private fun parseTimerRules(
         root: JSONObject
     ): List<TimerRuleData> {
         val data = root.optJSONObject("LTimer")
-            ?.optJSONObject("Data")
-            ?: return emptyList()
+        ?.optJSONObject("Data")
+        ?: return emptyList()
 
         return data.keys()
-            .asSequence()
-            .mapNotNull { key ->
-                val index = key.toIntOrNull() ?: return@mapNotNull null
-                val timerJson = data.optJSONObject(key) ?: return@mapNotNull null
+        .asSequence()
+        .mapNotNull {
+            key ->
+            val index = key.toIntOrNull() ?: return@mapNotNull null
+            val timerJson = data.optJSONObject(key) ?: return@mapNotNull null
 
-                TimerRuleData(
-                    index = index,
-                    enabled = timerJson.optBooleanCompat(
-                        name = "Enabled"
-                    ),
-                    name = timerJson.optString(
-                        "Name",
-                        "Timer ${index + 1}"
-                    ).ifBlank {
-                        "Timer ${index + 1}"
-                    },
-                    gpioPwm = timerJson.optString(
-                        "GPIO_PWM",
-                        "-"
-                    ).trim(),
-                    ye = timerJson.optFloatCompat(
-                        name = "YE",
-                        defaultValue = -1f
-                    ),
-                    weekDays = parseBooleanArray(
-                        array = timerJson.optJSONArray("WDay")
-                    ),
-                    timeStart = timerJson.optString(
-                        "TimeStart",
-                        ""
-                    ).trim(),
-                    intervalOn = timerJson.optString(
-                        "IntervalOn",
-                        ""
-                    ).trim(),
-                    intervalOff = timerJson.optString(
-                        "IntervalOff",
-                        ""
-                    ).trim(),
-                    count = timerJson.optInt(
-                        "Count",
-                        0
-                    ),
-                    status = timerJson.optString(
-                        "Status",
-                        ""
-                    ).trim()
-                )
-            }
-            .sortedBy { rule ->
-                rule.index
-            }
-            .toList()
+            TimerRuleData(
+                index = index,
+                enabled = timerJson.optBooleanCompat(
+                    name = "Enabled"
+                ),
+                name = timerJson.optString(
+                    "Name",
+                    "Timer ${index + 1}"
+                ).ifBlank {
+                    "Timer ${index + 1}"
+                },
+                gpioPwm = timerJson.optString(
+                    "GPIO_PWM",
+                    "-"
+                ).trim(),
+                ye = timerJson.optFloatCompat(
+                    name = "YE",
+                    defaultValue = -1f
+                ),
+                weekDays = parseBooleanArray(
+                    array = timerJson.optJSONArray("WDay")
+                ),
+                timeStart = timerJson.optString(
+                    "TimeStart",
+                    ""
+                ).trim(),
+                intervalOn = timerJson.optString(
+                    "IntervalOn",
+                    ""
+                ).trim(),
+                intervalOff = timerJson.optString(
+                    "IntervalOff",
+                    ""
+                ).trim(),
+                count = timerJson.optInt(
+                    "Count",
+                    0
+                ),
+                status = timerJson.optString(
+                    "Status",
+                    ""
+                ).trim()
+            )
+        }
+        .sortedBy {
+            rule ->
+            rule.index
+        }
+        .toList()
     }
 
     private fun parseBooleanArray(
@@ -431,21 +441,22 @@ class TimerDeviceRepository {
 
         return List(
             size = array.length()
-        ) { index ->
+        ) {
+            index ->
             val value = array.opt(index)
 
             when (value) {
                 is Boolean -> value
                 is Number -> value.toInt() != 0
                 is String -> value == "1" ||
-                    value.equals(
-                        "true",
-                        ignoreCase = true
-                    ) ||
-                    value.equals(
-                        "on",
-                        ignoreCase = true
-                    )
+                value.equals(
+                    "true",
+                    ignoreCase = true
+                ) ||
+                value.equals(
+                    "on",
+                    ignoreCase = true
+                )
 
                 else -> false
             }
@@ -478,18 +489,18 @@ class TimerDeviceRepository {
             is Boolean -> value
             is Number -> value.toInt() != 0
             is String -> value == "1" ||
-                value.equals(
-                    "true",
-                    ignoreCase = true
-                ) ||
-                value.equals(
-                    "on",
-                    ignoreCase = true
-                ) ||
-                value.equals(
-                    "enabled",
-                    ignoreCase = true
-                )
+            value.equals(
+                "true",
+                ignoreCase = true
+            ) ||
+            value.equals(
+                "on",
+                ignoreCase = true
+            ) ||
+            value.equals(
+                "enabled",
+                ignoreCase = true
+            )
 
             else -> defaultValue
         }
