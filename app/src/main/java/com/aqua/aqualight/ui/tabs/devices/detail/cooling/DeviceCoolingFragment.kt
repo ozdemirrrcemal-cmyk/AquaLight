@@ -20,8 +20,10 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
     private var temperatureChartRenderer: TemperatureChartRenderer? = null
     private var coolingManagementRenderer: CoolingManagementRenderer? = null
 
+    private var latestCoolingDashboardData: CoolingDeviceRepository.CoolingDashboardData? = null
+
     private val deviceIp: String
-    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -39,28 +41,23 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         temperatureChartRenderer = TemperatureChartRenderer(
             chart = binding.temperatureChartView,
             visualSpec = DeviceVisualSpecs.Cooling
-        ).also {
-            renderer ->
+        ).also { renderer ->
             renderer.setup()
         }
 
         coolingManagementRenderer = CoolingManagementRenderer(
             container = binding.fanCardsContainer,
             visualSpec = DeviceVisualSpecs.Cooling,
-            onFanCardClick = {
-                fan, rule ->
-                // Sonraki adımda burada fan özel edit bottom sheet açılacak.
-                // showCoolingFanSettingsBottomSheet(fan = fan, rule = rule)
+            onFanCardClick = { fan, rule ->
+                showCoolingFanSettingsBottomSheet(
+                    fan = fan,
+                    rule = rule
+                )
             }
         )
 
         binding.btnRefreshTemperature.setOnClickListener {
             loadCoolingDashboard()
-        }
-
-        binding.cardCoolingManagement.setOnClickListener {
-            // Sonraki adımda burada edit bottom sheet açacağız.
-            // showCoolingSettingsBottomSheet()
         }
 
         loadCoolingDashboard()
@@ -74,14 +71,14 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         binding.cardTemperatureGraph.strokeColor =
-        visualSpec.cardStrokeColor
+            visualSpec.cardStrokeColor
 
         binding.cardCoolingManagement.setCardBackgroundColor(
             visualSpec.cardBackgroundColor
         )
 
         binding.cardCoolingManagement.strokeColor =
-        visualSpec.cardStrokeColor
+            visualSpec.cardStrokeColor
 
         binding.viewGraphAccent.setBackgroundColor(
             visualSpec.accentColor
@@ -92,9 +89,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
 
         binding.btnRefreshTemperature.backgroundTintList =
-        ColorStateList.valueOf(
-            visualSpec.buttonColor
-        )
+            ColorStateList.valueOf(
+                visualSpec.buttonColor
+            )
 
         binding.btnRefreshTemperature.setTextColor(
             visualSpec.buttonTextColor
@@ -105,6 +102,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         val currentBinding = _binding ?: return
 
         if (deviceIp.isBlank()) {
+            latestCoolingDashboardData = null
             temperatureChartRenderer?.clear()
             coolingManagementRenderer?.clear()
             return
@@ -123,8 +121,9 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 return@launch
             }
 
-            result.onSuccess {
-                data ->
+            result.onSuccess { data ->
+                latestCoolingDashboardData = data
+
                 temperatureChartRenderer?.render(
                     sensors = data.sensors
                 )
@@ -133,6 +132,8 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                     data = data
                 )
             }.onFailure {
+                latestCoolingDashboardData = null
+
                 temperatureChartRenderer?.clear()
                 coolingManagementRenderer?.clear()
             }
@@ -141,9 +142,46 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         }
     }
 
+    private fun showCoolingFanSettingsBottomSheet(
+        fan: CoolingDeviceRepository.FanChannelData,
+        rule: CoolingDeviceRepository.CoolRuleData?
+    ) {
+        val dashboardData = latestCoolingDashboardData ?: return
+
+        CoolingFanSettingsBottomSheet(
+            fragment = this,
+            visualSpec = DeviceVisualSpecs.Cooling,
+            fan = fan,
+            rule = rule,
+            sensors = dashboardData.sensors,
+            onSave = { draft ->
+                handleCoolingFanSettingsDraft(
+                    draft = draft
+                )
+            }
+        ).show()
+    }
+
+    private fun handleCoolingFanSettingsDraft(
+        draft: CoolingFanSettingsBottomSheet.CoolingFanSettingsDraft
+    ) {
+        // Sonraki adımda ESP32 /set bağlantısı burada yapılacak.
+        // Şimdilik bottom sheet doğru fanı, rule'u ve sensörleri alıyor mu diye test edeceğiz.
+
+        // draft.fanIndex
+        // draft.ruleIndex
+        // draft.fanMode
+        // draft.startCooling
+        // draft.fullPower
+        // draft.minimumPowerPercent
+        // draft.maximumPowerPercent
+        // draft.selectedSensorIndexes
+    }
+
     override fun onDestroyView() {
         temperatureChartRenderer = null
         coolingManagementRenderer = null
+        latestCoolingDashboardData = null
         _binding = null
 
         super.onDestroyView()
@@ -163,6 +201,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                         ARG_DEVICE_ID,
                         deviceId
                     )
+
                     putString(
                         ARG_DEVICE_IP,
                         deviceIp
