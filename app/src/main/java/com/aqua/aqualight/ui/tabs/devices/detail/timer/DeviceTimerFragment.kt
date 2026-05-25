@@ -3,11 +3,14 @@ package com.aqua.aqualight.ui.tabs.devices.detail.timer
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceTimerBinding
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 
@@ -27,6 +30,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     private var currentDisplayedTitle: String = ""
 
     private var isQuickActionRunning: Boolean = false
+    private var isDeviceWriteRunning: Boolean = false
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
@@ -69,8 +73,18 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         )
 
         bindStaticScreen()
+
+        renderer?.renderLoading()
+
+        binding.tvTimerOnlineStatus.text = "Connecting"
+
+        setOutletCardsEnabled(
+            enabled = false
+        )
+
         bindClicks()
-        loadTimerDashboard()
+
+        startDashboardAutoRefresh()
     }
 
     private fun bindStaticScreen() {
@@ -146,7 +160,95 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                 outletPosition = 3
             )
         }
+    }
 
+    private fun startDashboardAutoRefresh() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                refreshTimerDashboard(
+                    clearWhenFailed = true
+                )
+
+                while (true) {
+                    delay(
+                        DASHBOARD_REFRESH_INTERVAL_MS
+                    )
+
+                    refreshTimerDashboard(
+                        clearWhenFailed = false
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun refreshTimerDashboard(
+        clearWhenFailed: Boolean
+    ) {
+        if (isDeviceWriteRunning) {
+            return
+        }
+
+        if (!isDeviceReachable()) {
+            latestDashboardData = null
+
+            if (_binding == null) {
+                return
+            }
+
+            binding.tvTimerOnlineStatus.text = "Offline"
+
+            if (clearWhenFailed) {
+                renderer?.clear()
+
+                setOutletCardsEnabled(
+                    enabled = false
+                )
+            }
+
+            return
+        }
+
+        val result = runCatching {
+            repository.fetchTimerDashboardData(
+                ipAddress = deviceIp
+            )
+        }
+
+        if (_binding == null) {
+            return
+        }
+
+        result.onSuccess { data ->
+            latestDashboardData = data
+
+            binding.tvTimerOnlineStatus.text = "Online"
+
+            renderer?.render(
+                data = data
+            )
+
+            setOutletCardsEnabled(
+                enabled = true
+            )
+        }.onFailure {
+            binding.tvTimerOnlineStatus.text = "Offline"
+
+            if (
+                clearWhenFailed ||
+                latestDashboardData == null
+            ) {
+                latestDashboardData = null
+
+                renderer?.clear()
+
+                setOutletCardsEnabled(
+                    enabled = false
+                )
+            }
+        }
     }
 
     private fun showDeviceNameBottomSheet() {
@@ -205,43 +307,6 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                 showErrorSnack(
                     message = "Device name could not be saved."
                 )
-            }
-        }
-    }
-
-    private fun loadTimerDashboard() {
-        if (!isDeviceReachable()) {
-            latestDashboardData = null
-            binding.tvTimerOnlineStatus.text = "Offline"
-            renderer?.clear()
-            return
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result = runCatching {
-                repository.fetchTimerDashboardData(
-                    ipAddress = deviceIp
-                )
-            }
-
-            if (_binding == null) {
-                return@launch
-            }
-
-            result.onSuccess { data ->
-                latestDashboardData = data
-
-                binding.tvTimerOnlineStatus.text = "Online"
-
-                renderer?.render(
-                    data = data
-                )
-            }.onFailure {
-                latestDashboardData = null
-
-                binding.tvTimerOnlineStatus.text = "Offline"
-
-                renderer?.clear()
             }
         }
     }
@@ -327,6 +392,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             return
         }
 
+        isDeviceWriteRunning = true
+
         showGlobalLoading()
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -342,11 +409,14 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             }
 
             if (_binding == null) {
+                isDeviceWriteRunning = false
                 hideGlobalLoading()
                 return@launch
             }
 
             result.onSuccess { data ->
+                isDeviceWriteRunning = false
+
                 hideGlobalLoading()
 
                 latestDashboardData = data
@@ -357,8 +427,14 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                     data = data
                 )
 
+                setOutletCardsEnabled(
+                    enabled = true
+                )
+
                 sheet.closeAfterSave()
             }.onFailure {
+                isDeviceWriteRunning = false
+
                 hideGlobalLoading()
 
                 binding.tvTimerOnlineStatus.text = "Offline"
@@ -414,9 +490,12 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         }
 
         isQuickActionRunning = true
+        isDeviceWriteRunning = true
+
         setOutletCardsEnabled(
             enabled = false
         )
+
         showGlobalLoading()
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -433,15 +512,19 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             }
 
             if (_binding == null) {
+                isDeviceWriteRunning = false
                 isQuickActionRunning = false
+
                 hideGlobalLoading()
                 return@launch
             }
 
             result.onSuccess { refreshedData ->
+                isDeviceWriteRunning = false
+                isQuickActionRunning = false
+
                 hideGlobalLoading()
 
-                isQuickActionRunning = false
                 setOutletCardsEnabled(
                     enabled = true
                 )
@@ -454,9 +537,11 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                     data = refreshedData
                 )
             }.onFailure {
+                isDeviceWriteRunning = false
+                isQuickActionRunning = false
+
                 hideGlobalLoading()
 
-                isQuickActionRunning = false
                 setOutletCardsEnabled(
                     enabled = true
                 )
@@ -473,6 +558,10 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     private fun setOutletCardsEnabled(
         enabled: Boolean
     ) {
+        if (_binding == null) {
+            return
+        }
+
         binding.cardOutlet1.isEnabled = enabled
         binding.cardOutlet2.isEnabled = enabled
         binding.cardOutlet3.isEnabled = enabled
@@ -482,7 +571,6 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         binding.cardOutlet2Power.isEnabled = enabled
         binding.cardOutlet3Power.isEnabled = enabled
         binding.cardOutlet4Power.isEnabled = enabled
-
     }
 
     private fun durationToMinutes(
@@ -583,6 +671,9 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     }
 
     override fun onDestroyView() {
+        isDeviceWriteRunning = false
+        isQuickActionRunning = false
+
         hideGlobalLoading()
 
         renderer = null
@@ -599,6 +690,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         private const val ARG_CAN_EDIT_DEVICE_NAME = "canEditDeviceName"
         private const val ARG_USER_DEVICE_NAME = "userDeviceName"
         private const val ARG_DEFAULT_DEVICE_TITLE = "defaultDeviceTitle"
+
+        private const val DASHBOARD_REFRESH_INTERVAL_MS = 1000L
 
         fun newInstance(
             deviceId: Long,
