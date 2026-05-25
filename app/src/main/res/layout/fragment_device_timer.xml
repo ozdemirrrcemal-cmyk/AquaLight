@@ -103,17 +103,20 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="13dp"
+                    android:baselineAligned="false"
+                    android:gravity="top"
                     android:orientation="horizontal">
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="0.85"
+                        android:layout_weight="0.78"
                         android:orientation="vertical">
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
                             android:text="Active Outlets"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="11sp" />
@@ -122,10 +125,11 @@
                             android:id="@+id/tvActiveOutletCount"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="6dp"
+                            android:includeFontPadding="false"
                             android:text="2 / 4"
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="16sp"
+                            android:textSize="17sp"
                             android:textStyle="bold" />
 
                     </LinearLayout>
@@ -133,13 +137,14 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1.15"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1.35"
                         android:orientation="vertical">
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
                             android:text="Next Event"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="11sp" />
@@ -148,12 +153,15 @@
                             android:id="@+id/tvNextTimerEvent"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
+                            android:layout_marginTop="6dp"
                             android:ellipsize="end"
-                            android:maxLines="1"
-                            android:text="18:30 · Outlet 1"
+                            android:includeFontPadding="false"
+                            android:lineSpacingExtra="2dp"
+                            android:maxLines="2"
+                            android:text="Tomorrow 09:00&#10;CO2"
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="12sp" />
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
 
                     </LinearLayout>
 
@@ -591,52 +599,52 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-       <com.google.android.material.card.MaterialCardView
-    android:id="@+id/cardUpcomingTimer"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="16dp"
-    app:cardBackgroundColor="#111A35"
-    app:cardCornerRadius="22dp"
-    app:cardElevation="0dp"
-    app:strokeColor="#352E6A"
-    app:strokeWidth="1dp">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="14dp">
-
-        <TextView
-            android:id="@+id/tvUpcomingTimerTitle"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardUpcomingTimer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Upcoming Timers"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#111A35"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#352E6A"
+            app:strokeWidth="1dp">
 
-        <LinearLayout
-            android:id="@+id/upcomingTimersContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:orientation="vertical" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
 
-        <TextView
-            android:id="@+id/tvUpcomingTimer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="No scheduled timer."
-            android:textColor="@color/settings_text_secondary"
-            android:textSize="12sp"
-            android:visibility="gone" />
+                <TextView
+                    android:id="@+id/tvUpcomingTimerTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Upcoming Timers"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-    </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/upcomingTimersContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:orientation="vertical" />
 
-</com.google.android.material.card.MaterialCardView>
+                <TextView
+                    android:id="@+id/tvUpcomingTimer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="No scheduled timer."
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 
