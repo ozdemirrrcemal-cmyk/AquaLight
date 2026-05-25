@@ -1,138 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/sheetRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/transparent"
-    android:clipToPadding="false">
+    android:background="@drawable/bg_bottomsheet_rounded"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="18dp">
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/sheetCard"
+    <View
+        android:id="@+id/dragHandle"
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_bottomsheet_handle" />
+
+    <TextView
+        android:id="@+id/tvSheetTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#0B1727"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="0dp"
-        app:strokeColor="#263A56"
-        app:strokeWidth="1dp">
+        android:ellipsize="end"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="2"
+        android:text="Device Name"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
-        <LinearLayout
-            android:id="@+id/sheetContent"
+    <TextView
+        android:id="@+id/tvSheetSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="This name is used only in the app."
+        android:textColor="#AFC1D6"
+        android:textSize="13sp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/inputDeviceNameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:hint="Device name"
+        app:boxBackgroundColor="#101F33"
+        app:boxBackgroundMode="outline"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxStrokeColor="#5F55C8"
+        app:boxStrokeWidth="1dp"
+        app:endIconMode="clear_text"
+        app:hintTextColor="#AFC1D6">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDeviceName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="22dp"
-            android:paddingTop="12dp"
-            android:paddingEnd="22dp"
-            android:paddingBottom="22dp">
+            android:imeOptions="actionDone"
+            android:inputType="textCapWords"
+            android:maxLength="32"
+            android:singleLine="true"
+            android:textColor="@android:color/white"
+            android:textColorHint="#AFC1D6"
+            android:textSize="15sp" />
 
-            <View
-                android:id="@+id/dragHandle"
-                android:layout_width="54dp"
-                android:layout_height="5dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="20dp"
-                android:background="@drawable/bg_bottomsheet_handle" />
+    </com.google.android.material.textfield.TextInputLayout>
 
-            <TextView
-                android:id="@+id/tvSheetTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Device Name"
-                android:textColor="#E8EEF7"
-                android:textSize="22sp"
-                android:textStyle="bold" />
+    <TextView
+        android:id="@+id/tvSheetError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:includeFontPadding="false"
+        android:textColor="#F18B9B"
+        android:textSize="13sp"
+        android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tvSheetSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="This name is used only in the app."
-                android:textColor="#9FAABB"
-                android:textSize="13sp" />
+    <LinearLayout
+        android:id="@+id/buttonsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="18dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/inputDeviceNameLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:hint="Device name"
-                app:boxBackgroundColor="#101F33"
-                app:boxBackgroundMode="outline"
-                app:boxCornerRadiusBottomEnd="18dp"
-                app:boxCornerRadiusBottomStart="18dp"
-                app:boxCornerRadiusTopEnd="18dp"
-                app:boxCornerRadiusTopStart="18dp"
-                app:boxStrokeColor="#5F55C8"
-                app:boxStrokeWidth="1dp"
-                app:endIconMode="clear_text"
-                app:hintTextColor="#9FAABB">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:textAllCaps="false"
+            android:textColor="#D5DEEA"
+            android:textSize="15sp"
+            app:backgroundTint="#15263A"
+            app:cornerRadius="18dp"
+            app:strokeColor="#2A3E59"
+            app:strokeWidth="1dp" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etDeviceName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:imeOptions="actionDone"
-                    android:inputType="textCapWords"
-                    android:maxLength="32"
-                    android:singleLine="true"
-                    android:textColor="#E8EEF7"
-                    android:textColorHint="#92A1B4"
-                    android:textSize="16sp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSave"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="Save"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="15sp"
+            app:backgroundTint="#6E63E8"
+            app:cornerRadius="18dp" />
 
-            </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvSheetError"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:textColor="#F18B9B"
-                android:textSize="13sp"
-                android:visibility="gone" />
-
-            <LinearLayout
-                android:id="@+id/buttonsContainer"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="22dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCancel"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:text="Cancel"
-                    android:textAllCaps="false"
-                    android:textColor="#D5DEEA"
-                    android:textSize="15sp"
-                    app:backgroundTint="#15263A"
-                    app:cornerRadius="18dp"
-                    app:strokeColor="#2A3E59"
-                    app:strokeWidth="1dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSave"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:text="Save"
-                    android:textAllCaps="false"
-                    android:textColor="@android:color/white"
-                    android:textSize="15sp"
-                    app:backgroundTint="#6E63E8"
-                    app:cornerRadius="18dp" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-</FrameLayout>
+</LinearLayout>
