@@ -13,6 +13,8 @@ import com.aqua.aqualight.databinding.FragmentDeviceTimerBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
+import com.aqua.aqualight.ui.tabs.devices.detail.initial.DeviceControllerInitialData
+import com.aqua.aqualight.ui.tabs.devices.detail.initial.DeviceControllerInitialDataStore
 
 class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
@@ -33,25 +35,25 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     private var isDeviceWriteRunning: Boolean = false
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+    get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceIp: String
-        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     private val deviceTitle: String
-        get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
 
     private val canEditDeviceName: Boolean
-        get() = requireArguments().getBoolean(
-            ARG_CAN_EDIT_DEVICE_NAME,
-            false
-        )
+    get() = requireArguments().getBoolean(
+        ARG_CAN_EDIT_DEVICE_NAME,
+        false
+    )
 
     private val userDeviceName: String
-        get() = requireArguments().getString(ARG_USER_DEVICE_NAME).orEmpty()
+    get() = requireArguments().getString(ARG_USER_DEVICE_NAME).orEmpty()
 
     private val defaultDeviceTitle: String
-        get() = requireArguments().getString(ARG_DEFAULT_DEVICE_TITLE).orEmpty()
+    get() = requireArguments().getString(ARG_DEFAULT_DEVICE_TITLE).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -74,17 +76,50 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
         bindStaticScreen()
 
-        renderer?.clear()
+        val hasInitialData = renderInitialDataIfAvailable()
 
-        binding.tvTimerOnlineStatus.text = "Connecting"
+        if (!hasInitialData) {
+            renderer?.clear()
 
-        setOutletCardsEnabled(
-            enabled = false
-        )
+            binding.tvTimerOnlineStatus.text = "Connecting"
+
+            setOutletCardsEnabled(
+                enabled = false
+            )
+        }
 
         bindClicks()
 
-        startDashboardAutoRefresh()
+        startDashboardAutoRefresh(
+            initialDelayMs = if (hasInitialData) {
+                DASHBOARD_REFRESH_INTERVAL_MS
+            } else {
+                0L
+            }
+        )
+    }
+
+    private fun renderInitialDataIfAvailable(): Boolean {
+        val initialData = DeviceControllerInitialDataStore.consume(
+            deviceId = deviceId
+        )
+
+        val timerData = initialData as? DeviceControllerInitialData.TimerDashboard
+        ?: return false
+
+        latestDashboardData = timerData.dashboardData
+
+        binding.tvTimerOnlineStatus.text = "Online"
+
+        renderer?.render(
+            data = timerData.dashboardData
+        )
+
+        setOutletCardsEnabled(
+            enabled = true
+        )
+
+        return true
     }
 
     private fun bindStaticScreen() {
@@ -100,10 +135,10 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         binding.tvTimerSubtitle.text = "4 channel smart timer"
 
         binding.cardTimerDeviceSummary.isClickable =
-            canEditDeviceName
+        canEditDeviceName
 
         binding.cardTimerDeviceSummary.isFocusable =
-            canEditDeviceName
+        canEditDeviceName
     }
 
     private fun bindClicks() {
@@ -162,13 +197,21 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         }
     }
 
-    private fun startDashboardAutoRefresh() {
+    private fun startDashboardAutoRefresh(
+        initialDelayMs: Long = 0L
+    ) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
+                if (initialDelayMs > 0L) {
+                    delay(
+                        initialDelayMs
+                    )
+                }
+
                 refreshTimerDashboard(
-                    clearWhenFailed = true
+                    clearWhenFailed = latestDashboardData == null
                 )
 
                 while (true) {
@@ -221,7 +264,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             return
         }
 
-        result.onSuccess { data ->
+        result.onSuccess {
+            data ->
             latestDashboardData = data
 
             binding.tvTimerOnlineStatus.text = "Online"
@@ -260,7 +304,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             fallbackName = defaultDeviceTitle.ifBlank {
                 "Timer Controller"
             },
-            onSave = { newName, sheet ->
+            onSave = {
+                newName, sheet ->
                 saveDeviceName(
                     newName = newName,
                     sheet = sheet
@@ -365,7 +410,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         TimerOutletSettingsBottomSheet(
             fragment = this,
             initialState = state,
-            onSave = { updatedState, sheet ->
+            onSave = {
+                updatedState, sheet ->
                 saveOutletSettings(
                     state = updatedState,
                     sheet = sheet
@@ -414,7 +460,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                 return@launch
             }
 
-            result.onSuccess { data ->
+            result.onSuccess {
+                data ->
                 isDeviceWriteRunning = false
 
                 hideGlobalLoading()
@@ -519,7 +566,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                 return@launch
             }
 
-            result.onSuccess { refreshedData ->
+            result.onSuccess {
+                refreshedData ->
                 isDeviceWriteRunning = false
                 isQuickActionRunning = false
 
@@ -581,10 +629,11 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         }
 
         val parts = value.trim()
-            .split(":")
-            .mapNotNull { part ->
-                part.toIntOrNull()
-            }
+        .split(":")
+        .mapNotNull {
+            part ->
+            part.toIntOrNull()
+        }
 
         if (parts.isEmpty()) {
             return 0
@@ -593,16 +642,14 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         val totalSeconds = when (parts.size) {
             3 -> {
                 parts[0] * 3600 +
-                    parts[1] * 60 +
-                    parts[2]
+                parts[1] * 60 +
+                parts[2]
             }
 
             2 -> {
                 parts[0] * 60 +
-                    parts[1]
-            }
-
-            else -> {
+                parts[1]
+            } else -> {
                 parts[0]
             }
         }
@@ -620,9 +667,9 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         source: List<Boolean>?
     ): List<Boolean> {
         val days = source
-            ?.take(7)
-            ?.toMutableList()
-            ?: mutableListOf()
+        ?.take(7)
+        ?.toMutableList()
+        ?: mutableListOf()
 
         while (days.size < 7) {
             days.add(
@@ -630,9 +677,10 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             )
         }
 
-        if (days.none { enabled ->
-                enabled
-            }
+        if (days.none {
+            enabled ->
+            enabled
+        }
         ) {
             return List(
                 size = 7
@@ -646,7 +694,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
     private fun isDeviceReachable(): Boolean {
         return deviceIp.isNotBlank() &&
-            deviceIp != "0.0.0.0"
+        deviceIp != "0.0.0.0"
     }
 
     private fun showGlobalLoading() {
