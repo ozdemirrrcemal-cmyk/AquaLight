@@ -286,6 +286,191 @@ class TimerDeviceRepository {
             connection.disconnect()
         }
     }
+    
+    suspend fun updateOutletSettings(
+    ipAddress: String,
+    state: TimerOutletEditorState
+) = withContext(Dispatchers.IO) {
+    val updateJson = JSONObject().apply {
+        put(
+            "LPWMChanelTimer",
+            JSONObject().apply {
+                put(
+                    "Data",
+                    JSONObject().apply {
+                        put(
+                            state.outletIndex.toString(),
+                            JSONObject().apply {
+                                put("Name", state.outletName)
+                                put("Regime", state.regime.displayName)
+                            }
+                        )
+                    }
+                )
+            }
+        )
+
+        put(
+            "LTimer",
+            JSONObject().apply {
+                put(
+                    "Data",
+                    JSONObject().apply {
+                        put(
+                            state.timerRuleIndex.toString(),
+                            JSONObject().apply {
+                                put("Enabled", state.timerEnabled)
+                                put("Name", state.outletName)
+                                put("GPIO_PWM", state.gpioPwm)
+                                put("YE", -1)
+                                put("WDay", JSONArray().apply {
+                                    state.weekDays.take(7).forEach { enabled ->
+                                        put(enabled)
+                                    }
+                                })
+                                put("TimeStart", state.startTime)
+                                put(
+                                    "IntervalOn",
+                                    formatDurationMinutes(
+                                        minutes = state.runDurationMinutes
+                                    )
+                                )
+                                put(
+                                    "IntervalOff",
+                                    formatDurationMinutes(
+                                        minutes = state.offDurationMinutes
+                                    )
+                                )
+                                put("Count", state.repeatCount)
+                            }
+                        )
+                    }
+                )
+            }
+        )
+    }
+
+    postSetJson(
+        ipAddress = ipAddress,
+        json = updateJson
+    )
+
+    saveTimerConfig(
+        ipAddress = ipAddress
+    )
+}
+
+suspend fun updateOutletRegime(
+    ipAddress: String,
+    outletIndex: Int,
+    regime: OutletRegime
+) = withContext(Dispatchers.IO) {
+    val updateJson = JSONObject().apply {
+        put(
+            "LPWMChanelTimer",
+            JSONObject().apply {
+                put(
+                    "Data",
+                    JSONObject().apply {
+                        put(
+                            outletIndex.toString(),
+                            JSONObject().apply {
+                                put("Regime", regime.displayName)
+                            }
+                        )
+                    }
+                )
+            }
+        )
+    }
+
+    postSetJson(
+        ipAddress = ipAddress,
+        json = updateJson
+    )
+
+    saveTimerConfig(
+        ipAddress = ipAddress
+    )
+}
+
+private fun saveTimerConfig(
+    ipAddress: String
+) {
+    val saveJson = JSONObject().apply {
+        put(
+            "Main",
+            JSONObject().apply {
+                put("SaveTimer", 0)
+            }
+        )
+    }
+
+    postSetJson(
+        ipAddress = ipAddress,
+        json = saveJson
+    )
+}
+
+private fun postSetJson(
+    ipAddress: String,
+    json: JSONObject
+) {
+    val encodedJson = URLEncoder.encode(
+        json.toString(),
+        StandardCharsets.UTF_8.name()
+    )
+
+    val body = "Json=$encodedJson&sRet=${System.currentTimeMillis()}"
+
+    val url = URL(
+        "http://$ipAddress/set?"
+    )
+
+    val connection = url.openConnection() as HttpURLConnection
+    connection.requestMethod = "POST"
+    connection.connectTimeout = 5000
+    connection.readTimeout = 5000
+    connection.doOutput = true
+
+    try {
+        connection.outputStream.use { output ->
+            output.write(
+                body.toByteArray(
+                    StandardCharsets.UTF_8
+                )
+            )
+        }
+
+        val code = connection.responseCode
+
+        if (code !in 200..299) {
+            throw IllegalStateException(
+                "Device returned HTTP $code"
+            )
+        }
+
+        connection.inputStream.use { stream ->
+            BufferedReader(
+                InputStreamReader(stream)
+            ).readText()
+        }
+    } finally {
+        connection.disconnect()
+    }
+}
+
+private fun formatDurationMinutes(
+    minutes: Int
+): String {
+    val safeMinutes = minutes.coerceAtLeast(
+        0
+    )
+
+    return "%02d:00".format(
+        safeMinutes
+    )
+}
 
     private fun parseTimerDashboardResponse(
         response: String

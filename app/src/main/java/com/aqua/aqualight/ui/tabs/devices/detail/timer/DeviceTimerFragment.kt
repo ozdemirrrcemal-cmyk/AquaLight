@@ -5,9 +5,11 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceTimerBinding
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 
 class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
@@ -19,9 +21,12 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     private lateinit var devicesStore: DevicesDataStoreManager
 
     private var renderer: TimerDashboardRenderer? = null
+    private var latestDashboardData: TimerDeviceRepository.TimerDashboardData? = null
 
     private var currentUserDeviceName: String = ""
     private var currentDisplayedTitle: String = ""
+
+    private var isQuickActionRunning: Boolean = false
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
@@ -95,35 +100,57 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         }
 
         binding.cardOutlet1.setOnClickListener {
-            // Sonraki adım: Outlet 1 ayar bottom sheet.
+            showOutletSettings(
+                outletPosition = 0
+            )
         }
 
         binding.cardOutlet2.setOnClickListener {
-            // Sonraki adım: Outlet 2 ayar bottom sheet.
+            showOutletSettings(
+                outletPosition = 1
+            )
         }
 
         binding.cardOutlet3.setOnClickListener {
-            // Sonraki adım: Outlet 3 ayar bottom sheet.
+            showOutletSettings(
+                outletPosition = 2
+            )
         }
 
         binding.cardOutlet4.setOnClickListener {
-            // Sonraki adım: Outlet 4 ayar bottom sheet.
+            showOutletSettings(
+                outletPosition = 3
+            )
         }
 
         binding.cardOutlet1Power.setOnClickListener {
-            // Sonraki adım: Outlet 1 hızlı ON/OFF.
+            quickToggleOutlet(
+                outletPosition = 0
+            )
         }
 
         binding.cardOutlet2Power.setOnClickListener {
-            // Sonraki adım: Outlet 2 hızlı ON/OFF.
+            quickToggleOutlet(
+                outletPosition = 1
+            )
         }
 
         binding.cardOutlet3Power.setOnClickListener {
-            // Sonraki adım: Outlet 3 hızlı ON/OFF.
+            quickToggleOutlet(
+                outletPosition = 2
+            )
         }
 
         binding.cardOutlet4Power.setOnClickListener {
-            // Sonraki adım: Outlet 4 hızlı ON/OFF.
+            quickToggleOutlet(
+                outletPosition = 3
+            )
+        }
+
+        binding.tvOutletPanelHint.setOnClickListener {
+            showOutletSettings(
+                outletPosition = 0
+            )
         }
     }
 
@@ -136,8 +163,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             fallbackName = defaultDeviceTitle.ifBlank {
                 "Timer Controller"
             },
-            onSave = {
-                newName, sheet ->
+            onSave = { newName, sheet ->
                 saveDeviceName(
                     newName = newName,
                     sheet = sheet
@@ -150,6 +176,8 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         newName: String,
         sheet: TimerDeviceNameBottomSheet
     ) {
+        showGlobalLoading()
+
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 devicesStore.updateDevice(
@@ -159,10 +187,13 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             }
 
             if (_binding == null) {
+                hideGlobalLoading()
                 return@launch
             }
 
             result.onSuccess {
+                hideGlobalLoading()
+
                 currentUserDeviceName = newName
                 currentDisplayedTitle = newName
 
@@ -170,7 +201,13 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
                 sheet.closeAfterSave()
             }.onFailure {
+                hideGlobalLoading()
+
                 sheet.showSaveError(
+                    message = "Device name could not be saved."
+                )
+
+                showErrorSnack(
                     message = "Device name could not be saved."
                 )
             }
@@ -178,10 +215,10 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
     }
 
     private fun loadTimerDashboard() {
-        if (
-            deviceIp.isBlank() ||
-            deviceIp == "0.0.0.0"
-        ) {
+        if (!isDeviceReachable()) {
+            latestDashboardData = null
+            binding.tvTimerOnlineStatus.text = "Offline"
+            renderer?.clear()
             return
         }
 
@@ -197,12 +234,16 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             }
 
             result.onSuccess { data ->
+                latestDashboardData = data
+
                 binding.tvTimerOnlineStatus.text = "Online"
 
                 renderer?.render(
                     data = data
                 )
             }.onFailure {
+                latestDashboardData = null
+
                 binding.tvTimerOnlineStatus.text = "Offline"
 
                 renderer?.clear()
@@ -210,8 +251,348 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         }
     }
 
+    private fun showOutletSettings(
+        outletPosition: Int
+    ) {
+        val data = latestDashboardData ?: run {
+            showErrorSnack(
+                message = "Timer data is not available."
+            )
+            return
+        }
+
+        val outlet = data.outlets.getOrNull(
+            outletPosition
+        ) ?: run {
+            showErrorSnack(
+                message = "Outlet data is not available."
+            )
+            return
+        }
+
+        val rule = data.ruleForOutlet(
+            outlet = outlet
+        )
+
+        val state = TimerOutletEditorState(
+            outletIndex = outlet.index,
+            timerRuleIndex = rule?.index ?: outlet.index,
+            gpioPwm = outlet.gpioPwm,
+            outletName = outlet.name,
+            regime = outlet.regime,
+            timerEnabled = rule?.enabled ?: false,
+            startTime = rule?.timeStart?.ifBlank {
+                "00:00"
+            } ?: "00:00",
+            runDurationMinutes = durationToMinutes(
+                value = rule?.intervalOn
+            ).coerceAtLeast(
+                1
+            ),
+            offDurationMinutes = durationToMinutes(
+                value = rule?.intervalOff
+            ).coerceAtLeast(
+                0
+            ),
+            repeatCount = rule?.count?.coerceAtLeast(
+                1
+            ) ?: 1,
+            weekDays = normalizeWeekDays(
+                source = rule?.weekDays
+            )
+        )
+
+        TimerOutletSettingsBottomSheet(
+            fragment = this,
+            initialState = state,
+            onSave = { updatedState, sheet ->
+                saveOutletSettings(
+                    state = updatedState,
+                    sheet = sheet
+                )
+            }
+        ).show()
+    }
+
+    private fun saveOutletSettings(
+        state: TimerOutletEditorState,
+        sheet: TimerOutletSettingsBottomSheet
+    ) {
+        if (!isDeviceReachable()) {
+            sheet.showSaveError(
+                message = "Device is not reachable."
+            )
+
+            binding.tvTimerOnlineStatus.text = "Offline"
+
+            showErrorSnack(
+                message = "Device is not reachable."
+            )
+
+            return
+        }
+
+        showGlobalLoading()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = runCatching {
+                repository.updateOutletSettings(
+                    ipAddress = deviceIp,
+                    state = state
+                )
+
+                repository.fetchTimerDashboardData(
+                    ipAddress = deviceIp
+                )
+            }
+
+            if (_binding == null) {
+                hideGlobalLoading()
+                return@launch
+            }
+
+            result.onSuccess { data ->
+                hideGlobalLoading()
+
+                latestDashboardData = data
+
+                binding.tvTimerOnlineStatus.text = "Online"
+
+                renderer?.render(
+                    data = data
+                )
+
+                sheet.closeAfterSave()
+            }.onFailure {
+                hideGlobalLoading()
+
+                binding.tvTimerOnlineStatus.text = "Offline"
+
+                sheet.showSaveError(
+                    message = "Outlet settings could not be saved."
+                )
+
+                showErrorSnack(
+                    message = "Outlet settings could not be saved."
+                )
+            }
+        }
+    }
+
+    private fun quickToggleOutlet(
+        outletPosition: Int
+    ) {
+        if (isQuickActionRunning) {
+            return
+        }
+
+        val data = latestDashboardData ?: run {
+            showErrorSnack(
+                message = "Timer data is not available."
+            )
+            return
+        }
+
+        val outlet = data.outlets.getOrNull(
+            outletPosition
+        ) ?: run {
+            showErrorSnack(
+                message = "Outlet data is not available."
+            )
+            return
+        }
+
+        if (!isDeviceReachable()) {
+            binding.tvTimerOnlineStatus.text = "Offline"
+
+            showErrorSnack(
+                message = "Device is not reachable."
+            )
+
+            return
+        }
+
+        val nextRegime = if (outlet.isCurrentlyOn()) {
+            TimerDeviceRepository.OutletRegime.OFF
+        } else {
+            TimerDeviceRepository.OutletRegime.ON
+        }
+
+        isQuickActionRunning = true
+        setOutletCardsEnabled(
+            enabled = false
+        )
+        showGlobalLoading()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = runCatching {
+                repository.updateOutletRegime(
+                    ipAddress = deviceIp,
+                    outletIndex = outlet.index,
+                    regime = nextRegime
+                )
+
+                repository.fetchTimerDashboardData(
+                    ipAddress = deviceIp
+                )
+            }
+
+            if (_binding == null) {
+                isQuickActionRunning = false
+                hideGlobalLoading()
+                return@launch
+            }
+
+            result.onSuccess { refreshedData ->
+                hideGlobalLoading()
+
+                isQuickActionRunning = false
+                setOutletCardsEnabled(
+                    enabled = true
+                )
+
+                latestDashboardData = refreshedData
+
+                binding.tvTimerOnlineStatus.text = "Online"
+
+                renderer?.render(
+                    data = refreshedData
+                )
+            }.onFailure {
+                hideGlobalLoading()
+
+                isQuickActionRunning = false
+                setOutletCardsEnabled(
+                    enabled = true
+                )
+
+                binding.tvTimerOnlineStatus.text = "Offline"
+
+                showErrorSnack(
+                    message = "Outlet command could not be sent."
+                )
+            }
+        }
+    }
+
+    private fun setOutletCardsEnabled(
+        enabled: Boolean
+    ) {
+        binding.cardOutlet1.isEnabled = enabled
+        binding.cardOutlet2.isEnabled = enabled
+        binding.cardOutlet3.isEnabled = enabled
+        binding.cardOutlet4.isEnabled = enabled
+
+        binding.cardOutlet1Power.isEnabled = enabled
+        binding.cardOutlet2Power.isEnabled = enabled
+        binding.cardOutlet3Power.isEnabled = enabled
+        binding.cardOutlet4Power.isEnabled = enabled
+
+        binding.tvOutletPanelHint.isEnabled = enabled
+    }
+
+    private fun durationToMinutes(
+        value: String?
+    ): Int {
+        if (value.isNullOrBlank()) {
+            return 0
+        }
+
+        val parts = value.trim()
+            .split(":")
+            .mapNotNull { part ->
+                part.toIntOrNull()
+            }
+
+        if (parts.isEmpty()) {
+            return 0
+        }
+
+        val totalSeconds = when (parts.size) {
+            3 -> {
+                parts[0] * 3600 +
+                    parts[1] * 60 +
+                    parts[2]
+            }
+
+            2 -> {
+                parts[0] * 60 +
+                    parts[1]
+            }
+
+            else -> {
+                parts[0]
+            }
+        }
+
+        if (totalSeconds <= 0) {
+            return 0
+        }
+
+        return ceil(
+            totalSeconds / 60.0
+        ).toInt()
+    }
+
+    private fun normalizeWeekDays(
+        source: List<Boolean>?
+    ): List<Boolean> {
+        val days = source
+            ?.take(7)
+            ?.toMutableList()
+            ?: mutableListOf()
+
+        while (days.size < 7) {
+            days.add(
+                true
+            )
+        }
+
+        if (days.none { enabled ->
+                enabled
+            }
+        ) {
+            return List(
+                size = 7
+            ) {
+                true
+            }
+        }
+
+        return days
+    }
+
+    private fun isDeviceReachable(): Boolean {
+        return deviceIp.isNotBlank() &&
+            deviceIp != "0.0.0.0"
+    }
+
+    private fun showGlobalLoading() {
+        (activity as? BaseActivity)?.showLoading(
+            show = true
+        )
+    }
+
+    private fun hideGlobalLoading() {
+        (activity as? BaseActivity)?.showLoading(
+            show = false
+        )
+    }
+
+    private fun showErrorSnack(
+        message: String
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = BaseActivity.SnackType.ERROR
+        )
+    }
+
     override fun onDestroyView() {
+        hideGlobalLoading()
+
         renderer = null
+        latestDashboardData = null
         _binding = null
 
         super.onDestroyView()
