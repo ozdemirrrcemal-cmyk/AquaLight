@@ -4,9 +4,10 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.View
-import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -47,15 +48,13 @@ class CoolingManagementRenderer(
                 rule = rule
             )
 
-            val card = createFanCard(
-                index = index,
-                fan = fan,
-                rule = rule,
-                usedSensors = usedSensors
-            )
-
             container.addView(
-                card
+                createFanCard(
+                    index = index,
+                    fan = fan,
+                    rule = rule,
+                    usedSensors = usedSensors
+                )
             )
         }
     }
@@ -92,7 +91,7 @@ class CoolingManagementRenderer(
                 Color.parseColor("#101F33")
             )
 
-            strokeColor = visualSpec.cardStrokeColor
+            strokeColor = Color.parseColor("#10243A")
             strokeWidth = 1.dp(context)
 
             radius = 18.dp(context).toFloat()
@@ -100,7 +99,9 @@ class CoolingManagementRenderer(
 
             isClickable = true
             isFocusable = true
-            foreground = selectableForeground(context)
+            foreground = selectableForeground(
+                context = context
+            )
 
             setOnClickListener {
                 onFanCardClick(
@@ -120,17 +121,10 @@ class CoolingManagementRenderer(
             )
         }
 
-        val title = TextView(context).apply {
-            text = "${fan.name} Cooling"
-            setTextColor(
-                Color.parseColor("#E6EDF7")
-            )
-            textSize = 16f
-            typeface = Typeface.DEFAULT_BOLD
-        }
-
         content.addView(
-            title
+            createCardHeader(
+                fanName = fan.name
+            )
         )
 
         content.addView(
@@ -190,7 +184,7 @@ class CoolingManagementRenderer(
         )
 
         content.addView(
-            createBlock(
+            createRow(
                 label = "Sensors",
                 value = if (usedSensors.isEmpty()) {
                     "No sensor selected"
@@ -200,7 +194,8 @@ class CoolingManagementRenderer(
                     ) { sensor ->
                         sensor.name
                     }
-                }
+                },
+                allowMultiLine = true
             )
         )
 
@@ -211,17 +206,77 @@ class CoolingManagementRenderer(
         return card
     }
 
+    private fun createCardHeader(
+    fanName: String
+): View {
+    val context = container.context
+
+    return LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = android.view.Gravity.CENTER_VERTICAL
+        setPadding(
+            0,
+            0,
+            0,
+            10.dp(context)
+        )
+
+        val titleView = TextView(context).apply {
+            text = "Cooling"
+            setTextColor(
+                Color.parseColor("#E6EDF7")
+            )
+            textSize = 16f
+            typeface = Typeface.DEFAULT_BOLD
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
+
+        val fanNameView = TextView(context).apply {
+            text = fanName
+            setTextColor(
+                visualSpec.accentColor
+            )
+            textSize = 15f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = android.view.Gravity.END
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
+
+        addView(
+            titleView,
+            LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        )
+
+        addView(
+            fanNameView,
+            LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        )
+    }
+}
+
     private fun createRow(
         label: String,
-        value: String
+        value: String,
+        allowMultiLine: Boolean = false
     ): View {
         val context = container.context
 
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(
                 0,
-                7.dp(context),
+                8.dp(context),
                 0,
                 0
             )
@@ -232,6 +287,8 @@ class CoolingManagementRenderer(
                     Color.parseColor("#9FAABB")
                 )
                 textSize = 14f
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
             }
 
             val valueView = TextView(context).apply {
@@ -241,6 +298,15 @@ class CoolingManagementRenderer(
                 )
                 textSize = 14f
                 typeface = Typeface.DEFAULT_BOLD
+                gravity = android.view.Gravity.END
+
+                if (allowMultiLine) {
+                    maxLines = 2
+                } else {
+                    maxLines = 1
+                }
+
+                ellipsize = TextUtils.TruncateAt.END
             }
 
             addView(
@@ -255,64 +321,9 @@ class CoolingManagementRenderer(
             addView(
                 valueView,
                 LinearLayout.LayoutParams(
+                    0,
                     LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            )
-        }
-    }
-
-    private fun createBlock(
-        label: String,
-        value: String
-    ): View {
-        val context = container.context
-
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(
-                0,
-                10.dp(context),
-                0,
-                0
-            )
-
-            val labelView = TextView(context).apply {
-                text = label
-                setTextColor(
-                    Color.parseColor("#9FAABB")
-                )
-                textSize = 14f
-            }
-
-            val valueView = TextView(context).apply {
-                text = value
-                setTextColor(
-                    Color.parseColor("#E6EDF7")
-                )
-                textSize = 14f
-                typeface = Typeface.DEFAULT_BOLD
-                setPadding(
-                    0,
-                    4.dp(context),
-                    0,
-                    0
-                )
-            }
-
-            addView(
-                labelView,
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            )
-
-            addView(
-                valueView,
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+                    1f
                 )
             )
         }
@@ -423,6 +434,30 @@ class CoolingManagementRenderer(
             "%.1f °C",
             value
         )
+    }
+
+    private fun roundedStrokeDrawable(
+        fillColor: Int,
+        strokeColor: Int,
+        radiusDp: Int,
+        context: Context
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+
+            setColor(
+                fillColor
+            )
+
+            setStroke(
+                1.dp(context),
+                strokeColor
+            )
+
+            cornerRadius = radiusDp.dp(
+                context = context
+            ).toFloat()
+        }
     }
 
     private fun selectableForeground(

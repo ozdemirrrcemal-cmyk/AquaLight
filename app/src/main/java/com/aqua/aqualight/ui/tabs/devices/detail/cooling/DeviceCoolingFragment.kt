@@ -212,7 +212,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         _binding?.btnRefreshTemperature?.isEnabled = false
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val result = runCatching {
+            val saveResult = runCatching {
                 repository.saveCoolingFanSettings(
                     ipAddress = deviceIp,
                     currentData = dashboardData,
@@ -238,22 +238,55 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
                 return@launch
             }
 
-            result.onSuccess {
-                sheet.closeAfterSave()
-
-                showShortMessage(
-                    message = "Cooling settings saved."
-                )
-
-                loadCoolingDashboard()
-            }.onFailure {
+            saveResult.onFailure {
                 error ->
                 sheet.showSaveError(
                     message = "Cooling settings could not be saved: ${error.message}"
                 )
 
                 _binding?.btnRefreshTemperature?.isEnabled = true
+
+                isSavingCoolingSettings = false
+
+                showGlobalLoading(
+                    show = false
+                )
+
+                return@launch
             }
+
+            sheet.closeAfterSave()
+
+            val refreshResult = runCatching {
+                repository.fetchCoolingDashboardData(
+                    ipAddress = deviceIp
+                )
+            }
+
+            if (_binding == null) {
+                isSavingCoolingSettings = false
+
+                showGlobalLoading(
+                    show = false
+                )
+
+                return@launch
+            }
+
+            refreshResult.onSuccess {
+                data ->
+                latestCoolingDashboardData = data
+
+                temperatureChartRenderer?.render(
+                    sensors = data.sensors
+                )
+
+                coolingManagementRenderer?.render(
+                    data = data
+                )
+            }
+
+            _binding?.btnRefreshTemperature?.isEnabled = true
 
             isSavingCoolingSettings = false
 
