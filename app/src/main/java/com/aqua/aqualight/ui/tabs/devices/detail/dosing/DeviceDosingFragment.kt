@@ -113,36 +113,45 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     }
 
     private fun bindEmptyChannelCard(
-        cardBinding: ItemDosingChannelCardBinding,
-        channelName: String
-    ) {
-        cardBinding.tvChannelName.text =
-            channelName
+    cardBinding: ItemDosingChannelCardBinding,
+    channelName: String
+) {
+    cardBinding.tvChannelName.text =
+        channelName
 
-        cardBinding.tvChannelDose.text =
-            "0.0 ml"
+    cardBinding.tvChannelState.text =
+        "Not set"
 
-        cardBinding.tvChannelSchedule.text =
-            "Every day"
+    cardBinding.tvChannelHint.text =
+        "Tap to set dose, schedule and reservoir"
 
-        cardBinding.tvChannelStatus.text =
-            "Not set up"
+    cardBinding.tvChannelDose.text =
+        "0.0 ml"
 
-        cardBinding.tvChannelProgressValue.text =
-            "0.00 ml"
+    cardBinding.tvChannelSchedule.text =
+        "Every day"
 
-        cardBinding.progressChannelDose.progress =
-            0
+    cardBinding.tvChannelStatus.text =
+        "Not set up"
 
-        cardBinding.ivChannelReservoirIcon.visibility =
-            View.GONE
+    cardBinding.tvChannelReservoir.text =
+        "0 ml · 0d"
 
-        cardBinding.tvChannelReservoir.visibility =
-            View.GONE
+    cardBinding.tvChannelProgressValue.text =
+        "0.00 / 0.00 ml"
 
-        cardBinding.btnChannelQuickDose.visibility =
-            View.GONE
-    }
+    cardBinding.progressChannelDose.progress =
+        0
+
+    cardBinding.channelMetricsContainer.visibility =
+        View.GONE
+
+    cardBinding.channelProgressSection.visibility =
+        View.GONE
+
+    cardBinding.btnChannelQuickDose.visibility =
+        View.GONE
+}
 
     private fun bindClicks() {
         binding.hotspotPump1.setOnClickListener {
