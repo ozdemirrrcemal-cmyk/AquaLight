@@ -7,46 +7,49 @@
     android:background="@color/background_color"
     android:orientation="vertical">
 
-    <!-- TOP BAR -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/channelSettingsTopBar"
-        android:layout_width="match_parent"
-        android:layout_height="76dp"
-        android:background="@color/background_color"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+   <!-- TOP BAR -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/channelSettingsTopBar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/background_color"
+    android:elevation="8dp"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="12dp">
 
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/back"
-            android:padding="10dp"
-            android:src="@drawable/ic_back"
-            app:tint="?attr/colorOnSurface"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <ImageView
+        android:id="@+id/btnBack"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/back"
+        android:scaleType="center"
+        android:src="@drawable/ic_back"
+        app:tint="?attr/colorOnSurface"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-        <TextView
-            android:id="@+id/tvChannelSettingsTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:text="Channel 1"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@id/btnBack"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/btnBack" />
+    <TextView
+        android:id="@+id/tvChannelSettingsTitle"
+        style="@style/TextAppearance.Aqua.EditProfileTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="Channel 1"
+        android:textColor="?attr/colorOnSurface"
+        android:importantForAccessibility="yes"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/btnBack"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
 
     <ScrollView
         android:id="@+id/channelSettingsScrollView"
