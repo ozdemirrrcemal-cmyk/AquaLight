@@ -19,6 +19,9 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     private val binding get() = _binding!!
 
     private var selectedPumpIndex: Int = 0
+    private var selectedCalibrationPumpIndex: Int = 0
+
+    private val calibrationNudgeStep: Float = 0.003f
 
     private val runningPumpIndexes: MutableSet<Int> =
         mutableSetOf()
@@ -306,6 +309,9 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         binding.tvPumpCalibrationValues.visibility =
             View.VISIBLE
 
+        binding.pumpCalibrationControls.visibility =
+            View.VISIBLE
+
         binding.indicatorPump1.visibility =
             View.VISIBLE
 
@@ -324,30 +330,59 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         binding.indicatorPump4.bringToFront()
 
         bindDraggablePumpIndicator(
+            pumpIndex = 0,
             indicator = binding.indicatorPump1,
             xGuide = binding.guidePump1Center
         )
 
         bindDraggablePumpIndicator(
+            pumpIndex = 1,
             indicator = binding.indicatorPump2,
             xGuide = binding.guidePump2Center
         )
 
         bindDraggablePumpIndicator(
+            pumpIndex = 2,
             indicator = binding.indicatorPump3,
             xGuide = binding.guidePump3Center
         )
 
         bindDraggablePumpIndicator(
+            pumpIndex = 3,
             indicator = binding.indicatorPump4,
             xGuide = binding.guidePump4Center
         )
+
+        binding.btnPumpXMinus.setOnClickListener {
+            nudgeSelectedPumpX(
+                delta = -calibrationNudgeStep
+            )
+        }
+
+        binding.btnPumpXPlus.setOnClickListener {
+            nudgeSelectedPumpX(
+                delta = calibrationNudgeStep
+            )
+        }
+
+        binding.btnPumpYMinus.setOnClickListener {
+            nudgeAllPumpY(
+                delta = -calibrationNudgeStep
+            )
+        }
+
+        binding.btnPumpYPlus.setOnClickListener {
+            nudgeAllPumpY(
+                delta = calibrationNudgeStep
+            )
+        }
 
         updatePumpCalibrationText()
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun bindDraggablePumpIndicator(
+        pumpIndex: Int,
         indicator: View,
         xGuide: View
     ) {
@@ -357,6 +392,9 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         indicator.setOnTouchListener { view, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
+                    selectedCalibrationPumpIndex =
+                        pumpIndex
+
                     view.parent.requestDisallowInterceptTouchEvent(
                         true
                     )
@@ -384,6 +422,8 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
                     touchOffsetFromCenterY =
                         touchYInContainer - currentCenterY
+
+                    updatePumpCalibrationText()
 
                     true
                 }
@@ -446,6 +486,41 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         }
     }
 
+    private fun nudgeSelectedPumpX(
+        delta: Float
+    ) {
+        val guide = when (selectedCalibrationPumpIndex) {
+            0 -> binding.guidePump1Center
+            1 -> binding.guidePump2Center
+            2 -> binding.guidePump3Center
+            else -> binding.guidePump4Center
+        }
+
+        val params =
+            guide.layoutParams as ConstraintLayout.LayoutParams
+
+        setGuidelinePercent(
+            guideline = guide,
+            percent = params.guidePercent + delta
+        )
+
+        updatePumpCalibrationText()
+    }
+
+    private fun nudgeAllPumpY(
+        delta: Float
+    ) {
+        val params =
+            binding.guidePumpIndicatorY.layoutParams as ConstraintLayout.LayoutParams
+
+        setGuidelinePercent(
+            guideline = binding.guidePumpIndicatorY,
+            percent = params.guidePercent + delta
+        )
+
+        updatePumpCalibrationText()
+    }
+
     private fun setGuidelinePercent(
         guideline: View,
         percent: Float
@@ -464,7 +539,8 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
     private fun updatePumpCalibrationText() {
         binding.tvPumpCalibrationValues.text =
-            "Y=${formatGuidePercent(binding.guidePumpIndicatorY)}  " +
+            "Selected=CH${selectedCalibrationPumpIndex + 1}  " +
+                "Y=${formatGuidePercent(binding.guidePumpIndicatorY)}  " +
                 "CH1=${formatGuidePercent(binding.guidePump1Center)}  " +
                 "CH2=${formatGuidePercent(binding.guidePump2Center)}  " +
                 "CH3=${formatGuidePercent(binding.guidePump3Center)}  " +
