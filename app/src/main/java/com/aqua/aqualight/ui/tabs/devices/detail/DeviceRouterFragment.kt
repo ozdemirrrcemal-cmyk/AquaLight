@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceRouterBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerFragment
 import kotlinx.coroutines.flow.first
@@ -212,17 +213,29 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 )
             }
 
-            AquaDeviceUiController.GENERIC_COOLING -> {
+            AquaDeviceUiController.GENERIC_COOLING,
+            AquaDeviceUiController.CUSTOM_COOLING_ADVANCED -> {
                 DeviceCoolingFragment.newInstance(
                     deviceId = deviceId,
                     deviceIp = deviceIp
                 )
             }
 
+            AquaDeviceUiController.GENERIC_DOSING,
+            AquaDeviceUiController.CUSTOM_DOSING_4CH -> {
+                DeviceDosingFragment.newInstance(
+                    deviceId = deviceId,
+                    deviceIp = deviceIp,
+                    deviceTitle = controllerTitle,
+                    canEditDeviceName = canEditDeviceName,
+                    userDeviceName = userDeviceName,
+                    defaultDeviceTitle = defaultDeviceTitle
+                )
+            }
+
             AquaDeviceUiController.FULL_CONTROLLER,
             AquaDeviceUiController.CUSTOM_LIGHT_ADVANCED,
             AquaDeviceUiController.CUSTOM_LIGHT_MATRIX,
-            AquaDeviceUiController.CUSTOM_COOLING_ADVANCED,
             AquaDeviceUiController.UNSUPPORTED -> {
                 null
             }
@@ -343,6 +356,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     override fun onDestroyView() {
         _binding = null
+
         super.onDestroyView()
     }
 

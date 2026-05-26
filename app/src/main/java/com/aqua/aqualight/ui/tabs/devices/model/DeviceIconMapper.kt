@@ -17,14 +17,17 @@ object DeviceIconMapper {
             }
 
             AquaDeviceType.AQUA_TIMER_001,
-            AquaDeviceType.AQUA_TIMER_002,
-            AquaDeviceType.AQUA_TIMER_003,
-            AquaDeviceType.AQUA_TIMER_004,
-            AquaDeviceType.AQUA_TIMER_005 -> {
+            AquaDeviceType.AQUA_TIMER_002 -> {
                 R.drawable.ic_device_timer
             }
 
-            AquaDeviceType.AQUA_COOL_001 -> {
+            AquaDeviceType.AQUA_DOSE_001,
+            AquaDeviceType.AQUA_DOSE_002 -> {
+                R.drawable.img_dosing_pump_4ch
+            }
+
+            AquaDeviceType.AQUA_COOL_001,
+            AquaDeviceType.AQUA_COOL_002 -> {
                 R.drawable.ic_device_temperature
             }
 

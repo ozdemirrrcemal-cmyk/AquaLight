@@ -13,6 +13,11 @@ enum class AquaDeviceFamily(
         legacyAquaName = "AquaTimer",
         displayName = "AquaTimer"
     ),
+	
+	AQUA_DOSE(
+        legacyAquaName = "AquaDose",
+        displayName = "AquaDose"
+    ),
 
     AQUA_COOL(
         legacyAquaName = "AquaCool",

@@ -10,50 +10,53 @@ object DebugDeviceSeeder {
 
     private const val TAG = "DebugDeviceSeeder"
 
-    private const val DEBUG_TIMER_DEVICE_ID = 900_001L
-    private const val DEBUG_TIMER_SERIAL = "DEBUG-TIMER-001"
+    private const val DEBUG_DOSING_DEVICE_ID = 900_002L
+    private const val DEBUG_DOSING_SERIAL = "DEBUG-DOSING-001"
 
     suspend fun seedIfNeeded(
         context: Context
     ) {
         val appContext = context.applicationContext
-        val devicesManager = DevicesDataStoreManager.create(appContext)
+        val devicesManager = DevicesDataStoreManager.create(
+            appContext
+        )
 
         val currentDevices = devicesManager.devicesFlow.first()
 
-        val timerDebugDeviceAlreadyExists = currentDevices.any { device ->
-            device.id == DEBUG_TIMER_DEVICE_ID ||
-                device.serial == DEBUG_TIMER_SERIAL
+        val dosingDebugDeviceAlreadyExists = currentDevices.any { device ->
+            device.id == DEBUG_DOSING_DEVICE_ID ||
+                device.serial == DEBUG_DOSING_SERIAL
         }
 
-        if (timerDebugDeviceAlreadyExists) {
+        if (dosingDebugDeviceAlreadyExists) {
             Log.d(
                 TAG,
-                "Debug Timer device already exists. Seed skipped."
+                "Debug dosing device already exists. Seed skipped."
             )
+
             return
         }
 
         devicesManager.addDevice(
-            id = DEBUG_TIMER_DEVICE_ID,
+            id = DEBUG_DOSING_DEVICE_ID,
 
-            aquaName = "AquaLight Timer",
-            name = "Timer",
+            aquaName = "AquaDose",
+            name = "DosePro 4",
             ip = "0.0.0.0",
-            serial = DEBUG_TIMER_SERIAL,
+            serial = DEBUG_DOSING_SERIAL,
             firmwareBuild = "debug",
 
-            deviceType = AquaDeviceType.AQUA_TIMER_001,
+            deviceType = AquaDeviceType.AQUA_DOSE_001,
 
             udpVersion = 20240813,
 
             tabLight = false,
-            tabTimer = true,
+            tabTimer = false,
             tabTemperature = false,
 
-            productId = "AQUA_TIMER_001",
-            productFamily = "timer",
-            productModel = "Aqua Timer 001",
+            productId = "aquadose.001",
+            productFamily = "AquaDose",
+            productModel = "DosePro 4",
             hardwareRevision = "debug",
             firmwareVersion = "debug",
             apiVersion = 1,
@@ -62,19 +65,27 @@ object DebugDeviceSeeder {
             sensorCount = 0,
 
             supportedFeatures = setOf(
-                "timer",
+                "dosing",
+                "ml_dosing",
+                "pump_calibration",
+                "manual_run",
                 "schedule",
-                "multi_channel_timer"
+                "reservoir_tracking"
             ),
 
             supportedScreens = setOf(
-                "timer"
+                "dosing",
+                "dosing_control",
+                "dosing_channels",
+                "dosing_calibration",
+                "dosing_schedule",
+                "dosing_reservoir"
             )
         )
 
         Log.d(
             TAG,
-            "Debug Timer device seeded."
+            "Debug dosing device seeded."
         )
     }
 }

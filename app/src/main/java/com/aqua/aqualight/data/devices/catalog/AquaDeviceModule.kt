@@ -4,5 +4,6 @@ enum class AquaDeviceModule {
     LIGHT,
     TIMER,
     COOLING,
+	DOSING,
     TEMPERATURE
 }

@@ -34,7 +34,8 @@ object TimerProductCatalog {
                 AquaDeviceModule.LIGHT to ModuleVisibility.HIDDEN,
                 AquaDeviceModule.TEMPERATURE to ModuleVisibility.HIDDEN,
                 AquaDeviceModule.TIMER to ModuleVisibility.TOP_LEVEL,
-                AquaDeviceModule.COOLING to ModuleVisibility.HIDDEN
+                AquaDeviceModule.COOLING to ModuleVisibility.HIDDEN,
+                AquaDeviceModule.DOSING to ModuleVisibility.HIDDEN
             ),
 
             screens = setOf(
@@ -66,18 +67,18 @@ object TimerProductCatalog {
     )
 
     /**
-     * Beşinci timer ürün modeli.
+     * İkinci timer ürün modeli.
      *
      * ESP32 legacy identity:
      * AquaName = Proelite
      * Name     = Multi control
      *
-     * Şu an özel ekran kullanılmıyor.
-     * Bu cihaz da standart Generic Timer ekranına yönlendirilir.
+     * 4 çıkışlı timer cihazıdır.
+     * Şu an standart Generic Timer ekranına yönlendirilir.
      */
-    val aquaTimer005 = TimerDeviceDefinition(
+    val aquaTimer002 = TimerDeviceDefinition(
         base = AquaDeviceDefinition(
-            type = AquaDeviceType.AQUA_TIMER_005,
+            type = AquaDeviceType.AQUA_TIMER_002,
             family = AquaDeviceFamily.CUSTOM,
 
             legacyAquaName = "Proelite",
@@ -97,7 +98,8 @@ object TimerProductCatalog {
                 AquaDeviceModule.LIGHT to ModuleVisibility.HIDDEN,
                 AquaDeviceModule.TEMPERATURE to ModuleVisibility.HIDDEN,
                 AquaDeviceModule.TIMER to ModuleVisibility.TOP_LEVEL,
-                AquaDeviceModule.COOLING to ModuleVisibility.HIDDEN
+                AquaDeviceModule.COOLING to ModuleVisibility.HIDDEN,
+                AquaDeviceModule.DOSING to ModuleVisibility.HIDDEN
             ),
 
             screens = setOf(
@@ -105,6 +107,7 @@ object TimerProductCatalog {
                 AquaDeviceScreen.TIMER_CONTROL,
                 AquaDeviceScreen.TIMER_SCHEDULES,
                 AquaDeviceScreen.TIMER_MANUAL_RUN,
+                AquaDeviceScreen.TIMER_MULTI_OUTPUT,
                 AquaDeviceScreen.ADVANCED
             ),
 
@@ -121,7 +124,8 @@ object TimerProductCatalog {
             TimerFeature.WEEKDAY_SCHEDULE,
             TimerFeature.INTERVAL_ON_OFF,
             TimerFeature.REPEAT_COUNT,
-            TimerFeature.MANUAL_RUN
+            TimerFeature.MANUAL_RUN,
+            TimerFeature.MULTI_OUTPUT
         ),
 
         maxTimerCount = 12,
@@ -130,7 +134,7 @@ object TimerProductCatalog {
 
     val all: List<TimerDeviceDefinition> = listOf(
         aquaTimer001,
-        aquaTimer005
+        aquaTimer002
     )
 
     fun findByType(
