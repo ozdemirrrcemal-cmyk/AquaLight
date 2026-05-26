@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentDeviceDosingChannelSettingsBinding
@@ -45,15 +46,27 @@ class DeviceDosingChannelSettingsFragment :
             view
         )
 
+        bindHeaderActions()
         bindStaticPreview()
         bindSelectedPumpIndicator()
         bindClicks()
+
         selectDosingMode(
             mode = selectedMode
         )
+
         updateScheduleEnabledState(
             enabled = binding.switchScheduleEnabled.isChecked
         )
+    }
+
+    private fun bindHeaderActions() {
+        binding.tvChannelSettingsTitle.text =
+            "Channel $channelNumber"
+
+        binding.btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
     }
 
     private fun bindStaticPreview() {
