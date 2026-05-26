@@ -3,16 +3,27 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.dosing.DosingCalibrationLocalStore
 import com.aqua.aqualight.databinding.FragmentDeviceDosingChannelSettingsBinding
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class DeviceDosingChannelSettingsFragment :
     Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
     private var _binding: FragmentDeviceDosingChannelSettingsBinding? = null
     private val binding get() = _binding!!
+
+    private lateinit var calibrationLocalStore: DosingCalibrationLocalStore
 
     private val channelIndex: Int
         get() = requireArguments().getInt(ARG_CHANNEL_INDEX, 0)
@@ -46,8 +57,14 @@ class DeviceDosingChannelSettingsFragment :
             view
         )
 
+        calibrationLocalStore =
+            DosingCalibrationLocalStore(
+                context = requireContext()
+            )
+
         bindHeaderActions()
         bindStaticPreview()
+        bindCalibrationState()
         bindSelectedPumpIndicator()
         bindClicks()
 
@@ -78,6 +95,41 @@ class DeviceDosingChannelSettingsFragment :
 
         binding.tvContainerVolumeValue.text =
             "450.0 ml"
+    }
+
+    private fun bindCalibrationState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                calibrationLocalStore.observeCalibration(
+                    deviceId = deviceId,
+                    channelIndex = channelIndex
+                ).collect { calibration ->
+                    binding.tvLastCalibrated.text =
+                        if (calibration == null) {
+                            "Last calibrated: Not calibrated"
+                        } else {
+                            "Last calibrated: ${
+                                formatCalibrationDate(
+                                    millis = calibration.lastCalibratedAtMillis
+                                )
+                            }"
+                        }
+                }
+            }
+        }
+    }
+
+    private fun formatCalibrationDate(
+        millis: Long
+    ): String {
+        return SimpleDateFormat(
+            "dd MMM yyyy, HH:mm",
+            Locale.getDefault()
+        ).format(
+            Date(millis)
+        )
     }
 
     private fun bindSelectedPumpIndicator() {

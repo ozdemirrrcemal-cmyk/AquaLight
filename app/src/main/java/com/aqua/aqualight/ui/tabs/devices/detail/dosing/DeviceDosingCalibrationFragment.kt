@@ -12,16 +12,23 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.dosing.DosingCalibrationLocalStore
+import com.aqua.aqualight.data.devices.dosing.DosingCalibrationTimeSource
+import com.aqua.aqualight.data.devices.dosing.EspDeviceTimeClient
 import com.aqua.aqualight.databinding.FragmentDeviceDosingCalibrationBinding
+import kotlinx.coroutines.launch
 
 class DeviceDosingCalibrationFragment :
     Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private var _binding: FragmentDeviceDosingCalibrationBinding? = null
     private val binding get() = _binding!!
+
+    private lateinit var calibrationLocalStore: DosingCalibrationLocalStore
 
     private var currentStepIndex: Int = 0
     private var primeCommandRunning: Boolean = false
@@ -112,6 +119,11 @@ class DeviceDosingCalibrationFragment :
             view
         )
 
+        calibrationLocalStore =
+            DosingCalibrationLocalStore(
+                context = requireContext()
+            )
+
         bindSystemBack()
         bindTopBar()
         bindSelectedPumpIndicator()
@@ -176,8 +188,8 @@ class DeviceDosingCalibrationFragment :
         keyboardVisible: Boolean
     ) {
         val inputStep =
-            currentStepIndex == 0 ||
-                currentStepIndex == 3
+            currentStepIndex == STEP_NAME ||
+                currentStepIndex == STEP_MEASURE
 
         val compactMode =
             keyboardVisible && inputStep
@@ -225,24 +237,28 @@ class DeviceDosingCalibrationFragment :
         }
 
         binding.btnStepDeviceAction.setOnTouchListener { view, event ->
-            if (currentStepIndex != 1) {
+            if (currentStepIndex != STEP_PRIME) {
                 return@setOnTouchListener false
             }
 
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     view.isPressed = true
+
                     startPrimeCommand()
+
                     true
                 }
 
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL -> {
                     view.isPressed = false
+
                     stopPrimeCommand()
 
                     if (event.actionMasked == MotionEvent.ACTION_UP) {
                         view.performClick()
+
                         markStepDeviceActionCompleted()
                     }
 
@@ -254,7 +270,7 @@ class DeviceDosingCalibrationFragment :
         }
 
         binding.btnStepDeviceAction.setOnClickListener {
-            if (currentStepIndex != 1) {
+            if (currentStepIndex != STEP_PRIME) {
                 handleStepDeviceAction()
             }
         }
@@ -280,16 +296,16 @@ class DeviceDosingCalibrationFragment :
 
         binding.btnSecondaryAction.text =
             when {
-                currentStepIndex == 0 -> "Cancel"
+                currentStepIndex == STEP_NAME -> "Cancel"
                 currentStepIndex == steps.lastIndex -> "Recalibrate"
                 else -> "Back"
             }
 
         binding.inputLiquidNameLayout.visibility =
-            if (currentStepIndex == 0) View.VISIBLE else View.GONE
+            if (currentStepIndex == STEP_NAME) View.VISIBLE else View.GONE
 
         binding.inputMeasuredAmountLayout.visibility =
-            if (currentStepIndex == 3) View.VISIBLE else View.GONE
+            if (currentStepIndex == STEP_MEASURE) View.VISIBLE else View.GONE
 
         binding.calibrationIllustrationView.stepIndex =
             currentStepIndex
@@ -341,17 +357,21 @@ class DeviceDosingCalibrationFragment :
             )
 
         binding.btnStepDeviceAction.text =
-            if (deviceActionCompleted) {
-                "Done"
-            } else {
-                step.deviceActionText.orEmpty()
+            when {
+                currentStepIndex == STEP_PRIME && deviceActionCompleted -> "Hold again"
+                deviceActionCompleted -> "Done"
+                else -> step.deviceActionText.orEmpty()
             }
 
         binding.btnStepDeviceAction.isEnabled =
-            !deviceActionCompleted
+            if (currentStepIndex == STEP_PRIME) {
+                true
+            } else {
+                !deviceActionCompleted
+            }
 
         binding.btnStepDeviceAction.alpha =
-            if (deviceActionCompleted) {
+            if (deviceActionCompleted && currentStepIndex != STEP_PRIME) {
                 0.55f
             } else {
                 1f
@@ -391,8 +411,7 @@ class DeviceDosingCalibrationFragment :
             message = "Pump priming started for Channel $channelNumber."
         )
 
-        // Buraya sonra cihaz komutu bağlanacak:
-        // start pump / manual run / prime start
+        // Sonra buraya ESP32 start pump / prime start komutu bağlanacak.
     }
 
     private fun stopPrimeCommand() {
@@ -406,15 +425,14 @@ class DeviceDosingCalibrationFragment :
             message = "Pump priming stopped for Channel $channelNumber."
         )
 
-        // Buraya sonra cihaz komutu bağlanacak:
-        // stop pump / manual run stop / prime stop
+        // Sonra buraya ESP32 stop pump / prime stop komutu bağlanacak.
     }
 
     private fun handleStepDeviceAction() {
         hideKeyboard()
 
         when (currentStepIndex) {
-            2 -> {
+            STEP_START_CALIBRATION -> {
                 showComingNext(
                     message = "Calibration command will be connected for Channel $channelNumber."
                 )
@@ -422,7 +440,7 @@ class DeviceDosingCalibrationFragment :
                 markStepDeviceActionCompleted()
             }
 
-            4 -> {
+            STEP_TEST_DOSE -> {
                 showComingNext(
                     message = "Dose 4 ml command will be connected for Channel $channelNumber."
                 )
@@ -442,7 +460,7 @@ class DeviceDosingCalibrationFragment :
 
     private fun handlePrimaryAction() {
         when (currentStepIndex) {
-            0 -> {
+            STEP_NAME -> {
                 val liquidName =
                     binding.etLiquidName.text
                         ?.toString()
@@ -459,7 +477,7 @@ class DeviceDosingCalibrationFragment :
                 goToNextStep()
             }
 
-            3 -> {
+            STEP_MEASURE -> {
                 val measuredAmountText =
                     binding.etMeasuredAmount.text
                         ?.toString()
@@ -484,11 +502,7 @@ class DeviceDosingCalibrationFragment :
             }
 
             steps.lastIndex -> {
-                showComingNext(
-                    message = "Calibration will be saved after device commands are connected."
-                )
-
-                findNavController().navigateUp()
+                saveCalibrationLocallyAndClose()
             }
 
             else -> {
@@ -497,10 +511,69 @@ class DeviceDosingCalibrationFragment :
         }
     }
 
+    private fun saveCalibrationLocallyAndClose() {
+        hideKeyboard()
+        stopPrimeCommand()
+
+        val liquidName =
+            binding.etLiquidName.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val measuredAmountMl =
+            binding.etMeasuredAmount.text
+                ?.toString()
+                ?.trim()
+                ?.toFloatOrNull()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val phoneNowMillis =
+                System.currentTimeMillis()
+
+            val espTimeResult =
+                EspDeviceTimeClient.readCurrentTimeMillis(
+                    deviceIp = deviceIp
+                )
+
+            val lastCalibratedAtMillis =
+                espTimeResult?.millis ?: phoneNowMillis
+
+            val timeSource =
+                if (espTimeResult != null) {
+                    DosingCalibrationTimeSource.ESP_TIME
+                } else {
+                    DosingCalibrationTimeSource.PHONE_TIME
+                }
+
+            calibrationLocalStore.saveCalibration(
+                deviceId = deviceId,
+                channelIndex = channelIndex,
+                liquidName = liquidName,
+                lastCalibratedAtMillis = lastCalibratedAtMillis,
+                phoneSavedAtMillis = phoneNowMillis,
+                timeSource = timeSource,
+                espRawTimeText = espTimeResult?.rawTimeText.orEmpty(),
+                measuredAmountMl = measuredAmountMl
+            )
+
+            showComingNext(
+                message = if (timeSource == DosingCalibrationTimeSource.ESP_TIME) {
+                    "Calibration saved with device time."
+                } else {
+                    "Calibration saved with phone time."
+                }
+            )
+
+            findNavController().navigateUp()
+        }
+    }
+
     private fun handleSecondaryAction() {
         hideKeyboard()
+        stopPrimeCommand()
 
-        if (currentStepIndex == 0) {
+        if (currentStepIndex == STEP_NAME) {
             findNavController().navigateUp()
             return
         }
@@ -508,12 +581,12 @@ class DeviceDosingCalibrationFragment :
         if (currentStepIndex == steps.lastIndex) {
             completedDeviceActionSteps.removeAll(
                 listOf(
-                    2,
-                    4
+                    STEP_START_CALIBRATION,
+                    STEP_TEST_DOSE
                 )
             )
 
-            currentStepIndex = 2
+            currentStepIndex = STEP_START_CALIBRATION
             renderStep()
             scrollToTop()
             return
@@ -521,7 +594,7 @@ class DeviceDosingCalibrationFragment :
 
         currentStepIndex =
             (currentStepIndex - 1).coerceAtLeast(
-                minimumValue = 0
+                minimumValue = STEP_NAME
             )
 
         renderStep()
@@ -530,6 +603,7 @@ class DeviceDosingCalibrationFragment :
 
     private fun goToNextStep() {
         hideKeyboard()
+        stopPrimeCommand()
 
         currentStepIndex =
             (currentStepIndex + 1).coerceAtMost(
@@ -542,15 +616,16 @@ class DeviceDosingCalibrationFragment :
 
     private fun handleBackPressed() {
         hideKeyboard()
+        stopPrimeCommand()
 
-        if (currentStepIndex == 0) {
+        if (currentStepIndex == STEP_NAME) {
             findNavController().navigateUp()
             return
         }
 
         currentStepIndex =
             (currentStepIndex - 1).coerceAtLeast(
-                minimumValue = 0
+                minimumValue = STEP_NAME
             )
 
         renderStep()
@@ -605,9 +680,7 @@ class DeviceDosingCalibrationFragment :
     }
 
     override fun onDestroyView() {
-        if (primeCommandRunning) {
-            stopPrimeCommand()
-        }
+        stopPrimeCommand()
 
         _binding = null
 
@@ -625,6 +698,12 @@ class DeviceDosingCalibrationFragment :
     )
 
     companion object {
+        private const val STEP_NAME = 0
+        private const val STEP_PRIME = 1
+        private const val STEP_START_CALIBRATION = 2
+        private const val STEP_MEASURE = 3
+        private const val STEP_TEST_DOSE = 4
+
         private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"
         private const val ARG_DEVICE_TITLE = "deviceTitle"
