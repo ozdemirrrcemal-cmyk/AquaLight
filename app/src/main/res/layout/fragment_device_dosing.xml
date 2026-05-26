@@ -146,7 +146,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.480" />
+        app:layout_constraintGuide_percent="0.486" />
 
     <!-- TOUCH AREAS X -->
     <androidx.constraintlayout.widget.Guideline
@@ -211,37 +211,37 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.090" />
+        app:layout_constraintGuide_percent="0.153" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidePump2Center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.300" />
+        app:layout_constraintGuide_percent="0.386" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidePump3Center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.740" />
+        app:layout_constraintGuide_percent="0.614" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidePump4Center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.935" />
+        app:layout_constraintGuide_percent="0.846" />
 
     <!-- INDICATORS -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorPump1"
-        android:layout_width="26dp"
-        android:layout_height="26dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:visibility="gone"
         app:cardBackgroundColor="#22C55E"
-        app:cardCornerRadius="13dp"
+        app:cardCornerRadius="12.5dp"
         app:cardElevation="0dp"
         app:strokeColor="#86EFAC"
         app:strokeWidth="1dp"
@@ -264,11 +264,11 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorPump2"
-        android:layout_width="26dp"
-        android:layout_height="26dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:visibility="gone"
         app:cardBackgroundColor="#22C55E"
-        app:cardCornerRadius="13dp"
+        app:cardCornerRadius="12.5dp"
         app:cardElevation="0dp"
         app:strokeColor="#86EFAC"
         app:strokeWidth="1dp"
@@ -291,11 +291,11 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorPump3"
-        android:layout_width="26dp"
-        android:layout_height="26dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:visibility="gone"
         app:cardBackgroundColor="#22C55E"
-        app:cardCornerRadius="13dp"
+        app:cardCornerRadius="12.5dp"
         app:cardElevation="0dp"
         app:strokeColor="#86EFAC"
         app:strokeWidth="1dp"
@@ -318,11 +318,11 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorPump4"
-        android:layout_width="26dp"
-        android:layout_height="26dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:visibility="gone"
         app:cardBackgroundColor="#22C55E"
-        app:cardCornerRadius="13dp"
+        app:cardCornerRadius="12.5dp"
         app:cardElevation="0dp"
         app:strokeColor="#86EFAC"
         app:strokeWidth="1dp"
@@ -393,77 +393,6 @@
         app:layout_constraintTop_toTopOf="@id/guidePumpTouchTop" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-<TextView
-    android:id="@+id/tvPumpCalibrationValues"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="6dp"
-    android:background="#17233A"
-    android:padding="10dp"
-    android:text="Calibration values"
-    android:textColor="@android:color/white"
-    android:textSize="12sp"
-    android:textStyle="bold"
-    android:visibility="gone" />
-    
-    <LinearLayout
-    android:id="@+id/pumpCalibrationControls"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="6dp"
-    android:gravity="center"
-    android:orientation="horizontal"
-    android:visibility="gone">
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnPumpXMinus"
-        android:layout_width="0dp"
-        android:layout_height="42dp"
-        android:layout_marginEnd="4dp"
-        android:layout_weight="1"
-        android:text="X -"
-        android:textAllCaps="false"
-        android:textSize="12sp"
-        app:cornerRadius="14dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnPumpXPlus"
-        android:layout_width="0dp"
-        android:layout_height="42dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="4dp"
-        android:layout_weight="1"
-        android:text="X +"
-        android:textAllCaps="false"
-        android:textSize="12sp"
-        app:cornerRadius="14dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnPumpYMinus"
-        android:layout_width="0dp"
-        android:layout_height="42dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="4dp"
-        android:layout_weight="1"
-        android:text="Y -"
-        android:textAllCaps="false"
-        android:textSize="12sp"
-        app:cornerRadius="14dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnPumpYPlus"
-        android:layout_width="0dp"
-        android:layout_height="42dp"
-        android:layout_marginStart="4dp"
-        android:layout_weight="1"
-        android:text="Y +"
-        android:textAllCaps="false"
-        android:textSize="12sp"
-        app:cornerRadius="14dp" />
-
-</LinearLayout>
 
         <!-- CHANNEL 1 CARD -->
         <com.google.android.material.card.MaterialCardView
