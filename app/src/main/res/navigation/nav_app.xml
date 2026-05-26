@@ -224,12 +224,44 @@
     android:name="com.aqua.aqualight.ui.tabs.devices.setup.DeviceSetupFragment"
     android:label="Device Setup"
     tools:layout="@layout/fragment_device_setup" />
+<fragment
+    android:id="@+id/deviceMenuFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment"
+    android:label="Device"
+    tools:layout="@layout/fragment_device_router">
 
-    <fragment
-        android:id="@+id/deviceMenuFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment"
-        android:label="Device"
-        tools:layout="@layout/fragment_device_router" />
+    <action
+        android:id="@+id/action_deviceMenuFragment_to_deviceDosingChannelSettingsFragment"
+        app:destination="@id/deviceDosingChannelSettingsFragment" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceDosingChannelSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingChannelSettingsFragment"
+    android:label="Channel Settings"
+    tools:layout="@layout/fragment_device_dosing_channel_settings">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+    <argument
+        android:name="deviceIp"
+        app:argType="string"
+        android:defaultValue="" />
+
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    <argument
+        android:name="channelIndex"
+        app:argType="integer"
+        android:defaultValue="0" />
+
+</fragment>
 
     <!-- ⚙️ Settings Tab -->
     <fragment

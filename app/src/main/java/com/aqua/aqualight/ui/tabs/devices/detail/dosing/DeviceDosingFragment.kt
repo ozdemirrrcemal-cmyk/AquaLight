@@ -2,9 +2,10 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentDeviceDosingBinding
 import com.aqua.aqualight.databinding.ItemDosingChannelCardBinding
 
@@ -42,7 +43,6 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
         bindDefaultChannelCards()
         bindClicks()
-
         renderPumpRunningIndicators()
     }
 
@@ -173,20 +173,12 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     private fun handlePumpClick(
         pumpIndex: Int
     ) {
-        selectPump(
-            pumpIndex = pumpIndex
-        )
-
-        openSelectedPumpSettings()
-    }
-
-    private fun selectPump(
-        pumpIndex: Int
-    ) {
         selectedPumpIndex = pumpIndex.coerceIn(
             minimumValue = 0,
             maximumValue = 3
         )
+
+        openSelectedPumpSettings()
     }
 
     private fun renderPumpRunningIndicators() {
@@ -220,17 +212,14 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     }
 
     private fun openSelectedPumpSettings() {
-        showComingNext(
-            message = "Channel ${selectedPumpIndex + 1} settings will open here."
-        )
-    }
-
-    private fun showComingNext(
-        message: String
-    ) {
-        (activity as? BaseActivity)?.showSnackBar(
-            message = message,
-            type = BaseActivity.SnackType.NORMAL
+        findNavController().navigate(
+            R.id.action_deviceMenuFragment_to_deviceDosingChannelSettingsFragment,
+            bundleOf(
+                "deviceId" to deviceId,
+                "deviceIp" to deviceIp,
+                "deviceTitle" to deviceTitle,
+                "channelIndex" to selectedPumpIndex
+            )
         )
     }
 
