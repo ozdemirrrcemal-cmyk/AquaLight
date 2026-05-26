@@ -1,13 +1,17 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentDeviceDosingBinding
 import com.google.android.material.card.MaterialCardView
+import java.util.Locale
 
 class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
@@ -61,6 +65,10 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         )
 
         renderPumpRunningIndicators()
+
+        if (PUMP_CALIBRATION_MODE) {
+            bindPumpIndicatorCalibrationForPhone()
+        }
     }
 
     private fun bindStaticScreen() {
@@ -256,6 +264,14 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     }
 
     private fun renderPumpRunningIndicators() {
+        if (PUMP_CALIBRATION_MODE) {
+            binding.indicatorPump1.visibility = View.VISIBLE
+            binding.indicatorPump2.visibility = View.VISIBLE
+            binding.indicatorPump3.visibility = View.VISIBLE
+            binding.indicatorPump4.visibility = View.VISIBLE
+            return
+        }
+
         binding.indicatorPump1.visibility =
             if (runningPumpIndexes.contains(0)) {
                 View.VISIBLE
@@ -283,6 +299,189 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
             } else {
                 View.GONE
             }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun bindPumpIndicatorCalibrationForPhone() {
+        binding.tvPumpCalibrationValues.visibility =
+            View.VISIBLE
+
+        binding.indicatorPump1.visibility =
+            View.VISIBLE
+
+        binding.indicatorPump2.visibility =
+            View.VISIBLE
+
+        binding.indicatorPump3.visibility =
+            View.VISIBLE
+
+        binding.indicatorPump4.visibility =
+            View.VISIBLE
+
+        binding.indicatorPump1.bringToFront()
+        binding.indicatorPump2.bringToFront()
+        binding.indicatorPump3.bringToFront()
+        binding.indicatorPump4.bringToFront()
+
+        bindDraggablePumpIndicator(
+            indicator = binding.indicatorPump1,
+            xGuide = binding.guidePump1Center
+        )
+
+        bindDraggablePumpIndicator(
+            indicator = binding.indicatorPump2,
+            xGuide = binding.guidePump2Center
+        )
+
+        bindDraggablePumpIndicator(
+            indicator = binding.indicatorPump3,
+            xGuide = binding.guidePump3Center
+        )
+
+        bindDraggablePumpIndicator(
+            indicator = binding.indicatorPump4,
+            xGuide = binding.guidePump4Center
+        )
+
+        updatePumpCalibrationText()
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun bindDraggablePumpIndicator(
+        indicator: View,
+        xGuide: View
+    ) {
+        var touchOffsetFromCenterX = 0f
+        var touchOffsetFromCenterY = 0f
+
+        indicator.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    view.parent.requestDisallowInterceptTouchEvent(
+                        true
+                    )
+
+                    val containerLocation = IntArray(2)
+
+                    binding.pumpVisualContainer.getLocationOnScreen(
+                        containerLocation
+                    )
+
+                    val touchXInContainer =
+                        event.rawX - containerLocation[0]
+
+                    val touchYInContainer =
+                        event.rawY - containerLocation[1]
+
+                    val currentCenterX =
+                        view.x + view.width / 2f
+
+                    val currentCenterY =
+                        view.y + view.height / 2f
+
+                    touchOffsetFromCenterX =
+                        touchXInContainer - currentCenterX
+
+                    touchOffsetFromCenterY =
+                        touchYInContainer - currentCenterY
+
+                    true
+                }
+
+                MotionEvent.ACTION_MOVE,
+                MotionEvent.ACTION_UP -> {
+                    view.parent.requestDisallowInterceptTouchEvent(
+                        true
+                    )
+
+                    val containerLocation = IntArray(2)
+
+                    binding.pumpVisualContainer.getLocationOnScreen(
+                        containerLocation
+                    )
+
+                    val touchXInContainer =
+                        event.rawX - containerLocation[0]
+
+                    val touchYInContainer =
+                        event.rawY - containerLocation[1]
+
+                    val centerX =
+                        touchXInContainer - touchOffsetFromCenterX
+
+                    val centerY =
+                        touchYInContainer - touchOffsetFromCenterY
+
+                    val xPercent =
+                        (centerX / binding.pumpVisualContainer.width)
+                            .coerceIn(
+                                minimumValue = 0f,
+                                maximumValue = 1f
+                            )
+
+                    val yPercent =
+                        (centerY / binding.pumpVisualContainer.height)
+                            .coerceIn(
+                                minimumValue = 0f,
+                                maximumValue = 1f
+                            )
+
+                    setGuidelinePercent(
+                        guideline = xGuide,
+                        percent = xPercent
+                    )
+
+                    setGuidelinePercent(
+                        guideline = binding.guidePumpIndicatorY,
+                        percent = yPercent
+                    )
+
+                    updatePumpCalibrationText()
+
+                    true
+                }
+
+                else -> false
+            }
+        }
+    }
+
+    private fun setGuidelinePercent(
+        guideline: View,
+        percent: Float
+    ) {
+        val params =
+            guideline.layoutParams as ConstraintLayout.LayoutParams
+
+        params.guidePercent =
+            percent.coerceIn(
+                minimumValue = 0f,
+                maximumValue = 1f
+            )
+
+        guideline.layoutParams = params
+    }
+
+    private fun updatePumpCalibrationText() {
+        binding.tvPumpCalibrationValues.text =
+            "Y=${formatGuidePercent(binding.guidePumpIndicatorY)}  " +
+                "CH1=${formatGuidePercent(binding.guidePump1Center)}  " +
+                "CH2=${formatGuidePercent(binding.guidePump2Center)}  " +
+                "CH3=${formatGuidePercent(binding.guidePump3Center)}  " +
+                "CH4=${formatGuidePercent(binding.guidePump4Center)}"
+    }
+
+    private fun formatGuidePercent(
+        guideline: View
+    ): String {
+        val params =
+            guideline.layoutParams as ConstraintLayout.LayoutParams
+
+        return String.format(
+            Locale.US,
+            "%.3f",
+            params.guidePercent
+        )
     }
 
     private fun openSelectedPumpSettings() {
@@ -315,6 +514,8 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     }
 
     companion object {
+        private const val PUMP_CALIBRATION_MODE = true
+
         private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"
         private const val ARG_DEVICE_TITLE = "deviceTitle"

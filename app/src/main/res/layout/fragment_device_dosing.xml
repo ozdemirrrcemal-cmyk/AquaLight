@@ -394,6 +394,20 @@
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
+
+<TextView
+    android:id="@+id/tvPumpCalibrationValues"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="6dp"
+    android:background="#17233A"
+    android:padding="10dp"
+    android:text="Calibration values"
+    android:textColor="@android:color/white"
+    android:textSize="12sp"
+    android:textStyle="bold"
+    android:visibility="gone" />
+
         <!-- CHANNEL 1 CARD -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardChannel1"
