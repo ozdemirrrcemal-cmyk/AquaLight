@@ -29,18 +29,6 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     private val deviceTitle: String
         get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
 
-    private val canEditDeviceName: Boolean
-        get() = requireArguments().getBoolean(
-            ARG_CAN_EDIT_DEVICE_NAME,
-            false
-        )
-
-    private val userDeviceName: String
-        get() = requireArguments().getString(ARG_USER_DEVICE_NAME).orEmpty()
-
-    private val defaultDeviceTitle: String
-        get() = requireArguments().getString(ARG_DEFAULT_DEVICE_TITLE).orEmpty()
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -54,7 +42,6 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
             view
         )
 
-        bindStaticScreen()
         bindDefaultChannelCards()
         bindClicks()
 
@@ -63,31 +50,6 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         )
 
         renderPumpRunningIndicators()
-    }
-
-    private fun bindStaticScreen() {
-        val title = deviceTitle.ifBlank {
-            userDeviceName.ifBlank {
-                defaultDeviceTitle.ifBlank {
-                    "DosePro 4"
-                }
-            }
-        }
-
-        binding.tvDosingTitle.text = title
-        binding.tvDosingSubtitle.text = "4 channel smart dosing pump"
-
-        binding.tvConnectionStatus.text = if (deviceIp.isBlank()) {
-            "Offline"
-        } else {
-            "Ready"
-        }
-
-        binding.cardDosingSummary.isClickable =
-            canEditDeviceName
-
-        binding.cardDosingSummary.isFocusable =
-            canEditDeviceName
     }
 
     private fun bindDefaultChannelCards() {
@@ -113,45 +75,48 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     }
 
     private fun bindEmptyChannelCard(
-    cardBinding: ItemDosingChannelCardBinding,
-    channelName: String
-) {
-    cardBinding.tvChannelName.text =
-        channelName
+        cardBinding: ItemDosingChannelCardBinding,
+        channelName: String
+    ) {
+        cardBinding.tvChannelName.text =
+            channelName
 
-    cardBinding.tvChannelState.text =
-        "Not set"
+        cardBinding.tvChannelState.text =
+            "Not set"
 
-    cardBinding.tvChannelHint.text =
-        "Tap to configure this channel"
+        cardBinding.tvChannelHint.text =
+            "Tap to configure this channel"
 
-    cardBinding.tvChannelDose.text =
-        "0.0 ml"
+        cardBinding.tvChannelHint.visibility =
+            View.VISIBLE
 
-    cardBinding.tvChannelSchedule.text =
-        "Every day"
+        cardBinding.tvChannelDose.text =
+            "0.0 ml"
 
-    cardBinding.tvChannelStatus.text =
-        "Not set up"
+        cardBinding.tvChannelSchedule.text =
+            "Every day"
 
-    cardBinding.tvChannelReservoir.text =
-        "0 ml · 0d"
+        cardBinding.tvChannelStatus.text =
+            "Not set up"
 
-    cardBinding.tvChannelProgressValue.text =
-        "0.00 / 0.00 ml"
+        cardBinding.tvChannelReservoir.text =
+            "0 ml · 0d"
 
-    cardBinding.progressChannelDose.progress =
-        0
+        cardBinding.tvChannelProgressValue.text =
+            "0.00 / 0.00 ml"
 
-    cardBinding.channelMetricsContainer.visibility =
-        View.GONE
+        cardBinding.progressChannelDose.progress =
+            0
 
-    cardBinding.channelProgressSection.visibility =
-        View.GONE
+        cardBinding.channelMetricsContainer.visibility =
+            View.GONE
 
-    cardBinding.btnChannelQuickDose.visibility =
-        View.GONE
-}
+        cardBinding.channelProgressSection.visibility =
+            View.GONE
+
+        cardBinding.btnChannelQuickDose.visibility =
+            View.GONE
+    }
 
     private fun bindClicks() {
         binding.hotspotPump1.setOnClickListener {
@@ -201,22 +166,6 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
                 pumpIndex = 3
             )
         }
-
-        binding.btnManualRun.setOnClickListener {
-            toggleSelectedPumpRunningForPreview()
-        }
-
-        binding.btnCalibration.setOnClickListener {
-            showComingNext(
-                message = "Calibration will be added for Pump ${selectedPumpIndex + 1}."
-            )
-        }
-
-        binding.btnSchedule.setOnClickListener {
-            showComingNext(
-                message = "Dosing schedule will be added for Pump ${selectedPumpIndex + 1}."
-            )
-        }
     }
 
     private fun handlePumpClick(
@@ -263,69 +212,32 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     }
 
     private fun applyChannelCardSelection(
-    card: MaterialCardView,
-    selected: Boolean
-) {
-    if (selected) {
-        card.setStrokeColor(
-            Color.parseColor("#315B7A")
-        )
-
-        card.setCardBackgroundColor(
-            Color.parseColor("#111A35")
-        )
-
-        card.strokeWidth =
-            dpToPx(1)
-    } else {
-        card.setStrokeColor(
-            Color.parseColor("#24314F")
-        )
-
-        card.setCardBackgroundColor(
-            Color.parseColor("#101426")
-        )
-
-        card.strokeWidth =
-            dpToPx(1)
-    }
-}
-
-    private fun toggleSelectedPumpRunningForPreview() {
-        val isRunning = runningPumpIndexes.contains(
-            selectedPumpIndex
-        )
-
-        setPumpRunning(
-            pumpIndex = selectedPumpIndex,
-            running = !isRunning
-        )
-
-        selectPump(
-            pumpIndex = selectedPumpIndex
-        )
-    }
-
-    private fun setPumpRunning(
-        pumpIndex: Int,
-        running: Boolean
+        card: MaterialCardView,
+        selected: Boolean
     ) {
-        val safePumpIndex = pumpIndex.coerceIn(
-            minimumValue = 0,
-            maximumValue = 3
-        )
-
-        if (running) {
-            runningPumpIndexes.add(
-                safePumpIndex
+        if (selected) {
+            card.setStrokeColor(
+                Color.parseColor("#315B7A")
             )
+
+            card.setCardBackgroundColor(
+                Color.parseColor("#111A35")
+            )
+
+            card.strokeWidth =
+                dpToPx(1)
         } else {
-            runningPumpIndexes.remove(
-                safePumpIndex
+            card.setStrokeColor(
+                Color.parseColor("#24314F")
             )
-        }
 
-        renderPumpRunningIndicators()
+            card.setCardBackgroundColor(
+                Color.parseColor("#101426")
+            )
+
+            card.strokeWidth =
+                dpToPx(1)
+        }
     }
 
     private fun renderPumpRunningIndicators() {
@@ -360,7 +272,7 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
     private fun openSelectedPumpSettings() {
         showComingNext(
-            message = "Pump ${selectedPumpIndex + 1} settings will open here."
+            message = "Channel ${selectedPumpIndex + 1} settings will open here."
         )
     }
 
