@@ -237,11 +237,11 @@
     <!-- INDICATORS -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorPump1"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
         android:visibility="gone"
         app:cardBackgroundColor="#22C55E"
-        app:cardCornerRadius="12.5dp"
+        app:cardCornerRadius="13dp"
         app:cardElevation="0dp"
         app:strokeColor="#86EFAC"
         app:strokeWidth="1dp"
@@ -264,11 +264,11 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorPump2"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
         android:visibility="gone"
         app:cardBackgroundColor="#22C55E"
-        app:cardCornerRadius="12.5dp"
+        app:cardCornerRadius="13dp"
         app:cardElevation="0dp"
         app:strokeColor="#86EFAC"
         app:strokeWidth="1dp"
@@ -291,11 +291,11 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorPump3"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
         android:visibility="gone"
         app:cardBackgroundColor="#22C55E"
-        app:cardCornerRadius="12.5dp"
+        app:cardCornerRadius="13dp"
         app:cardElevation="0dp"
         app:strokeColor="#86EFAC"
         app:strokeWidth="1dp"
@@ -318,11 +318,11 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/indicatorPump4"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
         android:visibility="gone"
         app:cardBackgroundColor="#22C55E"
-        app:cardCornerRadius="12.5dp"
+        app:cardCornerRadius="13dp"
         app:cardElevation="0dp"
         app:strokeColor="#86EFAC"
         app:strokeWidth="1dp"
