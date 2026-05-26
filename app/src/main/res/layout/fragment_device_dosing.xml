@@ -146,7 +146,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.478" />
+        app:layout_constraintGuide_percent="0.480" />
 
     <!-- TOUCH AREAS X -->
     <androidx.constraintlayout.widget.Guideline
@@ -211,28 +211,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.175" />
+        app:layout_constraintGuide_percent="0.090" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidePump2Center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.397" />
+        app:layout_constraintGuide_percent="0.300" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidePump3Center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.604" />
+        app:layout_constraintGuide_percent="0.740" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidePump4Center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.825" />
+        app:layout_constraintGuide_percent="0.935" />
 
     <!-- INDICATORS -->
     <com.google.android.material.card.MaterialCardView
