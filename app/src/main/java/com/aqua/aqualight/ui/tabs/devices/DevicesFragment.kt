@@ -217,6 +217,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             tank.id == connectedTankId
         }?.name ?: "Unknown aquarium"
     }
+	
+	private fun openAddDeviceScreen() {
+    findNavController().navigate(
+        R.id.action_devicesFragment_to_deviceAddFragment
+    )
+}
 
     private fun openDeviceMenu(
         device: DeviceCardUi
