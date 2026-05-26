@@ -187,9 +187,7 @@ class DeviceDosingChannelSettingsFragment :
         }
 
         binding.btnCalibrate.setOnClickListener {
-            showComingNext(
-                message = "Calibration flow will open for Channel $channelNumber."
-            )
+            openCalibrationWizard()
         }
 
         binding.btnManualDosing.setOnClickListener {
@@ -203,6 +201,33 @@ class DeviceDosingChannelSettingsFragment :
                 message = "Reset confirmation will open for Channel $channelNumber."
             )
         }
+    }
+
+    private fun openCalibrationWizard() {
+        findNavController().navigate(
+            R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingCalibrationFragment,
+            Bundle().apply {
+                putLong(
+                    ARG_DEVICE_ID,
+                    deviceId
+                )
+
+                putString(
+                    ARG_DEVICE_IP,
+                    deviceIp
+                )
+
+                putString(
+                    ARG_DEVICE_TITLE,
+                    deviceTitle
+                )
+
+                putInt(
+                    ARG_CHANNEL_INDEX,
+                    channelIndex
+                )
+            }
+        )
     }
 
     private fun selectDosingMode(
