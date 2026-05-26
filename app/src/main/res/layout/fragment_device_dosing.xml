@@ -126,45 +126,45 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <!-- CHANNEL OVERLAY ALIGNMENT -->
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guidePumpOverlayStart"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintGuide_percent="0.086" />
+<androidx.constraintlayout.widget.Guideline
+    android:id="@+id/guidePumpOverlayStart"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    app:layout_constraintGuide_percent="0.055" />
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guidePumpOverlayEnd"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintGuide_percent="0.916" />
+<androidx.constraintlayout.widget.Guideline
+    android:id="@+id/guidePumpOverlayEnd"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    app:layout_constraintGuide_percent="0.945" />
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guidePumpOverlayTop"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.185" />
+<androidx.constraintlayout.widget.Guideline
+    android:id="@+id/guidePumpOverlayTop"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    app:layout_constraintGuide_percent="0.235" />
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guidePumpOverlayBottom"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_percent="0.665" />
+<androidx.constraintlayout.widget.Guideline
+    android:id="@+id/guidePumpOverlayBottom"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    app:layout_constraintGuide_percent="0.720" />
 
-            <LinearLayout
-                android:id="@+id/pumpChannelOverlay"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:orientation="horizontal"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                app:layout_constraintStart_toStartOf="@id/guidePumpOverlayStart"
-                app:layout_constraintEnd_toEndOf="@id/guidePumpOverlayEnd"
-                app:layout_constraintTop_toTopOf="@id/guidePumpOverlayTop"
-                app:layout_constraintBottom_toBottomOf="@id/guidePumpOverlayBottom">
+<LinearLayout
+    android:id="@+id/pumpChannelOverlay"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:orientation="horizontal"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    app:layout_constraintStart_toStartOf="@id/guidePumpOverlayStart"
+    app:layout_constraintEnd_toEndOf="@id/guidePumpOverlayEnd"
+    app:layout_constraintTop_toTopOf="@id/guidePumpOverlayTop"
+    app:layout_constraintBottom_toBottomOf="@id/guidePumpOverlayBottom">
 
                 <FrameLayout
                     android:id="@+id/hotspotPump1"
