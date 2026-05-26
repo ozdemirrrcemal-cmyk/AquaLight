@@ -93,22 +93,22 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     private fun bindDefaultChannelCards() {
         bindEmptyChannelCard(
             cardBinding = binding.channelCard1,
-            channelName = "channel 1"
+            channelName = "Channel 1"
         )
 
         bindEmptyChannelCard(
             cardBinding = binding.channelCard2,
-            channelName = "channel 2"
+            channelName = "Channel 2"
         )
 
         bindEmptyChannelCard(
             cardBinding = binding.channelCard3,
-            channelName = "channel 3"
+            channelName = "Channel 3"
         )
 
         bindEmptyChannelCard(
             cardBinding = binding.channelCard4,
-            channelName = "channel 4"
+            channelName = "Channel 4"
         )
     }
 
@@ -123,7 +123,7 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         "Not set"
 
     cardBinding.tvChannelHint.text =
-        "Tap to set dose, schedule and reservoir"
+        "Tap to configure this channel"
 
     cardBinding.tvChannelDose.text =
         "0.0 ml"
@@ -263,25 +263,33 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     }
 
     private fun applyChannelCardSelection(
-        card: MaterialCardView,
-        selected: Boolean
-    ) {
-        if (selected) {
-            card.setStrokeColor(
-                Color.parseColor("#38BDF8")
-            )
+    card: MaterialCardView,
+    selected: Boolean
+) {
+    if (selected) {
+        card.setStrokeColor(
+            Color.parseColor("#315B7A")
+        )
 
-            card.strokeWidth =
-                dpToPx(2)
-        } else {
-            card.setStrokeColor(
-                Color.parseColor("#24314F")
-            )
+        card.setCardBackgroundColor(
+            Color.parseColor("#111A35")
+        )
 
-            card.strokeWidth =
-                dpToPx(1)
-        }
+        card.strokeWidth =
+            dpToPx(1)
+    } else {
+        card.setStrokeColor(
+            Color.parseColor("#24314F")
+        )
+
+        card.setCardBackgroundColor(
+            Color.parseColor("#101426")
+        )
+
+        card.strokeWidth =
+            dpToPx(1)
     }
+}
 
     private fun toggleSelectedPumpRunningForPreview() {
         val isRunning = runningPumpIndexes.contains(
