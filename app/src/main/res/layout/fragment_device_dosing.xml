@@ -102,216 +102,297 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- DOSING PUMP VISUAL -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/pumpVisualContainer"
-            android:layout_width="match_parent"
-            android:layout_height="140dp"
-            android:layout_marginTop="18dp"
-            android:clipChildren="false"
-            android:clipToPadding="false">
-
-            <ImageView
-                android:id="@+id/ivDosingPump"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:adjustViewBounds="false"
-                android:contentDescription="@null"
-                android:importantForAccessibility="no"
-                android:scaleType="fitCenter"
-                android:src="@drawable/img_dosing_pump_4ch"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <!-- CHANNEL OVERLAY ALIGNMENT -->
-<androidx.constraintlayout.widget.Guideline
-    android:id="@+id/guidePumpOverlayStart"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    app:layout_constraintGuide_percent="0.055" />
-
-<androidx.constraintlayout.widget.Guideline
-    android:id="@+id/guidePumpOverlayEnd"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    app:layout_constraintGuide_percent="0.945" />
-
-<androidx.constraintlayout.widget.Guideline
-    android:id="@+id/guidePumpOverlayTop"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    app:layout_constraintGuide_percent="0.235" />
-
-<androidx.constraintlayout.widget.Guideline
-    android:id="@+id/guidePumpOverlayBottom"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    app:layout_constraintGuide_percent="0.720" />
-
-<LinearLayout
-    android:id="@+id/pumpChannelOverlay"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    android:orientation="horizontal"
+<!-- DOSING PUMP VISUAL -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/pumpVisualContainer"
+    android:layout_width="match_parent"
+    android:layout_height="140dp"
+    android:layout_marginTop="18dp"
     android:clipChildren="false"
-    android:clipToPadding="false"
-    app:layout_constraintStart_toStartOf="@id/guidePumpOverlayStart"
-    app:layout_constraintEnd_toEndOf="@id/guidePumpOverlayEnd"
-    app:layout_constraintTop_toTopOf="@id/guidePumpOverlayTop"
-    app:layout_constraintBottom_toBottomOf="@id/guidePumpOverlayBottom">
+    android:clipToPadding="false">
 
-                <FrameLayout
-                    android:id="@+id/hotspotPump1"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:clipChildren="false"
-                    android:clipToPadding="false">
+    <ImageView
+        android:id="@+id/ivDosingPump"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:adjustViewBounds="false"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="fitCenter"
+        android:src="@drawable/img_dosing_pump_4ch"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/indicatorPump1"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:visibility="gone"
-                        app:cardBackgroundColor="#22C55E"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="#86EFAC"
-                        app:strokeWidth="1dp">
+    <!-- TOUCH AREA Y -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePumpTouchTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.185" />
 
-                        <TextView
-                            android:id="@+id/tvPumpIndicator1"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="1"
-                            android:textColor="@android:color/black"
-                            android:textSize="11sp" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePumpTouchBottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.735" />
 
-                    </com.google.android.material.card.MaterialCardView>
+    <!-- INDICATOR Y CENTER -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePumpIndicatorY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.470" />
 
-                </FrameLayout>
+    <!-- TOUCH AREAS X -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump1Start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.075" />
 
-                <FrameLayout
-                    android:id="@+id/hotspotPump2"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:clipChildren="false"
-                    android:clipToPadding="false">
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump1End"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.265" />
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/indicatorPump2"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:visibility="gone"
-                        app:cardBackgroundColor="#22C55E"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="#86EFAC"
-                        app:strokeWidth="1dp">
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump2Start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.295" />
 
-                        <TextView
-                            android:id="@+id/tvPumpIndicator2"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="2"
-                            android:textColor="@android:color/black"
-                            android:textSize="11sp" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump2End"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.485" />
 
-                    </com.google.android.material.card.MaterialCardView>
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump3Start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.515" />
 
-                </FrameLayout>
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump3End"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.705" />
 
-                <FrameLayout
-                    android:id="@+id/hotspotPump3"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:clipChildren="false"
-                    android:clipToPadding="false">
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump4Start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.735" />
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/indicatorPump3"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:visibility="gone"
-                        app:cardBackgroundColor="#22C55E"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="#86EFAC"
-                        app:strokeWidth="1dp">
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump4End"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.925" />
 
-                        <TextView
-                            android:id="@+id/tvPumpIndicator3"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="3"
-                            android:textColor="@android:color/black"
-                            android:textSize="11sp"/>
+    <!-- INDICATOR X CENTERS -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump1Center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.175" />
 
-                    </com.google.android.material.card.MaterialCardView>
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump2Center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.397" />
 
-                </FrameLayout>
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump3Center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.604" />
 
-                <FrameLayout
-                    android:id="@+id/hotspotPump4"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    android:clipChildren="false"
-                    android:clipToPadding="false">
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidePump4Center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.825" />
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/indicatorPump4"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:visibility="gone"
-                        app:cardBackgroundColor="#22C55E"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="#86EFAC"
-                        app:strokeWidth="1dp">
+    <!-- INDICATORS -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/indicatorPump1"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#22C55E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#86EFAC"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toBottomOf="@id/guidePumpIndicatorY"
+        app:layout_constraintEnd_toEndOf="@id/guidePump1Center"
+        app:layout_constraintStart_toStartOf="@id/guidePump1Center"
+        app:layout_constraintTop_toTopOf="@id/guidePumpIndicatorY">
 
-                        <TextView
-                            android:id="@+id/tvPumpIndicator4"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="4"
-                            android:textColor="@android:color/black"
-                            android:textSize="11sp" />
+        <TextView
+            android:id="@+id/tvPumpIndicator1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="1"
+            android:textColor="@android:color/black"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-                    </com.google.android.material.card.MaterialCardView>
+    </com.google.android.material.card.MaterialCardView>
 
-                </FrameLayout>
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/indicatorPump2"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#22C55E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#86EFAC"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toBottomOf="@id/guidePumpIndicatorY"
+        app:layout_constraintEnd_toEndOf="@id/guidePump2Center"
+        app:layout_constraintStart_toStartOf="@id/guidePump2Center"
+        app:layout_constraintTop_toTopOf="@id/guidePumpIndicatorY">
 
-            </LinearLayout>
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/tvPumpIndicator2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="2"
+            android:textColor="@android:color/black"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/indicatorPump3"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#22C55E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#86EFAC"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toBottomOf="@id/guidePumpIndicatorY"
+        app:layout_constraintEnd_toEndOf="@id/guidePump3Center"
+        app:layout_constraintStart_toStartOf="@id/guidePump3Center"
+        app:layout_constraintTop_toTopOf="@id/guidePumpIndicatorY">
+
+        <TextView
+            android:id="@+id/tvPumpIndicator3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="3"
+            android:textColor="@android:color/black"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/indicatorPump4"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#22C55E"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#86EFAC"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toBottomOf="@id/guidePumpIndicatorY"
+        app:layout_constraintEnd_toEndOf="@id/guidePump4Center"
+        app:layout_constraintStart_toStartOf="@id/guidePump4Center"
+        app:layout_constraintTop_toTopOf="@id/guidePumpIndicatorY">
+
+        <TextView
+            android:id="@+id/tvPumpIndicator4"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="4"
+            android:textColor="@android:color/black"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- TOUCH HOTSPOTS -->
+    <View
+        android:id="@+id/hotspotPump1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="@id/guidePumpTouchBottom"
+        app:layout_constraintEnd_toEndOf="@id/guidePump1End"
+        app:layout_constraintStart_toStartOf="@id/guidePump1Start"
+        app:layout_constraintTop_toTopOf="@id/guidePumpTouchTop" />
+
+    <View
+        android:id="@+id/hotspotPump2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="@id/guidePumpTouchBottom"
+        app:layout_constraintEnd_toEndOf="@id/guidePump2End"
+        app:layout_constraintStart_toStartOf="@id/guidePump2Start"
+        app:layout_constraintTop_toTopOf="@id/guidePumpTouchTop" />
+
+    <View
+        android:id="@+id/hotspotPump3"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="@id/guidePumpTouchBottom"
+        app:layout_constraintEnd_toEndOf="@id/guidePump3End"
+        app:layout_constraintStart_toStartOf="@id/guidePump3Start"
+        app:layout_constraintTop_toTopOf="@id/guidePumpTouchTop" />
+
+    <View
+        android:id="@+id/hotspotPump4"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="@id/guidePumpTouchBottom"
+        app:layout_constraintEnd_toEndOf="@id/guidePump4End"
+        app:layout_constraintStart_toStartOf="@id/guidePump4Start"
+        app:layout_constraintTop_toTopOf="@id/guidePumpTouchTop" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- CHANNEL 1 CARD -->
         <com.google.android.material.card.MaterialCardView
