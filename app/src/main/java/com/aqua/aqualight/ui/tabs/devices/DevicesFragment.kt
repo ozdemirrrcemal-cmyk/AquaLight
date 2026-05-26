@@ -42,7 +42,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private var selectionMode: Boolean = false
     private var isDeletingDevices: Boolean = false
-    private var isOpeningDevice: Boolean = false
 
     override fun onViewCreated(
         view: View,
@@ -75,14 +74,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             onSelectionModeStart = {
                 enterSelectionMode()
             },
-            onSelectionChanged = {
-                count ->
+            onSelectionChanged = { count ->
                 if (count == 0) {
                     exitSelectionMode()
                 }
             },
-            onDeviceClick = {
-                device ->
+            onDeviceClick = { device ->
                 openDeviceMenu(
                     device = device
                 )
@@ -107,8 +104,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun observeTanks() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-            tanks ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             latestTanks = tanks
             renderDevices()
         }
@@ -122,11 +118,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 combine(
                     devicesStore.devicesFlow,
                     DevicePresenceMonitor.statuses
-                ) {
-                    devices, statuses ->
+                ) { devices, statuses ->
                     devices to statuses
-                }.collect {
-                    pair ->
+                }.collect { pair ->
                     latestDevices = pair.first
                     latestStatuses = pair.second
 
@@ -159,32 +153,31 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         val now = System.currentTimeMillis()
 
-        val uiList = latestDevices.map {
-            device ->
+        val uiList = latestDevices.map { device ->
             val presenceState = latestStatuses[device.id]
 
             val online = presenceState?.isOnline ?: (
                 device.lastSeenMillis > 0L &&
-                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
-            )
+                    now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+                )
 
             val definition = AquaDeviceCatalog.findByType(
                 type = device.deviceType
             )
 
             val displayName = definition?.displayName
-            ?: device.name.ifBlank {
-                device.productModel.ifBlank {
-                    "Device"
+                ?: device.name.ifBlank {
+                    device.productModel.ifBlank {
+                        "Device"
+                    }
                 }
-            }
 
             val familyName = definition?.family?.displayName
-            ?: device.productFamily.ifBlank {
-                device.aquaName.ifBlank {
-                    "Unknown"
+                ?: device.productFamily.ifBlank {
+                    device.aquaName.ifBlank {
+                        "Unknown"
+                    }
                 }
-            }
 
             DeviceCardUi(
                 id = device.id,
@@ -212,72 +205,38 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     ): String {
         val connectedTankId = device.tankId ?: return ""
 
-        return latestTanks.firstOrNull {
-            tank ->
+        return latestTanks.firstOrNull { tank ->
             tank.id == connectedTankId
         }?.name ?: "Unknown aquarium"
     }
-	
-	private fun openAddDeviceScreen() {
-    findNavController().navigate(
-        R.id.action_devicesFragment_to_deviceAddFragment
-    )
-}
+
+    private fun openAddDeviceScreen() {
+        findNavController().navigate(
+            R.id.action_devicesFragment_to_deviceAddFragment
+        )
+    }
 
     private fun openDeviceMenu(
         device: DeviceCardUi
     ) {
-        if (isOpeningDevice) {
-            return
-        }
-
-        isOpeningDevice = true
-
         viewLifecycleOwner.lifecycleScope.launch {
             showGlobalLoading(
                 show = true
             )
 
-            val status = runCatching {
+            val status = try {
                 DevicePresenceMonitor.checkDeviceNow(
                     context = requireContext(),
                     deviceId = device.id,
                     knownIp = device.ip
                 )
-            }.getOrElse {
-                isOpeningDevice = false
-
+            } finally {
                 showGlobalLoading(
                     show = false
                 )
-
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.WARNING,
-                    title = getString(R.string.device_offline_title),
-                    message = getString(R.string.device_offline_message)
-                )
-
-                return@launch
-            }
-
-            if (_binding == null) {
-                isOpeningDevice = false
-
-                showGlobalLoading(
-                    show = false
-                )
-
-                return@launch
             }
 
             if (status?.isOnline != true) {
-                isOpeningDevice = false
-
-                showGlobalLoading(
-                    show = false
-                )
-
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.WARNING,
@@ -288,51 +247,19 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 return@launch
             }
 
-            val resolvedIp = status.ip.ifBlank {
-                device.ip
-            }
-
             val args = Bundle().apply {
-                putLong(
-                    "deviceId",
-                    device.id
-                )
-
-                putString(
-                    "deviceName",
-                    device.displayName
-                )
-
-                putString(
-                    "deviceAquaName",
-                    device.familyName
-                )
-
-                putString(
-                    "deviceIp",
-                    resolvedIp
-                )
-
-                putString(
-                    "deviceSerial",
-                    device.serial
-                )
-
-                putBoolean(
-                    "deviceOnline",
-                    true
-                )
+                putLong("deviceId", device.id)
+                putString("deviceName", device.displayName)
+                putString("deviceAquaName", device.familyName)
+                putString("deviceIp", status.ip)
+                putString("deviceSerial", device.serial)
+                putBoolean("deviceOnline", true)
             }
 
             findNavController().navigate(
                 R.id.action_devicesFragment_to_deviceMenuFragment,
                 args
             )
-
-            isOpeningDevice = false
-
-            // Burada loading kapatılmıyor.
-            // Açılan controller ekranı ilk gerçek veriyi alınca kapatacak.
         }
     }
 
@@ -494,7 +421,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     override fun onDestroyView() {
-        isOpeningDevice = false
         binding.rvSelectedDevices.adapter = null
         _binding = null
 
