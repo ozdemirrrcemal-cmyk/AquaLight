@@ -52,14 +52,63 @@ data class DosingEspTimerState(
 data class DosingEspState(
     val channel: DosingEspChannelState,
     val timer: DosingEspTimerState,
-    val activeMode: DosingScheduleMode
+    val activeMode: DosingScheduleMode,
+    val customPeriodTimers: List<DosingEspTimerState> = emptyList()
 ) {
-    val activeDailyDoseMl: Float
-        get() = timer.activeDailyDoseMl
+    val customPeriodsConfiguredDailyDoseMl: Float
+        get() =
+            customPeriodTimers.sumOf { timer ->
+                timer.configuredDailyDoseMl.toDouble()
+            }.toFloat()
+
+    val customPeriodsEnabled: Boolean
+        get() =
+            customPeriodTimers.any { timer ->
+                timer.enabled
+            }
+
+    val scheduleEnabled: Boolean
+        get() =
+            when (activeMode) {
+                DosingScheduleMode.CUSTOM_PERIODS -> {
+                    customPeriodsEnabled
+                }
+
+                else -> {
+                    timer.enabled
+                }
+            }
 
     val configuredDailyDoseMl: Float
-        get() = timer.configuredDailyDoseMl
+        get() =
+            when (activeMode) {
+                DosingScheduleMode.CUSTOM_PERIODS -> {
+                    if (timer.configuredDailyDoseMl > 0f) {
+                        timer.configuredDailyDoseMl
+                    } else {
+                        customPeriodsConfiguredDailyDoseMl
+                    }
+                }
+
+                else -> {
+                    timer.configuredDailyDoseMl
+                }
+            }
+
+    val activeDailyDoseMl: Float
+        get() =
+            if (scheduleEnabled) {
+                configuredDailyDoseMl
+            } else {
+                0f
+            }
 }
+
+data class DosingCustomPeriodSaveItem(
+    val startTime: String,
+    val endTime: String,
+    val doseCount: Int
+)
 
 data class DosingTimerSavePayload(
     val enabled: Boolean,

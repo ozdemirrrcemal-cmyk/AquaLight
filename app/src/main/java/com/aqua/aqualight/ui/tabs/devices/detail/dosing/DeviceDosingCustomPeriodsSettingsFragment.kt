@@ -17,11 +17,16 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.dosing.esp.DosingCustomPeriodSaveItem
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspRepository
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspState
+import com.aqua.aqualight.data.devices.dosing.esp.DosingScheduleMode
 import com.aqua.aqualight.databinding.FragmentDeviceDosingCustomPeriodsSettingsBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.bottomsheet.DosingBottomSheets
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -30,6 +35,11 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
     private var _binding: FragmentDeviceDosingCustomPeriodsSettingsBinding? = null
     private val binding get() = _binding!!
+
+    private lateinit var dosingEspRepository: DosingEspRepository
+
+    private var espDosingState: DosingEspState? =
+        null
 
     private val periods: MutableList<CustomPeriodUi> =
         mutableListOf()
@@ -46,6 +56,14 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             maximumValue = 3
         )
 
+    private val channelNumber: Int
+        get() = channelIndex + 1
+
+    private val deviceIp: String
+        get() = requireArguments().getString(
+            ARG_DEVICE_IP
+        ).orEmpty()
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -60,11 +78,15 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 view
             )
 
+        dosingEspRepository =
+            DosingEspRepository()
+
         bindHeader()
         bindSelectedPumpIndicator()
         bindClicks()
         bindDoseWatcher()
         bindInitialValues()
+        fetchCustomPeriodsStateFromEsp()
     }
 
     private fun bindHeader() {
@@ -80,32 +102,16 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-            if (channelIndex == 0) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+            if (channelIndex == 0) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump2.visibility =
-            if (channelIndex == 1) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+            if (channelIndex == 1) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump3.visibility =
-            if (channelIndex == 2) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+            if (channelIndex == 2) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump4.visibility =
-            if (channelIndex == 3) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+            if (channelIndex == 3) View.VISIBLE else View.GONE
     }
 
     private fun bindInitialValues() {
@@ -161,6 +167,107 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 ) = Unit
             }
         )
+    }
+
+    private fun fetchCustomPeriodsStateFromEsp() {
+        if (deviceIp.isBlank()) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
+        setLoading(
+            show = true
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result =
+                runCatching {
+                    dosingEspRepository.fetchDosingState(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex
+                    )
+                }
+
+            setLoading(
+                show = false
+            )
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            result.onSuccess { state ->
+                applyEspState(
+                    state = state
+                )
+            }.onFailure { throwable ->
+                DialogManager.showConfirmDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Device Data Failed",
+                    message = throwable.message
+                        ?: "Custom periods data could not be loaded from the device.",
+                    onConfirm = {
+                        fetchCustomPeriodsStateFromEsp()
+                    }
+                )
+            }
+        }
+    }
+
+    private fun applyEspState(
+        state: DosingEspState
+    ) {
+        espDosingState =
+            state
+
+        if (state.activeMode != DosingScheduleMode.CUSTOM_PERIODS) {
+            return
+        }
+
+        binding.etDailyDoseMl.setText(
+            formatDoseOnly(
+                value = state.configuredDailyDoseMl
+            )
+        )
+
+        periods.clear()
+
+        state.customPeriodTimers
+            .filter { timer ->
+                timer.name.contains(
+                    other = "CUSTOM_PERIODS",
+                    ignoreCase = true
+                )
+            }
+            .sortedBy { timer ->
+                timer.timeStart
+            }
+            .take(
+                n = MAX_PERIOD_COUNT
+            )
+            .forEach { timer ->
+                periods.add(
+                    CustomPeriodUi(
+                        startTime = timer.timeStart,
+                        endTime = calculateEndTimeFromTimer(
+                            startTime = timer.timeStart,
+                            intervalOff = timer.intervalOff,
+                            doseCount = timer.count
+                        ),
+                        doseCount = timer.count.coerceAtLeast(
+                            minimumValue = 1
+                        )
+                    )
+                )
+            }
+
+        renderSummary()
+        renderPeriods()
     }
 
     private fun createDefaultPeriod(): CustomPeriodUi {
@@ -236,6 +343,12 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 } else {
                     periods[periodIndex] =
                         newPeriod
+                }
+
+                periods.sortBy { item ->
+                    timeToMinutes(
+                        value = item.startTime
+                    )
                 }
 
                 renderSummary()
@@ -796,6 +909,15 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
         hideKeyboard()
 
+        if (deviceIp.isBlank()) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
         val dailyDoseMl =
             readDailyDoseMl()
 
@@ -845,26 +967,87 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             show = true
         )
 
+        val savePeriods =
+            periods.map { period ->
+                DosingCustomPeriodSaveItem(
+                    startTime = period.startTime,
+                    endTime = period.endTime,
+                    doseCount = period.doseCount
+                )
+            }
+
         viewLifecycleOwner.lifecycleScope.launch {
-            delay(
-                timeMillis = 700L
-            )
+            val result =
+                runCatching {
+                    val currentState =
+                        espDosingState ?: dosingEspRepository.fetchDosingState(
+                            deviceIp = deviceIp,
+                            channelIndex = channelIndex
+                        )
+
+                    val gpioPwm =
+                        currentState.timer.gpioPwm.takeIf { value ->
+                            value.isNotBlank() && value != "-"
+                        } ?: currentState.channel.gpioPwm
+
+                    if (
+                        gpioPwm.isBlank() ||
+                        gpioPwm == "-"
+                    ) {
+                        throw IllegalStateException(
+                            "PWM channel information is missing."
+                        )
+                    }
+
+                    dosingEspRepository.saveCustomPeriodsSchedule(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex,
+                        channelNumber = channelNumber,
+                        gpioPwm = gpioPwm,
+                        totalDailyDoseMl = dailyDoseMl,
+                        weekDays = currentState.timer.weekDays,
+                        periods = savePeriods,
+                        enabled = true
+                    )
+                }
 
             setLoading(
                 show = false
             )
 
-            saveInProgress =
-                false
-
             if (_binding == null) {
                 return@launch
             }
 
+            saveInProgress =
+                false
+
             renderSavingState()
             renderPeriods()
 
-            findNavController().navigateUp()
+            result.onSuccess {
+                findNavController()
+                    .previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(
+                        RESULT_DOSING_SCHEDULE_UPDATED,
+                        true
+                    )
+
+                findNavController().navigateUp()
+
+            }.onFailure { throwable ->
+                DialogManager.showConfirmDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Save Failed",
+                    message = throwable.message
+                        ?: "Custom periods could not be saved. Please check the device connection and try again.",
+                    onConfirm = {
+                        handleSaveClick()
+                    }
+                )
+            }
         }
     }
 
@@ -940,6 +1123,38 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             ?.toFloatOrNull()
     }
 
+    private fun calculateEndTimeFromTimer(
+        startTime: String,
+        intervalOff: String,
+        doseCount: Int
+    ): String {
+        val startMinutes =
+            timeToMinutes(
+                value = startTime
+            )
+
+        val intervalMinutes =
+            timeToMinutes(
+                value = intervalOff
+            )
+
+        val safeDoseCount =
+            doseCount.coerceAtLeast(
+                minimumValue = 1
+            )
+
+        val endMinutes =
+            if (safeDoseCount <= 1) {
+                startMinutes + 60
+            } else {
+                startMinutes + intervalMinutes * (safeDoseCount - 1)
+            }
+
+        return minutesToTime(
+            minutes = endMinutes
+        )
+    }
+
     private fun timeToMinutes(
         value: String
     ): Int {
@@ -969,6 +1184,34 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         return hour * 60 + minute
     }
 
+    private fun minutesToTime(
+        minutes: Int
+    ): String {
+        val safeMinutes =
+            minutes.coerceAtLeast(
+                minimumValue = 0
+            )
+
+        val dayMinutes =
+            24 * 60
+
+        val normalized =
+            safeMinutes % dayMinutes
+
+        val hour =
+            normalized / 60
+
+        val minute =
+            normalized % 60
+
+        return String.format(
+            Locale.US,
+            "%02d:%02d",
+            hour,
+            minute
+        )
+    }
+
     private fun formatMl(
         value: Float
     ): String {
@@ -987,6 +1230,24 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 )
 
             "$amount ml"
+        }
+    }
+
+    private fun formatDoseOnly(
+        value: Float
+    ): String {
+        return if (value % 1f == 0f) {
+            value.toInt().toString()
+        } else {
+            String.format(
+                Locale.US,
+                "%.2f",
+                value
+            ).trimEnd(
+                '0'
+            ).trimEnd(
+                '.'
+            )
         }
     }
 
@@ -1055,10 +1316,11 @@ class DeviceDosingCustomPeriodsSettingsFragment :
     )
 
     companion object {
-        private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"
-        private const val ARG_DEVICE_TITLE = "deviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
+
+        private const val RESULT_DOSING_SCHEDULE_UPDATED =
+            "dosingScheduleUpdated"
 
         private const val MAX_PERIOD_COUNT = 4
         private const val MAX_TOTAL_DOSE_COUNT = 24

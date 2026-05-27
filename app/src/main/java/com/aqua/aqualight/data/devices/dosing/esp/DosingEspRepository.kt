@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.dosing.esp
 
+import org.json.JSONObject
+
 class DosingEspRepository(
     private val api: DosingEspApi = DosingEspApi()
 ) {
@@ -51,6 +53,11 @@ class DosingEspRepository(
             payload = payload
         )
 
+        disableCustomPeriodSlots(
+            deviceIp = deviceIp,
+            channelIndex = channelIndex
+        )
+
         saveTimerToDevice(
             deviceIp = deviceIp
         )
@@ -74,6 +81,42 @@ class DosingEspRepository(
                 totalDailyDoseMl = totalDailyDoseMl,
                 weekDays = weekDays,
                 startTime = startTime,
+                enabled = enabled
+            )
+
+        api.postJson(
+            deviceIp = deviceIp,
+            payload = payload
+        )
+
+        disableCustomPeriodSlots(
+            deviceIp = deviceIp,
+            channelIndex = channelIndex
+        )
+
+        saveTimerToDevice(
+            deviceIp = deviceIp
+        )
+    }
+
+    suspend fun saveCustomPeriodsSchedule(
+        deviceIp: String,
+        channelIndex: Int,
+        channelNumber: Int,
+        gpioPwm: String,
+        totalDailyDoseMl: Float,
+        weekDays: List<Boolean>,
+        periods: List<DosingCustomPeriodSaveItem>,
+        enabled: Boolean
+    ) {
+        val payload =
+            DosingEspJsonMapper.createCustomPeriodsSchedulePayload(
+                channelIndex = channelIndex,
+                channelNumber = channelNumber,
+                gpioPwm = gpioPwm,
+                totalDailyDoseMl = totalDailyDoseMl,
+                weekDays = weekDays,
+                periods = periods,
                 enabled = enabled
             )
 
@@ -121,6 +164,36 @@ class DosingEspRepository(
             payload = payload
         )
 
+        if (mode != DosingScheduleMode.CUSTOM_PERIODS) {
+            disableCustomPeriodSlots(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
+        }
+
+        saveTimerToDevice(
+            deviceIp = deviceIp
+        )
+    }
+
+    suspend fun updateTimerEnabledAndWeekDays(
+        deviceIp: String,
+        channelIndex: Int,
+        enabled: Boolean,
+        weekDays: List<Boolean>
+    ) {
+        val payload =
+            DosingEspJsonMapper.createTimerEnabledWeekDaysPayload(
+                channelIndex = channelIndex,
+                enabled = enabled,
+                weekDays = weekDays
+            )
+
+        api.postJson(
+            deviceIp = deviceIp,
+            payload = payload
+        )
+
         saveTimerToDevice(
             deviceIp = deviceIp
         )
@@ -156,29 +229,72 @@ class DosingEspRepository(
             payload = payload
         )
     }
-	
-	suspend fun updateTimerEnabledAndWeekDays(
-    deviceIp: String,
-    channelIndex: Int,
-    enabled: Boolean,
-    weekDays: List<Boolean>
-) {
-    val payload =
-        DosingEspJsonMapper.createTimerEnabledWeekDaysPayload(
-            channelIndex = channelIndex,
-            enabled = enabled,
-            weekDays = weekDays
+
+    private suspend fun disableCustomPeriodSlots(
+        deviceIp: String,
+        channelIndex: Int
+    ) {
+        api.postJson(
+            deviceIp = deviceIp,
+            payload = createDisableCustomPeriodSlotsPayload(
+                channelIndex = channelIndex
+            )
         )
+    }
 
-    api.postJson(
-        deviceIp = deviceIp,
-        payload = payload
-    )
+    private fun createDisableCustomPeriodSlotsPayload(
+        channelIndex: Int
+    ): JSONObject {
+        val timerData =
+            JSONObject()
 
-    saveTimerToDevice(
-        deviceIp = deviceIp
-    )
-}
+        repeat(
+            times = 4
+        ) { periodIndex ->
+            val slotIndex =
+                DosingEspJsonMapper.getCustomPeriodSlotIndex(
+                    channelIndex = channelIndex,
+                    periodIndex = periodIndex
+                )
+
+            timerData.put(
+                slotIndex.toString(),
+                JSONObject().apply {
+                    put(
+                        "Enabled",
+                        false
+                    )
+
+                    put(
+                        "Name",
+                        "-"
+                    )
+
+                    put(
+                        "YE",
+                        0
+                    )
+
+                    put(
+                        "Count",
+                        1
+                    )
+                }
+            )
+        }
+
+        return JSONObject().apply {
+            put(
+                "LTimer",
+                JSONObject().apply {
+                    put(
+                        "Data",
+                        timerData
+                    )
+                }
+            )
+        }
+    }
 
     private suspend fun saveTimerToDevice(
         deviceIp: String
