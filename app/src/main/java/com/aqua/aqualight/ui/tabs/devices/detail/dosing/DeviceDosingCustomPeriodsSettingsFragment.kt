@@ -1,7 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
-import android.app.TimePickerDialog
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -16,6 +18,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentDeviceDosingCustomPeriodsSettingsBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.bottomsheet.DosingBottomSheets
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.delay
@@ -57,33 +60,62 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 view
             )
 
+        bindHeader()
+        bindSelectedPumpIndicator()
         bindClicks()
         bindDoseWatcher()
         bindInitialValues()
     }
 
+    private fun bindHeader() {
+        binding.tvTitle.text =
+            "Custom Periods"
+
+        binding.btnBack.setOnClickListener {
+            if (!saveInProgress) {
+                findNavController().navigateUp()
+            }
+        }
+    }
+
+    private fun bindSelectedPumpIndicator() {
+        binding.selectedIndicatorPump1.visibility =
+            if (channelIndex == 0) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        binding.selectedIndicatorPump2.visibility =
+            if (channelIndex == 1) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        binding.selectedIndicatorPump3.visibility =
+            if (channelIndex == 2) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        binding.selectedIndicatorPump4.visibility =
+            if (channelIndex == 3) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+    }
+
     private fun bindInitialValues() {
         periods.clear()
-
-        periods.add(
-            CustomPeriodUi(
-                startTime = "10:00",
-                endTime = "12:00",
-                doseCount = 2
-            )
-        )
 
         renderSummary()
         renderPeriods()
     }
 
     private fun bindClicks() {
-        binding.btnBack.setOnClickListener {
-            if (!saveInProgress) {
-                findNavController().navigateUp()
-            }
-        }
-
         binding.btnCancel.setOnClickListener {
             if (!saveInProgress) {
                 findNavController().navigateUp()
@@ -92,7 +124,10 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
         binding.btnAddPeriod.setOnClickListener {
             if (!saveInProgress) {
-                addDefaultPeriod()
+                showPeriodEditor(
+                    periodIndex = null,
+                    period = createDefaultPeriod()
+                )
             }
         }
 
@@ -128,8 +163,30 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         )
     }
 
-    private fun addDefaultPeriod() {
-        if (periods.size >= MAX_PERIOD_COUNT) {
+    private fun createDefaultPeriod(): CustomPeriodUi {
+        return if (periods.isEmpty()) {
+            CustomPeriodUi(
+                startTime = "10:00",
+                endTime = "12:00",
+                doseCount = 2
+            )
+        } else {
+            CustomPeriodUi(
+                startTime = "18:00",
+                endTime = "22:00",
+                doseCount = 4
+            )
+        }
+    }
+
+    private fun showPeriodEditor(
+        periodIndex: Int?,
+        period: CustomPeriodUi
+    ) {
+        if (
+            periodIndex == null &&
+            periods.size >= MAX_PERIOD_COUNT
+        ) {
             showSnackBar(
                 message = "You can add up to $MAX_PERIOD_COUNT periods.",
                 type = BaseActivity.SnackType.WARNING
@@ -137,29 +194,192 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             return
         }
 
-        periods.add(
-            CustomPeriodUi(
-                startTime = "18:00",
-                endTime = "22:00",
-                doseCount = 4
-            )
-        )
+        hideKeyboard()
 
-        renderSummary()
-        renderPeriods()
+        DosingBottomSheets.showCustomPeriodEditor(
+            context = requireContext(),
+            title = if (periodIndex == null) {
+                "Add Period"
+            } else {
+                "Edit Period"
+            },
+            initialStartTime = period.startTime,
+            initialEndTime = period.endTime,
+            initialDoseCount = period.doseCount,
+            maxDoseCount = MAX_TOTAL_DOSE_COUNT,
+            validator = { startTime, endTime, doseCount ->
+                validatePeriodDraft(
+                    periodIndex = periodIndex,
+                    startTime = startTime,
+                    endTime = endTime,
+                    doseCount = doseCount
+                )
+            },
+            onValidationError = { message ->
+                showSnackBar(
+                    message = message,
+                    type = BaseActivity.SnackType.WARNING
+                )
+            },
+            onDone = { result ->
+                val newPeriod =
+                    CustomPeriodUi(
+                        startTime = result.startTime,
+                        endTime = result.endTime,
+                        doseCount = result.doseCount
+                    )
+
+                if (periodIndex == null) {
+                    periods.add(
+                        newPeriod
+                    )
+                } else {
+                    periods[periodIndex] =
+                        newPeriod
+                }
+
+                renderSummary()
+                renderPeriods()
+            }
+        )
     }
 
     private fun renderPeriods() {
         binding.periodsContainer.removeAllViews()
 
-        periods.forEachIndexed { index, period ->
+        if (periods.isEmpty()) {
             binding.periodsContainer.addView(
-                createPeriodCard(
-                    index = index,
-                    period = period
-                )
+                createEmptyPeriodsCard()
             )
+        } else {
+            periods.forEachIndexed { index, period ->
+                binding.periodsContainer.addView(
+                    createPeriodCard(
+                        index = index,
+                        period = period
+                    )
+                )
+            }
         }
+    }
+
+    private fun createEmptyPeriodsCard(): View {
+        val card =
+            MaterialCardView(
+                requireContext()
+            ).apply {
+                radius =
+                    dp(
+                        value = 22f
+                    ).toFloat()
+
+                cardElevation =
+                    0f
+
+                setCardBackgroundColor(
+                    Color.parseColor("#101426")
+                )
+
+                strokeColor =
+                    Color.parseColor("#24314F")
+
+                strokeWidth =
+                    dp(
+                        value = 1f
+                    )
+
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+            }
+
+        val root =
+            LinearLayout(
+                requireContext()
+            ).apply {
+                orientation =
+                    LinearLayout.VERTICAL
+
+                gravity =
+                    Gravity.CENTER
+
+                setPadding(
+                    dp(16f),
+                    dp(18f),
+                    dp(16f),
+                    dp(18f)
+                )
+            }
+
+        val title =
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    "No periods added yet"
+
+                gravity =
+                    Gravity.CENTER
+
+                includeFontPadding =
+                    false
+
+                setTextColor(
+                    Color.WHITE
+                )
+
+                textSize =
+                    14f
+
+                setTypeface(
+                    typeface,
+                    Typeface.BOLD
+                )
+            }
+
+        val description =
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    "Tap Add Period to define a dosing window."
+
+                gravity =
+                    Gravity.CENTER
+
+                includeFontPadding =
+                    false
+
+                setTextColor(
+                    Color.parseColor("#9AA7BD")
+                )
+
+                textSize =
+                    12f
+
+                setPadding(
+                    0,
+                    dp(6f),
+                    0,
+                    0
+                )
+            }
+
+        root.addView(
+            title
+        )
+
+        root.addView(
+            description
+        )
+
+        card.addView(
+            root
+        )
+
+        return card
     }
 
     private fun createPeriodCard(
@@ -172,23 +392,36 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             ).apply {
                 radius =
                     dp(
-                        value = 20f
-                    )
+                        value = 22f
+                    ).toFloat()
 
                 cardElevation =
                     0f
 
+                isClickable =
+                    true
+
+                isFocusable =
+                    true
+
                 setCardBackgroundColor(
-                    android.graphics.Color.parseColor("#101426")
+                    Color.parseColor("#101426")
                 )
 
                 strokeColor =
-                    android.graphics.Color.parseColor("#24314F")
+                    Color.parseColor("#24314F")
 
                 strokeWidth =
                     dp(
                         value = 1f
-                    ).toInt()
+                    )
+
+                alpha =
+                    if (saveInProgress) {
+                        0.55f
+                    } else {
+                        1f
+                    }
 
                 layoutParams =
                     LinearLayout.LayoutParams(
@@ -196,10 +429,23 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                         LinearLayout.LayoutParams.WRAP_CONTENT
                     ).apply {
                         topMargin =
-                            dp(
-                                value = 10f
-                            ).toInt()
+                            if (index == 0) {
+                                0
+                            } else {
+                                dp(
+                                    value = 10f
+                                )
+                            }
                     }
+
+                setOnClickListener {
+                    if (!saveInProgress) {
+                        showPeriodEditor(
+                            periodIndex = index,
+                            period = period
+                        )
+                    }
+                }
             }
 
         val root =
@@ -210,10 +456,10 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                     LinearLayout.VERTICAL
 
                 setPadding(
-                    dp(16f).toInt(),
-                    dp(14f).toInt(),
-                    dp(16f).toInt(),
-                    dp(14f).toInt()
+                    dp(16f),
+                    dp(15f),
+                    dp(16f),
+                    dp(15f)
                 )
             }
 
@@ -235,8 +481,11 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 text =
                     "Period ${index + 1}"
 
+                includeFontPadding =
+                    false
+
                 setTextColor(
-                    android.graphics.Color.WHITE
+                    Color.WHITE
                 )
 
                 textSize =
@@ -244,7 +493,7 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
                 setTypeface(
                     typeface,
-                    android.graphics.Typeface.BOLD
+                    Typeface.BOLD
                 )
 
                 layoutParams =
@@ -253,6 +502,77 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                         LinearLayout.LayoutParams.WRAP_CONTENT,
                         1f
                     )
+            }
+
+        val doseBadge =
+            createPeriodBadge(
+                text = "${period.doseCount} doses"
+            )
+
+        titleRow.addView(
+            title
+        )
+
+        titleRow.addView(
+            doseBadge
+        )
+
+        val timeText =
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    "${period.startTime} - ${period.endTime}"
+
+                includeFontPadding =
+                    false
+
+                setTextColor(
+                    Color.WHITE
+                )
+
+                textSize =
+                    18f
+
+                setTypeface(
+                    typeface,
+                    Typeface.BOLD
+                )
+
+                setPadding(
+                    0,
+                    dp(12f),
+                    0,
+                    0
+                )
+            }
+
+        val perDose =
+            calculatePerDoseMl()
+
+        val infoText =
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    "${formatMl(perDose)} each · Tap to edit"
+
+                includeFontPadding =
+                    false
+
+                setTextColor(
+                    Color.parseColor("#9AA7BD")
+                )
+
+                textSize =
+                    12f
+
+                setPadding(
+                    0,
+                    dp(6f),
+                    0,
+                    0
+                )
             }
 
         val deleteButton =
@@ -281,29 +601,35 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                         1f
                     }
 
-                setPadding(
-                    dp(12f).toInt(),
-                    0,
-                    dp(12f).toInt(),
-                    0
+                setTextColor(
+                    Color.WHITE
                 )
+
+                backgroundTintList =
+                    ColorStateList.valueOf(
+                        Color.parseColor("#7F1D2D")
+                    )
+
+                cornerRadius =
+                    dp(
+                        value = 14f
+                    )
 
                 layoutParams =
                     LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        dp(38f).toInt()
-                    )
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        dp(
+                            value = 40f
+                        )
+                    ).apply {
+                        topMargin =
+                            dp(
+                                value = 14f
+                            )
+                    }
 
                 setOnClickListener {
                     if (saveInProgress) {
-                        return@setOnClickListener
-                    }
-
-                    if (periods.size <= 1) {
-                        showSnackBar(
-                            message = "At least one period is required.",
-                            type = BaseActivity.SnackType.WARNING
-                        )
                         return@setOnClickListener
                     }
 
@@ -316,209 +642,20 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 }
             }
 
-        titleRow.addView(
-            title
-        )
-
-        titleRow.addView(
-            deleteButton
-        )
-
-        val timeRow =
-            LinearLayout(
-                requireContext()
-            ).apply {
-                orientation =
-                    LinearLayout.HORIZONTAL
-
-                setPadding(
-                    0,
-                    dp(14f).toInt(),
-                    0,
-                    0
-                )
-            }
-
-        val startButton =
-            createSmallActionButton(
-                text = period.startTime
-            ) {
-                if (saveInProgress) {
-                    return@createSmallActionButton
-                }
-
-                showTimePicker(
-                    currentValue = period.startTime
-                ) { newTime ->
-                    periods[index] =
-                        period.copy(
-                            startTime = newTime
-                        )
-
-                    renderSummary()
-                    renderPeriods()
-                }
-            }
-
-        val endButton =
-            createSmallActionButton(
-                text = period.endTime
-            ) {
-                if (saveInProgress) {
-                    return@createSmallActionButton
-                }
-
-                showTimePicker(
-                    currentValue = period.endTime
-                ) { newTime ->
-                    periods[index] =
-                        period.copy(
-                            endTime = newTime
-                        )
-
-                    renderSummary()
-                    renderPeriods()
-                }
-            }
-
-        timeRow.addView(
-            startButton
-        )
-
-        timeRow.addView(
-            endButton
-        )
-
-        val countRow =
-            LinearLayout(
-                requireContext()
-            ).apply {
-                orientation =
-                    LinearLayout.HORIZONTAL
-
-                gravity =
-                    Gravity.CENTER_VERTICAL
-
-                setPadding(
-                    0,
-                    dp(14f).toInt(),
-                    0,
-                    0
-                )
-            }
-
-        val countText =
-            TextView(
-                requireContext()
-            ).apply {
-                text =
-                    "${period.doseCount} doses"
-
-                setTextColor(
-                    android.graphics.Color.WHITE
-                )
-
-                textSize =
-                    14f
-
-                gravity =
-                    Gravity.CENTER
-
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1f
-                    )
-            }
-
-        val minus =
-            createCountButton(
-                text = "-"
-            ) {
-                if (saveInProgress) {
-                    return@createCountButton
-                }
-
-                if (period.doseCount > 1) {
-                    periods[index] =
-                        period.copy(
-                            doseCount = period.doseCount - 1
-                        )
-
-                    renderSummary()
-                    renderPeriods()
-                }
-            }
-
-        val plus =
-            createCountButton(
-                text = "+"
-            ) {
-                if (saveInProgress) {
-                    return@createCountButton
-                }
-
-                periods[index] =
-                    period.copy(
-                        doseCount = period.doseCount + 1
-                    )
-
-                renderSummary()
-                renderPeriods()
-            }
-
-        countRow.addView(
-            minus
-        )
-
-        countRow.addView(
-            countText
-        )
-
-        countRow.addView(
-            plus
-        )
-
-        val perDose =
-            calculatePerDoseMl()
-
-        val info =
-            TextView(
-                requireContext()
-            ).apply {
-                text =
-                    "${period.startTime} - ${period.endTime} · ${period.doseCount} doses · ${formatMl(perDose)} each"
-
-                setTextColor(
-                    android.graphics.Color.parseColor("#9AA7BD")
-                )
-
-                textSize =
-                    12f
-
-                setPadding(
-                    0,
-                    dp(12f).toInt(),
-                    0,
-                    0
-                )
-            }
-
         root.addView(
             titleRow
         )
 
         root.addView(
-            timeRow
+            timeText
         )
 
         root.addView(
-            countRow
+            infoText
         )
 
         root.addView(
-            info
+            deleteButton
         )
 
         card.addView(
@@ -528,84 +665,112 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         return card
     }
 
-    private fun createSmallActionButton(
-        text: String,
-        onClick: () -> Unit
-    ): MaterialButton {
-        return MaterialButton(
-            requireContext()
-        ).apply {
-            this.text =
-                text
+    private fun createPeriodBadge(
+        text: String
+    ): MaterialCardView {
+        val badge =
+            MaterialCardView(
+                requireContext()
+            ).apply {
+                radius =
+                    dp(
+                        value = 13f
+                    ).toFloat()
 
-            isAllCaps =
-                false
+                cardElevation =
+                    0f
 
-            textSize =
-                14f
-
-            isEnabled =
-                !saveInProgress
-
-            alpha =
-                if (saveInProgress) {
-                    0.55f
-                } else {
-                    1f
-                }
-
-            layoutParams =
-                LinearLayout.LayoutParams(
-                    0,
-                    dp(44f).toInt(),
-                    1f
-                ).apply {
-                    marginEnd =
-                        dp(8f).toInt()
-                }
-
-            setOnClickListener {
-                onClick()
-            }
-        }
-    }
-
-    private fun createCountButton(
-        text: String,
-        onClick: () -> Unit
-    ): MaterialButton {
-        return MaterialButton(
-            requireContext()
-        ).apply {
-            this.text =
-                text
-
-            isAllCaps =
-                false
-
-            textSize =
-                18f
-
-            isEnabled =
-                !saveInProgress
-
-            alpha =
-                if (saveInProgress) {
-                    0.55f
-                } else {
-                    1f
-                }
-
-            layoutParams =
-                LinearLayout.LayoutParams(
-                    dp(48f).toInt(),
-                    dp(42f).toInt()
+                setCardBackgroundColor(
+                    Color.parseColor("#1A2238")
                 )
 
-            setOnClickListener {
-                onClick()
+                strokeColor =
+                    Color.parseColor("#33415F")
+
+                strokeWidth =
+                    dp(
+                        value = 1f
+                    )
+
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        dp(
+                            value = 34f
+                        )
+                    )
             }
+
+        val badgeText =
+            TextView(
+                requireContext()
+            ).apply {
+                this.text =
+                    text
+
+                gravity =
+                    Gravity.CENTER
+
+                includeFontPadding =
+                    false
+
+                setTextColor(
+                    Color.parseColor("#F43F5E")
+                )
+
+                textSize =
+                    12f
+
+                setTypeface(
+                    typeface,
+                    Typeface.BOLD
+                )
+
+                setPadding(
+                    dp(12f),
+                    0,
+                    dp(12f),
+                    0
+                )
+            }
+
+        badge.addView(
+            badgeText
+        )
+
+        return badge
+    }
+
+    private fun validatePeriodDraft(
+        periodIndex: Int?,
+        startTime: String,
+        endTime: String,
+        doseCount: Int
+    ): String? {
+        if (
+            timeToMinutes(
+                value = endTime
+            ) <= timeToMinutes(
+                value = startTime
+            )
+        ) {
+            return "End time must be later than start time."
         }
+
+        val totalDoseCountExcludingCurrent =
+            periods
+                .filterIndexed { index, _ ->
+                    index != periodIndex
+                }
+                .sumOf { period ->
+                    period.doseCount
+                }
+
+        if (totalDoseCountExcludingCurrent + doseCount > MAX_TOTAL_DOSE_COUNT) {
+            return "Total dose count cannot exceed $MAX_TOTAL_DOSE_COUNT doses per day."
+        }
+
+        return null
     }
 
     private fun renderSummary() {
@@ -619,6 +784,9 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
         binding.tvSummaryValue.text =
             "$totalDoseCount doses/day · ${formatMl(perDose)} each"
+
+        binding.tvPeriodLimitValue.text =
+            "${periods.size} / $MAX_PERIOD_COUNT"
     }
 
     private fun handleSaveClick() {
@@ -629,14 +797,7 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         hideKeyboard()
 
         val dailyDoseMl =
-            binding.etDailyDoseMl.text
-                ?.toString()
-                ?.trim()
-                ?.replace(
-                    oldValue = ",",
-                    newValue = "."
-                )
-                ?.toFloatOrNull()
+            readDailyDoseMl()
 
         if (
             dailyDoseMl == null ||
@@ -668,7 +829,7 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
         if (invalidPeriod != null) {
             showSnackBar(
-                message = "Period end time must be later than start time.",
+                message = "End time must be later than start time.",
                 type = BaseActivity.SnackType.WARNING
             )
             return
@@ -703,10 +864,7 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             renderSavingState()
             renderPeriods()
 
-            showSnackBar(
-                message = "Custom periods save will be connected after screen design is finalized.",
-                type = BaseActivity.SnackType.NORMAL
-            )
+            findNavController().navigateUp()
         }
     }
 
@@ -748,66 +906,13 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             if (saveInProgress) {
                 "Saving..."
             } else {
-                "Save periods"
+                "Save Custom Periods"
             }
-    }
-
-    private fun showTimePicker(
-        currentValue: String,
-        onSelected: (String) -> Unit
-    ) {
-        hideKeyboard()
-
-        val parts =
-            currentValue.split(":")
-
-        val hour =
-            parts.getOrNull(
-                index = 0
-            )?.toIntOrNull()
-                ?.coerceIn(
-                    minimumValue = 0,
-                    maximumValue = 23
-                ) ?: 0
-
-        val minute =
-            parts.getOrNull(
-                index = 1
-            )?.toIntOrNull()
-                ?.coerceIn(
-                    minimumValue = 0,
-                    maximumValue = 59
-                ) ?: 0
-
-        TimePickerDialog(
-            requireContext(),
-            { _, selectedHour, selectedMinute ->
-                onSelected(
-                    String.format(
-                        Locale.US,
-                        "%02d:%02d",
-                        selectedHour,
-                        selectedMinute
-                    )
-                )
-            },
-            hour,
-            minute,
-            true
-        ).show()
     }
 
     private fun calculatePerDoseMl(): Float {
         val dailyDoseMl =
-            binding.etDailyDoseMl.text
-                ?.toString()
-                ?.trim()
-                ?.replace(
-                    oldValue = ",",
-                    newValue = "."
-                )
-                ?.toFloatOrNull()
-                ?: 0f
+            readDailyDoseMl() ?: 0f
 
         val totalDoseCount =
             periods.sumOf { period ->
@@ -822,6 +927,17 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         }
 
         return dailyDoseMl / totalDoseCount.toFloat()
+    }
+
+    private fun readDailyDoseMl(): Float? {
+        return binding.etDailyDoseMl.text
+            ?.toString()
+            ?.trim()
+            ?.replace(
+                oldValue = ",",
+                newValue = "."
+            )
+            ?.toFloatOrNull()
     }
 
     private fun timeToMinutes(
@@ -909,8 +1025,11 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
     private fun dp(
         value: Float
-    ): Float {
-        return value * resources.displayMetrics.density
+    ): Int {
+        return (
+            value *
+                resources.displayMetrics.density
+            ).toInt()
     }
 
     override fun onDestroyView() {
@@ -940,6 +1059,8 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         private const val ARG_DEVICE_IP = "deviceIp"
         private const val ARG_DEVICE_TITLE = "deviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
+
         private const val MAX_PERIOD_COUNT = 4
+        private const val MAX_TOTAL_DOSE_COUNT = 24
     }
 }

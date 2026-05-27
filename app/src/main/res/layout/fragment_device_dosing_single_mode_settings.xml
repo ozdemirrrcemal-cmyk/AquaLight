@@ -299,7 +299,7 @@
                     </LinearLayout>
 
                     <com.google.android.material.card.MaterialCardView
-                        android:layout_width="118dp"
+                        android:layout_width="96dp"
                         android:layout_height="44dp"
                         android:layout_marginStart="14dp"
                         app:cardBackgroundColor="#1A2238"

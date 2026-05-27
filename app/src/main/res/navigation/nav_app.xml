@@ -281,6 +281,10 @@
 	<action
     android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingCustomPeriodsSettingsFragment"
     app:destination="@id/deviceDosingCustomPeriodsSettingsFragment" />
+	
+	<action
+    android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingTimerModeSettingsFragment"
+    app:destination="@id/deviceDosingTimerModeSettingsFragment" />
 
 </fragment>
 
@@ -325,6 +329,11 @@
     android:id="@+id/deviceDosingCustomPeriodsSettingsFragment"
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingCustomPeriodsSettingsFragment"
     android:label="Custom Periods" />
+	
+	<fragment
+    android:id="@+id/deviceDosingTimerModeSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingTimerModeSettingsFragment"
+    android:label="Timer" />
 
     <!-- ⚙️ Settings Tab -->
     <fragment

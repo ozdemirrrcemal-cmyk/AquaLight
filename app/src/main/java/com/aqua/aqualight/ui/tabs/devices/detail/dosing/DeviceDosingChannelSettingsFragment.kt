@@ -11,12 +11,14 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.dosing.DosingCalibrationDataStoreManager
+import com.aqua.aqualight.data.devices.dosing.DosingChannelSettingsDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceDosingChannelSettingsBinding
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 
 class DeviceDosingChannelSettingsFragment :
     Fragment(R.layout.fragment_device_dosing_channel_settings) {
@@ -25,6 +27,88 @@ class DeviceDosingChannelSettingsFragment :
     private val binding get() = _binding!!
 
     private lateinit var calibrationDataStoreManager: DosingCalibrationDataStoreManager
+    private lateinit var channelSettingsDataStoreManager: DosingChannelSettingsDataStoreManager
+
+    private var selectedMode: DosingMode =
+        DosingMode.SINGLE
+
+    private var scheduleEnabled: Boolean =
+        true
+
+    private var savedScheduleEnabled: Boolean =
+        true
+
+    private var dailyDoseMl: Float? =
+        0f
+
+    private var savedDailyDoseMl: Float? =
+        0f
+
+    private var selectedWeekDays: List<Boolean> =
+        List(
+            size = 7
+        ) {
+            true
+        }
+
+    private var savedWeekDays: List<Boolean> =
+        List(
+            size = 7
+        ) {
+            true
+        }
+
+    private var reservoirTrackingEnabled: Boolean =
+        true
+
+    private var savedReservoirTrackingEnabled: Boolean =
+        true
+
+    private var missedDoseCompensationEnabled: Boolean =
+        true
+
+    private var savedMissedDoseCompensationEnabled: Boolean =
+        true
+
+    private var containerVolumeMl: Float? =
+        null
+
+    private var savedContainerVolumeMl: Float? =
+        null
+
+    private var suppressScheduleCallback: Boolean =
+        false
+
+    private var suppressReservoirTrackingCallback: Boolean =
+        false
+
+    private var suppressMissedDoseCompensationCallback: Boolean =
+        false
+
+    private var saveSettingsInProgress: Boolean =
+        false
+
+    private val hasUnsavedDataStoreSettings: Boolean
+        get() =
+            reservoirTrackingEnabled != savedReservoirTrackingEnabled ||
+                missedDoseCompensationEnabled != savedMissedDoseCompensationEnabled ||
+                !areFloatValuesSame(
+                    currentValue = containerVolumeMl,
+                    savedValue = savedContainerVolumeMl
+                )
+
+    private val hasUnsavedEspTimerSettings: Boolean
+        get() =
+            scheduleEnabled != savedScheduleEnabled ||
+                !areFloatValuesSame(
+                    currentValue = dailyDoseMl,
+                    savedValue = savedDailyDoseMl
+                ) ||
+                selectedWeekDays != savedWeekDays
+
+    private val hasUnsavedChannelSettings: Boolean
+        get() =
+            hasUnsavedDataStoreSettings || hasUnsavedEspTimerSettings
 
     private val channelIndex: Int
         get() = requireArguments().getInt(
@@ -47,9 +131,6 @@ class DeviceDosingChannelSettingsFragment :
     private val deviceTitle: String
         get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
 
-    private var selectedMode: DosingMode =
-        DosingMode.SINGLE
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -69,10 +150,17 @@ class DeviceDosingChannelSettingsFragment :
                 context = requireContext()
             )
 
+        channelSettingsDataStoreManager =
+            DosingChannelSettingsDataStoreManager(
+                context = requireContext()
+            )
+
         bindHeaderActions()
         bindStaticPreview()
         bindCalibrationState()
         bindSelectedPumpIndicator()
+        syncInitialChannelSettingsFromUi()
+        bindLocalChannelSettings()
         bindClicks()
 
         selectDosingMode(
@@ -80,16 +168,14 @@ class DeviceDosingChannelSettingsFragment :
         )
 
         renderWeekDays(
-            weekDays = List(
-                size = 7
-            ) {
-                false
-            }
+            weekDays = selectedWeekDays
         )
 
         updateScheduleEnabledState(
-            enabled = binding.switchScheduleEnabled.isChecked
+            enabled = scheduleEnabled
         )
+
+        renderTopBarSaveState()
     }
 
     private fun bindHeaderActions() {
@@ -99,6 +185,12 @@ class DeviceDosingChannelSettingsFragment :
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
+
+        binding.btnSaveSettings.setOnClickListener {
+            saveChannelSettingsIfNeeded()
+        }
+
+        renderTopBarSaveState()
     }
 
     private fun bindStaticPreview() {
@@ -114,6 +206,36 @@ class DeviceDosingChannelSettingsFragment :
         makeDailyDoseCardDisplayOnly()
     }
 
+    private fun syncInitialChannelSettingsFromUi() {
+        scheduleEnabled =
+            binding.switchScheduleEnabled.isChecked
+
+        savedScheduleEnabled =
+            scheduleEnabled
+
+        missedDoseCompensationEnabled =
+            binding.switchMissedDoseCompensation.isChecked
+
+        savedMissedDoseCompensationEnabled =
+            missedDoseCompensationEnabled
+
+        dailyDoseMl =
+            readDailyDoseFromText()
+
+        savedDailyDoseMl =
+            dailyDoseMl
+
+        selectedWeekDays =
+            List(
+                size = 7
+            ) {
+                true
+            }
+
+        savedWeekDays =
+            selectedWeekDays
+    }
+
     private fun makeDailyDoseCardDisplayOnly() {
         binding.cardDailyDose.setOnClickListener(
             null
@@ -124,6 +246,272 @@ class DeviceDosingChannelSettingsFragment :
 
         binding.cardDailyDose.isFocusable =
             false
+    }
+
+    private fun bindLocalChannelSettings() {
+        binding.switchReservoirTracking.setOnCheckedChangeListener { _, isChecked ->
+            if (suppressReservoirTrackingCallback) {
+                return@setOnCheckedChangeListener
+            }
+
+            reservoirTrackingEnabled =
+                isChecked
+
+            renderReservoirTrackingState(
+                enabled = isChecked
+            )
+
+            renderTopBarSaveState()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                channelSettingsDataStoreManager.observeChannelSettings(
+                    deviceId = deviceId,
+                    channelIndex = channelIndex
+                ).collect { settings ->
+                    val hadUnsavedChanges =
+                        hasUnsavedChannelSettings || saveSettingsInProgress
+
+                    savedReservoirTrackingEnabled =
+                        settings.reservoirTrackingEnabled
+
+                    savedContainerVolumeMl =
+                        settings.containerVolumeMl
+
+                    savedMissedDoseCompensationEnabled =
+                        settings.missedDoseCompensationEnabled
+
+                    if (!hadUnsavedChanges) {
+                        reservoirTrackingEnabled =
+                            settings.reservoirTrackingEnabled
+
+                        containerVolumeMl =
+                            settings.containerVolumeMl
+
+                        missedDoseCompensationEnabled =
+                            settings.missedDoseCompensationEnabled
+
+                        suppressReservoirTrackingCallback =
+                            true
+
+                        binding.switchReservoirTracking.isChecked =
+                            settings.reservoirTrackingEnabled
+
+                        suppressReservoirTrackingCallback =
+                            false
+
+                        suppressMissedDoseCompensationCallback =
+                            true
+
+                        binding.switchMissedDoseCompensation.isChecked =
+                            settings.missedDoseCompensationEnabled
+
+                        suppressMissedDoseCompensationCallback =
+                            false
+
+                        renderReservoirTrackingState(
+                            enabled = settings.reservoirTrackingEnabled
+                        )
+                    }
+
+                    renderContainerVolumeValue(
+                        value = if (hadUnsavedChanges) {
+                            containerVolumeMl
+                        } else {
+                            settings.containerVolumeMl
+                        }
+                    )
+
+                    renderTopBarSaveState()
+                }
+            }
+        }
+    }
+
+    private fun saveChannelSettingsIfNeeded() {
+        if (
+            saveSettingsInProgress ||
+            !hasUnsavedChannelSettings
+        ) {
+            return
+        }
+
+        val hadDataStoreChanges =
+            hasUnsavedDataStoreSettings
+
+        val hadEspTimerChanges =
+            hasUnsavedEspTimerSettings
+
+        saveSettingsInProgress =
+            true
+
+        renderTopBarSaveState()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching {
+                if (hadDataStoreChanges) {
+                    channelSettingsDataStoreManager.saveLocalChannelSettings(
+                        deviceId = deviceId,
+                        channelIndex = channelIndex,
+                        reservoirTrackingEnabled = reservoirTrackingEnabled,
+                        containerVolumeMl = containerVolumeMl,
+                        missedDoseCompensationEnabled = missedDoseCompensationEnabled
+                    )
+                }
+
+                // TODO ESP32 SaveTimer:
+                // scheduleEnabled -> LTimer.Enabled
+                // dailyDoseMl -> selected mode'a göre LTimer.YE / LTimer.Count
+                // selectedWeekDays -> LTimer.WDay
+            }.onSuccess {
+                if (hadDataStoreChanges) {
+                    savedReservoirTrackingEnabled =
+                        reservoirTrackingEnabled
+
+                    savedContainerVolumeMl =
+                        containerVolumeMl
+
+                    savedMissedDoseCompensationEnabled =
+                        missedDoseCompensationEnabled
+                }
+
+                if (hadEspTimerChanges) {
+                    showSnackBar(
+                        message = "ESP32 timer save will be connected next.",
+                        type = BaseActivity.SnackType.NORMAL
+                    )
+                }
+            }.onFailure {
+                if (_binding != null) {
+                    showSnackBar(
+                        message = "Settings could not be saved.",
+                        type = BaseActivity.SnackType.WARNING
+                    )
+                }
+            }
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            saveSettingsInProgress =
+                false
+
+            renderTopBarSaveState()
+        }
+    }
+
+    private fun renderTopBarSaveState() {
+        if (_binding == null) {
+            return
+        }
+
+        val showSave =
+            hasUnsavedChannelSettings || saveSettingsInProgress
+
+        binding.btnSaveSettings.visibility =
+            if (showSave) {
+                View.VISIBLE
+            } else {
+                View.INVISIBLE
+            }
+
+        binding.btnSaveSettings.isEnabled =
+            hasUnsavedChannelSettings && !saveSettingsInProgress
+
+        binding.btnSaveSettings.alpha =
+            if (saveSettingsInProgress) {
+                0.45f
+            } else {
+                1f
+            }
+    }
+
+    private fun readDailyDoseFromText(): Float? {
+        return binding.tvDailyDoseValue.text
+            ?.toString()
+            ?.replace(
+                oldValue = "ml",
+                newValue = ""
+            )
+            ?.trim()
+            ?.replace(
+                oldValue = ",",
+                newValue = "."
+            )
+            ?.toFloatOrNull()
+    }
+
+    private fun areFloatValuesSame(
+        currentValue: Float?,
+        savedValue: Float?
+    ): Boolean {
+        if (
+            currentValue == null ||
+            savedValue == null
+        ) {
+            return currentValue == savedValue
+        }
+
+        return abs(
+            currentValue - savedValue
+        ) < 0.001f
+    }
+
+    private fun renderContainerVolumeValue(
+        value: Float?
+    ) {
+        binding.tvContainerVolumeValue.text =
+            value?.let { volume ->
+                formatContainerVolume(
+                    value = volume
+                )
+            } ?: "Not set"
+    }
+
+    private fun formatContainerVolume(
+        value: Float
+    ): String {
+        val text =
+            if (value % 1f == 0f) {
+                value.toInt().toString()
+            } else {
+                String.format(
+                    Locale.US,
+                    "%.1f",
+                    value
+                ).trimEnd(
+                    '0'
+                ).trimEnd(
+                    '.'
+                )
+            }
+
+        return "$text ml"
+    }
+
+    private fun renderReservoirTrackingState(
+        enabled: Boolean
+    ) {
+        binding.rowContainerVolume.visibility =
+            if (enabled) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        binding.rowContainerVolume.isEnabled =
+            enabled
+
+        binding.tvContainerVolumeValue.alpha =
+            if (enabled) {
+                1f
+            } else {
+                0.45f
+            }
     }
 
     private fun bindCalibrationState() {
@@ -193,9 +581,29 @@ class DeviceDosingChannelSettingsFragment :
 
     private fun bindClicks() {
         binding.switchScheduleEnabled.setOnCheckedChangeListener { _, isChecked ->
+            if (suppressScheduleCallback) {
+                return@setOnCheckedChangeListener
+            }
+
+            scheduleEnabled =
+                isChecked
+
             updateScheduleEnabledState(
                 enabled = isChecked
             )
+
+            renderTopBarSaveState()
+        }
+
+        binding.switchMissedDoseCompensation.setOnCheckedChangeListener { _, isChecked ->
+            if (suppressMissedDoseCompensationCallback) {
+                return@setOnCheckedChangeListener
+            }
+
+            missedDoseCompensationEnabled =
+                isChecked
+
+            renderTopBarSaveState()
         }
 
         binding.rowModeSingle.setOnClickListener {
@@ -269,16 +677,32 @@ class DeviceDosingChannelSettingsFragment :
         }
 
         binding.rowEveryDay.setOnClickListener {
+            if (!binding.rowEveryDay.isEnabled) {
+                return@setOnClickListener
+            }
+
             binding.radioEveryDay.isChecked =
                 true
 
-            showSnackBar(
-                message = "Recurrence selection will be added here.",
-                type = BaseActivity.SnackType.NORMAL
+            selectedWeekDays =
+                List(
+                    size = 7
+                ) {
+                    true
+                }
+
+            renderWeekDays(
+                weekDays = selectedWeekDays
             )
+
+            renderTopBarSaveState()
         }
 
         binding.rowContainerVolume.setOnClickListener {
+            if (!reservoirTrackingEnabled) {
+                return@setOnClickListener
+            }
+
             showSnackBar(
                 message = "Container volume editor will open here.",
                 type = BaseActivity.SnackType.NORMAL
@@ -301,6 +725,61 @@ class DeviceDosingChannelSettingsFragment :
                 message = "Reset confirmation will open for Channel $channelNumber.",
                 type = BaseActivity.SnackType.NORMAL
             )
+        }
+
+        bindWeekDayClicks()
+    }
+
+    private fun bindWeekDayClicks() {
+        val chips =
+            listOf(
+                binding.chipDayMon,
+                binding.chipDayTue,
+                binding.chipDayWed,
+                binding.chipDayThu,
+                binding.chipDayFri,
+                binding.chipDaySat,
+                binding.chipDaySun
+            )
+
+        chips.forEachIndexed { index, chip ->
+            chip.isClickable =
+                true
+
+            chip.isFocusable =
+                true
+
+            chip.setOnClickListener {
+                if (!binding.rowEveryDay.isEnabled) {
+                    return@setOnClickListener
+                }
+
+                val mutableDays =
+                    selectedWeekDays.toMutableList()
+
+                mutableDays[index] =
+                    !mutableDays[index]
+
+                if (mutableDays.none { selected -> selected }) {
+                    showSnackBar(
+                        message = "Please select at least one day.",
+                        type = BaseActivity.SnackType.WARNING
+                    )
+                    return@setOnClickListener
+                }
+
+                selectedWeekDays =
+                    mutableDays
+
+                binding.radioEveryDay.isChecked =
+                    selectedWeekDays.all { selected -> selected }
+
+                renderWeekDays(
+                    weekDays = selectedWeekDays
+                )
+
+                renderTopBarSaveState()
+            }
         }
     }
 
@@ -346,109 +825,53 @@ class DeviceDosingChannelSettingsFragment :
     private fun openSingleModeSettings() {
         findNavController().navigate(
             R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingSingleModeSettingsFragment,
-            Bundle().apply {
-                putLong(
-                    ARG_DEVICE_ID,
-                    deviceId
-                )
-
-                putString(
-                    ARG_DEVICE_IP,
-                    deviceIp
-                )
-
-                putString(
-                    ARG_DEVICE_TITLE,
-                    deviceTitle
-                )
-
-                putInt(
-                    ARG_CHANNEL_INDEX,
-                    channelIndex
-                )
-            }
+            createChannelBundle()
         )
     }
 
     private fun openHourly24ModeSettings() {
         findNavController().navigate(
             R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingHourly24ModeSettingsFragment,
-            Bundle().apply {
-                putLong(
-                    ARG_DEVICE_ID,
-                    deviceId
-                )
-
-                putString(
-                    ARG_DEVICE_IP,
-                    deviceIp
-                )
-
-                putString(
-                    ARG_DEVICE_TITLE,
-                    deviceTitle
-                )
-
-                putInt(
-                    ARG_CHANNEL_INDEX,
-                    channelIndex
-                )
-            }
+            createChannelBundle()
         )
     }
 
     private fun openCustomPeriodsSettings() {
         findNavController().navigate(
             R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingCustomPeriodsSettingsFragment,
-            Bundle().apply {
-                putLong(
-                    ARG_DEVICE_ID,
-                    deviceId
-                )
-
-                putString(
-                    ARG_DEVICE_IP,
-                    deviceIp
-                )
-
-                putString(
-                    ARG_DEVICE_TITLE,
-                    deviceTitle
-                )
-
-                putInt(
-                    ARG_CHANNEL_INDEX,
-                    channelIndex
-                )
-            }
+            createChannelBundle()
         )
     }
 
     private fun openCalibrationWizard() {
         findNavController().navigate(
             R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingCalibrationFragment,
-            Bundle().apply {
-                putLong(
-                    ARG_DEVICE_ID,
-                    deviceId
-                )
-
-                putString(
-                    ARG_DEVICE_IP,
-                    deviceIp
-                )
-
-                putString(
-                    ARG_DEVICE_TITLE,
-                    deviceTitle
-                )
-
-                putInt(
-                    ARG_CHANNEL_INDEX,
-                    channelIndex
-                )
-            }
+            createChannelBundle()
         )
+    }
+
+    private fun createChannelBundle(): Bundle {
+        return Bundle().apply {
+            putLong(
+                ARG_DEVICE_ID,
+                deviceId
+            )
+
+            putString(
+                ARG_DEVICE_IP,
+                deviceIp
+            )
+
+            putString(
+                ARG_DEVICE_TITLE,
+                deviceTitle
+            )
+
+            putInt(
+                ARG_CHANNEL_INDEX,
+                channelIndex
+            )
+        }
     }
 
     private fun selectDosingMode(

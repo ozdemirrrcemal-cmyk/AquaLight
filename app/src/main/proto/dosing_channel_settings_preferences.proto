@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.devices.dosing.proto";
+option java_multiple_files = true;
+
+message DosingChannelSettingsPreferences {
+  repeated DosingChannelSettingsRecord records = 1;
+}
+
+message DosingChannelSettingsRecord {
+  int64 device_id = 1;
+  int32 channel_index = 2;
+
+  bool reservoir_tracking_enabled = 3;
+
+  bool has_container_volume_ml = 4;
+  float container_volume_ml = 5;
+
+  int64 updated_at_millis = 6;
+
+  bool has_missed_dose_compensation_enabled = 7;
+  bool missed_dose_compensation_enabled = 8;
+}

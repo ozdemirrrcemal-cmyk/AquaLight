@@ -1,10 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
-import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.Fragment
@@ -13,6 +10,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentDeviceDosingHourly24ModeSettingsBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.bottomsheet.DosingBottomSheets
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -23,7 +21,7 @@ class DeviceDosingHourly24ModeSettingsFragment :
     private var _binding: FragmentDeviceDosingHourly24ModeSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private var selectedMinute: Int = 15
+    private var selectedMinute: Int = 0
     private var saveInProgress: Boolean = false
 
     private val channelIndex: Int
@@ -56,15 +54,13 @@ class DeviceDosingHourly24ModeSettingsFragment :
 
         bindHeader()
         bindSelectedPumpIndicator()
-        bindDoseWatcher()
         bindClicks()
         renderDoseMinute()
-        renderCalculatedDose()
     }
 
     private fun bindHeader() {
         binding.tvTitle.text =
-            "24 hourly"
+            "24 Hourly"
 
         binding.btnBack.setOnClickListener {
             if (!saveInProgress) {
@@ -103,36 +99,16 @@ class DeviceDosingHourly24ModeSettingsFragment :
             }
     }
 
-    private fun bindDoseWatcher() {
-        binding.etDailyDoseMl.addTextChangedListener(
-            object : TextWatcher {
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int
-                ) = Unit
-
-                override fun onTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    before: Int,
-                    count: Int
-                ) {
-                    renderCalculatedDose()
-                }
-
-                override fun afterTextChanged(
-                    s: Editable?
-                ) = Unit
-            }
-        )
-    }
-
     private fun bindClicks() {
         binding.btnCancel.setOnClickListener {
             if (!saveInProgress) {
                 findNavController().navigateUp()
+            }
+        }
+
+        binding.cardDoseMinute.setOnClickListener {
+            if (!saveInProgress) {
+                showDoseMinutePicker()
             }
         }
 
@@ -150,48 +126,19 @@ class DeviceDosingHourly24ModeSettingsFragment :
     private fun showDoseMinutePicker() {
         hideKeyboard()
 
-        val options =
-            arrayOf(
-                ":00",
-                ":15",
-                ":30",
-                ":45"
-            )
+        DosingBottomSheets.showMinutePicker(
+            context = requireContext(),
+            title = "Select Dose Minute",
+            initialMinute = selectedMinute
+        ) { minute ->
+            selectedMinute =
+                minute.coerceIn(
+                    minimumValue = 0,
+                    maximumValue = 59
+                )
 
-        val values =
-            listOf(
-                0,
-                15,
-                30,
-                45
-            )
-
-        val checkedIndex =
-            values.indexOf(
-                selectedMinute
-            ).takeIf { index ->
-                index >= 0
-            } ?: 1
-
-        AlertDialog.Builder(
-            requireContext()
-        )
-            .setTitle(
-                "Dose minute"
-            )
-            .setSingleChoiceItems(
-                options,
-                checkedIndex
-            ) { dialog, which ->
-                selectedMinute =
-                    values[which]
-
-                renderDoseMinute()
-                renderCalculatedDose()
-
-                dialog.dismiss()
-            }
-            .show()
+            renderDoseMinute()
+        }
     }
 
     private fun handleSaveClick() {
@@ -250,7 +197,7 @@ class DeviceDosingHourly24ModeSettingsFragment :
             renderSavingState()
 
             showSnackBar(
-                message = "24 hourly save will be connected after screen design is finalized.",
+                message = "24 Hourly save will be connected after screen design is finalized.",
                 type = BaseActivity.SnackType.NORMAL
             )
         }
@@ -265,42 +212,14 @@ class DeviceDosingHourly24ModeSettingsFragment :
             )
     }
 
-    private fun renderCalculatedDose() {
-        val dailyDoseMl =
-            binding.etDailyDoseMl.text
-                ?.toString()
-                ?.trim()
-                ?.replace(
-                    oldValue = ",",
-                    newValue = "."
-                )
-                ?.toFloatOrNull()
-
-        val perDose =
-            if (
-                dailyDoseMl != null &&
-                dailyDoseMl > 0f
-            ) {
-                dailyDoseMl / 24f
-            } else {
-                0f
-            }
-
-        binding.tvCalculatedDoseValue.text =
-            "${formatMl(perDose)} every hour at ${
-                String.format(
-                    Locale.US,
-                    ":%02d",
-                    selectedMinute
-                )
-            }"
-    }
-
     private fun renderSavingState() {
         binding.btnSave.isEnabled =
             !saveInProgress
 
         binding.btnCancel.isEnabled =
+            !saveInProgress
+
+        binding.cardDoseMinute.isEnabled =
             !saveInProgress
 
         binding.rowDoseMinute.isEnabled =
@@ -327,7 +246,7 @@ class DeviceDosingHourly24ModeSettingsFragment :
             if (saveInProgress) {
                 "Saving..."
             } else {
-                "Save 24 hourly"
+                "Save 24 Hourly"
             }
     }
 
@@ -344,24 +263,6 @@ class DeviceDosingHourly24ModeSettingsFragment :
             1 -> 15
             2 -> 30
             else -> 45
-        }
-    }
-
-    private fun formatMl(
-        value: Float
-    ): String {
-        return if (value % 1f == 0f) {
-            "${value.toInt()} ml"
-        } else {
-            String.format(
-                Locale.US,
-                "%.3f ml",
-                value
-            ).trimEnd(
-                '0'
-            ).trimEnd(
-                '.'
-            )
         }
     }
 
