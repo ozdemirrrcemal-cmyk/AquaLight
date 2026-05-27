@@ -182,6 +182,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         syncInitialChannelSettingsFromUi()
         bindLocalChannelSettings()
         bindClicks()
+        observeScheduleUpdateResult()
 
         selectDosingMode(
             mode = selectedMode
@@ -648,6 +649,31 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             0.45f
         } else {
             1f
+        }
+    }
+
+    private fun observeScheduleUpdateResult() {
+        findNavController()
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?.getLiveData<Boolean>(
+            RESULT_DOSING_SCHEDULE_UPDATED
+        )
+        ?.observe(
+            viewLifecycleOwner
+        ) {
+            updated ->
+            if (updated == true) {
+                findNavController()
+                .currentBackStackEntry
+                ?.savedStateHandle
+                ?.set(
+                    RESULT_DOSING_SCHEDULE_UPDATED,
+                    false
+                )
+
+                fetchDosingStateFromEsp()
+            }
         }
     }
 
@@ -1384,6 +1410,8 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         private const val ARG_DEVICE_IP = "deviceIp"
         private const val ARG_DEVICE_TITLE = "deviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
+        private const val RESULT_DOSING_SCHEDULE_UPDATED =
+    "dosingScheduleUpdated"
 
         fun newInstance(
             deviceId: Long,
