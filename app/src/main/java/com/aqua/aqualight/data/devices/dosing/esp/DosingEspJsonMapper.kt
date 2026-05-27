@@ -485,6 +485,70 @@ object DosingEspJsonMapper {
             )
         }
     }
+	
+	fun createCustomPeriodEnabledWeekDaysPayload(
+    channelIndex: Int,
+    activePeriodCount: Int,
+    enabled: Boolean,
+    weekDays: List<Boolean>
+): JSONObject {
+    val timerData =
+        JSONObject()
+
+    val safeActivePeriodCount =
+        activePeriodCount.coerceIn(
+            minimumValue = 0,
+            maximumValue = CUSTOM_PERIOD_SLOT_COUNT_PER_CHANNEL
+        )
+
+    repeat(
+        times = CUSTOM_PERIOD_SLOT_COUNT_PER_CHANNEL
+    ) { periodIndex ->
+        val slotIndex =
+            getCustomPeriodSlotIndex(
+                channelIndex = channelIndex,
+                periodIndex = periodIndex
+            )
+
+        val slotShouldBeActive =
+            periodIndex < safeActivePeriodCount
+
+        timerData.put(
+            slotIndex.toString(),
+            JSONObject().apply {
+                put(
+                    "Enabled",
+                    if (slotShouldBeActive) {
+                        enabled
+                    } else {
+                        false
+                    }
+                )
+
+                if (slotShouldBeActive) {
+                    put(
+                        "WDay",
+                        createWeekDayArray(
+                            weekDays = weekDays
+                        )
+                    )
+                }
+            }
+        )
+    }
+
+    return JSONObject().apply {
+        put(
+            KEY_L_TIMER,
+            JSONObject().apply {
+                put(
+                    KEY_DATA,
+                    timerData
+                )
+            }
+        )
+    }
+}
 
     fun createSaveTimerPayload(): JSONObject {
         return JSONObject().apply {

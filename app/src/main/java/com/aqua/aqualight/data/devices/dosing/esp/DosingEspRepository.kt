@@ -198,6 +198,31 @@ class DosingEspRepository(
             deviceIp = deviceIp
         )
     }
+	
+	suspend fun updateCustomPeriodsEnabledAndWeekDays(
+    deviceIp: String,
+    channelIndex: Int,
+    activePeriodCount: Int,
+    enabled: Boolean,
+    weekDays: List<Boolean>
+) {
+    val payload =
+        DosingEspJsonMapper.createCustomPeriodEnabledWeekDaysPayload(
+            channelIndex = channelIndex,
+            activePeriodCount = activePeriodCount,
+            enabled = enabled,
+            weekDays = weekDays
+        )
+
+    api.postJson(
+        deviceIp = deviceIp,
+        payload = payload
+    )
+
+    saveTimerToDevice(
+        deviceIp = deviceIp
+    )
+}
 
     suspend fun sendManualDose(
         deviceIp: String,
