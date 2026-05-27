@@ -16,7 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.dosing.DosingCalibrationLocalStore
+import com.aqua.aqualight.data.devices.dosing.DosingCalibrationDataStoreManager
 import com.aqua.aqualight.data.devices.dosing.DosingCalibrationTimeSource
 import com.aqua.aqualight.data.devices.dosing.EspDeviceTimeClient
 import com.aqua.aqualight.databinding.FragmentDeviceDosingCalibrationBinding
@@ -28,7 +28,7 @@ class DeviceDosingCalibrationFragment :
     private var _binding: FragmentDeviceDosingCalibrationBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var calibrationLocalStore: DosingCalibrationLocalStore
+    private lateinit var calibrationDataStoreManager: DosingCalibrationDataStoreManager
 
     private var currentStepIndex: Int = 0
     private var primeCommandRunning: Boolean = false
@@ -119,8 +119,8 @@ class DeviceDosingCalibrationFragment :
             view
         )
 
-        calibrationLocalStore =
-            DosingCalibrationLocalStore(
+        calibrationDataStoreManager =
+            DosingCalibrationDataStoreManager(
                 context = requireContext()
             )
 
@@ -155,16 +155,32 @@ class DeviceDosingCalibrationFragment :
 
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-            if (channelIndex == 0) View.VISIBLE else View.GONE
+            if (channelIndex == 0) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump2.visibility =
-            if (channelIndex == 1) View.VISIBLE else View.GONE
+            if (channelIndex == 1) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump3.visibility =
-            if (channelIndex == 2) View.VISIBLE else View.GONE
+            if (channelIndex == 2) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump4.visibility =
-            if (channelIndex == 3) View.VISIBLE else View.GONE
+            if (channelIndex == 3) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
     }
 
     private fun bindKeyboardMode() {
@@ -195,13 +211,25 @@ class DeviceDosingCalibrationFragment :
             keyboardVisible && inputStep
 
         binding.pumpVisualContainer.visibility =
-            if (compactMode) View.GONE else View.VISIBLE
+            if (compactMode) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
 
         binding.stepProgressRow.visibility =
-            if (compactMode) View.GONE else View.VISIBLE
+            if (compactMode) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
 
         binding.footerContainer.visibility =
-            if (compactMode) View.GONE else View.VISIBLE
+            if (compactMode) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
     }
 
     private fun bindInputDoneActions() {
@@ -302,10 +330,18 @@ class DeviceDosingCalibrationFragment :
             }
 
         binding.inputLiquidNameLayout.visibility =
-            if (currentStepIndex == STEP_NAME) View.VISIBLE else View.GONE
+            if (currentStepIndex == STEP_NAME) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.inputMeasuredAmountLayout.visibility =
-            if (currentStepIndex == STEP_MEASURE) View.VISIBLE else View.GONE
+            if (currentStepIndex == STEP_MEASURE) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.calibrationIllustrationView.stepIndex =
             currentStepIndex
@@ -343,7 +379,11 @@ class DeviceDosingCalibrationFragment :
             step.deviceActionText != null
 
         binding.cardStepDeviceAction.visibility =
-            if (hasDeviceAction) View.VISIBLE else View.GONE
+            if (hasDeviceAction) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.tvDeviceActionTitle.text =
             step.deviceActionTitle.orEmpty()
@@ -546,7 +586,7 @@ class DeviceDosingCalibrationFragment :
                     DosingCalibrationTimeSource.PHONE_TIME
                 }
 
-            calibrationLocalStore.saveCalibration(
+            calibrationDataStoreManager.saveCalibration(
                 deviceId = deviceId,
                 channelIndex = channelIndex,
                 liquidName = liquidName,
@@ -556,6 +596,10 @@ class DeviceDosingCalibrationFragment :
                 espRawTimeText = espTimeResult?.rawTimeText.orEmpty(),
                 measuredAmountMl = measuredAmountMl
             )
+
+            if (_binding == null) {
+                return@launch
+            }
 
             showComingNext(
                 message = if (timeSource == DosingCalibrationTimeSource.ESP_TIME) {

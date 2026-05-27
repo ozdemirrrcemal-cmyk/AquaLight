@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.devices.dosing.proto";
+option java_multiple_files = true;
+
+message DosingCalibrationPreferences {
+  repeated DosingChannelCalibrationRecord records = 1;
+}
+
+message DosingChannelCalibrationRecord {
+  int64 device_id = 1;
+  int32 channel_index = 2;
+
+  string liquid_name = 3;
+
+  int64 last_calibrated_at_millis = 4;
+  int64 phone_saved_at_millis = 5;
+
+  DosingCalibrationTimeSourceProto time_source = 6;
+  string esp_raw_time_text = 7;
+
+  bool has_measured_amount_ml = 8;
+  float measured_amount_ml = 9;
+}
+
+enum DosingCalibrationTimeSourceProto {
+  DCTS_UNSPECIFIED = 0;
+  DCTS_PHONE_TIME = 1;
+  DCTS_ESP_TIME = 2;
+}
