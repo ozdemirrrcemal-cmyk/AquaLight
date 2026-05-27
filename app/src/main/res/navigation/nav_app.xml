@@ -269,6 +269,10 @@
 	<action
     android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingCalibrationFragment"
     app:destination="@id/deviceDosingCalibrationFragment" />
+	
+	<action
+    android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingSingleModeSettingsFragment"
+    app:destination="@id/deviceDosingSingleModeSettingsFragment" />
 
 </fragment>
 
@@ -298,6 +302,11 @@
         android:defaultValue="0" />
 
 </fragment>
+
+<fragment
+    android:id="@+id/deviceDosingSingleModeSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingSingleModeSettingsFragment"
+    android:label="Single Dose" />
 
     <!-- ⚙️ Settings Tab -->
     <fragment

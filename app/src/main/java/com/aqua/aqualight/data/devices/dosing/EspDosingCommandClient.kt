@@ -38,9 +38,9 @@ object EspDosingCommandClient {
         durationMs: Long
     ): Boolean {
         val safeDurationMs =
-            durationMs.coerceAtLeast(
-                minimumValue = 1L
-            )
+        durationMs.coerceAtLeast(
+            minimumValue = 1L
+        )
 
         return setManualValue(
             deviceIp = deviceIp,
@@ -57,23 +57,23 @@ object EspDosingCommandClient {
         liquidName: String
     ): Boolean {
         val safeChannelIndex =
-            channelIndex.coerceIn(
-                minimumValue = 0,
-                maximumValue = 3
-            )
+        channelIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
 
         val safeYe =
-            yeMsPerMl.coerceAtLeast(
-                minimumValue = 1L
-            )
+        yeMsPerMl.coerceAtLeast(
+            minimumValue = 1L
+        )
 
         val safeLiquidName =
-            liquidName.trim().ifBlank {
-                "Channel ${safeChannelIndex + 1}"
-            }
+        liquidName.trim().ifBlank {
+            "Channel ${safeChannelIndex + 1}"
+        }
 
         val saveCalibrationJson =
-            """
+        """
             {
               "LPWMChanelTimer": {
                 "Data": {
@@ -88,12 +88,129 @@ object EspDosingCommandClient {
             """.trimIndent()
 
         val calibrationSaved =
-            EspDosingHttpClient.postJson(
-                deviceIp = deviceIp,
-                requestJson = saveCalibrationJson
-            ) != null
+        EspDosingHttpClient.postJson(
+            deviceIp = deviceIp,
+            requestJson = saveCalibrationJson
+        ) != null
 
         if (!calibrationSaved) {
+            return false
+        }
+
+        return saveTimerConfig(
+            deviceIp = deviceIp
+        )
+    }
+
+    suspend fun saveSingleModeSchedule(
+        deviceIp: String,
+        channelIndex: Int,
+        timerIndex: Int,
+        channelGpioPwm: String,
+        doseMl: Float,
+        startTime: String,
+        weekDays: List<Boolean>,
+        enabled: Boolean
+    ): Boolean {
+        val safeChannelIndex =
+        channelIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
+
+        val safeTimerIndex =
+        timerIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 99
+        )
+
+        val safeGpioPwm =
+        channelGpioPwm.trim()
+
+        if (
+            safeGpioPwm.isBlank() ||
+            safeGpioPwm == "-"
+        ) {
+            return false
+        }
+
+        val safeDoseMl =
+        doseMl.coerceAtLeast(
+            minimumValue = 0.01f
+        )
+
+        val safeStartTime =
+        startTime.ifBlank {
+            "00:00"
+        }
+
+        val safeWeekDays =
+        List(
+            size = 7
+        ) {
+            index ->
+            weekDays.getOrNull(
+                index = index
+            ) == true
+        }
+
+        val weekDaysJson =
+        safeWeekDays.joinToString(
+            separator = ","
+        ) {
+            selected ->
+            if (selected) {
+                "1"
+            } else {
+                "0"
+            }
+        }
+
+        val doseText =
+        String.format(
+            java.util.Locale.US,
+            "%.3f",
+            safeDoseMl
+        ).trimEnd(
+            '0'
+        ).trimEnd(
+            '.'
+        )
+
+        val requestJson =
+        """
+        {
+          "LPWMChanelTimer": {
+            "Data": {
+              "$safeChannelIndex": {
+                "Regime": "Auto"
+              }
+            }
+          },
+          "LTimer": {
+            "Data": {
+              "$safeTimerIndex": {
+                "Enabled": ${if (enabled) 1 else 0},
+                "Name": ${JSONObject.quote("Single ${safeChannelIndex + 1}")},
+                "GPIO_PWM": ${JSONObject.quote(safeGpioPwm)},
+                "YE": $doseText,
+                "WDay": [$weekDaysJson],
+                "TimeStart": ${JSONObject.quote(safeStartTime)},
+                "IntervalOff": "00:00",
+                "Count": 1
+              }
+            }
+          }
+        }
+        """.trimIndent()
+
+        val scheduleSaved =
+        EspDosingHttpClient.postJson(
+            deviceIp = deviceIp,
+            requestJson = requestJson
+        ) != null
+
+        if (!scheduleSaved) {
             return false
         }
 
@@ -107,13 +224,13 @@ object EspDosingCommandClient {
         channelIndex: Int
     ): Boolean {
         val safeChannelIndex =
-            channelIndex.coerceIn(
-                minimumValue = 0,
-                maximumValue = 3
-            )
+        channelIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
 
         val resetJson =
-            """
+        """
             {
               "LPWMChanelTimer": {
                 "Data": {
@@ -127,10 +244,10 @@ object EspDosingCommandClient {
             """.trimIndent()
 
         val resetDone =
-            EspDosingHttpClient.postJson(
-                deviceIp = deviceIp,
-                requestJson = resetJson
-            ) != null
+        EspDosingHttpClient.postJson(
+            deviceIp = deviceIp,
+            requestJson = resetJson
+        ) != null
 
         if (!resetDone) {
             return false
@@ -155,9 +272,9 @@ object EspDosingCommandClient {
         return (
             calibrationDurationMs.toDouble() / measuredAmountMl.toDouble()
         ).roundToLong()
-            .coerceAtLeast(
-                minimumValue = 1L
-            )
+        .coerceAtLeast(
+            minimumValue = 1L
+        )
     }
 
     fun calculateDurationForDose(
@@ -174,9 +291,9 @@ object EspDosingCommandClient {
         return (
             yeMsPerMl.toDouble() * doseMl.toDouble()
         ).roundToLong()
-            .coerceAtLeast(
-                minimumValue = 1L
-            )
+        .coerceAtLeast(
+            minimumValue = 1L
+        )
     }
 
     private suspend fun setManualValue(
@@ -186,18 +303,18 @@ object EspDosingCommandClient {
         durationMs: Long
     ): Boolean {
         val safeChannelIndex =
-            channelIndex.coerceIn(
-                minimumValue = 0,
-                maximumValue = 3
-            )
+        channelIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
 
         val safeDurationMs =
-            durationMs.coerceAtLeast(
-                minimumValue = 0L
-            )
+        durationMs.coerceAtLeast(
+            minimumValue = 0L
+        )
 
         val requestJson =
-            """
+        """
             {
               "LPWMChanelTimer": {
                 "Data": {
@@ -222,7 +339,7 @@ object EspDosingCommandClient {
         deviceIp: String
     ): Boolean {
         val requestJson =
-            """
+        """
             {
               "Main": {
                 "SaveTimer": 0

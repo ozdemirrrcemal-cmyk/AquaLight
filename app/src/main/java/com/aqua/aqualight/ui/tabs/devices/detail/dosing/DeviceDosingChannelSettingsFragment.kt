@@ -30,8 +30,13 @@ class DeviceDosingChannelSettingsFragment :
     private lateinit var calibrationDataStoreManager: DosingCalibrationDataStoreManager
 
     private val channelIndex: Int
-        get() = requireArguments().getInt(ARG_CHANNEL_INDEX, 0)
-            .coerceIn(0, 3)
+        get() = requireArguments().getInt(
+            ARG_CHANNEL_INDEX,
+            0
+        ).coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
 
     private val channelNumber: Int
         get() = channelIndex + 1
@@ -57,9 +62,10 @@ class DeviceDosingChannelSettingsFragment :
             savedInstanceState
         )
 
-        _binding = FragmentDeviceDosingChannelSettingsBinding.bind(
-            view
-        )
+        _binding =
+            FragmentDeviceDosingChannelSettingsBinding.bind(
+                view
+            )
 
         calibrationDataStoreManager =
             DosingCalibrationDataStoreManager(
@@ -108,7 +114,7 @@ class DeviceDosingChannelSettingsFragment :
             "Last calibrated: Not calibrated"
 
         binding.tvContainerVolumeValue.text =
-            "0 ml"
+            "Not set"
     }
 
     private fun bindCalibrationState() {
@@ -192,11 +198,7 @@ class DeviceDosingChannelSettingsFragment :
             )
 
         binding.tvContainerVolumeValue.text =
-            channel.restMl?.let { rest ->
-                formatMl(
-                    value = rest
-                )
-            } ?: "0 ml"
+            "Not set"
 
         selectDosingMode(
             mode = inferDosingMode(
@@ -333,26 +335,32 @@ class DeviceDosingChannelSettingsFragment :
         }
 
         binding.cardDailyDose.setOnClickListener {
-            showComingNext(
-                message = "Daily dose editor will open for Channel $channelNumber."
-            )
+            openSingleModeSettings()
         }
 
         binding.rowModeSingle.setOnClickListener {
             selectDosingMode(
                 mode = DosingMode.SINGLE
             )
+
+            openSingleModeSettings()
         }
 
         binding.radioModeSingle.setOnClickListener {
             selectDosingMode(
                 mode = DosingMode.SINGLE
             )
+
+            openSingleModeSettings()
         }
 
         binding.rowModeHourly.setOnClickListener {
             selectDosingMode(
                 mode = DosingMode.HOURLY_24
+            )
+
+            showComingNext(
+                message = "24 hourly settings screen will be added next."
             )
         }
 
@@ -360,11 +368,19 @@ class DeviceDosingChannelSettingsFragment :
             selectDosingMode(
                 mode = DosingMode.HOURLY_24
             )
+
+            showComingNext(
+                message = "24 hourly settings screen will be added next."
+            )
         }
 
         binding.rowModeCustomPeriods.setOnClickListener {
             selectDosingMode(
                 mode = DosingMode.CUSTOM_PERIODS
+            )
+
+            showComingNext(
+                message = "Custom periods settings screen will be added later."
             )
         }
 
@@ -372,17 +388,29 @@ class DeviceDosingChannelSettingsFragment :
             selectDosingMode(
                 mode = DosingMode.CUSTOM_PERIODS
             )
+
+            showComingNext(
+                message = "Custom periods settings screen will be added later."
+            )
         }
 
         binding.rowModeTimer.setOnClickListener {
             selectDosingMode(
                 mode = DosingMode.TIMER
             )
+
+            showComingNext(
+                message = "Timer settings screen will be added next."
+            )
         }
 
         binding.radioModeTimer.setOnClickListener {
             selectDosingMode(
                 mode = DosingMode.TIMER
+            )
+
+            showComingNext(
+                message = "Timer settings screen will be added next."
             )
         }
 
@@ -418,6 +446,33 @@ class DeviceDosingChannelSettingsFragment :
         }
     }
 
+    private fun openSingleModeSettings() {
+        findNavController().navigate(
+            R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingSingleModeSettingsFragment,
+            Bundle().apply {
+                putLong(
+                    ARG_DEVICE_ID,
+                    deviceId
+                )
+
+                putString(
+                    ARG_DEVICE_IP,
+                    deviceIp
+                )
+
+                putString(
+                    ARG_DEVICE_TITLE,
+                    deviceTitle
+                )
+
+                putInt(
+                    ARG_CHANNEL_INDEX,
+                    channelIndex
+                )
+            }
+        )
+    }
+
     private fun openCalibrationWizard() {
         findNavController().navigate(
             R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingCalibrationFragment,
@@ -448,7 +503,8 @@ class DeviceDosingChannelSettingsFragment :
     private fun selectDosingMode(
         mode: DosingMode
     ) {
-        selectedMode = mode
+        selectedMode =
+            mode
 
         binding.radioModeSingle.isChecked =
             mode == DosingMode.SINGLE
