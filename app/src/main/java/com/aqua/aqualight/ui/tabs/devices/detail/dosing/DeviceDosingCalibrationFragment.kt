@@ -19,7 +19,9 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.dosing.DosingCalibrationDataStoreManager
 import com.aqua.aqualight.data.devices.dosing.DosingCalibrationTimeSource
 import com.aqua.aqualight.data.devices.dosing.EspDeviceTimeClient
+import com.aqua.aqualight.data.devices.dosing.EspDosingCommandClient
 import com.aqua.aqualight.databinding.FragmentDeviceDosingCalibrationBinding
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class DeviceDosingCalibrationFragment :
@@ -32,6 +34,8 @@ class DeviceDosingCalibrationFragment :
 
     private var currentStepIndex: Int = 0
     private var primeCommandRunning: Boolean = false
+    private var timedDeviceCommandRunning: Boolean = false
+    private var calculatedYeMsPerMl: Long? = null
 
     private val completedDeviceActionSteps: MutableSet<Int> =
         mutableSetOf()
@@ -77,10 +81,10 @@ class DeviceDosingCalibrationFragment :
             CalibrationStep(
                 title = "Start calibration",
                 description = "Place the tube outlet into a measuring cylinder.",
-                hint = "The pump will dose a small calibration amount.",
+                hint = "The pump will dose for 6 seconds. Measure the collected liquid after it stops.",
                 miniStatus = "Calibrate",
                 deviceActionTitle = "Calibration dose",
-                deviceActionDescription = "Start the calibration dosing command for this channel.",
+                deviceActionDescription = "Start a fixed calibration dose for this channel.",
                 deviceActionText = "Start"
             ),
             CalibrationStep(
@@ -95,7 +99,7 @@ class DeviceDosingCalibrationFragment :
                 hint = "This validates the calibration with a known amount.",
                 miniStatus = "Test",
                 deviceActionTitle = "Validation dose",
-                deviceActionDescription = "Dose exactly 4 ml using the new calibration value.",
+                deviceActionDescription = "Dose exactly 4 ml using the calculated calibration value.",
                 deviceActionText = "Dose 4 ml"
             ),
             CalibrationStep(
@@ -282,9 +286,15 @@ class DeviceDosingCalibrationFragment :
                 MotionEvent.ACTION_CANCEL -> {
                     view.isPressed = false
 
+                    val wasRunning =
+                        primeCommandRunning
+
                     stopPrimeCommand()
 
-                    if (event.actionMasked == MotionEvent.ACTION_UP) {
+                    if (
+                        event.actionMasked == MotionEvent.ACTION_UP &&
+                        wasRunning
+                    ) {
                         view.performClick()
 
                         markStepDeviceActionCompleted()
@@ -305,7 +315,8 @@ class DeviceDosingCalibrationFragment :
     }
 
     private fun renderStep() {
-        val step = steps[currentStepIndex]
+        val step =
+            steps[currentStepIndex]
 
         binding.tvStepBadge.text =
             "STEP ${currentStepIndex + 1} OF ${steps.size}"
@@ -352,14 +363,15 @@ class DeviceDosingCalibrationFragment :
     }
 
     private fun renderStepProgress() {
-        val progressViews = listOf(
-            binding.stepProgress1,
-            binding.stepProgress2,
-            binding.stepProgress3,
-            binding.stepProgress4,
-            binding.stepProgress5,
-            binding.stepProgress6
-        )
+        val progressViews =
+            listOf(
+                binding.stepProgress1,
+                binding.stepProgress2,
+                binding.stepProgress3,
+                binding.stepProgress4,
+                binding.stepProgress5,
+                binding.stepProgress6
+            )
 
         progressViews.forEachIndexed { index, view ->
             view.setBackgroundColor(
@@ -373,7 +385,8 @@ class DeviceDosingCalibrationFragment :
     }
 
     private fun renderStepDeviceAction() {
-        val step = steps[currentStepIndex]
+        val step =
+            steps[currentStepIndex]
 
         val hasDeviceAction =
             step.deviceActionText != null
@@ -398,20 +411,24 @@ class DeviceDosingCalibrationFragment :
 
         binding.btnStepDeviceAction.text =
             when {
+                timedDeviceCommandRunning -> "Dosing..."
                 currentStepIndex == STEP_PRIME && deviceActionCompleted -> "Hold again"
                 deviceActionCompleted -> "Done"
                 else -> step.deviceActionText.orEmpty()
             }
 
         binding.btnStepDeviceAction.isEnabled =
-            if (currentStepIndex == STEP_PRIME) {
-                true
-            } else {
-                !deviceActionCompleted
+            when {
+                timedDeviceCommandRunning -> false
+                currentStepIndex == STEP_PRIME -> true
+                else -> !deviceActionCompleted
             }
 
         binding.btnStepDeviceAction.alpha =
-            if (deviceActionCompleted && currentStepIndex != STEP_PRIME) {
+            if (
+                deviceActionCompleted &&
+                currentStepIndex != STEP_PRIME
+            ) {
                 0.55f
             } else {
                 1f
@@ -428,13 +445,26 @@ class DeviceDosingCalibrationFragment :
             }
 
         binding.btnPrimaryAction.isEnabled =
-            primaryEnabled
+            primaryEnabled && !timedDeviceCommandRunning
 
         binding.btnPrimaryAction.alpha =
-            if (primaryEnabled) {
+            if (
+                primaryEnabled &&
+                !timedDeviceCommandRunning
+            ) {
                 1f
             } else {
                 0.45f
+            }
+
+        binding.btnSecondaryAction.isEnabled =
+            !timedDeviceCommandRunning
+
+        binding.btnSecondaryAction.alpha =
+            if (timedDeviceCommandRunning) {
+                0.45f
+            } else {
+                1f
             }
     }
 
@@ -445,13 +475,40 @@ class DeviceDosingCalibrationFragment :
 
         hideKeyboard()
 
-        primeCommandRunning = true
+        primeCommandRunning =
+            true
 
-        showComingNext(
-            message = "Pump priming started for Channel $channelNumber."
-        )
+        viewLifecycleOwner.lifecycleScope.launch {
+            val commandSent =
+                EspDosingCommandClient.startPrime(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex
+                )
 
-        // Sonra buraya ESP32 start pump / prime start komutu bağlanacak.
+            if (!commandSent) {
+                primeCommandRunning =
+                    false
+
+                if (_binding == null) {
+                    return@launch
+                }
+
+                showComingNext(
+                    message = "Prime command could not be sent."
+                )
+
+                renderStep()
+                return@launch
+            }
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            showComingNext(
+                message = "Pump priming started for Channel $channelNumber."
+            )
+        }
     }
 
     private fun stopPrimeCommand() {
@@ -459,34 +516,174 @@ class DeviceDosingCalibrationFragment :
             return
         }
 
-        primeCommandRunning = false
+        primeCommandRunning =
+            false
 
-        showComingNext(
-            message = "Pump priming stopped for Channel $channelNumber."
-        )
+        viewLifecycleOwner.lifecycleScope.launch {
+            val commandSent =
+                EspDosingCommandClient.stopManual(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex
+                )
 
-        // Sonra buraya ESP32 stop pump / prime stop komutu bağlanacak.
+            if (_binding == null) {
+                return@launch
+            }
+
+            if (commandSent) {
+                showComingNext(
+                    message = "Pump priming stopped for Channel $channelNumber."
+                )
+            } else {
+                showComingNext(
+                    message = "Prime stop command could not be sent."
+                )
+            }
+        }
     }
 
     private fun handleStepDeviceAction() {
         hideKeyboard()
 
+        if (timedDeviceCommandRunning) {
+            showComingNext(
+                message = "Please wait until the current dosing command finishes."
+            )
+            return
+        }
+
         when (currentStepIndex) {
             STEP_START_CALIBRATION -> {
-                showComingNext(
-                    message = "Calibration command will be connected for Channel $channelNumber."
-                )
-
-                markStepDeviceActionCompleted()
+                runCalibrationDoseCommand()
             }
 
             STEP_TEST_DOSE -> {
-                showComingNext(
-                    message = "Dose 4 ml command will be connected for Channel $channelNumber."
+                runTestDoseCommand()
+            }
+        }
+    }
+
+    private fun runCalibrationDoseCommand() {
+        timedDeviceCommandRunning =
+            true
+
+        renderStepDeviceAction()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val commandSent =
+                EspDosingCommandClient.runTimedDose(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    durationMs = CALIBRATION_DOSING_DURATION_MS
                 )
 
-                markStepDeviceActionCompleted()
+            if (!commandSent) {
+                timedDeviceCommandRunning =
+                    false
+
+                if (_binding == null) {
+                    return@launch
+                }
+
+                showComingNext(
+                    message = "Calibration dose command could not be sent."
+                )
+
+                renderStep()
+                return@launch
             }
+
+            delay(
+                CALIBRATION_DOSING_DURATION_MS
+            )
+
+            timedDeviceCommandRunning =
+                false
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            markStepDeviceActionCompleted()
+
+            showComingNext(
+                message = "Calibration dose completed."
+            )
+        }
+    }
+
+    private fun runTestDoseCommand() {
+        val yeMsPerMl =
+            calculatedYeMsPerMl
+
+        if (
+            yeMsPerMl == null ||
+            yeMsPerMl <= 0L
+        ) {
+            showComingNext(
+                message = "Calibration value is missing. Please measure again."
+            )
+            return
+        }
+
+        val testDoseDurationMs =
+            EspDosingCommandClient.calculateDurationForDose(
+                yeMsPerMl = yeMsPerMl,
+                doseMl = TEST_DOSE_ML
+            )
+
+        if (testDoseDurationMs == null) {
+            showComingNext(
+                message = "Test dose duration could not be calculated."
+            )
+            return
+        }
+
+        timedDeviceCommandRunning =
+            true
+
+        renderStepDeviceAction()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val commandSent =
+                EspDosingCommandClient.runTimedDose(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    durationMs = testDoseDurationMs
+                )
+
+            if (!commandSent) {
+                timedDeviceCommandRunning =
+                    false
+
+                if (_binding == null) {
+                    return@launch
+                }
+
+                showComingNext(
+                    message = "Test dose command could not be sent."
+                )
+
+                renderStep()
+                return@launch
+            }
+
+            delay(
+                testDoseDurationMs
+            )
+
+            timedDeviceCommandRunning =
+                false
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            markStepDeviceActionCompleted()
+
+            showComingNext(
+                message = "4 ml test dose completed."
+            )
         }
     }
 
@@ -499,6 +696,13 @@ class DeviceDosingCalibrationFragment :
     }
 
     private fun handlePrimaryAction() {
+        if (timedDeviceCommandRunning) {
+            showComingNext(
+                message = "Please wait until the dosing command finishes."
+            )
+            return
+        }
+
         when (currentStepIndex) {
             STEP_NAME -> {
                 val liquidName =
@@ -537,6 +741,25 @@ class DeviceDosingCalibrationFragment :
                     )
                     return
                 }
+
+                val calculatedYe =
+                    EspDosingCommandClient.calculateYeMsPerMl(
+                        calibrationDurationMs = CALIBRATION_DOSING_DURATION_MS,
+                        measuredAmountMl = measuredAmount
+                    )
+
+                if (
+                    calculatedYe == null ||
+                    calculatedYe <= 0L
+                ) {
+                    showComingNext(
+                        message = "Calibration value could not be calculated."
+                    )
+                    return
+                }
+
+                calculatedYeMsPerMl =
+                    calculatedYe
 
                 goToNextStep()
             }
@@ -586,6 +809,41 @@ class DeviceDosingCalibrationFragment :
                     DosingCalibrationTimeSource.PHONE_TIME
                 }
 
+            val yeMsPerMl =
+                calculatedYeMsPerMl
+
+            if (
+                yeMsPerMl == null ||
+                yeMsPerMl <= 0L
+            ) {
+                if (_binding == null) {
+                    return@launch
+                }
+
+                showComingNext(
+                    message = "Calibration value is missing. Please measure again."
+                )
+                return@launch
+            }
+
+            val coefficientSavedOnDevice =
+                EspDosingCommandClient.saveCalibrationCoefficient(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    yeMsPerMl = yeMsPerMl
+                )
+
+            if (!coefficientSavedOnDevice) {
+                if (_binding == null) {
+                    return@launch
+                }
+
+                showComingNext(
+                    message = "Calibration could not be saved to device."
+                )
+                return@launch
+            }
+
             calibrationDataStoreManager.saveCalibration(
                 deviceId = deviceId,
                 channelIndex = channelIndex,
@@ -614,6 +872,13 @@ class DeviceDosingCalibrationFragment :
     }
 
     private fun handleSecondaryAction() {
+        if (timedDeviceCommandRunning) {
+            showComingNext(
+                message = "Please wait until the dosing command finishes."
+            )
+            return
+        }
+
         hideKeyboard()
         stopPrimeCommand()
 
@@ -630,7 +895,12 @@ class DeviceDosingCalibrationFragment :
                 )
             )
 
-            currentStepIndex = STEP_START_CALIBRATION
+            calculatedYeMsPerMl =
+                null
+
+            currentStepIndex =
+                STEP_START_CALIBRATION
+
             renderStep()
             scrollToTop()
             return
@@ -659,6 +929,13 @@ class DeviceDosingCalibrationFragment :
     }
 
     private fun handleBackPressed() {
+        if (timedDeviceCommandRunning) {
+            showComingNext(
+                message = "Please wait until the dosing command finishes."
+            )
+            return
+        }
+
         hideKeyboard()
         stopPrimeCommand()
 
@@ -726,6 +1003,9 @@ class DeviceDosingCalibrationFragment :
     override fun onDestroyView() {
         stopPrimeCommand()
 
+        timedDeviceCommandRunning =
+            false
+
         _binding = null
 
         super.onDestroyView()
@@ -747,6 +1027,9 @@ class DeviceDosingCalibrationFragment :
         private const val STEP_START_CALIBRATION = 2
         private const val STEP_MEASURE = 3
         private const val STEP_TEST_DOSE = 4
+
+        private const val CALIBRATION_DOSING_DURATION_MS = 6000L
+        private const val TEST_DOSE_ML = 4f
 
         private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"

@@ -1,11 +1,5 @@
 package com.aqua.aqualight.data.devices.dosing
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
-import java.net.URLEncoder
 import java.util.Calendar
 import java.util.Locale
 
@@ -19,87 +13,27 @@ object EspDeviceTimeClient {
     suspend fun readCurrentTimeMillis(
         deviceIp: String
     ): EspDeviceTimeResult? {
-        val safeDeviceIp =
-            deviceIp.trim()
+        val root =
+            EspDosingHttpClient.getJson(
+                deviceIp = deviceIp,
+                requestJson = """{"Time":{"TimeCurrent":0}}"""
+            ) ?: return null
 
-        if (safeDeviceIp.isBlank()) {
-            return null
-        }
+        val rawTime =
+            root.optJSONObject("Time")
+                ?.optString("TimeCurrent")
+                .orEmpty()
+                .trim()
 
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                val requestJson =
-                    """{"Time":{"TimeCurrent":0}}"""
+        val millis =
+            parseEspTimeCurrent(
+                rawTime = rawTime
+            ) ?: return null
 
-                val encodedJson =
-                    URLEncoder.encode(
-                        requestJson,
-                        "UTF-8"
-                    )
-
-                val encodedRet =
-                    URLEncoder.encode(
-                        "TimeCurrent",
-                        "UTF-8"
-                    )
-
-                val url =
-                    URL(
-                        "http://$safeDeviceIp/get?Json=$encodedJson&sRet=$encodedRet"
-                    )
-
-                val connection =
-                    url.openConnection() as HttpURLConnection
-
-                connection.requestMethod =
-                    "GET"
-
-                connection.connectTimeout =
-                    2500
-
-                connection.readTimeout =
-                    2500
-
-                connection.useCaches =
-                    false
-
-                val responseCode =
-                    connection.responseCode
-
-                if (responseCode !in 200..299) {
-                    connection.disconnect()
-                    return@runCatching null
-                }
-
-                val responseBody =
-                    connection.inputStream
-                        .bufferedReader()
-                        .use { reader ->
-                            reader.readText()
-                        }
-
-                connection.disconnect()
-
-                val root =
-                    JSONObject(responseBody)
-
-                val rawTime =
-                    root.optJSONObject("Time")
-                        ?.optString("TimeCurrent")
-                        .orEmpty()
-                        .trim()
-
-                val millis =
-                    parseEspTimeCurrent(
-                        rawTime = rawTime
-                    ) ?: return@runCatching null
-
-                EspDeviceTimeResult(
-                    millis = millis,
-                    rawTimeText = rawTime
-                )
-            }.getOrNull()
-        }
+        return EspDeviceTimeResult(
+            millis = millis,
+            rawTimeText = rawTime
+        )
     }
 
     private fun parseEspTimeCurrent(
