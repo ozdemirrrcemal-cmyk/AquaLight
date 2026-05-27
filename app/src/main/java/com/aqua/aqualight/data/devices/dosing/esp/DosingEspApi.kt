@@ -10,7 +10,6 @@ import java.net.URL
 import java.net.URLEncoder
 
 class DosingEspApi(
-    private val endpointPath: String = "/",
     private val connectTimeoutMillis: Int = 6_000,
     private val readTimeoutMillis: Int = 8_000
 ) {
@@ -29,8 +28,13 @@ class DosingEspApi(
 
             val url =
                 URL(
-                    "${createBaseUrl(deviceIp)}?Json=$encodedJson&sRet=1"
+                    "${createBaseUrl(deviceIp)}/get?Json=$encodedJson&sRet=1"
                 )
+
+            android.util.Log.d(
+                TAG,
+                "GET $url"
+            )
 
             val connection =
                 openConnection(
@@ -62,10 +66,16 @@ class DosingEspApi(
         ) {
             val url =
                 URL(
-                    createBaseUrl(
-                        deviceIp = deviceIp
-                    )
+                    "${createBaseUrl(deviceIp)}/set"
                 )
+
+            val body =
+                "Json=${encode(payload.toString())}&sRet=1&"
+
+            android.util.Log.d(
+                TAG,
+                "POST $url BODY=$body"
+            )
 
             val connection =
                 openConnection(
@@ -80,9 +90,6 @@ class DosingEspApi(
                         "text/plain; charset=UTF-8"
                     )
                 }
-
-            val body =
-                "Json=${encode(payload.toString())}&sRet=1&"
 
             try {
                 OutputStreamWriter(
@@ -155,6 +162,11 @@ class DosingEspApi(
                 BufferedReader::readText
             )
 
+        android.util.Log.d(
+            TAG,
+            "HTTP $responseCode RESPONSE=$responseText"
+        )
+
         if (responseCode !in 200..299) {
             throw IllegalStateException(
                 "ESP32 request failed. HTTP $responseCode: $responseText"
@@ -179,30 +191,20 @@ class DosingEspApi(
                     suffix = "/"
                 )
 
-        val withScheme =
-            if (
-                normalizedIp.startsWith(
-                    prefix = "http://",
-                    ignoreCase = true
-                ) ||
-                normalizedIp.startsWith(
-                    prefix = "https://",
-                    ignoreCase = true
-                )
-            ) {
-                normalizedIp
-            } else {
-                "http://$normalizedIp"
-            }
-
-        val normalizedPath =
-            if (endpointPath.startsWith("/")) {
-                endpointPath
-            } else {
-                "/$endpointPath"
-            }
-
-        return "$withScheme$normalizedPath"
+        return if (
+            normalizedIp.startsWith(
+                prefix = "http://",
+                ignoreCase = true
+            ) ||
+            normalizedIp.startsWith(
+                prefix = "https://",
+                ignoreCase = true
+            )
+        ) {
+            normalizedIp
+        } else {
+            "http://$normalizedIp"
+        }
     }
 
     private fun encode(
@@ -212,5 +214,9 @@ class DosingEspApi(
             value,
             Charsets.UTF_8.name()
         )
+    }
+
+    companion object {
+        private const val TAG = "DOSING_ESP"
     }
 }
