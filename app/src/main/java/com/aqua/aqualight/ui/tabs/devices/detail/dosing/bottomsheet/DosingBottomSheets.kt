@@ -725,342 +725,344 @@ fun showMlValueEditor(
     description: String,
     hint: String,
     initialValue: Float?,
+    confirmButtonText: String = "Done",
     allowClear: Boolean = true,
     onValidationError: (message: String) -> Unit = {},
     onClear: (() -> Unit)? = null,
-    onDone: (value: Float) -> Unit
+onDone: (value: Float) -> Unit
 ) {
-    val dialog =
-        BottomSheetDialog(
-            context
-        )
+val dialog =
+BottomSheetDialog(
+    context
+)
 
-    val root =
-        createRoot(
-            context = context
-        )
+val root =
+createRoot(
+    context = context
+)
 
-    val inputCard =
-        MaterialCardView(
-            context
-        ).apply {
-            radius =
-                dp(
-                    context = context,
-                    value = 18
-                ).toFloat()
+val inputCard =
+MaterialCardView(
+    context
+).apply {
+    radius =
+    dp(
+        context = context,
+        value = 18
+    ).toFloat()
 
-            cardElevation =
-                0f
+    cardElevation =
+    0f
 
-            setCardBackgroundColor(
-                Color.parseColor("#1A2238")
-            )
-
-            strokeColor =
-                Color.parseColor("#33415F")
-
-            strokeWidth =
-                dp(
-                    context = context,
-                    value = 1
-                )
-
-            layoutParams =
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    dp(
-                        context = context,
-                        value = 56
-                    )
-                ).apply {
-                    topMargin =
-                        dp(
-                            context = context,
-                            value = 16
-                        )
-                }
-        }
-
-    val inputRow =
-        LinearLayout(
-            context
-        ).apply {
-            orientation =
-                LinearLayout.HORIZONTAL
-
-            gravity =
-                Gravity.CENTER_VERTICAL
-
-            setPadding(
-                dp(
-                    context = context,
-                    value = 16
-                ),
-                0,
-                dp(
-                    context = context,
-                    value = 16
-                ),
-                0
-            )
-        }
-
-    val editText =
-        EditText(
-            context
-        ).apply {
-            setText(
-                initialValue?.let { value ->
-                    formatSheetMlInput(
-                        value = value
-                    )
-                }.orEmpty()
-            )
-
-            setHint(
-                hint
-            )
-
-            setSingleLine(
-                true
-            )
-
-            inputType =
-                android.text.InputType.TYPE_CLASS_NUMBER or
-                    android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-
-            setTextColor(
-                Color.WHITE
-            )
-
-            setHintTextColor(
-                Color.parseColor("#6B7280")
-            )
-
-            textSize =
-                18f
-
-            typeface =
-                Typeface.DEFAULT_BOLD
-
-            gravity =
-                Gravity.CENTER_VERTICAL or Gravity.END
-
-            background =
-                null
-
-            includeFontPadding =
-                false
-
-            layoutParams =
-                LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    1f
-                )
-        }
-
-    val suffix =
-        TextView(
-            context
-        ).apply {
-            text =
-                "ml"
-
-            setTextColor(
-                Color.parseColor("#F43F5E")
-            )
-
-            textSize =
-                15f
-
-            typeface =
-                Typeface.DEFAULT_BOLD
-
-            gravity =
-                Gravity.CENTER
-
-            includeFontPadding =
-                false
-
-            setPadding(
-                dp(
-                    context = context,
-                    value = 8
-                ),
-                0,
-                0,
-                0
-            )
-        }
-
-    inputRow.addView(
-        editText
+    setCardBackgroundColor(
+        Color.parseColor("#1A2238")
     )
 
-    inputRow.addView(
-        suffix
+    strokeColor =
+    Color.parseColor("#33415F")
+
+    strokeWidth =
+    dp(
+        context = context,
+        value = 1
     )
 
-    inputCard.addView(
-        inputRow
-    )
-
-    val buttonRow =
-        createButtonRow(
-            context = context
-        ).apply {
-            setPadding(
-                0,
-                dp(
-                    context = context,
-                    value = 18
-                ),
-                0,
-                0
-            )
-        }
-
-    val cancelButton =
-        createButton(
+    layoutParams =
+    LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        dp(
             context = context,
-            text = "Cancel",
-            backgroundColor = "#17253C",
-            textColor = "#FFFFFF",
-            weight = 1f
-        ).apply {
-            setOnClickListener {
-                dialog.dismiss()
-            }
+            value = 56
+        )
+    ).apply {
+        topMargin =
+        dp(
+            context = context,
+            value = 16
+        )
+    }
+}
+
+val inputRow =
+LinearLayout(
+    context
+).apply {
+    orientation =
+    LinearLayout.HORIZONTAL
+
+    gravity =
+    Gravity.CENTER_VERTICAL
+
+    setPadding(
+        dp(
+            context = context,
+            value = 16
+        ),
+        0,
+        dp(
+            context = context,
+            value = 16
+        ),
+        0
+    )
+}
+
+val editText =
+EditText(
+    context
+).apply {
+    setText(
+        initialValue?.let {
+            value ->
+            formatSheetMlInput(
+                value = value
+            )
+        }.orEmpty()
+    )
+
+    setHint(
+        hint
+    )
+
+    setSingleLine(
+        true
+    )
+
+    inputType =
+    android.text.InputType.TYPE_CLASS_NUMBER or
+    android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+
+    setTextColor(
+        Color.WHITE
+    )
+
+    setHintTextColor(
+        Color.parseColor("#6B7280")
+    )
+
+    textSize =
+    18f
+
+    typeface =
+    Typeface.DEFAULT_BOLD
+
+    gravity =
+    Gravity.CENTER_VERTICAL or Gravity.END
+
+    background =
+    null
+
+    includeFontPadding =
+    false
+
+    layoutParams =
+    LinearLayout.LayoutParams(
+        0,
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        1f
+    )
+}
+
+val suffix =
+TextView(
+    context
+).apply {
+    text =
+    "ml"
+
+    setTextColor(
+        Color.parseColor("#F43F5E")
+    )
+
+    textSize =
+    15f
+
+    typeface =
+    Typeface.DEFAULT_BOLD
+
+    gravity =
+    Gravity.CENTER
+
+    includeFontPadding =
+    false
+
+    setPadding(
+        dp(
+            context = context,
+            value = 8
+        ),
+        0,
+        0,
+        0
+    )
+}
+
+inputRow.addView(
+    editText
+)
+
+inputRow.addView(
+    suffix
+)
+
+inputCard.addView(
+    inputRow
+)
+
+val buttonRow =
+createButtonRow(
+    context = context
+).apply {
+    setPadding(
+        0,
+        dp(
+            context = context,
+            value = 18
+        ),
+        0,
+        0
+    )
+}
+
+val cancelButton =
+createButton(
+    context = context,
+    text = "Cancel",
+    backgroundColor = "#17253C",
+    textColor = "#FFFFFF",
+    weight = 1f
+).apply {
+    setOnClickListener {
+        dialog.dismiss()
+    }
+}
+
+val doneButton =
+createButton(
+    context = context,
+    text = "Done",
+    backgroundColor = "#F43F5E",
+    textColor = "#FFFFFF",
+    weight = 1.35f
+).apply {
+    setOnClickListener {
+        val value =
+        editText.text
+        ?.toString()
+        ?.trim()
+        ?.replace(
+            oldValue = ",",
+            newValue = "."
+        )
+        ?.toFloatOrNull()
+
+        if (
+            value == null ||
+            value <= 0f
+        ) {
+            onValidationError(
+                "Please enter a valid volume."
+            )
+
+            return@setOnClickListener
         }
 
-    val doneButton =
-        createButton(
-            context = context,
-            text = "Done",
-            backgroundColor = "#F43F5E",
-            textColor = "#FFFFFF",
-            weight = 1.35f
-        ).apply {
-            setOnClickListener {
-                val value =
-                    editText.text
-                        ?.toString()
-                        ?.trim()
-                        ?.replace(
-                            oldValue = ",",
-                            newValue = "."
-                        )
-                        ?.toFloatOrNull()
-
-                if (
-                    value == null ||
-                    value <= 0f
-                ) {
-                    onValidationError(
-                        "Please enter a valid volume."
-                    )
-
-                    return@setOnClickListener
-                }
-
-                onDone(
-                    value
-                )
-
-                dialog.dismiss()
-            }
-        }
-
-    buttonRow.addView(
-        cancelButton
-    )
-
-    buttonRow.addView(
-        doneButton
-    )
-
-    root.addView(
-        createHandle(
-            context = context
+        onDone(
+            value
         )
-    )
 
-    root.addView(
-        createTitle(
-            context = context,
-            text = title
-        )
-    )
+        dialog.dismiss()
+    }
+}
 
-    root.addView(
-        createSubtitle(
-            context = context,
-            text = description
-        )
-    )
+buttonRow.addView(
+    cancelButton
+)
 
-    root.addView(
-        inputCard
-    )
+buttonRow.addView(
+    doneButton
+)
 
-    if (
-        allowClear &&
-        onClear != null
-    ) {
-        val clearButton =
-            createButton(
+root.addView(
+    createHandle(
+        context = context
+    )
+)
+
+root.addView(
+    createTitle(
+        context = context,
+        text = title
+    )
+)
+
+root.addView(
+    createSubtitle(
+        context = context,
+        text = description
+    )
+)
+
+root.addView(
+    inputCard
+)
+
+if (
+    allowClear &&
+    onClear != null
+) {
+    val clearButton =
+    createButton(
+        context = context,
+        text = "Clear value",
+        backgroundColor = "#7F1D2D",
+        textColor = "#FFFFFF",
+        weight = 1f
+    ).apply {
+        layoutParams =
+        LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            dp(
                 context = context,
-                text = "Clear value",
-                backgroundColor = "#7F1D2D",
-                textColor = "#FFFFFF",
-                weight = 1f
-            ).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        dp(
-                            context = context,
-                            value = 46
-                        )
-                    ).apply {
-                        topMargin =
-                            dp(
-                                context = context,
-                                value = 12
-                            )
-                    }
+                value = 46
+            )
+        ).apply {
+            topMargin =
+            dp(
+                context = context,
+                value = 12
+            )
+        }
 
-                setOnClickListener {
-                    onClear()
-                    dialog.dismiss()
-                }
-            }
-
-        root.addView(
-            clearButton
-        )
+        setOnClickListener {
+            onClear()
+            dialog.dismiss()
+        }
     }
 
     root.addView(
-        buttonRow
+        clearButton
     )
+}
 
-    showDialog(
-        dialog = dialog,
-        root = root
-    )
+root.addView(
+    buttonRow
+)
 
-    editText.requestFocus()
+showDialog(
+    dialog = dialog,
+    root = root
+)
+
+editText.requestFocus()
 }
 
 fun showTimerDoseEditor(
-    context: Context,
-    title: String,
-    initialStartTime: String,
-    initialDoseMl: Float,
-    validator: ((startTime: String, doseMl: Float) -> String?)? = null,
+context: Context,
+title: String,
+initialStartTime: String,
+initialDoseMl: Float,
+validator: ((startTime: String, doseMl: Float) -> String?)? = null,
 onValidationError: (message: String) -> Unit = {},
 onDelete: (() -> Unit)? = null,
 onDone: (result: TimerDoseResult) -> Unit
@@ -1168,7 +1170,7 @@ dialog.dismiss()
 val doneButton =
 createButton(
 context = context,
-text = "Done",
+text = confirmButtonText,
 backgroundColor = "#F43F5E",
 textColor = "#FFFFFF",
 weight = 1.35f
@@ -2369,21 +2371,21 @@ maximumValue = 59
 }
 
 private fun formatSheetMlInput(
-    value: Float
+value: Float
 ): String {
-    return if (value % 1f == 0f) {
-        value.toInt().toString()
-    } else {
-        String.format(
-            Locale.US,
-            "%.1f",
-            value
-        ).trimEnd(
-            '0'
-        ).trimEnd(
-            '.'
-        )
-    }
+return if (value % 1f == 0f) {
+value.toInt().toString()
+} else {
+String.format(
+Locale.US,
+"%.1f",
+value
+).trimEnd(
+'0'
+).trimEnd(
+'.'
+)
+}
 }
 
 private fun dp(
