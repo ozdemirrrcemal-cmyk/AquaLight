@@ -30,7 +30,8 @@ data class EspDosingTimerState(
 
 data class EspDosingChannelSettingsSnapshot(
     val channel: EspDosingChannelState,
-    val timer: EspDosingTimerState?
+    val timer: EspDosingTimerState?,
+    val timersForChannel: List<EspDosingTimerState>
 )
 
 object EspDosingSettingsClient {
@@ -50,16 +51,24 @@ object EspDosingSettingsClient {
                 deviceIp = deviceIp
             )
 
-        val matchedTimer =
-            timers.firstOrNull { timer ->
-                timer.gpioPwm.isNotBlank() &&
-                    timer.gpioPwm != "-" &&
-                    timer.gpioPwm == channel.gpioPwm
-            }
+        val timersForChannel =
+            timers
+                .filter { timer ->
+                    timer.gpioPwm.isNotBlank() &&
+                        timer.gpioPwm != "-" &&
+                        timer.gpioPwm == channel.gpioPwm
+                }
+                .sortedBy { timer ->
+                    timer.timerIndex
+                }
+
+        val primaryTimer =
+            timersForChannel.firstOrNull()
 
         return EspDosingChannelSettingsSnapshot(
             channel = channel,
-            timer = matchedTimer
+            timer = primaryTimer,
+            timersForChannel = timersForChannel
         )
     }
 
@@ -229,11 +238,11 @@ object EspDosingSettingsClient {
             ),
             timeStart = optString(
                 "TimeStart",
-                "00:00:00"
+                "00:00"
             ),
             intervalOff = optString(
                 "IntervalOff",
-                "00:00:00"
+                "00:00"
             ),
             count = optInt(
                 "Count",
@@ -255,12 +264,20 @@ object EspDosingSettingsClient {
 
         return runCatching {
             when (val value = get(key)) {
-                is Number -> value.toFloat()
-                is String -> value.replace(
-                    oldValue = ",",
-                    newValue = "."
-                ).toFloatOrNull()
-                else -> null
+                is Number -> {
+                    value.toFloat()
+                }
+
+                is String -> {
+                    value.replace(
+                        oldValue = ",",
+                        newValue = "."
+                    ).toFloatOrNull()
+                }
+
+                else -> {
+                    null
+                }
             }
         }.getOrNull()
     }
@@ -273,39 +290,74 @@ object EspDosingSettingsClient {
         }
 
         return when (val value = opt(key)) {
-            is Boolean -> value
-            is Number -> value.toInt() != 0
+            is Boolean -> {
+                value
+            }
+
+            is Number -> {
+                value.toInt() != 0
+            }
+
             is String -> {
                 value.equals(
                     other = "true",
                     ignoreCase = true
                 ) || value == "1"
             }
-            else -> false
+
+            else -> {
+                false
+            }
         }
     }
 
     private fun JSONObject.optWeekDays(
         key: String
     ): List<Boolean> {
+        val rawValue =
+            opt(key)
+
         val array =
-            optJSONArray(
-                key
-            ) ?: JSONArray()
+            when (rawValue) {
+                is JSONArray -> {
+                    rawValue
+                }
+
+                is String -> {
+                    runCatching {
+                        JSONArray(
+                            rawValue
+                        )
+                    }.getOrNull() ?: JSONArray()
+                }
+
+                else -> {
+                    JSONArray()
+                }
+            }
 
         return List(
             size = 7
         ) { index ->
             when (val value = array.opt(index)) {
-                is Boolean -> value
-                is Number -> value.toInt() != 0
+                is Boolean -> {
+                    value
+                }
+
+                is Number -> {
+                    value.toInt() != 0
+                }
+
                 is String -> {
                     value.equals(
                         other = "true",
                         ignoreCase = true
                     ) || value == "1"
                 }
-                else -> false
+
+                else -> {
+                    false
+                }
             }
         }
     }

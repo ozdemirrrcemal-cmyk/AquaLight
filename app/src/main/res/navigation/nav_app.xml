@@ -277,6 +277,10 @@
 	<action
     android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingHourly24ModeSettingsFragment"
     app:destination="@id/deviceDosingHourly24ModeSettingsFragment" />
+	
+	<action
+    android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingCustomPeriodsSettingsFragment"
+    app:destination="@id/deviceDosingCustomPeriodsSettingsFragment" />
 
 </fragment>
 
@@ -316,6 +320,11 @@
     android:id="@+id/deviceDosingHourly24ModeSettingsFragment"
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingHourly24ModeSettingsFragment"
     android:label="24 Hourly Dose" />
+	
+	<fragment
+    android:id="@+id/deviceDosingCustomPeriodsSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingCustomPeriodsSettingsFragment"
+    android:label="Custom Periods" />
 
     <!-- ⚙️ Settings Tab -->
     <fragment

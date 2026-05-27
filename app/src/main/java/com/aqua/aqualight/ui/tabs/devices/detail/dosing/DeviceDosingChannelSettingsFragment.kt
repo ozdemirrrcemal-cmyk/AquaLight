@@ -173,7 +173,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         val channel =
         snapshot.channel
 
-        val timer =
+        val primaryTimer =
         snapshot.timer
 
         binding.tvChannelSettingsTitle.text =
@@ -181,17 +181,19 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             "Channel $channelNumber"
         }
 
+        val hasEnabledTimer =
+        snapshot.timersForChannel.any {
+            timer ->
+            timer.enabled
+        }
+
         binding.switchScheduleEnabled.isChecked =
-        timer?.enabled == true
+        hasEnabledTimer
 
         val dailyDoseMl =
-        if (timer != null && timer.enabled) {
-            timer.doseMl * timer.count.coerceAtLeast(
-                minimumValue = 1
-            )
-        } else {
-            0f
-        }
+        calculateDailyDoseMl(
+            timers = snapshot.timersForChannel
+        )
 
         binding.tvDailyDoseValue.text =
         formatMl(
@@ -203,16 +205,15 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
         selectDosingMode(
             mode = inferDosingMode(
-                timer = timer
+                timers = snapshot.timersForChannel
             )
         )
 
         renderWeekDays(
-            weekDays = timer?.weekDays ?: List(
-                size = 7
-            ) {
-                false
-            }
+            weekDays = resolveWeekDays(
+                timers = snapshot.timersForChannel,
+                fallbackTimer = primaryTimer
+            )
         )
 
         updateScheduleEnabledState(
@@ -220,17 +221,72 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         )
     }
 
+    private fun calculateDailyDoseMl(
+        timers: List<EspDosingTimerState>
+    ): Float {
+        return timers
+        .filter {
+            timer ->
+            timer.enabled
+        }
+        .sumOf {
+            timer ->
+            (
+                timer.doseMl *
+                timer.count.coerceAtLeast(
+                    minimumValue = 1
+                )
+            ).toDouble()
+        }
+        .toFloat()
+    }
+
     private fun inferDosingMode(
-        timer: EspDosingTimerState?
+        timers: List<EspDosingTimerState>
     ): DosingMode {
-        if (timer == null || !timer.enabled) {
+        val activeTimers =
+        timers.filter {
+            timer ->
+            timer.enabled
+        }
+
+        if (activeTimers.isEmpty()) {
             return DosingMode.SINGLE
         }
+
+        if (activeTimers.size > 1) {
+            return DosingMode.CUSTOM_PERIODS
+        }
+
+        val timer =
+        activeTimers.first()
 
         return when {
             timer.count == 24 -> DosingMode.HOURLY_24
             timer.count <= 1 -> DosingMode.SINGLE
             else -> DosingMode.TIMER
+        }
+    }
+
+    private fun resolveWeekDays(
+        timers: List<EspDosingTimerState>,
+        fallbackTimer: EspDosingTimerState?
+    ): List<Boolean> {
+        val activeTimer =
+        timers.firstOrNull {
+            timer ->
+            timer.enabled && timer.weekDays.any {
+                selected ->
+                selected
+            }
+        }
+
+        return activeTimer?.weekDays
+        ?: fallbackTimer?.weekDays
+        ?: List(
+            size = 7
+        ) {
+            false
         }
     }
 
@@ -373,24 +429,20 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             openHourly24ModeSettings()
         }
 
-        binding.radioModeHourly.setOnClickListener {
-            selectDosingMode(
-                mode = DosingMode.HOURLY_24
-            )
-
-            showComingNext(
-                message = "24 hourly settings screen will be added next."
-            )
-        }
-
         binding.rowModeCustomPeriods.setOnClickListener {
             selectDosingMode(
                 mode = DosingMode.CUSTOM_PERIODS
             )
 
-            showComingNext(
-                message = "Custom periods settings screen will be added later."
+            openCustomPeriodsSettings()
+        }
+
+        binding.radioModeCustomPeriods.setOnClickListener {
+            selectDosingMode(
+                mode = DosingMode.CUSTOM_PERIODS
             )
+
+            openCustomPeriodsSettings()
         }
 
         binding.radioModeCustomPeriods.setOnClickListener {
@@ -399,7 +451,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             )
 
             showComingNext(
-                message = "Custom periods settings screen will be added later."
+                message = "Custom periods settings screen will be added next."
             )
         }
 
@@ -485,6 +537,33 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     private fun openHourly24ModeSettings() {
         findNavController().navigate(
             R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingHourly24ModeSettingsFragment,
+            Bundle().apply {
+                putLong(
+                    ARG_DEVICE_ID,
+                    deviceId
+                )
+
+                putString(
+                    ARG_DEVICE_IP,
+                    deviceIp
+                )
+
+                putString(
+                    ARG_DEVICE_TITLE,
+                    deviceTitle
+                )
+
+                putInt(
+                    ARG_CHANNEL_INDEX,
+                    channelIndex
+                )
+            }
+        )
+    }
+
+    private fun openCustomPeriodsSettings() {
+        findNavController().navigate(
+            R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingCustomPeriodsSettingsFragment,
             Bundle().apply {
                 putLong(
                     ARG_DEVICE_ID,
