@@ -9,9 +9,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspRepository
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspState
+import com.aqua.aqualight.data.devices.dosing.esp.DosingScheduleMode
 import com.aqua.aqualight.databinding.FragmentDeviceDosingHourly24ModeSettingsBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.bottomsheet.DosingBottomSheets
-import kotlinx.coroutines.delay
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -21,8 +25,16 @@ class DeviceDosingHourly24ModeSettingsFragment :
     private var _binding: FragmentDeviceDosingHourly24ModeSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private var selectedMinute: Int = 0
-    private var saveInProgress: Boolean = false
+    private lateinit var dosingEspRepository: DosingEspRepository
+
+    private var espDosingState: DosingEspState? =
+        null
+
+    private var selectedMinute: Int =
+        0
+
+    private var saveInProgress: Boolean =
+        false
 
     private val channelIndex: Int
         get() = requireArguments().getInt(
@@ -32,6 +44,14 @@ class DeviceDosingHourly24ModeSettingsFragment :
             minimumValue = 0,
             maximumValue = 3
         )
+
+    private val channelNumber: Int
+        get() = channelIndex + 1
+
+    private val deviceIp: String
+        get() = requireArguments().getString(
+            ARG_DEVICE_IP
+        ).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -47,6 +67,9 @@ class DeviceDosingHourly24ModeSettingsFragment :
                 view
             )
 
+        dosingEspRepository =
+            DosingEspRepository()
+
         selectedMinute =
             defaultMinuteForChannel(
                 channelIndex = channelIndex
@@ -56,6 +79,7 @@ class DeviceDosingHourly24ModeSettingsFragment :
         bindSelectedPumpIndicator()
         bindClicks()
         renderDoseMinute()
+        fetchHourly24ModeStateFromEsp()
     }
 
     private fun bindHeader() {
@@ -123,6 +147,78 @@ class DeviceDosingHourly24ModeSettingsFragment :
         }
     }
 
+    private fun fetchHourly24ModeStateFromEsp() {
+        if (deviceIp.isBlank()) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
+        setLoading(
+            show = true
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result =
+                runCatching {
+                    dosingEspRepository.fetchDosingState(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex
+                    )
+                }
+
+            setLoading(
+                show = false
+            )
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            result.onSuccess { state ->
+                applyEspState(
+                    state = state
+                )
+            }.onFailure { throwable ->
+                DialogManager.showConfirmDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Device Data Failed",
+                    message = throwable.message
+                        ?: "24 Hourly mode data could not be loaded from the device.",
+                    onConfirm = {
+                        fetchHourly24ModeStateFromEsp()
+                    }
+                )
+            }
+        }
+    }
+
+    private fun applyEspState(
+        state: DosingEspState
+    ) {
+        espDosingState =
+            state
+
+        if (state.activeMode == DosingScheduleMode.HOURLY_24) {
+            binding.etDailyDoseMl.setText(
+                formatDoseMl(
+                    value = state.configuredDailyDoseMl
+                )
+            )
+
+            selectedMinute =
+                parseMinuteFromTime(
+                    value = state.timer.timeStart
+                )
+
+            renderDoseMinute()
+        }
+    }
+
     private fun showDoseMinutePicker() {
         hideKeyboard()
 
@@ -148,6 +244,15 @@ class DeviceDosingHourly24ModeSettingsFragment :
 
         hideKeyboard()
 
+        if (deviceIp.isBlank()) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
         val dailyDoseMl =
             binding.etDailyDoseMl.text
                 ?.toString()
@@ -166,6 +271,7 @@ class DeviceDosingHourly24ModeSettingsFragment :
                 message = "Please enter a valid daily dose.",
                 type = BaseActivity.SnackType.WARNING
             )
+
             return
         }
 
@@ -178,28 +284,83 @@ class DeviceDosingHourly24ModeSettingsFragment :
             show = true
         )
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            delay(
-                timeMillis = 700L
+        val startTime =
+            formatTime(
+                hour = 0,
+                minute = selectedMinute
             )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result =
+                runCatching {
+                    val currentState =
+                        espDosingState ?: dosingEspRepository.fetchDosingState(
+                            deviceIp = deviceIp,
+                            channelIndex = channelIndex
+                        )
+
+                    val gpioPwm =
+                        currentState.timer.gpioPwm.takeIf { value ->
+                            value.isNotBlank() && value != "-"
+                        } ?: currentState.channel.gpioPwm
+
+                    if (
+                        gpioPwm.isBlank() ||
+                        gpioPwm == "-"
+                    ) {
+                        throw IllegalStateException(
+                            "PWM channel information is missing."
+                        )
+                    }
+
+                    dosingEspRepository.saveHourly24Schedule(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex,
+                        channelNumber = channelNumber,
+                        gpioPwm = gpioPwm,
+                        totalDailyDoseMl = dailyDoseMl,
+                        weekDays = currentState.timer.weekDays,
+                        startTime = startTime,
+                        enabled = true
+                    )
+                }
 
             setLoading(
                 show = false
             )
 
-            saveInProgress =
-                false
-
             if (_binding == null) {
                 return@launch
             }
 
+            saveInProgress =
+                false
+
             renderSavingState()
 
-            showSnackBar(
-                message = "24 Hourly save will be connected after screen design is finalized.",
-                type = BaseActivity.SnackType.NORMAL
-            )
+            result.onSuccess {
+                findNavController()
+                    .previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(
+                        RESULT_DOSING_SCHEDULE_UPDATED,
+                        true
+                    )
+
+                findNavController().navigateUp()
+
+            }.onFailure { throwable ->
+                DialogManager.showConfirmDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Save Failed",
+                    message = throwable.message
+                        ?: "24 Hourly mode could not be saved. Please check the device connection and try again.",
+                    onConfirm = {
+                        handleSaveClick()
+                    }
+                )
+            }
         }
     }
 
@@ -266,6 +427,60 @@ class DeviceDosingHourly24ModeSettingsFragment :
         }
     }
 
+    private fun parseMinuteFromTime(
+        value: String
+    ): Int {
+        return value.ifBlank {
+            "00:00"
+        }.split(
+            ":"
+        ).getOrNull(
+            index = 1
+        )?.toIntOrNull()
+            ?.coerceIn(
+                minimumValue = 0,
+                maximumValue = 59
+            ) ?: defaultMinuteForChannel(
+            channelIndex = channelIndex
+        )
+    }
+
+    private fun formatTime(
+        hour: Int,
+        minute: Int
+    ): String {
+        return String.format(
+            Locale.US,
+            "%02d:%02d",
+            hour.coerceIn(
+                minimumValue = 0,
+                maximumValue = 23
+            ),
+            minute.coerceIn(
+                minimumValue = 0,
+                maximumValue = 59
+            )
+        )
+    }
+
+    private fun formatDoseMl(
+        value: Float
+    ): String {
+        return if (value % 1f == 0f) {
+            value.toInt().toString()
+        } else {
+            String.format(
+                Locale.US,
+                "%.2f",
+                value
+            ).trimEnd(
+                '0'
+            ).trimEnd(
+                '.'
+            )
+        }
+    }
+
     private fun hideKeyboard() {
         val inputMethodManager =
             requireContext().getSystemService(
@@ -316,9 +531,10 @@ class DeviceDosingHourly24ModeSettingsFragment :
     }
 
     companion object {
-        private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"
-        private const val ARG_DEVICE_TITLE = "deviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
+
+        private const val RESULT_DOSING_SCHEDULE_UPDATED =
+            "dosingScheduleUpdated"
     }
 }
