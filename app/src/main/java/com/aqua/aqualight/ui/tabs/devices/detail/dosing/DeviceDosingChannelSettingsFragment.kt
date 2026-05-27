@@ -32,7 +32,6 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     private val binding get() = _binding!!
 
     private lateinit var calibrationDataStoreManager: DosingCalibrationDataStoreManager
-    private lateinit var channelSettingsDataStoreManager: DosingChannelSettingsDataStoreManager
     
     private lateinit var channelSettingsDataStoreManager: DosingChannelSettingsDataStoreManager
     
