@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -7,12 +8,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.dosing.DosingCalibrationDataStoreManager
+import com.aqua.aqualight.data.devices.dosing.EspDosingChannelSettingsSnapshot
+import com.aqua.aqualight.data.devices.dosing.EspDosingSettingsClient
+import com.aqua.aqualight.data.devices.dosing.EspDosingTimerState
 import com.aqua.aqualight.databinding.FragmentDeviceDosingChannelSettingsBinding
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -75,6 +79,16 @@ class DeviceDosingChannelSettingsFragment :
         updateScheduleEnabledState(
             enabled = binding.switchScheduleEnabled.isChecked
         )
+
+        loadEspDosingSettings()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (_binding != null) {
+            loadEspDosingSettings()
+        }
     }
 
     private fun bindHeaderActions() {
@@ -94,7 +108,7 @@ class DeviceDosingChannelSettingsFragment :
             "Last calibrated: Not calibrated"
 
         binding.tvContainerVolumeValue.text =
-            "450.0 ml"
+            "0 ml"
     }
 
     private fun bindCalibrationState() {
@@ -118,6 +132,155 @@ class DeviceDosingChannelSettingsFragment :
                         }
                 }
             }
+        }
+    }
+
+    private fun loadEspDosingSettings() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val snapshot =
+                EspDosingSettingsClient.readChannelSettingsSnapshot(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex
+                )
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            if (snapshot == null) {
+                showComingNext(
+                    message = "Dosing settings could not be read from device."
+                )
+                return@launch
+            }
+
+            renderEspDosingSettings(
+                snapshot = snapshot
+            )
+        }
+    }
+
+    private fun renderEspDosingSettings(
+        snapshot: EspDosingChannelSettingsSnapshot
+    ) {
+        val channel =
+            snapshot.channel
+
+        val timer =
+            snapshot.timer
+
+        binding.tvChannelSettingsTitle.text =
+            channel.name.ifBlank {
+                "Channel $channelNumber"
+            }
+
+        binding.switchScheduleEnabled.isChecked =
+            timer?.enabled == true
+
+        val dailyDoseMl =
+            if (timer != null && timer.enabled) {
+                timer.doseMl * timer.count.coerceAtLeast(
+                    minimumValue = 1
+                )
+            } else {
+                0f
+            }
+
+        binding.tvDailyDoseValue.text =
+            formatMl(
+                value = dailyDoseMl
+            )
+
+        binding.tvContainerVolumeValue.text =
+            channel.restMl?.let { rest ->
+                formatMl(
+                    value = rest
+                )
+            } ?: "0 ml"
+
+        selectDosingMode(
+            mode = inferDosingMode(
+                timer = timer
+            )
+        )
+
+        renderWeekDays(
+            weekDays = timer?.weekDays ?: List(
+                size = 7
+            ) {
+                false
+            }
+        )
+
+        updateScheduleEnabledState(
+            enabled = binding.switchScheduleEnabled.isChecked
+        )
+    }
+
+    private fun inferDosingMode(
+        timer: EspDosingTimerState?
+    ): DosingMode {
+        if (timer == null || !timer.enabled) {
+            return DosingMode.SINGLE
+        }
+
+        return when {
+            timer.count == 24 -> DosingMode.HOURLY_24
+            timer.count <= 1 -> DosingMode.SINGLE
+            else -> DosingMode.TIMER
+        }
+    }
+
+    private fun renderWeekDays(
+        weekDays: List<Boolean>
+    ) {
+        val chips =
+            listOf(
+                binding.chipDayMon,
+                binding.chipDayTue,
+                binding.chipDayWed,
+                binding.chipDayThu,
+                binding.chipDayFri,
+                binding.chipDaySat,
+                binding.chipDaySun
+            )
+
+        chips.forEachIndexed { index, chip ->
+            val selected =
+                weekDays.getOrNull(
+                    index = index
+                ) == true
+
+            chip.alpha =
+                if (selected) {
+                    1f
+                } else {
+                    0.35f
+                }
+
+            chip.setBackgroundColor(
+                Color.parseColor(
+                    if (selected) {
+                        "#702536"
+                    } else {
+                        "#24314F"
+                    }
+                )
+            )
+        }
+    }
+
+    private fun formatMl(
+        value: Float
+    ): String {
+        return if (value % 1f == 0f) {
+            "${value.toInt()} ml"
+        } else {
+            String.format(
+                Locale.US,
+                "%.2f ml",
+                value
+            )
         }
     }
 
@@ -303,11 +466,12 @@ class DeviceDosingChannelSettingsFragment :
     private fun updateScheduleEnabledState(
         enabled: Boolean
     ) {
-        val contentAlpha = if (enabled) {
-            1f
-        } else {
-            0.45f
-        }
+        val contentAlpha =
+            if (enabled) {
+                1f
+            } else {
+                0.45f
+            }
 
         binding.cardDailyDose.alpha =
             contentAlpha

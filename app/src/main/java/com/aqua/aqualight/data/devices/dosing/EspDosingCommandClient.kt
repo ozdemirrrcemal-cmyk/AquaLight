@@ -38,9 +38,9 @@ object EspDosingCommandClient {
         durationMs: Long
     ): Boolean {
         val safeDurationMs =
-        durationMs.coerceAtLeast(
-            minimumValue = 1L
-        )
+            durationMs.coerceAtLeast(
+                minimumValue = 1L
+            )
 
         return setManualValue(
             deviceIp = deviceIp,
@@ -57,41 +57,41 @@ object EspDosingCommandClient {
         liquidName: String
     ): Boolean {
         val safeChannelIndex =
-        channelIndex.coerceIn(
-            minimumValue = 0,
-            maximumValue = 3
-        )
+            channelIndex.coerceIn(
+                minimumValue = 0,
+                maximumValue = 3
+            )
 
         val safeYe =
-        yeMsPerMl.coerceAtLeast(
-            minimumValue = 1L
-        )
+            yeMsPerMl.coerceAtLeast(
+                minimumValue = 1L
+            )
 
         val safeLiquidName =
-        liquidName.trim().ifBlank {
-            "Channel ${safeChannelIndex + 1}"
-        }
+            liquidName.trim().ifBlank {
+                "Channel ${safeChannelIndex + 1}"
+            }
 
         val saveCalibrationJson =
-        """
-        {
-          "LPWMChanelTimer": {
-            "Data": {
-              "$safeChannelIndex": {
-                "Name": ${org.json.JSONObject.quote(safeLiquidName)},
-                "YE": $safeYe,
-                "Dimension": "ml"
+            """
+            {
+              "LPWMChanelTimer": {
+                "Data": {
+                  "$safeChannelIndex": {
+                    "Name": ${JSONObject.quote(safeLiquidName)},
+                    "YE": $safeYe,
+                    "Dimension": "ml"
+                  }
+                }
               }
             }
-          }
-        }
-        """.trimIndent()
+            """.trimIndent()
 
         val calibrationSaved =
-        EspDosingHttpClient.postJson(
-            deviceIp = deviceIp,
-            requestJson = saveCalibrationJson
-        ) != null
+            EspDosingHttpClient.postJson(
+                deviceIp = deviceIp,
+                requestJson = saveCalibrationJson
+            ) != null
 
         if (!calibrationSaved) {
             return false
@@ -107,13 +107,13 @@ object EspDosingCommandClient {
         channelIndex: Int
     ): Boolean {
         val safeChannelIndex =
-        channelIndex.coerceIn(
-            minimumValue = 0,
-            maximumValue = 3
-        )
+            channelIndex.coerceIn(
+                minimumValue = 0,
+                maximumValue = 3
+            )
 
         val resetJson =
-        """
+            """
             {
               "LPWMChanelTimer": {
                 "Data": {
@@ -127,10 +127,10 @@ object EspDosingCommandClient {
             """.trimIndent()
 
         val resetDone =
-        EspDosingHttpClient.postJson(
-            deviceIp = deviceIp,
-            requestJson = resetJson
-        ) != null
+            EspDosingHttpClient.postJson(
+                deviceIp = deviceIp,
+                requestJson = resetJson
+            ) != null
 
         if (!resetDone) {
             return false
@@ -155,9 +155,9 @@ object EspDosingCommandClient {
         return (
             calibrationDurationMs.toDouble() / measuredAmountMl.toDouble()
         ).roundToLong()
-        .coerceAtLeast(
-            minimumValue = 1L
-        )
+            .coerceAtLeast(
+                minimumValue = 1L
+            )
     }
 
     fun calculateDurationForDose(
@@ -174,9 +174,9 @@ object EspDosingCommandClient {
         return (
             yeMsPerMl.toDouble() * doseMl.toDouble()
         ).roundToLong()
-        .coerceAtLeast(
-            minimumValue = 1L
-        )
+            .coerceAtLeast(
+                minimumValue = 1L
+            )
     }
 
     private suspend fun setManualValue(
@@ -186,18 +186,18 @@ object EspDosingCommandClient {
         durationMs: Long
     ): Boolean {
         val safeChannelIndex =
-        channelIndex.coerceIn(
-            minimumValue = 0,
-            maximumValue = 3
-        )
+            channelIndex.coerceIn(
+                minimumValue = 0,
+                maximumValue = 3
+            )
 
         val safeDurationMs =
-        durationMs.coerceAtLeast(
-            minimumValue = 0L
-        )
+            durationMs.coerceAtLeast(
+                minimumValue = 0L
+            )
 
         val requestJson =
-        """
+            """
             {
               "LPWMChanelTimer": {
                 "Data": {
@@ -222,7 +222,7 @@ object EspDosingCommandClient {
         deviceIp: String
     ): Boolean {
         val requestJson =
-        """
+            """
             {
               "Main": {
                 "SaveTimer": 0
