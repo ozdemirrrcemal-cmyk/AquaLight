@@ -17,7 +17,6 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.dosing.DosingCalibrationDataStoreManager
-import com.aqua.aqualight.data.devices.dosing.DosingCalibrationTimeSource
 import com.aqua.aqualight.data.devices.dosing.EspDeviceTimeClient
 import com.aqua.aqualight.data.devices.dosing.EspDosingCommandClient
 import com.aqua.aqualight.databinding.FragmentDeviceDosingCalibrationBinding
