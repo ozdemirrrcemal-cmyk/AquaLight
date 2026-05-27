@@ -21,6 +21,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspRepository
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspState
+import com.aqua.aqualight.data.devices.dosing.esp.DosingScheduleMode
 
 class DeviceDosingChannelSettingsFragment :
 Fragment(R.layout.fragment_device_dosing_channel_settings) {
@@ -30,6 +33,13 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
     private lateinit var calibrationDataStoreManager: DosingCalibrationDataStoreManager
     private lateinit var channelSettingsDataStoreManager: DosingChannelSettingsDataStoreManager
+    
+    private lateinit var channelSettingsDataStoreManager: DosingChannelSettingsDataStoreManager
+    
+    private lateinit var dosingEspRepository: DosingEspRepository
+
+private var espDosingState: DosingEspState? =
+    null
 
     private var selectedMode: DosingMode =
     DosingMode.SINGLE
@@ -162,6 +172,9 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         DosingChannelSettingsDataStoreManager(
             context = requireContext()
         )
+        
+        dosingEspRepository =
+    DosingEspRepository()
 
         bindHeaderActions()
         bindStaticPreview()
@@ -184,6 +197,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         )
 
         renderTopBarSaveState()
+        fetchDosingStateFromEsp()
     }
 
     private fun bindHeaderActions() {
@@ -255,6 +269,161 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         binding.cardDailyDose.isFocusable =
         false
     }
+    
+    private fun fetchDosingStateFromEsp() {
+    if (deviceIp.isBlank()) {
+        showSnackBar(
+            message = "Device IP address is missing.",
+            type = BaseActivity.SnackType.WARNING
+        )
+
+        return
+    }
+
+    val baseActivity =
+        activity as? BaseActivity
+
+    baseActivity?.showLoading(
+        true
+    )
+
+    viewLifecycleOwner.lifecycleScope.launch {
+        val result =
+            runCatching {
+                dosingEspRepository.fetchDosingState(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex
+                )
+            }
+
+        baseActivity?.showLoading(
+            false
+        )
+
+        if (_binding == null) {
+            return@launch
+        }
+
+        result.onSuccess { state ->
+            applyEspDosingState(
+                state = state
+            )
+        }.onFailure {
+            DialogManager.showConfirmDialog(
+                context = requireContext(),
+                type = DialogType.ERROR,
+                title = "Device Data Failed",
+                message = "Dosing data could not be loaded from the device. Please check the device connection and try again.",
+                onConfirm = {
+                    fetchDosingStateFromEsp()
+                }
+            )
+        }
+    }
+}
+
+private fun applyEspDosingState(
+    state: DosingEspState
+) {
+    espDosingState =
+        state
+
+    scheduleEnabled =
+        state.timer.enabled
+
+    savedScheduleEnabled =
+        state.timer.enabled
+
+    dailyDoseMl =
+        state.configuredDailyDoseMl
+
+    savedDailyDoseMl =
+        state.configuredDailyDoseMl
+
+    selectedWeekDays =
+        state.timer.weekDays
+
+    savedWeekDays =
+        state.timer.weekDays
+
+    suppressScheduleCallback =
+        true
+
+    binding.switchScheduleEnabled.isChecked =
+        state.timer.enabled
+
+    suppressScheduleCallback =
+        false
+
+    renderDailyDoseValue(
+        value = state.configuredDailyDoseMl
+    )
+
+    renderWeekDays(
+        weekDays = state.timer.weekDays
+    )
+
+    selectDosingMode(
+        mode = mapEspModeToUiMode(
+            mode = state.activeMode
+        )
+    )
+
+    updateScheduleEnabledState(
+        enabled = state.timer.enabled
+    )
+
+    renderTopBarSaveState()
+}
+
+private fun mapEspModeToUiMode(
+    mode: DosingScheduleMode
+): DosingMode {
+    return when (mode) {
+        DosingScheduleMode.SINGLE -> {
+            DosingMode.SINGLE
+        }
+
+        DosingScheduleMode.HOURLY_24 -> {
+            DosingMode.HOURLY_24
+        }
+
+        DosingScheduleMode.CUSTOM_PERIODS -> {
+            DosingMode.CUSTOM_PERIODS
+        }
+
+        DosingScheduleMode.TIMER -> {
+            DosingMode.TIMER
+        }
+    }
+}
+
+private fun renderDailyDoseValue(
+    value: Float?
+) {
+    binding.tvDailyDoseValue.text =
+        value?.let { dose ->
+            "${formatDoseMl(dose)} ml"
+        } ?: "0 ml"
+}
+
+private fun formatDoseMl(
+    value: Float
+): String {
+    return if (value % 1f == 0f) {
+        value.toInt().toString()
+    } else {
+        String.format(
+            Locale.US,
+            "%.2f",
+            value
+        ).trimEnd(
+            '0'
+        ).trimEnd(
+            '.'
+        )
+    }
+}
 
     private fun bindLocalChannelSettings() {
         binding.switchReservoirTracking.setOnCheckedChangeListener {
@@ -341,34 +510,34 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
     }
 
-    private fun saveChannelSettingsIfNeeded() {
-        if (
-            saveSettingsInProgress ||
-            !hasUnsavedChannelSettings
-        ) {
-            return
-        }
+private fun saveChannelSettingsIfNeeded() {
+    if (
+        saveSettingsInProgress ||
+        !hasUnsavedChannelSettings
+    ) {
+        return
+    }
 
-        val hadDataStoreChanges =
+    val hadDataStoreChanges =
         hasUnsavedDataStoreSettings
 
-        val hadEspTimerChanges =
+    val hadEspTimerChanges =
         hasUnsavedEspTimerSettings
 
-        val baseActivity =
+    val baseActivity =
         activity as? BaseActivity
 
-        saveSettingsInProgress =
+    saveSettingsInProgress =
         true
 
-        renderTopBarSaveState()
+    renderTopBarSaveState()
 
-        baseActivity?.showLoading(
-            true
-        )
+    baseActivity?.showLoading(
+        true
+    )
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result =
+    viewLifecycleOwner.lifecycleScope.launch {
+        val result =
             runCatching {
                 if (hadDataStoreChanges) {
                     channelSettingsDataStoreManager.saveLocalChannelSettings(
@@ -380,61 +549,96 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                     )
                 }
 
-                // TODO ESP32 SaveTimer:
-                // scheduleEnabled -> LTimer.Enabled
-                // dailyDoseMl -> selected mode'a göre LTimer.YE / LTimer.Count
-                // selectedWeekDays -> LTimer.WDay
+                if (hadEspTimerChanges) {
+                    val currentState =
+                        espDosingState ?: throw IllegalStateException(
+                            "Device schedule data is not loaded yet."
+                        )
+
+                    val timer =
+                        currentState.timer
+
+                    val gpioPwm =
+                        timer.gpioPwm.takeIf { value ->
+                            value.isNotBlank() && value != "-"
+                        } ?: currentState.channel.gpioPwm
+
+                    dosingEspRepository.saveGenericTimerSchedule(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex,
+                        channelNumber = channelNumber,
+                        mode = currentState.activeMode,
+                        gpioPwm = gpioPwm,
+                        dosePerRunMl = timer.dosePerRunMl,
+                        weekDays = selectedWeekDays,
+                        timeStart = timer.timeStart,
+                        intervalOn = timer.intervalOn,
+                        intervalOff = timer.intervalOff,
+                        count = timer.count.coerceAtLeast(
+                            minimumValue = 1
+                        ),
+                        enabled = scheduleEnabled
+                    )
+                }
             }
 
-            baseActivity?.showLoading(
-                false
-            )
+        baseActivity?.showLoading(
+            false
+        )
 
-            if (_binding == null) {
-                return@launch
-            }
+        if (_binding == null) {
+            return@launch
+        }
 
-            saveSettingsInProgress =
+        saveSettingsInProgress =
             false
 
-            result.onSuccess {
-                if (hadDataStoreChanges) {
-                    savedReservoirTrackingEnabled =
+        result.onSuccess {
+            if (hadDataStoreChanges) {
+                savedReservoirTrackingEnabled =
                     reservoirTrackingEnabled
 
-                    savedContainerVolumeMl =
+                savedContainerVolumeMl =
                     containerVolumeMl
 
-                    savedMissedDoseCompensationEnabled =
+                savedMissedDoseCompensationEnabled =
                     missedDoseCompensationEnabled
-                }
-
-                if (hadEspTimerChanges) {
-                    savedScheduleEnabled =
-                    scheduleEnabled
-
-                    savedDailyDoseMl =
-                    dailyDoseMl
-
-                    savedWeekDays =
-                    selectedWeekDays
-                }
-
-            }.onFailure {
-                DialogManager.showConfirmDialog(
-                    context = requireContext(),
-                    type = DialogType.ERROR,
-                    title = "Save Failed",
-                    message = "Channel settings could not be saved. Please check the device connection and try again.",
-                    onConfirm = {
-                        saveChannelSettingsIfNeeded()
-                    }
-                )
             }
 
-            renderTopBarSaveState()
+            if (hadEspTimerChanges) {
+                savedScheduleEnabled =
+                    scheduleEnabled
+
+                savedDailyDoseMl =
+                    dailyDoseMl
+
+                savedWeekDays =
+                    selectedWeekDays
+
+                espDosingState =
+                    espDosingState?.copy(
+                        timer = espDosingState!!.timer.copy(
+                            enabled = scheduleEnabled,
+                            weekDays = selectedWeekDays
+                        )
+                    )
+            }
+
+        }.onFailure {
+            DialogManager.showConfirmDialog(
+                context = requireContext(),
+                type = DialogType.ERROR,
+                title = "Save Failed",
+                message = "Channel settings could not be saved. Please check the device connection and try again.",
+                onConfirm = {
+                    saveChannelSettingsIfNeeded()
+                }
+            )
         }
+
+        renderTopBarSaveState()
     }
+}
 
     private fun renderTopBarSaveState() {
         if (_binding == null) {
@@ -1064,66 +1268,88 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     }
 
     private fun startManualDosing(
-        doseMl: Float
-    ) {
-        if (doseMl <= 0f) {
-            showSnackBar(
-                message = "Please enter a valid dose amount.",
-                type = BaseActivity.SnackType.WARNING
-            )
-
-            return
-        }
-
-        val baseActivity =
-        activity as? BaseActivity
-
-        baseActivity?.showLoading(
-            true
+    doseMl: Float
+) {
+    if (doseMl <= 0f) {
+        showSnackBar(
+            message = "Please enter a valid dose amount.",
+            type = BaseActivity.SnackType.WARNING
         )
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result =
-            runCatching {
-                // TODO ESP32 Manual Dose:
-                // deviceIp -> target device
-                // channelIndex -> selected channel
-                // doseMl -> manual dose quantity in ml
-                //
-                // Example later:
-                // dosingDeviceRepository.sendManualDose(
-                //     ip = deviceIp,
-                //     channelIndex = channelIndex,
-                //     doseMl = doseMl
-                // )
-            }
-
-            baseActivity?.showLoading(
-                false
-            )
-
-            if (_binding == null) {
-                return@launch
-            }
-
-            result.onFailure {
-                DialogManager.showConfirmDialog(
-                    context = requireContext(),
-                    type = DialogType.ERROR,
-                    title = "Manual Dosing Failed",
-                    message = "The manual dose could not be started. Please check the device connection and try again.",
-                    confirmTextResId = R.string.confirm,
-                    cancelTextResId = R.string.cancel,
-                    onConfirm = {
-                        startManualDosing(
-                            doseMl = doseMl
-                        )
-                    }
-                )
-            }
-        }
+        return
     }
 
+    val currentState =
+        espDosingState
+
+    if (currentState == null) {
+        DialogManager.showConfirmDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = "Device Data Not Loaded",
+            message = "Dosing data has not been loaded from the device yet. Load device data and try again.",
+            onConfirm = {
+                fetchDosingStateFromEsp()
+            }
+        )
+
+        return
+    }
+
+    if (!currentState.channel.isCalibrated) {
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = "Calibration Required",
+            message = "Please calibrate this dosing channel before using manual dosing."
+        )
+
+        return
+    }
+
+    val baseActivity =
+        activity as? BaseActivity
+
+    baseActivity?.showLoading(
+        true
+    )
+
+    viewLifecycleOwner.lifecycleScope.launch {
+        val result =
+            runCatching {
+                dosingEspRepository.sendManualDose(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    doseMl = doseMl,
+                    calibrationMsPerMl = currentState.channel.calibrationMsPerMl
+                )
+            }
+
+        baseActivity?.showLoading(
+            false
+        )
+
+        if (_binding == null) {
+            return@launch
+        }
+
+        result.onFailure {
+            DialogManager.showConfirmDialog(
+                context = requireContext(),
+                type = DialogType.ERROR,
+                title = "Manual Dosing Failed",
+                message = "The manual dose could not be started. Please check the device connection and try again.",
+                confirmTextResId = R.string.confirm,
+                cancelTextResId = R.string.cancel,
+                onConfirm = {
+                    startManualDosing(
+                        doseMl = doseMl
+                    )
+                }
+            )
+        }
+    }
+}
 
     private fun showSnackBar(
         message: String,
