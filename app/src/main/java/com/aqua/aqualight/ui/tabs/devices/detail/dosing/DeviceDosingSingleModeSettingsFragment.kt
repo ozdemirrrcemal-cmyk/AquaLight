@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 
-import android.app.TimePickerDialog
 import android.content.Context
 import android.os.Bundle
 import android.view.View
@@ -10,45 +9,30 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.dosing.EspDosingCommandClient
-import com.aqua.aqualight.data.devices.dosing.EspDosingSettingsClient
 import com.aqua.aqualight.databinding.FragmentDeviceDosingSingleModeSettingsBinding
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.bottomsheet.DosingBottomSheets
 
 class DeviceDosingSingleModeSettingsFragment :
-    Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
+Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
 
     private var _binding: FragmentDeviceDosingSingleModeSettingsBinding? = null
     private val binding get() = _binding!!
 
     private var selectedHour: Int = 0
     private var selectedMinute: Int = 0
-    private var selectedWeekDays: List<Boolean> =
-        List(
-            size = 7
-        ) {
-            true
-        }
-
-    private var timerIndexForSave: Int? = null
-    private var channelGpioPwmForSave: String = "-"
     private var saveInProgress: Boolean = false
 
     private val channelIndex: Int
-        get() = requireArguments().getInt(
-            ARG_CHANNEL_INDEX,
-            0
-        ).coerceIn(
-            minimumValue = 0,
-            maximumValue = 3
-        )
-
-    private val channelNumber: Int
-        get() = channelIndex + 1
-
-    private val deviceIp: String
-        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+    get() = requireArguments().getInt(
+        ARG_CHANNEL_INDEX,
+        0
+    ).coerceIn(
+        minimumValue = 0,
+        maximumValue = 3
+    )
 
     override fun onViewCreated(
         view: View,
@@ -60,174 +44,104 @@ class DeviceDosingSingleModeSettingsFragment :
         )
 
         _binding =
-            FragmentDeviceDosingSingleModeSettingsBinding.bind(
-                view
-            )
+        FragmentDeviceDosingSingleModeSettingsBinding.bind(
+            view
+        )
 
         bindHeader()
         bindSelectedPumpIndicator()
+        bindInitialValues()
         bindClicks()
-        loadCurrentSingleModeValues()
     }
 
     private fun bindHeader() {
         binding.tvTitle.text =
-            "Single dose"
+        "Single dose"
 
         binding.btnBack.setOnClickListener {
             findNavController().navigateUp()
         }
     }
 
+    private fun bindInitialValues() {
+        applyStartTime(
+            value = "00:00"
+        )
+    }
+
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-            if (channelIndex == 0) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (channelIndex == 0) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.selectedIndicatorPump2.visibility =
-            if (channelIndex == 1) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (channelIndex == 1) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.selectedIndicatorPump3.visibility =
-            if (channelIndex == 2) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (channelIndex == 2) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.selectedIndicatorPump4.visibility =
-            if (channelIndex == 3) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (channelIndex == 3) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
     }
 
     private fun bindClicks() {
         binding.btnCancel.setOnClickListener {
-            findNavController().navigateUp()
+            if (!saveInProgress) {
+                findNavController().navigateUp()
+            }
         }
 
         binding.rowStartTime.setOnClickListener {
-            showTimePicker()
+            if (!saveInProgress) {
+                showTimePicker()
+            }
         }
 
         binding.btnSave.setOnClickListener {
-            saveSingleMode()
-        }
-    }
-
-    private fun loadCurrentSingleModeValues() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val snapshot =
-                EspDosingSettingsClient.readChannelSettingsSnapshot(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex
-                )
-
-            if (_binding == null || snapshot == null) {
-                return@launch
-            }
-
-            val channel =
-                snapshot.channel
-
-            val timer =
-                snapshot.timer
-
-            channelGpioPwmForSave =
-                channel.gpioPwm
-
-            timerIndexForSave =
-                timer?.timerIndex ?: channelIndex
-
-            if (timer != null) {
-                val doseForSingleMode =
-                    if (timer.count > 1) {
-                        timer.doseMl * timer.count
-                    } else {
-                        timer.doseMl
-                    }
-
-                if (doseForSingleMode > 0f) {
-                    binding.etSingleDoseMl.setText(
-                        formatDoseInput(
-                            value = doseForSingleMode
-                        )
-                    )
-                }
-
-                applyStartTime(
-                    value = timer.timeStart
-                )
-
-                val hasAnySelectedDay =
-                    timer.weekDays.any { selected ->
-                        selected
-                    }
-
-                selectedWeekDays =
-                    if (hasAnySelectedDay) {
-                        timer.weekDays
-                    } else {
-                        List(
-                            size = 7
-                        ) {
-                            true
-                        }
-                    }
-            } else {
-                applyStartTime(
-                    value = "00:00"
-                )
-
-                selectedWeekDays =
-                    List(
-                        size = 7
-                    ) {
-                        true
-                    }
-            }
+            handleSaveClick()
         }
     }
 
     private fun showTimePicker() {
         hideKeyboard()
 
-        TimePickerDialog(
-            requireContext(),
-            { _, hourOfDay, minute ->
-                selectedHour =
-                    hourOfDay.coerceIn(
-                        minimumValue = 0,
-                        maximumValue = 23
-                    )
+        DosingBottomSheets.showTimePicker(
+            context = requireContext(),
+            title = "Select Start Time",
+            initialHour = selectedHour,
+            initialMinute = selectedMinute
+        ) {
+            hour, minute ->
+            selectedHour =
+            hour
 
-                selectedMinute =
-                    minute.coerceIn(
-                        minimumValue = 0,
-                        maximumValue = 59
-                    )
+            selectedMinute =
+            minute
 
-                binding.tvStartTimeValue.text =
-                    formatTime(
-                        hour = selectedHour,
-                        minute = selectedMinute
-                    )
-            },
-            selectedHour,
-            selectedMinute,
-            true
-        ).show()
+            binding.tvStartTimeValue.text =
+            formatTime(
+                hour = selectedHour,
+                minute = selectedMinute
+            )
+        }
     }
 
-    private fun saveSingleMode() {
+    private fun handleSaveClick() {
         if (saveInProgress) {
             return
         }
@@ -235,67 +149,46 @@ class DeviceDosingSingleModeSettingsFragment :
         hideKeyboard()
 
         val doseMl =
-            binding.etSingleDoseMl.text
-                ?.toString()
-                ?.trim()
-                ?.replace(
-                    oldValue = ",",
-                    newValue = "."
-                )
-                ?.toFloatOrNull()
+        binding.etSingleDoseMl.text
+        ?.toString()
+        ?.trim()
+        ?.replace(
+            oldValue = ",",
+            newValue = "."
+        )
+        ?.toFloatOrNull()
 
         if (
             doseMl == null ||
             doseMl <= 0f
         ) {
-            showComingNext(
-                message = "Please enter a valid dose amount."
+            showSnackBar(
+                message = "Please enter a valid dose amount.",
+                type = BaseActivity.SnackType.WARNING
             )
             return
         }
-
-        val safeTimerIndex =
-            timerIndexForSave ?: channelIndex
-
-        val safeGpioPwm =
-            channelGpioPwmForSave.trim()
-
-        if (
-            safeGpioPwm.isBlank() ||
-            safeGpioPwm == "-"
-        ) {
-            showComingNext(
-                message = "Channel output could not be found."
-            )
-            return
-        }
-
-        val startTime =
-            formatTime(
-                hour = selectedHour,
-                minute = selectedMinute
-            )
 
         saveInProgress =
-            true
+        true
 
         renderSavingState()
 
+        setLoading(
+            show = true
+        )
+
         viewLifecycleOwner.lifecycleScope.launch {
-            val saved =
-                EspDosingCommandClient.saveSingleModeSchedule(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex,
-                    timerIndex = safeTimerIndex,
-                    channelGpioPwm = safeGpioPwm,
-                    doseMl = doseMl,
-                    startTime = startTime,
-                    weekDays = selectedWeekDays,
-                    enabled = true
-                )
+            delay(
+                timeMillis = 700L
+            )
+
+            setLoading(
+                show = false
+            )
 
             saveInProgress =
-                false
+            false
 
             if (_binding == null) {
                 return@launch
@@ -303,89 +196,82 @@ class DeviceDosingSingleModeSettingsFragment :
 
             renderSavingState()
 
-            if (saved) {
-                showComingNext(
-                    message = "Single mode saved."
-                )
-
-                findNavController().navigateUp()
-            } else {
-                showComingNext(
-                    message = "Single mode could not be saved to device."
-                )
-            }
+            showSnackBar(
+                message = "Single mode save will be connected after screen design is finalized.",
+                type = BaseActivity.SnackType.NORMAL
+            )
         }
     }
 
     private fun renderSavingState() {
         binding.btnSave.isEnabled =
-            !saveInProgress
+        !saveInProgress
 
         binding.btnCancel.isEnabled =
-            !saveInProgress
+        !saveInProgress
 
         binding.rowStartTime.isEnabled =
-            !saveInProgress
+        !saveInProgress
 
         binding.etSingleDoseMl.isEnabled =
-            !saveInProgress
+        !saveInProgress
 
         binding.btnSave.alpha =
-            if (saveInProgress) {
-                0.55f
-            } else {
-                1f
-            }
+        if (saveInProgress) {
+            0.55f
+        } else {
+            1f
+        }
 
         binding.btnCancel.alpha =
-            if (saveInProgress) {
-                0.55f
-            } else {
-                1f
-            }
+        if (saveInProgress) {
+            0.55f
+        } else {
+            1f
+        }
 
         binding.btnSave.text =
-            if (saveInProgress) {
-                "Saving..."
-            } else {
-                "Save single mode"
-            }
+        if (saveInProgress) {
+            "Saving..."
+        } else {
+            "Save single mode"
+        }
     }
 
     private fun applyStartTime(
         value: String
     ) {
         val safeValue =
-            value.ifBlank {
-                "00:00"
-            }
+        value.ifBlank {
+            "00:00"
+        }
 
         val parts =
-            safeValue.split(":")
+        safeValue.split(":")
 
         selectedHour =
-            parts.getOrNull(
-                index = 0
-            )?.toIntOrNull()
-                ?.coerceIn(
-                    minimumValue = 0,
-                    maximumValue = 23
-                ) ?: 0
+        parts.getOrNull(
+            index = 0
+        )?.toIntOrNull()
+        ?.coerceIn(
+            minimumValue = 0,
+            maximumValue = 23
+        ) ?: 0
 
         selectedMinute =
-            parts.getOrNull(
-                index = 1
-            )?.toIntOrNull()
-                ?.coerceIn(
-                    minimumValue = 0,
-                    maximumValue = 59
-                ) ?: 0
+        parts.getOrNull(
+            index = 1
+        )?.toIntOrNull()
+        ?.coerceIn(
+            minimumValue = 0,
+            maximumValue = 59
+        ) ?: 0
 
         binding.tvStartTimeValue.text =
-            formatTime(
-                hour = selectedHour,
-                minute = selectedMinute
-            )
+        formatTime(
+            hour = selectedHour,
+            minute = selectedMinute
+        )
     }
 
     private fun formatTime(
@@ -406,25 +292,11 @@ class DeviceDosingSingleModeSettingsFragment :
         )
     }
 
-    private fun formatDoseInput(
-        value: Float
-    ): String {
-        return if (value % 1f == 0f) {
-            value.toInt().toString()
-        } else {
-            String.format(
-                Locale.US,
-                "%.2f",
-                value
-            )
-        }
-    }
-
     private fun hideKeyboard() {
         val inputMethodManager =
-            requireContext().getSystemService(
-                Context.INPUT_METHOD_SERVICE
-            ) as InputMethodManager
+        requireContext().getSystemService(
+            Context.INPUT_METHOD_SERVICE
+        ) as InputMethodManager
 
         inputMethodManager.hideSoftInputFromWindow(
             binding.root.windowToken,
@@ -435,23 +307,44 @@ class DeviceDosingSingleModeSettingsFragment :
         binding.root.clearFocus()
     }
 
-    private fun showComingNext(
-        message: String
+    private fun setLoading(
+        show: Boolean
+    ) {
+        (activity as? BaseActivity)?.showLoading(
+            show = show
+        )
+    }
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
     ) {
         (activity as? BaseActivity)?.showSnackBar(
             message = message,
-            type = BaseActivity.SnackType.NORMAL
+            type = type
         )
     }
 
     override fun onDestroyView() {
-        _binding = null
+        if (saveInProgress) {
+            setLoading(
+                show = false
+            )
+        }
+
+        saveInProgress =
+        false
+
+        _binding =
+        null
 
         super.onDestroyView()
     }
 
     companion object {
+        private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"
+        private const val ARG_DEVICE_TITLE = "deviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
     }
 }

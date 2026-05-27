@@ -15,15 +15,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.dosing.CustomDosingPeriodCommand
-import com.aqua.aqualight.data.devices.dosing.EspDosingCommandClient
-import com.aqua.aqualight.data.devices.dosing.EspDosingSettingsClient
 import com.aqua.aqualight.databinding.FragmentDeviceDosingCustomPeriodsSettingsBinding
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
-import kotlin.math.roundToInt
 
 class DeviceDosingCustomPeriodsSettingsFragment :
     Fragment(R.layout.fragment_device_dosing_custom_periods_settings) {
@@ -33,22 +30,6 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
     private val periods: MutableList<CustomPeriodUi> =
         mutableListOf()
-
-    private var selectedWeekDays: List<Boolean> =
-        List(
-            size = 7
-        ) {
-            true
-        }
-
-    private var oldTimerIndexesForChannel: List<Int> =
-        emptyList()
-
-    private var channelGpioPwmForSave: String =
-        "-"
-
-    private var channelCalibrationYeMsPerMlForSave: Long =
-        -1L
 
     private var saveInProgress: Boolean =
         false
@@ -61,9 +42,6 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             minimumValue = 0,
             maximumValue = 3
         )
-
-    private val deviceIp: String
-        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -81,24 +59,45 @@ class DeviceDosingCustomPeriodsSettingsFragment :
 
         bindClicks()
         bindDoseWatcher()
-        loadCurrentValues()
+        bindInitialValues()
+    }
+
+    private fun bindInitialValues() {
+        periods.clear()
+
+        periods.add(
+            CustomPeriodUi(
+                startTime = "10:00",
+                endTime = "12:00",
+                doseCount = 2
+            )
+        )
+
+        renderSummary()
+        renderPeriods()
     }
 
     private fun bindClicks() {
         binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
+            if (!saveInProgress) {
+                findNavController().navigateUp()
+            }
         }
 
         binding.btnCancel.setOnClickListener {
-            findNavController().navigateUp()
+            if (!saveInProgress) {
+                findNavController().navigateUp()
+            }
         }
 
         binding.btnAddPeriod.setOnClickListener {
-            addDefaultPeriod()
+            if (!saveInProgress) {
+                addDefaultPeriod()
+            }
         }
 
         binding.btnSave.setOnClickListener {
-            saveCustomPeriods()
+            handleSaveClick()
         }
     }
 
@@ -129,103 +128,11 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         )
     }
 
-    private fun loadCurrentValues() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val snapshot =
-                EspDosingSettingsClient.readChannelSettingsSnapshot(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex
-                )
-
-            if (_binding == null || snapshot == null) {
-                return@launch
-            }
-
-            channelGpioPwmForSave =
-                snapshot.channel.gpioPwm
-
-            channelCalibrationYeMsPerMlForSave =
-                snapshot.channel.calibrationYeMsPerMl
-
-            oldTimerIndexesForChannel =
-                snapshot.timersForChannel.map { timer ->
-                    timer.timerIndex
-                }
-
-            val activeTimers =
-                snapshot.timersForChannel
-                    .filter { timer ->
-                        timer.enabled
-                    }
-                    .sortedBy { timer ->
-                        timer.timerIndex
-                    }
-
-            val dailyDose =
-                activeTimers.sumOf { timer ->
-                    (
-                        timer.doseMl *
-                            timer.count.coerceAtLeast(
-                                minimumValue = 1
-                            )
-                        ).toDouble()
-                }.toFloat()
-
-            if (dailyDose > 0f) {
-                binding.etDailyDoseMl.setText(
-                    formatDoseInput(
-                        value = dailyDose
-                    )
-                )
-            }
-
-            val timerWithDays =
-                activeTimers.firstOrNull { timer ->
-                    timer.weekDays.any { selected ->
-                        selected
-                    }
-                }
-
-            selectedWeekDays =
-                timerWithDays?.weekDays ?: List(
-                    size = 7
-                ) {
-                    true
-                }
-
-            periods.clear()
-
-            activeTimers.forEach { timer ->
-                periods.add(
-                    timerToPeriodUi(
-                        timeStart = timer.timeStart,
-                        intervalOff = timer.intervalOff,
-                        doseMl = timer.doseMl,
-                        count = timer.count,
-                        calibrationYeMsPerMl = snapshot.channel.calibrationYeMsPerMl
-                    )
-                )
-            }
-
-            if (periods.isEmpty()) {
-                periods.add(
-                    CustomPeriodUi(
-                        startTime = "10:00",
-                        endTime = "12:00",
-                        doseCount = 2
-                    )
-                )
-            }
-
-            renderSummary()
-            renderPeriods()
-        }
-    }
-
     private fun addDefaultPeriod() {
         if (periods.size >= MAX_PERIOD_COUNT) {
-            showMessage(
-                message = "You can add up to $MAX_PERIOD_COUNT periods."
+            showSnackBar(
+                message = "You can add up to $MAX_PERIOD_COUNT periods.",
+                type = BaseActivity.SnackType.WARNING
             )
             return
         }
@@ -364,6 +271,16 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 minHeight =
                     0
 
+                isEnabled =
+                    !saveInProgress
+
+                alpha =
+                    if (saveInProgress) {
+                        0.55f
+                    } else {
+                        1f
+                    }
+
                 setPadding(
                     dp(12f).toInt(),
                     0,
@@ -378,6 +295,18 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                     )
 
                 setOnClickListener {
+                    if (saveInProgress) {
+                        return@setOnClickListener
+                    }
+
+                    if (periods.size <= 1) {
+                        showSnackBar(
+                            message = "At least one period is required.",
+                            type = BaseActivity.SnackType.WARNING
+                        )
+                        return@setOnClickListener
+                    }
+
                     periods.removeAt(
                         index
                     )
@@ -414,6 +343,10 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             createSmallActionButton(
                 text = period.startTime
             ) {
+                if (saveInProgress) {
+                    return@createSmallActionButton
+                }
+
                 showTimePicker(
                     currentValue = period.startTime
                 ) { newTime ->
@@ -431,6 +364,10 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             createSmallActionButton(
                 text = period.endTime
             ) {
+                if (saveInProgress) {
+                    return@createSmallActionButton
+                }
+
                 showTimePicker(
                     currentValue = period.endTime
                 ) { newTime ->
@@ -499,6 +436,10 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             createCountButton(
                 text = "-"
             ) {
+                if (saveInProgress) {
+                    return@createCountButton
+                }
+
                 if (period.doseCount > 1) {
                     periods[index] =
                         period.copy(
@@ -514,6 +455,10 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             createCountButton(
                 text = "+"
             ) {
+                if (saveInProgress) {
+                    return@createCountButton
+                }
+
                 periods[index] =
                     period.copy(
                         doseCount = period.doseCount + 1
@@ -599,6 +544,16 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             textSize =
                 14f
 
+            isEnabled =
+                !saveInProgress
+
+            alpha =
+                if (saveInProgress) {
+                    0.55f
+                } else {
+                    1f
+                }
+
             layoutParams =
                 LinearLayout.LayoutParams(
                     0,
@@ -631,6 +586,16 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             textSize =
                 18f
 
+            isEnabled =
+                !saveInProgress
+
+            alpha =
+                if (saveInProgress) {
+                    0.55f
+                } else {
+                    1f
+                }
+
             layoutParams =
                 LinearLayout.LayoutParams(
                     dp(48f).toInt(),
@@ -656,7 +621,7 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             "$totalDoseCount doses/day · ${formatMl(perDose)} each"
     }
 
-    private fun saveCustomPeriods() {
+    private fun handleSaveClick() {
         if (saveInProgress) {
             return
         }
@@ -677,29 +642,17 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             dailyDoseMl == null ||
             dailyDoseMl <= 0f
         ) {
-            showMessage(
-                message = "Please enter a valid daily dose."
+            showSnackBar(
+                message = "Please enter a valid daily dose.",
+                type = BaseActivity.SnackType.WARNING
             )
             return
         }
 
         if (periods.isEmpty()) {
-            showMessage(
-                message = "Please add at least one dosing period."
-            )
-            return
-        }
-
-        if (channelGpioPwmForSave.isBlank() || channelGpioPwmForSave == "-") {
-            showMessage(
-                message = "Channel output could not be found."
-            )
-            return
-        }
-
-        if (channelCalibrationYeMsPerMlForSave <= 0L) {
-            showMessage(
-                message = "Please calibrate this channel first."
+            showSnackBar(
+                message = "Please add at least one dosing period.",
+                type = BaseActivity.SnackType.WARNING
             )
             return
         }
@@ -714,8 +667,9 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             }
 
         if (invalidPeriod != null) {
-            showMessage(
-                message = "Period end time must be later than start time."
+            showSnackBar(
+                message = "Period end time must be later than start time.",
+                type = BaseActivity.SnackType.WARNING
             )
             return
         }
@@ -724,26 +678,20 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             true
 
         renderSavingState()
+        renderPeriods()
+
+        setLoading(
+            show = true
+        )
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val saved =
-                EspDosingCommandClient.saveCustomPeriodsSchedule(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex,
-                    channelGpioPwm = channelGpioPwmForSave,
-                    channelCalibrationYeMsPerMl = channelCalibrationYeMsPerMlForSave,
-                    dailyDoseMl = dailyDoseMl,
-                    periods = periods.map { period ->
-                        CustomDosingPeriodCommand(
-                            startTime = period.startTime,
-                            endTime = period.endTime,
-                            doseCount = period.doseCount
-                        )
-                    },
-                    weekDays = selectedWeekDays,
-                    oldTimerIndexesForChannel = oldTimerIndexesForChannel,
-                    enabled = true
-                )
+            delay(
+                timeMillis = 700L
+            )
+
+            setLoading(
+                show = false
+            )
 
             saveInProgress =
                 false
@@ -753,18 +701,12 @@ class DeviceDosingCustomPeriodsSettingsFragment :
             }
 
             renderSavingState()
+            renderPeriods()
 
-            if (saved) {
-                showMessage(
-                    message = "Custom periods saved."
-                )
-
-                findNavController().navigateUp()
-            } else {
-                showMessage(
-                    message = "Custom periods could not be saved."
-                )
-            }
+            showSnackBar(
+                message = "Custom periods save will be connected after screen design is finalized.",
+                type = BaseActivity.SnackType.NORMAL
+            )
         }
     }
 
@@ -788,6 +730,20 @@ class DeviceDosingCustomPeriodsSettingsFragment :
                 1f
             }
 
+        binding.btnCancel.alpha =
+            if (saveInProgress) {
+                0.55f
+            } else {
+                1f
+            }
+
+        binding.btnAddPeriod.alpha =
+            if (saveInProgress) {
+                0.55f
+            } else {
+                1f
+            }
+
         binding.btnSave.text =
             if (saveInProgress) {
                 "Saving..."
@@ -803,7 +759,7 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         hideKeyboard()
 
         val parts =
-    currentValue.split(":")
+            currentValue.split(":")
 
         val hour =
             parts.getOrNull(
@@ -841,62 +797,6 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         ).show()
     }
 
-    private fun timerToPeriodUi(
-        timeStart: String,
-        intervalOff: String,
-        doseMl: Float,
-        count: Int,
-        calibrationYeMsPerMl: Long
-    ): CustomPeriodUi {
-        val startMinutes =
-            timeToMinutes(
-                value = timeStart
-            )
-
-        val safeCount =
-            count.coerceAtLeast(
-                minimumValue = 1
-            )
-
-        val doseRunMs =
-            (
-                doseMl.toDouble() *
-                    calibrationYeMsPerMl.coerceAtLeast(
-                        minimumValue = 1L
-                    ).toDouble()
-                ).roundToInt()
-                .coerceAtLeast(
-                    minimumValue = 1
-                )
-
-        val spacingMs =
-            parseDurationMillis(
-                value = intervalOff
-            ) + doseRunMs
-
-        val periodDurationMinutes =
-            ((spacingMs * safeCount) / 60_000f)
-                .roundToInt()
-                .coerceAtLeast(
-                    minimumValue = 1
-                )
-
-        val endMinutes =
-            (startMinutes + periodDurationMinutes).coerceAtMost(
-                maximumValue = 23 * 60 + 59
-            )
-
-        return CustomPeriodUi(
-            startTime = minutesToTime(
-                minutes = startMinutes
-            ),
-            endTime = minutesToTime(
-                minutes = endMinutes
-            ),
-            doseCount = safeCount
-        )
-    }
-
     private fun calculatePerDoseMl(): Float {
         val dailyDoseMl =
             binding.etDailyDoseMl.text
@@ -924,67 +824,13 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         return dailyDoseMl / totalDoseCount.toFloat()
     }
 
-    private fun parseDurationMillis(
-        value: String
-    ): Int {
-        val clean =
-            value.ifBlank {
-                "00:00"
-            }
-
-        val mainPart =
-            clean.substringBefore(
-                delimiter = "."
-            )
-
-        val millisPart =
-            clean.substringAfter(
-                delimiter = ".",
-                missingDelimiterValue = "0"
-            ).take(
-                n = 3
-            ).padEnd(
-                length = 3,
-                padChar = '0'
-            ).toIntOrNull() ?: 0
-
-        val parts =
-            mainPart.split(
-                delimiter = ":"
-            )
-
-        val hours =
-            parts.getOrNull(
-                index = 0
-            )?.toIntOrNull() ?: 0
-
-        val minutes =
-            parts.getOrNull(
-                index = 1
-            )?.toIntOrNull() ?: 0
-
-        val seconds =
-            parts.getOrNull(
-                index = 2
-            )?.toIntOrNull() ?: 0
-
-        return (
-            hours * 3_600_000 +
-                minutes * 60_000 +
-                seconds * 1_000 +
-                millisPart
-            )
-    }
-
     private fun timeToMinutes(
         value: String
     ): Int {
         val parts =
             value.ifBlank {
                 "00:00"
-            }.split(
-                delimiter = ":"
-            )
+            }.split(":")
 
         val hour =
             parts.getOrNull(
@@ -1007,52 +853,24 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         return hour * 60 + minute
     }
 
-    private fun minutesToTime(
-        minutes: Int
-    ): String {
-        val safeMinutes =
-            minutes.coerceIn(
-                minimumValue = 0,
-                maximumValue = 23 * 60 + 59
-            )
-
-        return String.format(
-            Locale.US,
-            "%02d:%02d",
-            safeMinutes / 60,
-            safeMinutes % 60
-        )
-    }
-
-    private fun formatDoseInput(
-        value: Float
-    ): String {
-        return if (value % 1f == 0f) {
-            value.toInt().toString()
-        } else {
-            String.format(
-                Locale.US,
-                "%.2f",
-                value
-            )
-        }
-    }
-
     private fun formatMl(
         value: Float
     ): String {
         return if (value % 1f == 0f) {
             "${value.toInt()} ml"
         } else {
-            String.format(
-                Locale.US,
-                "%.3f ml",
-                value
-            ).trimEnd(
-                '0'
-            ).trimEnd(
-                '.'
-            )
+            val amount =
+                String.format(
+                    Locale.US,
+                    "%.3f",
+                    value
+                ).trimEnd(
+                    '0'
+                ).trimEnd(
+                    '.'
+                )
+
+            "$amount ml"
         }
     }
 
@@ -1071,12 +889,21 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         binding.root.clearFocus()
     }
 
-    private fun showMessage(
-        message: String
+    private fun setLoading(
+        show: Boolean
+    ) {
+        (activity as? BaseActivity)?.showLoading(
+            show = show
+        )
+    }
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
     ) {
         (activity as? BaseActivity)?.showSnackBar(
             message = message,
-            type = BaseActivity.SnackType.NORMAL
+            type = type
         )
     }
 
@@ -1087,7 +914,17 @@ class DeviceDosingCustomPeriodsSettingsFragment :
     }
 
     override fun onDestroyView() {
-        _binding = null
+        if (saveInProgress) {
+            setLoading(
+                show = false
+            )
+        }
+
+        saveInProgress =
+            false
+
+        _binding =
+            null
 
         super.onDestroyView()
     }
@@ -1099,7 +936,9 @@ class DeviceDosingCustomPeriodsSettingsFragment :
     )
 
     companion object {
+        private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"
+        private const val ARG_DEVICE_TITLE = "deviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
         private const val MAX_PERIOD_COUNT = 4
     }

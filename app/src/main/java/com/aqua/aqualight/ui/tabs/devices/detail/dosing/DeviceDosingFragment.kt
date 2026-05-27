@@ -13,12 +13,12 @@ import com.aqua.aqualight.databinding.FragmentDeviceDosingBinding
 import com.aqua.aqualight.databinding.ItemDosingChannelCardBinding
 import kotlinx.coroutines.launch
 
-class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
+class DeviceDosingFragment :
+    Fragment(R.layout.fragment_device_dosing) {
 
     private var _binding: FragmentDeviceDosingBinding? = null
     private val binding get() = _binding!!
 
-    private var selectedPumpIndex: Int = 0
     private var navigationInProgress: Boolean = false
 
     private val runningPumpIndexes: MutableSet<Int> =
@@ -42,9 +42,10 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
             savedInstanceState
         )
 
-        _binding = FragmentDeviceDosingBinding.bind(
-            view
-        )
+        _binding =
+            FragmentDeviceDosingBinding.bind(
+                view
+            )
 
         bindDefaultChannelCards()
         bindClicks()
@@ -182,21 +183,22 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
             return
         }
 
-        selectedPumpIndex =
+        val safePumpIndex =
             pumpIndex.coerceIn(
                 minimumValue = 0,
                 maximumValue = 3
             )
 
         routeChannelByCalibrationState(
-            channelIndex = selectedPumpIndex
+            channelIndex = safePumpIndex
         )
     }
 
     private fun routeChannelByCalibrationState(
         channelIndex: Int
     ) {
-        navigationInProgress = true
+        navigationInProgress =
+            true
 
         viewLifecycleOwner.lifecycleScope.launch {
             val calibrationState =
@@ -205,7 +207,8 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
                     channelIndex = channelIndex
                 )
 
-            navigationInProgress = false
+            navigationInProgress =
+                false
 
             if (!isAdded || _binding == null) {
                 return@launch
@@ -213,8 +216,9 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
             when {
                 calibrationState == null -> {
-                    showComingNext(
-                        message = "Calibration state could not be read. Opening settings."
+                    showSnackBar(
+                        message = "Calibration state could not be read. Opening settings.",
+                        type = BaseActivity.SnackType.WARNING
                     )
 
                     openSelectedPumpSettings(
@@ -300,18 +304,22 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         )
     }
 
-    private fun showComingNext(
-        message: String
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
     ) {
         (activity as? BaseActivity)?.showSnackBar(
             message = message,
-            type = BaseActivity.SnackType.NORMAL
+            type = type
         )
     }
 
     override fun onDestroyView() {
-        navigationInProgress = false
-        _binding = null
+        navigationInProgress =
+            false
+
+        _binding =
+            null
 
         super.onDestroyView()
     }

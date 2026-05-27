@@ -24,7 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class DeviceDosingCalibrationFragment :
-Fragment(R.layout.fragment_device_dosing_calibration) {
+    Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private var _binding: FragmentDeviceDosingCalibrationBinding? = null
     private val binding get() = _binding!!
@@ -34,80 +34,78 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
     private var currentStepIndex: Int = 0
     private var primeCommandRunning: Boolean = false
     private var timedDeviceCommandRunning: Boolean = false
+    private var calibrationSaveInProgress: Boolean = false
     private var calculatedYeMsPerMl: Long? = null
 
     private val completedDeviceActionSteps: MutableSet<Int> =
-    mutableSetOf()
+        mutableSetOf()
 
     private val channelIndex: Int
-    get() = requireArguments().getInt(
-        ARG_CHANNEL_INDEX,
-        0
-    ).coerceIn(
-        minimumValue = 0,
-        maximumValue = 3
-    )
+        get() = requireArguments().getInt(
+            ARG_CHANNEL_INDEX,
+            0
+        ).coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
 
     private val channelNumber: Int
-    get() = channelIndex + 1
+        get() = channelIndex + 1
 
     private val deviceId: Long
-    get() = requireArguments().getLong(ARG_DEVICE_ID)
+        get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceIp: String
-    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
-
-    private val deviceTitle: String
-    get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
+        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     private val steps: List<CalibrationStep> =
-    listOf(
-        CalibrationStep(
-            title = "Name the liquid",
-            description = "Name this dosing liquid before calibration.",
-            hint = "Example: Micro, Macro, Iron, NPK or KH buffer.",
-            miniStatus = "Setup"
-        ),
-        CalibrationStep(
-            title = "Prime the tube",
-            description = "Fill the tube with liquid until no air remains inside.",
-            hint = "Press and hold Prime until liquid reaches the tube outlet.",
-            miniStatus = "Prime",
-            deviceActionTitle = "Tube priming",
-            deviceActionDescription = "Hold the button to run the selected pump. Release to stop.",
-            deviceActionText = "Hold Prime"
-        ),
-        CalibrationStep(
-            title = "Start calibration",
-            description = "Place the tube outlet into a measuring cylinder.",
-            hint = "The pump will dose for 6 seconds. Measure the collected liquid after it stops.",
-            miniStatus = "Calibrate",
-            deviceActionTitle = "Calibration dose",
-            deviceActionDescription = "Start a fixed calibration dose for this channel.",
-            deviceActionText = "Start"
-        ),
-        CalibrationStep(
-            title = "Enter measured amount",
-            description = "Read the exact amount in the measuring cylinder.",
-            hint = "Enter the value as accurately as possible. Recommended precision is 0.05 ml.",
-            miniStatus = "Measure"
-        ),
-        CalibrationStep(
-            title = "Dose test amount",
-            description = "Empty and dry the measuring cylinder, then dose 4 ml.",
-            hint = "This validates the calibration with a known amount.",
-            miniStatus = "Test",
-            deviceActionTitle = "Validation dose",
-            deviceActionDescription = "Dose exactly 4 ml using the calculated calibration value.",
-            deviceActionText = "Dose 4 ml"
-        ),
-        CalibrationStep(
-            title = "Confirm result",
-            description = "Was exactly 4 ml dosed into the measuring cylinder?",
-            hint = "Accept if the result is between 3.95 ml and 4.05 ml.",
-            miniStatus = "Result"
+        listOf(
+            CalibrationStep(
+                title = "Name the liquid",
+                description = "Name this dosing liquid before calibration.",
+                hint = "Example: Micro, Macro, Iron, NPK or KH buffer.",
+                miniStatus = "Setup"
+            ),
+            CalibrationStep(
+                title = "Prime the tube",
+                description = "Fill the tube with liquid until no air remains inside.",
+                hint = "Press and hold Prime until liquid reaches the tube outlet.",
+                miniStatus = "Prime",
+                deviceActionTitle = "Tube priming",
+                deviceActionDescription = "Hold the button to run the selected pump. Release to stop.",
+                deviceActionText = "Hold Prime"
+            ),
+            CalibrationStep(
+                title = "Start calibration",
+                description = "Place the tube outlet into a measuring cylinder.",
+                hint = "The pump will dose for 6 seconds. Measure the collected liquid after it stops.",
+                miniStatus = "Calibrate",
+                deviceActionTitle = "Calibration dose",
+                deviceActionDescription = "Start a fixed calibration dose for this channel.",
+                deviceActionText = "Start"
+            ),
+            CalibrationStep(
+                title = "Enter measured amount",
+                description = "Read the exact amount in the measuring cylinder.",
+                hint = "Enter the value as accurately as possible. Recommended precision is 0.05 ml.",
+                miniStatus = "Measure"
+            ),
+            CalibrationStep(
+                title = "Dose test amount",
+                description = "Empty and dry the measuring cylinder, then dose 4 ml.",
+                hint = "This validates the calibration with a known amount.",
+                miniStatus = "Test",
+                deviceActionTitle = "Validation dose",
+                deviceActionDescription = "Dose exactly 4 ml using the calculated calibration value.",
+                deviceActionText = "Dose 4 ml"
+            ),
+            CalibrationStep(
+                title = "Confirm result",
+                description = "Was exactly 4 ml dosed into the measuring cylinder?",
+                hint = "Accept if the result is between 3.95 ml and 4.05 ml.",
+                miniStatus = "Result"
+            )
         )
-    )
 
     override fun onViewCreated(
         view: View,
@@ -118,14 +116,15 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
             savedInstanceState
         )
 
-        _binding = FragmentDeviceDosingCalibrationBinding.bind(
-            view
-        )
+        _binding =
+            FragmentDeviceDosingCalibrationBinding.bind(
+                view
+            )
 
         calibrationDataStoreManager =
-        DosingCalibrationDataStoreManager(
-            context = requireContext()
-        )
+            DosingCalibrationDataStoreManager(
+                context = requireContext()
+            )
 
         bindSystemBack()
         bindTopBar()
@@ -149,7 +148,7 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun bindTopBar() {
         binding.tvTitle.text =
-        "Channel $channelNumber Calibration"
+            "Channel $channelNumber Calibration"
 
         binding.btnBack.setOnClickListener {
             handleBackPressed()
@@ -158,43 +157,42 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-        if (channelIndex == 0) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 0) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump2.visibility =
-        if (channelIndex == 1) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 1) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump3.visibility =
-        if (channelIndex == 2) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 2) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump4.visibility =
-        if (channelIndex == 3) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 3) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
     }
 
     private fun bindKeyboardMode() {
         ViewCompat.setOnApplyWindowInsetsListener(
             binding.root
-        ) {
-            _, insets ->
+        ) { _, insets ->
             val keyboardVisible =
-            insets.isVisible(
-                WindowInsetsCompat.Type.ime()
-            )
+                insets.isVisible(
+                    WindowInsetsCompat.Type.ime()
+                )
 
             renderKeyboardMode(
                 keyboardVisible = keyboardVisible
@@ -208,37 +206,36 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         keyboardVisible: Boolean
     ) {
         val inputStep =
-        currentStepIndex == STEP_NAME ||
-        currentStepIndex == STEP_MEASURE
+            currentStepIndex == STEP_NAME ||
+                currentStepIndex == STEP_MEASURE
 
         val compactMode =
-        keyboardVisible && inputStep
+            keyboardVisible && inputStep
 
         binding.pumpVisualContainer.visibility =
-        if (compactMode) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
+            if (compactMode) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
 
         binding.stepProgressRow.visibility =
-        if (compactMode) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
+            if (compactMode) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
 
         binding.footerContainer.visibility =
-        if (compactMode) {
-            View.GONE
-        } else {
-            View.VISIBLE
-        }
+            if (compactMode) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
     }
 
     private fun bindInputDoneActions() {
-        binding.etLiquidName.setOnEditorActionListener {
-            _, actionId, _ ->
+        binding.etLiquidName.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 hideKeyboard()
                 handlePrimaryAction()
@@ -248,8 +245,7 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
             }
         }
 
-        binding.etMeasuredAmount.setOnEditorActionListener {
-            _, actionId, _ ->
+        binding.etMeasuredAmount.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 hideKeyboard()
                 handlePrimaryAction()
@@ -270,8 +266,7 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
             handlePrimaryAction()
         }
 
-        binding.btnStepDeviceAction.setOnTouchListener {
-            view, event ->
+        binding.btnStepDeviceAction.setOnTouchListener { view, event ->
             if (currentStepIndex != STEP_PRIME) {
                 return@setOnTouchListener false
             }
@@ -290,7 +285,7 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
                     view.isPressed = false
 
                     val wasRunning =
-                    primeCommandRunning
+                        primeCommandRunning
 
                     stopPrimeCommand()
 
@@ -304,7 +299,9 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
                     }
 
                     true
-                } else -> true
+                }
+
+                else -> true
             }
         }
 
@@ -317,46 +314,46 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun renderStep() {
         val step =
-        steps[currentStepIndex]
+            steps[currentStepIndex]
 
         binding.tvStepBadge.text =
-        "STEP ${currentStepIndex + 1} OF ${steps.size}"
+            "STEP ${currentStepIndex + 1} OF ${steps.size}"
 
         binding.tvStepMiniStatus.text =
-        step.miniStatus
+            step.miniStatus
 
         binding.tvStepTitle.text =
-        step.title
+            step.title
 
         binding.tvStepDescription.text =
-        step.description
+            step.description
 
         binding.tvStepHint.text =
-        step.hint
+            step.hint
 
         binding.btnSecondaryAction.text =
-        when {
-            currentStepIndex == STEP_NAME -> "Cancel"
-            currentStepIndex == steps.lastIndex -> "Recalibrate"
-            else -> "Back"
-        }
+            when {
+                currentStepIndex == STEP_NAME -> "Cancel"
+                currentStepIndex == steps.lastIndex -> "Recalibrate"
+                else -> "Back"
+            }
 
         binding.inputLiquidNameLayout.visibility =
-        if (currentStepIndex == STEP_NAME) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (currentStepIndex == STEP_NAME) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.inputMeasuredAmountLayout.visibility =
-        if (currentStepIndex == STEP_MEASURE) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (currentStepIndex == STEP_MEASURE) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.calibrationIllustrationView.stepIndex =
-        currentStepIndex
+            currentStepIndex
 
         renderStepProgress()
         renderStepDeviceAction()
@@ -365,17 +362,16 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun renderStepProgress() {
         val progressViews =
-        listOf(
-            binding.stepProgress1,
-            binding.stepProgress2,
-            binding.stepProgress3,
-            binding.stepProgress4,
-            binding.stepProgress5,
-            binding.stepProgress6
-        )
+            listOf(
+                binding.stepProgress1,
+                binding.stepProgress2,
+                binding.stepProgress3,
+                binding.stepProgress4,
+                binding.stepProgress5,
+                binding.stepProgress6
+            )
 
-        progressViews.forEachIndexed {
-            index, view ->
+        progressViews.forEachIndexed { index, view ->
             view.setBackgroundColor(
                 if (index <= currentStepIndex) {
                     Color.parseColor("#38BDF8")
@@ -388,86 +384,93 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun renderStepDeviceAction() {
         val step =
-        steps[currentStepIndex]
+            steps[currentStepIndex]
 
         val hasDeviceAction =
-        step.deviceActionText != null
+            step.deviceActionText != null
 
         binding.cardStepDeviceAction.visibility =
-        if (hasDeviceAction) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (hasDeviceAction) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.tvDeviceActionTitle.text =
-        step.deviceActionTitle.orEmpty()
+            step.deviceActionTitle.orEmpty()
 
         binding.tvDeviceActionDescription.text =
-        step.deviceActionDescription.orEmpty()
+            step.deviceActionDescription.orEmpty()
 
         val deviceActionCompleted =
-        completedDeviceActionSteps.contains(
-            currentStepIndex
-        )
+            completedDeviceActionSteps.contains(
+                currentStepIndex
+            )
 
         binding.btnStepDeviceAction.text =
-        when {
-            timedDeviceCommandRunning -> "Dosing..."
-            currentStepIndex == STEP_PRIME && deviceActionCompleted -> "Hold again"
-            deviceActionCompleted -> "Done"
-            else -> step.deviceActionText.orEmpty()
-        }
+            when {
+                timedDeviceCommandRunning -> "Dosing..."
+                currentStepIndex == STEP_PRIME && deviceActionCompleted -> "Hold again"
+                deviceActionCompleted -> "Done"
+                else -> step.deviceActionText.orEmpty()
+            }
 
         binding.btnStepDeviceAction.isEnabled =
-        when {
-            timedDeviceCommandRunning -> false
-            currentStepIndex == STEP_PRIME -> true
-            else -> !deviceActionCompleted
-        }
+            when {
+                timedDeviceCommandRunning -> false
+                currentStepIndex == STEP_PRIME -> true
+                else -> !deviceActionCompleted
+            }
 
         binding.btnStepDeviceAction.alpha =
-        if (
-            deviceActionCompleted &&
-            currentStepIndex != STEP_PRIME
-        ) {
-            0.55f
-        } else {
-            1f
-        }
+            if (
+                deviceActionCompleted &&
+                currentStepIndex != STEP_PRIME
+            ) {
+                0.55f
+            } else {
+                1f
+            }
 
         val primaryEnabled =
-        !hasDeviceAction || deviceActionCompleted
+            !hasDeviceAction || deviceActionCompleted
 
         binding.btnPrimaryAction.text =
-        if (currentStepIndex == steps.lastIndex) {
-            "Yes, save"
-        } else {
-            "Continue"
-        }
+            if (currentStepIndex == steps.lastIndex) {
+                "Yes, save"
+            } else {
+                "Continue"
+            }
 
         binding.btnPrimaryAction.isEnabled =
-        primaryEnabled && !timedDeviceCommandRunning
+            primaryEnabled &&
+                !timedDeviceCommandRunning &&
+                !calibrationSaveInProgress
 
         binding.btnPrimaryAction.alpha =
-        if (
-            primaryEnabled &&
-            !timedDeviceCommandRunning
-        ) {
-            1f
-        } else {
-            0.45f
-        }
+            if (
+                primaryEnabled &&
+                !timedDeviceCommandRunning &&
+                !calibrationSaveInProgress
+            ) {
+                1f
+            } else {
+                0.45f
+            }
 
         binding.btnSecondaryAction.isEnabled =
-        !timedDeviceCommandRunning
+            !timedDeviceCommandRunning &&
+                !calibrationSaveInProgress
 
         binding.btnSecondaryAction.alpha =
-        if (timedDeviceCommandRunning) {
-            0.45f
-        } else {
-            1f
-        }
+            if (
+                timedDeviceCommandRunning ||
+                calibrationSaveInProgress
+            ) {
+                0.45f
+            } else {
+                1f
+            }
     }
 
     private fun startPrimeCommand() {
@@ -478,38 +481,30 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         hideKeyboard()
 
         primeCommandRunning =
-        true
+            true
 
         viewLifecycleOwner.lifecycleScope.launch {
             val commandSent =
-            EspDosingCommandClient.startPrime(
-                deviceIp = deviceIp,
-                channelIndex = channelIndex
-            )
+                EspDosingCommandClient.startPrime(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex
+                )
 
             if (!commandSent) {
                 primeCommandRunning =
-                false
+                    false
 
                 if (_binding == null) {
                     return@launch
                 }
 
-                showComingNext(
-                    message = "Prime command could not be sent."
+                showSnackBar(
+                    message = "Prime command could not be sent.",
+                    type = BaseActivity.SnackType.ERROR
                 )
 
                 renderStep()
-                return@launch
             }
-
-            if (_binding == null) {
-                return@launch
-            }
-
-            showComingNext(
-                message = "Pump priming started for Channel $channelNumber."
-            )
         }
     }
 
@@ -519,26 +514,23 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         }
 
         primeCommandRunning =
-        false
+            false
 
         viewLifecycleOwner.lifecycleScope.launch {
             val commandSent =
-            EspDosingCommandClient.stopManual(
-                deviceIp = deviceIp,
-                channelIndex = channelIndex
-            )
+                EspDosingCommandClient.stopManual(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex
+                )
 
             if (_binding == null) {
                 return@launch
             }
 
-            if (commandSent) {
-                showComingNext(
-                    message = "Pump priming stopped for Channel $channelNumber."
-                )
-            } else {
-                showComingNext(
-                    message = "Prime stop command could not be sent."
+            if (!commandSent) {
+                showSnackBar(
+                    message = "Prime stop command could not be sent.",
+                    type = BaseActivity.SnackType.ERROR
                 )
             }
         }
@@ -548,8 +540,9 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         hideKeyboard()
 
         if (timedDeviceCommandRunning) {
-            showComingNext(
-                message = "Please wait until the current dosing command finishes."
+            showSnackBar(
+                message = "Please wait until the current dosing command finishes.",
+                type = BaseActivity.SnackType.WARNING
             )
             return
         }
@@ -567,28 +560,29 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun runCalibrationDoseCommand() {
         timedDeviceCommandRunning =
-        true
+            true
 
         renderStepDeviceAction()
 
         viewLifecycleOwner.lifecycleScope.launch {
             val commandSent =
-            EspDosingCommandClient.runTimedDose(
-                deviceIp = deviceIp,
-                channelIndex = channelIndex,
-                durationMs = CALIBRATION_DOSING_DURATION_MS
-            )
+                EspDosingCommandClient.runTimedDose(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    durationMs = CALIBRATION_DOSING_DURATION_MS
+                )
 
             if (!commandSent) {
                 timedDeviceCommandRunning =
-                false
+                    false
 
                 if (_binding == null) {
                     return@launch
                 }
 
-                showComingNext(
-                    message = "Calibration dose command could not be sent."
+                showSnackBar(
+                    message = "Calibration dose command could not be sent.",
+                    type = BaseActivity.SnackType.ERROR
                 )
 
                 renderStep()
@@ -600,70 +594,69 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
             )
 
             timedDeviceCommandRunning =
-            false
+                false
 
             if (_binding == null) {
                 return@launch
             }
 
             markStepDeviceActionCompleted()
-
-            showComingNext(
-                message = "Calibration dose completed."
-            )
         }
     }
 
     private fun runTestDoseCommand() {
         val yeMsPerMl =
-        calculatedYeMsPerMl
+            calculatedYeMsPerMl
 
         if (
             yeMsPerMl == null ||
             yeMsPerMl <= 0L
         ) {
-            showComingNext(
-                message = "Calibration value is missing. Please measure again."
+            showSnackBar(
+                message = "Calibration value is missing. Please measure again.",
+                type = BaseActivity.SnackType.WARNING
             )
             return
         }
 
         val testDoseDurationMs =
-        EspDosingCommandClient.calculateDurationForDose(
-            yeMsPerMl = yeMsPerMl,
-            doseMl = TEST_DOSE_ML
-        )
+            EspDosingCommandClient.calculateDurationForDose(
+                yeMsPerMl = yeMsPerMl,
+                doseMl = TEST_DOSE_ML
+            )
 
         if (testDoseDurationMs == null) {
-            showComingNext(
-                message = "Test dose duration could not be calculated."
+            showSnackBar(
+                message = "Test dose duration could not be calculated.",
+                type = BaseActivity.SnackType.ERROR
             )
             return
         }
 
         timedDeviceCommandRunning =
-        true
+            true
 
         renderStepDeviceAction()
 
         viewLifecycleOwner.lifecycleScope.launch {
             val commandSent =
-            EspDosingCommandClient.runTimedDose(
-                deviceIp = deviceIp,
-                channelIndex = channelIndex,
-                durationMs = testDoseDurationMs
-            )
+                EspDosingCommandClient.runTimedDose(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    durationMs = testDoseDurationMs
+                )
 
             if (!commandSent) {
                 timedDeviceCommandRunning =
-                false
+                    false
 
                 if (_binding == null) {
                     return@launch
                 }
 
-                showComingNext(
-                    message = "Test dose command could not be sent."
+                showSnackBar(
+                    message = "Test dose command could not be sent.",
+                    type = BaseActivity.SnackType.ERROR
                 )
 
                 renderStep()
@@ -675,17 +668,13 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
             )
 
             timedDeviceCommandRunning =
-            false
+                false
 
             if (_binding == null) {
                 return@launch
             }
 
             markStepDeviceActionCompleted()
-
-            showComingNext(
-                message = "4 ml test dose completed."
-            )
         }
     }
 
@@ -699,23 +688,29 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun handlePrimaryAction() {
         if (timedDeviceCommandRunning) {
-            showComingNext(
-                message = "Please wait until the dosing command finishes."
+            showSnackBar(
+                message = "Please wait until the dosing command finishes.",
+                type = BaseActivity.SnackType.WARNING
             )
+            return
+        }
+
+        if (calibrationSaveInProgress) {
             return
         }
 
         when (currentStepIndex) {
             STEP_NAME -> {
                 val liquidName =
-                binding.etLiquidName.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
+                    binding.etLiquidName.text
+                        ?.toString()
+                        ?.trim()
+                        .orEmpty()
 
                 if (liquidName.isBlank()) {
-                    showComingNext(
-                        message = "Please enter a liquid name."
+                    showSnackBar(
+                        message = "Please enter a liquid name.",
+                        type = BaseActivity.SnackType.WARNING
                     )
                     return
                 }
@@ -725,50 +720,54 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
             STEP_MEASURE -> {
                 val measuredAmountText =
-                binding.etMeasuredAmount.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
+                    binding.etMeasuredAmount.text
+                        ?.toString()
+                        ?.trim()
+                        .orEmpty()
 
                 val measuredAmount =
-                measuredAmountText.toFloatOrNull()
+                    measuredAmountText.toFloatOrNull()
 
                 if (
                     measuredAmountText.isBlank() ||
                     measuredAmount == null ||
                     measuredAmount <= 0f
                 ) {
-                    showComingNext(
-                        message = "Please enter a valid measured amount."
+                    showSnackBar(
+                        message = "Please enter a valid measured amount.",
+                        type = BaseActivity.SnackType.WARNING
                     )
                     return
                 }
 
                 val calculatedYe =
-                EspDosingCommandClient.calculateYeMsPerMl(
-                    calibrationDurationMs = CALIBRATION_DOSING_DURATION_MS,
-                    measuredAmountMl = measuredAmount
-                )
+                    EspDosingCommandClient.calculateYeMsPerMl(
+                        calibrationDurationMs = CALIBRATION_DOSING_DURATION_MS,
+                        measuredAmountMl = measuredAmount
+                    )
 
                 if (
                     calculatedYe == null ||
                     calculatedYe <= 0L
                 ) {
-                    showComingNext(
-                        message = "Calibration value could not be calculated."
+                    showSnackBar(
+                        message = "Calibration value could not be calculated.",
+                        type = BaseActivity.SnackType.ERROR
                     )
                     return
                 }
 
                 calculatedYeMsPerMl =
-                calculatedYe
+                    calculatedYe
 
                 goToNextStep()
             }
 
             steps.lastIndex -> {
                 saveCalibrationLocallyAndClose()
-            } else -> {
+            }
+
+            else -> {
                 goToNextStep()
             }
         }
@@ -779,55 +778,77 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         stopPrimeCommand()
 
         val liquidName =
-        binding.etLiquidName.text
-        ?.toString()
-        ?.trim()
-        .orEmpty()
+            binding.etLiquidName.text
+                ?.toString()
+                ?.trim()
+                .orEmpty()
+
+        val yeMsPerMl =
+            calculatedYeMsPerMl
+
+        if (
+            yeMsPerMl == null ||
+            yeMsPerMl <= 0L
+        ) {
+            showSnackBar(
+                message = "Calibration value is missing. Please measure again.",
+                type = BaseActivity.SnackType.WARNING
+            )
+            return
+        }
+
+        calibrationSaveInProgress =
+            true
+
+        renderStepDeviceAction()
+
+        setLoading(
+            show = true
+        )
 
         viewLifecycleOwner.lifecycleScope.launch {
             val phoneNowMillis =
-            System.currentTimeMillis()
+                System.currentTimeMillis()
 
             val espTimeResult =
-            EspDeviceTimeClient.readCurrentTimeMillis(
-                deviceIp = deviceIp
-            )
+                EspDeviceTimeClient.readCurrentTimeMillis(
+                    deviceIp = deviceIp
+                )
 
             val lastCalibratedAtMillis =
-            espTimeResult?.millis ?: phoneNowMillis
+                espTimeResult?.millis ?: phoneNowMillis
 
-            val yeMsPerMl =
-            calculatedYeMsPerMl
+            val coefficientSavedOnDevice =
+                EspDosingCommandClient.saveCalibrationCoefficient(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    yeMsPerMl = yeMsPerMl,
+                    liquidName = liquidName
+                )
 
-            if (
-                yeMsPerMl == null ||
-                yeMsPerMl <= 0L
-            ) {
-                if (_binding == null) {
-                    return@launch
-                }
+            if (_binding == null) {
+                calibrationSaveInProgress =
+                    false
 
-                showComingNext(
-                    message = "Calibration value is missing. Please measure again."
+                setLoading(
+                    show = false
                 )
                 return@launch
             }
 
-            val coefficientSavedOnDevice =
-            EspDosingCommandClient.saveCalibrationCoefficient(
-                deviceIp = deviceIp,
-                channelIndex = channelIndex,
-                yeMsPerMl = yeMsPerMl,
-                liquidName = liquidName
-            )
-
             if (!coefficientSavedOnDevice) {
-                if (_binding == null) {
-                    return@launch
-                }
+                calibrationSaveInProgress =
+                    false
 
-                showComingNext(
-                    message = "Calibration could not be saved to device."
+                setLoading(
+                    show = false
+                )
+
+                renderStepDeviceAction()
+
+                showSnackBar(
+                    message = "Calibration could not be saved to device.",
+                    type = BaseActivity.SnackType.ERROR
                 )
                 return@launch
             }
@@ -839,12 +860,23 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
             )
 
             if (_binding == null) {
+                calibrationSaveInProgress =
+                    false
+
+                setLoading(
+                    show = false
+                )
                 return@launch
             }
 
-            showComingNext(
-                message = "Calibration saved."
+            calibrationSaveInProgress =
+                false
+
+            setLoading(
+                show = false
             )
+
+            renderStepDeviceAction()
 
             findNavController().navigateUp()
         }
@@ -852,9 +884,14 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun handleSecondaryAction() {
         if (timedDeviceCommandRunning) {
-            showComingNext(
-                message = "Please wait until the dosing command finishes."
+            showSnackBar(
+                message = "Please wait until the dosing command finishes.",
+                type = BaseActivity.SnackType.WARNING
             )
+            return
+        }
+
+        if (calibrationSaveInProgress) {
             return
         }
 
@@ -875,10 +912,10 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
             )
 
             calculatedYeMsPerMl =
-            null
+                null
 
             currentStepIndex =
-            STEP_START_CALIBRATION
+                STEP_START_CALIBRATION
 
             renderStep()
             scrollToTop()
@@ -886,9 +923,9 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         }
 
         currentStepIndex =
-        (currentStepIndex - 1).coerceAtLeast(
-            minimumValue = STEP_NAME
-        )
+            (currentStepIndex - 1).coerceAtLeast(
+                minimumValue = STEP_NAME
+            )
 
         renderStep()
         scrollToTop()
@@ -899,9 +936,9 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         stopPrimeCommand()
 
         currentStepIndex =
-        (currentStepIndex + 1).coerceAtMost(
-            maximumValue = steps.lastIndex
-        )
+            (currentStepIndex + 1).coerceAtMost(
+                maximumValue = steps.lastIndex
+            )
 
         renderStep()
         scrollToTop()
@@ -909,9 +946,14 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun handleBackPressed() {
         if (timedDeviceCommandRunning) {
-            showComingNext(
-                message = "Please wait until the dosing command finishes."
+            showSnackBar(
+                message = "Please wait until the dosing command finishes.",
+                type = BaseActivity.SnackType.WARNING
             )
+            return
+        }
+
+        if (calibrationSaveInProgress) {
             return
         }
 
@@ -924,9 +966,9 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         }
 
         currentStepIndex =
-        (currentStepIndex - 1).coerceAtLeast(
-            minimumValue = STEP_NAME
-        )
+            (currentStepIndex - 1).coerceAtLeast(
+                minimumValue = STEP_NAME
+            )
 
         renderStep()
         scrollToTop()
@@ -943,11 +985,11 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun refreshKeyboardMode() {
         val keyboardVisible =
-        ViewCompat.getRootWindowInsets(
-            binding.root
-        )?.isVisible(
-            WindowInsetsCompat.Type.ime()
-        ) == true
+            ViewCompat.getRootWindowInsets(
+                binding.root
+            )?.isVisible(
+                WindowInsetsCompat.Type.ime()
+            ) == true
 
         renderKeyboardMode(
             keyboardVisible = keyboardVisible
@@ -956,9 +998,9 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
 
     private fun hideKeyboard() {
         val inputMethodManager =
-        requireContext().getSystemService(
-            Context.INPUT_METHOD_SERVICE
-        ) as InputMethodManager
+            requireContext().getSystemService(
+                Context.INPUT_METHOD_SERVICE
+            ) as InputMethodManager
 
         inputMethodManager.hideSoftInputFromWindow(
             binding.root.windowToken,
@@ -970,22 +1012,41 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         binding.root.clearFocus()
     }
 
-    private fun showComingNext(
-        message: String
+    private fun setLoading(
+        show: Boolean
+    ) {
+        (activity as? BaseActivity)?.showLoading(
+            show = show
+        )
+    }
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
     ) {
         (activity as? BaseActivity)?.showSnackBar(
             message = message,
-            type = BaseActivity.SnackType.NORMAL
+            type = type
         )
     }
 
     override fun onDestroyView() {
         stopPrimeCommand()
 
-        timedDeviceCommandRunning =
-        false
+        if (calibrationSaveInProgress) {
+            setLoading(
+                show = false
+            )
+        }
 
-        _binding = null
+        calibrationSaveInProgress =
+            false
+
+        timedDeviceCommandRunning =
+            false
+
+        _binding =
+            null
 
         super.onDestroyView()
     }
