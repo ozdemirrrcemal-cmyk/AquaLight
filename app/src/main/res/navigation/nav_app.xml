@@ -224,7 +224,8 @@
     android:name="com.aqua.aqualight.ui.tabs.devices.setup.DeviceSetupFragment"
     android:label="Device Setup"
     tools:layout="@layout/fragment_device_setup" />
-<fragment
+	
+	<fragment
     android:id="@+id/deviceMenuFragment"
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment"
     android:label="Device"
@@ -233,6 +234,10 @@
     <action
         android:id="@+id/action_deviceMenuFragment_to_deviceDosingChannelSettingsFragment"
         app:destination="@id/deviceDosingChannelSettingsFragment" />
+
+    <action
+        android:id="@+id/action_deviceMenuFragment_to_deviceDosingCalibrationFragment"
+        app:destination="@id/deviceDosingCalibrationFragment" />
 
 </fragment>
 

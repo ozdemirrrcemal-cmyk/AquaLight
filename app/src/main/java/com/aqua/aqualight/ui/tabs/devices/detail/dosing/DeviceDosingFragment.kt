@@ -4,10 +4,14 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.dosing.EspDosingCalibrationStateClient
 import com.aqua.aqualight.databinding.FragmentDeviceDosingBinding
 import com.aqua.aqualight.databinding.ItemDosingChannelCardBinding
+import kotlinx.coroutines.launch
 
 class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
@@ -15,6 +19,7 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     private val binding get() = _binding!!
 
     private var selectedPumpIndex: Int = 0
+    private var navigationInProgress: Boolean = false
 
     private val runningPumpIndexes: MutableSet<Int> =
         mutableSetOf()
@@ -173,12 +178,63 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
     private fun handlePumpClick(
         pumpIndex: Int
     ) {
-        selectedPumpIndex = pumpIndex.coerceIn(
-            minimumValue = 0,
-            maximumValue = 3
-        )
+        if (navigationInProgress) {
+            return
+        }
 
-        openSelectedPumpSettings()
+        selectedPumpIndex =
+            pumpIndex.coerceIn(
+                minimumValue = 0,
+                maximumValue = 3
+            )
+
+        routeChannelByCalibrationState(
+            channelIndex = selectedPumpIndex
+        )
+    }
+
+    private fun routeChannelByCalibrationState(
+        channelIndex: Int
+    ) {
+        navigationInProgress = true
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val calibrationState =
+                EspDosingCalibrationStateClient.readChannelCalibrationState(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex
+                )
+
+            navigationInProgress = false
+
+            if (!isAdded || _binding == null) {
+                return@launch
+            }
+
+            when {
+                calibrationState == null -> {
+                    showComingNext(
+                        message = "Calibration state could not be read. Opening settings."
+                    )
+
+                    openSelectedPumpSettings(
+                        channelIndex = channelIndex
+                    )
+                }
+
+                calibrationState.calibratedOnDevice -> {
+                    openSelectedPumpSettings(
+                        channelIndex = channelIndex
+                    )
+                }
+
+                else -> {
+                    openSelectedPumpCalibration(
+                        channelIndex = channelIndex
+                    )
+                }
+            }
+        }
     }
 
     private fun renderPumpRunningIndicators() {
@@ -211,19 +267,50 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
             }
     }
 
-    private fun openSelectedPumpSettings() {
+    private fun openSelectedPumpSettings(
+        channelIndex: Int
+    ) {
         findNavController().navigate(
             R.id.action_deviceMenuFragment_to_deviceDosingChannelSettingsFragment,
-            bundleOf(
-                "deviceId" to deviceId,
-                "deviceIp" to deviceIp,
-                "deviceTitle" to deviceTitle,
-                "channelIndex" to selectedPumpIndex
+            createChannelBundle(
+                channelIndex = channelIndex
             )
         )
     }
 
+    private fun openSelectedPumpCalibration(
+        channelIndex: Int
+    ) {
+        findNavController().navigate(
+            R.id.action_deviceMenuFragment_to_deviceDosingCalibrationFragment,
+            createChannelBundle(
+                channelIndex = channelIndex
+            )
+        )
+    }
+
+    private fun createChannelBundle(
+        channelIndex: Int
+    ): Bundle {
+        return bundleOf(
+            ARG_DEVICE_ID to deviceId,
+            ARG_DEVICE_IP to deviceIp,
+            ARG_DEVICE_TITLE to deviceTitle,
+            ARG_CHANNEL_INDEX to channelIndex
+        )
+    }
+
+    private fun showComingNext(
+        message: String
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = BaseActivity.SnackType.NORMAL
+        )
+    }
+
     override fun onDestroyView() {
+        navigationInProgress = false
         _binding = null
 
         super.onDestroyView()
@@ -236,6 +323,7 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         private const val ARG_CAN_EDIT_DEVICE_NAME = "canEditDeviceName"
         private const val ARG_USER_DEVICE_NAME = "userDeviceName"
         private const val ARG_DEFAULT_DEVICE_TITLE = "defaultDeviceTitle"
+        private const val ARG_CHANNEL_INDEX = "channelIndex"
 
         fun newInstance(
             deviceId: Long,
