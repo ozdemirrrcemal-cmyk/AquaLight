@@ -10,7 +10,7 @@
 
     <!-- 🎬 Login Background & Visuals -->
     <string name="main_login_video_background_description">Background video playing in login screen</string>
-    <string name="main_login_blur_overlay_description">Blur overlay layer for background</string>
+    <string name="main_login_blur_overlay_description">Blur overla layer for background</string>
     <string name="main_login_logo_description">AquaLight app logo</string>
     <string name="main_login_fragment_container_description">Fragment container displaying login or registration screens</string>
 
