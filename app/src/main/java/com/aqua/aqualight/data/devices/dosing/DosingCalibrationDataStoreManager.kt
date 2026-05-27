@@ -53,79 +53,45 @@ class DosingCalibrationDataStoreManager(
     }
 
     suspend fun saveCalibration(
-        deviceId: Long,
-        channelIndex: Int,
-        liquidName: String,
-        lastCalibratedAtMillis: Long,
-        phoneSavedAtMillis: Long,
-        timeSource: DosingCalibrationTimeSource,
-        espRawTimeText: String,
-        measuredAmountMl: Float?
-    ) {
-        appContext.dosingCalibrationDataStore.updateData { current ->
-            val newRecordBuilder =
-                DosingChannelCalibrationRecord.newBuilder()
-                    .setDeviceId(
-                        deviceId
+    deviceId: Long,
+    channelIndex: Int,
+    lastCalibratedAtMillis: Long
+) {
+    appContext.dosingCalibrationDataStore.updateData { current ->
+        val newRecord =
+            DosingChannelCalibrationRecord.newBuilder()
+                .setDeviceId(
+                    deviceId
+                )
+                .setChannelIndex(
+                    channelIndex.coerceIn(
+                        minimumValue = 0,
+                        maximumValue = 3
                     )
-                    .setChannelIndex(
-                        channelIndex.coerceIn(
-                            minimumValue = 0,
-                            maximumValue = 3
-                        )
-                    )
-                    .setLiquidName(
-                        liquidName
-                    )
-                    .setLastCalibratedAtMillis(
-                        lastCalibratedAtMillis
-                    )
-                    .setPhoneSavedAtMillis(
-                        phoneSavedAtMillis
-                    )
-                    .setTimeSource(
-                        timeSource.toProto()
-                    )
-                    .setEspRawTimeText(
-                        espRawTimeText
-                    )
-
-            if (measuredAmountMl != null) {
-                newRecordBuilder
-                    .setHasMeasuredAmountMl(
-                        true
-                    )
-                    .setMeasuredAmountMl(
-                        measuredAmountMl
-                    )
-            } else {
-                newRecordBuilder
-                    .setHasMeasuredAmountMl(
-                        false
-                    )
-                    .setMeasuredAmountMl(
-                        0f
-                    )
-            }
-
-            val updatedRecords =
-                current.recordsList
-                    .filterNot { record ->
-                        record.deviceId == deviceId &&
-                            record.channelIndex == channelIndex
-                    }
-                    .plus(
-                        newRecordBuilder.build()
-                    )
-
-            current.toBuilder()
-                .clearRecords()
-                .addAllRecords(
-                    updatedRecords
+                )
+                .setLastCalibratedAtMillis(
+                    lastCalibratedAtMillis
                 )
                 .build()
-        }
+
+        val updatedRecords =
+            current.recordsList
+                .filterNot { record ->
+                    record.deviceId == deviceId &&
+                        record.channelIndex == channelIndex
+                }
+                .plus(
+                    newRecord
+                )
+
+        current.toBuilder()
+            .clearRecords()
+            .addAllRecords(
+                updatedRecords
+            )
+            .build()
     }
+}
 
     suspend fun clearCalibration(
         deviceId: Long,
