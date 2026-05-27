@@ -156,6 +156,29 @@ class DosingEspRepository(
             payload = payload
         )
     }
+	
+	suspend fun updateTimerEnabledAndWeekDays(
+    deviceIp: String,
+    channelIndex: Int,
+    enabled: Boolean,
+    weekDays: List<Boolean>
+) {
+    val payload =
+        DosingEspJsonMapper.createTimerEnabledWeekDaysPayload(
+            channelIndex = channelIndex,
+            enabled = enabled,
+            weekDays = weekDays
+        )
+
+    api.postJson(
+        deviceIp = deviceIp,
+        payload = payload
+    )
+
+    saveTimerToDevice(
+        deviceIp = deviceIp
+    )
+}
 
     private suspend fun saveTimerToDevice(
         deviceIp: String

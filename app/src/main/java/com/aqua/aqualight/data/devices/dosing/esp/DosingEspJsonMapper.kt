@@ -281,6 +281,43 @@ object DosingEspJsonMapper {
             )
         }
     }
+	
+	fun createTimerEnabledWeekDaysPayload(
+    channelIndex: Int,
+    enabled: Boolean,
+    weekDays: List<Boolean>
+): JSONObject {
+    return JSONObject().apply {
+        put(
+            KEY_L_TIMER,
+            JSONObject().apply {
+                put(
+                    KEY_DATA,
+                    JSONObject().apply {
+                        put(
+                            channelIndex.coerceAtLeast(
+                                minimumValue = 0
+                            ).toString(),
+                            JSONObject().apply {
+                                put(
+                                    "Enabled",
+                                    enabled
+                                )
+
+                                put(
+                                    "WDay",
+                                    createWeekDayArray(
+                                        weekDays = weekDays
+                                    )
+                                )
+                            }
+                        )
+                    }
+                )
+            }
+        )
+    }
+}
 
     fun createSaveTimerPayload(): JSONObject {
         return JSONObject().apply {
