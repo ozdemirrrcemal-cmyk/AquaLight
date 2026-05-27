@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.dosing
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.core.updateData
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.devices.dosing.proto.DosingChannelSettingsPreferences
 import com.aqua.aqualight.data.devices.dosing.proto.DosingChannelSettingsRecord
