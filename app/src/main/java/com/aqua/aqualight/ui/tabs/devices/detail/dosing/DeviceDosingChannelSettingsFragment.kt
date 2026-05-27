@@ -355,12 +355,17 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         val hadEspTimerChanges =
         hasUnsavedEspTimerSettings
 
+        val baseActivity =
+        activity as? BaseActivity
+
         saveSettingsInProgress =
         true
 
         renderTopBarSaveState()
 
-        (activity as? BaseActivity)?.showLoading()
+        baseActivity?.showLoading(
+            true
+        )
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result =
@@ -381,11 +386,13 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 // selectedWeekDays -> LTimer.WDay
             }
 
+            baseActivity?.showLoading(
+                false
+            )
+
             if (_binding == null) {
                 return@launch
             }
-
-            (activity as? BaseActivity)?.hideLoading()
 
             saveSettingsInProgress =
             false
