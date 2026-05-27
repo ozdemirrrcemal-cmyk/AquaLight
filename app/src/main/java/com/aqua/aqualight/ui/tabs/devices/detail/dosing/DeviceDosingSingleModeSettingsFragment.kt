@@ -361,9 +361,7 @@ class DeviceDosingSingleModeSettingsFragment :
             }
 
         val parts =
-            safeValue.split(
-                delimiter = ":"
-            )
+            safeValue.split(":")
 
         selectedHour =
             parts.getOrNull(

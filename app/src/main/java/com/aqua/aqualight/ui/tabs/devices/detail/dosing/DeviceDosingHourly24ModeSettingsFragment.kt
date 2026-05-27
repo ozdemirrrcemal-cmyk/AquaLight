@@ -19,18 +19,18 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 class DeviceDosingHourly24ModeSettingsFragment :
-    Fragment(R.layout.fragment_device_dosing_hourly24_mode_settings) {
+Fragment(R.layout.fragment_device_dosing_hourly24_mode_settings) {
 
     private var _binding: FragmentDeviceDosingHourly24ModeSettingsBinding? = null
     private val binding get() = _binding!!
 
     private var selectedMinute: Int = 15
     private var selectedWeekDays: List<Boolean> =
-        List(
-            size = 7
-        ) {
-            true
-        }
+    List(
+        size = 7
+    ) {
+        true
+    }
 
     private var timerIndexForSave: Int? = null
     private var channelGpioPwmForSave: String = "-"
@@ -38,16 +38,16 @@ class DeviceDosingHourly24ModeSettingsFragment :
     private var saveInProgress: Boolean = false
 
     private val channelIndex: Int
-        get() = requireArguments().getInt(
-            ARG_CHANNEL_INDEX,
-            0
-        ).coerceIn(
-            minimumValue = 0,
-            maximumValue = 3
-        )
+    get() = requireArguments().getInt(
+        ARG_CHANNEL_INDEX,
+        0
+    ).coerceIn(
+        minimumValue = 0,
+        maximumValue = 3
+    )
 
     private val deviceIp: String
-        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -59,14 +59,14 @@ class DeviceDosingHourly24ModeSettingsFragment :
         )
 
         _binding =
-            FragmentDeviceDosingHourly24ModeSettingsBinding.bind(
-                view
-            )
+        FragmentDeviceDosingHourly24ModeSettingsBinding.bind(
+            view
+        )
 
         selectedMinute =
-            defaultMinuteForChannel(
-                channelIndex = channelIndex
-            )
+        defaultMinuteForChannel(
+            channelIndex = channelIndex
+        )
 
         bindHeader()
         bindSelectedPumpIndicator()
@@ -79,7 +79,7 @@ class DeviceDosingHourly24ModeSettingsFragment :
 
     private fun bindHeader() {
         binding.tvTitle.text =
-            "24 hourly"
+        "24 hourly"
 
         binding.btnBack.setOnClickListener {
             findNavController().navigateUp()
@@ -88,16 +88,16 @@ class DeviceDosingHourly24ModeSettingsFragment :
 
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-            if (channelIndex == 0) View.VISIBLE else View.GONE
+        if (channelIndex == 0) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump2.visibility =
-            if (channelIndex == 1) View.VISIBLE else View.GONE
+        if (channelIndex == 1) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump3.visibility =
-            if (channelIndex == 2) View.VISIBLE else View.GONE
+        if (channelIndex == 2) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump4.visibility =
-            if (channelIndex == 3) View.VISIBLE else View.GONE
+        if (channelIndex == 3) View.VISIBLE else View.GONE
     }
 
     private fun bindDoseWatcher() {
@@ -143,37 +143,37 @@ class DeviceDosingHourly24ModeSettingsFragment :
     private fun loadCurrentValues() {
         viewLifecycleOwner.lifecycleScope.launch {
             val snapshot =
-                EspDosingSettingsClient.readChannelSettingsSnapshot(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex
-                )
+            EspDosingSettingsClient.readChannelSettingsSnapshot(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
 
             if (_binding == null || snapshot == null) {
                 return@launch
             }
 
             val channel =
-                snapshot.channel
+            snapshot.channel
 
             val timer =
-                snapshot.timer
+            snapshot.timer
 
             channelGpioPwmForSave =
-                channel.gpioPwm
+            channel.gpioPwm
 
             channelCalibrationYeMsPerMlForSave =
-                channel.calibrationYeMsPerMl
+            channel.calibrationYeMsPerMl
 
             timerIndexForSave =
-                timer?.timerIndex ?: channelIndex
+            timer?.timerIndex ?: channelIndex
 
             if (timer != null) {
                 val dailyDose =
-                    if (timer.count > 1) {
-                        timer.doseMl * timer.count
-                    } else {
-                        timer.doseMl
-                    }
+                if (timer.count > 1) {
+                    timer.doseMl * timer.count
+                } else {
+                    timer.doseMl
+                }
 
                 if (dailyDose > 0f) {
                     binding.etDailyDoseMl.setText(
@@ -184,25 +184,26 @@ class DeviceDosingHourly24ModeSettingsFragment :
                 }
 
                 selectedMinute =
-                    parseMinuteFromTime(
-                        value = timer.timeStart
-                    ) ?: selectedMinute
+                parseMinuteFromTime(
+                    value = timer.timeStart
+                ) ?: selectedMinute
 
                 val hasAnySelectedDay =
-                    timer.weekDays.any { selected ->
-                        selected
-                    }
+                timer.weekDays.any {
+                    selected ->
+                    selected
+                }
 
                 selectedWeekDays =
-                    if (hasAnySelectedDay) {
-                        timer.weekDays
-                    } else {
-                        List(
-                            size = 7
-                        ) {
-                            true
-                        }
+                if (hasAnySelectedDay) {
+                    timer.weekDays
+                } else {
+                    List(
+                        size = 7
+                    ) {
+                        true
                     }
+                }
             }
 
             renderDoseMinute()
@@ -214,46 +215,48 @@ class DeviceDosingHourly24ModeSettingsFragment :
         hideKeyboard()
 
         val options =
-            arrayOf(
-                ":00",
-                ":15",
-                ":30",
-                ":45"
-            )
+        arrayOf(
+            ":00",
+            ":15",
+            ":30",
+            ":45"
+        )
 
         val values =
-            listOf(
-                0,
-                15,
-                30,
-                45
-            )
+        listOf(
+            0,
+            15,
+            30,
+            45
+        )
 
         val checkedIndex =
-            values.indexOf(
-                selectedMinute
-            ).takeIf { index ->
-                index >= 0
-            } ?: 1
+        values.indexOf(
+            selectedMinute
+        ).takeIf {
+            index ->
+            index >= 0
+        } ?: 1
 
         AlertDialog.Builder(
             requireContext()
         )
-            .setTitle(
-                "Dose minute"
-            )
-            .setSingleChoiceItems(
-                options,
-                checkedIndex
-            ) { dialog, which ->
-                selectedMinute =
-                    values[which]
+        .setTitle(
+            "Dose minute"
+        )
+        .setSingleChoiceItems(
+            options,
+            checkedIndex
+        ) {
+            dialog, which ->
+            selectedMinute =
+            values[which]
 
-                renderDoseMinute()
+            renderDoseMinute()
 
-                dialog.dismiss()
-            }
-            .show()
+            dialog.dismiss()
+        }
+        .show()
     }
 
     private fun saveHourly24Mode() {
@@ -264,14 +267,14 @@ class DeviceDosingHourly24ModeSettingsFragment :
         hideKeyboard()
 
         val dailyDoseMl =
-            binding.etDailyDoseMl.text
-                ?.toString()
-                ?.trim()
-                ?.replace(
-                    oldValue = ",",
-                    newValue = "."
-                )
-                ?.toFloatOrNull()
+        binding.etDailyDoseMl.text
+        ?.toString()
+        ?.trim()
+        ?.replace(
+            oldValue = ",",
+            newValue = "."
+        )
+        ?.toFloatOrNull()
 
         if (
             dailyDoseMl == null ||
@@ -284,7 +287,7 @@ class DeviceDosingHourly24ModeSettingsFragment :
         }
 
         val safeGpioPwm =
-            channelGpioPwmForSave.trim()
+        channelGpioPwmForSave.trim()
 
         if (
             safeGpioPwm.isBlank() ||
@@ -304,26 +307,26 @@ class DeviceDosingHourly24ModeSettingsFragment :
         }
 
         saveInProgress =
-            true
+        true
 
         renderSavingState()
 
         viewLifecycleOwner.lifecycleScope.launch {
             val saved =
-                EspDosingCommandClient.saveHourly24ModeSchedule(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex,
-                    timerIndex = timerIndexForSave ?: channelIndex,
-                    channelGpioPwm = safeGpioPwm,
-                    channelCalibrationYeMsPerMl = channelCalibrationYeMsPerMlForSave,
-                    dailyDoseMl = dailyDoseMl,
-                    selectedMinute = selectedMinute,
-                    weekDays = selectedWeekDays,
-                    enabled = true
-                )
+            EspDosingCommandClient.saveHourly24ModeSchedule(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex,
+                timerIndex = timerIndexForSave ?: channelIndex,
+                channelGpioPwm = safeGpioPwm,
+                channelCalibrationYeMsPerMl = channelCalibrationYeMsPerMlForSave,
+                dailyDoseMl = dailyDoseMl,
+                selectedMinute = selectedMinute,
+                weekDays = selectedWeekDays,
+                enabled = true
+            )
 
             saveInProgress =
-                false
+            false
 
             if (_binding == null) {
                 return@launch
@@ -347,42 +350,42 @@ class DeviceDosingHourly24ModeSettingsFragment :
 
     private fun renderDoseMinute() {
         binding.tvDoseMinuteValue.text =
-            String.format(
-                Locale.US,
-                ":%02d",
-                selectedMinute
-            )
+        String.format(
+            Locale.US,
+            ":%02d",
+            selectedMinute
+        )
     }
 
     private fun renderCalculatedDose() {
         val dailyDoseMl =
-            binding.etDailyDoseMl.text
-                ?.toString()
-                ?.trim()
-                ?.replace(
-                    oldValue = ",",
-                    newValue = "."
-                )
-                ?.toFloatOrNull()
+        binding.etDailyDoseMl.text
+        ?.toString()
+        ?.trim()
+        ?.replace(
+            oldValue = ",",
+            newValue = "."
+        )
+        ?.toFloatOrNull()
 
         val perDose =
-            if (
-                dailyDoseMl != null &&
-                dailyDoseMl > 0f
-            ) {
-                dailyDoseMl / 24f
-            } else {
-                0f
-            }
+        if (
+            dailyDoseMl != null &&
+            dailyDoseMl > 0f
+        ) {
+            dailyDoseMl / 24f
+        } else {
+            0f
+        }
 
         binding.tvCalculatedDoseValue.text =
-            "${formatMl(perDose)} every hour at ${
+        "${formatMl(perDose)} every hour at ${
                 String.format(
                     Locale.US,
                     ":%02d",
-                    selectedMinute
-                )
-            }"
+        selectedMinute
+    )
+}"
     }
 
     private fun renderSavingState() {
@@ -424,83 +427,83 @@ class DeviceDosingHourly24ModeSettingsFragment :
     }
 
     private fun parseMinuteFromTime(
-        value: String
-    ): Int? {
-        return value.split(
-            delimiter = ":"
-        ).getOrNull(
-            index = 1
-        )?.toIntOrNull()
-            ?.coerceIn(
-                minimumValue = 0,
-                maximumValue = 59
-            )
-    }
+    value: String
+): Int? {
+    return value.split(":")
+.getOrNull(
+index = 1
+)
+?.toIntOrNull()
+?.coerceIn(
+minimumValue = 0,
+maximumValue = 59
+)
+}
 
-    private fun formatDoseInput(
-        value: Float
-    ): String {
-        return if (value % 1f == 0f) {
-            value.toInt().toString()
-        } else {
-            String.format(
-                Locale.US,
-                "%.2f",
-                value
-            )
-        }
-    }
+private fun formatDoseInput(
+value: Float
+): String {
+return if (value % 1f == 0f) {
+value.toInt().toString()
+} else {
+String.format(
+Locale.US,
+"%.2f",
+value
+)
+}
+}
 
-    private fun formatMl(
-        value: Float
-    ): String {
-        return if (value % 1f == 0f) {
-            "${value.toInt()} ml"
-        } else {
-            String.format(
-                Locale.US,
-                "%.3f ml",
-                value
-            ).trimEnd(
-                '0'
-            ).trimEnd(
-                '.'
-            )
-        }
-    }
+private fun formatMl(
+value: Float
+): String {
+return if (value % 1f == 0f) {
+"${value.toInt()} ml"
+} else {
+String.format(
+Locale.US,
+"%.3f ml",
+value
+).trimEnd(
+'0'
+).trimEnd(
+'.'
+)
+}
+}
 
-    private fun hideKeyboard() {
-        val inputMethodManager =
-            requireContext().getSystemService(
-                Context.INPUT_METHOD_SERVICE
-            ) as InputMethodManager
+private fun hideKeyboard() {
+val inputMethodManager =
+requireContext().getSystemService(
+Context.INPUT_METHOD_SERVICE
+) as InputMethodManager
 
-        inputMethodManager.hideSoftInputFromWindow(
-            binding.root.windowToken,
-            0
-        )
+inputMethodManager.hideSoftInputFromWindow(
+binding.root.windowToken,
+0
+)
 
-        binding.etDailyDoseMl.clearFocus()
-        binding.root.clearFocus()
-    }
+binding.etDailyDoseMl.clearFocus()
+binding.root.clearFocus()
+}
 
-    private fun showComingNext(
-        message: String
-    ) {
-        (activity as? BaseActivity)?.showSnackBar(
-            message = message,
-            type = BaseActivity.SnackType.NORMAL
-        )
-    }
+private fun showComingNext(
+message: String
+) {
+(activity as? BaseActivity)?.showSnackBar(
+message = message,
+type = BaseActivity.SnackType.NORMAL
+)
+}
 
-    override fun onDestroyView() {
-        _binding = null
+override fun onDestroyView() {
+_binding = null
 
-        super.onDestroyView()
-    }
+super.onDestroyView()
+}
 
-    companion object {
-        private const val ARG_DEVICE_IP = "deviceIp"
-        private const val ARG_CHANNEL_INDEX = "channelIndex"
-    }
+companion object {
+private const val ARG_DEVICE_IP = "deviceIp"
+private const val ARG_CHANNEL_INDEX = "channelIndex"
+}
 }

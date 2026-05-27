@@ -803,9 +803,7 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         hideKeyboard()
 
         val parts =
-            currentValue.split(
-                delimiter = ":"
-            )
+    currentValue.split(":")
 
         val hour =
             parts.getOrNull(
