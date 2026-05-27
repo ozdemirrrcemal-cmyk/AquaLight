@@ -688,10 +688,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 mode = DosingMode.TIMER
             )
 
-            showSnackBar(
-                message = "Timer settings screen will be added next.",
-                type = BaseActivity.SnackType.NORMAL
-            )
+            openTimerModeSettings()
         }
 
         binding.radioModeTimer.setOnClickListener {
@@ -699,10 +696,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 mode = DosingMode.TIMER
             )
 
-            showSnackBar(
-                message = "Timer settings screen will be added next.",
-                type = BaseActivity.SnackType.NORMAL
-            )
+            openTimerModeSettings()
         }
 
         binding.rowEveryDay.setOnClickListener {
@@ -927,6 +921,13 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     private fun openCustomPeriodsSettings() {
         findNavController().navigate(
             R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingCustomPeriodsSettingsFragment,
+            createChannelBundle()
+        )
+    }
+
+    private fun openTimerModeSettings() {
+        findNavController().navigate(
+            R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingTimerModeSettingsFragment,
             createChannelBundle()
         )
     }
