@@ -9,9 +9,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.dosing.DosingCalibrationLocalStore
+import com.aqua.aqualight.data.devices.dosing.DosingCalibrationDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceDosingChannelSettingsBinding
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -23,7 +22,7 @@ class DeviceDosingChannelSettingsFragment :
     private var _binding: FragmentDeviceDosingChannelSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var calibrationLocalStore: DosingCalibrationLocalStore
+    private lateinit var calibrationDataStoreManager: DosingCalibrationDataStoreManager
 
     private val channelIndex: Int
         get() = requireArguments().getInt(ARG_CHANNEL_INDEX, 0)
@@ -57,8 +56,8 @@ class DeviceDosingChannelSettingsFragment :
             view
         )
 
-        calibrationLocalStore =
-            DosingCalibrationLocalStore(
+        calibrationDataStoreManager =
+            DosingCalibrationDataStoreManager(
                 context = requireContext()
             )
 
@@ -102,7 +101,7 @@ class DeviceDosingChannelSettingsFragment :
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
-                calibrationLocalStore.observeCalibration(
+                calibrationDataStoreManager.observeCalibration(
                     deviceId = deviceId,
                     channelIndex = channelIndex
                 ).collect { calibration ->
