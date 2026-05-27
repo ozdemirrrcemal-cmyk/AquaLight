@@ -22,7 +22,7 @@ import java.util.Date
 import java.util.Locale
 
 class DeviceDosingChannelSettingsFragment :
-    Fragment(R.layout.fragment_device_dosing_channel_settings) {
+Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
     private var _binding: FragmentDeviceDosingChannelSettingsBinding? = null
     private val binding get() = _binding!!
@@ -30,28 +30,28 @@ class DeviceDosingChannelSettingsFragment :
     private lateinit var calibrationDataStoreManager: DosingCalibrationDataStoreManager
 
     private val channelIndex: Int
-        get() = requireArguments().getInt(
-            ARG_CHANNEL_INDEX,
-            0
-        ).coerceIn(
-            minimumValue = 0,
-            maximumValue = 3
-        )
+    get() = requireArguments().getInt(
+        ARG_CHANNEL_INDEX,
+        0
+    ).coerceIn(
+        minimumValue = 0,
+        maximumValue = 3
+    )
 
     private val channelNumber: Int
-        get() = channelIndex + 1
+    get() = channelIndex + 1
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+    get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceIp: String
-        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     private val deviceTitle: String
-        get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
 
     private var selectedMode: DosingMode =
-        DosingMode.SINGLE
+    DosingMode.SINGLE
 
     override fun onViewCreated(
         view: View,
@@ -63,14 +63,14 @@ class DeviceDosingChannelSettingsFragment :
         )
 
         _binding =
-            FragmentDeviceDosingChannelSettingsBinding.bind(
-                view
-            )
+        FragmentDeviceDosingChannelSettingsBinding.bind(
+            view
+        )
 
         calibrationDataStoreManager =
-            DosingCalibrationDataStoreManager(
-                context = requireContext()
-            )
+        DosingCalibrationDataStoreManager(
+            context = requireContext()
+        )
 
         bindHeaderActions()
         bindStaticPreview()
@@ -99,7 +99,7 @@ class DeviceDosingChannelSettingsFragment :
 
     private fun bindHeaderActions() {
         binding.tvChannelSettingsTitle.text =
-            "Channel $channelNumber"
+        "Channel $channelNumber"
 
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
@@ -108,13 +108,13 @@ class DeviceDosingChannelSettingsFragment :
 
     private fun bindStaticPreview() {
         binding.tvDailyDoseValue.text =
-            "0 ml"
+        "0 ml"
 
         binding.tvLastCalibrated.text =
-            "Last calibrated: Not calibrated"
+        "Last calibrated: Not calibrated"
 
         binding.tvContainerVolumeValue.text =
-            "Not set"
+        "Not set"
     }
 
     private fun bindCalibrationState() {
@@ -125,17 +125,18 @@ class DeviceDosingChannelSettingsFragment :
                 calibrationDataStoreManager.observeCalibration(
                     deviceId = deviceId,
                     channelIndex = channelIndex
-                ).collect { calibration ->
+                ).collect {
+                    calibration ->
                     binding.tvLastCalibrated.text =
-                        if (calibration == null) {
-                            "Last calibrated: Not calibrated"
-                        } else {
-                            "Last calibrated: ${
+                    if (calibration == null) {
+                        "Last calibrated: Not calibrated"
+                    } else {
+                        "Last calibrated: ${
                                 formatCalibrationDate(
                                     millis = calibration.lastCalibratedAtMillis
                                 )
                             }"
-                        }
+                    }
                 }
             }
         }
@@ -144,10 +145,10 @@ class DeviceDosingChannelSettingsFragment :
     private fun loadEspDosingSettings() {
         viewLifecycleOwner.lifecycleScope.launch {
             val snapshot =
-                EspDosingSettingsClient.readChannelSettingsSnapshot(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex
-                )
+            EspDosingSettingsClient.readChannelSettingsSnapshot(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
 
             if (_binding == null) {
                 return@launch
@@ -170,35 +171,35 @@ class DeviceDosingChannelSettingsFragment :
         snapshot: EspDosingChannelSettingsSnapshot
     ) {
         val channel =
-            snapshot.channel
+        snapshot.channel
 
         val timer =
-            snapshot.timer
+        snapshot.timer
 
         binding.tvChannelSettingsTitle.text =
-            channel.name.ifBlank {
-                "Channel $channelNumber"
-            }
+        channel.name.ifBlank {
+            "Channel $channelNumber"
+        }
 
         binding.switchScheduleEnabled.isChecked =
-            timer?.enabled == true
+        timer?.enabled == true
 
         val dailyDoseMl =
-            if (timer != null && timer.enabled) {
-                timer.doseMl * timer.count.coerceAtLeast(
-                    minimumValue = 1
-                )
-            } else {
-                0f
-            }
+        if (timer != null && timer.enabled) {
+            timer.doseMl * timer.count.coerceAtLeast(
+                minimumValue = 1
+            )
+        } else {
+            0f
+        }
 
         binding.tvDailyDoseValue.text =
-            formatMl(
-                value = dailyDoseMl
-            )
+        formatMl(
+            value = dailyDoseMl
+        )
 
         binding.tvContainerVolumeValue.text =
-            "Not set"
+        "Not set"
 
         selectDosingMode(
             mode = inferDosingMode(
@@ -237,28 +238,29 @@ class DeviceDosingChannelSettingsFragment :
         weekDays: List<Boolean>
     ) {
         val chips =
-            listOf(
-                binding.chipDayMon,
-                binding.chipDayTue,
-                binding.chipDayWed,
-                binding.chipDayThu,
-                binding.chipDayFri,
-                binding.chipDaySat,
-                binding.chipDaySun
-            )
+        listOf(
+            binding.chipDayMon,
+            binding.chipDayTue,
+            binding.chipDayWed,
+            binding.chipDayThu,
+            binding.chipDayFri,
+            binding.chipDaySat,
+            binding.chipDaySun
+        )
 
-        chips.forEachIndexed { index, chip ->
+        chips.forEachIndexed {
+            index, chip ->
             val selected =
-                weekDays.getOrNull(
-                    index = index
-                ) == true
+            weekDays.getOrNull(
+                index = index
+            ) == true
 
             chip.alpha =
-                if (selected) {
-                    1f
-                } else {
-                    0.35f
-                }
+            if (selected) {
+                1f
+            } else {
+                0.35f
+            }
 
             chip.setBackgroundColor(
                 Color.parseColor(
@@ -299,36 +301,37 @@ class DeviceDosingChannelSettingsFragment :
 
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-            if (channelIndex == 0) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (channelIndex == 0) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.selectedIndicatorPump2.visibility =
-            if (channelIndex == 1) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (channelIndex == 1) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.selectedIndicatorPump3.visibility =
-            if (channelIndex == 2) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (channelIndex == 2) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.selectedIndicatorPump4.visibility =
-            if (channelIndex == 3) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (channelIndex == 3) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
     }
 
     private fun bindClicks() {
-        binding.switchScheduleEnabled.setOnCheckedChangeListener { _, isChecked ->
+        binding.switchScheduleEnabled.setOnCheckedChangeListener {
+            _, isChecked ->
             updateScheduleEnabledState(
                 enabled = isChecked
             )
@@ -359,9 +362,15 @@ class DeviceDosingChannelSettingsFragment :
                 mode = DosingMode.HOURLY_24
             )
 
-            showComingNext(
-                message = "24 hourly settings screen will be added next."
+            openHourly24ModeSettings()
+        }
+
+        binding.radioModeHourly.setOnClickListener {
+            selectDosingMode(
+                mode = DosingMode.HOURLY_24
             )
+
+            openHourly24ModeSettings()
         }
 
         binding.radioModeHourly.setOnClickListener {
@@ -416,7 +425,7 @@ class DeviceDosingChannelSettingsFragment :
 
         binding.rowEveryDay.setOnClickListener {
             binding.radioEveryDay.isChecked =
-                true
+            true
 
             showComingNext(
                 message = "Recurrence selection will be added here."
@@ -473,6 +482,33 @@ class DeviceDosingChannelSettingsFragment :
         )
     }
 
+    private fun openHourly24ModeSettings() {
+        findNavController().navigate(
+            R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingHourly24ModeSettingsFragment,
+            Bundle().apply {
+                putLong(
+                    ARG_DEVICE_ID,
+                    deviceId
+                )
+
+                putString(
+                    ARG_DEVICE_IP,
+                    deviceIp
+                )
+
+                putString(
+                    ARG_DEVICE_TITLE,
+                    deviceTitle
+                )
+
+                putInt(
+                    ARG_CHANNEL_INDEX,
+                    channelIndex
+                )
+            }
+        )
+    }
+
     private fun openCalibrationWizard() {
         findNavController().navigate(
             R.id.action_deviceDosingChannelSettingsFragment_to_deviceDosingCalibrationFragment,
@@ -504,63 +540,63 @@ class DeviceDosingChannelSettingsFragment :
         mode: DosingMode
     ) {
         selectedMode =
-            mode
+        mode
 
         binding.radioModeSingle.isChecked =
-            mode == DosingMode.SINGLE
+        mode == DosingMode.SINGLE
 
         binding.radioModeHourly.isChecked =
-            mode == DosingMode.HOURLY_24
+        mode == DosingMode.HOURLY_24
 
         binding.radioModeCustomPeriods.isChecked =
-            mode == DosingMode.CUSTOM_PERIODS
+        mode == DosingMode.CUSTOM_PERIODS
 
         binding.radioModeTimer.isChecked =
-            mode == DosingMode.TIMER
+        mode == DosingMode.TIMER
     }
 
     private fun updateScheduleEnabledState(
         enabled: Boolean
     ) {
         val contentAlpha =
-            if (enabled) {
-                1f
-            } else {
-                0.45f
-            }
+        if (enabled) {
+            1f
+        } else {
+            0.45f
+        }
 
         binding.cardDailyDose.alpha =
-            contentAlpha
+        contentAlpha
 
         binding.cardDosingSchedule.alpha =
-            contentAlpha
+        contentAlpha
 
         binding.cardRecurrence.alpha =
-            contentAlpha
+        contentAlpha
 
         binding.cardMissedDoseCompensation.alpha =
-            contentAlpha
+        contentAlpha
 
         binding.cardDailyDose.isEnabled =
-            enabled
+        enabled
 
         binding.rowModeSingle.isEnabled =
-            enabled
+        enabled
 
         binding.rowModeHourly.isEnabled =
-            enabled
+        enabled
 
         binding.rowModeCustomPeriods.isEnabled =
-            enabled
+        enabled
 
         binding.rowModeTimer.isEnabled =
-            enabled
+        enabled
 
         binding.rowEveryDay.isEnabled =
-            enabled
+        enabled
 
         binding.switchMissedDoseCompensation.isEnabled =
-            enabled
+        enabled
     }
 
     private fun showComingNext(

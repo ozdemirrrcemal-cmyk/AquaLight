@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.dosing
 
 import kotlin.math.roundToLong
 import org.json.JSONObject
+import java.util.Locale
 
 object EspDosingCommandClient {
 
@@ -218,6 +219,224 @@ object EspDosingCommandClient {
             deviceIp = deviceIp
         )
     }
+	
+	suspend fun saveHourly24ModeSchedule(
+    deviceIp: String,
+    channelIndex: Int,
+    timerIndex: Int,
+    channelGpioPwm: String,
+    channelCalibrationYeMsPerMl: Long,
+    dailyDoseMl: Float,
+    selectedMinute: Int,
+    weekDays: List<Boolean>,
+    enabled: Boolean
+): Boolean {
+    val safeChannelIndex =
+        channelIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
+
+    val safeTimerIndex =
+        timerIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 99
+        )
+
+    val safeGpioPwm =
+        channelGpioPwm.trim()
+
+    if (
+        safeGpioPwm.isBlank() ||
+        safeGpioPwm == "-"
+    ) {
+        return false
+    }
+
+    val safeCalibrationYe =
+        channelCalibrationYeMsPerMl.coerceAtLeast(
+            minimumValue = 1L
+        )
+
+    val safeDailyDoseMl =
+        dailyDoseMl.coerceAtLeast(
+            minimumValue = 0.01f
+        )
+
+    val perDoseMl =
+        safeDailyDoseMl / 24f
+
+    val doseRunMs =
+        (
+            perDoseMl.toDouble() *
+                safeCalibrationYe.toDouble()
+            ).roundToLong()
+            .coerceAtLeast(
+                minimumValue = 1L
+            )
+
+    if (doseRunMs >= ONE_HOUR_MS) {
+        return false
+    }
+
+    val intervalOffMs =
+        (ONE_HOUR_MS - doseRunMs).coerceAtLeast(
+            minimumValue = 1L
+        )
+
+    val safeMinute =
+        selectedMinute.coerceIn(
+            minimumValue = 0,
+            maximumValue = 59
+        )
+
+    val timeStart =
+        String.format(
+            Locale.US,
+            "00:%02d",
+            safeMinute
+        )
+
+    val intervalOff =
+        formatDurationForEsp(
+            millis = intervalOffMs
+        )
+
+    val safeWeekDays =
+        List(
+            size = 7
+        ) { index ->
+            weekDays.getOrNull(
+                index = index
+            ) == true
+        }
+
+    val weekDaysJson =
+        safeWeekDays.joinToString(
+            separator = ","
+        ) { selected ->
+            if (selected) {
+                "1"
+            } else {
+                "0"
+            }
+        }
+
+    val perDoseText =
+        formatFloatForJson(
+            value = perDoseMl
+        )
+
+    val requestJson =
+        """
+        {
+          "LPWMChanelTimer": {
+            "Data": {
+              "$safeChannelIndex": {
+                "Regime": "Auto"
+              }
+            }
+          },
+          "LTimer": {
+            "Data": {
+              "$safeTimerIndex": {
+                "Enabled": ${if (enabled) 1 else 0},
+                "Name": ${JSONObject.quote("24 hourly ${safeChannelIndex + 1}")},
+                "GPIO_PWM": ${JSONObject.quote(safeGpioPwm)},
+                "YE": $perDoseText,
+                "WDay": [$weekDaysJson],
+                "TimeStart": ${JSONObject.quote(timeStart)},
+                "IntervalOff": ${JSONObject.quote(intervalOff)},
+                "Count": 24
+              }
+            }
+          }
+        }
+        """.trimIndent()
+
+    val scheduleSaved =
+        EspDosingHttpClient.postJson(
+            deviceIp = deviceIp,
+            requestJson = requestJson
+        ) != null
+
+    if (!scheduleSaved) {
+        return false
+    }
+
+    return saveTimerConfig(
+        deviceIp = deviceIp
+    )
+}
+
+private fun formatFloatForJson(
+    value: Float
+): String {
+    return String.format(
+        Locale.US,
+        "%.4f",
+        value
+    ).trimEnd(
+        '0'
+    ).trimEnd(
+        '.'
+    )
+}
+
+private fun formatDurationForEsp(
+    millis: Long
+): String {
+    var remaining =
+        millis.coerceAtLeast(
+            minimumValue = 0L
+        )
+
+    val hours =
+        remaining / ONE_HOUR_MS
+
+    remaining -=
+        hours * ONE_HOUR_MS
+
+    val minutes =
+        remaining / 60_000L
+
+    remaining -=
+        minutes * 60_000L
+
+    val seconds =
+        remaining / 1_000L
+
+    remaining -=
+        seconds * 1_000L
+
+    return if (remaining > 0L) {
+        String.format(
+            Locale.US,
+            "%02d:%02d:%02d.%03d",
+            hours,
+            minutes,
+            seconds,
+            remaining
+        )
+    } else if (seconds > 0L) {
+        String.format(
+            Locale.US,
+            "%02d:%02d:%02d",
+            hours,
+            minutes,
+            seconds
+        )
+    } else {
+        String.format(
+            Locale.US,
+            "%02d:%02d",
+            hours,
+            minutes
+        )
+    }
+}
+
+private const val ONE_HOUR_MS = 3_600_000L
 
     suspend fun resetCalibrationCoefficient(
         deviceIp: String,

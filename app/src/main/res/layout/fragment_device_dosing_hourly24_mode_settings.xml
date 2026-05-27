@@ -25,10 +25,10 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:clickable="true"
-            android:contentDescription="Back"
             android:focusable="true"
             android:scaleType="center"
             android:src="@drawable/ic_back"
+            android:contentDescription="Back"
             app:tint="?attr/colorOnSurface"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -39,10 +39,10 @@
             style="@style/TextAppearance.Aqua.EditProfileTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
-            android:text="Single dose"
+            android:ellipsize="end"
+            android:text="24 hourly"
             android:textColor="?attr/colorOnSurface"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -85,11 +85,10 @@
                     android:id="@+id/ivDosingPump"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:adjustViewBounds="false"
-                    android:contentDescription="@null"
-                    android:importantForAccessibility="no"
                     android:scaleType="fitCenter"
                     android:src="@drawable/img_dosing_pump_4ch"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -242,7 +241,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:lineSpacingExtra="2dp"
-                android:text="Single mode gives the full daily dose once a day at the selected start time."
+                android:text="The daily dose will be divided into 24 equal doses and dosed once every hour."
                 android:textColor="@color/settings_text_secondary"
                 android:textSize="13sp" />
 
@@ -264,21 +263,18 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/tvDailyDoseLabel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:includeFontPadding="false"
                         android:text="Daily dose"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvDailyDoseDescription"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
-                        android:text="The complete amount dosed in one action."
+                        android:text="Total amount to dose during one day."
                         android:textColor="@color/settings_text_secondary"
                         android:textSize="12sp" />
 
@@ -287,7 +283,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:hint="Dose amount"
+                        android:hint="Daily dose"
                         app:boxBackgroundColor="#1A2238"
                         app:boxCornerRadiusBottomEnd="16dp"
                         app:boxCornerRadiusBottomStart="16dp"
@@ -298,7 +294,7 @@
                         app:suffixText="ml">
 
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etSingleDoseMl"
+                            android:id="@+id/etDailyDoseMl"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
@@ -314,7 +310,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardStartTime"
+                android:id="@+id/cardDoseMinute"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
@@ -325,7 +321,7 @@
                 app:strokeWidth="1dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/rowStartTime"
+                    android:id="@+id/rowDoseMinute"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clickable="true"
@@ -333,40 +329,39 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/tvStartTimeLabel"
+                        android:id="@+id/tvDoseMinuteLabel"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:includeFontPadding="false"
-                        android:text="Start time"
+                        android:text="Dose minute"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="15sp"
                         android:textStyle="bold"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/tvStartTimeValue"
+                        app:layout_constraintEnd_toStartOf="@id/tvDoseMinuteValue"
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
-                        android:id="@+id/tvStartTimeDescription"
+                        android:id="@+id/tvDoseMinuteDescription"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
-                        android:text="The time when the daily dose starts."
+                        android:text="Dose once every hour at this minute."
                         android:textColor="@color/settings_text_secondary"
                         android:textSize="12sp"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/tvStartTimeValue"
-                        app:layout_constraintTop_toBottomOf="@id/tvStartTimeLabel" />
+                        app:layout_constraintEnd_toStartOf="@id/tvDoseMinuteValue"
+                        app:layout_constraintTop_toBottomOf="@id/tvDoseMinuteLabel" />
 
                     <TextView
-                        android:id="@+id/tvStartTimeValue"
+                        android:id="@+id/tvDoseMinuteValue"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
                         android:background="#1A2238"
                         android:gravity="center"
-                        android:minWidth="86dp"
+                        android:minWidth="72dp"
                         android:paddingStart="14dp"
                         android:paddingEnd="14dp"
-                        android:text="00:00"
+                        android:text=":15"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="15sp"
                         android:textStyle="bold"
@@ -375,6 +370,45 @@
                         app:layout_constraintBottom_toBottomOf="parent" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardCalculatedDose"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                app:cardBackgroundColor="#101426"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#24314F"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tvCalculatedDoseTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Calculated dose"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvCalculatedDoseValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="0 ml every hour"
+                        android:textColor="@color/settings_text_secondary"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -426,7 +460,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="1.45"
                 android:minHeight="0dp"
-                android:text="Save single mode"
+                android:text="Save 24 hourly"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
                 android:textSize="14sp"
