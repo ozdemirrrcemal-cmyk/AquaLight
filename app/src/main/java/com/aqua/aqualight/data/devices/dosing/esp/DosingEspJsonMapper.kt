@@ -23,50 +23,13 @@ object DosingEspJsonMapper {
     fun createReadDosingStatePayload(
         channelIndex: Int
     ): JSONObject {
-        val channelIndexKey =
-            channelIndex.coerceAtLeast(
-                minimumValue = 0
-            ).toString()
-
-        val channelData =
-            JSONObject().apply {
-                put(
-                    channelIndexKey,
-                    JSONObject().apply {
-                        put("Name", 0)
-                        put("Regime", 0)
-                        put("Color", 0)
-                        put("GPIO_PWM", 0)
-                        put("YE", 0)
-                        put("Dimension", 0)
-                        put("Rest", 0)
-                        put("VNow", 0)
-                        put("VMin", 0)
-                        put("VMax", 0)
-                        put("Invert", 0)
-                    }
-                )
-            }
-
-        val timerData =
-            JSONObject().apply {
-                getAppTimerSlotIndicesForChannel(
-                    channelIndex = channelIndex
-                ).forEach { timerIndex ->
-                    put(
-                        timerIndex.toString(),
-                        createTimerReadRequestObject()
-                    )
-                }
-            }
-
         return JSONObject().apply {
             put(
                 KEY_L_PWM_CHANNEL_TIMER,
                 JSONObject().apply {
                     put(
-                        KEY_DATA,
-                        channelData
+                        "All",
+                        0
                     )
                 }
             )
@@ -75,8 +38,8 @@ object DosingEspJsonMapper {
                 KEY_L_TIMER,
                 JSONObject().apply {
                     put(
-                        KEY_DATA,
-                        timerData
+                        "All",
+                        0
                     )
                 }
             )
@@ -170,8 +133,8 @@ object DosingEspJsonMapper {
         )
     }
 
-    fun createSingleSchedulePayload(
-        channelIndex: Int,
+    fun createMergedSingleSchedulePayload(
+        existingTimers: List<DosingEspTimerState>,
         channelNumber: Int,
         gpioPwm: String,
         totalDailyDoseMl: Float,
@@ -179,44 +142,37 @@ object DosingEspJsonMapper {
         startTime: String,
         enabled: Boolean
     ): JSONObject {
-        val timerSlots =
-            createCleanChannelSlotMap(
-                channelIndex = channelIndex,
-                gpioPwm = gpioPwm,
-                weekDays = weekDays
-            ).toMutableMap()
-
-        timerSlots[
-            getPrimaryAppTimerSlotIndex(
-                channelIndex = channelIndex
-            )
-        ] =
-            DosingTimerSavePayload(
-                enabled = enabled,
-                name = createTimerName(
-                    channelNumber = channelNumber,
-                    mode = DosingScheduleMode.SINGLE
-                ),
-                gpioPwm = gpioPwm,
-                dosePerRunMl = totalDailyDoseMl.coerceAtLeast(
-                    minimumValue = 0f
-                ),
-                weekDays = weekDays,
-                timeStart = normalizeTime(
-                    value = startTime
-                ),
-                intervalOn = "00:00",
-                intervalOff = "00:00",
-                count = 1
+        val newTimers =
+            listOf(
+                DosingTimerSavePayload(
+                    enabled = enabled,
+                    name = createTimerName(
+                        channelNumber = channelNumber,
+                        mode = DosingScheduleMode.SINGLE
+                    ),
+                    gpioPwm = gpioPwm,
+                    dosePerRunMl = totalDailyDoseMl.coerceAtLeast(
+                        minimumValue = 0f
+                    ),
+                    weekDays = weekDays,
+                    timeStart = normalizeTime(
+                        value = startTime
+                    ),
+                    intervalOn = "00:00",
+                    intervalOff = "00:00",
+                    count = 1
+                )
             )
 
-        return createTimerSlotsPayload(
-            timerSlots = timerSlots
+        return createMergedTimerListPayload(
+            existingTimers = existingTimers,
+            targetGpioPwm = gpioPwm,
+            newTimers = newTimers
         )
     }
 
-    fun createHourly24SchedulePayload(
-        channelIndex: Int,
+    fun createMergedHourly24SchedulePayload(
+        existingTimers: List<DosingEspTimerState>,
         channelNumber: Int,
         gpioPwm: String,
         totalDailyDoseMl: Float,
@@ -232,42 +188,35 @@ object DosingEspJsonMapper {
                 minimumValue = 0f
             ) / count.toFloat()
 
-        val timerSlots =
-            createCleanChannelSlotMap(
-                channelIndex = channelIndex,
-                gpioPwm = gpioPwm,
-                weekDays = weekDays
-            ).toMutableMap()
-
-        timerSlots[
-            getPrimaryAppTimerSlotIndex(
-                channelIndex = channelIndex
-            )
-        ] =
-            DosingTimerSavePayload(
-                enabled = enabled,
-                name = createTimerName(
-                    channelNumber = channelNumber,
-                    mode = DosingScheduleMode.HOURLY_24
-                ),
-                gpioPwm = gpioPwm,
-                dosePerRunMl = dosePerRunMl,
-                weekDays = weekDays,
-                timeStart = normalizeTime(
-                    value = startTime
-                ),
-                intervalOn = "00:00",
-                intervalOff = "01:00",
-                count = count
+        val newTimers =
+            listOf(
+                DosingTimerSavePayload(
+                    enabled = enabled,
+                    name = createTimerName(
+                        channelNumber = channelNumber,
+                        mode = DosingScheduleMode.HOURLY_24
+                    ),
+                    gpioPwm = gpioPwm,
+                    dosePerRunMl = dosePerRunMl,
+                    weekDays = weekDays,
+                    timeStart = normalizeTime(
+                        value = startTime
+                    ),
+                    intervalOn = "00:00",
+                    intervalOff = "01:00",
+                    count = count
+                )
             )
 
-        return createTimerSlotsPayload(
-            timerSlots = timerSlots
+        return createMergedTimerListPayload(
+            existingTimers = existingTimers,
+            targetGpioPwm = gpioPwm,
+            newTimers = newTimers
         )
     }
 
-    fun createGenericTimerSchedulePayload(
-        channelIndex: Int,
+    fun createMergedGenericTimerSchedulePayload(
+        existingTimers: List<DosingEspTimerState>,
         channelNumber: Int,
         mode: DosingScheduleMode,
         gpioPwm: String,
@@ -279,50 +228,43 @@ object DosingEspJsonMapper {
         count: Int,
         enabled: Boolean
     ): JSONObject {
-        val timerSlots =
-            createCleanChannelSlotMap(
-                channelIndex = channelIndex,
-                gpioPwm = gpioPwm,
-                weekDays = weekDays
-            ).toMutableMap()
-
-        timerSlots[
-            getPrimaryAppTimerSlotIndex(
-                channelIndex = channelIndex
-            )
-        ] =
-            DosingTimerSavePayload(
-                enabled = enabled,
-                name = createTimerName(
-                    channelNumber = channelNumber,
-                    mode = mode
-                ),
-                gpioPwm = gpioPwm,
-                dosePerRunMl = dosePerRunMl.coerceAtLeast(
-                    minimumValue = 0f
-                ),
-                weekDays = weekDays,
-                timeStart = normalizeTime(
-                    value = timeStart
-                ),
-                intervalOn = intervalOn.ifBlank {
-                    "00:00"
-                },
-                intervalOff = intervalOff.ifBlank {
-                    "00:00"
-                },
-                count = count.coerceAtLeast(
-                    minimumValue = 1
+        val newTimers =
+            listOf(
+                DosingTimerSavePayload(
+                    enabled = enabled,
+                    name = createTimerName(
+                        channelNumber = channelNumber,
+                        mode = mode
+                    ),
+                    gpioPwm = gpioPwm,
+                    dosePerRunMl = dosePerRunMl.coerceAtLeast(
+                        minimumValue = 0f
+                    ),
+                    weekDays = weekDays,
+                    timeStart = normalizeTime(
+                        value = timeStart
+                    ),
+                    intervalOn = intervalOn.ifBlank {
+                        "00:00"
+                    },
+                    intervalOff = intervalOff.ifBlank {
+                        "00:00"
+                    },
+                    count = count.coerceAtLeast(
+                        minimumValue = 1
+                    )
                 )
             )
 
-        return createTimerSlotsPayload(
-            timerSlots = timerSlots
+        return createMergedTimerListPayload(
+            existingTimers = existingTimers,
+            targetGpioPwm = gpioPwm,
+            newTimers = newTimers
         )
     }
 
-    fun createCustomPeriodsSchedulePayload(
-        channelIndex: Int,
+    fun createMergedCustomPeriodsSchedulePayload(
+        existingTimers: List<DosingEspTimerState>,
         channelNumber: Int,
         gpioPwm: String,
         totalDailyDoseMl: Float,
@@ -349,23 +291,8 @@ object DosingEspJsonMapper {
                 minimumValue = 0f
             ) / totalDoseCount.toFloat()
 
-        val timerSlots =
-            createCleanChannelSlotMap(
-                channelIndex = channelIndex,
-                gpioPwm = gpioPwm,
-                weekDays = weekDays
-            ).toMutableMap()
-
-        val channelSlots =
-            getAppTimerSlotIndicesForChannel(
-                channelIndex = channelIndex
-            )
-
-        safePeriods.forEachIndexed { periodIndex, period ->
-            val slotIndex =
-                channelSlots[periodIndex]
-
-            timerSlots[slotIndex] =
+        val newTimers =
+            safePeriods.mapIndexed { periodIndex, period ->
                 DosingTimerSavePayload(
                     enabled = enabled,
                     name = "AQL_CH${channelNumber}_CUSTOM_PERIODS_${periodIndex + 1}",
@@ -385,15 +312,17 @@ object DosingEspJsonMapper {
                         minimumValue = 1
                     )
                 )
-        }
+            }
 
-        return createTimerSlotsPayload(
-            timerSlots = timerSlots
+        return createMergedTimerListPayload(
+            existingTimers = existingTimers,
+            targetGpioPwm = gpioPwm,
+            newTimers = newTimers
         )
     }
 
-    fun createTimerModeSchedulePayload(
-        channelIndex: Int,
+    fun createMergedTimerModeSchedulePayload(
+        existingTimers: List<DosingEspTimerState>,
         channelNumber: Int,
         gpioPwm: String,
         weekDays: List<Boolean>,
@@ -405,23 +334,8 @@ object DosingEspJsonMapper {
                 n = APP_TIMER_SLOTS_PER_CHANNEL
             )
 
-        val timerSlots =
-            createCleanChannelSlotMap(
-                channelIndex = channelIndex,
-                gpioPwm = gpioPwm,
-                weekDays = weekDays
-            ).toMutableMap()
-
-        val channelSlots =
-            getAppTimerSlotIndicesForChannel(
-                channelIndex = channelIndex
-            )
-
-        safeDoses.forEachIndexed { doseIndex, dose ->
-            val slotIndex =
-                channelSlots[doseIndex]
-
-            timerSlots[slotIndex] =
+        val newTimers =
+            safeDoses.mapIndexed { doseIndex, dose ->
                 DosingTimerSavePayload(
                     enabled = enabled,
                     name = "AQL_CH${channelNumber}_TIMER_${doseIndex + 1}",
@@ -437,11 +351,81 @@ object DosingEspJsonMapper {
                     intervalOff = "00:00",
                     count = 1
                 )
+            }
+
+        return createMergedTimerListPayload(
+            existingTimers = existingTimers,
+            targetGpioPwm = gpioPwm,
+            newTimers = newTimers
+        )
+    }
+
+    private fun createMergedTimerListPayload(
+        existingTimers: List<DosingEspTimerState>,
+        targetGpioPwm: String,
+        newTimers: List<DosingTimerSavePayload>
+    ): JSONObject {
+        val cleanTargetGpioPwm =
+            targetGpioPwm.trim()
+
+        val preservedTimers =
+            existingTimers
+                .filter { timer ->
+                    shouldKeepExistingTimer(
+                        timer = timer
+                    )
+                }
+                .filterNot { timer ->
+                    timer.belongsToGpioPwm(
+                        targetGpioPwm = cleanTargetGpioPwm
+                    )
+                }
+                .sortedBy { timer ->
+                    timer.index
+                }
+                .map { timer ->
+                    timer.toSavePayload()
+                }
+
+        val mergedTimers =
+            preservedTimers + newTimers
+
+        return createFullTimerListPayload(
+            timers = mergedTimers
+        )
+    }
+
+    private fun createFullTimerListPayload(
+        timers: List<DosingTimerSavePayload>
+    ): JSONObject {
+        val timerData =
+            JSONObject()
+
+        timers.forEachIndexed { index, timer ->
+            timerData.put(
+                index.toString(),
+                createTimerObject(
+                    timer = timer
+                )
+            )
         }
 
-        return createTimerSlotsPayload(
-            timerSlots = timerSlots
-        )
+        return JSONObject().apply {
+            put(
+                KEY_L_TIMER,
+                JSONObject().apply {
+                    put(
+                        "Count",
+                        timers.size
+                    )
+
+                    put(
+                        KEY_DATA,
+                        timerData
+                    )
+                }
+            )
+        }
     }
 
     fun createTimerSlotsPayload(
@@ -468,6 +452,15 @@ object DosingEspJsonMapper {
             put(
                 KEY_L_TIMER,
                 JSONObject().apply {
+                    timerCount?.let { count ->
+                        put(
+                            "Count",
+                            count.coerceAtLeast(
+                                minimumValue = 0
+                            )
+                        )
+                    }
+
                     put(
                         KEY_DATA,
                         timerData
@@ -582,59 +575,18 @@ object DosingEspJsonMapper {
         enabled: Boolean,
         weekDays: List<Boolean>
     ): JSONObject {
-        val timerData =
-            JSONObject()
-
-        val channelSlots =
-            getAppTimerSlotIndicesForChannel(
+        return createTimerEnabledWeekDaysPayload(
+            timerIndices = getAppTimerSlotIndicesForChannel(
                 channelIndex = channelIndex
-            )
-
-        val safeActivePeriodCount =
-            activePeriodCount.coerceIn(
-                minimumValue = 0,
-                maximumValue = APP_TIMER_SLOTS_PER_CHANNEL
-            )
-
-        channelSlots.forEachIndexed { periodIndex, slotIndex ->
-            val slotShouldBeActive =
-                periodIndex < safeActivePeriodCount
-
-            timerData.put(
-                slotIndex.toString(),
-                JSONObject().apply {
-                    put(
-                        "Enabled",
-                        if (slotShouldBeActive) {
-                            enabled
-                        } else {
-                            false
-                        }
-                    )
-
-                    if (slotShouldBeActive) {
-                        put(
-                            "WDay",
-                            createWeekDayArray(
-                                weekDays = weekDays
-                            )
-                        )
-                    }
-                }
-            )
-        }
-
-        return JSONObject().apply {
-            put(
-                KEY_L_TIMER,
-                JSONObject().apply {
-                    put(
-                        KEY_DATA,
-                        timerData
-                    )
-                }
-            )
-        }
+            ).take(
+                n = activePeriodCount.coerceIn(
+                    minimumValue = 0,
+                    maximumValue = APP_TIMER_SLOTS_PER_CHANNEL
+                )
+            ),
+            enabled = enabled,
+            weekDays = weekDays
+        )
     }
 
     fun createManualDosePayload(
@@ -774,21 +726,6 @@ object DosingEspJsonMapper {
         )]
     }
 
-    private fun createCleanChannelSlotMap(
-        channelIndex: Int,
-        gpioPwm: String,
-        weekDays: List<Boolean>
-    ): Map<Int, DosingTimerSavePayload> {
-        return getAppTimerSlotIndicesForChannel(
-            channelIndex = channelIndex
-        ).associateWith {
-            createDisabledTimerPayload(
-                gpioPwm = gpioPwm,
-                weekDays = weekDays
-            )
-        }
-    }
-
     private fun createTimerReadRequestObject(): JSONObject {
         return JSONObject().apply {
             put("Enabled", 0)
@@ -914,6 +851,49 @@ object DosingEspJsonMapper {
         )
     }
 
+    private fun shouldKeepExistingTimer(
+        timer: DosingEspTimerState
+    ): Boolean {
+        val hasName =
+            timer.name.isNotBlank() &&
+                timer.name != "-"
+
+        val hasGpio =
+            timer.hasValidGpioPwm
+
+        val hasDose =
+            timer.dosePerRunMl > 0f
+
+        return hasName ||
+            hasGpio ||
+            hasDose ||
+            timer.enabled
+    }
+
+    private fun DosingEspTimerState.toSavePayload(): DosingTimerSavePayload {
+        return DosingTimerSavePayload(
+            enabled = enabled,
+            name = name,
+            gpioPwm = gpioPwm,
+            dosePerRunMl = dosePerRunMl,
+            weekDays = if (weekDays.size == 7) {
+                weekDays
+            } else {
+                List(
+                    size = 7
+                ) {
+                    true
+                }
+            },
+            timeStart = timeStart,
+            intervalOn = intervalOn,
+            intervalOff = intervalOff,
+            count = count.coerceAtLeast(
+                minimumValue = 1
+            )
+        )
+    }
+
     private fun parseAllTimerStates(
         timerDataJson: JSONObject
     ): List<DosingEspTimerState> {
@@ -955,34 +935,21 @@ object DosingEspJsonMapper {
         timerDataJson: JSONObject,
         channelTimers: List<DosingEspTimerState>
     ): DosingEspTimerState {
-        val appSlotIndices =
-            getAppTimerSlotIndicesForChannel(
-                channelIndex = channelIndex
-            ).toSet()
-
         channelTimers.firstOrNull { timer ->
-            timer.index in appSlotIndices &&
-                timer.isAquaLightTimer &&
+            timer.isAquaLightTimer &&
                 timer.enabled
-        }?.let { timer ->
-            return timer
-        }
-
-        channelTimers.firstOrNull { timer ->
-            timer.index in appSlotIndices &&
-                timer.enabled
-        }?.let { timer ->
-            return timer
-        }
-
-        channelTimers.firstOrNull { timer ->
-            timer.index in appSlotIndices
         }?.let { timer ->
             return timer
         }
 
         channelTimers.firstOrNull { timer ->
             timer.enabled
+        }?.let { timer ->
+            return timer
+        }
+
+        channelTimers.firstOrNull { timer ->
+            timer.isAquaLightTimer
         }?.let { timer ->
             return timer
         }

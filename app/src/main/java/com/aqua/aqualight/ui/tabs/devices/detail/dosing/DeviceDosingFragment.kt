@@ -4,20 +4,28 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.dosing.DosingChannelSettingsDataStoreManager
+import com.aqua.aqualight.data.devices.dosing.DosingChannelSettingsUi
 import com.aqua.aqualight.data.devices.dosing.EspDosingCalibrationStateClient
 import com.aqua.aqualight.databinding.FragmentDeviceDosingBinding
 import com.aqua.aqualight.databinding.ItemDosingChannelCardBinding
 import kotlinx.coroutines.launch
+import java.util.Locale
+import kotlin.math.roundToInt
 
 class DeviceDosingFragment :
     Fragment(R.layout.fragment_device_dosing) {
 
     private var _binding: FragmentDeviceDosingBinding? = null
     private val binding get() = _binding!!
+
+    private lateinit var channelSettingsDataStoreManager: DosingChannelSettingsDataStoreManager
 
     private var navigationInProgress: Boolean = false
 
@@ -47,7 +55,13 @@ class DeviceDosingFragment :
                 view
             )
 
+        channelSettingsDataStoreManager =
+            DosingChannelSettingsDataStoreManager(
+                context = requireContext()
+            )
+
         bindDefaultChannelCards()
+        observeReservoirProgress()
         bindClicks()
         renderPumpRunningIndicators()
     }
@@ -108,10 +122,16 @@ class DeviceDosingFragment :
             "Not set up"
 
         cardBinding.tvChannelReservoir.text =
-            "0 ml · 0d"
+            "Reservoir not set"
+
+        cardBinding.tvChannelProgressTitle.text =
+            "Reservoir"
 
         cardBinding.tvChannelProgressValue.text =
-            "0.00 / 0.00 ml"
+            "0 / 0 ml"
+
+        cardBinding.progressChannelDose.max =
+            RESERVOIR_PROGRESS_MAX
 
         cardBinding.progressChannelDose.progress =
             0
@@ -122,8 +142,288 @@ class DeviceDosingFragment :
         cardBinding.channelProgressSection.visibility =
             View.GONE
 
+        cardBinding.channelProgressBarRow.visibility =
+            View.GONE
+
         cardBinding.btnChannelQuickDose.visibility =
             View.GONE
+
+        cardBinding.btnChannelQuickDose.setOnClickListener(
+            null
+        )
+    }
+
+    private fun observeReservoirProgress() {
+        val channelCards =
+            listOf(
+                binding.channelCard1,
+                binding.channelCard2,
+                binding.channelCard3,
+                binding.channelCard4
+            )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                channelCards.forEachIndexed { channelIndex, cardBinding ->
+                    launch {
+                        channelSettingsDataStoreManager.observeChannelSettings(
+                            deviceId = deviceId,
+                            channelIndex = channelIndex
+                        ).collect { settings ->
+                            renderReservoirProgress(
+                                cardBinding = cardBinding,
+                                settings = settings
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun renderReservoirProgress(
+        cardBinding: ItemDosingChannelCardBinding,
+        settings: DosingChannelSettingsUi
+    ) {
+        when {
+            !settings.reservoirTrackingEnabled -> {
+                renderReservoirDisabled(
+                    cardBinding = cardBinding
+                )
+            }
+
+            !settings.hasReservoirCapacity -> {
+                renderReservoirNotConfigured(
+                    cardBinding = cardBinding
+                )
+            }
+
+            settings.shouldShowRefillAction -> {
+                renderReservoirEmpty(
+                    cardBinding = cardBinding,
+                    settings = settings
+                )
+            }
+
+            settings.shouldShowReservoirProgress -> {
+                renderReservoirReady(
+                    cardBinding = cardBinding,
+                    remainingMl = settings.remainingVolumeMl ?: 0f,
+                    capacityMl = settings.containerVolumeMl ?: 0f
+                )
+            }
+
+            else -> {
+                renderReservoirNotConfigured(
+                    cardBinding = cardBinding
+                )
+            }
+        }
+    }
+
+    private fun renderReservoirDisabled(
+        cardBinding: ItemDosingChannelCardBinding
+    ) {
+        cardBinding.tvChannelReservoir.text =
+            "Reservoir tracking off"
+
+        cardBinding.tvChannelProgressTitle.text =
+            "Reservoir"
+
+        cardBinding.tvChannelProgressValue.text =
+            "Tracking disabled"
+
+        cardBinding.progressChannelDose.progress =
+            0
+
+        cardBinding.channelProgressSection.visibility =
+            View.GONE
+
+        cardBinding.channelProgressBarRow.visibility =
+            View.GONE
+
+        cardBinding.btnChannelQuickDose.visibility =
+            View.GONE
+
+        cardBinding.btnChannelQuickDose.setOnClickListener(
+            null
+        )
+    }
+
+    private fun renderReservoirNotConfigured(
+        cardBinding: ItemDosingChannelCardBinding
+    ) {
+        cardBinding.tvChannelReservoir.text =
+            "Reservoir not set"
+
+        cardBinding.tvChannelProgressTitle.text =
+            "Reservoir"
+
+        cardBinding.tvChannelProgressValue.text =
+            "Set container volume"
+
+        cardBinding.progressChannelDose.progress =
+            0
+
+        cardBinding.channelProgressSection.visibility =
+            View.GONE
+
+        cardBinding.channelProgressBarRow.visibility =
+            View.GONE
+
+        cardBinding.btnChannelQuickDose.visibility =
+            View.GONE
+
+        cardBinding.btnChannelQuickDose.setOnClickListener(
+            null
+        )
+    }
+
+    private fun renderReservoirEmpty(
+        cardBinding: ItemDosingChannelCardBinding,
+        settings: DosingChannelSettingsUi
+    ) {
+        val capacityMl =
+            settings.containerVolumeMl ?: 0f
+
+        cardBinding.channelProgressSection.visibility =
+            View.VISIBLE
+
+        cardBinding.channelProgressBarRow.visibility =
+            View.GONE
+
+        cardBinding.tvChannelReservoir.text =
+            "Reservoir empty"
+
+        cardBinding.tvChannelProgressTitle.text =
+            "Reservoir"
+
+        cardBinding.tvChannelProgressValue.text =
+            "0 / ${formatMl(capacityMl)}"
+
+        cardBinding.progressChannelDose.max =
+            RESERVOIR_PROGRESS_MAX
+
+        cardBinding.progressChannelDose.progress =
+            0
+
+        cardBinding.btnChannelQuickDose.visibility =
+            View.VISIBLE
+
+        cardBinding.btnChannelQuickDose.text =
+            "Refill"
+
+        cardBinding.btnChannelQuickDose.setOnClickListener {
+            refillReservoir(
+                channelIndex = settings.channelIndex
+            )
+        }
+    }
+
+    private fun renderReservoirReady(
+        cardBinding: ItemDosingChannelCardBinding,
+        remainingMl: Float,
+        capacityMl: Float
+    ) {
+        val progressPercent =
+            calculateReservoirProgressPercent(
+                remainingMl = remainingMl,
+                capacityMl = capacityMl
+            )
+
+        cardBinding.channelProgressSection.visibility =
+            View.VISIBLE
+
+        cardBinding.channelProgressBarRow.visibility =
+            View.VISIBLE
+
+        cardBinding.tvChannelReservoir.text =
+            "${formatMl(remainingMl)} / ${formatMl(capacityMl)}"
+
+        cardBinding.tvChannelProgressTitle.text =
+            "Reservoir"
+
+        cardBinding.tvChannelProgressValue.text =
+            "${formatMl(remainingMl)} / ${formatMl(capacityMl)}"
+
+        cardBinding.progressChannelDose.max =
+            RESERVOIR_PROGRESS_MAX
+
+        cardBinding.progressChannelDose.progress =
+            progressPercent
+
+        cardBinding.btnChannelQuickDose.visibility =
+            View.GONE
+
+        cardBinding.btnChannelQuickDose.setOnClickListener(
+            null
+        )
+    }
+
+    private fun refillReservoir(
+        channelIndex: Int
+    ) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching {
+                channelSettingsDataStoreManager.refillReservoir(
+                    deviceId = deviceId,
+                    channelIndex = channelIndex
+                )
+            }.onSuccess {
+                showSnackBar(
+                    message = "Reservoir refilled.",
+                    type = BaseActivity.SnackType.NORMAL
+                )
+            }.onFailure {
+                showSnackBar(
+                    message = "Reservoir could not be refilled.",
+                    type = BaseActivity.SnackType.WARNING
+                )
+            }
+        }
+    }
+
+    private fun calculateReservoirProgressPercent(
+        remainingMl: Float,
+        capacityMl: Float
+    ): Int {
+        if (capacityMl <= 0f) {
+            return 0
+        }
+
+        return (
+            remainingMl.coerceIn(
+                minimumValue = 0f,
+                maximumValue = capacityMl
+            ) / capacityMl * RESERVOIR_PROGRESS_MAX
+            ).roundToInt()
+            .coerceIn(
+                minimumValue = 0,
+                maximumValue = RESERVOIR_PROGRESS_MAX
+            )
+    }
+
+    private fun formatMl(
+        value: Float
+    ): String {
+        val amount =
+            if (value % 1f == 0f) {
+                value.toInt().toString()
+            } else {
+                String.format(
+                    Locale.US,
+                    "%.2f",
+                    value
+                ).trimEnd(
+                    '0'
+                ).trimEnd(
+                    '.'
+                )
+            }
+
+        return "$amount ml"
     }
 
     private fun bindClicks() {
@@ -202,10 +502,12 @@ class DeviceDosingFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             val calibrationState =
-                EspDosingCalibrationStateClient.readChannelCalibrationState(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex
-                )
+                runCatching {
+                    EspDosingCalibrationStateClient.readChannelCalibrationState(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex
+                    )
+                }.getOrNull()
 
             navigationInProgress =
                 false
@@ -332,6 +634,8 @@ class DeviceDosingFragment :
         private const val ARG_USER_DEVICE_NAME = "userDeviceName"
         private const val ARG_DEFAULT_DEVICE_TITLE = "defaultDeviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
+
+        private const val RESERVOIR_PROGRESS_MAX = 100
 
         fun newInstance(
             deviceId: Long,

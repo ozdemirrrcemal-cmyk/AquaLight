@@ -35,9 +35,15 @@ class DosingEspRepository(
         startTime: String,
         enabled: Boolean
     ) {
+        val currentState =
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
+
         val payload =
-            DosingEspJsonMapper.createSingleSchedulePayload(
-                channelIndex = channelIndex,
+            DosingEspJsonMapper.createMergedSingleSchedulePayload(
+                existingTimers = currentState.timers,
                 channelNumber = channelNumber,
                 gpioPwm = gpioPwm,
                 totalDailyDoseMl = totalDailyDoseMl,
@@ -66,9 +72,15 @@ class DosingEspRepository(
         startTime: String,
         enabled: Boolean
     ) {
+        val currentState =
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
+
         val payload =
-            DosingEspJsonMapper.createHourly24SchedulePayload(
-                channelIndex = channelIndex,
+            DosingEspJsonMapper.createMergedHourly24SchedulePayload(
+                existingTimers = currentState.timers,
                 channelNumber = channelNumber,
                 gpioPwm = gpioPwm,
                 totalDailyDoseMl = totalDailyDoseMl,
@@ -97,9 +109,15 @@ class DosingEspRepository(
         periods: List<DosingCustomPeriodSaveItem>,
         enabled: Boolean
     ) {
+        val currentState =
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
+
         val payload =
-            DosingEspJsonMapper.createCustomPeriodsSchedulePayload(
-                channelIndex = channelIndex,
+            DosingEspJsonMapper.createMergedCustomPeriodsSchedulePayload(
+                existingTimers = currentState.timers,
                 channelNumber = channelNumber,
                 gpioPwm = gpioPwm,
                 totalDailyDoseMl = totalDailyDoseMl,
@@ -127,9 +145,15 @@ class DosingEspRepository(
         doses: List<DosingTimerDoseSaveItem>,
         enabled: Boolean
     ) {
+        val currentState =
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
+
         val payload =
-            DosingEspJsonMapper.createTimerModeSchedulePayload(
-                channelIndex = channelIndex,
+            DosingEspJsonMapper.createMergedTimerModeSchedulePayload(
+                existingTimers = currentState.timers,
                 channelNumber = channelNumber,
                 gpioPwm = gpioPwm,
                 weekDays = weekDays,
@@ -161,9 +185,15 @@ class DosingEspRepository(
         count: Int,
         enabled: Boolean
     ) {
+        val currentState =
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
+
         val payload =
-            DosingEspJsonMapper.createGenericTimerSchedulePayload(
-                channelIndex = channelIndex,
+            DosingEspJsonMapper.createMergedGenericTimerSchedulePayload(
+                existingTimers = currentState.timers,
                 channelNumber = channelNumber,
                 mode = mode,
                 gpioPwm = gpioPwm,
@@ -198,20 +228,10 @@ class DosingEspRepository(
                 channelIndex = channelIndex
             )
 
-        val channelSlotIndices =
-            DosingEspJsonMapper.getAppTimerSlotIndicesForChannel(
-                channelIndex = channelIndex
-            )
-
         val targetTimerIndices =
-            if (enabled) {
-                findExistingScheduleSlotIndicesForChannel(
-                    state = currentState,
-                    channelSlotIndices = channelSlotIndices
-                )
-            } else {
-                channelSlotIndices
-            }
+            findExistingScheduleTimerIndicesForChannel(
+                state = currentState
+            )
 
         if (targetTimerIndices.isEmpty()) {
             return
@@ -280,26 +300,29 @@ class DosingEspRepository(
         )
     }
 
-    private fun findExistingScheduleSlotIndicesForChannel(
-        state: DosingEspState,
-        channelSlotIndices: List<Int>
+    private fun findExistingScheduleTimerIndicesForChannel(
+        state: DosingEspState
     ): List<Int> {
-        val channelSlotIndexSet =
-            channelSlotIndices.toSet()
-
         val channelGpioPwm =
             state.channel.gpioPwm.trim()
 
+        if (
+            channelGpioPwm.isBlank() ||
+            channelGpioPwm == "-"
+        ) {
+            return emptyList()
+        }
+
         return state.timers
             .filter { timer ->
-                timer.index in channelSlotIndexSet &&
-                    timer.belongsToGpioPwm(
-                        targetGpioPwm = channelGpioPwm
-                    ) &&
+                timer.belongsToGpioPwm(
+                    targetGpioPwm = channelGpioPwm
+                ) &&
                     timer.name.isNotBlank() &&
                     timer.name != "-" &&
                     timer.dosePerRunMl > 0f &&
-                    timer.count > 0
+                    timer.count > 0 &&
+                    timer.index >= 0
             }
             .map { timer ->
                 timer.index

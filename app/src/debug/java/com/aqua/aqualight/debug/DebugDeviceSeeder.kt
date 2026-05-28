@@ -10,28 +10,34 @@ object DebugDeviceSeeder {
 
     private const val TAG = "DebugDeviceSeeder"
 
-    private const val DEBUG_DOSING_DEVICE_ID = 900_002L
-    private const val DEBUG_DOSING_SERIAL = "DEBUG-DOSING-001"
+    private const val DEBUG_DOSING_DEVICE_ID = 900_003L
+    private const val DEBUG_DOSING_SERIAL = "DEBUG-DOSING-LOCAL-001"
+    private const val DEBUG_DOSING_IP = "127.0.0.1:8081"
 
     suspend fun seedIfNeeded(
         context: Context
     ) {
-        val appContext = context.applicationContext
-        val devicesManager = DevicesDataStoreManager.create(
-            appContext
-        )
+        val appContext =
+            context.applicationContext
 
-        val currentDevices = devicesManager.devicesFlow.first()
+        val devicesManager =
+            DevicesDataStoreManager.create(
+                appContext
+            )
 
-        val dosingDebugDeviceAlreadyExists = currentDevices.any { device ->
-            device.id == DEBUG_DOSING_DEVICE_ID ||
-                device.serial == DEBUG_DOSING_SERIAL
-        }
+        val currentDevices =
+            devicesManager.devicesFlow.first()
+
+        val dosingDebugDeviceAlreadyExists =
+            currentDevices.any { device ->
+                device.id == DEBUG_DOSING_DEVICE_ID ||
+                    device.serial == DEBUG_DOSING_SERIAL
+            }
 
         if (dosingDebugDeviceAlreadyExists) {
             Log.d(
                 TAG,
-                "Debug dosing device already exists. Seed skipped."
+                "Local debug dosing device already exists. Seed skipped."
             )
 
             return
@@ -40,11 +46,11 @@ object DebugDeviceSeeder {
         devicesManager.addDevice(
             id = DEBUG_DOSING_DEVICE_ID,
 
-            aquaName = "AquaDose",
-            name = "DosePro 4",
-            ip = "0.0.0.0",
+            aquaName = "AquaDose Local",
+            name = "DosePro 4 Local",
+            ip = DEBUG_DOSING_IP,
             serial = DEBUG_DOSING_SERIAL,
-            firmwareBuild = "debug",
+            firmwareBuild = "debug-local",
 
             deviceType = AquaDeviceType.AQUA_DOSE_001,
 
@@ -54,11 +60,11 @@ object DebugDeviceSeeder {
             tabTimer = false,
             tabTemperature = false,
 
-            productId = "aquadose.001",
+            productId = "aquadose.001.local",
             productFamily = "AquaDose",
             productModel = "DosePro 4",
             hardwareRevision = "debug",
-            firmwareVersion = "debug",
+            firmwareVersion = "debug-local",
             apiVersion = 1,
 
             channelCount = 4,
@@ -85,7 +91,7 @@ object DebugDeviceSeeder {
 
         Log.d(
             TAG,
-            "Debug dosing device seeded."
+            "Local debug dosing device seeded with IP: $DEBUG_DOSING_IP"
         )
     }
 }

@@ -20,4 +20,21 @@ message DosingChannelSettingsRecord {
 
   bool has_missed_dose_compensation_enabled = 7;
   bool missed_dose_compensation_enabled = 8;
+
+  bool has_remaining_volume_ml = 9;
+  float remaining_volume_ml = 10;
+
+  int64 last_reservoir_sync_at_millis = 11;
+
+  bool has_last_daily_dose_ml = 12;
+  float last_daily_dose_ml = 13;
+
+  bool reservoir_empty = 14;
+  bool paused_by_reservoir_empty = 15;
+
+  int64 last_refilled_at_millis = 16;
+
+  bool has_last_manual_dose_ml = 17;
+  float last_manual_dose_ml = 18;
+  int64 last_manual_dose_at_millis = 19;
 }

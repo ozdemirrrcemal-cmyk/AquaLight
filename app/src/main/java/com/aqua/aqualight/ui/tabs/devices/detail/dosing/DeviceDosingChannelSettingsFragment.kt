@@ -16,6 +16,7 @@ import com.aqua.aqualight.data.devices.dosing.esp.DosingEspRepository
 import com.aqua.aqualight.data.devices.dosing.esp.DosingEspState
 import com.aqua.aqualight.data.devices.dosing.esp.DosingScheduleMode
 import com.aqua.aqualight.databinding.FragmentDeviceDosingChannelSettingsBinding
+import kotlinx.coroutines.flow.first
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.bottomsheet.DosingBottomSheets
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -546,11 +547,30 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
     }
 
+    private fun hasValidContainerVolume(): Boolean {
+        return containerVolumeMl?.let {
+            value ->
+            value > 0f
+        } == true
+    }
+
     private fun saveChannelSettingsIfNeeded() {
         if (
             saveSettingsInProgress ||
             !hasUnsavedChannelSettings
         ) {
+            return
+        }
+
+        if (
+            reservoirTrackingEnabled &&
+            !hasValidContainerVolume()
+        ) {
+            showSnackBar(
+                message = "Please set container volume before enabling reservoir tracking.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
             return
         }
 
@@ -1242,14 +1262,19 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         binding.cardDailyDose.alpha =
         contentAlpha
 
-        binding.cardDosingSchedule.alpha =
-        contentAlpha
-
         binding.cardRecurrence.alpha =
         contentAlpha
 
         binding.cardMissedDoseCompensation.alpha =
         contentAlpha
+
+        /*
+     * Schedule kapalı olsa bile mode kartı kullanılabilir kalmalı.
+     * Çünkü kullanıcı Single / Hourly / Custom / Timer ekranına girip
+     * yeni schedule oluşturabilmeli.
+     */
+        binding.cardDosingSchedule.alpha =
+        1f
 
         binding.cardDailyDose.isEnabled =
         true
@@ -1257,18 +1282,54 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         makeDailyDoseCardDisplayOnly()
 
         binding.rowModeSingle.isEnabled =
-        enabled
+        true
 
         binding.rowModeHourly.isEnabled =
-        enabled
+        true
 
         binding.rowModeCustomPeriods.isEnabled =
-        enabled
+        true
 
         binding.rowModeTimer.isEnabled =
-        enabled
+        true
+
+        binding.radioModeSingle.isEnabled =
+        true
+
+        binding.radioModeHourly.isEnabled =
+        true
+
+        binding.radioModeCustomPeriods.isEnabled =
+        true
+
+        binding.radioModeTimer.isEnabled =
+        true
 
         binding.rowEveryDay.isEnabled =
+        enabled
+
+        binding.radioEveryDay.isEnabled =
+        enabled
+
+        binding.chipDayMon.isEnabled =
+        enabled
+
+        binding.chipDayTue.isEnabled =
+        enabled
+
+        binding.chipDayWed.isEnabled =
+        enabled
+
+        binding.chipDayThu.isEnabled =
+        enabled
+
+        binding.chipDayFri.isEnabled =
+        enabled
+
+        binding.chipDaySat.isEnabled =
+        enabled
+
+        binding.chipDaySun.isEnabled =
         enabled
 
         binding.switchMissedDoseCompensation.isEnabled =
@@ -1351,7 +1412,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         )
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val result =
+            val manualDoseResult =
             runCatching {
                 dosingEspRepository.sendManualDose(
                     deviceIp = deviceIp,
@@ -1361,15 +1422,22 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 )
             }
 
-            baseActivity?.showLoading(
-                false
-            )
-
             if (_binding == null) {
+                baseActivity?.showLoading(
+                    false
+                )
+
                 return@launch
             }
 
-            result.onFailure {
+            val manualDoseError =
+            manualDoseResult.exceptionOrNull()
+
+            if (manualDoseError != null) {
+                baseActivity?.showLoading(
+                    false
+                )
+
                 DialogManager.showConfirmDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
@@ -1383,8 +1451,111 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                         )
                     }
                 )
+
+                return@launch
+            }
+
+            val reservoirUpdateResult =
+            runCatching {
+                handleManualDosingAccepted(
+                    doseMl = doseMl
+                )
+            }
+
+            baseActivity?.showLoading(
+                false
+            )
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            reservoirUpdateResult.onSuccess {
+                schedulePaused ->
+                if (schedulePaused) {
+                    showSnackBar(
+                        message = "Manual dose started. Reservoir is empty, schedule paused.",
+                        type = BaseActivity.SnackType.WARNING
+                    )
+                } else {
+                    showSnackBar(
+                        message = "Manual dose started.",
+                        type = BaseActivity.SnackType.NORMAL
+                    )
+                }
+            }.onFailure {
+                showSnackBar(
+                    message = "Manual dose started, but reservoir status could not be updated.",
+                    type = BaseActivity.SnackType.WARNING
+                )
             }
         }
+    }
+
+    private suspend fun handleManualDosingAccepted(
+        doseMl: Float
+    ): Boolean {
+        channelSettingsDataStoreManager.saveLastManualDoseMl(
+            deviceId = deviceId,
+            channelIndex = channelIndex,
+            manualDoseMl = doseMl
+        )
+
+        val updatedSettings =
+        channelSettingsDataStoreManager.observeChannelSettings(
+            deviceId = deviceId,
+            channelIndex = channelIndex
+        ).first()
+
+        if (!updatedSettings.reservoirTrackingEnabled) {
+            return false
+        }
+
+        if (!updatedSettings.hasReservoirCapacity) {
+            return false
+        }
+
+        if (!updatedSettings.shouldShowRefillAction) {
+            return false
+        }
+
+        pauseScheduleBecauseReservoirIsEmpty()
+
+        return true
+    }
+
+    private suspend fun pauseScheduleBecauseReservoirIsEmpty() {
+        if (!scheduleEnabled) {
+            return
+        }
+
+        dosingEspRepository.updateTimerEnabledAndWeekDays(
+            deviceIp = deviceIp,
+            channelIndex = channelIndex,
+            enabled = false,
+            weekDays = selectedWeekDays
+        )
+
+        scheduleEnabled =
+        false
+
+        savedScheduleEnabled =
+        false
+
+        suppressScheduleCallback =
+        true
+
+        binding.switchScheduleEnabled.isChecked =
+        false
+
+        suppressScheduleCallback =
+        false
+
+        updateScheduleEnabledState(
+            enabled = false
+        )
+
+        renderTopBarSaveState()
     }
 
     private fun renderChannelTitle(
