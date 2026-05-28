@@ -25,6 +25,64 @@ class DosingEspRepository(
         )
     }
 
+    suspend fun readChannelRestMl(
+        deviceIp: String,
+        channelIndex: Int
+    ): Float? {
+        val payload =
+            DosingEspJsonMapper.createReadChannelRestPayload(
+                channelIndex = channelIndex
+            )
+
+        val response =
+            api.getJson(
+                deviceIp = deviceIp,
+                payload = payload
+            )
+
+        return DosingEspJsonMapper.parseChannelRestMl(
+            response = response,
+            channelIndex = channelIndex
+        )
+    }
+
+    suspend fun writeChannelRestMl(
+        deviceIp: String,
+        channelIndex: Int,
+        restMl: Float
+    ) {
+        val payload =
+            DosingEspJsonMapper.createWriteChannelRestPayload(
+                channelIndex = channelIndex,
+                restMl = restMl.coerceAtLeast(
+                    minimumValue = 0f
+                )
+            )
+
+        api.postJson(
+            deviceIp = deviceIp,
+            payload = payload
+        )
+    }
+
+    suspend fun refillChannelReservoir(
+        deviceIp: String,
+        channelIndex: Int,
+        capacityMl: Float
+    ) {
+        require(
+            value = capacityMl > 0f
+        ) {
+            "Reservoir capacity must be greater than 0 ml."
+        }
+
+        writeChannelRestMl(
+            deviceIp = deviceIp,
+            channelIndex = channelIndex,
+            restMl = capacityMl
+        )
+    }
+
     suspend fun saveSingleSchedule(
         deviceIp: String,
         channelIndex: Int,

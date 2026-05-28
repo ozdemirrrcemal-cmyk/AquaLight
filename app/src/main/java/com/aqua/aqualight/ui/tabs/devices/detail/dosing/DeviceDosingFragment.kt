@@ -13,10 +13,15 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.dosing.DosingChannelSettingsDataStoreManager
 import com.aqua.aqualight.data.devices.dosing.DosingChannelSettingsUi
 import com.aqua.aqualight.data.devices.dosing.EspDosingCalibrationStateClient
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspRepository
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspState
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspTimerState
+import com.aqua.aqualight.data.devices.dosing.esp.DosingScheduleMode
 import com.aqua.aqualight.databinding.FragmentDeviceDosingBinding
 import com.aqua.aqualight.databinding.ItemDosingChannelCardBinding
 import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.math.floor
 import kotlin.math.roundToInt
 
 class DeviceDosingFragment :
@@ -26,6 +31,7 @@ class DeviceDosingFragment :
     private val binding get() = _binding!!
 
     private lateinit var channelSettingsDataStoreManager: DosingChannelSettingsDataStoreManager
+    private lateinit var dosingEspRepository: DosingEspRepository
 
     private var navigationInProgress: Boolean = false
 
@@ -60,8 +66,11 @@ class DeviceDosingFragment :
                 context = requireContext()
             )
 
+        dosingEspRepository =
+            DosingEspRepository()
+
         bindDefaultChannelCards()
-        observeReservoirProgress()
+        observeChannelCards()
         bindClicks()
         renderPumpRunningIndicators()
     }
@@ -113,7 +122,7 @@ class DeviceDosingFragment :
             View.VISIBLE
 
         cardBinding.tvChannelDose.text =
-            "0.0 ml"
+            "0 ml"
 
         cardBinding.tvChannelSchedule.text =
             "Every day"
@@ -124,17 +133,30 @@ class DeviceDosingFragment :
         cardBinding.tvChannelReservoir.text =
             "Reservoir not set"
 
+        cardBinding.tvChannelReservoir.setOnClickListener(
+            null
+        )
+
+        cardBinding.tvChannelReservoir.isClickable =
+            false
+
+        cardBinding.tvChannelReservoir.isFocusable =
+            false
+
         cardBinding.tvChannelProgressTitle.text =
-            "Reservoir"
+            "Today"
 
         cardBinding.tvChannelProgressValue.text =
             "0 / 0 ml"
 
         cardBinding.progressChannelDose.max =
-            RESERVOIR_PROGRESS_MAX
+            TODAY_PROGRESS_MAX
 
         cardBinding.progressChannelDose.progress =
             0
+
+        cardBinding.progressChannelDose.visibility =
+            View.VISIBLE
 
         cardBinding.channelMetricsContainer.visibility =
             View.GONE
@@ -153,7 +175,7 @@ class DeviceDosingFragment :
         )
     }
 
-    private fun observeReservoirProgress() {
+    private fun observeChannelCards() {
         val channelCards =
             listOf(
                 binding.channelCard1,
@@ -172,7 +194,7 @@ class DeviceDosingFragment :
                             deviceId = deviceId,
                             channelIndex = channelIndex
                         ).collect { settings ->
-                            renderReservoirProgress(
+                            renderChannelFromSources(
                                 cardBinding = cardBinding,
                                 settings = settings
                             )
@@ -183,154 +205,248 @@ class DeviceDosingFragment :
         }
     }
 
-    private fun renderReservoirProgress(
+    private suspend fun renderChannelFromSources(
         cardBinding: ItemDosingChannelCardBinding,
         settings: DosingChannelSettingsUi
     ) {
+        if (deviceIp.isBlank()) {
+            renderDeviceDataUnavailable(
+                cardBinding = cardBinding,
+                settings = settings
+            )
+
+            return
+        }
+
+        val stateResult =
+            runCatching {
+                dosingEspRepository.fetchDosingState(
+                    deviceIp = deviceIp,
+                    channelIndex = settings.channelIndex
+                )
+            }
+
+        if (_binding == null) {
+            return
+        }
+
+        stateResult.onSuccess { state ->
+            renderConfiguredChannelCard(
+                cardBinding = cardBinding,
+                settings = settings,
+                state = state
+            )
+        }.onFailure {
+            renderDeviceDataUnavailable(
+                cardBinding = cardBinding,
+                settings = settings
+            )
+        }
+    }
+
+    private fun renderConfiguredChannelCard(
+        cardBinding: ItemDosingChannelCardBinding,
+        settings: DosingChannelSettingsUi,
+        state: DosingEspState
+    ) {
+        val channelName =
+            state.channel.name
+                .trim()
+                .takeIf { name ->
+                    name.isNotBlank() &&
+                        name != "-"
+                } ?: "Channel ${settings.channelIndex + 1}"
+
+        val dailyDoseMl =
+            state.configuredDailyDoseMl
+                ?.coerceAtLeast(
+                    minimumValue = 0f
+                ) ?: 0f
+
+        val hasSchedule =
+            dailyDoseMl > 0f
+
+        val hasAnyVisibleData =
+            state.channel.isCalibrated ||
+                hasSchedule ||
+                settings.hasReservoirCapacity
+
+        cardBinding.tvChannelName.text =
+            channelName
+
+        cardBinding.tvChannelState.text =
+            when {
+                !state.channel.isCalibrated -> {
+                    "Calibrate"
+                }
+
+                hasSchedule && state.scheduleEnabled -> {
+                    "Active"
+                }
+
+                hasSchedule && !state.scheduleEnabled -> {
+                    "Paused"
+                }
+
+                else -> {
+                    "Set up"
+                }
+            }
+
+        cardBinding.tvChannelHint.visibility =
+            if (hasAnyVisibleData) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+
+        cardBinding.channelMetricsContainer.visibility =
+            if (hasAnyVisibleData) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        cardBinding.tvChannelDose.text =
+            formatMl(
+                value = dailyDoseMl
+            )
+
+        cardBinding.tvChannelSchedule.text =
+            formatScheduleText(
+                state = state
+            )
+
+        cardBinding.tvChannelStatus.text =
+            formatModeStatusText(
+                state = state
+            )
+
+        renderReservoirText(
+            cardBinding = cardBinding,
+            settings = settings,
+            state = state,
+            dailyDoseMl = dailyDoseMl
+        )
+
+        renderTodayProgress(
+            cardBinding = cardBinding,
+            dailyDoseMl = dailyDoseMl,
+            manualTodayMl = 0f,
+            autoTodayMl = 0f
+        )
+    }
+
+    private fun renderReservoirText(
+        cardBinding: ItemDosingChannelCardBinding,
+        settings: DosingChannelSettingsUi,
+        state: DosingEspState,
+        dailyDoseMl: Float
+    ) {
+        clearReservoirClick(
+            cardBinding = cardBinding
+        )
+
         when {
             !settings.reservoirTrackingEnabled -> {
-                renderReservoirDisabled(
-                    cardBinding = cardBinding
-                )
+                cardBinding.tvChannelReservoir.text =
+                    "Tracking off"
             }
 
             !settings.hasReservoirCapacity -> {
-                renderReservoirNotConfigured(
-                    cardBinding = cardBinding
-                )
+                cardBinding.tvChannelReservoir.text =
+                    "Reservoir not set"
             }
 
-            settings.shouldShowRefillAction -> {
-                renderReservoirEmpty(
+            state.channel.restMl == null -> {
+                cardBinding.tvChannelReservoir.text =
+                    "Rest unavailable"
+            }
+
+            state.channel.restMl <= 0f -> {
+                renderReservoirRefillAction(
                     cardBinding = cardBinding,
                     settings = settings
                 )
             }
 
-            settings.shouldShowReservoirProgress -> {
-                renderReservoirReady(
-                    cardBinding = cardBinding,
-                    remainingMl = settings.remainingVolumeMl ?: 0f,
-                    capacityMl = settings.containerVolumeMl ?: 0f
-                )
-            }
-
             else -> {
-                renderReservoirNotConfigured(
-                    cardBinding = cardBinding
-                )
+                cardBinding.tvChannelReservoir.text =
+                    formatReservoirSummary(
+                        restMl = state.channel.restMl,
+                        dailyDoseMl = dailyDoseMl
+                    )
             }
         }
     }
 
-    private fun renderReservoirDisabled(
-        cardBinding: ItemDosingChannelCardBinding
-    ) {
-        cardBinding.tvChannelReservoir.text =
-            "Reservoir tracking off"
-
-        cardBinding.tvChannelProgressTitle.text =
-            "Reservoir"
-
-        cardBinding.tvChannelProgressValue.text =
-            "Tracking disabled"
-
-        cardBinding.progressChannelDose.progress =
-            0
-
-        cardBinding.channelProgressSection.visibility =
-            View.GONE
-
-        cardBinding.channelProgressBarRow.visibility =
-            View.GONE
-
-        cardBinding.btnChannelQuickDose.visibility =
-            View.GONE
-
-        cardBinding.btnChannelQuickDose.setOnClickListener(
-            null
-        )
-    }
-
-    private fun renderReservoirNotConfigured(
-        cardBinding: ItemDosingChannelCardBinding
-    ) {
-        cardBinding.tvChannelReservoir.text =
-            "Reservoir not set"
-
-        cardBinding.tvChannelProgressTitle.text =
-            "Reservoir"
-
-        cardBinding.tvChannelProgressValue.text =
-            "Set container volume"
-
-        cardBinding.progressChannelDose.progress =
-            0
-
-        cardBinding.channelProgressSection.visibility =
-            View.GONE
-
-        cardBinding.channelProgressBarRow.visibility =
-            View.GONE
-
-        cardBinding.btnChannelQuickDose.visibility =
-            View.GONE
-
-        cardBinding.btnChannelQuickDose.setOnClickListener(
-            null
-        )
-    }
-
-    private fun renderReservoirEmpty(
+    private fun renderReservoirRefillAction(
         cardBinding: ItemDosingChannelCardBinding,
         settings: DosingChannelSettingsUi
     ) {
-        val capacityMl =
-            settings.containerVolumeMl ?: 0f
-
-        cardBinding.channelProgressSection.visibility =
-            View.VISIBLE
-
-        cardBinding.channelProgressBarRow.visibility =
-            View.GONE
-
         cardBinding.tvChannelReservoir.text =
-            "Reservoir empty"
-
-        cardBinding.tvChannelProgressTitle.text =
-            "Reservoir"
-
-        cardBinding.tvChannelProgressValue.text =
-            "0 / ${formatMl(capacityMl)}"
-
-        cardBinding.progressChannelDose.max =
-            RESERVOIR_PROGRESS_MAX
-
-        cardBinding.progressChannelDose.progress =
-            0
-
-        cardBinding.btnChannelQuickDose.visibility =
-            View.VISIBLE
-
-        cardBinding.btnChannelQuickDose.text =
             "Refill"
 
-        cardBinding.btnChannelQuickDose.setOnClickListener {
+        cardBinding.tvChannelReservoir.isClickable =
+            true
+
+        cardBinding.tvChannelReservoir.isFocusable =
+            true
+
+        cardBinding.tvChannelReservoir.setOnClickListener {
             refillReservoir(
-                channelIndex = settings.channelIndex
+                cardBinding = cardBinding,
+                settings = settings
             )
         }
     }
 
-    private fun renderReservoirReady(
-        cardBinding: ItemDosingChannelCardBinding,
-        remainingMl: Float,
-        capacityMl: Float
+    private fun clearReservoirClick(
+        cardBinding: ItemDosingChannelCardBinding
     ) {
+        cardBinding.tvChannelReservoir.setOnClickListener(
+            null
+        )
+
+        cardBinding.tvChannelReservoir.isClickable =
+            false
+
+        cardBinding.tvChannelReservoir.isFocusable =
+            false
+    }
+
+    private fun renderTodayProgress(
+        cardBinding: ItemDosingChannelCardBinding,
+        dailyDoseMl: Float,
+        manualTodayMl: Float,
+        autoTodayMl: Float
+    ) {
+        if (dailyDoseMl <= 0f) {
+            cardBinding.channelProgressSection.visibility =
+                View.GONE
+
+            cardBinding.channelProgressBarRow.visibility =
+                View.GONE
+
+            cardBinding.btnChannelQuickDose.visibility =
+                View.GONE
+
+            cardBinding.btnChannelQuickDose.setOnClickListener(
+                null
+            )
+
+            return
+        }
+
+        val givenTodayMl =
+            (manualTodayMl + autoTodayMl).coerceAtLeast(
+                minimumValue = 0f
+            )
+
         val progressPercent =
-            calculateReservoirProgressPercent(
-                remainingMl = remainingMl,
-                capacityMl = capacityMl
+            calculateTodayProgressPercent(
+                givenTodayMl = givenTodayMl,
+                dailyDoseMl = dailyDoseMl
             )
 
         cardBinding.channelProgressSection.visibility =
@@ -339,17 +455,17 @@ class DeviceDosingFragment :
         cardBinding.channelProgressBarRow.visibility =
             View.VISIBLE
 
-        cardBinding.tvChannelReservoir.text =
-            "${formatMl(remainingMl)} / ${formatMl(capacityMl)}"
+        cardBinding.progressChannelDose.visibility =
+            View.VISIBLE
 
         cardBinding.tvChannelProgressTitle.text =
-            "Reservoir"
+            "Today"
 
         cardBinding.tvChannelProgressValue.text =
-            "${formatMl(remainingMl)} / ${formatMl(capacityMl)}"
+            "${formatMl(givenTodayMl)} / ${formatMl(dailyDoseMl)}"
 
         cardBinding.progressChannelDose.max =
-            RESERVOIR_PROGRESS_MAX
+            TODAY_PROGRESS_MAX
 
         cardBinding.progressChannelDose.progress =
             progressPercent
@@ -362,21 +478,119 @@ class DeviceDosingFragment :
         )
     }
 
-    private fun refillReservoir(
-        channelIndex: Int
+    private fun renderDeviceDataUnavailable(
+        cardBinding: ItemDosingChannelCardBinding,
+        settings: DosingChannelSettingsUi
     ) {
+        cardBinding.tvChannelState.text =
+            "Offline"
+
+        cardBinding.tvChannelHint.text =
+            "Device data could not be loaded"
+
+        cardBinding.tvChannelHint.visibility =
+            View.VISIBLE
+
+        cardBinding.channelMetricsContainer.visibility =
+            if (settings.hasReservoirCapacity) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        cardBinding.tvChannelReservoir.text =
+            if (settings.hasReservoirCapacity) {
+                "Rest unavailable"
+            } else {
+                "Reservoir not set"
+            }
+
+        clearReservoirClick(
+            cardBinding = cardBinding
+        )
+
+        cardBinding.channelProgressSection.visibility =
+            View.GONE
+
+        cardBinding.channelProgressBarRow.visibility =
+            View.GONE
+
+        cardBinding.btnChannelQuickDose.visibility =
+            View.GONE
+
+        cardBinding.btnChannelQuickDose.setOnClickListener(
+            null
+        )
+    }
+
+    private fun refillReservoir(
+        cardBinding: ItemDosingChannelCardBinding,
+        settings: DosingChannelSettingsUi
+    ) {
+        val capacityMl =
+            settings.containerVolumeMl
+                ?.takeIf { value ->
+                    value > 0f
+                }
+
+        if (capacityMl == null) {
+            showSnackBar(
+                message = "Container volume is not set.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
+        if (deviceIp.isBlank()) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
+        cardBinding.tvChannelReservoir.text =
+            "Refilling..."
+
+        clearReservoirClick(
+            cardBinding = cardBinding
+        )
+
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
-                channelSettingsDataStoreManager.refillReservoir(
-                    deviceId = deviceId,
-                    channelIndex = channelIndex
-                )
-            }.onSuccess {
+            val result =
+                runCatching {
+                    dosingEspRepository.refillChannelReservoir(
+                        deviceIp = deviceIp,
+                        channelIndex = settings.channelIndex,
+                        capacityMl = capacityMl
+                    )
+                }
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            result.onSuccess {
                 showSnackBar(
                     message = "Reservoir refilled.",
                     type = BaseActivity.SnackType.NORMAL
                 )
+
+                renderChannelFromSources(
+                    cardBinding = cardBinding,
+                    settings = settings
+                )
             }.onFailure {
+                cardBinding.tvChannelReservoir.text =
+                    "Refill"
+
+                renderReservoirRefillAction(
+                    cardBinding = cardBinding,
+                    settings = settings
+                )
+
                 showSnackBar(
                     message = "Reservoir could not be refilled.",
                     type = BaseActivity.SnackType.WARNING
@@ -385,37 +599,197 @@ class DeviceDosingFragment :
         }
     }
 
-    private fun calculateReservoirProgressPercent(
-        remainingMl: Float,
-        capacityMl: Float
+    private fun formatScheduleText(
+        state: DosingEspState
+    ): String {
+        val timer =
+            findPrimaryDisplayTimer(
+                state = state
+            )
+
+        val weekDays =
+            timer?.weekDays
+                ?.takeIf { days ->
+                    days.size == 7
+                } ?: List(
+                size = 7
+            ) {
+                true
+            }
+
+        if (weekDays.all { selected -> selected }) {
+            return "Every day"
+        }
+
+        val dayNames =
+            listOf(
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+                "Sun"
+            )
+
+        val selectedDays =
+            weekDays.mapIndexedNotNull { index, selected ->
+                if (selected) {
+                    dayNames[index]
+                } else {
+                    null
+                }
+            }
+
+        return if (selectedDays.isEmpty()) {
+            "No days"
+        } else {
+            selectedDays.joinToString(
+                separator = ", "
+            )
+        }
+    }
+
+    private fun formatModeStatusText(
+        state: DosingEspState
+    ): String {
+        val timers =
+            findDoseTimers(
+                state = state
+            )
+
+        if (timers.isEmpty()) {
+            return "Not set up"
+        }
+
+        val primaryTimer =
+            findPrimaryDisplayTimer(
+                state = state
+            )
+
+        val totalDoseCount =
+            timers.sumOf { timer ->
+                timer.count.coerceAtLeast(
+                    minimumValue = 0
+                )
+            }.coerceAtLeast(
+                minimumValue = 1
+            )
+
+        val progressText =
+            primaryTimer
+                ?.status
+                ?.trim()
+                ?.takeIf { status ->
+                    status.isNotBlank() &&
+                        status != "-"
+                } ?: "${totalDoseCount}x"
+
+        return "$progressText ${formatModeLabel(state.activeMode)}"
+    }
+
+    private fun formatModeLabel(
+        mode: DosingScheduleMode
+    ): String {
+        return when (mode) {
+            DosingScheduleMode.SINGLE -> {
+                "Single"
+            }
+
+            DosingScheduleMode.HOURLY_24 -> {
+                "/24 hourly"
+            }
+
+            DosingScheduleMode.CUSTOM_PERIODS -> {
+                "Custom"
+            }
+
+            DosingScheduleMode.TIMER -> {
+                "Timer"
+            }
+        }
+    }
+
+    private fun findPrimaryDisplayTimer(
+        state: DosingEspState
+    ): DosingEspTimerState? {
+        return findDoseTimers(
+            state = state
+        ).firstOrNull()
+            ?: state.timer.takeIf { timer ->
+                timer.count > 0 ||
+                    timer.dosePerRunMl > 0f
+            }
+    }
+
+    private fun findDoseTimers(
+        state: DosingEspState
+    ): List<DosingEspTimerState> {
+        return state.channelTimers
+            .filter { timer ->
+                timer.dosePerRunMl > 0f &&
+                    timer.count > 0
+            }
+            .sortedBy { timer ->
+                timer.index
+            }
+    }
+
+    private fun formatReservoirSummary(
+        restMl: Float,
+        dailyDoseMl: Float
+    ): String {
+        if (dailyDoseMl <= 0f) {
+            return "${formatMl(restMl)} left"
+        }
+
+        val daysLeft =
+            floor(
+                restMl / dailyDoseMl
+            ).toInt()
+                .coerceAtLeast(
+                    minimumValue = 0
+                )
+
+        return "$daysLeft days   ${formatMl(restMl)}"
+    }
+
+    private fun calculateTodayProgressPercent(
+        givenTodayMl: Float,
+        dailyDoseMl: Float
     ): Int {
-        if (capacityMl <= 0f) {
+        if (dailyDoseMl <= 0f) {
             return 0
         }
 
         return (
-            remainingMl.coerceIn(
+            givenTodayMl.coerceIn(
                 minimumValue = 0f,
-                maximumValue = capacityMl
-            ) / capacityMl * RESERVOIR_PROGRESS_MAX
+                maximumValue = dailyDoseMl
+            ) / dailyDoseMl * TODAY_PROGRESS_MAX
             ).roundToInt()
             .coerceIn(
                 minimumValue = 0,
-                maximumValue = RESERVOIR_PROGRESS_MAX
+                maximumValue = TODAY_PROGRESS_MAX
             )
     }
 
     private fun formatMl(
         value: Float
     ): String {
+        val safeValue =
+            value.coerceAtLeast(
+                minimumValue = 0f
+            )
+
         val amount =
-            if (value % 1f == 0f) {
-                value.toInt().toString()
+            if (safeValue % 1f == 0f) {
+                safeValue.toInt().toString()
             } else {
                 String.format(
                     Locale.US,
                     "%.2f",
-                    value
+                    safeValue
                 ).trimEnd(
                     '0'
                 ).trimEnd(
@@ -635,7 +1009,7 @@ class DeviceDosingFragment :
         private const val ARG_DEFAULT_DEVICE_TITLE = "defaultDeviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
 
-        private const val RESERVOIR_PROGRESS_MAX = 100
+        private const val TODAY_PROGRESS_MAX = 100
 
         fun newInstance(
             deviceId: Long,
