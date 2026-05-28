@@ -203,19 +203,63 @@ class DeviceDosingHourly24ModeSettingsFragment :
         espDosingState =
             state
 
-        if (state.activeMode == DosingScheduleMode.HOURLY_24) {
-            binding.etDailyDoseMl.setText(
-                formatDoseMl(
-                    value = state.configuredDailyDoseMl
-                )
+        if (state.activeMode != DosingScheduleMode.HOURLY_24) {
+            return
+        }
+
+        val hourlyTimer =
+            findHourly24Timer(
+                state = state
+            ) ?: return
+
+        binding.etDailyDoseMl.setText(
+            formatDoseMl(
+                value = hourlyTimer.configuredDailyDoseMl
+            )
+        )
+
+        selectedMinute =
+            parseMinuteFromTime(
+                value = hourlyTimer.timeStart
             )
 
-            selectedMinute =
-                parseMinuteFromTime(
-                    value = state.timer.timeStart
-                )
+        renderDoseMinute()
+    }
 
-            renderDoseMinute()
+    private fun findHourly24Timer(
+        state: DosingEspState
+    ) =
+        state.channelTimers.firstOrNull { timer ->
+            timer.name.contains(
+                other = "HOURLY_24",
+                ignoreCase = true
+            ) &&
+                timer.dosePerRunMl > 0f &&
+                timer.count > 0
+        } ?: state.channelTimers.firstOrNull { timer ->
+            timer.count == 24 &&
+                timer.dosePerRunMl > 0f
+        } ?: state.timer.takeIf { timer ->
+            timer.dosePerRunMl > 0f &&
+                timer.count > 0
+        }
+
+    private fun getScheduleWeekDays(
+        state: DosingEspState
+    ): List<Boolean> {
+        val timer =
+            findHourly24Timer(
+                state = state
+            ) ?: state.timer
+
+        return if (timer.weekDays.size == 7) {
+            timer.weekDays
+        } else {
+            List(
+                size = 7
+            ) {
+                true
+            }
         }
     }
 
@@ -300,18 +344,11 @@ class DeviceDosingHourly24ModeSettingsFragment :
                         )
 
                     val gpioPwm =
-                        currentState.timer.gpioPwm.takeIf { value ->
+                        currentState.channel.gpioPwm.takeIf { value ->
                             value.isNotBlank() && value != "-"
-                        } ?: currentState.channel.gpioPwm
-
-                    if (
-                        gpioPwm.isBlank() ||
-                        gpioPwm == "-"
-                    ) {
-                        throw IllegalStateException(
+                        } ?: throw IllegalStateException(
                             "PWM channel information is missing."
                         )
-                    }
 
                     dosingEspRepository.saveHourly24Schedule(
                         deviceIp = deviceIp,
@@ -319,7 +356,9 @@ class DeviceDosingHourly24ModeSettingsFragment :
                         channelNumber = channelNumber,
                         gpioPwm = gpioPwm,
                         totalDailyDoseMl = dailyDoseMl,
-                        weekDays = currentState.timer.weekDays,
+                        weekDays = getScheduleWeekDays(
+                            state = currentState
+                        ),
                         startTime = startTime,
                         enabled = true
                     )

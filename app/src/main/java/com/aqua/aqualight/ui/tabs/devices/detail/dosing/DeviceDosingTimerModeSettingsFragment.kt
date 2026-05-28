@@ -15,33 +15,51 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspRepository
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspState
+import com.aqua.aqualight.data.devices.dosing.esp.DosingScheduleMode
+import com.aqua.aqualight.data.devices.dosing.esp.DosingTimerDoseSaveItem
 import com.aqua.aqualight.databinding.FragmentDeviceDosingTimerModeSettingsBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.bottomsheet.DosingBottomSheets
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.card.MaterialCardView
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 class DeviceDosingTimerModeSettingsFragment :
-Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
+    Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
 
     private var _binding: FragmentDeviceDosingTimerModeSettingsBinding? = null
     private val binding get() = _binding!!
 
+    private lateinit var dosingEspRepository: DosingEspRepository
+
+    private var espDosingState: DosingEspState? =
+        null
+
     private val timerDoses: MutableList<TimerDoseUi> =
-    mutableListOf()
+        mutableListOf()
 
     private var saveInProgress: Boolean =
-    false
+        false
 
     private val channelIndex: Int
-    get() = requireArguments().getInt(
-        ARG_CHANNEL_INDEX,
-        0
-    ).coerceIn(
-        minimumValue = 0,
-        maximumValue = 3
-    )
+        get() = requireArguments().getInt(
+            ARG_CHANNEL_INDEX,
+            0
+        ).coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
+
+    private val channelNumber: Int
+        get() = channelIndex + 1
+
+    private val deviceIp: String
+        get() = requireArguments().getString(
+            ARG_DEVICE_IP
+        ).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -53,20 +71,25 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
         )
 
         _binding =
-        FragmentDeviceDosingTimerModeSettingsBinding.bind(
-            view
-        )
+            FragmentDeviceDosingTimerModeSettingsBinding.bind(
+                view
+            )
+
+        dosingEspRepository =
+            DosingEspRepository()
 
         bindHeader()
         bindSelectedPumpIndicator()
         bindClicks()
         renderTimerDoses()
         renderSummary()
+        renderSavingState()
+        fetchTimerModeStateFromEsp()
     }
 
     private fun bindHeader() {
         binding.tvTitle.text =
-        "Timer"
+            "Timer"
 
         binding.btnBack.setOnClickListener {
             if (!saveInProgress) {
@@ -77,32 +100,16 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
 
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-        if (channelIndex == 0) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 0) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump2.visibility =
-        if (channelIndex == 1) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 1) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump3.visibility =
-        if (channelIndex == 2) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 2) View.VISIBLE else View.GONE
 
         binding.selectedIndicatorPump4.visibility =
-        if (channelIndex == 3) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 3) View.VISIBLE else View.GONE
     }
 
     private fun bindClicks() {
@@ -126,24 +133,170 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
         }
     }
 
-    private fun createDefaultDose(): TimerDoseUi {
-        val baseHour =
-        when (timerDoses.size) {
-            0 -> 12
-            1 -> 14
-            2 -> 16
-            else -> 18
+    private fun fetchTimerModeStateFromEsp() {
+        if (deviceIp.isBlank()) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
         }
 
-        return TimerDoseUi(
-            startTime = String.format(
-                Locale.US,
-                "%02d:00",
-                baseHour.coerceIn(
-                    minimumValue = 0,
-                    maximumValue = 23
+        setLoading(
+            show = true
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result =
+                runCatching {
+                    dosingEspRepository.fetchDosingState(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex
+                    )
+                }
+
+            setLoading(
+                show = false
+            )
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            result.onSuccess { state ->
+                applyEspState(
+                    state = state
                 )
-            ),
+            }.onFailure { throwable ->
+                DialogManager.showConfirmDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Device Data Failed",
+                    message = throwable.message
+                        ?: "Timer mode data could not be loaded from the device.",
+                    onConfirm = {
+                        fetchTimerModeStateFromEsp()
+                    }
+                )
+            }
+        }
+    }
+
+    private fun applyEspState(
+        state: DosingEspState
+    ) {
+        espDosingState =
+            state
+
+        if (state.activeMode != DosingScheduleMode.TIMER) {
+            renderTimerDoses()
+            renderSummary()
+            renderSavingState()
+            return
+        }
+
+        timerDoses.clear()
+
+        getTimerModeTimers(
+            state = state
+        ).forEach { timer ->
+            timerDoses.add(
+                TimerDoseUi(
+                    startTime = timer.timeStart,
+                    doseMl = timer.dosePerRunMl
+                )
+            )
+        }
+
+        sortDoses()
+        renderTimerDoses()
+        renderSummary()
+        renderSavingState()
+    }
+
+    private fun getTimerModeTimers(
+        state: DosingEspState
+    ) =
+        state.channelTimers
+            .filter { timer ->
+                timer.name.contains(
+                    other = "TIMER",
+                    ignoreCase = true
+                ) &&
+                    !timer.name.contains(
+                        other = "CUSTOM_PERIODS",
+                        ignoreCase = true
+                    ) &&
+                    timer.dosePerRunMl > 0f &&
+                    timer.count > 0
+            }
+            .sortedBy { timer ->
+                timer.index
+            }
+            .take(
+                n = MAX_TIMER_DOSE_COUNT
+            )
+
+    private fun getScheduleWeekDays(
+        state: DosingEspState
+    ): List<Boolean> {
+        val timer =
+            getTimerModeTimers(
+                state = state
+            ).firstOrNull()
+                ?: state.channelTimers.firstOrNull { item ->
+                    item.weekDays.size == 7
+                }
+                ?: state.timer
+
+        return if (timer.weekDays.size == 7) {
+            timer.weekDays
+        } else {
+            List(
+                size = 7
+            ) {
+                true
+            }
+        }
+    }
+
+    private fun createDefaultDose(): TimerDoseUi {
+        val usedTimes =
+            timerDoses.map { dose ->
+                dose.startTime
+            }.toSet()
+
+        val candidateHours =
+            listOf(
+                12,
+                14,
+                16,
+                18,
+                20,
+                22,
+                8,
+                10
+            )
+
+        val startTime =
+            candidateHours
+                .map { hour ->
+                    String.format(
+                        Locale.US,
+                        "%02d:00",
+                        hour.coerceIn(
+                            minimumValue = 0,
+                            maximumValue = 23
+                        )
+                    )
+                }
+                .firstOrNull { time ->
+                    time !in usedTimes
+                } ?: "12:00"
+
+        return TimerDoseUi(
+            startTime = startTime,
             doseMl = 1f
         )
     }
@@ -160,6 +313,7 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
                 message = "You can add up to $MAX_TIMER_DOSE_COUNT doses.",
                 type = BaseActivity.SnackType.WARNING
             )
+
             return
         }
 
@@ -174,16 +328,14 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
             },
             initialStartTime = dose.startTime,
             initialDoseMl = dose.doseMl,
-            validator = {
-                startTime, doseMl ->
+            validator = { startTime, doseMl ->
                 validateDoseDraft(
                     doseIndex = doseIndex,
                     startTime = startTime,
                     doseMl = doseMl
                 )
             },
-            onValidationError = {
-                message ->
+            onValidationError = { message ->
                 showSnackBar(
                     message = message,
                     type = BaseActivity.SnackType.WARNING
@@ -200,15 +352,15 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
                     sortDoses()
                     renderTimerDoses()
                     renderSummary()
+                    renderSavingState()
                 }
             },
-            onDone = {
-                result ->
+            onDone = { result ->
                 val newDose =
-                TimerDoseUi(
-                    startTime = result.startTime,
-                    doseMl = result.doseMl
-                )
+                    TimerDoseUi(
+                        startTime = result.startTime,
+                        doseMl = result.doseMl
+                    )
 
                 if (doseIndex == null) {
                     timerDoses.add(
@@ -216,12 +368,13 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
                     )
                 } else {
                     timerDoses[doseIndex] =
-                    newDose
+                        newDose
                 }
 
                 sortDoses()
                 renderTimerDoses()
                 renderSummary()
+                renderSavingState()
             }
         )
     }
@@ -236,11 +389,10 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
         }
 
         val duplicateTimeExists =
-        timerDoses.withIndex().any {
-            indexedDose ->
-            indexedDose.index != doseIndex &&
-            indexedDose.value.startTime == startTime
-        }
+            timerDoses.withIndex().any { indexedDose ->
+                indexedDose.index != doseIndex &&
+                    indexedDose.value.startTime == startTime
+            }
 
         if (duplicateTimeExists) {
             return "A dose already exists at this time."
@@ -257,8 +409,7 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
                 createEmptyDoseCard()
             )
         } else {
-            timerDoses.forEachIndexed {
-                index, dose ->
+            timerDoses.forEachIndexed { index, dose ->
                 binding.timerDosesContainer.addView(
                     createTimerDoseCard(
                         index = index,
@@ -271,107 +422,107 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
 
     private fun createEmptyDoseCard(): View {
         val card =
-        MaterialCardView(
-            requireContext()
-        ).apply {
-            radius =
-            dp(
-                value = 18f
-            ).toFloat()
+            MaterialCardView(
+                requireContext()
+            ).apply {
+                radius =
+                    dp(
+                        value = 18f
+                    ).toFloat()
 
-            cardElevation =
-            0f
+                cardElevation =
+                    0f
 
-            setCardBackgroundColor(
-                Color.parseColor("#0B1020")
-            )
+                setCardBackgroundColor(
+                    Color.parseColor("#0B1020")
+                )
 
-            strokeColor =
-            Color.parseColor("#24314F")
+                strokeColor =
+                    Color.parseColor("#24314F")
 
-            strokeWidth =
-            dp(
-                value = 1f
-            )
+                strokeWidth =
+                    dp(
+                        value = 1f
+                    )
 
-            layoutParams =
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+            }
 
         val root =
-        LinearLayout(
-            requireContext()
-        ).apply {
-            orientation =
-            LinearLayout.VERTICAL
+            LinearLayout(
+                requireContext()
+            ).apply {
+                orientation =
+                    LinearLayout.VERTICAL
 
-            gravity =
-            Gravity.CENTER
+                gravity =
+                    Gravity.CENTER
 
-            setPadding(
-                dp(16f),
-                dp(16f),
-                dp(16f),
-                dp(16f)
-            )
-        }
+                setPadding(
+                    dp(16f),
+                    dp(16f),
+                    dp(16f),
+                    dp(16f)
+                )
+            }
 
         val title =
-        TextView(
-            requireContext()
-        ).apply {
-            text =
-            "No doses added yet"
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    "No doses added"
 
-            gravity =
-            Gravity.CENTER
+                gravity =
+                    Gravity.CENTER
 
-            includeFontPadding =
-            false
+                includeFontPadding =
+                    false
 
-            setTextColor(
-                Color.WHITE
-            )
+                setTextColor(
+                    Color.WHITE
+                )
 
-            textSize =
-            14f
+                textSize =
+                    14f
 
-            setTypeface(
-                typeface,
-                Typeface.BOLD
-            )
-        }
+                setTypeface(
+                    typeface,
+                    Typeface.BOLD
+                )
+            }
 
         val description =
-        TextView(
-            requireContext()
-        ).apply {
-            text =
-            "Tap Add to create an individual dose."
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    "Add a timer dose or save empty to clear timer mode."
 
-            gravity =
-            Gravity.CENTER
+                gravity =
+                    Gravity.CENTER
 
-            includeFontPadding =
-            false
+                includeFontPadding =
+                    false
 
-            setTextColor(
-                Color.parseColor("#9AA7BD")
-            )
+                setTextColor(
+                    Color.parseColor("#9AA7BD")
+                )
 
-            textSize =
-            12f
+                textSize =
+                    12f
 
-            setPadding(
-                0,
-                dp(6f),
-                0,
-                0
-            )
-        }
+                setPadding(
+                    0,
+                    dp(6f),
+                    0,
+                    0
+                )
+            }
 
         root.addView(
             title
@@ -393,215 +544,215 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
         dose: TimerDoseUi
     ): View {
         val card =
-        MaterialCardView(
-            requireContext()
-        ).apply {
-            radius =
-            dp(
-                value = 18f
-            ).toFloat()
-
-            cardElevation =
-            0f
-
-            isClickable =
-            true
-
-            isFocusable =
-            true
-
-            alpha =
-            if (saveInProgress) {
-                0.55f
-            } else {
-                1f
-            }
-
-            setCardBackgroundColor(
-                Color.parseColor("#0B1020")
-            )
-
-            strokeColor =
-            Color.parseColor("#24314F")
-
-            strokeWidth =
-            dp(
-                value = 1f
-            )
-
-            layoutParams =
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+            MaterialCardView(
+                requireContext()
             ).apply {
-                topMargin =
-                if (index == 0) {
-                    0
-                } else {
+                radius =
                     dp(
-                        value = 8f
-                    )
-                }
-            }
+                        value = 18f
+                    ).toFloat()
 
-            setOnClickListener {
-                if (!saveInProgress) {
-                    showDoseEditor(
-                        doseIndex = index,
-                        dose = dose
+                cardElevation =
+                    0f
+
+                isClickable =
+                    true
+
+                isFocusable =
+                    true
+
+                alpha =
+                    if (saveInProgress) {
+                        0.55f
+                    } else {
+                        1f
+                    }
+
+                setCardBackgroundColor(
+                    Color.parseColor("#0B1020")
+                )
+
+                strokeColor =
+                    Color.parseColor("#24314F")
+
+                strokeWidth =
+                    dp(
+                        value = 1f
                     )
+
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin =
+                            if (index == 0) {
+                                0
+                            } else {
+                                dp(
+                                    value = 8f
+                                )
+                            }
+                    }
+
+                setOnClickListener {
+                    if (!saveInProgress) {
+                        showDoseEditor(
+                            doseIndex = index,
+                            dose = dose
+                        )
+                    }
                 }
             }
-        }
 
         val row =
-        LinearLayout(
-            requireContext()
-        ).apply {
-            orientation =
-            LinearLayout.HORIZONTAL
-
-            gravity =
-            Gravity.CENTER_VERTICAL
-
-            setPadding(
-                dp(14f),
-                dp(12f),
-                dp(14f),
-                dp(12f)
-            )
-        }
-
-        val textContainer =
-        LinearLayout(
-            requireContext()
-        ).apply {
-            orientation =
-            LinearLayout.VERTICAL
-
-            layoutParams =
-            LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-        }
-
-        val timeText =
-        TextView(
-            requireContext()
-        ).apply {
-            text =
-            dose.startTime
-
-            includeFontPadding =
-            false
-
-            setTextColor(
-                Color.WHITE
-            )
-
-            textSize =
-            16f
-
-            setTypeface(
-                typeface,
-                Typeface.BOLD
-            )
-        }
-
-        val hintText =
-        TextView(
-            requireContext()
-        ).apply {
-            text =
-            "Tap to edit"
-
-            includeFontPadding =
-            false
-
-            setTextColor(
-                Color.parseColor("#9AA7BD")
-            )
-
-            textSize =
-            11f
-
-            setPadding(
-                0,
-                dp(4f),
-                0,
-                0
-            )
-        }
-
-        val doseBadge =
-        MaterialCardView(
-            requireContext()
-        ).apply {
-            radius =
-            dp(
-                value = 14f
-            ).toFloat()
-
-            cardElevation =
-            0f
-
-            setCardBackgroundColor(
-                Color.parseColor("#1A2238")
-            )
-
-            strokeColor =
-            Color.parseColor("#33415F")
-
-            strokeWidth =
-            dp(
-                value = 1f
-            )
-
-            layoutParams =
-            LinearLayout.LayoutParams(
-                dp(
-                    value = 92f
-                ),
-                dp(
-                    value = 38f
-                )
+            LinearLayout(
+                requireContext()
             ).apply {
-                marginStart =
-                dp(
-                    value = 12f
+                orientation =
+                    LinearLayout.HORIZONTAL
+
+                gravity =
+                    Gravity.CENTER_VERTICAL
+
+                setPadding(
+                    dp(14f),
+                    dp(12f),
+                    dp(14f),
+                    dp(12f)
                 )
             }
-        }
+
+        val textContainer =
+            LinearLayout(
+                requireContext()
+            ).apply {
+                orientation =
+                    LinearLayout.VERTICAL
+
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f
+                    )
+            }
+
+        val timeText =
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    dose.startTime
+
+                includeFontPadding =
+                    false
+
+                setTextColor(
+                    Color.WHITE
+                )
+
+                textSize =
+                    16f
+
+                setTypeface(
+                    typeface,
+                    Typeface.BOLD
+                )
+            }
+
+        val hintText =
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    "Tap to edit"
+
+                includeFontPadding =
+                    false
+
+                setTextColor(
+                    Color.parseColor("#9AA7BD")
+                )
+
+                textSize =
+                    11f
+
+                setPadding(
+                    0,
+                    dp(4f),
+                    0,
+                    0
+                )
+            }
+
+        val doseBadge =
+            MaterialCardView(
+                requireContext()
+            ).apply {
+                radius =
+                    dp(
+                        value = 14f
+                    ).toFloat()
+
+                cardElevation =
+                    0f
+
+                setCardBackgroundColor(
+                    Color.parseColor("#1A2238")
+                )
+
+                strokeColor =
+                    Color.parseColor("#33415F")
+
+                strokeWidth =
+                    dp(
+                        value = 1f
+                    )
+
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        dp(
+                            value = 92f
+                        ),
+                        dp(
+                            value = 38f
+                        )
+                    ).apply {
+                        marginStart =
+                            dp(
+                                value = 12f
+                            )
+                    }
+            }
 
         val doseText =
-        TextView(
-            requireContext()
-        ).apply {
-            text =
-            formatMl(
-                value = dose.doseMl
-            )
+            TextView(
+                requireContext()
+            ).apply {
+                text =
+                    formatMl(
+                        value = dose.doseMl
+                    )
 
-            gravity =
-            Gravity.CENTER
+                gravity =
+                    Gravity.CENTER
 
-            includeFontPadding =
-            false
+                includeFontPadding =
+                    false
 
-            setTextColor(
-                Color.parseColor("#F43F5E")
-            )
+                setTextColor(
+                    Color.parseColor("#F43F5E")
+                )
 
-            textSize =
-            13f
+                textSize =
+                    13f
 
-            setTypeface(
-                typeface,
-                Typeface.BOLD
-            )
-        }
+                setTypeface(
+                    typeface,
+                    Typeface.BOLD
+                )
+            }
 
         textContainer.addView(
             timeText
@@ -632,12 +783,12 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
 
     private fun renderSummary() {
         binding.tvTotalDailyDoseValue.text =
-        formatMl(
-            value = calculateTotalDailyDoseMl()
-        )
+            formatMl(
+                value = calculateTotalDailyDoseMl()
+            )
 
         binding.tvDoseLimitValue.text =
-        "${timerDoses.size} / $MAX_TIMER_DOSE_COUNT"
+            "${timerDoses.size} / $MAX_TIMER_DOSE_COUNT"
     }
 
     private fun handleSaveClick() {
@@ -647,16 +798,17 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
 
         hideKeyboard()
 
-        if (timerDoses.isEmpty()) {
+        if (deviceIp.isBlank()) {
             showSnackBar(
-                message = "Please add at least one dose.",
+                message = "Device IP address is missing.",
                 type = BaseActivity.SnackType.WARNING
             )
+
             return
         }
 
         saveInProgress =
-        true
+            true
 
         renderSavingState()
         renderTimerDoses()
@@ -665,67 +817,131 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
             show = true
         )
 
+        val saveDoses =
+            timerDoses.map { dose ->
+                DosingTimerDoseSaveItem(
+                    startTime = dose.startTime,
+                    doseMl = dose.doseMl
+                )
+            }
+
         viewLifecycleOwner.lifecycleScope.launch {
-            delay(
-                timeMillis = 700L
-            )
+            val result =
+                runCatching {
+                    val currentState =
+                        espDosingState ?: dosingEspRepository.fetchDosingState(
+                            deviceIp = deviceIp,
+                            channelIndex = channelIndex
+                        )
+
+                    val gpioPwm =
+                        currentState.channel.gpioPwm.takeIf { value ->
+                            value.isNotBlank() && value != "-"
+                        } ?: throw IllegalStateException(
+                            "PWM channel information is missing."
+                        )
+
+                    dosingEspRepository.saveTimerModeSchedule(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex,
+                        channelNumber = channelNumber,
+                        gpioPwm = gpioPwm,
+                        weekDays = getScheduleWeekDays(
+                            state = currentState
+                        ),
+                        doses = saveDoses,
+                        enabled = timerDoses.isNotEmpty()
+                    )
+                }
 
             setLoading(
                 show = false
             )
 
-            saveInProgress =
-            false
-
             if (_binding == null) {
                 return@launch
             }
 
+            saveInProgress =
+                false
+
             renderSavingState()
             renderTimerDoses()
 
-            findNavController().navigateUp()
+            result.onSuccess {
+                findNavController()
+                    .previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(
+                        RESULT_DOSING_SCHEDULE_UPDATED,
+                        true
+                    )
+
+                findNavController().navigateUp()
+            }.onFailure { throwable ->
+                DialogManager.showConfirmDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Save Failed",
+                    message = throwable.message
+                        ?: "Timer mode could not be saved. Please check the device connection and try again.",
+                    onConfirm = {
+                        handleSaveClick()
+                    }
+                )
+            }
         }
     }
 
     private fun renderSavingState() {
         binding.btnSave.isEnabled =
-        !saveInProgress
+            !saveInProgress
 
         binding.btnCancel.isEnabled =
-        !saveInProgress
+            !saveInProgress
 
         binding.btnAddDose.isEnabled =
-        !saveInProgress
+            !saveInProgress
 
         binding.btnSave.alpha =
-        if (saveInProgress) {
-            0.55f
-        } else {
-            1f
-        }
+            if (saveInProgress) {
+                0.55f
+            } else {
+                1f
+            }
 
         binding.btnCancel.alpha =
-        if (saveInProgress) {
-            0.55f
-        } else {
-            1f
-        }
+            if (saveInProgress) {
+                0.55f
+            } else {
+                1f
+            }
 
         binding.btnAddDose.alpha =
-        if (saveInProgress) {
-            0.55f
-        } else {
-            1f
-        }
+            if (saveInProgress) {
+                0.55f
+            } else {
+                1f
+            }
 
         binding.btnSave.text =
-        "Save"
+            when {
+                saveInProgress -> {
+                    "Saving..."
+                }
+
+                timerDoses.isEmpty() -> {
+                    "Clear Timer"
+                }
+
+                else -> {
+                    "Save Timer"
+                }
+            }
     }
 
     private fun sortDoses() {
-        timerDoses.sortBy {
-            dose ->
+        timerDoses.sortBy { dose ->
             timeToMinutes(
                 value = dose.startTime
             )
@@ -733,8 +949,7 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
     }
 
     private fun calculateTotalDailyDoseMl(): Float {
-        return timerDoses.sumOf {
-            dose ->
+        return timerDoses.sumOf { dose ->
             dose.doseMl.toDouble()
         }.toFloat()
     }
@@ -743,27 +958,27 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
         value: String
     ): Int {
         val parts =
-        value.ifBlank {
-            "00:00"
-        }.split(":")
+            value.ifBlank {
+                "00:00"
+            }.split(":")
 
         val hour =
-        parts.getOrNull(
-            index = 0
-        )?.toIntOrNull()
-        ?.coerceIn(
-            minimumValue = 0,
-            maximumValue = 23
-        ) ?: 0
+            parts.getOrNull(
+                index = 0
+            )?.toIntOrNull()
+                ?.coerceIn(
+                    minimumValue = 0,
+                    maximumValue = 23
+                ) ?: 0
 
         val minute =
-        parts.getOrNull(
-            index = 1
-        )?.toIntOrNull()
-        ?.coerceIn(
-            minimumValue = 0,
-            maximumValue = 59
-        ) ?: 0
+            parts.getOrNull(
+                index = 1
+            )?.toIntOrNull()
+                ?.coerceIn(
+                    minimumValue = 0,
+                    maximumValue = 59
+                ) ?: 0
 
         return hour * 60 + minute
     }
@@ -775,15 +990,15 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
             "${value.toInt()} ml"
         } else {
             val amount =
-            String.format(
-                Locale.US,
-                "%.3f",
-                value
-            ).trimEnd(
-                '0'
-            ).trimEnd(
-                '.'
-            )
+                String.format(
+                    Locale.US,
+                    "%.3f",
+                    value
+                ).trimEnd(
+                    '0'
+                ).trimEnd(
+                    '.'
+                )
 
             "$amount ml"
         }
@@ -791,9 +1006,9 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
 
     private fun hideKeyboard() {
         val inputMethodManager =
-        requireContext().getSystemService(
-            Context.INPUT_METHOD_SERVICE
-        ) as InputMethodManager
+            requireContext().getSystemService(
+                Context.INPUT_METHOD_SERVICE
+            ) as InputMethodManager
 
         inputMethodManager.hideSoftInputFromWindow(
             binding.root.windowToken,
@@ -826,8 +1041,8 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
     ): Int {
         return (
             value *
-            resources.displayMetrics.density
-        ).toInt()
+                resources.displayMetrics.density
+            ).toInt()
     }
 
     override fun onDestroyView() {
@@ -838,10 +1053,10 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
         }
 
         saveInProgress =
-        false
+            false
 
         _binding =
-        null
+            null
 
         super.onDestroyView()
     }
@@ -852,11 +1067,12 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
     )
 
     companion object {
-        private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_IP = "deviceIp"
-        private const val ARG_DEVICE_TITLE = "deviceTitle"
         private const val ARG_CHANNEL_INDEX = "channelIndex"
 
-        private const val MAX_TIMER_DOSE_COUNT = 24
+        private const val RESULT_DOSING_SCHEDULE_UPDATED =
+            "dosingScheduleUpdated"
+
+        private const val MAX_TIMER_DOSE_COUNT = 8
     }
 }

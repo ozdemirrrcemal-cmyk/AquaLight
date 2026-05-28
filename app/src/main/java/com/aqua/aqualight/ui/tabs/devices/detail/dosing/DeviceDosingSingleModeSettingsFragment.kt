@@ -203,16 +203,60 @@ class DeviceDosingSingleModeSettingsFragment :
         espDosingState =
             state
 
-        if (state.activeMode == DosingScheduleMode.SINGLE) {
-            binding.etSingleDoseMl.setText(
-                formatDoseMl(
-                    value = state.configuredDailyDoseMl
-                )
-            )
+        if (state.activeMode != DosingScheduleMode.SINGLE) {
+            return
+        }
 
-            applyStartTime(
-                value = state.timer.timeStart
+        val singleTimer =
+            findSingleTimer(
+                state = state
+            ) ?: return
+
+        binding.etSingleDoseMl.setText(
+            formatDoseMl(
+                value = singleTimer.configuredDailyDoseMl
             )
+        )
+
+        applyStartTime(
+            value = singleTimer.timeStart
+        )
+    }
+
+    private fun findSingleTimer(
+        state: DosingEspState
+    ) =
+        state.channelTimers.firstOrNull { timer ->
+            timer.name.contains(
+                other = "SINGLE",
+                ignoreCase = true
+            ) &&
+                timer.dosePerRunMl > 0f &&
+                timer.count > 0
+        } ?: state.channelTimers.firstOrNull { timer ->
+            timer.dosePerRunMl > 0f &&
+                timer.count > 0
+        } ?: state.timer.takeIf { timer ->
+            timer.dosePerRunMl > 0f &&
+                timer.count > 0
+        }
+
+    private fun getScheduleWeekDays(
+        state: DosingEspState
+    ): List<Boolean> {
+        val timer =
+            findSingleTimer(
+                state = state
+            ) ?: state.timer
+
+        return if (timer.weekDays.size == 7) {
+            timer.weekDays
+        } else {
+            List(
+                size = 7
+            ) {
+                true
+            }
         }
     }
 
@@ -302,18 +346,11 @@ class DeviceDosingSingleModeSettingsFragment :
                         )
 
                     val gpioPwm =
-                        currentState.timer.gpioPwm.takeIf { value ->
+                        currentState.channel.gpioPwm.takeIf { value ->
                             value.isNotBlank() && value != "-"
-                        } ?: currentState.channel.gpioPwm
-
-                    if (
-                        gpioPwm.isBlank() ||
-                        gpioPwm == "-"
-                    ) {
-                        throw IllegalStateException(
+                        } ?: throw IllegalStateException(
                             "PWM channel information is missing."
                         )
-                    }
 
                     dosingEspRepository.saveSingleSchedule(
                         deviceIp = deviceIp,
@@ -321,7 +358,9 @@ class DeviceDosingSingleModeSettingsFragment :
                         channelNumber = channelNumber,
                         gpioPwm = gpioPwm,
                         totalDailyDoseMl = doseMl,
-                        weekDays = currentState.timer.weekDays,
+                        weekDays = getScheduleWeekDays(
+                            state = currentState
+                        ),
                         startTime = startTime,
                         enabled = true
                     )
