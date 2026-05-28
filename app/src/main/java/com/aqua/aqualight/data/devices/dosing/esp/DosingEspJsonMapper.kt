@@ -50,9 +50,9 @@ object DosingEspJsonMapper {
 
         val timerData =
             JSONObject().apply {
-                repeat(
-                    times = APP_TIMER_TOTAL_COUNT
-                ) { timerIndex ->
+                getAppTimerSlotIndicesForChannel(
+                    channelIndex = channelIndex
+                ).forEach { timerIndex ->
                     put(
                         timerIndex.toString(),
                         createTimerReadRequestObject()
@@ -74,11 +74,6 @@ object DosingEspJsonMapper {
             put(
                 KEY_L_TIMER,
                 JSONObject().apply {
-                    put(
-                        "Count",
-                        0
-                    )
-
                     put(
                         KEY_DATA,
                         timerData
@@ -214,8 +209,7 @@ object DosingEspJsonMapper {
             )
 
         return createTimerSlotsPayload(
-            timerSlots = timerSlots,
-            timerCount = APP_TIMER_TOTAL_COUNT
+            timerSlots = timerSlots
         )
     }
 
@@ -264,8 +258,7 @@ object DosingEspJsonMapper {
             )
 
         return createTimerSlotsPayload(
-            timerSlots = timerSlots,
-            timerCount = APP_TIMER_TOTAL_COUNT
+            timerSlots = timerSlots
         )
     }
 
@@ -318,8 +311,7 @@ object DosingEspJsonMapper {
             )
 
         return createTimerSlotsPayload(
-            timerSlots = timerSlots,
-            timerCount = APP_TIMER_TOTAL_COUNT
+            timerSlots = timerSlots
         )
     }
 
@@ -388,8 +380,7 @@ object DosingEspJsonMapper {
         }
 
         return createTimerSlotsPayload(
-            timerSlots = timerSlots,
-            timerCount = APP_TIMER_TOTAL_COUNT
+            timerSlots = timerSlots
         )
     }
 
@@ -439,8 +430,7 @@ object DosingEspJsonMapper {
         }
 
         return createTimerSlotsPayload(
-            timerSlots = timerSlots,
-            timerCount = APP_TIMER_TOTAL_COUNT
+            timerSlots = timerSlots
         )
     }
 
@@ -474,18 +464,19 @@ object DosingEspJsonMapper {
         val requiredCount =
             maxOf(
                 timerCount ?: 0,
-                highestSlotCount,
-                APP_TIMER_TOTAL_COUNT
+                highestSlotCount
             )
 
         return JSONObject().apply {
             put(
                 KEY_L_TIMER,
                 JSONObject().apply {
-                    put(
-                        "Count",
-                        requiredCount
-                    )
+                    if (requiredCount > 0) {
+                        put(
+                            "Count",
+                            requiredCount
+                        )
+                    }
 
                     put(
                         KEY_DATA,
@@ -518,11 +509,6 @@ object DosingEspJsonMapper {
             put(
                 KEY_L_TIMER,
                 JSONObject().apply {
-                    put(
-                        "Count",
-                        APP_TIMER_TOTAL_COUNT
-                    )
-
                     put(
                         KEY_DATA,
                         timerData
@@ -582,11 +568,6 @@ object DosingEspJsonMapper {
             put(
                 KEY_L_TIMER,
                 JSONObject().apply {
-                    put(
-                        "Count",
-                        APP_TIMER_TOTAL_COUNT
-                    )
-
                     put(
                         KEY_DATA,
                         timerData
@@ -648,11 +629,6 @@ object DosingEspJsonMapper {
             put(
                 KEY_L_TIMER,
                 JSONObject().apply {
-                    put(
-                        "Count",
-                        APP_TIMER_TOTAL_COUNT
-                    )
-
                     put(
                         KEY_DATA,
                         timerData
