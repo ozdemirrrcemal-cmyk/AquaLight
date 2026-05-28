@@ -1073,6 +1073,6 @@ class DeviceDosingTimerModeSettingsFragment :
         private const val RESULT_DOSING_SCHEDULE_UPDATED =
             "dosingScheduleUpdated"
 
-        private const val MAX_TIMER_DOSE_COUNT = 8
+        private const val MAX_TIMER_DOSE_COUNT = 4
     }
 }

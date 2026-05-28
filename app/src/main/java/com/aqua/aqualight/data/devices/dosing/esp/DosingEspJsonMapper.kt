@@ -14,7 +14,7 @@ object DosingEspJsonMapper {
     private const val KEY_MAIN = "Main"
 
     private const val APP_TIMER_BASE_INDEX = 0
-    private const val APP_TIMER_SLOTS_PER_CHANNEL = 8
+    private const val APP_TIMER_SLOTS_PER_CHANNEL = 4
     private const val APP_TIMER_CHANNEL_COUNT = 4
 
     private const val APP_TIMER_TOTAL_COUNT =
@@ -181,7 +181,9 @@ object DosingEspJsonMapper {
     ): JSONObject {
         val timerSlots =
             createCleanChannelSlotMap(
-                channelIndex = channelIndex
+                channelIndex = channelIndex,
+                gpioPwm = gpioPwm,
+                weekDays = weekDays
             ).toMutableMap()
 
         timerSlots[
@@ -232,7 +234,9 @@ object DosingEspJsonMapper {
 
         val timerSlots =
             createCleanChannelSlotMap(
-                channelIndex = channelIndex
+                channelIndex = channelIndex,
+                gpioPwm = gpioPwm,
+                weekDays = weekDays
             ).toMutableMap()
 
         timerSlots[
@@ -277,7 +281,9 @@ object DosingEspJsonMapper {
     ): JSONObject {
         val timerSlots =
             createCleanChannelSlotMap(
-                channelIndex = channelIndex
+                channelIndex = channelIndex,
+                gpioPwm = gpioPwm,
+                weekDays = weekDays
             ).toMutableMap()
 
         timerSlots[
@@ -345,7 +351,9 @@ object DosingEspJsonMapper {
 
         val timerSlots =
             createCleanChannelSlotMap(
-                channelIndex = channelIndex
+                channelIndex = channelIndex,
+                gpioPwm = gpioPwm,
+                weekDays = weekDays
             ).toMutableMap()
 
         val channelSlots =
@@ -399,7 +407,9 @@ object DosingEspJsonMapper {
 
         val timerSlots =
             createCleanChannelSlotMap(
-                channelIndex = channelIndex
+                channelIndex = channelIndex,
+                gpioPwm = gpioPwm,
+                weekDays = weekDays
             ).toMutableMap()
 
         val channelSlots =
@@ -454,30 +464,10 @@ object DosingEspJsonMapper {
                 )
             }
 
-        val highestSlotCount =
-            timerSlots.keys
-                .maxOrNull()
-                ?.let { highestIndex ->
-                    highestIndex + 1
-                } ?: 0
-
-        val requiredCount =
-            maxOf(
-                timerCount ?: 0,
-                highestSlotCount
-            )
-
         return JSONObject().apply {
             put(
                 KEY_L_TIMER,
                 JSONObject().apply {
-                    if (requiredCount > 0) {
-                        put(
-                            "Count",
-                            requiredCount
-                        )
-                    }
-
                     put(
                         KEY_DATA,
                         timerData
@@ -488,7 +478,13 @@ object DosingEspJsonMapper {
     }
 
     fun createDisableTimerSlotsPayload(
-        timerIndices: List<Int>
+        timerIndices: List<Int>,
+        gpioPwm: String = "-",
+        weekDays: List<Boolean> = List(
+            size = 7
+        ) {
+            false
+        }
     ): JSONObject {
         val timerData =
             JSONObject()
@@ -501,7 +497,10 @@ object DosingEspJsonMapper {
                     timerIndex.coerceAtLeast(
                         minimumValue = 0
                     ).toString(),
-                    createDisabledTimerObject()
+                    createDisabledTimerObject(
+                        gpioPwm = gpioPwm,
+                        weekDays = weekDays
+                    )
                 )
             }
 
@@ -776,12 +775,17 @@ object DosingEspJsonMapper {
     }
 
     private fun createCleanChannelSlotMap(
-        channelIndex: Int
+        channelIndex: Int,
+        gpioPwm: String,
+        weekDays: List<Boolean>
     ): Map<Int, DosingTimerSavePayload> {
         return getAppTimerSlotIndicesForChannel(
             channelIndex = channelIndex
         ).associateWith {
-            createDisabledTimerPayload()
+            createDisabledTimerPayload(
+                gpioPwm = gpioPwm,
+                weekDays = weekDays
+            )
         }
     }
 
@@ -863,16 +867,29 @@ object DosingEspJsonMapper {
         }
     }
 
-    private fun createDisabledTimerPayload(): DosingTimerSavePayload {
+    private fun createDisabledTimerPayload(
+        gpioPwm: String = "-",
+        weekDays: List<Boolean> = List(
+            size = 7
+        ) {
+            false
+        }
+    ): DosingTimerSavePayload {
         return DosingTimerSavePayload(
             enabled = false,
             name = "-",
-            gpioPwm = "-",
+            gpioPwm = gpioPwm.ifBlank {
+                "-"
+            },
             dosePerRunMl = 0f,
-            weekDays = List(
-                size = 7
-            ) {
-                false
+            weekDays = if (weekDays.size == 7) {
+                weekDays
+            } else {
+                List(
+                    size = 7
+                ) {
+                    false
+                }
             },
             timeStart = "00:00",
             intervalOn = "00:00",
@@ -881,9 +898,19 @@ object DosingEspJsonMapper {
         )
     }
 
-    private fun createDisabledTimerObject(): JSONObject {
+    private fun createDisabledTimerObject(
+        gpioPwm: String = "-",
+        weekDays: List<Boolean> = List(
+            size = 7
+        ) {
+            false
+        }
+    ): JSONObject {
         return createTimerObject(
-            timer = createDisabledTimerPayload()
+            timer = createDisabledTimerPayload(
+                gpioPwm = gpioPwm,
+                weekDays = weekDays
+            )
         )
     }
 
