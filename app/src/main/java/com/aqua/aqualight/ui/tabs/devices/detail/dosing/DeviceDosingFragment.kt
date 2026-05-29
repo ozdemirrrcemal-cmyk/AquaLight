@@ -39,10 +39,11 @@ class DeviceDosingFragment :
     private val latestEspStateByChannel: MutableMap<Int, DosingEspState> =
         mutableMapOf()
 
-    private var navigationInProgress: Boolean = false
-
     private val runningPumpIndexes: MutableSet<Int> =
         mutableSetOf()
+
+    private var navigationInProgress: Boolean =
+        false
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
@@ -120,8 +121,11 @@ class DeviceDosingFragment :
         cardBinding.tvChannelName.text =
             channelName
 
+        cardBinding.cardChannelState.visibility =
+            View.VISIBLE
+
         cardBinding.tvChannelState.text =
-            "Set up"
+            "Not Active"
 
         cardBinding.tvChannelHint.text =
             "Tap to configure this channel"
@@ -397,33 +401,24 @@ class DeviceDosingFragment :
         val hasVisibleDetails =
             hasSchedule || hasReservoir
 
+        val isScheduleActive =
+            hasSchedule &&
+                espState?.scheduleEnabled == true
+
         cardBinding.tvChannelNumber.text =
             channelNumber.toString()
 
         cardBinding.tvChannelName.text =
             channelName
 
+        cardBinding.cardChannelState.visibility =
+            View.VISIBLE
+
         cardBinding.tvChannelState.text =
-            when {
-                espState == null -> {
-                    "Set up"
-                }
-
-                !espState.channel.isCalibrated -> {
-                    "Calibrate"
-                }
-
-                dailyDoseMl > 0f && espState.scheduleEnabled -> {
-                    "Active"
-                }
-
-                dailyDoseMl > 0f && !espState.scheduleEnabled -> {
-                    "Paused"
-                }
-
-                else -> {
-                    "Set up"
-                }
+            if (isScheduleActive) {
+                "Active"
+            } else {
+                "Not Active"
             }
 
         cardBinding.tvChannelDose.text =
@@ -489,14 +484,10 @@ class DeviceDosingFragment :
             espState != null &&
                 dailyDoseMl > 0f
 
-        val showReservoir =
-            settings?.reservoirTrackingEnabled == true &&
-                settings.hasReservoirCapacity
-
         cardBinding.channelProgressSection.visibility =
             if (
                 showTimeline ||
-                showReservoir
+                hasReservoir
             ) {
                 View.VISIBLE
             } else {
@@ -1397,7 +1388,6 @@ class DeviceDosingFragment :
 
         private const val RESERVOIR_PROGRESS_MAX = 100
         private const val DOSING_STATE_REFRESH_INTERVAL_MS = 4000L
-
         private const val PUMP_RUNNING_REFRESH_INTERVAL_MS = 1000L
         private const val PUMP_RUNNING_VNOW_THRESHOLD = 0.01f
 
