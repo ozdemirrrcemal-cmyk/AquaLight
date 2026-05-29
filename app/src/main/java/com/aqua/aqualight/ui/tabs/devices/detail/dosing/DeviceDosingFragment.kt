@@ -1399,9 +1399,41 @@ Fragment(R.layout.fragment_device_dosing) {
         true
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val calibrationState =
+            val screenState =
+            latestEspStateByChannel[channelIndex]
+
+            val isCalibratedFromScreenState =
+            screenState?.channel?.isCalibrated == true
+
+            if (!isAdded || _binding == null) {
+                navigationInProgress =
+                false
+
+                return@launch
+            }
+
+            if (screenState != null) {
+                navigationInProgress =
+                false
+
+                if (isCalibratedFromScreenState) {
+                    openSelectedPumpSettings(
+                        channelIndex = channelIndex,
+                        openCalibrationFirst = false
+                    )
+                } else {
+                    openSelectedPumpSettings(
+                        channelIndex = channelIndex,
+                        openCalibrationFirst = true
+                    )
+                }
+
+                return@launch
+            }
+
+            val refreshedState =
             runCatching {
-                EspDosingCalibrationStateClient.readChannelCalibrationState(
+                dosingEspRepository.fetchDosingState(
                     deviceIp = deviceIp,
                     channelIndex = channelIndex
                 )
@@ -1414,29 +1446,34 @@ Fragment(R.layout.fragment_device_dosing) {
                 return@launch
             }
 
-            when {
-                calibrationState == null -> {
-                    showSnackBar(
-                        message = "Calibration state could not be read. Opening settings.",
-                        type = BaseActivity.SnackType.WARNING
-                    )
+            if (refreshedState != null) {
+                latestEspStateByChannel[channelIndex] =
+                refreshedState
 
+                if (refreshedState.channel.isCalibrated) {
                     openSelectedPumpSettings(
-                        channelIndex = channelIndex
+                        channelIndex = channelIndex,
+                        openCalibrationFirst = false
                     )
-                }
-
-                calibrationState.calibratedOnDevice -> {
-                    openSelectedPumpSettings(
-                        channelIndex = channelIndex
-                    )
-                } else -> {
+                } else {
                     openSelectedPumpSettings(
                         channelIndex = channelIndex,
                         openCalibrationFirst = true
                     )
                 }
+
+                return@launch
             }
+
+            showSnackBar(
+                message = "Device calibration state could not be read.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            openSelectedPumpSettings(
+                channelIndex = channelIndex,
+                openCalibrationFirst = true
+            )
         }
     }
 
