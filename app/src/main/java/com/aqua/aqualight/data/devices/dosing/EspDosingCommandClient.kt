@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.dosing
 
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspJsonMapper
 import kotlin.math.roundToLong
 import org.json.JSONObject
 
@@ -72,6 +73,11 @@ object EspDosingCommandClient {
                 "Channel ${safeChannelIndex + 1}"
             }
 
+        val fixedGpioPwm =
+            DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+                channelIndex = safeChannelIndex
+            )
+
         val saveCalibrationJson =
             """
             {
@@ -79,6 +85,7 @@ object EspDosingCommandClient {
                 "Data": {
                   "$safeChannelIndex": {
                     "Name": ${JSONObject.quote(safeLiquidName)},
+                    "GPIO_PWM": ${JSONObject.quote(fixedGpioPwm)},
                     "YE": $safeYe,
                     "Dimension": "ml"
                   }
@@ -112,12 +119,18 @@ object EspDosingCommandClient {
                 maximumValue = 3
             )
 
+        val fixedGpioPwm =
+            DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+                channelIndex = safeChannelIndex
+            )
+
         val resetJson =
             """
             {
               "LPWMChanelTimer": {
                 "Data": {
                   "$safeChannelIndex": {
+                    "GPIO_PWM": ${JSONObject.quote(fixedGpioPwm)},
                     "YE": 0,
                     "Dimension": "ml"
                   }
@@ -227,7 +240,7 @@ object EspDosingCommandClient {
             """
             {
               "Main": {
-                "SaveTimer": 0
+                "SaveTimer": 1
               }
             }
             """.trimIndent()

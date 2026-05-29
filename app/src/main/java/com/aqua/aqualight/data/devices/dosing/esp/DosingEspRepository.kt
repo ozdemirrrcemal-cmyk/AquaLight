@@ -157,7 +157,6 @@ class DosingEspRepository(
         deviceIp: String,
         channelIndex: Int,
         channelNumber: Int,
-        gpioPwm: String,
         totalDailyDoseMl: Float,
         weekDays: List<Boolean>,
         startTime: String,
@@ -169,11 +168,16 @@ class DosingEspRepository(
             channelIndex = channelIndex
         )
 
+        val fixedGpioPwm =
+        DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+            channelIndex = channelIndex
+        )
+
         val payload =
         DosingEspJsonMapper.createMergedSingleSchedulePayload(
             existingTimers = currentState.timers,
             channelNumber = channelNumber,
-            gpioPwm = gpioPwm,
+            gpioPwm = fixedGpioPwm,
             totalDailyDoseMl = totalDailyDoseMl,
             weekDays = weekDays,
             startTime = startTime,
@@ -206,11 +210,16 @@ class DosingEspRepository(
             channelIndex = channelIndex
         )
 
+        val fixedGpioPwm =
+        DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+            channelIndex = channelIndex
+        )
+
         val payload =
         DosingEspJsonMapper.createMergedHourly24SchedulePayload(
             existingTimers = currentState.timers,
             channelNumber = channelNumber,
-            gpioPwm = gpioPwm,
+            gpioPwm = fixedGpioPwm,
             totalDailyDoseMl = totalDailyDoseMl,
             weekDays = weekDays,
             startTime = startTime,
@@ -243,11 +252,16 @@ class DosingEspRepository(
             channelIndex = channelIndex
         )
 
+        val fixedGpioPwm =
+        DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+            channelIndex = channelIndex
+        )
+
         val payload =
         DosingEspJsonMapper.createMergedCustomPeriodsSchedulePayload(
             existingTimers = currentState.timers,
             channelNumber = channelNumber,
-            gpioPwm = gpioPwm,
+            gpioPwm = fixedGpioPwm,
             totalDailyDoseMl = totalDailyDoseMl,
             weekDays = weekDays,
             periods = periods,
@@ -279,11 +293,16 @@ class DosingEspRepository(
             channelIndex = channelIndex
         )
 
+        val fixedGpioPwm =
+        DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+            channelIndex = channelIndex
+        )
+
         val payload =
         DosingEspJsonMapper.createMergedTimerModeSchedulePayload(
             existingTimers = currentState.timers,
             channelNumber = channelNumber,
-            gpioPwm = gpioPwm,
+            gpioPwm = fixedGpioPwm,
             weekDays = weekDays,
             doses = doses,
             enabled = enabled
@@ -319,12 +338,17 @@ class DosingEspRepository(
             channelIndex = channelIndex
         )
 
+        val fixedGpioPwm =
+        DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+            channelIndex = channelIndex
+        )
+
         val payload =
         DosingEspJsonMapper.createMergedGenericTimerSchedulePayload(
             existingTimers = currentState.timers,
             channelNumber = channelNumber,
             mode = mode,
-            gpioPwm = gpioPwm,
+            gpioPwm = fixedGpioPwm,
             dosePerRunMl = dosePerRunMl,
             weekDays = weekDays,
             timeStart = timeStart,
@@ -358,6 +382,7 @@ class DosingEspRepository(
 
         val targetTimerIndices =
         findExistingScheduleTimerIndicesForChannel(
+            channelIndex = channelIndex,
             state = currentState
         )
 
@@ -439,12 +464,9 @@ class DosingEspRepository(
             channelIndex = channelIndex
         )
 
-        val gpioPwm =
-        currentState.channel.gpioPwm.trim().takeIf {
-            value ->
-            value.isNotBlank() && value != "-"
-        } ?: throw IllegalStateException(
-            "PWM channel information is missing."
+        val fixedGpioPwm =
+        DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+            channelIndex = channelIndex
         )
 
         val payload =
@@ -452,7 +474,7 @@ class DosingEspRepository(
             channelIndex = channelIndex,
             channelNumber = channelNumber,
             existingTimers = currentState.timers,
-            gpioPwm = gpioPwm
+            gpioPwm = fixedGpioPwm
         )
 
         api.postJson(
@@ -471,29 +493,30 @@ class DosingEspRepository(
     }
 
     private fun findExistingScheduleTimerIndicesForChannel(
+        channelIndex: Int,
         state: DosingEspState
     ): List<Int> {
-        val channelGpioPwm =
-        state.channel.gpioPwm.trim()
+        val fixedGpioPwm =
+        DosingEspJsonMapper.fixedGpioPwmForChannelIndex(
+            channelIndex = channelIndex
+        )
 
-        if (
-            channelGpioPwm.isBlank() ||
-            channelGpioPwm == "-"
-        ) {
-            return emptyList()
-        }
+        val fixedSlotIndices =
+        DosingEspJsonMapper.getAppTimerSlotIndicesForChannel(
+            channelIndex = channelIndex
+        )
 
         return state.timers
         .filter {
             timer ->
+            timer.index in fixedSlotIndices &&
             timer.belongsToGpioPwm(
-                targetGpioPwm = channelGpioPwm
+                targetGpioPwm = fixedGpioPwm
             ) &&
             timer.name.isNotBlank() &&
             timer.name != "-" &&
             timer.dosePerRunMl > 0f &&
-            timer.count > 0 &&
-            timer.index >= 0
+            timer.count > 0
         }
         .map {
             timer ->

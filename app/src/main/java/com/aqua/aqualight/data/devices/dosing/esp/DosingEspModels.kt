@@ -7,6 +7,73 @@ enum class DosingScheduleMode {
     TIMER
 }
 
+object DosingGpioPwmMapping {
+
+    private const val GPIO_PWM_CHANNEL_1 = "G25|0|16"
+    private const val GPIO_PWM_CHANNEL_2 = "G26|1|16"
+    private const val GPIO_PWM_CHANNEL_3 = "G27|2|16"
+    private const val GPIO_PWM_CHANNEL_4 = "G33|3|16"
+
+    fun fixedGpioPwmForChannel(
+        channelIndex: Int
+    ): String {
+        return when (
+            channelIndex.coerceIn(
+                minimumValue = 0,
+                maximumValue = 3
+            )
+        ) {
+            0 -> GPIO_PWM_CHANNEL_1
+            1 -> GPIO_PWM_CHANNEL_2
+            2 -> GPIO_PWM_CHANNEL_3
+            else -> GPIO_PWM_CHANNEL_4
+        }
+    }
+
+    fun fixedGpioPwmForChannelNumber(
+        channelNumber: Int
+    ): String {
+        return fixedGpioPwmForChannel(
+            channelIndex = channelNumber.coerceIn(
+                minimumValue = 1,
+                maximumValue = 4
+            ) - 1
+        )
+    }
+
+    fun isKnownGpioPwm(
+        value: String
+    ): Boolean {
+        return when (value.trim()) {
+            GPIO_PWM_CHANNEL_1,
+            GPIO_PWM_CHANNEL_2,
+            GPIO_PWM_CHANNEL_3,
+            GPIO_PWM_CHANNEL_4 -> true
+
+            else -> false
+        }
+    }
+
+    fun areSameGpioPwm(
+        first: String,
+        second: String
+    ): Boolean {
+        val cleanFirst =
+            first.trim()
+
+        val cleanSecond =
+            second.trim()
+
+        return isKnownGpioPwm(
+            value = cleanFirst
+        ) &&
+            isKnownGpioPwm(
+                value = cleanSecond
+            ) &&
+            cleanFirst == cleanSecond
+    }
+}
+
 data class DosingEspChannelState(
     val gpioPwm: String,
     val name: String,
@@ -51,8 +118,9 @@ data class DosingEspTimerState(
 
     val hasValidGpioPwm: Boolean
         get() =
-            gpioPwm.isNotBlank() &&
-                gpioPwm != "-"
+            DosingGpioPwmMapping.isKnownGpioPwm(
+                value = gpioPwm
+            )
 
     val isAquaLightTimer: Boolean
         get() =
@@ -64,15 +132,10 @@ data class DosingEspTimerState(
     fun belongsToGpioPwm(
         targetGpioPwm: String
     ): Boolean {
-        val cleanTarget =
-            targetGpioPwm.trim()
-
-        val cleanTimerGpio =
-            gpioPwm.trim()
-
-        return cleanTarget.isNotBlank() &&
-            cleanTarget != "-" &&
-            cleanTimerGpio == cleanTarget
+        return DosingGpioPwmMapping.areSameGpioPwm(
+            first = gpioPwm,
+            second = targetGpioPwm
+        )
     }
 }
 
@@ -111,8 +174,9 @@ data class DosingEspState(
                 channel.gpioPwm.trim()
 
             if (
-                channelGpioPwm.isBlank() ||
-                channelGpioPwm == "-"
+                !DosingGpioPwmMapping.isKnownGpioPwm(
+                    value = channelGpioPwm
+                )
             ) {
                 return emptyList()
             }
