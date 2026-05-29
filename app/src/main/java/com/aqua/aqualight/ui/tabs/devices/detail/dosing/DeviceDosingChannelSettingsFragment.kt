@@ -25,6 +25,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 import android.util.Log
+import kotlin.math.roundToInt
 
 class DeviceDosingChannelSettingsFragment :
 Fragment(R.layout.fragment_device_dosing_channel_settings) {
@@ -299,16 +300,12 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                     throwable
                 )
 
-                DialogManager.showConfirmDialog(
-                    context = requireContext(),
-                    type = DialogType.ERROR,
-                    title = "Device Data Failed",
-                    message = throwable.message
-                    ?: "Dosing data could not be loaded from the device. Please check the device connection and try again.",
-                    onConfirm = {
-                        fetchDosingStateFromEsp()
-                    }
+                showSnackBar(
+                    message = "Device data could not be refreshed.",
+                    type = BaseActivity.SnackType.WARNING
                 )
+
+                renderTopBarSaveState()
             }
         }
     }
@@ -427,11 +424,47 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     private fun renderDailyDoseValue(
         value: Float?
     ) {
-        binding.tvDailyDoseValue.text =
+        val displayValue =
         value?.let {
+            dose ->
+            normalizeDailyDoseForDisplay(
+                value = dose,
+                mode = espDosingState?.activeMode
+            )
+        }
+
+        binding.tvDailyDoseValue.text =
+        displayValue?.let {
             dose ->
             "${formatDoseMl(dose)} ml"
         } ?: "0 ml"
+    }
+
+    private fun normalizeDailyDoseForDisplay(
+        value: Float,
+        mode: DosingScheduleMode?
+    ): Float {
+        val safeValue =
+        value.coerceAtLeast(
+            minimumValue = 0f
+        )
+
+        if (mode != DosingScheduleMode.HOURLY_24) {
+            return safeValue
+        }
+
+        val nearestWhole =
+        safeValue.roundToInt().toFloat()
+
+        return if (
+            abs(
+                safeValue - nearestWhole
+            ) <= HOURLY24_DAILY_DOSE_ROUNDING_TOLERANCE_ML
+        ) {
+            nearestWhole
+        } else {
+            safeValue
+        }
     }
 
     private fun formatDoseMl(
@@ -1015,10 +1048,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         binding.btnResetChannel.setOnClickListener {
-            showSnackBar(
-                message = "Reset confirmation will open for Channel $channelNumber.",
-                type = BaseActivity.SnackType.NORMAL
-            )
+            showResetChannelConfirmation()
         }
 
         bindWeekDayClicks()
@@ -1212,6 +1242,116 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 ARG_CHANNEL_INDEX,
                 channelIndex
             )
+        }
+    }
+
+    private fun showResetChannelConfirmation() {
+        DialogManager.showConfirmDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = "Reset Channel",
+            message = "This will reset Channel $channelNumber dosing schedule, reservoir settings, calibration value and channel name. This action cannot be undone.",
+            confirmTextResId = R.string.confirm,
+            cancelTextResId = R.string.cancel,
+            onConfirm = {
+                resetChannel()
+            }
+        )
+    }
+
+    private fun resetChannel() {
+        if (deviceIp.isBlank()) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
+        val baseActivity =
+        activity as? BaseActivity
+
+        saveSettingsInProgress =
+        true
+
+        renderTopBarSaveState()
+
+        baseActivity?.showLoading(
+            true
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result =
+            runCatching {
+                val resetState =
+                dosingEspRepository.resetDosingChannel(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    channelNumber = channelNumber
+                )
+
+                channelSettingsDataStoreManager.saveLocalChannelSettings(
+                    deviceId = deviceId,
+                    channelIndex = channelIndex,
+                    reservoirTrackingEnabled = false,
+                    containerVolumeMl = null,
+                    missedDoseCompensationEnabled = true
+                )
+
+                resetState
+            }
+
+            baseActivity?.showLoading(
+                false
+            )
+
+            if (_binding == null) {
+                return@launch
+            }
+
+            saveSettingsInProgress =
+            false
+
+            result.onSuccess {
+                state ->
+                applyResetState(
+                    state = state
+                )
+
+                findNavController()
+                .previousBackStackEntry
+                ?.savedStateHandle
+                ?.set(
+                    RESULT_DOSING_SCHEDULE_UPDATED,
+                    true
+                )
+
+                showSnackBar(
+                    message = "Channel $channelNumber reset.",
+                    type = BaseActivity.SnackType.NORMAL
+                )
+            }.onFailure {
+                throwable ->
+                Log.e(
+                    "DOSING_RESET",
+                    "Channel reset failed. deviceIp=$deviceIp channelIndex=$channelIndex",
+                    throwable
+                )
+
+                DialogManager.showConfirmDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Reset Failed",
+                    message = throwable.message
+                    ?: "Channel could not be reset. Please check the device connection and try again.",
+                    onConfirm = {
+                        resetChannel()
+                    }
+                )
+            }
+
+            renderTopBarSaveState()
         }
     }
 
@@ -1453,6 +1593,111 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             "Channel $channelNumber"
         }
     }
+    
+    private fun applyResetState(
+    state: DosingEspState
+) {
+    espDosingState =
+        state
+
+    selectedMode =
+        DosingMode.SINGLE
+
+    scheduleEnabled =
+        false
+
+    savedScheduleEnabled =
+        false
+
+    dailyDoseMl =
+        0f
+
+    savedDailyDoseMl =
+        0f
+
+    selectedWeekDays =
+        List(
+            size = 7
+        ) {
+            true
+        }
+
+    savedWeekDays =
+        selectedWeekDays
+
+    reservoirTrackingEnabled =
+        false
+
+    savedReservoirTrackingEnabled =
+        false
+
+    missedDoseCompensationEnabled =
+        true
+
+    savedMissedDoseCompensationEnabled =
+        true
+
+    containerVolumeMl =
+        null
+
+    savedContainerVolumeMl =
+        null
+
+    renderChannelTitle(
+        name = "Channel $channelNumber"
+    )
+
+    suppressScheduleCallback =
+        true
+
+    binding.switchScheduleEnabled.isChecked =
+        false
+
+    suppressScheduleCallback =
+        false
+
+    suppressReservoirTrackingCallback =
+        true
+
+    binding.switchReservoirTracking.isChecked =
+        false
+
+    suppressReservoirTrackingCallback =
+        false
+
+    suppressMissedDoseCompensationCallback =
+        true
+
+    binding.switchMissedDoseCompensation.isChecked =
+        true
+
+    suppressMissedDoseCompensationCallback =
+        false
+
+    renderDailyDoseValue(
+        value = 0f
+    )
+
+    renderContainerVolumeValue(
+        value = null
+    )
+
+    renderWeekDays(
+        weekDays = selectedWeekDays
+    )
+
+    selectDosingMode(
+        mode = DosingMode.SINGLE
+    )
+
+    renderReservoirTrackingState(
+        enabled = false
+    )
+
+    updateScheduleEnabledState(
+        enabled = false
+    )
+}
 
     private fun showSnackBar(
         message: String,
@@ -1486,6 +1731,8 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
         private const val RESULT_DOSING_SCHEDULE_UPDATED =
         "dosingScheduleUpdated"
+
+        private const val HOURLY24_DAILY_DOSE_ROUNDING_TOLERANCE_ML = 0.12f
 
         fun newInstance(
             deviceId: Long,

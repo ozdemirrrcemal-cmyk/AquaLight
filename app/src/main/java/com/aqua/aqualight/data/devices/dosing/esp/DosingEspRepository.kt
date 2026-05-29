@@ -428,6 +428,48 @@ class DosingEspRepository(
         )
     }
 
+    suspend fun resetDosingChannel(
+        deviceIp: String,
+        channelIndex: Int,
+        channelNumber: Int
+    ): DosingEspState {
+        val currentState =
+        fetchDosingState(
+            deviceIp = deviceIp,
+            channelIndex = channelIndex
+        )
+
+        val gpioPwm =
+        currentState.channel.gpioPwm.trim().takeIf {
+            value ->
+            value.isNotBlank() && value != "-"
+        } ?: throw IllegalStateException(
+            "PWM channel information is missing."
+        )
+
+        val payload =
+        DosingEspJsonMapper.createResetDosingChannelPayload(
+            channelIndex = channelIndex,
+            channelNumber = channelNumber,
+            existingTimers = currentState.timers,
+            gpioPwm = gpioPwm
+        )
+
+        api.postJson(
+            deviceIp = deviceIp,
+            payload = payload
+        )
+
+        saveTimerToDevice(
+            deviceIp = deviceIp
+        )
+
+        return fetchDosingState(
+            deviceIp = deviceIp,
+            channelIndex = channelIndex
+        )
+    }
+
     private fun findExistingScheduleTimerIndicesForChannel(
         state: DosingEspState
     ): List<Int> {

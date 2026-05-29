@@ -423,9 +423,20 @@ Fragment(R.layout.fragment_device_dosing) {
             )
         } ?: "Not set up"
 
+        val hasSchedule =
+        dailyDoseMl > 0f
+
+        val hasReservoir =
+        settings?.reservoirTrackingEnabled == true &&
+        settings.hasReservoirCapacity
+
+        val hasCustomName =
+        channelName != "Channel $channelNumber"
+
         val hasAnyVisibleData =
-        espState != null ||
-        settings?.hasReservoirCapacity == true
+        hasSchedule ||
+        hasReservoir ||
+        hasCustomName
 
         cardBinding.tvChannelHint.visibility =
         if (hasAnyVisibleData) {

@@ -1106,54 +1106,46 @@ class DeviceDosingCustomPeriodsSettingsFragment :
     }
 
     private fun renderSavingState() {
-        binding.btnSave.isEnabled =
-            !saveInProgress
+    binding.btnSave.isEnabled =
+        !saveInProgress
 
-        binding.btnCancel.isEnabled =
-            !saveInProgress
+    binding.btnCancel.isEnabled =
+        !saveInProgress
 
-        binding.btnAddPeriod.isEnabled =
-            !saveInProgress
+    binding.btnAddPeriod.isEnabled =
+        !saveInProgress
 
-        binding.etDailyDoseMl.isEnabled =
-            !saveInProgress
+    binding.etDailyDoseMl.isEnabled =
+        !saveInProgress
 
-        binding.btnSave.alpha =
-            if (saveInProgress) {
-                0.55f
-            } else {
-                1f
-            }
+    binding.btnSave.alpha =
+        if (saveInProgress) {
+            0.55f
+        } else {
+            1f
+        }
 
-        binding.btnCancel.alpha =
-            if (saveInProgress) {
-                0.55f
-            } else {
-                1f
-            }
+    binding.btnCancel.alpha =
+        if (saveInProgress) {
+            0.55f
+        } else {
+            1f
+        }
 
-        binding.btnAddPeriod.alpha =
-            if (saveInProgress) {
-                0.55f
-            } else {
-                1f
-            }
+    binding.btnAddPeriod.alpha =
+        if (saveInProgress) {
+            0.55f
+        } else {
+            1f
+        }
 
-        binding.btnSave.text =
-            when {
-                saveInProgress -> {
-                    "Saving..."
-                }
-
-                periods.isEmpty() -> {
-                    "Clear Custom Periods"
-                }
-
-                else -> {
-                    "Save Custom Periods"
-                }
-            }
-    }
+    binding.btnSave.text =
+        if (saveInProgress) {
+            "Saving..."
+        } else {
+            "Save Periods"
+        }
+}
 
     private fun calculatePerDoseMl(): Float {
         val dailyDoseMl =
@@ -1384,7 +1376,7 @@ class DeviceDosingCustomPeriodsSettingsFragment :
         private const val RESULT_DOSING_SCHEDULE_UPDATED =
             "dosingScheduleUpdated"
 
-        private const val MAX_PERIOD_COUNT = 8
+        private const val MAX_PERIOD_COUNT = 4
         private const val MAX_TOTAL_DOSE_COUNT = 24
     }
 }

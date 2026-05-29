@@ -602,6 +602,115 @@ object DosingEspJsonMapper {
         }
     }
 
+    fun createResetDosingChannelPayload(
+        channelIndex: Int,
+        channelNumber: Int,
+        existingTimers: List<DosingEspTimerState>,
+        gpioPwm: String
+    ): JSONObject {
+        val safeChannelIndex =
+        channelIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = APP_TIMER_CHANNEL_COUNT - 1
+        )
+
+        val cleanGpioPwm =
+        gpioPwm.trim()
+
+        val preservedTimers =
+        existingTimers
+        .filter {
+            timer ->
+            shouldKeepExistingTimer(
+                timer = timer
+            )
+        }
+        .filterNot {
+            timer ->
+            timer.belongsToGpioPwm(
+                targetGpioPwm = cleanGpioPwm
+            )
+        }
+        .sortedBy {
+            timer ->
+            timer.index
+        }
+        .map {
+            timer ->
+            timer.toSavePayload()
+        }
+
+        val timerData =
+        JSONObject()
+
+        preservedTimers.forEachIndexed {
+            index, timer ->
+            timerData.put(
+                index.toString(),
+                createTimerObject(
+                    timer = timer
+                )
+            )
+        }
+
+        return JSONObject().apply {
+            put(
+                KEY_L_PWM_CHANNEL_TIMER,
+                JSONObject().apply {
+                    put(
+                        KEY_DATA,
+                        JSONObject().apply {
+                            put(
+                                safeChannelIndex.toString(),
+                                JSONObject().apply {
+                                    put(
+                                        "Name",
+                                        "Channel $channelNumber"
+                                    )
+
+                                    put(
+                                        "Regime",
+                                        "Off"
+                                    )
+
+                                    put(
+                                        "GPIO_PWM",
+                                        cleanGpioPwm
+                                    )
+
+                                    put(
+                                        "YE",
+                                        0
+                                    )
+
+                                    put(
+                                        "Rest",
+                                        0
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+
+            put(
+                KEY_L_TIMER,
+                JSONObject().apply {
+                    put(
+                        "Count",
+                        preservedTimers.size
+                    )
+
+                    put(
+                        KEY_DATA,
+                        timerData
+                    )
+                }
+            )
+        }
+    }
+
     fun createSaveTimerPayload(): JSONObject {
         return JSONObject().apply {
             put(
