@@ -63,7 +63,7 @@
                 android:maxLines="1"
                 android:text="Channel 1"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="17sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
@@ -120,8 +120,8 @@
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="17dp"
+                    android:layout_height="17dp"
                     android:contentDescription="@null"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_dosing_drop_20" />
@@ -132,9 +132,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="9dp"
                     android:includeFontPadding="false"
-                    android:text="0.0 ml"
+                    android:text="0 ml"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -147,59 +147,47 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:text="Every day"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textColor="#C8D2E3"
+                    android:textSize="13sp" />
 
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/channelModeRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="11dp"
+                android:layout_marginTop="10dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="17dp"
+                    android:layout_height="17dp"
                     android:contentDescription="@null"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_dosing_mode_20" />
 
                 <TextView
                     android:id="@+id/tvChannelStatus"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
                     android:includeFontPadding="false"
-                    android:text="0/1 Single"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
-
-                <ImageView
-                    android:id="@+id/ivChannelReservoirIcon"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:contentDescription="@null"
-                    android:importantForAccessibility="no"
-                    android:src="@drawable/ic_dosing_reservoir_20" />
+                    android:maxLines="1"
+                    android:text="Mode 24 Hourly"
+                    android:textColor="#C8D2E3"
+                    android:textSize="13sp" />
 
                 <TextView
-                    android:id="@+id/tvChannelReservoir"
+                    android:id="@+id/tvChannelModeProgress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
                     android:includeFontPadding="false"
-                    android:text="500 ml / 500 ml"
+                    android:text="1/24"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
             </LinearLayout>
@@ -215,8 +203,73 @@
             android:visibility="gone">
 
             <LinearLayout
+                android:id="@+id/channelTimelineHeaderRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvTodayDoseTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:includeFontPadding="false"
+                    android:text="Today dose"
+                    android:textColor="@color/settings_text_secondary"
+                    android:textSize="11sp" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardManualDoseChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="#251A31"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#5B2A53"
+                    app:strokeWidth="1dp">
+
+                    <TextView
+                        android:id="@+id/tvManualDoseChip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="Manual +5 ml"
+                        android:textColor="#F9A8D4"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+            <com.aqua.aqualight.ui.tabs.devices.detail.dosing.view.DosingTimelineView
+                android:id="@+id/dosingTimelineView"
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tvDosingTimelineCaption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="4.17 ml each · 1/24"
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="10sp" />
+
+            <LinearLayout
+                android:id="@+id/channelReservoirHeaderRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -228,6 +281,15 @@
                     android:includeFontPadding="false"
                     android:text="Reservoir"
                     android:textColor="@color/settings_text_secondary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tvChannelReservoir"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text="75 days 450/500 ml"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="11sp"
                     android:textStyle="bold" />
 
@@ -236,10 +298,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="0 / 0 ml"
+                    android:text=""
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
             </LinearLayout>
 
@@ -254,13 +317,13 @@
                 <com.google.android.material.progressindicator.LinearProgressIndicator
                     android:id="@+id/progressChannelDose"
                     android:layout_width="match_parent"
-                    android:layout_height="7dp"
+                    android:layout_height="5dp"
                     android:max="100"
                     android:progress="0"
                     app:indicatorColor="#F43F5E"
-                    app:trackColor="#7F1D2D"
-                    app:trackCornerRadius="7dp"
-                    app:trackThickness="7dp" />
+                    app:trackColor="#3A1422"
+                    app:trackCornerRadius="5dp"
+                    app:trackThickness="5dp" />
 
             </LinearLayout>
 
