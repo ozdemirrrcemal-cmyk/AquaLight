@@ -27,6 +27,30 @@ class DosingEspRepository(
         )
     }
 
+    suspend fun fetchDosingScreenStates(
+        deviceIp: String
+    ): List<DosingEspState> {
+        val payload =
+            DosingEspJsonMapper.createReadDosingStatePayload(
+                channelIndex = 0
+            )
+
+        val response =
+            api.getJson(
+                deviceIp = deviceIp,
+                payload = payload
+            )
+
+        return List(
+            size = DOSING_CHANNEL_COUNT
+        ) { channelIndex ->
+            DosingEspJsonMapper.parseDosingState(
+                response = response,
+                channelIndex = channelIndex
+            )
+        }
+    }
+
     suspend fun readChannelRestMl(
         deviceIp: String,
         channelIndex: Int
@@ -428,5 +452,6 @@ class DosingEspRepository(
 
     private companion object {
         private const val REST_WRITE_TOLERANCE_ML = 0.5f
+        private const val DOSING_CHANNEL_COUNT = 4
     }
 }

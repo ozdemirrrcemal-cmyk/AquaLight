@@ -19,6 +19,7 @@ import com.aqua.aqualight.data.devices.dosing.esp.DosingEspTimerState
 import com.aqua.aqualight.data.devices.dosing.esp.DosingScheduleMode
 import com.aqua.aqualight.databinding.FragmentDeviceDosingBinding
 import com.aqua.aqualight.databinding.ItemDosingChannelCardBinding
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -76,7 +77,7 @@ class DeviceDosingFragment :
 
         bindDefaultChannelCards()
         observeChannelCards()
-      
+        startDosingStatePolling()
         bindClicks()
         renderPumpRunningIndicators()
     }
@@ -195,6 +196,24 @@ class DeviceDosingFragment :
         }
     }
 
+    private fun startDosingStatePolling() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                while (true) {
+                    refreshDosingStatesFromEsp(
+                        showWarning = false
+                    )
+
+                    delay(
+                        timeMillis = DOSING_STATE_REFRESH_INTERVAL_MS
+                    )
+                }
+            }
+        }
+    }
+
     private fun fetchDosingStatesFromEsp() {
         if (deviceIp.isBlank()) {
             showSnackBar(
@@ -206,27 +225,45 @@ class DeviceDosingFragment :
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            getChannelCards().forEachIndexed { channelIndex, _ ->
-                val result =
-                    runCatching {
-                        dosingEspRepository.fetchDosingState(
-                            deviceIp = deviceIp,
-                            channelIndex = channelIndex
-                        )
-                    }
+            refreshDosingStatesFromEsp(
+                showWarning = true
+            )
+        }
+    }
 
-                if (_binding == null) {
-                    return@launch
-                }
+    private suspend fun refreshDosingStatesFromEsp(
+        showWarning: Boolean
+    ) {
+        if (deviceIp.isBlank()) {
+            return
+        }
 
-                result.onSuccess { state ->
-                    latestEspStateByChannel[channelIndex] =
-                        state
+        val result =
+            runCatching {
+                dosingEspRepository.fetchDosingScreenStates(
+                    deviceIp = deviceIp
+                )
+            }
 
-                    renderChannelCard(
-                        channelIndex = channelIndex
-                    )
-                }
+        if (_binding == null) {
+            return
+        }
+
+        result.onSuccess { states ->
+            states.forEachIndexed { channelIndex, state ->
+                latestEspStateByChannel[channelIndex] =
+                    state
+
+                renderChannelCard(
+                    channelIndex = channelIndex
+                )
+            }
+        }.onFailure {
+            if (showWarning) {
+                showSnackBar(
+                    message = "Device data could not be refreshed.",
+                    type = BaseActivity.SnackType.WARNING
+                )
             }
         }
     }
@@ -1044,17 +1081,6 @@ class DeviceDosingFragment :
 
         super.onDestroyView()
     }
-	
-	override fun onResume() {
-    super.onResume()
-
-    if (
-        _binding != null &&
-        ::dosingEspRepository.isInitialized
-    ) {
-        fetchDosingStatesFromEsp()
-    }
-}
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
@@ -1066,6 +1092,7 @@ class DeviceDosingFragment :
         private const val ARG_CHANNEL_INDEX = "channelIndex"
 
         private const val RESERVOIR_PROGRESS_MAX = 100
+        private const val DOSING_STATE_REFRESH_INTERVAL_MS = 5000L
 
         fun newInstance(
             deviceId: Long,
