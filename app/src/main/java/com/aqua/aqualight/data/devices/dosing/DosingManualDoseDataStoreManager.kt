@@ -114,6 +114,32 @@ class DosingManualDoseDataStoreManager(
                 )
         }
     }
+	
+	suspend fun clearChannelManualDoseRecords(
+    deviceId: Long,
+    channelIndex: Int
+) {
+    val safeChannelIndex =
+        channelIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
+
+    appContext.dosingManualDoseDataStore.edit { preferences ->
+        val remainingRecords =
+            parseRecords(
+                json = preferences[recordsKey].orEmpty()
+            ).filterNot { record ->
+                record.deviceId == deviceId &&
+                    record.channelIndex == safeChannelIndex
+            }
+
+        preferences[recordsKey] =
+            encodeRecords(
+                records = remainingRecords
+            )
+    }
+}
 
     private fun parseRecords(
         json: String
