@@ -86,13 +86,14 @@ class DeviceDosingFragment :
         dosingEspRepository =
             DosingEspRepository()
 
-        bindDefaultChannelCards()
-        observeChannelCards()
-        observeTodayManualDoses()
-        startDosingStatePolling()
-        startPumpRunningPolling()
-        bindClicks()
-        renderPumpRunningIndicators()
+       bindDefaultChannelCards()
+observeChannelCards()
+observeTodayManualDoses()
+fetchDosingStatesImmediately()
+startDosingStatePolling()
+startPumpRunningPolling()
+bindClicks()
+renderPumpRunningIndicators()
     }
 
     private fun bindDefaultChannelCards() {
@@ -273,22 +274,50 @@ class DeviceDosingFragment :
     }
 
     private fun startDosingStatePolling() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-                while (true) {
-                    refreshDosingStatesFromEsp(
-                        showWarning = false
-                    )
+    viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.repeatOnLifecycle(
+            Lifecycle.State.STARTED
+        ) {
+            delay(
+                timeMillis = DOSING_STATE_REFRESH_INTERVAL_MS
+            )
 
-                    delay(
-                        timeMillis = DOSING_STATE_REFRESH_INTERVAL_MS
-                    )
-                }
+            while (true) {
+                refreshDosingStatesFromEsp(
+                    showWarning = false
+                )
+
+                delay(
+                    timeMillis = DOSING_STATE_REFRESH_INTERVAL_MS
+                )
             }
         }
     }
+}
+	
+	private fun fetchDosingStatesImmediately() {
+    if (deviceIp.isBlank()) {
+        return
+    }
+
+    viewLifecycleOwner.lifecycleScope.launch {
+        setLoading(
+            show = true
+        )
+
+        refreshDosingStatesFromEsp(
+            showWarning = true
+        )
+
+        if (_binding == null) {
+            return@launch
+        }
+
+        setLoading(
+            show = false
+        )
+    }
+}
 
     private fun startPumpRunningPolling() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -1445,6 +1474,14 @@ class DeviceDosingFragment :
             ARG_CHANNEL_INDEX to channelIndex
         )
     }
+	
+	private fun setLoading(
+    show: Boolean
+) {
+    (activity as? BaseActivity)?.showLoading(
+        show = show
+    )
+}
 
     private fun showSnackBar(
         message: String,
