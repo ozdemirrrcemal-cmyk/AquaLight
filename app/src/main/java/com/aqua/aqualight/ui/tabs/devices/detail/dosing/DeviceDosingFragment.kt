@@ -76,7 +76,7 @@ class DeviceDosingFragment :
 
         bindDefaultChannelCards()
         observeChannelCards()
-        fetchDosingStatesFromEsp()
+      
         bindClicks()
         renderPumpRunningIndicators()
     }
