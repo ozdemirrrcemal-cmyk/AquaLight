@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 class DeviceDosingSingleModeSettingsFragment :
-Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
+    Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
 
     private var _binding: FragmentDeviceDosingSingleModeSettingsBinding? = null
     private val binding get() = _binding!!
@@ -28,33 +28,33 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
     private lateinit var dosingEspRepository: DosingEspRepository
 
     private var espDosingState: DosingEspState? =
-    null
+        null
 
     private var selectedHour: Int =
-    0
+        0
 
     private var selectedMinute: Int =
-    0
+        0
 
     private var saveInProgress: Boolean =
-    false
+        false
 
     private val channelIndex: Int
-    get() = requireArguments().getInt(
-        ARG_CHANNEL_INDEX,
-        0
-    ).coerceIn(
-        minimumValue = 0,
-        maximumValue = 3
-    )
+        get() = requireArguments().getInt(
+            ARG_CHANNEL_INDEX,
+            0
+        ).coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
 
     private val channelNumber: Int
-    get() = channelIndex + 1
+        get() = channelIndex + 1
 
     private val deviceIp: String
-    get() = requireArguments().getString(
-        ARG_DEVICE_IP
-    ).orEmpty()
+        get() = requireArguments().getString(
+            ARG_DEVICE_IP
+        ).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -66,12 +66,12 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
         )
 
         _binding =
-        FragmentDeviceDosingSingleModeSettingsBinding.bind(
-            view
-        )
+            FragmentDeviceDosingSingleModeSettingsBinding.bind(
+                view
+            )
 
         dosingEspRepository =
-        DosingEspRepository()
+            DosingEspRepository()
 
         bindHeader()
         bindSelectedPumpIndicator()
@@ -82,7 +82,7 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
 
     private fun bindHeader() {
         binding.tvTitle.text =
-        "Single dose"
+            "Single dose"
 
         binding.btnBack.setOnClickListener {
             if (!saveInProgress) {
@@ -101,32 +101,32 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
 
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-        if (channelIndex == 0) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 0) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump2.visibility =
-        if (channelIndex == 1) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 1) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump3.visibility =
-        if (channelIndex == 2) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 2) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump4.visibility =
-        if (channelIndex == 3) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 3) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
     }
 
     private fun bindClicks() {
@@ -163,12 +163,12 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result =
-            runCatching {
-                dosingEspRepository.fetchDosingState(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex
-                )
-            }
+                runCatching {
+                    dosingEspRepository.fetchDosingState(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex
+                    )
+                }
 
             setLoading(
                 show = false
@@ -178,19 +178,17 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
                 return@launch
             }
 
-            result.onSuccess {
-                state ->
+            result.onSuccess { state ->
                 applyEspState(
                     state = state
                 )
-            }.onFailure {
-                throwable ->
+            }.onFailure { throwable ->
                 DialogManager.showConfirmDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
                     title = "Device Data Failed",
                     message = throwable.message
-                    ?: "Single mode data could not be loaded from the device.",
+                        ?: "Single mode data could not be loaded from the device.",
                     onConfirm = {
                         fetchSingleModeStateFromEsp()
                     }
@@ -203,16 +201,16 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
         state: DosingEspState
     ) {
         espDosingState =
-        state
+            state
 
         if (state.activeMode != DosingScheduleMode.SINGLE) {
             return
         }
 
         val singleTimer =
-        findSingleTimer(
-            state = state
-        ) ?: return
+            findSingleTimer(
+                state = state
+            ) ?: return
 
         binding.etSingleDoseMl.setText(
             formatDoseMl(
@@ -228,31 +226,28 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
     private fun findSingleTimer(
         state: DosingEspState
     ) =
-    state.channelTimers.firstOrNull {
-        timer ->
-        timer.name.contains(
-            other = "SINGLE",
-            ignoreCase = true
-        ) &&
-        timer.dosePerRunMl > 0f &&
-        timer.count > 0
-    } ?: state.channelTimers.firstOrNull {
-        timer ->
-        timer.dosePerRunMl > 0f &&
-        timer.count > 0
-    } ?: state.timer.takeIf {
-        timer ->
-        timer.dosePerRunMl > 0f &&
-        timer.count > 0
-    }
+        state.channelTimers.firstOrNull { timer ->
+            timer.name.contains(
+                other = "SINGLE",
+                ignoreCase = true
+            ) &&
+                timer.dosePerRunMl > 0f &&
+                timer.count > 0
+        } ?: state.channelTimers.firstOrNull { timer ->
+            timer.dosePerRunMl > 0f &&
+                timer.count > 0
+        } ?: state.timer.takeIf { timer ->
+            timer.dosePerRunMl > 0f &&
+                timer.count > 0
+        }
 
     private fun getScheduleWeekDays(
         state: DosingEspState
     ): List<Boolean> {
         val timer =
-        findSingleTimer(
-            state = state
-        ) ?: state.timer
+            findSingleTimer(
+                state = state
+            ) ?: state.timer
 
         return if (timer.weekDays.size == 7) {
             timer.weekDays
@@ -273,19 +268,18 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
             title = "Select Start Time",
             initialHour = selectedHour,
             initialMinute = selectedMinute
-        ) {
-            hour, minute ->
+        ) { hour, minute ->
             selectedHour =
-            hour
+                hour
 
             selectedMinute =
-            minute
+                minute
 
             binding.tvStartTimeValue.text =
-            formatTime(
-                hour = selectedHour,
-                minute = selectedMinute
-            )
+                formatTime(
+                    hour = selectedHour,
+                    minute = selectedMinute
+                )
         }
     }
 
@@ -306,14 +300,14 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
         }
 
         val doseMl =
-        binding.etSingleDoseMl.text
-        ?.toString()
-        ?.trim()
-        ?.replace(
-            oldValue = ",",
-            newValue = "."
-        )
-        ?.toFloatOrNull()
+            binding.etSingleDoseMl.text
+                ?.toString()
+                ?.trim()
+                ?.replace(
+                    oldValue = ",",
+                    newValue = "."
+                )
+                ?.toFloatOrNull()
 
         if (
             doseMl == null ||
@@ -328,7 +322,7 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
         }
 
         saveInProgress =
-        true
+            true
 
         renderSavingState()
 
@@ -337,32 +331,40 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
         )
 
         val startTime =
-        formatTime(
-            hour = selectedHour,
-            minute = selectedMinute
-        )
+            formatTime(
+                hour = selectedHour,
+                minute = selectedMinute
+            )
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result =
-            runCatching {
-                val currentState =
-                espDosingState ?: dosingEspRepository.fetchDosingState(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex
-                )
+                runCatching {
+                    val currentState =
+                        espDosingState ?: dosingEspRepository.fetchDosingState(
+                            deviceIp = deviceIp,
+                            channelIndex = channelIndex
+                        )
 
-                dosingEspRepository.saveSingleSchedule(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex,
-                    channelNumber = channelNumber,
-                    totalDailyDoseMl = doseMl,
-                    weekDays = getScheduleWeekDays(
-                        state = currentState
-                    ),
-                    startTime = startTime,
-                    enabled = true
-                )
-            }
+                    val gpioPwm =
+                        currentState.channel.gpioPwm.takeIf { value ->
+                            value.isNotBlank() && value != "-"
+                        } ?: throw IllegalStateException(
+                            "PWM channel information is missing."
+                        )
+
+                    dosingEspRepository.saveSingleSchedule(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex,
+                        channelNumber = channelNumber,
+                        gpioPwm = gpioPwm,
+                        totalDailyDoseMl = doseMl,
+                        weekDays = getScheduleWeekDays(
+                            state = currentState
+                        ),
+                        startTime = startTime,
+                        enabled = true
+                    )
+                }
 
             setLoading(
                 show = false
@@ -373,28 +375,27 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
             }
 
             saveInProgress =
-            false
+                false
 
             renderSavingState()
 
             result.onSuccess {
                 findNavController()
-                .previousBackStackEntry
-                ?.savedStateHandle
-                ?.set(
-                    RESULT_DOSING_SCHEDULE_UPDATED,
-                    true
-                )
+                    .previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(
+                        RESULT_DOSING_SCHEDULE_UPDATED,
+                        true
+                    )
 
                 findNavController().navigateUp()
-            }.onFailure {
-                throwable ->
+            }.onFailure { throwable ->
                 DialogManager.showConfirmDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
                     title = "Save Failed",
                     message = throwable.message
-                    ?: "Single mode could not be saved. Please check the device connection and try again.",
+                        ?: "Single mode could not be saved. Please check the device connection and try again.",
                     onConfirm = {
                         handleSaveClick()
                     }
@@ -405,75 +406,75 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
 
     private fun renderSavingState() {
         binding.btnSave.isEnabled =
-        !saveInProgress
+            !saveInProgress
 
         binding.btnCancel.isEnabled =
-        !saveInProgress
+            !saveInProgress
 
         binding.rowStartTime.isEnabled =
-        !saveInProgress
+            !saveInProgress
 
         binding.etSingleDoseMl.isEnabled =
-        !saveInProgress
+            !saveInProgress
 
         binding.btnSave.alpha =
-        if (saveInProgress) {
-            0.55f
-        } else {
-            1f
-        }
+            if (saveInProgress) {
+                0.55f
+            } else {
+                1f
+            }
 
         binding.btnCancel.alpha =
-        if (saveInProgress) {
-            0.55f
-        } else {
-            1f
-        }
+            if (saveInProgress) {
+                0.55f
+            } else {
+                1f
+            }
 
         binding.btnSave.text =
-        if (saveInProgress) {
-            "Saving..."
-        } else {
-            "Save single mode"
-        }
+            if (saveInProgress) {
+                "Saving..."
+            } else {
+                "Save single mode"
+            }
     }
 
     private fun applyStartTime(
         value: String
     ) {
         val safeValue =
-        value.ifBlank {
-            "00:00"
-        }
+            value.ifBlank {
+                "00:00"
+            }
 
         val parts =
-        safeValue.split(
-            ":"
-        )
+            safeValue.split(
+                ":"
+            )
 
         selectedHour =
-        parts.getOrNull(
-            index = 0
-        )?.toIntOrNull()
-        ?.coerceIn(
-            minimumValue = 0,
-            maximumValue = 23
-        ) ?: 0
+            parts.getOrNull(
+                index = 0
+            )?.toIntOrNull()
+                ?.coerceIn(
+                    minimumValue = 0,
+                    maximumValue = 23
+                ) ?: 0
 
         selectedMinute =
-        parts.getOrNull(
-            index = 1
-        )?.toIntOrNull()
-        ?.coerceIn(
-            minimumValue = 0,
-            maximumValue = 59
-        ) ?: 0
+            parts.getOrNull(
+                index = 1
+            )?.toIntOrNull()
+                ?.coerceIn(
+                    minimumValue = 0,
+                    maximumValue = 59
+                ) ?: 0
 
         binding.tvStartTimeValue.text =
-        formatTime(
-            hour = selectedHour,
-            minute = selectedMinute
-        )
+            formatTime(
+                hour = selectedHour,
+                minute = selectedMinute
+            )
     }
 
     private fun formatTime(
@@ -514,9 +515,9 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
 
     private fun hideKeyboard() {
         val inputMethodManager =
-        requireContext().getSystemService(
-            Context.INPUT_METHOD_SERVICE
-        ) as InputMethodManager
+            requireContext().getSystemService(
+                Context.INPUT_METHOD_SERVICE
+            ) as InputMethodManager
 
         inputMethodManager.hideSoftInputFromWindow(
             binding.root.windowToken,
@@ -553,10 +554,10 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
         }
 
         saveInProgress =
-        false
+            false
 
         _binding =
-        null
+            null
 
         super.onDestroyView()
     }
@@ -566,6 +567,6 @@ Fragment(R.layout.fragment_device_dosing_single_mode_settings) {
         private const val ARG_CHANNEL_INDEX = "channelIndex"
 
         private const val RESULT_DOSING_SCHEDULE_UPDATED =
-        "dosingScheduleUpdated"
+            "dosingScheduleUpdated"
     }
 }
