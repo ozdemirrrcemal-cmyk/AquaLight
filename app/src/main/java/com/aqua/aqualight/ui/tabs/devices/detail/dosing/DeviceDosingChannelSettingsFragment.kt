@@ -1356,6 +1356,9 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                     message = "Channel $channelNumber reset.",
                     type = BaseActivity.SnackType.NORMAL
                 )
+
+                findNavController().navigateUp()
+				return@launch
             }.onFailure {
                 throwable ->
                 Log.e(
