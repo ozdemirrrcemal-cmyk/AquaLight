@@ -722,13 +722,15 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
             }
 
             STEP_MEASURE -> {
-                val measuredAmount =
-                measuredAmountText
-                .replace(
+                val measuredAmountText =
+                binding.etMeasuredAmount.text
+                ?.toString()
+                ?.trim()
+                ?.replace(
                     oldValue = ",",
                     newValue = "."
                 )
-                .toFloatOrNull()
+                .orEmpty()
 
                 val measuredAmount =
                 measuredAmountText.toFloatOrNull()

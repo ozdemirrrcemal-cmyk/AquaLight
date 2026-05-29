@@ -1061,10 +1061,19 @@ Fragment(R.layout.fragment_device_dosing_custom_periods_settings) {
                     channelIndex = channelIndex
                 )
 
+                val gpioPwm =
+                currentState.channel.gpioPwm.takeIf {
+                    value ->
+                    value.isNotBlank() && value != "-"
+                } ?: throw IllegalStateException(
+                    "PWM channel information is missing."
+                )
+
                 dosingEspRepository.saveCustomPeriodsSchedule(
                     deviceIp = deviceIp,
                     channelIndex = channelIndex,
                     channelNumber = channelNumber,
+                    gpioPwm = gpioPwm,
                     totalDailyDoseMl = dailyDoseMl ?: 0f,
                     weekDays = getScheduleWeekDays(
                         state = currentState

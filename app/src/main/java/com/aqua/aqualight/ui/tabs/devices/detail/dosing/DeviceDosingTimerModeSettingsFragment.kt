@@ -851,10 +851,19 @@ Fragment(R.layout.fragment_device_dosing_timer_mode_settings) {
                     channelIndex = channelIndex
                 )
 
+                val gpioPwm =
+                currentState.channel.gpioPwm.takeIf {
+                    value ->
+                    value.isNotBlank() && value != "-"
+                } ?: throw IllegalStateException(
+                    "PWM channel information is missing."
+                )
+
                 dosingEspRepository.saveTimerModeSchedule(
                     deviceIp = deviceIp,
                     channelIndex = channelIndex,
                     channelNumber = channelNumber,
+                    gpioPwm = gpioPwm,
                     weekDays = getScheduleWeekDays(
                         state = currentState
                     ),
