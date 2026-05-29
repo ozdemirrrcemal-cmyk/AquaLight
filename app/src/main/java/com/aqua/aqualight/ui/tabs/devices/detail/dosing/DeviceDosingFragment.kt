@@ -12,6 +12,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.dosing.DosingChannelSettingsDataStoreManager
 import com.aqua.aqualight.data.devices.dosing.DosingChannelSettingsUi
+import com.aqua.aqualight.data.devices.dosing.DosingManualDoseDataStoreManager
 import com.aqua.aqualight.data.devices.dosing.EspDosingCalibrationStateClient
 import com.aqua.aqualight.data.devices.dosing.esp.DosingEspRepository
 import com.aqua.aqualight.data.devices.dosing.esp.DosingEspState
@@ -31,12 +32,16 @@ class DeviceDosingFragment :
     private val binding get() = _binding!!
 
     private lateinit var channelSettingsDataStoreManager: DosingChannelSettingsDataStoreManager
+    private lateinit var manualDoseDataStoreManager: DosingManualDoseDataStoreManager
     private lateinit var dosingEspRepository: DosingEspRepository
 
     private val latestLocalSettingsByChannel: MutableMap<Int, DosingChannelSettingsUi> =
         mutableMapOf()
 
     private val latestEspStateByChannel: MutableMap<Int, DosingEspState> =
+        mutableMapOf()
+
+    private val todayManualDoseMlByChannel: MutableMap<Int, Float> =
         mutableMapOf()
 
     private val runningPumpIndexes: MutableSet<Int> =
@@ -73,11 +78,17 @@ class DeviceDosingFragment :
                 context = requireContext()
             )
 
+        manualDoseDataStoreManager =
+            DosingManualDoseDataStoreManager(
+                context = requireContext()
+            )
+
         dosingEspRepository =
             DosingEspRepository()
 
         bindDefaultChannelCards()
         observeChannelCards()
+        observeTodayManualDoses()
         startDosingStatePolling()
         startPumpRunningPolling()
         bindClicks()
@@ -227,6 +238,34 @@ class DeviceDosingFragment :
                                 channelIndex = channelIndex
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun observeTodayManualDoses() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                manualDoseDataStoreManager.observeTodayManualDoseTotals(
+                    deviceId = deviceId
+                ).collect { totals ->
+                    if (_binding == null) {
+                        return@collect
+                    }
+
+                    todayManualDoseMlByChannel.clear()
+
+                    todayManualDoseMlByChannel.putAll(
+                        totals
+                    )
+
+                    getChannelCards().indices.forEach { channelIndex ->
+                        renderChannelCard(
+                            channelIndex = channelIndex
+                        )
                     }
                 }
             }
@@ -398,8 +437,17 @@ class DeviceDosingFragment :
             settings?.reservoirTrackingEnabled == true &&
                 settings.hasReservoirCapacity
 
+        val todayManualDoseMl =
+            todayManualDoseMlByChannel[channelIndex]
+                ?.takeIf { value ->
+                    value > 0f
+                } ?: 0f
+
+        val hasTodayManualDose =
+            todayManualDoseMl > 0f
+
         val hasVisibleDetails =
-            hasSchedule || hasReservoir
+            hasSchedule || hasReservoir || hasTodayManualDose
 
         val isScheduleActive =
             hasSchedule &&
@@ -487,7 +535,8 @@ class DeviceDosingFragment :
         cardBinding.channelProgressSection.visibility =
             if (
                 showTimeline ||
-                hasReservoir
+                hasReservoir ||
+                hasTodayManualDose
             ) {
                 View.VISIBLE
             } else {
@@ -516,26 +565,52 @@ class DeviceDosingFragment :
         espState: DosingEspState?,
         dailyDoseMl: Float
     ) {
+        val todayManualDoseMl =
+            todayManualDoseMlByChannel[channelIndex]
+                ?.takeIf { value ->
+                    value > 0f
+                } ?: 0f
+
         if (
             espState == null ||
             dailyDoseMl <= 0f
         ) {
-            cardBinding.channelTimelineHeaderRow.visibility =
-                View.GONE
-
             cardBinding.dosingTimelineView.renderEmpty()
 
             cardBinding.dosingTimelineView.visibility =
                 View.GONE
 
-            cardBinding.tvDosingTimelineCaption.text =
-                ""
+            if (todayManualDoseMl > 0f) {
+                cardBinding.channelTimelineHeaderRow.visibility =
+                    View.VISIBLE
 
-            cardBinding.tvDosingTimelineCaption.visibility =
-                View.GONE
+                cardBinding.cardManualDoseChip.visibility =
+                    View.VISIBLE
 
-            cardBinding.cardManualDoseChip.visibility =
-                View.GONE
+                cardBinding.tvManualDoseChip.text =
+                    "Manual +${formatMl(todayManualDoseMl)}"
+
+                cardBinding.tvDosingTimelineCaption.text =
+                    "Manual dosing only today"
+
+                cardBinding.tvDosingTimelineCaption.visibility =
+                    View.VISIBLE
+            } else {
+                cardBinding.channelTimelineHeaderRow.visibility =
+                    View.GONE
+
+                cardBinding.cardManualDoseChip.visibility =
+                    View.GONE
+
+                cardBinding.tvManualDoseChip.text =
+                    ""
+
+                cardBinding.tvDosingTimelineCaption.text =
+                    ""
+
+                cardBinding.tvDosingTimelineCaption.visibility =
+                    View.GONE
+            }
 
             return
         }
@@ -567,8 +642,19 @@ class DeviceDosingFragment :
         cardBinding.tvDosingTimelineCaption.visibility =
             View.VISIBLE
 
-        cardBinding.cardManualDoseChip.visibility =
-            View.GONE
+        if (todayManualDoseMl > 0f) {
+            cardBinding.cardManualDoseChip.visibility =
+                View.VISIBLE
+
+            cardBinding.tvManualDoseChip.text =
+                "Manual +${formatMl(todayManualDoseMl)}"
+        } else {
+            cardBinding.cardManualDoseChip.visibility =
+                View.GONE
+
+            cardBinding.tvManualDoseChip.text =
+                ""
+        }
 
         when (espState.activeMode) {
             DosingScheduleMode.SINGLE -> {
