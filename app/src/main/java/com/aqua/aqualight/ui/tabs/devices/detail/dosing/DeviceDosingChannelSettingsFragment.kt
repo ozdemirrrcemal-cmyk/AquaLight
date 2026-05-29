@@ -29,7 +29,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class DeviceDosingChannelSettingsFragment :
-Fragment(R.layout.fragment_device_dosing_channel_settings) {
+    Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
     private var _binding: FragmentDeviceDosingChannelSettingsBinding? = null
     private val binding get() = _binding!!
@@ -50,23 +50,23 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     private var savedDailyDoseMl: Float? = 0f
 
     private var selectedWeekDays: List<Boolean> =
-    List(size = 7) {
-        true
-    }
+        List(size = 7) {
+            true
+        }
 
     private var savedWeekDays: List<Boolean> =
-    List(size = 7) {
-        true
-    }
+        List(size = 7) {
+            true
+        }
 
     private var calibrationAutoOpenHandled: Boolean = false
     private var forceScheduleEnabledAfterCalibration: Boolean = false
 
     private val shouldOpenCalibrationFirst: Boolean
-    get() = requireArguments().getBoolean(
-        ARG_OPEN_CALIBRATION_FIRST,
-        false
-    )
+        get() = requireArguments().getBoolean(
+            ARG_OPEN_CALIBRATION_FIRST,
+            false
+        )
 
     private var reservoirTrackingEnabled: Boolean = false
     private var savedReservoirTrackingEnabled: Boolean = false
@@ -84,53 +84,53 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     private var saveSettingsInProgress: Boolean = false
 
     private val hasUnsavedDataStoreSettings: Boolean
-    get() =
-    reservoirTrackingEnabled != savedReservoirTrackingEnabled ||
-    missedDoseCompensationEnabled != savedMissedDoseCompensationEnabled ||
-    !areFloatValuesSame(
-        currentValue = containerVolumeMl,
-        savedValue = savedContainerVolumeMl
-    )
+        get() =
+            reservoirTrackingEnabled != savedReservoirTrackingEnabled ||
+                missedDoseCompensationEnabled != savedMissedDoseCompensationEnabled ||
+                !areFloatValuesSame(
+                    currentValue = containerVolumeMl,
+                    savedValue = savedContainerVolumeMl
+                )
 
     private val hasUnsavedEspTimerSettings: Boolean
-    get() =
-    scheduleEnabled != savedScheduleEnabled ||
-    !areFloatValuesSame(
-        currentValue = dailyDoseMl,
-        savedValue = savedDailyDoseMl
-    ) ||
-    selectedWeekDays != savedWeekDays
+        get() =
+            scheduleEnabled != savedScheduleEnabled ||
+                !areFloatValuesSame(
+                    currentValue = dailyDoseMl,
+                    savedValue = savedDailyDoseMl
+                ) ||
+                selectedWeekDays != savedWeekDays
 
     private val hasUnsavedChannelSettings: Boolean
-    get() =
-    hasUnsavedDataStoreSettings || hasUnsavedEspTimerSettings
+        get() =
+            hasUnsavedDataStoreSettings || hasUnsavedEspTimerSettings
 
     private val channelIndex: Int
-    get() = requireArguments().getInt(
-        ARG_CHANNEL_INDEX,
-        0
-    ).coerceIn(
-        minimumValue = 0,
-        maximumValue = 3
-    )
+        get() = requireArguments().getInt(
+            ARG_CHANNEL_INDEX,
+            0
+        ).coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
 
     private val channelNumber: Int
-    get() = channelIndex + 1
+        get() = channelIndex + 1
 
     private val deviceId: Long
-    get() = requireArguments().getLong(
-        ARG_DEVICE_ID
-    )
+        get() = requireArguments().getLong(
+            ARG_DEVICE_ID
+        )
 
     private val deviceIp: String
-    get() = requireArguments().getString(
-        ARG_DEVICE_IP
-    ).orEmpty()
+        get() = requireArguments().getString(
+            ARG_DEVICE_IP
+        ).orEmpty()
 
     private val deviceTitle: String
-    get() = requireArguments().getString(
-        ARG_DEVICE_TITLE
-    ).orEmpty()
+        get() = requireArguments().getString(
+            ARG_DEVICE_TITLE
+        ).orEmpty()
 
     override fun onViewCreated(
         view: View,
@@ -142,27 +142,27 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         )
 
         _binding =
-        FragmentDeviceDosingChannelSettingsBinding.bind(
-            view
-        )
+            FragmentDeviceDosingChannelSettingsBinding.bind(
+                view
+            )
 
         calibrationDataStoreManager =
-        DosingCalibrationDataStoreManager(
-            context = requireContext()
-        )
+            DosingCalibrationDataStoreManager(
+                context = requireContext()
+            )
 
         channelSettingsDataStoreManager =
-        DosingChannelSettingsDataStoreManager(
-            context = requireContext()
-        )
+            DosingChannelSettingsDataStoreManager(
+                context = requireContext()
+            )
 
         manualDoseDataStoreManager =
-        DosingManualDoseDataStoreManager(
-            context = requireContext()
-        )
+            DosingManualDoseDataStoreManager(
+                context = requireContext()
+            )
 
         dosingEspRepository =
-        DosingEspRepository()
+            DosingEspRepository()
 
         bindHeaderActions()
         bindStaticPreview()
@@ -187,10 +187,10 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
         renderTopBarSaveState()
 
+        fetchDosingStateFromEsp()
+
         if (shouldOpenCalibrationFirst) {
             maybeOpenCalibrationFirst()
-        } else {
-            fetchDosingStateFromEsp()
         }
     }
 
@@ -210,22 +210,22 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
     private fun bindStaticPreview() {
         binding.tvDailyDoseValue.text =
-        "0 ml"
+            "0 ml"
 
         binding.tvLastCalibrated.text =
-        "Last calibrated: Not calibrated"
+            "Last calibrated: Not calibrated"
 
         binding.tvContainerVolumeValue.text =
-        "Not set"
+            "Not set"
 
         suppressReservoirTrackingCallback =
-        true
+            true
 
         binding.switchReservoirTracking.isChecked =
-        false
+            false
 
         suppressReservoirTrackingCallback =
-        false
+            false
 
         renderReservoirTrackingState(
             enabled = false
@@ -240,43 +240,48 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         calibrationAutoOpenHandled =
-        true
+            true
 
         binding.root.post {
             if (_binding == null) {
                 return@post
             }
 
-            openCalibrationWizard()
+            if (
+                findNavController().currentDestination?.id ==
+                R.id.deviceDosingChannelSettingsFragment
+            ) {
+                openCalibrationWizard()
+            }
         }
     }
 
     private fun syncInitialChannelSettingsFromUi() {
         scheduleEnabled =
-        binding.switchScheduleEnabled.isChecked
+            binding.switchScheduleEnabled.isChecked
 
         savedScheduleEnabled =
-        scheduleEnabled
+            scheduleEnabled
 
         missedDoseCompensationEnabled =
-        binding.switchMissedDoseCompensation.isChecked
+            binding.switchMissedDoseCompensation.isChecked
 
         savedMissedDoseCompensationEnabled =
-        missedDoseCompensationEnabled
+            missedDoseCompensationEnabled
 
         dailyDoseMl =
-        readDailyDoseFromText()
+            readDailyDoseFromText()
 
         savedDailyDoseMl =
-        dailyDoseMl
+            dailyDoseMl
 
         selectedWeekDays =
-        List(size = 7) {
-            true
-        }
+            List(size = 7) {
+                true
+            }
 
         savedWeekDays =
-        selectedWeekDays
+            selectedWeekDays
     }
 
     private fun makeDailyDoseCardDisplayOnly() {
@@ -285,10 +290,10 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         )
 
         binding.cardDailyDose.isClickable =
-        false
+            false
 
         binding.cardDailyDose.isFocusable =
-        false
+            false
     }
 
     private fun fetchDosingStateFromEsp() {
@@ -302,7 +307,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         val baseActivity =
-        activity as? BaseActivity
+            activity as? BaseActivity
 
         baseActivity?.showLoading(
             true
@@ -310,12 +315,12 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result =
-            runCatching {
-                dosingEspRepository.fetchDosingState(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex
-                )
-            }
+                runCatching {
+                    dosingEspRepository.fetchDosingState(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex
+                    )
+                }
 
             baseActivity?.showLoading(
                 false
@@ -325,13 +330,11 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 return@launch
             }
 
-            result.onSuccess {
-                state ->
+            result.onSuccess { state ->
                 applyEspDosingState(
                     state = state
                 )
-            }.onFailure {
-                throwable ->
+            }.onFailure { throwable ->
                 Log.e(
                     "DOSING_STATE",
                     "Dosing state could not be loaded. deviceIp=$deviceIp channelIndex=$channelIndex",
@@ -352,43 +355,43 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         state: DosingEspState
     ) {
         espDosingState =
-        state
+            state
 
         renderChannelTitle(
             name = state.channel.name
         )
 
         val scheduleWeekDays =
-        getScheduleWeekDays(
-            state = state
-        )
+            getScheduleWeekDays(
+                state = state
+            )
 
         scheduleEnabled =
-        state.scheduleEnabled
+            state.scheduleEnabled
 
         savedScheduleEnabled =
-        state.scheduleEnabled
+            state.scheduleEnabled
 
         dailyDoseMl =
-        state.configuredDailyDoseMl
+            state.configuredDailyDoseMl
 
         savedDailyDoseMl =
-        state.configuredDailyDoseMl
+            state.configuredDailyDoseMl
 
         selectedWeekDays =
-        scheduleWeekDays
+            scheduleWeekDays
 
         savedWeekDays =
-        scheduleWeekDays
+            scheduleWeekDays
 
         suppressScheduleCallback =
-        true
+            true
 
         binding.switchScheduleEnabled.isChecked =
-        state.scheduleEnabled
+            state.scheduleEnabled
 
         suppressScheduleCallback =
-        false
+            false
 
         renderDailyDoseValue(
             value = state.configuredDailyDoseMl
@@ -410,19 +413,19 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
         if (forceScheduleEnabledAfterCalibration) {
             forceScheduleEnabledAfterCalibration =
-            false
+                false
 
             scheduleEnabled =
-            true
+                true
 
             suppressScheduleCallback =
-            true
+                true
 
             binding.switchScheduleEnabled.isChecked =
-            true
+                true
 
             suppressScheduleCallback =
-            false
+                false
 
             updateScheduleEnabledState(
                 enabled = true
@@ -436,18 +439,16 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         state: DosingEspState
     ): List<Boolean> {
         val scheduleTimer =
-        state.channelTimers.firstOrNull {
-            timer ->
-            timer.enabled &&
-            timer.weekDays.size == 7 &&
-            timer.dosePerRunMl > 0f &&
-            timer.count > 0
-        } ?: state.channelTimers.firstOrNull {
-            timer ->
-            timer.weekDays.size == 7 &&
-            timer.dosePerRunMl > 0f &&
-            timer.count > 0
-        } ?: state.timer
+            state.channelTimers.firstOrNull { timer ->
+                timer.enabled &&
+                    timer.weekDays.size == 7 &&
+                    timer.dosePerRunMl > 0f &&
+                    timer.count > 0
+            } ?: state.channelTimers.firstOrNull { timer ->
+                timer.weekDays.size == 7 &&
+                    timer.dosePerRunMl > 0f &&
+                    timer.count > 0
+            } ?: state.timer
 
         return if (scheduleTimer.weekDays.size == 7) {
             scheduleTimer.weekDays
@@ -484,19 +485,17 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         value: Float?
     ) {
         val displayValue =
-        value?.let {
-            dose ->
-            normalizeDailyDoseForDisplay(
-                value = dose,
-                mode = espDosingState?.activeMode
-            )
-        }
+            value?.let { dose ->
+                normalizeDailyDoseForDisplay(
+                    value = dose,
+                    mode = espDosingState?.activeMode
+                )
+            }
 
         binding.tvDailyDoseValue.text =
-        displayValue?.let {
-            dose ->
-            "${formatDoseMl(dose)} ml"
-        } ?: "0 ml"
+            displayValue?.let { dose ->
+                "${formatDoseMl(dose)} ml"
+            } ?: "0 ml"
     }
 
     private fun normalizeDailyDoseForDisplay(
@@ -504,16 +503,16 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         mode: DosingScheduleMode?
     ): Float {
         val safeValue =
-        value.coerceAtLeast(
-            minimumValue = 0f
-        )
+            value.coerceAtLeast(
+                minimumValue = 0f
+            )
 
         if (mode != DosingScheduleMode.HOURLY_24) {
             return safeValue
         }
 
         val nearestWhole =
-        safeValue.roundToInt().toFloat()
+            safeValue.roundToInt().toFloat()
 
         return if (
             abs(
@@ -545,14 +544,13 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     }
 
     private fun bindLocalChannelSettings() {
-        binding.switchReservoirTracking.setOnCheckedChangeListener {
-            _, isChecked ->
+        binding.switchReservoirTracking.setOnCheckedChangeListener { _, isChecked ->
             if (suppressReservoirTrackingCallback) {
                 return@setOnCheckedChangeListener
             }
 
             reservoirTrackingEnabled =
-            isChecked
+                isChecked
 
             renderReservoirTrackingState(
                 enabled = isChecked
@@ -568,47 +566,46 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 channelSettingsDataStoreManager.observeChannelSettings(
                     deviceId = deviceId,
                     channelIndex = channelIndex
-                ).collect {
-                    settings ->
+                ).collect { settings ->
                     val hadUnsavedChanges =
-                    hasUnsavedChannelSettings || saveSettingsInProgress
+                        hasUnsavedChannelSettings || saveSettingsInProgress
 
                     savedReservoirTrackingEnabled =
-                    settings.reservoirTrackingEnabled
+                        settings.reservoirTrackingEnabled
 
                     savedContainerVolumeMl =
-                    settings.containerVolumeMl
+                        settings.containerVolumeMl
 
                     savedMissedDoseCompensationEnabled =
-                    settings.missedDoseCompensationEnabled
+                        settings.missedDoseCompensationEnabled
 
                     if (!hadUnsavedChanges) {
                         reservoirTrackingEnabled =
-                        settings.reservoirTrackingEnabled
+                            settings.reservoirTrackingEnabled
 
                         containerVolumeMl =
-                        settings.containerVolumeMl
+                            settings.containerVolumeMl
 
                         missedDoseCompensationEnabled =
-                        settings.missedDoseCompensationEnabled
+                            settings.missedDoseCompensationEnabled
 
                         suppressReservoirTrackingCallback =
-                        true
+                            true
 
                         binding.switchReservoirTracking.isChecked =
-                        settings.reservoirTrackingEnabled
+                            settings.reservoirTrackingEnabled
 
                         suppressReservoirTrackingCallback =
-                        false
+                            false
 
                         suppressMissedDoseCompensationCallback =
-                        true
+                            true
 
                         binding.switchMissedDoseCompensation.isChecked =
-                        settings.missedDoseCompensationEnabled
+                            settings.missedDoseCompensationEnabled
 
                         suppressMissedDoseCompensationCallback =
-                        false
+                            false
 
                         renderReservoirTrackingState(
                             enabled = settings.reservoirTrackingEnabled
@@ -630,8 +627,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     }
 
     private fun hasValidContainerVolume(): Boolean {
-        return containerVolumeMl?.let {
-            value ->
+        return containerVolumeMl?.let { value ->
             value > 0f
         } == true
     }
@@ -657,15 +653,15 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         val shouldSyncReservoirRestToEsp =
-        reservoirTrackingEnabled &&
-        hasValidContainerVolume() &&
-        (
-            reservoirTrackingEnabled != savedReservoirTrackingEnabled ||
-            !areFloatValuesSame(
-                currentValue = containerVolumeMl,
-                savedValue = savedContainerVolumeMl
-            )
-        )
+            reservoirTrackingEnabled &&
+                hasValidContainerVolume() &&
+                (
+                    reservoirTrackingEnabled != savedReservoirTrackingEnabled ||
+                        !areFloatValuesSame(
+                            currentValue = containerVolumeMl,
+                            savedValue = savedContainerVolumeMl
+                        )
+                    )
 
         if (
             shouldSyncReservoirRestToEsp &&
@@ -680,19 +676,19 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         val reservoirCapacityToSync =
-        containerVolumeMl
+            containerVolumeMl
 
         val hadDataStoreChanges =
-        hasUnsavedDataStoreSettings
+            hasUnsavedDataStoreSettings
 
         val hadEspTimerChanges =
-        hasUnsavedEspTimerSettings
+            hasUnsavedEspTimerSettings
 
         val baseActivity =
-        activity as? BaseActivity
+            activity as? BaseActivity
 
         saveSettingsInProgress =
-        true
+            true
 
         renderTopBarSaveState()
 
@@ -702,47 +698,47 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result =
-            runCatching {
-                if (hadDataStoreChanges) {
-                    channelSettingsDataStoreManager.saveLocalChannelSettings(
-                        deviceId = deviceId,
-                        channelIndex = channelIndex,
-                        reservoirTrackingEnabled = reservoirTrackingEnabled,
-                        containerVolumeMl = containerVolumeMl,
-                        missedDoseCompensationEnabled = missedDoseCompensationEnabled
-                    )
+                runCatching {
+                    if (hadDataStoreChanges) {
+                        channelSettingsDataStoreManager.saveLocalChannelSettings(
+                            deviceId = deviceId,
+                            channelIndex = channelIndex,
+                            reservoirTrackingEnabled = reservoirTrackingEnabled,
+                            containerVolumeMl = containerVolumeMl,
+                            missedDoseCompensationEnabled = missedDoseCompensationEnabled
+                        )
+                    }
+
+                    if (shouldSyncReservoirRestToEsp) {
+                        val capacityMl =
+                            reservoirCapacityToSync ?: throw IllegalStateException(
+                                "Reservoir capacity is missing."
+                            )
+
+                        val refreshedState =
+                            dosingEspRepository.refillChannelReservoir(
+                                deviceIp = deviceIp,
+                                channelIndex = channelIndex,
+                                capacityMl = capacityMl
+                            )
+
+                        espDosingState =
+                            refreshedState
+                    }
+
+                    if (hadEspTimerChanges) {
+                        espDosingState ?: throw IllegalStateException(
+                            "Device schedule data is not loaded yet."
+                        )
+
+                        dosingEspRepository.updateTimerEnabledAndWeekDays(
+                            deviceIp = deviceIp,
+                            channelIndex = channelIndex,
+                            enabled = scheduleEnabled,
+                            weekDays = selectedWeekDays
+                        )
+                    }
                 }
-
-                if (shouldSyncReservoirRestToEsp) {
-                    val capacityMl =
-                    reservoirCapacityToSync ?: throw IllegalStateException(
-                        "Reservoir capacity is missing."
-                    )
-
-                    val refreshedState =
-                    dosingEspRepository.refillChannelReservoir(
-                        deviceIp = deviceIp,
-                        channelIndex = channelIndex,
-                        capacityMl = capacityMl
-                    )
-
-                    espDosingState =
-                    refreshedState
-                }
-
-                if (hadEspTimerChanges) {
-                    espDosingState ?: throw IllegalStateException(
-                        "Device schedule data is not loaded yet."
-                    )
-
-                    dosingEspRepository.updateTimerEnabledAndWeekDays(
-                        deviceIp = deviceIp,
-                        channelIndex = channelIndex,
-                        enabled = scheduleEnabled,
-                        weekDays = selectedWeekDays
-                    )
-                }
-            }
 
             baseActivity?.showLoading(
                 false
@@ -750,35 +746,35 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
             if (_binding == null) {
                 saveSettingsInProgress =
-                false
+                    false
 
                 return@launch
             }
 
             saveSettingsInProgress =
-            false
+                false
 
             result.onSuccess {
                 if (hadDataStoreChanges) {
                     savedReservoirTrackingEnabled =
-                    reservoirTrackingEnabled
+                        reservoirTrackingEnabled
 
                     savedContainerVolumeMl =
-                    containerVolumeMl
+                        containerVolumeMl
 
                     savedMissedDoseCompensationEnabled =
-                    missedDoseCompensationEnabled
+                        missedDoseCompensationEnabled
                 }
 
                 if (hadEspTimerChanges) {
                     savedScheduleEnabled =
-                    scheduleEnabled
+                        scheduleEnabled
 
                     savedDailyDoseMl =
-                    dailyDoseMl
+                        dailyDoseMl
 
                     savedWeekDays =
-                    selectedWeekDays
+                        selectedWeekDays
                 }
 
                 if (
@@ -809,90 +805,88 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         val showSave =
-        hasUnsavedChannelSettings || saveSettingsInProgress
+            hasUnsavedChannelSettings || saveSettingsInProgress
 
         binding.btnSaveSettings.visibility =
-        if (showSave) {
-            View.VISIBLE
-        } else {
-            View.INVISIBLE
-        }
+            if (showSave) {
+                View.VISIBLE
+            } else {
+                View.INVISIBLE
+            }
 
         binding.btnSaveSettings.isEnabled =
-        hasUnsavedChannelSettings && !saveSettingsInProgress
+            hasUnsavedChannelSettings && !saveSettingsInProgress
 
         binding.btnSaveSettings.alpha =
-        if (saveSettingsInProgress) {
-            0.45f
-        } else {
-            1f
-        }
+            if (saveSettingsInProgress) {
+                0.45f
+            } else {
+                1f
+            }
     }
 
     private fun observeScheduleUpdateResult() {
         findNavController()
-        .currentBackStackEntry
-        ?.savedStateHandle
-        ?.getLiveData<Boolean>(
-            RESULT_DOSING_SCHEDULE_UPDATED
-        )
-        ?.observe(
-            viewLifecycleOwner
-        ) {
-            updated ->
-            if (updated == true) {
-                findNavController()
-                .currentBackStackEntry
-                ?.savedStateHandle
-                ?.set(
-                    RESULT_DOSING_SCHEDULE_UPDATED,
-                    false
-                )
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.getLiveData<Boolean>(
+                RESULT_DOSING_SCHEDULE_UPDATED
+            )
+            ?.observe(
+                viewLifecycleOwner
+            ) { updated ->
+                if (updated == true) {
+                    findNavController()
+                        .currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(
+                            RESULT_DOSING_SCHEDULE_UPDATED,
+                            false
+                        )
 
-                fetchDosingStateFromEsp()
+                    fetchDosingStateFromEsp()
+                }
             }
-        }
 
         findNavController()
-        .currentBackStackEntry
-        ?.savedStateHandle
-        ?.getLiveData<Boolean>(
-            RESULT_DOSING_CALIBRATION_COMPLETED
-        )
-        ?.observe(
-            viewLifecycleOwner
-        ) {
-            completed ->
-            if (completed == true) {
-                findNavController()
-                .currentBackStackEntry
-                ?.savedStateHandle
-                ?.set(
-                    RESULT_DOSING_CALIBRATION_COMPLETED,
-                    false
-                )
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.getLiveData<Boolean>(
+                RESULT_DOSING_CALIBRATION_COMPLETED
+            )
+            ?.observe(
+                viewLifecycleOwner
+            ) { completed ->
+                if (completed == true) {
+                    findNavController()
+                        .currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(
+                            RESULT_DOSING_CALIBRATION_COMPLETED,
+                            false
+                        )
 
-                forceScheduleEnabledAfterCalibration =
-                true
+                    forceScheduleEnabledAfterCalibration =
+                        true
 
-                fetchDosingStateFromEsp()
+                    fetchDosingStateFromEsp()
+                }
             }
-        }
     }
 
     private fun readDailyDoseFromText(): Float? {
         return binding.tvDailyDoseValue.text
-        ?.toString()
-        ?.replace(
-            oldValue = "ml",
-            newValue = ""
-        )
-        ?.trim()
-        ?.replace(
-            oldValue = ",",
-            newValue = "."
-        )
-        ?.toFloatOrNull()
+            ?.toString()
+            ?.replace(
+                oldValue = "ml",
+                newValue = ""
+            )
+            ?.trim()
+            ?.replace(
+                oldValue = ",",
+                newValue = "."
+            )
+            ?.toFloatOrNull()
     }
 
     private fun areFloatValuesSame(
@@ -915,31 +909,30 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         value: Float?
     ) {
         binding.tvContainerVolumeValue.text =
-        value?.let {
-            volume ->
-            formatContainerVolume(
-                value = volume
-            )
-        } ?: "Not set"
+            value?.let { volume ->
+                formatContainerVolume(
+                    value = volume
+                )
+            } ?: "Not set"
     }
 
     private fun formatContainerVolume(
         value: Float
     ): String {
         val text =
-        if (value % 1f == 0f) {
-            value.toInt().toString()
-        } else {
-            String.format(
-                Locale.US,
-                "%.1f",
-                value
-            ).trimEnd(
-                '0'
-            ).trimEnd(
-                '.'
-            )
-        }
+            if (value % 1f == 0f) {
+                value.toInt().toString()
+            } else {
+                String.format(
+                    Locale.US,
+                    "%.1f",
+                    value
+                ).trimEnd(
+                    '0'
+                ).trimEnd(
+                    '.'
+                )
+            }
 
         return "$text ml"
     }
@@ -948,21 +941,21 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         enabled: Boolean
     ) {
         binding.rowContainerVolume.visibility =
-        if (enabled) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (enabled) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.rowContainerVolume.isEnabled =
-        enabled
+            enabled
 
         binding.tvContainerVolumeValue.alpha =
-        if (enabled) {
-            1f
-        } else {
-            0.45f
-        }
+            if (enabled) {
+                1f
+            } else {
+                0.45f
+            }
     }
 
     private fun bindCalibrationState() {
@@ -973,18 +966,17 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 calibrationDataStoreManager.observeCalibration(
                     deviceId = deviceId,
                     channelIndex = channelIndex
-                ).collect {
-                    calibration ->
+                ).collect { calibration ->
                     binding.tvLastCalibrated.text =
-                    if (calibration == null) {
-                        "Last calibrated: Not calibrated"
-                    } else {
-                        "Last calibrated: ${
+                        if (calibration == null) {
+                            "Last calibrated: Not calibrated"
+                        } else {
+                            "Last calibrated: ${
                                 formatCalibrationDate(
                                     millis = calibration.lastCalibratedAtMillis
                                 )
                             }"
-                    }
+                        }
                 }
             }
         }
@@ -1003,43 +995,42 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
     private fun bindSelectedPumpIndicator() {
         binding.selectedIndicatorPump1.visibility =
-        if (channelIndex == 0) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 0) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump2.visibility =
-        if (channelIndex == 1) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 1) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump3.visibility =
-        if (channelIndex == 2) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 2) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.selectedIndicatorPump4.visibility =
-        if (channelIndex == 3) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+            if (channelIndex == 3) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
     }
 
     private fun bindClicks() {
-        binding.switchScheduleEnabled.setOnCheckedChangeListener {
-            _, isChecked ->
+        binding.switchScheduleEnabled.setOnCheckedChangeListener { _, isChecked ->
             if (suppressScheduleCallback) {
                 return@setOnCheckedChangeListener
             }
 
             scheduleEnabled =
-            isChecked
+                isChecked
 
             updateScheduleEnabledState(
                 enabled = isChecked
@@ -1048,14 +1039,13 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             renderTopBarSaveState()
         }
 
-        binding.switchMissedDoseCompensation.setOnCheckedChangeListener {
-            _, isChecked ->
+        binding.switchMissedDoseCompensation.setOnCheckedChangeListener { _, isChecked ->
             if (suppressMissedDoseCompensationCallback) {
                 return@setOnCheckedChangeListener
             }
 
             missedDoseCompensationEnabled =
-            isChecked
+                isChecked
 
             renderTopBarSaveState()
         }
@@ -1144,8 +1134,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 hint = "500",
                 initialValue = containerVolumeMl,
                 allowClear = true,
-                onValidationError = {
-                    message ->
+                onValidationError = { message ->
                     showSnackBar(
                         message = message,
                         type = BaseActivity.SnackType.WARNING
@@ -1153,7 +1142,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 },
                 onClear = {
                     containerVolumeMl =
-                    null
+                        null
 
                     renderContainerVolumeValue(
                         value = containerVolumeMl
@@ -1161,10 +1150,9 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
                     renderTopBarSaveState()
                 },
-                onDone = {
-                    value ->
+                onDone = { value ->
                     containerVolumeMl =
-                    value
+                        value
 
                     renderContainerVolumeValue(
                         value = containerVolumeMl
@@ -1191,14 +1179,10 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     }
 
     private fun selectEveryDay() {
-        if (!binding.rowEveryDay.isEnabled) {
-            return
-        }
-
         selectedWeekDays =
-        List(size = 7) {
-            true
-        }
+            List(size = 7) {
+                true
+            }
 
         renderWeekDays(
             weekDays = selectedWeekDays
@@ -1209,23 +1193,22 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
     private fun bindWeekDayClicks() {
         val chips =
-        listOf(
-            binding.chipDayMon,
-            binding.chipDayTue,
-            binding.chipDayWed,
-            binding.chipDayThu,
-            binding.chipDayFri,
-            binding.chipDaySat,
-            binding.chipDaySun
-        )
+            listOf(
+                binding.chipDayMon,
+                binding.chipDayTue,
+                binding.chipDayWed,
+                binding.chipDayThu,
+                binding.chipDayFri,
+                binding.chipDaySat,
+                binding.chipDaySun
+            )
 
-        chips.forEachIndexed {
-            index, chip ->
+        chips.forEachIndexed { index, chip ->
             chip.isClickable =
-            true
+                true
 
             chip.isFocusable =
-            true
+                true
 
             chip.setOnClickListener {
                 toggleWeekDay(
@@ -1238,20 +1221,15 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
     private fun toggleWeekDay(
         index: Int
     ) {
-        if (!binding.rowEveryDay.isEnabled) {
-            return
-        }
-
         val mutableDays =
-        selectedWeekDays.toMutableList()
+            selectedWeekDays.toMutableList()
 
         mutableDays[index] =
-        !mutableDays[index]
+            !mutableDays[index]
 
-        if (mutableDays.none {
-            selected ->
-            selected
-        }
+        if (mutableDays.none { selected ->
+                selected
+            }
         ) {
             showSnackBar(
                 message = "Please select at least one day.",
@@ -1262,7 +1240,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         selectedWeekDays =
-        mutableDays
+            mutableDays
 
         renderWeekDays(
             weekDays = selectedWeekDays
@@ -1275,36 +1253,35 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         weekDays: List<Boolean>
     ) {
         val safeWeekDays =
-        if (weekDays.size == 7) {
-            weekDays
-        } else {
-            List(size = 7) {
-                true
+            if (weekDays.size == 7) {
+                weekDays
+            } else {
+                List(size = 7) {
+                    true
+                }
             }
-        }
 
         val chips =
-        listOf(
-            binding.chipDayMon,
-            binding.chipDayTue,
-            binding.chipDayWed,
-            binding.chipDayThu,
-            binding.chipDayFri,
-            binding.chipDaySat,
-            binding.chipDaySun
-        )
+            listOf(
+                binding.chipDayMon,
+                binding.chipDayTue,
+                binding.chipDayWed,
+                binding.chipDayThu,
+                binding.chipDayFri,
+                binding.chipDaySat,
+                binding.chipDaySun
+            )
 
-        chips.forEachIndexed {
-            index, chip ->
+        chips.forEachIndexed { index, chip ->
             val selected =
-            safeWeekDays[index]
+                safeWeekDays[index]
 
             chip.alpha =
-            if (selected) {
-                1f
-            } else {
-                0.35f
-            }
+                if (selected) {
+                    1f
+                } else {
+                    0.35f
+                }
 
             chip.setBackgroundColor(
                 Color.parseColor(
@@ -1318,10 +1295,9 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         binding.radioEveryDay.isChecked =
-        safeWeekDays.all {
-            selected ->
-            selected
-        }
+            safeWeekDays.all { selected ->
+                selected
+            }
     }
 
     private fun openSingleModeSettings() {
@@ -1408,10 +1384,10 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         val baseActivity =
-        activity as? BaseActivity
+            activity as? BaseActivity
 
         saveSettingsInProgress =
-        true
+            true
 
         renderTopBarSaveState()
 
@@ -1421,34 +1397,34 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result =
-            runCatching {
-                val resetState =
-                dosingEspRepository.resetDosingChannel(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex,
-                    channelNumber = channelNumber
-                )
+                runCatching {
+                    val resetState =
+                        dosingEspRepository.resetDosingChannel(
+                            deviceIp = deviceIp,
+                            channelIndex = channelIndex,
+                            channelNumber = channelNumber
+                        )
 
-                channelSettingsDataStoreManager.saveLocalChannelSettings(
-                    deviceId = deviceId,
-                    channelIndex = channelIndex,
-                    reservoirTrackingEnabled = false,
-                    containerVolumeMl = null,
-                    missedDoseCompensationEnabled = true
-                )
+                    channelSettingsDataStoreManager.saveLocalChannelSettings(
+                        deviceId = deviceId,
+                        channelIndex = channelIndex,
+                        reservoirTrackingEnabled = false,
+                        containerVolumeMl = null,
+                        missedDoseCompensationEnabled = true
+                    )
 
-                manualDoseDataStoreManager.clearChannelManualDoseRecords(
-                    deviceId = deviceId,
-                    channelIndex = channelIndex
-                )
+                    manualDoseDataStoreManager.clearChannelManualDoseRecords(
+                        deviceId = deviceId,
+                        channelIndex = channelIndex
+                    )
 
-                calibrationDataStoreManager.clearCalibration(
-                    deviceId = deviceId,
-                    channelIndex = channelIndex
-                )
+                    calibrationDataStoreManager.clearCalibration(
+                        deviceId = deviceId,
+                        channelIndex = channelIndex
+                    )
 
-                resetState
-            }
+                    resetState
+                }
 
             baseActivity?.showLoading(
                 false
@@ -1456,27 +1432,26 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
             if (_binding == null) {
                 saveSettingsInProgress =
-                false
+                    false
 
                 return@launch
             }
 
             saveSettingsInProgress =
-            false
+                false
 
-            result.onSuccess {
-                state ->
+            result.onSuccess { state ->
                 applyResetState(
                     state = state
                 )
 
                 findNavController()
-                .previousBackStackEntry
-                ?.savedStateHandle
-                ?.set(
-                    RESULT_DOSING_SCHEDULE_UPDATED,
-                    true
-                )
+                    .previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(
+                        RESULT_DOSING_SCHEDULE_UPDATED,
+                        true
+                    )
 
                 showSnackBar(
                     message = "Channel $channelNumber reset.",
@@ -1485,8 +1460,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
                 findNavController().navigateUp()
                 return@launch
-            }.onFailure {
-                throwable ->
+            }.onFailure { throwable ->
                 Log.e(
                     "DOSING_RESET",
                     "Channel reset failed. deviceIp=$deviceIp channelIndex=$channelIndex",
@@ -1498,7 +1472,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                     type = DialogType.ERROR,
                     title = "Reset Failed",
                     message = throwable.message
-                    ?: "Channel could not be reset. Please check the device connection and try again.",
+                        ?: "Channel could not be reset. Please check the device connection and try again.",
                     onConfirm = {
                         resetChannel()
                     }
@@ -1513,101 +1487,101 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         mode: DosingMode
     ) {
         selectedMode =
-        mode
+            mode
 
         binding.radioModeSingle.isChecked =
-        mode == DosingMode.SINGLE
+            mode == DosingMode.SINGLE
 
         binding.radioModeHourly.isChecked =
-        mode == DosingMode.HOURLY_24
+            mode == DosingMode.HOURLY_24
 
         binding.radioModeCustomPeriods.isChecked =
-        mode == DosingMode.CUSTOM_PERIODS
+            mode == DosingMode.CUSTOM_PERIODS
 
         binding.radioModeTimer.isChecked =
-        mode == DosingMode.TIMER
+            mode == DosingMode.TIMER
     }
 
     private fun updateScheduleEnabledState(
         enabled: Boolean
     ) {
-        val contentAlpha =
-        if (enabled) {
-            1f
-        } else {
-            0.45f
-        }
+        val scheduleDependentAlpha =
+            if (enabled) {
+                1f
+            } else {
+                0.45f
+            }
 
         binding.cardDailyDose.alpha =
-        contentAlpha
-
-        binding.cardRecurrence.alpha =
-        contentAlpha
+            scheduleDependentAlpha
 
         binding.cardMissedDoseCompensation.alpha =
-        contentAlpha
+            scheduleDependentAlpha
 
         binding.cardDosingSchedule.alpha =
-        1f
+            1f
+
+        binding.cardRecurrence.alpha =
+            1f
 
         binding.cardDailyDose.isEnabled =
-        true
+            true
 
         makeDailyDoseCardDisplayOnly()
 
         binding.rowModeSingle.isEnabled =
-        true
+            true
 
         binding.rowModeHourly.isEnabled =
-        true
+            true
 
         binding.rowModeCustomPeriods.isEnabled =
-        true
+            true
 
         binding.rowModeTimer.isEnabled =
-        true
+            true
 
         binding.radioModeSingle.isEnabled =
-        true
+            true
 
         binding.radioModeHourly.isEnabled =
-        true
+            true
 
         binding.radioModeCustomPeriods.isEnabled =
-        true
+            true
 
         binding.radioModeTimer.isEnabled =
-        true
+            true
 
         binding.rowEveryDay.isEnabled =
-        enabled
+            true
 
         binding.radioEveryDay.isEnabled =
-        enabled
+            true
 
         binding.chipDayMon.isEnabled =
-        enabled
+            true
 
         binding.chipDayTue.isEnabled =
-        enabled
+            true
 
         binding.chipDayWed.isEnabled =
-        enabled
+            true
 
         binding.chipDayThu.isEnabled =
-        enabled
+            true
 
         binding.chipDayFri.isEnabled =
-        enabled
+            true
 
         binding.chipDaySat.isEnabled =
-        enabled
+            true
 
         binding.chipDaySun.isEnabled =
-        enabled
+            true
 
         binding.switchMissedDoseCompensation.isEnabled =
-        enabled
+            enabled
     }
 
     private fun openManualDosingBottomSheet() {
@@ -1619,8 +1593,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             initialValue = null,
             allowClear = false,
             confirmButtonText = "Confirm Dose",
-            onValidationError = {
-                message ->
+            onValidationError = { message ->
                 showSnackBar(
                     message = message,
                     type = BaseActivity.SnackType.WARNING
@@ -1629,8 +1602,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             onClear = {
                 // Manual dosing does not use clear action.
             },
-            onDone = {
-                value ->
+            onDone = { value ->
                 startManualDosing(
                     doseMl = value
                 )
@@ -1651,7 +1623,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         val currentState =
-        espDosingState
+            espDosingState
 
         if (currentState == null) {
             DialogManager.showConfirmDialog(
@@ -1679,7 +1651,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         }
 
         val baseActivity =
-        activity as? BaseActivity
+            activity as? BaseActivity
 
         baseActivity?.showLoading(
             true
@@ -1687,14 +1659,14 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val manualDoseResult =
-            runCatching {
-                dosingEspRepository.sendManualDose(
-                    deviceIp = deviceIp,
-                    channelIndex = channelIndex,
-                    doseMl = doseMl,
-                    calibrationMsPerMl = currentState.channel.calibrationMsPerMl
-                )
-            }
+                runCatching {
+                    dosingEspRepository.sendManualDose(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex,
+                        doseMl = doseMl,
+                        calibrationMsPerMl = currentState.channel.calibrationMsPerMl
+                    )
+                }
 
             baseActivity?.showLoading(
                 false
@@ -1741,100 +1713,100 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         name: String? = espDosingState?.channel?.name
     ) {
         val cleanName =
-        name
-        ?.trim()
-        .orEmpty()
+            name
+                ?.trim()
+                .orEmpty()
 
         binding.tvChannelSettingsTitle.text =
-        if (
-            cleanName.isNotBlank() &&
-            cleanName != "-"
-        ) {
-            cleanName
-        } else {
-            "Channel $channelNumber"
-        }
+            if (
+                cleanName.isNotBlank() &&
+                cleanName != "-"
+            ) {
+                cleanName
+            } else {
+                "Channel $channelNumber"
+            }
     }
 
     private fun applyResetState(
         state: DosingEspState
     ) {
         espDosingState =
-        state
+            state
 
         selectedMode =
-        DosingMode.SINGLE
+            DosingMode.SINGLE
 
         scheduleEnabled =
-        false
+            false
 
         savedScheduleEnabled =
-        false
+            false
 
         dailyDoseMl =
-        0f
+            0f
 
         savedDailyDoseMl =
-        0f
+            0f
 
         selectedWeekDays =
-        List(
-            size = 7
-        ) {
-            true
-        }
+            List(
+                size = 7
+            ) {
+                true
+            }
 
         savedWeekDays =
-        selectedWeekDays
+            selectedWeekDays
 
         reservoirTrackingEnabled =
-        false
+            false
 
         savedReservoirTrackingEnabled =
-        false
+            false
 
         missedDoseCompensationEnabled =
-        true
+            true
 
         savedMissedDoseCompensationEnabled =
-        true
+            true
 
         containerVolumeMl =
-        null
+            null
 
         savedContainerVolumeMl =
-        null
+            null
 
         renderChannelTitle(
             name = "Channel $channelNumber"
         )
 
         suppressScheduleCallback =
-        true
+            true
 
         binding.switchScheduleEnabled.isChecked =
-        false
+            false
 
         suppressScheduleCallback =
-        false
+            false
 
         suppressReservoirTrackingCallback =
-        true
+            true
 
         binding.switchReservoirTracking.isChecked =
-        false
+            false
 
         suppressReservoirTrackingCallback =
-        false
+            false
 
         suppressMissedDoseCompensationCallback =
-        true
+            true
 
         binding.switchMissedDoseCompensation.isChecked =
-        true
+            true
 
         suppressMissedDoseCompensationCallback =
-        false
+            false
 
         renderDailyDoseValue(
             value = 0f
@@ -1875,7 +1847,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
     override fun onDestroyView() {
         _binding =
-        null
+            null
 
         super.onDestroyView()
     }
@@ -1894,14 +1866,15 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         private const val ARG_CHANNEL_INDEX = "channelIndex"
 
         private const val RESULT_DOSING_SCHEDULE_UPDATED =
-        "dosingScheduleUpdated"
+            "dosingScheduleUpdated"
 
         private const val HOURLY24_DAILY_DOSE_ROUNDING_TOLERANCE_ML = 0.12f
 
-        private const val ARG_OPEN_CALIBRATION_FIRST = "openCalibrationFirst"
+        private const val ARG_OPEN_CALIBRATION_FIRST =
+            "openCalibrationFirst"
 
         private const val RESULT_DOSING_CALIBRATION_COMPLETED =
-        "dosingCalibrationCompleted"
+            "dosingCalibrationCompleted"
 
         fun newInstance(
             deviceId: Long,
