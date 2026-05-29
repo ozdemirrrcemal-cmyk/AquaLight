@@ -18,6 +18,8 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class DeviceDosingHourly24ModeSettingsFragment :
     Fragment(R.layout.fragment_device_dosing_hourly24_mode_settings) {
@@ -213,10 +215,12 @@ class DeviceDosingHourly24ModeSettingsFragment :
             ) ?: return
 
         binding.etDailyDoseMl.setText(
-            formatDoseMl(
-                value = hourlyTimer.configuredDailyDoseMl
-            )
+    formatDoseMl(
+        value = normalizeHourly24DailyDoseForDisplay(
+            value = hourlyTimer.configuredDailyDoseMl
         )
+    )
+)
 
         selectedMinute =
             parseMinuteFromTime(
@@ -501,6 +505,41 @@ class DeviceDosingHourly24ModeSettingsFragment :
             )
         )
     }
+    
+    private fun normalizeHourly24DailyDoseForDisplay(
+    value: Float
+): Float {
+    val safeValue =
+        value.coerceAtLeast(
+            minimumValue = 0f
+        )
+
+    val nearestWhole =
+        safeValue.roundToInt().toFloat()
+
+    /*
+     * Hourly 24 modda ESP, total daily dose'u değil,
+     * tek doz miktarını saklıyor.
+     *
+     * Örnek:
+     * Kullanıcı 100 ml giriyor.
+     * 100 / 24 = 4.166...
+     * ESP bunu 4.17 gibi döndürürse app tekrar:
+     * 4.17 * 24 = 100.08 görür.
+     *
+     * Bu yüzden tam sayıya çok yakın sapmaları kullanıcıya
+     * girilen değer gibi temiz gösteriyoruz.
+     */
+    return if (
+        abs(
+            safeValue - nearestWhole
+        ) <= HOURLY24_DAILY_DOSE_ROUNDING_TOLERANCE_ML
+    ) {
+        nearestWhole
+    } else {
+        safeValue
+    }
+}
 
     private fun formatDoseMl(
         value: Float
@@ -575,5 +614,7 @@ class DeviceDosingHourly24ModeSettingsFragment :
 
         private const val RESULT_DOSING_SCHEDULE_UPDATED =
             "dosingScheduleUpdated"
+            
+        private const val HOURLY24_DAILY_DOSE_ROUNDING_TOLERANCE_ML = 0.12f
     }
 }

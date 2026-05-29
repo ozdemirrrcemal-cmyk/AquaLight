@@ -198,7 +198,7 @@ class DosingChannelSettingsDataStoreManager(
                             safeChannelIndex
                         )
                         .setReservoirTrackingEnabled(
-                            true
+                            false
                         )
                         .setHasMissedDoseCompensationEnabled(
                             true
@@ -301,7 +301,7 @@ class DosingChannelSettingsDataStoreManager(
                 minimumValue = 0,
                 maximumValue = 3
             ),
-            reservoirTrackingEnabled = true,
+            reservoirTrackingEnabled = false,
             containerVolumeMl = null,
             missedDoseCompensationEnabled = true,
             updatedAtMillis = 0L
