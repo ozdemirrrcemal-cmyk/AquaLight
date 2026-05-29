@@ -86,15 +86,9 @@ object DosingEspJsonMapper {
             ).toString()
 
         return response
-            .optJSONObject(
-                KEY_L_PWM_CHANNEL_TIMER
-            )
-            ?.optJSONObject(
-                KEY_DATA
-            )
-            ?.optJSONObject(
-                safeChannelIndex
-            )
+            .optJSONObject(KEY_L_PWM_CHANNEL_TIMER)
+            ?.optJSONObject(KEY_DATA)
+            ?.optJSONObject(safeChannelIndex)
             ?.optNullableFloat(
                 key = "Rest"
             )
@@ -151,20 +145,17 @@ object DosingEspJsonMapper {
             ).toString()
 
         val timerDataJson =
-            response.optJSONObject(
-                KEY_L_TIMER
-            )?.optJSONObject(
-                KEY_DATA
-            ) ?: JSONObject()
+            response
+                .optJSONObject(KEY_L_TIMER)
+                ?.optJSONObject(KEY_DATA)
+                ?: JSONObject()
 
         val channelJson =
-            response.optJSONObject(
-                KEY_L_PWM_CHANNEL_TIMER
-            )?.optJSONObject(
-                KEY_DATA
-            )?.optJSONObject(
-                channelIndexKey
-            ) ?: JSONObject()
+            response
+                .optJSONObject(KEY_L_PWM_CHANNEL_TIMER)
+                ?.optJSONObject(KEY_DATA)
+                ?.optJSONObject(channelIndexKey)
+                ?: JSONObject()
 
         val channelState =
             parseChannelState(
@@ -564,40 +555,6 @@ object DosingEspJsonMapper {
             )
         }
     }
-    
-    fun createChannelRestPayload(
-    channelIndex: Int,
-    restMl: Float
-): JSONObject {
-    return JSONObject().apply {
-        put(
-            KEY_L_PWM_CHANNEL_TIMER,
-            JSONObject().apply {
-                put(
-                    KEY_DATA,
-                    JSONObject().apply {
-                        put(
-                            channelIndex.coerceIn(
-                                minimumValue = 0,
-                                maximumValue = 3
-                            ).toString(),
-                            JSONObject().apply {
-                                put(
-                                    "Rest",
-                                    formatFloatForEsp(
-                                        value = restMl.coerceAtLeast(
-                                            minimumValue = 0f
-                                        )
-                                    )
-                                )
-                            }
-                        )
-                    }
-                )
-            }
-        )
-    }
-}
 
     fun createSaveTimerPayload(): JSONObject {
         return JSONObject().apply {
@@ -619,21 +576,10 @@ object DosingEspJsonMapper {
     ): String {
         val suffix =
             when (mode) {
-                DosingScheduleMode.SINGLE -> {
-                    "SINGLE"
-                }
-
-                DosingScheduleMode.HOURLY_24 -> {
-                    "HOURLY_24"
-                }
-
-                DosingScheduleMode.CUSTOM_PERIODS -> {
-                    "CUSTOM_PERIODS"
-                }
-
-                DosingScheduleMode.TIMER -> {
-                    "TIMER"
-                }
+                DosingScheduleMode.SINGLE -> "SINGLE"
+                DosingScheduleMode.HOURLY_24 -> "HOURLY_24"
+                DosingScheduleMode.CUSTOM_PERIODS -> "CUSTOM_PERIODS"
+                DosingScheduleMode.TIMER -> "TIMER"
             }
 
         return "AQL_CH${channelNumber}_$suffix"
@@ -1075,31 +1021,23 @@ object DosingEspJsonMapper {
                         other = "CUSTOM_TIME",
                         ignoreCase = true
                     )
-            } -> {
-                DosingScheduleMode.CUSTOM_PERIODS
-            }
+            } -> DosingScheduleMode.CUSTOM_PERIODS
 
             names.any { name ->
                 name.contains(
                     other = "HOURLY_24",
                     ignoreCase = true
                 )
-            } -> {
-                DosingScheduleMode.HOURLY_24
-            }
+            } -> DosingScheduleMode.HOURLY_24
 
             names.any { name ->
                 name.contains(
                     other = "TIMER",
                     ignoreCase = true
                 )
-            } -> {
-                DosingScheduleMode.TIMER
-            }
+            } -> DosingScheduleMode.TIMER
 
-            else -> {
-                DosingScheduleMode.SINGLE
-            }
+            else -> DosingScheduleMode.SINGLE
         }
     }
 
@@ -1237,13 +1175,9 @@ object DosingEspJsonMapper {
                 )
 
             when (value) {
-                is Boolean -> {
-                    value
-                }
+                is Boolean -> value
 
-                is Number -> {
-                    value.toInt() != 0
-                }
+                is Number -> value.toInt() != 0
 
                 is String -> {
                     value == "1" ||
@@ -1253,9 +1187,7 @@ object DosingEspJsonMapper {
                         )
                 }
 
-                else -> {
-                    false
-                }
+                else -> false
             }
         }
     }
@@ -1321,13 +1253,9 @@ object DosingEspJsonMapper {
         }
 
         return when (val value = opt(key)) {
-            is Boolean -> {
-                value
-            }
+            is Boolean -> value
 
-            is Number -> {
-                value.toInt() != 0
-            }
+            is Number -> value.toInt() != 0
 
             is String -> {
                 value == "1" ||
@@ -1337,9 +1265,7 @@ object DosingEspJsonMapper {
                     )
             }
 
-            else -> {
-                defaultValue
-            }
+            else -> defaultValue
         }
     }
 
@@ -1352,9 +1278,7 @@ object DosingEspJsonMapper {
         }
 
         return when (val value = opt(key)) {
-            is Number -> {
-                value.toFloat()
-            }
+            is Number -> value.toFloat()
 
             is String -> {
                 value.replace(
@@ -1363,9 +1287,7 @@ object DosingEspJsonMapper {
                 ).toFloatOrNull() ?: defaultValue
             }
 
-            else -> {
-                defaultValue
-            }
+            else -> defaultValue
         }
     }
 
@@ -1378,17 +1300,11 @@ object DosingEspJsonMapper {
         }
 
         return when (val value = opt(key)) {
-            is Number -> {
-                value.toLong()
-            }
+            is Number -> value.toLong()
 
-            is String -> {
-                value.toLongOrNull() ?: defaultValue
-            }
+            is String -> value.toLongOrNull() ?: defaultValue
 
-            else -> {
-                defaultValue
-            }
+            else -> defaultValue
         }
     }
 
@@ -1401,17 +1317,11 @@ object DosingEspJsonMapper {
         }
 
         return when (val value = opt(key)) {
-            is Number -> {
-                value.toInt()
-            }
+            is Number -> value.toInt()
 
-            is String -> {
-                value.toIntOrNull() ?: defaultValue
-            }
+            is String -> value.toIntOrNull() ?: defaultValue
 
-            else -> {
-                defaultValue
-            }
+            else -> defaultValue
         }
     }
 

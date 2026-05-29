@@ -9,15 +9,15 @@ class DosingEspRepository(
         channelIndex: Int
     ): DosingEspState {
         val payload =
-        DosingEspJsonMapper.createReadDosingStatePayload(
-            channelIndex = channelIndex
-        )
+            DosingEspJsonMapper.createReadDosingStatePayload(
+                channelIndex = channelIndex
+            )
 
         val response =
-        api.getJson(
-            deviceIp = deviceIp,
-            payload = payload
-        )
+            api.getJson(
+                deviceIp = deviceIp,
+                payload = payload
+            )
 
         return DosingEspJsonMapper.parseDosingState(
             response = response,
@@ -30,15 +30,15 @@ class DosingEspRepository(
         channelIndex: Int
     ): Float? {
         val payload =
-        DosingEspJsonMapper.createReadChannelRestPayload(
-            channelIndex = channelIndex
-        )
+            DosingEspJsonMapper.createReadChannelRestPayload(
+                channelIndex = channelIndex
+            )
 
         val response =
-        api.getJson(
-            deviceIp = deviceIp,
-            payload = payload
-        )
+            api.getJson(
+                deviceIp = deviceIp,
+                payload = payload
+            )
 
         return DosingEspJsonMapper.parseChannelRestMl(
             response = response,
@@ -52,12 +52,12 @@ class DosingEspRepository(
         restMl: Float
     ) {
         val payload =
-        DosingEspJsonMapper.createWriteChannelRestPayload(
-            channelIndex = channelIndex,
-            restMl = restMl.coerceAtLeast(
-                minimumValue = 0f
+            DosingEspJsonMapper.createWriteChannelRestPayload(
+                channelIndex = channelIndex,
+                restMl = restMl.coerceAtLeast(
+                    minimumValue = 0f
+                )
             )
-        )
 
         api.postJson(
             deviceIp = deviceIp,
@@ -69,7 +69,7 @@ class DosingEspRepository(
         deviceIp: String,
         channelIndex: Int,
         capacityMl: Float
-    ) {
+    ): DosingEspState {
         require(
             value = capacityMl > 0f
         ) {
@@ -80,6 +80,11 @@ class DosingEspRepository(
             deviceIp = deviceIp,
             channelIndex = channelIndex,
             restMl = capacityMl
+        )
+
+        return fetchDosingState(
+            deviceIp = deviceIp,
+            channelIndex = channelIndex
         )
     }
 
@@ -94,21 +99,21 @@ class DosingEspRepository(
         enabled: Boolean
     ) {
         val currentState =
-        fetchDosingState(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex
-        )
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
 
         val payload =
-        DosingEspJsonMapper.createMergedSingleSchedulePayload(
-            existingTimers = currentState.timers,
-            channelNumber = channelNumber,
-            gpioPwm = gpioPwm,
-            totalDailyDoseMl = totalDailyDoseMl,
-            weekDays = weekDays,
-            startTime = startTime,
-            enabled = enabled
-        )
+            DosingEspJsonMapper.createMergedSingleSchedulePayload(
+                existingTimers = currentState.timers,
+                channelNumber = channelNumber,
+                gpioPwm = gpioPwm,
+                totalDailyDoseMl = totalDailyDoseMl,
+                weekDays = weekDays,
+                startTime = startTime,
+                enabled = enabled
+            )
 
         api.postJson(
             deviceIp = deviceIp,
@@ -131,21 +136,21 @@ class DosingEspRepository(
         enabled: Boolean
     ) {
         val currentState =
-        fetchDosingState(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex
-        )
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
 
         val payload =
-        DosingEspJsonMapper.createMergedHourly24SchedulePayload(
-            existingTimers = currentState.timers,
-            channelNumber = channelNumber,
-            gpioPwm = gpioPwm,
-            totalDailyDoseMl = totalDailyDoseMl,
-            weekDays = weekDays,
-            startTime = startTime,
-            enabled = enabled
-        )
+            DosingEspJsonMapper.createMergedHourly24SchedulePayload(
+                existingTimers = currentState.timers,
+                channelNumber = channelNumber,
+                gpioPwm = gpioPwm,
+                totalDailyDoseMl = totalDailyDoseMl,
+                weekDays = weekDays,
+                startTime = startTime,
+                enabled = enabled
+            )
 
         api.postJson(
             deviceIp = deviceIp,
@@ -168,21 +173,21 @@ class DosingEspRepository(
         enabled: Boolean
     ) {
         val currentState =
-        fetchDosingState(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex
-        )
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
 
         val payload =
-        DosingEspJsonMapper.createMergedCustomPeriodsSchedulePayload(
-            existingTimers = currentState.timers,
-            channelNumber = channelNumber,
-            gpioPwm = gpioPwm,
-            totalDailyDoseMl = totalDailyDoseMl,
-            weekDays = weekDays,
-            periods = periods,
-            enabled = enabled
-        )
+            DosingEspJsonMapper.createMergedCustomPeriodsSchedulePayload(
+                existingTimers = currentState.timers,
+                channelNumber = channelNumber,
+                gpioPwm = gpioPwm,
+                totalDailyDoseMl = totalDailyDoseMl,
+                weekDays = weekDays,
+                periods = periods,
+                enabled = enabled
+            )
 
         api.postJson(
             deviceIp = deviceIp,
@@ -204,20 +209,20 @@ class DosingEspRepository(
         enabled: Boolean
     ) {
         val currentState =
-        fetchDosingState(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex
-        )
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
 
         val payload =
-        DosingEspJsonMapper.createMergedTimerModeSchedulePayload(
-            existingTimers = currentState.timers,
-            channelNumber = channelNumber,
-            gpioPwm = gpioPwm,
-            weekDays = weekDays,
-            doses = doses,
-            enabled = enabled
-        )
+            DosingEspJsonMapper.createMergedTimerModeSchedulePayload(
+                existingTimers = currentState.timers,
+                channelNumber = channelNumber,
+                gpioPwm = gpioPwm,
+                weekDays = weekDays,
+                doses = doses,
+                enabled = enabled
+            )
 
         api.postJson(
             deviceIp = deviceIp,
@@ -244,25 +249,25 @@ class DosingEspRepository(
         enabled: Boolean
     ) {
         val currentState =
-        fetchDosingState(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex
-        )
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
 
         val payload =
-        DosingEspJsonMapper.createMergedGenericTimerSchedulePayload(
-            existingTimers = currentState.timers,
-            channelNumber = channelNumber,
-            mode = mode,
-            gpioPwm = gpioPwm,
-            dosePerRunMl = dosePerRunMl,
-            weekDays = weekDays,
-            timeStart = timeStart,
-            intervalOn = intervalOn,
-            intervalOff = intervalOff,
-            count = count,
-            enabled = enabled
-        )
+            DosingEspJsonMapper.createMergedGenericTimerSchedulePayload(
+                existingTimers = currentState.timers,
+                channelNumber = channelNumber,
+                mode = mode,
+                gpioPwm = gpioPwm,
+                dosePerRunMl = dosePerRunMl,
+                weekDays = weekDays,
+                timeStart = timeStart,
+                intervalOn = intervalOn,
+                intervalOff = intervalOff,
+                count = count,
+                enabled = enabled
+            )
 
         api.postJson(
             deviceIp = deviceIp,
@@ -281,26 +286,26 @@ class DosingEspRepository(
         weekDays: List<Boolean>
     ) {
         val currentState =
-        fetchDosingState(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex
-        )
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
 
         val targetTimerIndices =
-        findExistingScheduleTimerIndicesForChannel(
-            state = currentState
-        )
+            findExistingScheduleTimerIndicesForChannel(
+                state = currentState
+            )
 
         if (targetTimerIndices.isEmpty()) {
             return
         }
 
         val payload =
-        DosingEspJsonMapper.createTimerEnabledWeekDaysPayload(
-            timerIndices = targetTimerIndices,
-            enabled = enabled,
-            weekDays = weekDays
-        )
+            DosingEspJsonMapper.createTimerEnabledWeekDaysPayload(
+                timerIndices = targetTimerIndices,
+                enabled = enabled,
+                weekDays = weekDays
+            )
 
         api.postJson(
             deviceIp = deviceIp,
@@ -346,54 +351,15 @@ class DosingEspRepository(
         }
 
         val payload =
-        DosingEspJsonMapper.createManualDosePayload(
-            channelIndex = channelIndex,
-            doseMl = doseMl,
-            calibrationMsPerMl = calibrationMsPerMl
-        )
+            DosingEspJsonMapper.createManualDosePayload(
+                channelIndex = channelIndex,
+                doseMl = doseMl,
+                calibrationMsPerMl = calibrationMsPerMl
+            )
 
         api.postJson(
             deviceIp = deviceIp,
             payload = payload
-        )
-    }
-
-    suspend fun updateChannelRest(
-        deviceIp: String,
-        channelIndex: Int,
-        restMl: Float
-    ) {
-        val payload =
-        DosingEspJsonMapper.createChannelRestPayload(
-            channelIndex = channelIndex,
-            restMl = restMl
-        )
-
-        api.postJson(
-            deviceIp = deviceIp,
-            payload = payload
-        )
-    }
-
-    suspend fun refillChannelReservoir(
-        deviceIp: String,
-        channelIndex: Int,
-        capacityMl: Float
-    ): DosingEspState {
-        val safeCapacityMl =
-        capacityMl.coerceAtLeast(
-            minimumValue = 0f
-        )
-
-        updateChannelRest(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex,
-            restMl = safeCapacityMl
-        )
-
-        return fetchDosingState(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex
         )
     }
 
@@ -401,7 +367,7 @@ class DosingEspRepository(
         state: DosingEspState
     ): List<Int> {
         val channelGpioPwm =
-        state.channel.gpioPwm.trim()
+            state.channel.gpioPwm.trim()
 
         if (
             channelGpioPwm.isBlank() ||
@@ -411,23 +377,21 @@ class DosingEspRepository(
         }
 
         return state.timers
-        .filter {
-            timer ->
-            timer.belongsToGpioPwm(
-                targetGpioPwm = channelGpioPwm
-            ) &&
-            timer.name.isNotBlank() &&
-            timer.name != "-" &&
-            timer.dosePerRunMl > 0f &&
-            timer.count > 0 &&
-            timer.index >= 0
-        }
-        .map {
-            timer ->
-            timer.index
-        }
-        .distinct()
-        .sorted()
+            .filter { timer ->
+                timer.belongsToGpioPwm(
+                    targetGpioPwm = channelGpioPwm
+                ) &&
+                    timer.name.isNotBlank() &&
+                    timer.name != "-" &&
+                    timer.dosePerRunMl > 0f &&
+                    timer.count > 0 &&
+                    timer.index >= 0
+            }
+            .map { timer ->
+                timer.index
+            }
+            .distinct()
+            .sorted()
     }
 
     private suspend fun saveTimerToDevice(
