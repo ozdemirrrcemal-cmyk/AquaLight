@@ -345,18 +345,10 @@ class DeviceDosingSingleModeSettingsFragment :
                             channelIndex = channelIndex
                         )
 
-                    val gpioPwm =
-                        currentState.channel.gpioPwm.takeIf { value ->
-                            value.isNotBlank() && value != "-"
-                        } ?: throw IllegalStateException(
-                            "PWM channel information is missing."
-                        )
-
                     dosingEspRepository.saveSingleSchedule(
                         deviceIp = deviceIp,
                         channelIndex = channelIndex,
                         channelNumber = channelNumber,
-                        gpioPwm = gpioPwm,
                         totalDailyDoseMl = doseMl,
                         weekDays = getScheduleWeekDays(
                             state = currentState
