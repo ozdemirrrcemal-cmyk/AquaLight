@@ -614,42 +614,101 @@ object DosingEspJsonMapper {
             maximumValue = APP_TIMER_CHANNEL_COUNT - 1
         )
 
-        val cleanGpioPwm =
-        gpioPwm.trim()
+        val safeChannelNumber =
+        channelNumber.coerceIn(
+            minimumValue = 1,
+            maximumValue = APP_TIMER_CHANNEL_COUNT
+        )
 
-        val preservedTimers =
+        val cleanGpioPwm =
+        gpioPwm.trim().takeIf {
+            value ->
+            value.isNotBlank() && value != "-"
+        } ?: "PWM$safeChannelNumber"
+
+        val targetTimerIndices =
         existingTimers
         .filter {
             timer ->
-            shouldKeepExistingTimer(
-                timer = timer
-            )
-        }
-        .filterNot {
-            timer ->
             timer.belongsToGpioPwm(
                 targetGpioPwm = cleanGpioPwm
-            )
-        }
-        .sortedBy {
-            timer ->
-            timer.index
+            ) &&
+            timer.index >= 0
         }
         .map {
             timer ->
-            timer.toSavePayload()
+            timer.index
+        }
+        .distinct()
+        .sorted()
+        .ifEmpty {
+            getAppTimerSlotIndicesForChannel(
+                channelIndex = safeChannelIndex
+            )
         }
 
         val timerData =
         JSONObject()
 
-        preservedTimers.forEachIndexed {
-            index, timer ->
+        targetTimerIndices.forEach {
+            timerIndex ->
             timerData.put(
-                index.toString(),
-                createTimerObject(
-                    timer = timer
-                )
+                timerIndex.toString(),
+                JSONObject().apply {
+                    put(
+                        "Enabled",
+                        false
+                    )
+
+                    put(
+                        "Regime",
+                        "Off"
+                    )
+
+                    put(
+                        "Name",
+                        "-"
+                    )
+
+                    put(
+                        "GPIO_PWM",
+                        "-"
+                    )
+
+                    put(
+                        "YE",
+                        0
+                    )
+
+                    put(
+                        "WDay",
+                        createWeekDayArray(
+                            weekDays = List(size = 7) {
+                                true
+                            }
+                        )
+                    )
+
+                    put(
+                        "TimeStart",
+                        "00:00"
+                    )
+
+                    put(
+                        "IntervalOn",
+                        "00:00"
+                    )
+
+                    put(
+                        "IntervalOff",
+                        "00:00"
+                    )
+
+                    put(
+                        "Count",
+                        0
+                    )
+                }
             )
         }
 
@@ -665,12 +724,7 @@ object DosingEspJsonMapper {
                                 JSONObject().apply {
                                     put(
                                         "Name",
-                                        "Channel $channelNumber"
-                                    )
-
-                                    put(
-                                        "Regime",
-                                        "Off"
+                                        "Channel $safeChannelNumber"
                                     )
 
                                     put(
@@ -684,8 +738,28 @@ object DosingEspJsonMapper {
                                     )
 
                                     put(
+                                        "Dimension",
+                                        "ml"
+                                    )
+
+                                    put(
                                         "Rest",
                                         0
+                                    )
+
+                                    put(
+                                        "VManual",
+                                        JSONObject().apply {
+                                            put(
+                                                "V",
+                                                -1
+                                            )
+
+                                            put(
+                                                "TOffMs",
+                                                0
+                                            )
+                                        }
                                     )
                                 }
                             )
@@ -697,11 +771,6 @@ object DosingEspJsonMapper {
             put(
                 KEY_L_TIMER,
                 JSONObject().apply {
-                    put(
-                        "Count",
-                        preservedTimers.size
-                    )
-
                     put(
                         KEY_DATA,
                         timerData
