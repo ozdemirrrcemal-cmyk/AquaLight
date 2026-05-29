@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import android.util.Log
 
 class DeviceDosingChannelSettingsFragment :
 Fragment(R.layout.fragment_device_dosing_channel_settings) {
@@ -291,11 +292,19 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                     state = state
                 )
             }.onFailure {
+                throwable ->
+                Log.e(
+                    "DOSING_STATE",
+                    "Dosing state could not be loaded. deviceIp=$deviceIp channelIndex=$channelIndex",
+                    throwable
+                )
+
                 DialogManager.showConfirmDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
                     title = "Device Data Failed",
-                    message = "Dosing data could not be loaded from the device. Please check the device connection and try again.",
+                    message = throwable.message
+                    ?: "Dosing data could not be loaded from the device. Please check the device connection and try again.",
                     onConfirm = {
                         fetchDosingStateFromEsp()
                     }

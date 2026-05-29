@@ -1044,6 +1044,17 @@ class DeviceDosingFragment :
 
         super.onDestroyView()
     }
+	
+	override fun onResume() {
+    super.onResume()
+
+    if (
+        _binding != null &&
+        ::dosingEspRepository.isInitialized
+    ) {
+        fetchDosingStatesFromEsp()
+    }
+}
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"

@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.dosing.esp
 
+import kotlin.math.abs
+
 class DosingEspRepository(
     private val api: DosingEspApi = DosingEspApi()
 ) {
@@ -51,12 +53,15 @@ class DosingEspRepository(
         channelIndex: Int,
         restMl: Float
     ) {
+        val safeRestMl =
+            restMl.coerceAtLeast(
+                minimumValue = 0f
+            )
+
         val payload =
             DosingEspJsonMapper.createWriteChannelRestPayload(
                 channelIndex = channelIndex,
-                restMl = restMl.coerceAtLeast(
-                    minimumValue = 0f
-                )
+                restMl = safeRestMl
             )
 
         api.postJson(
@@ -82,10 +87,28 @@ class DosingEspRepository(
             restMl = capacityMl
         )
 
-        return fetchDosingState(
-            deviceIp = deviceIp,
-            channelIndex = channelIndex
-        )
+        val updatedState =
+            fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = channelIndex
+            )
+
+        val updatedRestMl =
+            updatedState.channel.restMl
+
+        val refillVerified =
+            updatedRestMl != null &&
+                abs(
+                    updatedRestMl - capacityMl
+                ) <= REST_WRITE_TOLERANCE_ML
+
+        if (!refillVerified) {
+            throw IllegalStateException(
+                "Reservoir refill could not be verified."
+            )
+        }
+
+        return updatedState
     }
 
     suspend fun saveSingleSchedule(
@@ -401,5 +424,9 @@ class DosingEspRepository(
             deviceIp = deviceIp,
             payload = DosingEspJsonMapper.createSaveTimerPayload()
         )
+    }
+
+    private companion object {
+        private const val REST_WRITE_TOLERANCE_ML = 0.5f
     }
 }
