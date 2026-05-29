@@ -891,6 +891,14 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
                 true
             )
 
+            findNavController()
+            .previousBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                RESULT_DOSING_CALIBRATION_COMPLETED,
+                true
+            )
+
             showSnackBar(
                 message = "Calibration saved.",
                 type = BaseActivity.SnackType.NORMAL
@@ -1095,6 +1103,8 @@ Fragment(R.layout.fragment_device_dosing_calibration) {
         private const val ARG_CHANNEL_INDEX = "channelIndex"
         private const val RESULT_DOSING_SCHEDULE_UPDATED =
         "dosingScheduleUpdated"
+        private const val RESULT_DOSING_CALIBRATION_COMPLETED =
+        "dosingCalibrationCompleted"
 
         fun newInstance(
             deviceId: Long,

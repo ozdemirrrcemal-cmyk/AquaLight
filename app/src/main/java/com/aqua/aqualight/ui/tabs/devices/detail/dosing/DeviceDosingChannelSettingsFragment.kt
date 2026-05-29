@@ -59,6 +59,15 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         true
     }
 
+    private var calibrationAutoOpenHandled: Boolean = false
+    private var forceScheduleEnabledAfterCalibration: Boolean = false
+
+    private val shouldOpenCalibrationFirst: Boolean
+    get() = requireArguments().getBoolean(
+        ARG_OPEN_CALIBRATION_FIRST,
+        false
+    )
+
     private var reservoirTrackingEnabled: Boolean = false
     private var savedReservoirTrackingEnabled: Boolean = false
 
@@ -177,7 +186,12 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         )
 
         renderTopBarSaveState()
-        fetchDosingStateFromEsp()
+
+        if (shouldOpenCalibrationFirst) {
+            maybeOpenCalibrationFirst()
+        } else {
+            fetchDosingStateFromEsp()
+        }
     }
 
     private fun bindHeaderActions() {
@@ -218,6 +232,23 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         )
 
         makeDailyDoseCardDisplayOnly()
+    }
+
+    private fun maybeOpenCalibrationFirst() {
+        if (calibrationAutoOpenHandled) {
+            return
+        }
+
+        calibrationAutoOpenHandled =
+        true
+
+        binding.root.post {
+            if (_binding == null) {
+                return@post
+            }
+
+            openCalibrationWizard()
+        }
     }
 
     private fun syncInitialChannelSettingsFromUi() {
@@ -376,6 +407,27 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         updateScheduleEnabledState(
             enabled = state.scheduleEnabled
         )
+
+        if (forceScheduleEnabledAfterCalibration) {
+            forceScheduleEnabledAfterCalibration =
+            false
+
+            scheduleEnabled =
+            true
+
+            suppressScheduleCallback =
+            true
+
+            binding.switchScheduleEnabled.isChecked =
+            true
+
+            suppressScheduleCallback =
+            false
+
+            updateScheduleEnabledState(
+                enabled = true
+            )
+        }
 
         renderTopBarSaveState()
     }
@@ -604,6 +656,32 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
             return
         }
 
+        val shouldSyncReservoirRestToEsp =
+        reservoirTrackingEnabled &&
+        hasValidContainerVolume() &&
+        (
+            reservoirTrackingEnabled != savedReservoirTrackingEnabled ||
+            !areFloatValuesSame(
+                currentValue = containerVolumeMl,
+                savedValue = savedContainerVolumeMl
+            )
+        )
+
+        if (
+            shouldSyncReservoirRestToEsp &&
+            deviceIp.isBlank()
+        ) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
+        val reservoirCapacityToSync =
+        containerVolumeMl
+
         val hadDataStoreChanges =
         hasUnsavedDataStoreSettings
 
@@ -633,6 +711,23 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                         containerVolumeMl = containerVolumeMl,
                         missedDoseCompensationEnabled = missedDoseCompensationEnabled
                     )
+                }
+
+                if (shouldSyncReservoirRestToEsp) {
+                    val capacityMl =
+                    reservoirCapacityToSync ?: throw IllegalStateException(
+                        "Reservoir capacity is missing."
+                    )
+
+                    val refreshedState =
+                    dosingEspRepository.refillChannelReservoir(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex,
+                        capacityMl = capacityMl
+                    )
+
+                    espDosingState =
+                    refreshedState
                 }
 
                 if (hadEspTimerChanges) {
@@ -684,7 +779,12 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
 
                     savedWeekDays =
                     selectedWeekDays
+                }
 
+                if (
+                    hadEspTimerChanges ||
+                    shouldSyncReservoirRestToEsp
+                ) {
                     fetchDosingStateFromEsp()
                 }
             }.onFailure {
@@ -748,6 +848,32 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                     RESULT_DOSING_SCHEDULE_UPDATED,
                     false
                 )
+
+                fetchDosingStateFromEsp()
+            }
+        }
+
+        findNavController()
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?.getLiveData<Boolean>(
+            RESULT_DOSING_CALIBRATION_COMPLETED
+        )
+        ?.observe(
+            viewLifecycleOwner
+        ) {
+            completed ->
+            if (completed == true) {
+                findNavController()
+                .currentBackStackEntry
+                ?.savedStateHandle
+                ?.set(
+                    RESULT_DOSING_CALIBRATION_COMPLETED,
+                    false
+                )
+
+                forceScheduleEnabledAfterCalibration =
+                true
 
                 fetchDosingStateFromEsp()
             }
@@ -1358,7 +1484,7 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
                 )
 
                 findNavController().navigateUp()
-				return@launch
+                return@launch
             }.onFailure {
                 throwable ->
                 Log.e(
@@ -1771,6 +1897,11 @@ Fragment(R.layout.fragment_device_dosing_channel_settings) {
         "dosingScheduleUpdated"
 
         private const val HOURLY24_DAILY_DOSE_ROUNDING_TOLERANCE_ML = 0.12f
+
+        private const val ARG_OPEN_CALIBRATION_FIRST = "openCalibrationFirst"
+
+        private const val RESULT_DOSING_CALIBRATION_COMPLETED =
+        "dosingCalibrationCompleted"
 
         fun newInstance(
             deviceId: Long,
