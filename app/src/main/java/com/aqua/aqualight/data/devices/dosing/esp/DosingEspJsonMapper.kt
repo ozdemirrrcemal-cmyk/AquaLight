@@ -564,6 +564,40 @@ object DosingEspJsonMapper {
             )
         }
     }
+    
+    fun createChannelRestPayload(
+    channelIndex: Int,
+    restMl: Float
+): JSONObject {
+    return JSONObject().apply {
+        put(
+            KEY_L_PWM_CHANNEL_TIMER,
+            JSONObject().apply {
+                put(
+                    KEY_DATA,
+                    JSONObject().apply {
+                        put(
+                            channelIndex.coerceIn(
+                                minimumValue = 0,
+                                maximumValue = 3
+                            ).toString(),
+                            JSONObject().apply {
+                                put(
+                                    "Rest",
+                                    formatFloatForEsp(
+                                        value = restMl.coerceAtLeast(
+                                            minimumValue = 0f
+                                        )
+                                    )
+                                )
+                            }
+                        )
+                    }
+                )
+            }
+        )
+    }
+}
 
     fun createSaveTimerPayload(): JSONObject {
         return JSONObject().apply {

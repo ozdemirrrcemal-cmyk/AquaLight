@@ -23,9 +23,14 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.floor
 import kotlin.math.roundToInt
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspRepository
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspState
+import com.aqua.aqualight.data.devices.dosing.esp.DosingEspTimerState
+import com.aqua.aqualight.data.devices.dosing.esp.DosingScheduleMode
+import kotlin.math.roundToInt
 
 class DeviceDosingFragment :
-    Fragment(R.layout.fragment_device_dosing) {
+Fragment(R.layout.fragment_device_dosing) {
 
     private var _binding: FragmentDeviceDosingBinding? = null
     private val binding get() = _binding!!
@@ -36,16 +41,24 @@ class DeviceDosingFragment :
     private var navigationInProgress: Boolean = false
 
     private val runningPumpIndexes: MutableSet<Int> =
-        mutableSetOf()
+    mutableSetOf()
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+    get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceIp: String
-        get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     private val deviceTitle: String
-        get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
+    get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
+
+    private lateinit var dosingEspRepository: DosingEspRepository
+
+    private val latestLocalSettingsByChannel: MutableMap<Int, DosingChannelSettingsUi> =
+    mutableMapOf()
+
+    private val latestEspStateByChannel: MutableMap<Int, DosingEspState> =
+    mutableMapOf()
 
     override fun onViewCreated(
         view: View,
@@ -57,20 +70,21 @@ class DeviceDosingFragment :
         )
 
         _binding =
-            FragmentDeviceDosingBinding.bind(
-                view
-            )
+        FragmentDeviceDosingBinding.bind(
+            view
+        )
 
         channelSettingsDataStoreManager =
-            DosingChannelSettingsDataStoreManager(
-                context = requireContext()
-            )
+        DosingChannelSettingsDataStoreManager(
+            context = requireContext()
+        )
 
         dosingEspRepository =
-            DosingEspRepository()
+        DosingEspRepository()
 
         bindDefaultChannelCards()
         observeChannelCards()
+        fetchDosingStatesFromEsp()
         bindClicks()
         renderPumpRunningIndicators()
     }
@@ -107,68 +121,68 @@ class DeviceDosingFragment :
         channelName: String
     ) {
         cardBinding.tvChannelNumber.text =
-            channelNumber.toString()
+        channelNumber.toString()
 
         cardBinding.tvChannelName.text =
-            channelName
+        channelName
 
         cardBinding.tvChannelState.text =
-            "Set up"
+        "Set up"
 
         cardBinding.tvChannelHint.text =
-            "Tap to configure this channel"
+        "Tap to configure this channel"
 
         cardBinding.tvChannelHint.visibility =
-            View.VISIBLE
+        View.VISIBLE
 
         cardBinding.tvChannelDose.text =
-            "0 ml"
+        "0 ml"
 
         cardBinding.tvChannelSchedule.text =
-            "Every day"
+        "Every day"
 
         cardBinding.tvChannelStatus.text =
-            "Not set up"
+        "Not set up"
 
         cardBinding.tvChannelReservoir.text =
-            "Reservoir not set"
+        "Reservoir not set"
 
         cardBinding.tvChannelReservoir.setOnClickListener(
             null
         )
 
         cardBinding.tvChannelReservoir.isClickable =
-            false
+        false
 
         cardBinding.tvChannelReservoir.isFocusable =
-            false
+        false
 
         cardBinding.tvChannelProgressTitle.text =
-            "Today"
+        "Today"
 
         cardBinding.tvChannelProgressValue.text =
-            "0 / 0 ml"
+        "0 / 0 ml"
 
         cardBinding.progressChannelDose.max =
-            TODAY_PROGRESS_MAX
+        TODAY_PROGRESS_MAX
 
         cardBinding.progressChannelDose.progress =
-            0
+        0
 
         cardBinding.progressChannelDose.visibility =
-            View.VISIBLE
+        View.VISIBLE
 
         cardBinding.channelMetricsContainer.visibility =
-            View.GONE
+        View.GONE
 
         cardBinding.channelProgressSection.visibility =
-            View.GONE
+        View.GONE
 
         cardBinding.channelProgressBarRow.visibility =
-            View.GONE
+        View.GONE
 
         cardBinding.btnChannelQuickDose.visibility =
-            View.GONE
+        View.GONE
 
         cardBinding.btnChannelQuickDose.setOnClickListener(
             null
@@ -177,26 +191,25 @@ class DeviceDosingFragment :
 
     private fun observeChannelCards() {
         val channelCards =
-            listOf(
-                binding.channelCard1,
-                binding.channelCard2,
-                binding.channelCard3,
-                binding.channelCard4
-            )
+        getChannelCards()
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
-                channelCards.forEachIndexed { channelIndex, cardBinding ->
+                channelCards.forEachIndexed {
+                    channelIndex, _ ->
                     launch {
                         channelSettingsDataStoreManager.observeChannelSettings(
                             deviceId = deviceId,
                             channelIndex = channelIndex
-                        ).collect { settings ->
-                            renderChannelFromSources(
-                                cardBinding = cardBinding,
-                                settings = settings
+                        ).collect {
+                            settings ->
+                            latestLocalSettingsByChannel[channelIndex] =
+                            settings
+
+                            renderChannelCard(
+                                channelIndex = channelIndex
                             )
                         }
                     }
@@ -204,6 +217,317 @@ class DeviceDosingFragment :
             }
         }
     }
+
+    private fun fetchDosingStatesFromEsp() {
+        if (deviceIp.isBlank()) {
+            showSnackBar(
+                message = "Device IP address is missing.",
+                type = BaseActivity.SnackType.WARNING
+            )
+
+            return
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            getChannelCards().forEachIndexed {
+                channelIndex, _ ->
+                val result =
+                runCatching {
+                    dosingEspRepository.fetchDosingState(
+                        deviceIp = deviceIp,
+                        channelIndex = channelIndex
+                    )
+                }
+
+                if (_binding == null) {
+                    return@launch
+                }
+
+                result.onSuccess {
+                    state ->
+                    latestEspStateByChannel[channelIndex] =
+                    state
+
+                    renderChannelCard(
+                        channelIndex = channelIndex
+                    )
+                }
+            }
+        }
+    }
+
+    private fun getChannelCards(): List<ItemDosingChannelCardBinding> {
+        return listOf(
+            binding.channelCard1,
+            binding.channelCard2,
+            binding.channelCard3,
+            binding.channelCard4
+        )
+    }
+
+    private fun renderChannelCard(
+        channelIndex: Int
+    ) {
+        if (_binding == null) {
+            return
+        }
+
+        val cardBinding =
+        getChannelCards().getOrNull(
+            index = channelIndex
+        ) ?: return
+
+        val settings =
+        latestLocalSettingsByChannel[channelIndex]
+
+        val espState =
+        latestEspStateByChannel[channelIndex]
+
+        val channelNumber =
+        channelIndex + 1
+
+        val channelName =
+        espState
+        ?.channel
+        ?.name
+        ?.trim()
+        ?.takeIf {
+            name ->
+            name.isNotBlank() && name != "-"
+        } ?: "Channel $channelNumber"
+
+        val dailyDoseMl =
+        espState?.configuredDailyDoseMl ?: 0f
+
+        cardBinding.tvChannelNumber.text =
+        channelNumber.toString()
+
+        cardBinding.tvChannelName.text =
+        channelName
+
+        cardBinding.tvChannelState.text =
+        if (espState?.scheduleEnabled == true) {
+            "Active"
+        } else {
+            "Inactive"
+        }
+
+        cardBinding.tvChannelDose.text =
+        formatMl(
+            value = dailyDoseMl
+        )
+
+        cardBinding.tvChannelSchedule.text =
+        espState?.let {
+            state ->
+            formatWeekDays(
+                weekDays = getScheduleWeekDays(
+                    state = state
+                )
+            )
+        } ?: "Every day"
+
+        cardBinding.tvChannelStatus.text =
+        espState?.let {
+            state ->
+            formatModeProgress(
+                state = state
+            )
+        } ?: "Not set up"
+
+        cardBinding.tvChannelHint.visibility =
+        View.GONE
+
+        cardBinding.channelMetricsContainer.visibility =
+        View.VISIBLE
+
+        renderReservoirSection(
+            cardBinding = cardBinding,
+            channelIndex = channelIndex,
+            settings = settings,
+            espState = espState,
+            dailyDoseMl = dailyDoseMl
+        )
+    }
+
+    private fun renderReservoirSection(
+        cardBinding: ItemDosingChannelCardBinding,
+        channelIndex: Int,
+        settings: DosingChannelSettingsUi?,
+        espState: DosingEspState?,
+        dailyDoseMl: Float
+    ) {
+        if (settings == null) {
+            cardBinding.tvChannelReservoir.text =
+            "Reservoir not set"
+
+            cardBinding.channelProgressSection.visibility =
+            View.GONE
+
+            cardBinding.channelProgressBarRow.visibility =
+            View.GONE
+
+            cardBinding.btnChannelQuickDose.visibility =
+            View.GONE
+
+            cardBinding.btnChannelQuickDose.setOnClickListener(
+                null
+            )
+
+            return
+        }
+
+        if (!settings.reservoirTrackingEnabled) {
+            cardBinding.tvChannelReservoir.text =
+            "Tracking off"
+
+            cardBinding.channelProgressSection.visibility =
+            View.GONE
+
+            cardBinding.channelProgressBarRow.visibility =
+            View.GONE
+
+            cardBinding.btnChannelQuickDose.visibility =
+            View.GONE
+
+            cardBinding.btnChannelQuickDose.setOnClickListener(
+                null
+            )
+
+            return
+        }
+
+        val capacityMl =
+        settings.containerVolumeMl
+        ?.takeIf {
+            value ->
+            value > 0f
+        }
+
+        if (capacityMl == null) {
+            cardBinding.tvChannelReservoir.text =
+            "Reservoir not set"
+
+            cardBinding.channelProgressSection.visibility =
+            View.GONE
+
+            cardBinding.channelProgressBarRow.visibility =
+            View.GONE
+
+            cardBinding.btnChannelQuickDose.visibility =
+            View.GONE
+
+            cardBinding.btnChannelQuickDose.setOnClickListener(
+                null
+            )
+
+            return
+        }
+
+        val rawRestMl =
+        espState?.channel?.restMl
+
+        val remainingMl =
+        rawRestMl
+        ?.coerceAtLeast(
+            minimumValue = 0f
+        )
+        ?.coerceAtMost(
+            maximumValue = capacityMl
+        )
+        ?: capacityMl
+
+        if (remainingMl <= 0f) {
+            renderRefillReservoirState(
+                cardBinding = cardBinding,
+                channelIndex = channelIndex,
+                capacityMl = capacityMl
+            )
+
+            return
+        }
+
+        val remainingDays =
+        calculateRemainingDays(
+            remainingMl = remainingMl,
+            dailyDoseMl = dailyDoseMl
+        )
+
+        cardBinding.tvChannelReservoir.text =
+        if (remainingDays == null) {
+            formatMl(
+                value = remainingMl
+            )
+        } else {
+            "$remainingDays days  ${formatMl(remainingMl)}"
+        }
+
+        cardBinding.channelProgressSection.visibility =
+        View.VISIBLE
+
+        cardBinding.channelProgressBarRow.visibility =
+        View.VISIBLE
+
+        cardBinding.tvChannelProgressTitle.text =
+        "Reservoir"
+
+        cardBinding.tvChannelProgressValue.text =
+        "${formatMl(remainingMl)} / ${formatMl(capacityMl)}"
+
+        cardBinding.progressChannelDose.max =
+        RESERVOIR_PROGRESS_MAX
+
+        cardBinding.progressChannelDose.progress =
+        calculateReservoirProgressPercent(
+            remainingMl = remainingMl,
+            capacityMl = capacityMl
+        )
+
+        cardBinding.btnChannelQuickDose.visibility =
+        View.GONE
+
+        cardBinding.btnChannelQuickDose.setOnClickListener(
+            null
+        )
+    }
+
+    private fun renderRefillReservoirState(
+        cardBinding: ItemDosingChannelCardBinding,
+        channelIndex: Int,
+        capacityMl: Float
+    ) {
+        cardBinding.tvChannelReservoir.text =
+        "Refill required"
+
+        cardBinding.channelProgressSection.visibility =
+        View.VISIBLE
+
+        cardBinding.channelProgressBarRow.visibility =
+        View.GONE
+
+        cardBinding.tvChannelProgressTitle.text =
+        "Reservoir"
+
+        cardBinding.tvChannelProgressValue.text =
+        "0 / ${formatMl(capacityMl)}"
+
+        cardBinding.progressChannelDose.progress =
+        0
+
+        cardBinding.btnChannelQuickDose.visibility =
+        View.VISIBLE
+
+        cardBinding.btnChannelQuickDose.text =
+        "Refill"
+
+        cardBinding.btnChannelQuickDose.setOnClickListener {
+            refillReservoirOnDevice(
+                channelIndex = channelIndex,
+                capacityMl = capacityMl
+            )
+        }
+    }
+
 
     private suspend fun renderChannelFromSources(
         cardBinding: ItemDosingChannelCardBinding,
@@ -219,18 +543,19 @@ class DeviceDosingFragment :
         }
 
         val stateResult =
-            runCatching {
-                dosingEspRepository.fetchDosingState(
-                    deviceIp = deviceIp,
-                    channelIndex = settings.channelIndex
-                )
-            }
+        runCatching {
+            dosingEspRepository.fetchDosingState(
+                deviceIp = deviceIp,
+                channelIndex = settings.channelIndex
+            )
+        }
 
         if (_binding == null) {
             return
         }
 
-        stateResult.onSuccess { state ->
+        stateResult.onSuccess {
+            state ->
             renderConfiguredChannelCard(
                 cardBinding = cardBinding,
                 settings = settings,
@@ -250,77 +575,76 @@ class DeviceDosingFragment :
         state: DosingEspState
     ) {
         val channelName =
-            state.channel.name
-                .trim()
-                .takeIf { name ->
-                    name.isNotBlank() &&
-                        name != "-"
-                } ?: "Channel ${settings.channelIndex + 1}"
+        state.channel.name
+        .trim()
+        .takeIf {
+            name ->
+            name.isNotBlank() &&
+            name != "-"
+        } ?: "Channel ${settings.channelIndex + 1}"
 
         val dailyDoseMl =
-            state.configuredDailyDoseMl
-                ?.coerceAtLeast(
-                    minimumValue = 0f
-                ) ?: 0f
+        state.configuredDailyDoseMl
+        ?.coerceAtLeast(
+            minimumValue = 0f
+        ) ?: 0f
 
         val hasSchedule =
-            dailyDoseMl > 0f
+        dailyDoseMl > 0f
 
         val hasAnyVisibleData =
-            state.channel.isCalibrated ||
-                hasSchedule ||
-                settings.hasReservoirCapacity
+        state.channel.isCalibrated ||
+        hasSchedule ||
+        settings.hasReservoirCapacity
 
         cardBinding.tvChannelName.text =
-            channelName
+        channelName
 
         cardBinding.tvChannelState.text =
-            when {
-                !state.channel.isCalibrated -> {
-                    "Calibrate"
-                }
-
-                hasSchedule && state.scheduleEnabled -> {
-                    "Active"
-                }
-
-                hasSchedule && !state.scheduleEnabled -> {
-                    "Paused"
-                }
-
-                else -> {
-                    "Set up"
-                }
+        when {
+            !state.channel.isCalibrated -> {
+                "Calibrate"
             }
+
+            hasSchedule && state.scheduleEnabled -> {
+                "Active"
+            }
+
+            hasSchedule && !state.scheduleEnabled -> {
+                "Paused"
+            } else -> {
+                "Set up"
+            }
+        }
 
         cardBinding.tvChannelHint.visibility =
-            if (hasAnyVisibleData) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
+        if (hasAnyVisibleData) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         cardBinding.channelMetricsContainer.visibility =
-            if (hasAnyVisibleData) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (hasAnyVisibleData) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         cardBinding.tvChannelDose.text =
-            formatMl(
-                value = dailyDoseMl
-            )
+        formatMl(
+            value = dailyDoseMl
+        )
 
         cardBinding.tvChannelSchedule.text =
-            formatScheduleText(
-                state = state
-            )
+        formatScheduleText(
+            state = state
+        )
 
         cardBinding.tvChannelStatus.text =
-            formatModeStatusText(
-                state = state
-            )
+        formatModeStatusText(
+            state = state
+        )
 
         renderReservoirText(
             cardBinding = cardBinding,
@@ -350,17 +674,17 @@ class DeviceDosingFragment :
         when {
             !settings.reservoirTrackingEnabled -> {
                 cardBinding.tvChannelReservoir.text =
-                    "Tracking off"
+                "Tracking off"
             }
 
             !settings.hasReservoirCapacity -> {
                 cardBinding.tvChannelReservoir.text =
-                    "Reservoir not set"
+                "Reservoir not set"
             }
 
             state.channel.restMl == null -> {
                 cardBinding.tvChannelReservoir.text =
-                    "Rest unavailable"
+                "Rest unavailable"
             }
 
             state.channel.restMl <= 0f -> {
@@ -368,14 +692,12 @@ class DeviceDosingFragment :
                     cardBinding = cardBinding,
                     settings = settings
                 )
-            }
-
-            else -> {
+            } else -> {
                 cardBinding.tvChannelReservoir.text =
-                    formatReservoirSummary(
-                        restMl = state.channel.restMl,
-                        dailyDoseMl = dailyDoseMl
-                    )
+                formatReservoirSummary(
+                    restMl = state.channel.restMl,
+                    dailyDoseMl = dailyDoseMl
+                )
             }
         }
     }
@@ -385,13 +707,13 @@ class DeviceDosingFragment :
         settings: DosingChannelSettingsUi
     ) {
         cardBinding.tvChannelReservoir.text =
-            "Refill"
+        "Refill"
 
         cardBinding.tvChannelReservoir.isClickable =
-            true
+        true
 
         cardBinding.tvChannelReservoir.isFocusable =
-            true
+        true
 
         cardBinding.tvChannelReservoir.setOnClickListener {
             refillReservoir(
@@ -409,10 +731,10 @@ class DeviceDosingFragment :
         )
 
         cardBinding.tvChannelReservoir.isClickable =
-            false
+        false
 
         cardBinding.tvChannelReservoir.isFocusable =
-            false
+        false
     }
 
     private fun renderTodayProgress(
@@ -423,13 +745,13 @@ class DeviceDosingFragment :
     ) {
         if (dailyDoseMl <= 0f) {
             cardBinding.channelProgressSection.visibility =
-                View.GONE
+            View.GONE
 
             cardBinding.channelProgressBarRow.visibility =
-                View.GONE
+            View.GONE
 
             cardBinding.btnChannelQuickDose.visibility =
-                View.GONE
+            View.GONE
 
             cardBinding.btnChannelQuickDose.setOnClickListener(
                 null
@@ -439,39 +761,39 @@ class DeviceDosingFragment :
         }
 
         val givenTodayMl =
-            (manualTodayMl + autoTodayMl).coerceAtLeast(
-                minimumValue = 0f
-            )
+        (manualTodayMl + autoTodayMl).coerceAtLeast(
+            minimumValue = 0f
+        )
 
         val progressPercent =
-            calculateTodayProgressPercent(
-                givenTodayMl = givenTodayMl,
-                dailyDoseMl = dailyDoseMl
-            )
+        calculateTodayProgressPercent(
+            givenTodayMl = givenTodayMl,
+            dailyDoseMl = dailyDoseMl
+        )
 
         cardBinding.channelProgressSection.visibility =
-            View.VISIBLE
+        View.VISIBLE
 
         cardBinding.channelProgressBarRow.visibility =
-            View.VISIBLE
+        View.VISIBLE
 
         cardBinding.progressChannelDose.visibility =
-            View.VISIBLE
+        View.VISIBLE
 
         cardBinding.tvChannelProgressTitle.text =
-            "Today"
+        "Today"
 
         cardBinding.tvChannelProgressValue.text =
-            "${formatMl(givenTodayMl)} / ${formatMl(dailyDoseMl)}"
+        "${formatMl(givenTodayMl)} / ${formatMl(dailyDoseMl)}"
 
         cardBinding.progressChannelDose.max =
-            TODAY_PROGRESS_MAX
+        TODAY_PROGRESS_MAX
 
         cardBinding.progressChannelDose.progress =
-            progressPercent
+        progressPercent
 
         cardBinding.btnChannelQuickDose.visibility =
-            View.GONE
+        View.GONE
 
         cardBinding.btnChannelQuickDose.setOnClickListener(
             null
@@ -483,65 +805,50 @@ class DeviceDosingFragment :
         settings: DosingChannelSettingsUi
     ) {
         cardBinding.tvChannelState.text =
-            "Offline"
+        "Offline"
 
         cardBinding.tvChannelHint.text =
-            "Device data could not be loaded"
+        "Device data could not be loaded"
 
         cardBinding.tvChannelHint.visibility =
-            View.VISIBLE
+        View.VISIBLE
 
         cardBinding.channelMetricsContainer.visibility =
-            if (settings.hasReservoirCapacity) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (settings.hasReservoirCapacity) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         cardBinding.tvChannelReservoir.text =
-            if (settings.hasReservoirCapacity) {
-                "Rest unavailable"
-            } else {
-                "Reservoir not set"
-            }
+        if (settings.hasReservoirCapacity) {
+            "Rest unavailable"
+        } else {
+            "Reservoir not set"
+        }
 
         clearReservoirClick(
             cardBinding = cardBinding
         )
 
         cardBinding.channelProgressSection.visibility =
-            View.GONE
+        View.GONE
 
         cardBinding.channelProgressBarRow.visibility =
-            View.GONE
+        View.GONE
 
         cardBinding.btnChannelQuickDose.visibility =
-            View.GONE
+        View.GONE
 
         cardBinding.btnChannelQuickDose.setOnClickListener(
             null
         )
     }
 
-    private fun refillReservoir(
-        cardBinding: ItemDosingChannelCardBinding,
-        settings: DosingChannelSettingsUi
+    private fun refillReservoirOnDevice(
+        channelIndex: Int,
+        capacityMl: Float
     ) {
-        val capacityMl =
-            settings.containerVolumeMl
-                ?.takeIf { value ->
-                    value > 0f
-                }
-
-        if (capacityMl == null) {
-            showSnackBar(
-                message = "Container volume is not set.",
-                type = BaseActivity.SnackType.WARNING
-            )
-
-            return
-        }
-
         if (deviceIp.isBlank()) {
             showSnackBar(
                 message = "Device IP address is missing.",
@@ -551,46 +858,34 @@ class DeviceDosingFragment :
             return
         }
 
-        cardBinding.tvChannelReservoir.text =
-            "Refilling..."
-
-        clearReservoirClick(
-            cardBinding = cardBinding
-        )
-
         viewLifecycleOwner.lifecycleScope.launch {
             val result =
-                runCatching {
-                    dosingEspRepository.refillChannelReservoir(
-                        deviceIp = deviceIp,
-                        channelIndex = settings.channelIndex,
-                        capacityMl = capacityMl
-                    )
-                }
+            runCatching {
+                dosingEspRepository.refillChannelReservoir(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex,
+                    capacityMl = capacityMl
+                )
+            }
 
             if (_binding == null) {
                 return@launch
             }
 
             result.onSuccess {
+                state ->
+                latestEspStateByChannel[channelIndex] =
+                state
+
+                renderChannelCard(
+                    channelIndex = channelIndex
+                )
+
                 showSnackBar(
                     message = "Reservoir refilled.",
                     type = BaseActivity.SnackType.NORMAL
                 )
-
-                renderChannelFromSources(
-                    cardBinding = cardBinding,
-                    settings = settings
-                )
             }.onFailure {
-                cardBinding.tvChannelReservoir.text =
-                    "Refill"
-
-                renderReservoirRefillAction(
-                    cardBinding = cardBinding,
-                    settings = settings
-                )
-
                 showSnackBar(
                     message = "Reservoir could not be refilled.",
                     type = BaseActivity.SnackType.WARNING
@@ -599,47 +894,299 @@ class DeviceDosingFragment :
         }
     }
 
-    private fun formatScheduleText(
-        state: DosingEspState
-    ): String {
-        val timer =
-            findPrimaryDisplayTimer(
-                state = state
-            )
 
-        val weekDays =
-            timer?.weekDays
-                ?.takeIf { days ->
-                    days.size == 7
-                } ?: List(
+    private fun calculateRemainingDays(
+        remainingMl: Float,
+        dailyDoseMl: Float
+    ): String? {
+        if (dailyDoseMl <= 0f) {
+            return null
+        }
+
+        val days =
+        remainingMl / dailyDoseMl
+
+        return when {
+            days < 1f -> {
+                "<1"
+            } else -> {
+                days.toInt().toString()
+            }
+        }
+    }
+
+    private fun getScheduleWeekDays(
+        state: DosingEspState
+    ): List<Boolean> {
+        val timer =
+        findPrimaryScheduleTimer(
+            state = state
+        ) ?: state.timer
+
+        return if (timer.weekDays.size == 7) {
+            timer.weekDays
+        } else {
+            List(
                 size = 7
             ) {
                 true
             }
+        }
+    }
 
-        if (weekDays.all { selected -> selected }) {
+    private fun formatWeekDays(
+        weekDays: List<Boolean>
+    ): String {
+        val safeWeekDays =
+        if (weekDays.size == 7) {
+            weekDays
+        } else {
+            List(
+                size = 7
+            ) {
+                true
+            }
+        }
+
+        if (safeWeekDays.all {
+            selected -> selected
+        }) {
+            return "Every day"
+        }
+
+        val labels =
+        listOf(
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat",
+            "Sun"
+        )
+
+        return safeWeekDays
+        .mapIndexedNotNull {
+            index, selected ->
+            if (selected) {
+                labels[index]
+            } else {
+                null
+            }
+        }
+        .joinToString(
+            separator = ", "
+        )
+    }
+
+    private fun formatModeProgress(
+        state: DosingEspState
+    ): String {
+        val totalRuns =
+        calculateTotalRuns(
+            state = state
+        ).coerceAtLeast(
+            minimumValue = 1
+        )
+
+        val currentRun =
+        extractCurrentRun(
+            state = state,
+            totalRuns = totalRuns
+        )
+
+        return "$currentRun/$totalRuns ${formatModeName(state.activeMode)}"
+    }
+
+    private fun calculateTotalRuns(
+        state: DosingEspState
+    ): Int {
+        return when (state.activeMode) {
+            DosingScheduleMode.SINGLE -> {
+                1
+            }
+
+            DosingScheduleMode.HOURLY_24 -> {
+                24
+            }
+
+            DosingScheduleMode.CUSTOM_PERIODS -> {
+                val customTimers =
+                state.channelTimers.filter {
+                    timer ->
+                    timer.name.contains(
+                        other = "CUSTOM_PERIODS",
+                        ignoreCase = true
+                    ) ||
+                    timer.name.contains(
+                        other = "CUSTOM_TIME",
+                        ignoreCase = true
+                    )
+                }
+
+                customTimers
+                .sumOf {
+                    timer ->
+                    timer.count.coerceAtLeast(
+                        minimumValue = 0
+                    )
+                }
+                .takeIf {
+                    count ->
+                    count > 0
+                } ?: 1
+            }
+
+            DosingScheduleMode.TIMER -> {
+                val timerModeTimers =
+                state.channelTimers.filter {
+                    timer ->
+                    timer.name.contains(
+                        other = "TIMER",
+                        ignoreCase = true
+                    )
+                }
+
+                timerModeTimers
+                .sumOf {
+                    timer ->
+                    timer.count.coerceAtLeast(
+                        minimumValue = 0
+                    )
+                }
+                .takeIf {
+                    count ->
+                    count > 0
+                } ?: state.timer.count.coerceAtLeast(
+                    minimumValue = 1
+                )
+            }
+        }
+    }
+
+    private fun extractCurrentRun(
+        state: DosingEspState,
+        totalRuns: Int
+    ): Int {
+        val statusText =
+        state.channelTimers
+        .mapNotNull {
+            timer ->
+            timer.status
+        }
+        .firstOrNull {
+            status ->
+            status.isNotBlank()
+        } ?: state.timer.status.orEmpty()
+
+        val match =
+        Regex(
+            pattern = """(\d+)\s*/\s*(\d+)"""
+        ).find(
+            input = statusText
+        )
+
+        val current =
+        match
+        ?.groupValues
+        ?.getOrNull(
+            index = 1
+        )
+        ?.toIntOrNull()
+
+        return current
+        ?.coerceIn(
+            minimumValue = 1,
+            maximumValue = totalRuns
+        ) ?: 1
+    }
+
+    private fun formatModeName(
+        mode: DosingScheduleMode
+    ): String {
+        return when (mode) {
+            DosingScheduleMode.SINGLE -> {
+                "Single"
+            }
+
+            DosingScheduleMode.HOURLY_24 -> {
+                "24 hourly"
+            }
+
+            DosingScheduleMode.CUSTOM_PERIODS -> {
+                "Custom"
+            }
+
+            DosingScheduleMode.TIMER -> {
+                "Timer"
+            }
+        }
+    }
+
+    private fun findPrimaryScheduleTimer(
+        state: DosingEspState
+    ): DosingEspTimerState? {
+        return state.channelTimers.firstOrNull {
+            timer ->
+            timer.enabled &&
+            timer.dosePerRunMl > 0f &&
+            timer.count > 0
+        } ?: state.channelTimers.firstOrNull {
+            timer ->
+            timer.dosePerRunMl > 0f &&
+            timer.count > 0
+        } ?: state.timer.takeIf {
+            timer ->
+            timer.dosePerRunMl > 0f &&
+            timer.count > 0
+        }
+    }
+
+    private fun formatScheduleText(
+        state: DosingEspState
+    ): String {
+        val timer =
+        findPrimaryDisplayTimer(
+            state = state
+        )
+
+        val weekDays =
+        timer?.weekDays
+        ?.takeIf {
+            days ->
+            days.size == 7
+        } ?: List(
+            size = 7
+        ) {
+            true
+        }
+
+        if (weekDays.all {
+            selected -> selected
+        }) {
             return "Every day"
         }
 
         val dayNames =
-            listOf(
-                "Mon",
-                "Tue",
-                "Wed",
-                "Thu",
-                "Fri",
-                "Sat",
-                "Sun"
-            )
+        listOf(
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat",
+            "Sun"
+        )
 
         val selectedDays =
-            weekDays.mapIndexedNotNull { index, selected ->
-                if (selected) {
-                    dayNames[index]
-                } else {
-                    null
-                }
+        weekDays.mapIndexedNotNull {
+            index, selected ->
+            if (selected) {
+                dayNames[index]
+            } else {
+                null
             }
+        }
 
         return if (selectedDays.isEmpty()) {
             "No days"
@@ -654,36 +1201,38 @@ class DeviceDosingFragment :
         state: DosingEspState
     ): String {
         val timers =
-            findDoseTimers(
-                state = state
-            )
+        findDoseTimers(
+            state = state
+        )
 
         if (timers.isEmpty()) {
             return "Not set up"
         }
 
         val primaryTimer =
-            findPrimaryDisplayTimer(
-                state = state
-            )
+        findPrimaryDisplayTimer(
+            state = state
+        )
 
         val totalDoseCount =
-            timers.sumOf { timer ->
-                timer.count.coerceAtLeast(
-                    minimumValue = 0
-                )
-            }.coerceAtLeast(
-                minimumValue = 1
+        timers.sumOf {
+            timer ->
+            timer.count.coerceAtLeast(
+                minimumValue = 0
             )
+        }.coerceAtLeast(
+            minimumValue = 1
+        )
 
         val progressText =
-            primaryTimer
-                ?.status
-                ?.trim()
-                ?.takeIf { status ->
-                    status.isNotBlank() &&
-                        status != "-"
-                } ?: "${totalDoseCount}x"
+        primaryTimer
+        ?.status
+        ?.trim()
+        ?.takeIf {
+            status ->
+            status.isNotBlank() &&
+            status != "-"
+        } ?: "${totalDoseCount}x"
 
         return "$progressText ${formatModeLabel(state.activeMode)}"
     }
@@ -716,23 +1265,26 @@ class DeviceDosingFragment :
         return findDoseTimers(
             state = state
         ).firstOrNull()
-            ?: state.timer.takeIf { timer ->
-                timer.count > 0 ||
-                    timer.dosePerRunMl > 0f
-            }
+        ?: state.timer.takeIf {
+            timer ->
+            timer.count > 0 ||
+            timer.dosePerRunMl > 0f
+        }
     }
 
     private fun findDoseTimers(
         state: DosingEspState
     ): List<DosingEspTimerState> {
         return state.channelTimers
-            .filter { timer ->
-                timer.dosePerRunMl > 0f &&
-                    timer.count > 0
-            }
-            .sortedBy { timer ->
-                timer.index
-            }
+        .filter {
+            timer ->
+            timer.dosePerRunMl > 0f &&
+            timer.count > 0
+        }
+        .sortedBy {
+            timer ->
+            timer.index
+        }
     }
 
     private fun formatReservoirSummary(
@@ -744,12 +1296,12 @@ class DeviceDosingFragment :
         }
 
         val daysLeft =
-            floor(
-                restMl / dailyDoseMl
-            ).toInt()
-                .coerceAtLeast(
-                    minimumValue = 0
-                )
+        floor(
+            restMl / dailyDoseMl
+        ).toInt()
+        .coerceAtLeast(
+            minimumValue = 0
+        )
 
         return "$daysLeft days   ${formatMl(restMl)}"
     }
@@ -767,35 +1319,35 @@ class DeviceDosingFragment :
                 minimumValue = 0f,
                 maximumValue = dailyDoseMl
             ) / dailyDoseMl * TODAY_PROGRESS_MAX
-            ).roundToInt()
-            .coerceIn(
-                minimumValue = 0,
-                maximumValue = TODAY_PROGRESS_MAX
-            )
+        ).roundToInt()
+        .coerceIn(
+            minimumValue = 0,
+            maximumValue = TODAY_PROGRESS_MAX
+        )
     }
 
     private fun formatMl(
         value: Float
     ): String {
         val safeValue =
-            value.coerceAtLeast(
-                minimumValue = 0f
-            )
+        value.coerceAtLeast(
+            minimumValue = 0f
+        )
 
         val amount =
-            if (safeValue % 1f == 0f) {
-                safeValue.toInt().toString()
-            } else {
-                String.format(
-                    Locale.US,
-                    "%.2f",
-                    safeValue
-                ).trimEnd(
-                    '0'
-                ).trimEnd(
-                    '.'
-                )
-            }
+        if (safeValue % 1f == 0f) {
+            safeValue.toInt().toString()
+        } else {
+            String.format(
+                Locale.US,
+                "%.2f",
+                safeValue
+            ).trimEnd(
+                '0'
+            ).trimEnd(
+                '.'
+            )
+        }
 
         return "$amount ml"
     }
@@ -858,10 +1410,10 @@ class DeviceDosingFragment :
         }
 
         val safePumpIndex =
-            pumpIndex.coerceIn(
-                minimumValue = 0,
-                maximumValue = 3
-            )
+        pumpIndex.coerceIn(
+            minimumValue = 0,
+            maximumValue = 3
+        )
 
         routeChannelByCalibrationState(
             channelIndex = safePumpIndex
@@ -872,19 +1424,19 @@ class DeviceDosingFragment :
         channelIndex: Int
     ) {
         navigationInProgress =
-            true
+        true
 
         viewLifecycleOwner.lifecycleScope.launch {
             val calibrationState =
-                runCatching {
-                    EspDosingCalibrationStateClient.readChannelCalibrationState(
-                        deviceIp = deviceIp,
-                        channelIndex = channelIndex
-                    )
-                }.getOrNull()
+            runCatching {
+                EspDosingCalibrationStateClient.readChannelCalibrationState(
+                    deviceIp = deviceIp,
+                    channelIndex = channelIndex
+                )
+            }.getOrNull()
 
             navigationInProgress =
-                false
+            false
 
             if (!isAdded || _binding == null) {
                 return@launch
@@ -906,9 +1458,7 @@ class DeviceDosingFragment :
                     openSelectedPumpSettings(
                         channelIndex = channelIndex
                     )
-                }
-
-                else -> {
+                } else -> {
                     openSelectedPumpCalibration(
                         channelIndex = channelIndex
                     )
@@ -919,32 +1469,32 @@ class DeviceDosingFragment :
 
     private fun renderPumpRunningIndicators() {
         binding.indicatorPump1.visibility =
-            if (runningPumpIndexes.contains(0)) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (runningPumpIndexes.contains(0)) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.indicatorPump2.visibility =
-            if (runningPumpIndexes.contains(1)) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (runningPumpIndexes.contains(1)) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.indicatorPump3.visibility =
-            if (runningPumpIndexes.contains(2)) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (runningPumpIndexes.contains(2)) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.indicatorPump4.visibility =
-            if (runningPumpIndexes.contains(3)) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (runningPumpIndexes.contains(3)) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
     }
 
     private fun openSelectedPumpSettings(
@@ -992,10 +1542,10 @@ class DeviceDosingFragment :
 
     override fun onDestroyView() {
         navigationInProgress =
-            false
+        false
 
         _binding =
-            null
+        null
 
         super.onDestroyView()
     }
