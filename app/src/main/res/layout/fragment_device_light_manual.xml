@@ -22,37 +22,6 @@
         android:paddingEnd="@dimen/light_screen_padding_horizontal"
         android:paddingBottom="@dimen/light_screen_padding_bottom">
 
-        <LinearLayout
-            android:id="@+id/manualStatusRow"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/light_header_height"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/viewManualOnlineDot"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/inter_semibold"
-                android:includeFontPadding="false"
-                android:text="●"
-                android:textColor="@color/light_accent"
-                android:textSize="11sp" />
-
-            <TextView
-                android:id="@+id/tvManualConnectionStatus"
-                style="@style/TextAppearance.Aqua.Light.BodyMuted"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="Online · Manual ready"
-                tools:text="Online · Manual ready" />
-
-        </LinearLayout>
-
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardManualHero"
             style="@style/Widget.Aqua.Light.Card.Surface"
@@ -303,19 +272,20 @@
 
                 </LinearLayout>
 
-                <SeekBar
+                <com.google.android.material.slider.Slider
                     android:id="@+id/sliderMasterBrightness"
                     android:layout_width="match_parent"
-                    android:layout_height="34dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="13dp"
-                    android:max="100"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="0dp"
-                    android:progress="78"
-                    android:progressDrawable="@drawable/seekbar_light_master"
-                    android:splitTrack="false"
-                    android:thumb="@drawable/seekbar_thumb_master"
-                    android:thumbOffset="0dp" />
+                    android:value="78"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_accent"
+                    app:labelBehavior="gone"
+                    app:thumbColor="@color/light_accent"
+                    app:trackColorActive="@color/light_accent"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
                 <TextView
                     android:id="@+id/tvManualNotice"
@@ -390,18 +360,19 @@
 
                 </LinearLayout>
 
-                <SeekBar
+                <com.google.android.material.slider.Slider
                     android:id="@+id/sliderRed"
                     android:layout_width="match_parent"
-                    android:layout_height="32dp"
-                    android:max="100"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="0dp"
-                    android:progress="80"
-                    android:progressDrawable="@drawable/seekbar_light_red"
-                    android:splitTrack="false"
-                    android:thumb="@drawable/seekbar_thumb_red"
-                    android:thumbOffset="0dp" />
+                    android:layout_height="wrap_content"
+                    android:value="80"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_red"
+                    app:labelBehavior="gone"
+                    app:thumbColor="@color/light_red"
+                    app:trackColorActive="@color/light_red"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
                 <LinearLayout
                     android:id="@+id/greenChannelHeader"
@@ -437,18 +408,19 @@
 
                 </LinearLayout>
 
-                <SeekBar
+                <com.google.android.material.slider.Slider
                     android:id="@+id/sliderGreen"
                     android:layout_width="match_parent"
-                    android:layout_height="32dp"
-                    android:max="100"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="0dp"
-                    android:progress="84"
-                    android:progressDrawable="@drawable/seekbar_light_green"
-                    android:splitTrack="false"
-                    android:thumb="@drawable/seekbar_thumb_green"
-                    android:thumbOffset="0dp" />
+                    android:layout_height="wrap_content"
+                    android:value="84"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_green"
+                    app:labelBehavior="gone"
+                    app:thumbColor="@color/light_green"
+                    app:trackColorActive="@color/light_green"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
                 <LinearLayout
                     android:id="@+id/blueChannelHeader"
@@ -484,18 +456,19 @@
 
                 </LinearLayout>
 
-                <SeekBar
+                <com.google.android.material.slider.Slider
                     android:id="@+id/sliderBlue"
                     android:layout_width="match_parent"
-                    android:layout_height="32dp"
-                    android:max="100"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="0dp"
-                    android:progress="79"
-                    android:progressDrawable="@drawable/seekbar_light_blue"
-                    android:splitTrack="false"
-                    android:thumb="@drawable/seekbar_thumb_blue"
-                    android:thumbOffset="0dp" />
+                    android:layout_height="wrap_content"
+                    android:value="79"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_blue"
+                    app:labelBehavior="gone"
+                    app:thumbColor="@color/light_blue"
+                    app:trackColorActive="@color/light_blue"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
                 <LinearLayout
                     android:id="@+id/whiteChannelHeader"
@@ -531,18 +504,19 @@
 
                 </LinearLayout>
 
-                <SeekBar
+                <com.google.android.material.slider.Slider
                     android:id="@+id/sliderWhite"
                     android:layout_width="match_parent"
-                    android:layout_height="32dp"
-                    android:max="100"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="0dp"
-                    android:progress="65"
-                    android:progressDrawable="@drawable/seekbar_light_white"
-                    android:splitTrack="false"
-                    android:thumb="@drawable/seekbar_thumb_white"
-                    android:thumbOffset="0dp" />
+                    android:layout_height="wrap_content"
+                    android:value="65"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_white"
+                    app:labelBehavior="gone"
+                    app:thumbColor="@color/light_white"
+                    app:trackColorActive="@color/light_white"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
                 <LinearLayout
                     android:id="@+id/manualQuickSetRow"
