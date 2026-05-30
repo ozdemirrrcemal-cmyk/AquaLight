@@ -3,9 +3,10 @@ package com.aqua.aqualight.ui.tabs.devices.detail
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.activity.OnBackPressedCallback
+import androidx.core.view.setPadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
@@ -17,15 +18,18 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceRouterBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.chrome.DeviceChromeHost
+import com.aqua.aqualight.ui.tabs.devices.detail.chrome.DeviceHeaderAction
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingFragment
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightManualFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightControllerFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerFragment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
+class DeviceRouterFragment :
+    Fragment(R.layout.fragment_device_router),
+    DeviceChromeHost {
 
     private var _binding: FragmentDeviceRouterBinding? = null
     private val binding get() = _binding!!
@@ -35,9 +39,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     private var routedDeviceId: Long? = null
 
-    private var activeRouterScreen: RouterScreen = RouterScreen.Controller
-    private var activeLightDeviceId: Long? = null
-    private var activeLightTitle: String = DEFAULT_DEVICE_TITLE
+    private var currentBackClick: (() -> Unit)? = null
 
     override fun onViewCreated(
         view: View,
@@ -58,16 +60,20 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             requireContext().applicationContext
         )
 
-        binding.tvSubtitle.visibility = View.GONE
-
-        showHeaderActions(
-            sync = false,
-            settings = false,
-            more = false
+        setDeviceHeader(
+            title = DEFAULT_DEVICE_TITLE,
+            actions = emptyList(),
+            onBackClick = {
+                findNavController().popBackStack()
+            }
         )
 
-        setupHeaderClicks()
-        setupSystemBackHandling()
+        binding.tvSubtitle.visibility = View.GONE
+
+        binding.btnBack.setOnClickListener {
+            currentBackClick?.invoke()
+                ?: findNavController().popBackStack()
+        }
 
         val deviceId = requireArguments().getLong(
             ARG_DEVICE_ID,
@@ -87,76 +93,73 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         )
     }
 
-    private fun setupHeaderClicks() = with(binding) {
-        btnBack.setOnClickListener {
-            handleBackAction()
+    override fun setDeviceHeader(
+        title: String,
+        actions: List<DeviceHeaderAction>,
+        onBackClick: (() -> Unit)?
+    ) {
+        if (_binding == null) {
+            return
         }
 
-        btnHeaderSync.setOnClickListener {
-            when (activeRouterScreen) {
-                RouterScreen.LightOverview -> {
-                    currentLightOverviewFragment()?.onHeaderSyncClick()
-                }
-
-                RouterScreen.LightManual -> {
-                    currentLightManualFragment()?.onHeaderSyncClick()
-                }
-
-                RouterScreen.Controller -> Unit
-            }
+        binding.tvTitle.text = title.ifBlank {
+            DEFAULT_DEVICE_TITLE
         }
 
-        btnHeaderSettings.setOnClickListener {
-            when (activeRouterScreen) {
-                RouterScreen.LightOverview -> {
-                    currentLightOverviewFragment()?.onHeaderSettingsClick()
-                }
+        binding.tvSubtitle.visibility = View.GONE
 
-                RouterScreen.LightManual,
-                RouterScreen.Controller -> Unit
-            }
+        currentBackClick = onBackClick ?: {
+            findNavController().popBackStack()
         }
 
-        btnHeaderMore.setOnClickListener {
-            when (activeRouterScreen) {
-                RouterScreen.LightOverview -> {
-                    currentLightOverviewFragment()?.onHeaderMoreClick()
-                }
-
-                RouterScreen.LightManual,
-                RouterScreen.Controller -> Unit
-            }
-        }
-    }
-
-    private fun setupSystemBackHandling() {
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    handleBackAction()
-                }
-            }
+        renderHeaderActions(
+            actions = actions
         )
     }
 
-    private fun handleBackAction() {
-        when (activeRouterScreen) {
-            RouterScreen.LightManual -> {
-                openLightOverview()
+    private fun renderHeaderActions(
+        actions: List<DeviceHeaderAction>
+    ) = with(binding) {
+        headerActionsContainer.removeAllViews()
+
+        if (actions.isEmpty()) {
+            headerActionsContainer.visibility = View.GONE
+            return@with
+        }
+
+        headerActionsContainer.visibility = View.VISIBLE
+
+        actions.forEach { action ->
+            val button = ImageButton(requireContext()).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    HEADER_ACTION_SIZE_DP.dp(),
+                    HEADER_ACTION_SIZE_DP.dp()
+                )
+
+                background = resolveSelectableBorderlessBackground()
+                contentDescription = action.contentDescription
+                scaleType = ImageButton.ScaleType.CENTER
+                setImageResource(action.iconRes)
+                setPadding(HEADER_ACTION_PADDING_DP.dp())
+                setColorFilter(
+                    requireContext().getColorCompat(
+                        android.R.attr.textColorSecondary
+                    )
+                )
+
+                setOnClickListener {
+                    action.onClick.invoke()
+                }
             }
 
-            RouterScreen.LightOverview,
-            RouterScreen.Controller -> {
-                findNavController().popBackStack()
-            }
+            headerActionsContainer.addView(button)
         }
     }
 
     private fun routeDevice(
         deviceId: Long
     ) {
-        if (routedDeviceId == deviceId) {
+        if (routedDeviceId == deviceId && currentControllerFragment() != null) {
             return
         }
 
@@ -221,8 +224,13 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 fallbackDeviceTitle = routerTitle
             )
 
-            binding.tvTitle.text = routerTitle
-            binding.tvSubtitle.visibility = View.GONE
+            setDeviceHeader(
+                title = routerTitle,
+                actions = emptyList(),
+                onBackClick = {
+                    findNavController().popBackStack()
+                }
+            )
 
             routeToController(
                 deviceId = device.id,
@@ -272,35 +280,17 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
     ) {
         val controllerFragment = when (definition.uiController) {
             AquaDeviceUiController.GENERIC_LIGHT -> {
-                activeRouterScreen = RouterScreen.LightOverview
-                activeLightDeviceId = deviceId
-                activeLightTitle = routerTitle
-
-                binding.tvTitle.text = routerTitle
-
-                showHeaderActions(
-                    sync = true,
-                    settings = true,
-                    more = true
-                )
-
-                DeviceLightFragment.newInstance(
-                    deviceId = deviceId
+                DeviceLightControllerFragment.newInstance(
+                    deviceId = deviceId,
+                    deviceIp = deviceIp,
+                    deviceTitle = controllerTitle,
+                    defaultDeviceTitle = defaultDeviceTitle
                 )
             }
 
             AquaDeviceUiController.GENERIC_TIMER,
             AquaDeviceUiController.CUSTOM_TIMER_MULTI_CONTROL,
             AquaDeviceUiController.CUSTOM_TIMER_SCENE_PRO -> {
-                activeRouterScreen = RouterScreen.Controller
-                activeLightDeviceId = null
-
-                showHeaderActions(
-                    sync = false,
-                    settings = false,
-                    more = false
-                )
-
                 DeviceTimerFragment.newInstance(
                     deviceId = deviceId,
                     deviceIp = deviceIp,
@@ -313,15 +303,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
             AquaDeviceUiController.GENERIC_COOLING,
             AquaDeviceUiController.CUSTOM_COOLING_ADVANCED -> {
-                activeRouterScreen = RouterScreen.Controller
-                activeLightDeviceId = null
-
-                showHeaderActions(
-                    sync = false,
-                    settings = false,
-                    more = false
-                )
-
                 DeviceCoolingFragment.newInstance(
                     deviceId = deviceId,
                     deviceIp = deviceIp
@@ -330,15 +311,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
             AquaDeviceUiController.GENERIC_DOSING,
             AquaDeviceUiController.CUSTOM_DOSING_4CH -> {
-                activeRouterScreen = RouterScreen.Controller
-                activeLightDeviceId = null
-
-                showHeaderActions(
-                    sync = false,
-                    settings = false,
-                    more = false
-                )
-
                 DeviceDosingFragment.newInstance(
                     deviceId = deviceId,
                     deviceIp = deviceIp,
@@ -353,15 +325,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             AquaDeviceUiController.CUSTOM_LIGHT_ADVANCED,
             AquaDeviceUiController.CUSTOM_LIGHT_MATRIX,
             AquaDeviceUiController.UNSUPPORTED -> {
-                activeRouterScreen = RouterScreen.Controller
-                activeLightDeviceId = null
-
-                showHeaderActions(
-                    sync = false,
-                    settings = false,
-                    more = false
-                )
-
                 null
             }
         }
@@ -375,6 +338,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         }
 
         childFragmentManager.commit {
+            setReorderingAllowed(true)
             replace(
                 R.id.deviceControllerContainer,
                 controllerFragment
@@ -382,102 +346,10 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         }
     }
 
-    fun openLightOverview() {
-        val deviceId = activeLightDeviceId ?: routedDeviceId ?: return
-
-        activeRouterScreen = RouterScreen.LightOverview
-
-        binding.tvTitle.text = activeLightTitle.ifBlank {
-            DEFAULT_DEVICE_TITLE
-        }
-
-        showHeaderActions(
-            sync = true,
-            settings = true,
-            more = true
-        )
-
-        childFragmentManager.commit {
-            replace(
-                R.id.deviceControllerContainer,
-                DeviceLightFragment.newInstance(
-                    deviceId = deviceId
-                )
-            )
-        }
-    }
-
-    fun openManualControl() {
-        val deviceId = activeLightDeviceId ?: routedDeviceId ?: return
-
-        activeRouterScreen = RouterScreen.LightManual
-
-        binding.tvTitle.text = getString(
-            R.string.light_manual_title
-        )
-
-        showHeaderActions(
-            sync = true,
-            settings = false,
-            more = false
-        )
-
-        childFragmentManager.commit {
-            replace(
-                R.id.deviceControllerContainer,
-                DeviceLightManualFragment.newInstance(
-                    deviceId = deviceId
-                )
-            )
-        }
-    }
-
-    private fun currentLightOverviewFragment(): DeviceLightFragment? {
+    private fun currentControllerFragment(): Fragment? {
         return childFragmentManager.findFragmentById(
             R.id.deviceControllerContainer
-        ) as? DeviceLightFragment
-    }
-
-    private fun currentLightManualFragment(): DeviceLightManualFragment? {
-        return childFragmentManager.findFragmentById(
-            R.id.deviceControllerContainer
-        ) as? DeviceLightManualFragment
-    }
-
-    private fun showHeaderActions(
-        sync: Boolean,
-        settings: Boolean,
-        more: Boolean
-    ) = with(binding) {
-        val showAnyAction = sync || settings || more
-
-        headerActions.visibility =
-            if (showAnyAction) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-
-        btnHeaderSync.visibility =
-            if (sync) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-
-        btnHeaderSettings.visibility =
-            if (settings) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-
-        btnHeaderMore.visibility =
-            if (more) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        )
     }
 
     private fun showUnavailableState(
@@ -488,17 +360,20 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             return
         }
 
-        activeRouterScreen = RouterScreen.Controller
-        activeLightDeviceId = null
-
-        binding.tvTitle.text = title
-        binding.tvSubtitle.visibility = View.GONE
-
-        showHeaderActions(
-            sync = false,
-            settings = false,
-            more = false
+        setDeviceHeader(
+            title = title,
+            actions = emptyList(),
+            onBackClick = {
+                findNavController().popBackStack()
+            }
         )
+
+        currentControllerFragment()?.let { existingFragment ->
+            childFragmentManager.commit {
+                setReorderingAllowed(true)
+                remove(existingFragment)
+            }
+        }
 
         binding.deviceControllerContainer.removeAllViews()
 
@@ -568,6 +443,21 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         )
     }
 
+    private fun resolveSelectableBorderlessBackground(): android.graphics.drawable.Drawable? {
+        val typedValue = android.util.TypedValue()
+
+        requireContext().theme.resolveAttribute(
+            android.R.attr.selectableItemBackgroundBorderless,
+            typedValue,
+            true
+        )
+
+        return androidx.appcompat.content.res.AppCompatResources.getDrawable(
+            requireContext(),
+            typedValue.resourceId
+        )
+    }
+
     private fun Int.dp(): Int {
         return (this * resources.displayMetrics.density).toInt()
     }
@@ -587,15 +477,10 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
     }
 
     override fun onDestroyView() {
+        currentBackClick = null
         _binding = null
 
         super.onDestroyView()
-    }
-
-    private enum class RouterScreen {
-        Controller,
-        LightOverview,
-        LightManual
     }
 
     companion object {
@@ -604,5 +489,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
         private const val INVALID_DEVICE_ID = -1L
         private const val DEFAULT_DEVICE_TITLE = "Device"
+
+        private const val HEADER_ACTION_SIZE_DP = 40
+        private const val HEADER_ACTION_PADDING_DP = 9
     }
 }

@@ -14,7 +14,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightBinding
-import com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightOverviewUiState
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.launch
@@ -26,6 +25,9 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
+
+    private val lightController: DeviceLightControllerFragment?
+        get() = parentFragment as? DeviceLightControllerFragment
 
     private val viewModel: DeviceLightViewModel by viewModels {
         DeviceLightViewModel.Factory(
@@ -191,13 +193,15 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun setupClicks() = with(binding) {
         cardManualControl.setOnClickListener {
-            (parentFragment as? DeviceRouterFragment)?.openManualControl()
+            lightController?.openManual()
         }
 
         cardProgram.setOnClickListener {
-            navigateWithDeviceId(
-                destinationId = R.id.deviceLightProgramListFragment
-            )
+            lightController?.openPrograms()
+        }
+
+        cardActivePrograms.setOnClickListener {
+            lightController?.openPrograms()
         }
 
         btnEditLightCurve.setOnClickListener {
@@ -215,12 +219,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         cardPresets.setOnClickListener {
             navigateWithDeviceId(
                 destinationId = R.id.deviceLightPresetsFragment
-            )
-        }
-
-        cardActivePrograms.setOnClickListener {
-            navigateWithDeviceId(
-                destinationId = R.id.deviceLightProgramListFragment
             )
         }
 

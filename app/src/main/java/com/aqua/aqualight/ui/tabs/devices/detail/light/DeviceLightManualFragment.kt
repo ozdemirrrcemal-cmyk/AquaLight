@@ -22,7 +22,10 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentDeviceLightManualBinding.bind(view)
 
@@ -30,6 +33,20 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         renderPreviewState()
         setupSliders()
         setupClicks()
+    }
+
+    fun onHeaderSyncClick() {
+        if (_binding == null) {
+            return
+        }
+
+        showMessage(
+            message = "Syncing manual light data"
+        )
+
+        // ESP32 bağlantısı eklendiğinde manuel ekran verileri burada yenilenecek.
+        // Örnek:
+        // viewModel.refreshManualState(deviceId)
     }
 
     private fun configureSliders() = with(binding) {
@@ -146,11 +163,15 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         }
 
         btnApplyTemporary.setOnClickListener {
-            showMessage("Temporary manual output command will be sent")
+            showMessage(
+                message = "Temporary manual output command will be sent"
+            )
         }
 
         btnSaveAsPreset.setOnClickListener {
-            showMessage("Save as preset will be added")
+            showMessage(
+                message = "Save as preset will be added"
+            )
         }
 
         btnApplyToProgram.setOnClickListener {
@@ -158,7 +179,9 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
                 return@setOnClickListener
             }
 
-            showMessage("Apply to program will be added")
+            showMessage(
+                message = "Apply to program will be added"
+            )
         }
     }
 
@@ -213,11 +236,12 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     private fun updatePowerState() = with(binding) {
         val master = sliderMasterBrightness.value.roundToInt()
 
-        tvManualPowerState.text = if (master <= 0) {
-            "OFF"
-        } else {
-            "LIVE"
-        }
+        tvManualPowerState.text =
+            if (master <= 0) {
+                "OFF"
+            } else {
+                "LIVE"
+            }
     }
 
     private fun updatePreviewText() = with(binding) {
@@ -227,34 +251,38 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         val blue = sliderBlue.value
         val white = sliderWhite.value
 
-        val channelAverage = (red + green + blue + white) / 4f
-        val effectiveAverage = channelAverage * (master / 100f)
+        val channelAverage =
+            (red + green + blue + white) / 4f
 
-        val description = when {
-            master <= 0f || effectiveAverage <= 5f -> {
-                "Estimated appearance: Lights off"
-            }
+        val effectiveAverage =
+            channelAverage * (master / 100f)
 
-            blue > red + 20f -> {
-                "Estimated appearance: Cool blue display"
-            }
+        val description =
+            when {
+                master <= 0f || effectiveAverage <= 5f -> {
+                    "Estimated appearance: Lights off"
+                }
 
-            red > blue + 20f -> {
-                "Estimated appearance: Warm evening tone"
-            }
+                blue > red + 20f -> {
+                    "Estimated appearance: Cool blue display"
+                }
 
-            white >= 70f && effectiveAverage >= 70f -> {
-                "Estimated appearance: Bright daylight"
-            }
+                red > blue + 20f -> {
+                    "Estimated appearance: Warm evening tone"
+                }
 
-            effectiveAverage >= 45f -> {
-                "Estimated appearance: Neutral daylight"
-            }
+                white >= 70f && effectiveAverage >= 70f -> {
+                    "Estimated appearance: Bright daylight"
+                }
 
-            else -> {
-                "Estimated appearance: Soft low light"
+                effectiveAverage >= 45f -> {
+                    "Estimated appearance: Neutral daylight"
+                }
+
+                else -> {
+                    "Estimated appearance: Soft low light"
+                }
             }
-        }
 
         tvPreviewAppearance.text = description
     }
@@ -264,10 +292,6 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     ): String {
         return "${value.coerceIn(0, MAX_PERCENT)}%"
     }
-	
-	fun onHeaderSyncClick() {
-    showMessage("Syncing manual light data")
-}
 
     private fun showMessage(
         message: String
@@ -281,11 +305,13 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
 
     override fun onDestroyView() {
         _binding = null
+
         super.onDestroyView()
     }
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
+
         private const val MAX_PERCENT = 100
         private const val DISABLED_ALPHA = 0.45f
 
