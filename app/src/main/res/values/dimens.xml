@@ -1,36 +1,60 @@
-<!-- Light overview spacing -->
-<dimen name="light_overview_padding_horizontal">16dp</dimen>
-<dimen name="light_overview_padding_top">10dp</dimen>
-<dimen name="light_overview_padding_bottom">28dp</dimen>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
 
-<dimen name="light_header_height">44dp</dimen>
-<dimen name="light_header_icon_button_size">40dp</dimen>
-<dimen name="light_header_more_button_width">36dp</dimen>
-<dimen name="light_header_icon_padding">9dp</dimen>
-<dimen name="light_header_more_icon_padding">8dp</dimen>
+    <!-- Light overview screen spacing -->
+    <dimen name="light_screen_padding_horizontal">16dp</dimen>
+    <dimen name="light_screen_padding_top">10dp</dimen>
+    <dimen name="light_screen_padding_bottom">28dp</dimen>
 
-<dimen name="light_card_margin_top">12dp</dimen>
-<dimen name="light_card_padding">16dp</dimen>
-<dimen name="light_card_radius_large">24dp</dimen>
-<dimen name="light_card_radius">22dp</dimen>
-<dimen name="light_card_radius_medium">20dp</dimen>
-<dimen name="light_card_radius_small">16dp</dimen>
-<dimen name="light_card_stroke_width">1dp</dimen>
+    <dimen name="light_card_margin_top">12dp</dimen>
+    <dimen name="light_hero_margin_top">10dp</dimen>
 
-<dimen name="light_chip_height">30dp</dimen>
-<dimen name="light_chip_radius">15dp</dimen>
-<dimen name="light_chip_padding_horizontal">13dp</dimen>
+    <dimen name="light_card_padding">16dp</dimen>
+    <dimen name="light_card_corner_radius_large">24dp</dimen>
+    <dimen name="light_card_corner_radius">22dp</dimen>
+    <dimen name="light_inner_card_corner_radius">20dp</dimen>
+    <dimen name="light_chip_corner_radius">14dp</dimen>
 
-<dimen name="light_channel_chip_height">36dp</dimen>
-<dimen name="light_channel_chip_radius">14dp</dimen>
-<dimen name="light_channel_line_width">18dp</dimen>
-<dimen name="light_channel_line_height">3dp</dimen>
+    <dimen name="light_stroke_width">1dp</dimen>
+    <dimen name="light_divider_height">1dp</dimen>
 
-<dimen name="light_quick_action_height">78dp</dimen>
-<dimen name="light_quick_action_icon_container">34dp</dimen>
-<dimen name="light_quick_action_icon_size">18dp</dimen>
+    <!-- Header -->
+    <dimen name="light_header_height">44dp</dimen>
+    <dimen name="light_header_icon_size">40dp</dimen>
+    <dimen name="light_header_more_width">36dp</dimen>
+    <dimen name="light_header_icon_padding">9dp</dimen>
+    <dimen name="light_header_more_padding">8dp</dimen>
 
-<dimen name="light_timeline_height">16dp</dimen>
-<dimen name="light_health_metric_height">58dp</dimen>
-<dimen name="light_scene_button_height">40dp</dimen>
-<dimen name="light_add_program_height">38dp</dimen>
+    <!-- Mode chip -->
+    <dimen name="light_mode_chip_height">30dp</dimen>
+    <dimen name="light_mode_chip_radius">15dp</dimen>
+    <dimen name="light_mode_chip_padding_horizontal">13dp</dimen>
+
+    <!-- Channel chips -->
+    <dimen name="light_channel_chip_height">36dp</dimen>
+    <dimen name="light_channel_chip_margin">5dp</dimen>
+    <dimen name="light_channel_line_width">18dp</dimen>
+    <dimen name="light_channel_line_height">3dp</dimen>
+    <dimen name="light_channel_text_margin_start">6dp</dimen>
+    <dimen name="light_channel_chip_padding_horizontal">8dp</dimen>
+
+    <!-- Timeline -->
+    <dimen name="light_timeline_height">16dp</dimen>
+    <dimen name="light_timeline_margin_top">18dp</dimen>
+
+    <!-- Quick action cards -->
+    <dimen name="light_quick_action_height">78dp</dimen>
+    <dimen name="light_quick_action_icon_container_size">34dp</dimen>
+    <dimen name="light_quick_action_icon_size">18dp</dimen>
+    <dimen name="light_quick_action_gap">6dp</dimen>
+
+    <!-- Programs -->
+    <dimen name="light_add_program_height">38dp</dimen>
+
+    <!-- Quick scenes -->
+    <dimen name="light_scene_button_height">40dp</dimen>
+
+    <!-- Device health -->
+    <dimen name="light_health_item_height">58dp</dimen>
+
+</resources>
