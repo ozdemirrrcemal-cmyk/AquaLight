@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.model
 
 data class LightOverviewUiState(
+    val isLoading: Boolean = true,
+    val isOnline: Boolean = false,
+
     val connectionLabel: String = "Connecting · WRGB",
 
     val programTitle: String = "Current Program",
@@ -28,20 +31,24 @@ data class LightOverviewUiState(
     val curveSunsetLabel: String = NO_VALUE,
     val curveRampLabel: String = NO_VALUE,
 
-    val activeProgramName: String = NO_VALUE,
-    val activeProgramSchedule: String = NO_VALUE,
-    val activeProgramChannels: String = NO_VALUE,
-    val activeProgramStatusLabel: String = "Off",
+    val activeProgramName: String = "Waiting for program data",
+    val activeProgramSchedule: String = "",
+    val activeProgramChannels: String = "",
+    val activeProgramStatusLabel: String = "",
+    val isProgramEnabled: Boolean = false,
 
-    val healthLabel: String = "Connecting",
+    val healthLabel: String = "Waiting for device data",
     val temperatureLabel: String = NO_VALUE,
     val fanLabel: String = NO_VALUE,
     val deviceTimeLabel: String = NO_VALUE,
-    val firmwareLabel: String = NO_VALUE,
-
-    val isProgramEnabled: Boolean = false
+    val firmwareLabel: String = NO_VALUE
 ) {
+
     companion object {
         const val NO_VALUE = "—"
+
+        fun loading(): LightOverviewUiState {
+            return LightOverviewUiState()
+        }
     }
 }

@@ -5,7 +5,6 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.IdRes
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -86,10 +85,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         tvTimelineMidLabel.text = state.timelineMidLabel
         tvTimelineEndLabel.text = state.timelineEndLabel
 
-        renderTimelineState(
-            hasCurveData = state.hasRealCurveData()
-        )
-
         tvCurveStartValue.text = state.curveStartLabel
         tvCurvePeakValue.text = state.curvePeakLabel
         tvCurveSunsetValue.text = state.curveSunsetLabel
@@ -100,61 +95,66 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         tvActiveProgramChannels.text = state.activeProgramChannels
         tvActiveProgramStatus.text = state.activeProgramStatusLabel
 
+        tvActiveProgramSchedule.visibility =
+            if (state.activeProgramSchedule.isBlank()) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+
+        tvActiveProgramChannels.visibility =
+            if (state.activeProgramChannels.isBlank()) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+
+        tvActiveProgramStatus.visibility =
+            if (state.isLoading || state.activeProgramStatusLabel.isBlank()) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+
+        switchProgramEveryDay.visibility =
+            if (state.isLoading) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
+
+        switchProgramEveryDay.isEnabled = !state.isLoading
+
         tvDeviceHealthSync.text = state.healthLabel
         tvLightTemperature.text = state.temperatureLabel
         tvLightFan.text = state.fanLabel
         tvLightDeviceTime.text = state.deviceTimeLabel
         tvLightFirmware.text = state.firmwareLabel
 
+        updateTimelineAvailability(
+            hasCurveData = !state.isLoading
+        )
+
         setProgramSwitchChecked(
             checked = state.isProgramEnabled
         )
     }
 
-    private fun renderTimelineState(
+    private fun updateTimelineAvailability(
         hasCurveData: Boolean
     ) = with(binding) {
-        val inactiveColor =
-            ContextCompat.getColor(
-                requireContext(),
-                R.color.light_timeline_inactive
-            )
+        val activeAlpha =
+            if (hasCurveData) {
+                1f
+            } else {
+                0f
+            }
 
-        val nightColor =
-            ContextCompat.getColor(
-                requireContext(),
-                R.color.light_timeline_night
-            )
-
-        val transitionColor =
-            ContextCompat.getColor(
-                requireContext(),
-                R.color.light_timeline_transition
-            )
-
-        val peakColor =
-            ContextCompat.getColor(
-                requireContext(),
-                R.color.light_accent
-            )
-
-        if (hasCurveData) {
-            viewTimelineNightStart.setBackgroundColor(nightColor)
-            viewTimelineSunrise.setBackgroundColor(transitionColor)
-            viewTimelinePeak.setBackgroundColor(peakColor)
-            viewTimelineSunset.setBackgroundColor(transitionColor)
-            viewTimelineNightEnd.setBackgroundColor(nightColor)
-
-            lightTimelineBar.alpha = 1f
-        } else {
-            viewTimelineNightStart.setBackgroundColor(inactiveColor)
-            viewTimelineSunrise.setBackgroundColor(inactiveColor)
-            viewTimelinePeak.setBackgroundColor(inactiveColor)
-            viewTimelineSunset.setBackgroundColor(inactiveColor)
-            viewTimelineNightEnd.setBackgroundColor(inactiveColor)
-
-            lightTimelineBar.alpha = 0.55f
-        }
+        viewTimelineNightStart.alpha = activeAlpha
+        viewTimelineSunrise.alpha = activeAlpha
+        viewTimelinePeak.alpha = activeAlpha
+        viewTimelineSunset.alpha = activeAlpha
+        viewTimelineNightEnd.alpha = activeAlpha
     }
 
     private fun setupClicks() = with(binding) {
@@ -210,9 +210,11 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         programEveryDayRow.setOnClickListener {
-            navigateToProgramEditor(
-                programName = currentProgramName()
-            )
+            if (!viewModel.uiState.value.isLoading) {
+                navigateToProgramEditor(
+                    programName = currentProgramName()
+                )
+            }
         }
 
         btnAddProgram.setOnClickListener {
@@ -283,12 +285,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         durationLabel: String,
         resumeLabel: String
     ) {
-        /*
-         * Burada ekrana fake değer basmıyoruz.
-         *
-         * outputPercent sadece ESP32'ye gönderilecek komut parametresi.
-         * Ekranda 45%, 55%, 100% ancak ESP32 geri dönerse görünmeli.
-         */
         viewModel.applyTemporaryScene(
             sceneName = sceneName,
             outputPercent = outputPercent,
@@ -443,16 +439,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         return currentName
             .takeIf {
                 it.isNotBlank() &&
-                    it != LightOverviewUiState.NO_VALUE
+                    it != LightOverviewUiState.NO_VALUE &&
+                    it != "Waiting for program data"
             }
             ?: DEFAULT_PROGRAM_NAME
-    }
-
-    private fun LightOverviewUiState.hasRealCurveData(): Boolean {
-        return curveStartLabel != LightOverviewUiState.NO_VALUE &&
-            curvePeakLabel != LightOverviewUiState.NO_VALUE &&
-            curveSunsetLabel != LightOverviewUiState.NO_VALUE &&
-            curveRampLabel != LightOverviewUiState.NO_VALUE
     }
 
     private fun setProgramSwitchChecked(
