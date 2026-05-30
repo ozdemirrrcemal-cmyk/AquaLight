@@ -20,16 +20,18 @@
     <dimen name="light_card_margin_top">12dp</dimen>
     <dimen name="light_hero_margin_top">10dp</dimen>
     <dimen name="light_card_padding">16dp</dimen>
+	
+<!-- Card radius -->
+<dimen name="light_card_corner_radius_large">24dp</dimen>
+<dimen name="light_card_corner_radius">22dp</dimen>
+<dimen name="light_inner_card_corner_radius">20dp</dimen>
 
-    <!-- Card radius -->
-    <dimen name="light_card_corner_radius_large">24dp</dimen>
-    <dimen name="light_card_corner_radius">22dp</dimen>
-    <dimen name="light_inner_card_corner_radius">20dp</dimen>
-
-    <!-- Style aliases -->
-    <dimen name="light_card_radius_large">24dp</dimen>
-    <dimen name="light_card_radius_medium">22dp</dimen>
-    <dimen name="light_card_radius_small">16dp</dimen>
+<!-- Style aliases -->
+<dimen name="light_card_radius_large">24dp</dimen>
+<dimen name="light_card_radius_medium">22dp</dimen>
+<dimen name="light_card_radius_small">16dp</dimen>
+<dimen name="light_card_radius_action">18dp</dimen>
+<dimen name="light_card_stroke_width">1dp</dimen>
 
     <!-- Stroke / divider -->
     <dimen name="light_stroke_width">1dp</dimen>
