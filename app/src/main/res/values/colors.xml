@@ -92,4 +92,19 @@
 <color name="aqua_input_hint_unfocused">#7F91AA</color>
 <color name="white">#FFFFFF</color>
 
+
+<color name="light_surface">#1B3554</color>
+<color name="light_surface_soft">#203D61</color>
+<color name="light_surface_deep">#162D49</color>
+<color name="light_stroke">#2D557A</color>
+<color name="light_accent">#39D5D5</color>
+<color name="light_accent_soft">#183F52</color>
+<color name="light_chip_auto">#193F4F</color>
+<color name="light_warning">#FFB74D</color>
+<color name="light_error">#EF5350</color>
+<color name="light_red">#EF5350</color>
+<color name="light_green">#66BB6A</color>
+<color name="light_blue">#42A5F5</color>
+<color name="light_white">#ECEFF1</color>
+
 </resources>
