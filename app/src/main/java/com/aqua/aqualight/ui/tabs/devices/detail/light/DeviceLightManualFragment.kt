@@ -42,7 +42,6 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         ).forEach { slider ->
             slider.valueFrom = 0f
             slider.valueTo = MAX_PERCENT.toFloat()
-            slider.stepSize = 1f
         }
     }
 
@@ -194,15 +193,21 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         val blue = sliderBlue.value.roundToInt()
         val white = sliderWhite.value.roundToInt()
 
-        tvRedValue.text = formatPercent(red)
-        tvGreenValue.text = formatPercent(green)
-        tvBlueValue.text = formatPercent(blue)
-        tvWhiteValue.text = formatPercent(white)
+        tvRedValue.text = formatPercent(
+            value = red
+        )
 
-        tvManualRedSummaryValue.text = "R${formatPercent(red)}"
-        tvManualGreenSummaryValue.text = "G${formatPercent(green)}"
-        tvManualBlueSummaryValue.text = "B${formatPercent(blue)}"
-        tvManualWhiteSummaryValue.text = "W${formatPercent(white)}"
+        tvGreenValue.text = formatPercent(
+            value = green
+        )
+
+        tvBlueValue.text = formatPercent(
+            value = blue
+        )
+
+        tvWhiteValue.text = formatPercent(
+            value = white
+        )
     }
 
     private fun updatePowerState() = with(binding) {
