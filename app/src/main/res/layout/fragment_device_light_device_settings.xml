@@ -21,70 +21,10 @@
         android:paddingEnd="16dp"
         android:paddingBottom="28dp">
 
-        <!-- HEADER -->
-        <LinearLayout
-            android:id="@+id/deviceSettingsHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btnDeviceSettingsBack"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Back"
-                android:padding="9dp"
-                android:src="@drawable/ic_back"
-                app:tint="?attr/colorOnSurface" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvDeviceSettingsTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Device Settings"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvDeviceSettingsSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:text="Lighting hardware and safety"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/btnDeviceSettingsSync"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:gravity="center"
-                android:text="↻"
-                android:textColor="@color/light_accent"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <!-- DEVICE INFO -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLightDeviceInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
             app:cardBackgroundColor="@color/light_surface"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
@@ -215,7 +155,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- CHANNEL CONFIGURATION -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardChannelConfiguration"
             android:layout_width="match_parent"
@@ -249,7 +188,6 @@
                     android:textColor="@color/settings_text_secondary"
                     android:textSize="13sp" />
 
-                <!-- CH1 -->
                 <LinearLayout
                     android:id="@+id/rowChannelOne"
                     android:layout_width="match_parent"
@@ -283,7 +221,6 @@
 
                 </LinearLayout>
 
-                <!-- CH2 -->
                 <LinearLayout
                     android:id="@+id/rowChannelTwo"
                     android:layout_width="match_parent"
@@ -316,7 +253,6 @@
 
                 </LinearLayout>
 
-                <!-- CH3 -->
                 <LinearLayout
                     android:id="@+id/rowChannelThree"
                     android:layout_width="match_parent"
@@ -349,7 +285,6 @@
 
                 </LinearLayout>
 
-                <!-- CH4 -->
                 <LinearLayout
                     android:id="@+id/rowChannelFour"
                     android:layout_width="match_parent"
@@ -386,7 +321,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- DEVICE TIME -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardDeviceTime"
             android:layout_width="match_parent"
@@ -465,7 +399,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- SAFETY -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLightSafety"
             android:layout_width="match_parent"
@@ -608,7 +541,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- MAINTENANCE ACTIONS -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLightMaintenanceActions"
             android:layout_width="match_parent"

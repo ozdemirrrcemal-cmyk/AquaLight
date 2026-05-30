@@ -21,70 +21,10 @@
         android:paddingEnd="16dp"
         android:paddingBottom="28dp">
 
-        <!-- HEADER -->
-        <LinearLayout
-            android:id="@+id/presetsHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btnPresetsBack"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Back"
-                android:padding="9dp"
-                android:src="@drawable/ic_back"
-                app:tint="?attr/colorOnSurface" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvPresetsTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Presets &amp; Scenes"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvPresetsSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:text="Quick lighting profiles"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/btnCreatePresetTop"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:gravity="center"
-                android:text="+"
-                android:textColor="@color/light_accent"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <!-- INTRO / STATUS -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardSceneIntro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
             app:cardBackgroundColor="@color/light_surface"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
@@ -178,7 +118,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- GROWTH -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -345,7 +284,6 @@
 
         </LinearLayout>
 
-        <!-- DISPLAY -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -587,7 +525,6 @@
 
         </LinearLayout>
 
-        <!-- UTILITY -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -672,7 +609,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- CUSTOM -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardCustomPresets"
             android:layout_width="match_parent"

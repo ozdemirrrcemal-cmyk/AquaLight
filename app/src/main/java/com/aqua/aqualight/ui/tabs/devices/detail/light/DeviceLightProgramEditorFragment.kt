@@ -5,7 +5,6 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -45,9 +44,25 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
         configureSliderRanges()
-        renderDummyState()
+        renderPreviewState()
         setupSliders()
         setupClicks()
+    }
+
+    fun onHeaderPreviewClick() {
+        if (_binding == null) {
+            return
+        }
+
+        showPreviewMessage()
+    }
+
+    fun onHeaderSaveClick() {
+        if (_binding == null) {
+            return
+        }
+
+        saveProgram()
     }
 
     private fun configureSliderRanges() = with(binding) {
@@ -63,10 +78,7 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         }
     }
 
-    private fun renderDummyState() = with(binding) {
-        tvProgramEditorTitle.text = programName
-        tvProgramEditorSubtitle.text = "09:00 → 19:15 · 10h 15m photoperiod"
-
+    private fun renderPreviewState() = with(binding) {
         sliderProgramRed.value = 80f
         sliderProgramGreen.value = 84f
         sliderProgramBlue.value = 79f
@@ -113,24 +125,12 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
     }
 
     private fun setupClicks() = with(binding) {
-        btnProgramEditorBack.setOnClickListener {
-            findNavController().navigateUp()
-        }
-
         btnSimpleMode.setOnClickListener {
             setSimpleMode()
         }
 
         btnProMode.setOnClickListener {
             setProMode()
-        }
-
-        btnProgramPreviewTop.setOnClickListener {
-            showMessage("Preview day simulation will be added")
-        }
-
-        btnProgramSaveTop.setOnClickListener {
-            showMessage("Program save will be connected later")
         }
 
         btnAddCurvePoint.setOnClickListener {
@@ -251,11 +251,11 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         }
 
         btnPreviewDay.setOnClickListener {
-            showMessage("Preview day simulation will be added")
+            showPreviewMessage()
         }
 
         btnSaveProgram.setOnClickListener {
-            showMessage("Program save will be connected after UI is complete")
+            saveProgram()
         }
     }
 
@@ -308,7 +308,8 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         }
 
         btnPointTimeMinus.setOnClickListener {
-            selectedMinutes = (selectedMinutes - POINT_STEP_MINUTES).coerceAtLeast(0)
+            selectedMinutes =
+                (selectedMinutes - POINT_STEP_MINUTES).coerceAtLeast(0)
             tvPointTime.text = minutesToTime(selectedMinutes)
         }
 
@@ -513,7 +514,13 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
                     "Every day selected"
                 }
 
-                selectedDays == setOf(DAY_MON, DAY_TUE, DAY_WED, DAY_THU, DAY_FRI) -> {
+                selectedDays == setOf(
+                    DAY_MON,
+                    DAY_TUE,
+                    DAY_WED,
+                    DAY_THU,
+                    DAY_FRI
+                ) -> {
                     "Weekdays selected"
                 }
 
@@ -717,6 +724,14 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         tvCurveSubtitle.text = "Separate channel curves will be connected later"
         tvChannelBalanceTitle.text = "Base Channel Values"
         tvChannelBalanceSubtitle.text = "Temporary base values until pro curves are connected"
+    }
+
+    private fun showPreviewMessage() {
+        showMessage("Preview day simulation will be added")
+    }
+
+    private fun saveProgram() {
+        showMessage("$programName save will be connected later")
     }
 
     private fun timeToMinutes(

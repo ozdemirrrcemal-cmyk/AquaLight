@@ -21,81 +21,10 @@
         android:paddingEnd="16dp"
         android:paddingBottom="28dp">
 
-        <!-- HEADER -->
-        <LinearLayout
-            android:id="@+id/programEditorHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btnProgramEditorBack"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Back"
-                android:padding="9dp"
-                android:src="@drawable/ic_back"
-                app:tint="?attr/colorOnSurface" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvProgramEditorTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Every Day Program"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvProgramEditorSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:text="09:00 → 19:15 · 10h 15m photoperiod"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/btnProgramPreviewTop"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:gravity="center"
-                android:text="▶"
-                android:textColor="@color/light_accent"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/btnProgramSaveTop"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:gravity="center"
-                android:text="✓"
-                android:textColor="@color/light_accent"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <!-- MODE SWITCH -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardEditorMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
             app:cardBackgroundColor="@color/light_surface"
             app:cardCornerRadius="22dp"
             app:cardElevation="0dp"
@@ -163,7 +92,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- CURVE EDITOR -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLightCurveEditor"
             android:layout_width="match_parent"
@@ -226,7 +154,6 @@
 
                 </LinearLayout>
 
-                <!-- GRAPH AREA -->
                 <LinearLayout
                     android:id="@+id/curveGraphArea"
                     android:layout_width="match_parent"
@@ -442,7 +369,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- POINT LIST -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardCurvePoints"
             android:layout_width="match_parent"
@@ -652,7 +578,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- CHANNEL BALANCE -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardProgramChannelBalance"
             android:layout_width="match_parent"
@@ -701,7 +626,7 @@
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderProgramRed"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content" />
 
                 <TextView
                     android:id="@+id/tvProgramGreenValue"
@@ -715,7 +640,7 @@
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderProgramGreen"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content" />
 
                 <TextView
                     android:id="@+id/tvProgramBlueValue"
@@ -729,7 +654,7 @@
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderProgramBlue"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content" />
 
                 <TextView
                     android:id="@+id/tvProgramWhiteValue"
@@ -743,13 +668,12 @@
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderProgramWhite"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content" />
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- SETTINGS -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardProgramSettings"
             android:layout_width="match_parent"
@@ -1003,7 +927,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- FOOTER ACTIONS -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardProgramEditorActions"
             android:layout_width="match_parent"

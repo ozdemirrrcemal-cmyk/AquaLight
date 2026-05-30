@@ -4,21 +4,20 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightQuickSetupBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlin.math.roundToInt
 
-class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_quick_setup) {
+class DeviceLightQuickSetupFragment :
+    Fragment(R.layout.fragment_device_light_quick_setup) {
 
     private var _binding: FragmentDeviceLightQuickSetupBinding? = null
     private val binding get() = _binding!!
 
-    private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+    private val lightController: DeviceLightControllerFragment?
+        get() = parentFragment as? DeviceLightControllerFragment
 
     private var sunriseStartTime: String = "09:00"
     private var sunsetEndTime: String = "19:15"
@@ -42,12 +41,16 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        _binding = FragmentDeviceLightQuickSetupBinding.bind(view)
+        _binding =
+            FragmentDeviceLightQuickSetupBinding.bind(view)
 
         configureSliderRanges()
-        renderDummyState()
+        renderPreviewState()
         setupSliders()
         setupClicks()
     }
@@ -62,10 +65,7 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         sliderPeakIntensity.stepSize = 1f
     }
 
-    private fun renderDummyState() = with(binding) {
-        tvQuickSetupSubtitle.text =
-            "Create a clean sunrise / sunset program · Device ID: $deviceId"
-
+    private fun renderPreviewState() = with(binding) {
         tvSunriseStartTime.text = sunriseStartTime
         tvSunsetEndTime.text = sunsetEndTime
 
@@ -93,10 +93,6 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
     }
 
     private fun setupClicks() = with(binding) {
-        btnQuickSetupBack.setOnClickListener {
-            findNavController().navigateUp()
-        }
-
         btnSunriseStart.setOnClickListener {
             showTimePickerSheet(
                 title = "Sunrise Start",
@@ -150,15 +146,21 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         }
 
         btnRamp30.setOnClickListener {
-            setRamp(30)
+            setRamp(
+                minutes = 30
+            )
         }
 
         btnRamp60.setOnClickListener {
-            setRamp(60)
+            setRamp(
+                minutes = 60
+            )
         }
 
         btnRamp90.setOnClickListener {
-            setRamp(90)
+            setRamp(
+                minutes = 90
+            )
         }
 
         chipBalanceNatural.setOnClickListener {
@@ -190,7 +192,7 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         }
 
         btnCreateQuickProgram.setOnClickListener {
-            navigateToGeneratedProgram()
+            openGeneratedProgram()
         }
     }
 
@@ -199,75 +201,126 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         initialTime: String,
         onTimeSelected: (String) -> Unit
     ) {
-        val dialog = BottomSheetDialog(requireContext())
-        val sheetView = layoutInflater.inflate(
-            R.layout.bottom_sheet_light_time_picker,
-            null
-        )
+        val dialog =
+            BottomSheetDialog(
+                requireContext()
+            )
+
+        val sheetView =
+            layoutInflater.inflate(
+                R.layout.bottom_sheet_light_time_picker,
+                null
+            )
 
         val tvTitle =
-            sheetView.findViewById<TextView>(R.id.tvTimePickerTitle)
+            sheetView.findViewById<TextView>(
+                R.id.tvTimePickerTitle
+            )
 
         val tvSelectedTime =
-            sheetView.findViewById<TextView>(R.id.tvSelectedLightTime)
+            sheetView.findViewById<TextView>(
+                R.id.tvSelectedLightTime
+            )
 
         val btnMinusHour =
-            sheetView.findViewById<TextView>(R.id.btnLightTimeMinusHour)
+            sheetView.findViewById<TextView>(
+                R.id.btnLightTimeMinusHour
+            )
 
         val btnMinusStep =
-            sheetView.findViewById<TextView>(R.id.btnLightTimeMinusStep)
+            sheetView.findViewById<TextView>(
+                R.id.btnLightTimeMinusStep
+            )
 
         val btnPlusStep =
-            sheetView.findViewById<TextView>(R.id.btnLightTimePlusStep)
+            sheetView.findViewById<TextView>(
+                R.id.btnLightTimePlusStep
+            )
 
         val btnPlusHour =
-            sheetView.findViewById<TextView>(R.id.btnLightTimePlusHour)
+            sheetView.findViewById<TextView>(
+                R.id.btnLightTimePlusHour
+            )
 
         val btnSave =
-            sheetView.findViewById<TextView>(R.id.btnLightTimeSave)
+            sheetView.findViewById<TextView>(
+                R.id.btnLightTimeSave
+            )
 
         val btnCancel =
-            sheetView.findViewById<TextView>(R.id.btnLightTimeCancel)
+            sheetView.findViewById<TextView>(
+                R.id.btnLightTimeCancel
+            )
 
-        var selectedMinutes = timeToMinutes(initialTime)
+        var selectedMinutes =
+            timeToMinutes(
+                time = initialTime
+            )
 
         fun updateTimeLabel() {
-            tvSelectedTime.text = minutesToTime(selectedMinutes)
+            tvSelectedTime.text =
+                minutesToTime(
+                    minutes = selectedMinutes
+                )
         }
 
         tvTitle.text = title
         updateTimeLabel()
 
         btnMinusHour.setOnClickListener {
-            selectedMinutes = wrapMinutes(selectedMinutes - 60)
+            selectedMinutes =
+                wrapMinutes(
+                    minutes = selectedMinutes - 60
+                )
+
             updateTimeLabel()
         }
 
         btnMinusStep.setOnClickListener {
-            selectedMinutes = wrapMinutes(selectedMinutes - TIME_STEP_MINUTES)
+            selectedMinutes =
+                wrapMinutes(
+                    minutes = selectedMinutes - TIME_STEP_MINUTES
+                )
+
             updateTimeLabel()
         }
 
         btnPlusStep.setOnClickListener {
-            selectedMinutes = wrapMinutes(selectedMinutes + TIME_STEP_MINUTES)
+            selectedMinutes =
+                wrapMinutes(
+                    minutes = selectedMinutes + TIME_STEP_MINUTES
+                )
+
             updateTimeLabel()
         }
 
         btnPlusHour.setOnClickListener {
-            selectedMinutes = wrapMinutes(selectedMinutes + 60)
+            selectedMinutes =
+                wrapMinutes(
+                    minutes = selectedMinutes + 60
+                )
+
             updateTimeLabel()
         }
 
         btnSave.setOnClickListener {
             dialog.dismiss()
-            onTimeSelected(minutesToTime(selectedMinutes))
+
+            onTimeSelected(
+                minutesToTime(
+                    minutes = selectedMinutes
+                )
+            )
         }
 
         btnCancel.setOnClickListener {
             dialog.dismiss()
         }
 
-        dialog.setContentView(sheetView)
+        dialog.setContentView(
+            sheetView
+        )
+
         dialog.show()
     }
 
@@ -276,7 +329,9 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
     ) {
         if (selectedDays.contains(day)) {
             if (selectedDays.size == 1) {
-                showMessage("At least one day must be selected")
+                showMessage(
+                    message = "At least one day must be selected"
+                )
                 return
             }
 
@@ -290,32 +345,70 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
     }
 
     private fun renderDayChips() = with(binding) {
-        renderDayChip(chipDayMon, DAY_MON)
-        renderDayChip(chipDayTue, DAY_TUE)
-        renderDayChip(chipDayWed, DAY_WED)
-        renderDayChip(chipDayThu, DAY_THU)
-        renderDayChip(chipDayFri, DAY_FRI)
-        renderDayChip(chipDaySat, DAY_SAT)
-        renderDayChip(chipDaySun, DAY_SUN)
+        renderDayChip(
+            chip = chipDayMon,
+            day = DAY_MON
+        )
+
+        renderDayChip(
+            chip = chipDayTue,
+            day = DAY_TUE
+        )
+
+        renderDayChip(
+            chip = chipDayWed,
+            day = DAY_WED
+        )
+
+        renderDayChip(
+            chip = chipDayThu,
+            day = DAY_THU
+        )
+
+        renderDayChip(
+            chip = chipDayFri,
+            day = DAY_FRI
+        )
+
+        renderDayChip(
+            chip = chipDaySat,
+            day = DAY_SAT
+        )
+
+        renderDayChip(
+            chip = chipDaySun,
+            day = DAY_SUN
+        )
     }
 
     private fun renderDayChip(
         chip: TextView,
         day: Int
     ) {
-        val isSelected = selectedDays.contains(day)
+        val isSelected =
+            selectedDays.contains(day)
 
         if (isSelected) {
             chip.setBackgroundColor(
-                requireContext().getColor(R.color.light_accent)
+                requireContext().getColor(
+                    R.color.light_accent
+                )
             )
+
             chip.setTextColor(
-                requireContext().getColor(R.color.background_color)
+                requireContext().getColor(
+                    R.color.background_color
+                )
             )
         } else {
-            chip.setBackgroundResource(android.R.color.transparent)
+            chip.setBackgroundResource(
+                android.R.color.transparent
+            )
+
             chip.setTextColor(
-                requireContext().getColor(R.color.settings_text_secondary)
+                requireContext().getColor(
+                    R.color.settings_text_secondary
+                )
             )
         }
     }
@@ -325,6 +418,7 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
     ) = with(binding) {
         rampMinutes = minutes
         sliderRampDuration.value = minutes.toFloat()
+
         updateRampText()
         updatePreviewText()
     }
@@ -337,52 +431,76 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         channelSummary = summary
         tvQuickChannelSummary.text = summary
 
-        showMessage("$name balance selected")
+        showMessage(
+            message = "$name balance selected"
+        )
+
         updatePreviewText()
     }
 
     private fun updateRampText() = with(binding) {
-        tvRampDurationValue.text = "$rampMinutes min"
+        tvRampDurationValue.text =
+            "$rampMinutes min"
     }
 
     private fun updatePeakText() = with(binding) {
-        tvPeakIntensityValue.text = "$peakIntensity%"
+        tvPeakIntensityValue.text =
+            "$peakIntensity%"
     }
 
     private fun updatePreviewText() = with(binding) {
-        val peakStart = addMinutesToTime(
-            time = sunriseStartTime,
-            minutesToAdd = rampMinutes
-        )
+        val peakStart =
+            addMinutesToTime(
+                time = sunriseStartTime,
+                minutesToAdd = rampMinutes
+            )
 
-        val sunsetRampStart = subtractMinutesFromTime(
-            time = sunsetEndTime,
-            minutesToSubtract = rampMinutes
-        )
+        val sunsetRampStart =
+            subtractMinutesFromTime(
+                time = sunsetEndTime,
+                minutesToSubtract = rampMinutes
+            )
 
         tvQuickPreviewSummary.text =
             "$sunriseStartTime sunrise → $peakStart peak → " +
                 "$sunsetRampStart sunset ramp → $sunsetEndTime off · ${selectedDaysLabel()}"
 
-        tvQuickChannelSummary.text = channelSummary
+        tvQuickChannelSummary.text =
+            channelSummary
     }
 
-    private fun navigateToGeneratedProgram() {
-        findNavController().navigate(
-            R.id.action_deviceLightQuickSetupFragment_to_deviceLightProgramEditorFragment,
-            bundleOf(
-                ARG_DEVICE_ID to deviceId,
-                ARG_PROGRAM_NAME to "Quick Setup Program"
-            )
+    private fun openGeneratedProgram() {
+        lightController?.openProgramEditor(
+            programName = "Quick Setup Program"
         )
     }
 
     private fun selectedDaysLabel(): String {
         return when {
-            selectedDays.size == 7 -> "Every day"
-            selectedDays == setOf(DAY_MON, DAY_TUE, DAY_WED, DAY_THU, DAY_FRI) -> "Weekdays"
-            selectedDays == setOf(DAY_SAT, DAY_SUN) -> "Weekend"
-            else -> "${selectedDays.size} days"
+            selectedDays.size == 7 -> {
+                "Every day"
+            }
+
+            selectedDays == setOf(
+                DAY_MON,
+                DAY_TUE,
+                DAY_WED,
+                DAY_THU,
+                DAY_FRI
+            ) -> {
+                "Weekdays"
+            }
+
+            selectedDays == setOf(
+                DAY_SAT,
+                DAY_SUN
+            ) -> {
+                "Weekend"
+            }
+
+            else -> {
+                "${selectedDays.size} days"
+            }
         }
     }
 
@@ -390,43 +508,83 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         time: String,
         minutesToAdd: Int
     ): String {
-        val total = timeToMinutes(time) + minutesToAdd
-        return minutesToTime(wrapMinutes(total))
+        val total =
+            timeToMinutes(
+                time = time
+            ) + minutesToAdd
+
+        return minutesToTime(
+            minutes = wrapMinutes(
+                minutes = total
+            )
+        )
     }
 
     private fun subtractMinutesFromTime(
         time: String,
         minutesToSubtract: Int
     ): String {
-        val total = timeToMinutes(time) - minutesToSubtract
-        return minutesToTime(wrapMinutes(total))
+        val total =
+            timeToMinutes(
+                time = time
+            ) - minutesToSubtract
+
+        return minutesToTime(
+            minutes = wrapMinutes(
+                minutes = total
+            )
+        )
     }
 
     private fun timeToMinutes(
         time: String
     ): Int {
-        val parts = time.split(":")
-        if (parts.size != 2) return 0
+        val parts =
+            time.split(":")
 
-        val hour = parts[0].toIntOrNull() ?: 0
-        val minute = parts[1].toIntOrNull() ?: 0
+        if (parts.size != 2) {
+            return 0
+        }
 
-        return (hour * 60 + minute).coerceIn(0, MINUTES_IN_DAY - 1)
+        val hour =
+            parts[0].toIntOrNull() ?: 0
+
+        val minute =
+            parts[1].toIntOrNull() ?: 0
+
+        return (hour * 60 + minute)
+            .coerceIn(
+                minimumValue = 0,
+                maximumValue = MINUTES_IN_DAY - 1
+            )
     }
 
     private fun minutesToTime(
         minutes: Int
     ): String {
-        val safeMinutes = wrapMinutes(minutes)
-        val hour = safeMinutes / 60
-        val minute = safeMinutes % 60
-        return "%02d:%02d".format(hour, minute)
+        val safeMinutes =
+            wrapMinutes(
+                minutes = minutes
+            )
+
+        val hour =
+            safeMinutes / 60
+
+        val minute =
+            safeMinutes % 60
+
+        return "%02d:%02d".format(
+            hour,
+            minute
+        )
     }
 
     private fun wrapMinutes(
         minutes: Int
     ): Int {
-        return ((minutes % MINUTES_IN_DAY) + MINUTES_IN_DAY) % MINUTES_IN_DAY
+        return (
+            (minutes % MINUTES_IN_DAY) + MINUTES_IN_DAY
+            ) % MINUTES_IN_DAY
     }
 
     private fun showMessage(
@@ -441,12 +599,12 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
 
     override fun onDestroyView() {
         _binding = null
+
         super.onDestroyView()
     }
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
-        private const val ARG_PROGRAM_NAME = "programName"
 
         private const val TIME_STEP_MINUTES = 15
         private const val MINUTES_IN_DAY = 24 * 60
@@ -464,7 +622,10 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         ): DeviceLightQuickSetupFragment {
             return DeviceLightQuickSetupFragment().apply {
                 arguments = Bundle().apply {
-                    putLong(ARG_DEVICE_ID, deviceId)
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
                 }
             }
         }

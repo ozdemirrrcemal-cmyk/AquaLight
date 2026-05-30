@@ -21,59 +21,10 @@
         android:paddingEnd="16dp"
         android:paddingBottom="28dp">
 
-        <!-- HEADER -->
-        <LinearLayout
-            android:id="@+id/quickSetupHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btnQuickSetupBack"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Back"
-                android:padding="9dp"
-                android:src="@drawable/ic_back"
-                app:tint="?attr/colorOnSurface" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvQuickSetupTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Quick Setup"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvQuickSetupSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:text="Create a clean sunrise / sunset program"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- INTRO -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardQuickSetupIntro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
             app:cardBackgroundColor="@color/light_surface"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
@@ -147,7 +98,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- STEP 1 DAYS -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardQuickDays"
             android:layout_width="match_parent"
@@ -290,7 +240,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- STEP 2 TIME RANGE -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardQuickTimeRange"
             android:layout_width="match_parent"
@@ -386,7 +335,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- STEP 3 RAMP -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardQuickRamp"
             android:layout_width="match_parent"
@@ -425,7 +373,7 @@
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderRampDuration"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -479,7 +427,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- STEP 4 INTENSITY -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardQuickIntensity"
             android:layout_width="match_parent"
@@ -518,7 +465,7 @@
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderPeakIntensity"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -605,7 +552,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- STEP 5 PREVIEW -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardQuickPreview"
             android:layout_width="match_parent"

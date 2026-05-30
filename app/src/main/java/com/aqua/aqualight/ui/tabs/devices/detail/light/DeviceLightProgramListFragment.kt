@@ -4,9 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramListBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -19,6 +17,9 @@ class DeviceLightProgramListFragment :
 
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
+
+    private val lightController: DeviceLightControllerFragment?
+        get() = parentFragment as? DeviceLightControllerFragment
 
     override fun onViewCreated(
         view: View,
@@ -41,8 +42,8 @@ class DeviceLightProgramListFragment :
             return
         }
 
-        navigateToProgramEditor(
-            programName = "New Program"
+        openProgramEditor(
+            programName = DEFAULT_NEW_PROGRAM_NAME
         )
     }
 
@@ -62,7 +63,7 @@ class DeviceLightProgramListFragment :
 
     private fun setupClicks() = with(binding) {
         cardProgramEveryDay.setOnClickListener {
-            navigateToProgramEditor(
+            openProgramEditor(
                 programName = "Every Day Program"
             )
         }
@@ -73,7 +74,7 @@ class DeviceLightProgramListFragment :
                 subtitle = "09:00 → 19:15 · Every day",
                 isEnabled = switchEveryDayProgram.isChecked,
                 onEdit = {
-                    navigateToProgramEditor(
+                    openProgramEditor(
                         programName = "Every Day Program"
                     )
                 },
@@ -97,7 +98,7 @@ class DeviceLightProgramListFragment :
         }
 
         cardProgramWeekend.setOnClickListener {
-            navigateToProgramEditor(
+            openProgramEditor(
                 programName = "Weekend Soft Light"
             )
         }
@@ -108,7 +109,7 @@ class DeviceLightProgramListFragment :
                 subtitle = "10:00 → 18:00 · Sat, Sun",
                 isEnabled = switchWeekendProgram.isChecked,
                 onEdit = {
-                    navigateToProgramEditor(
+                    openProgramEditor(
                         programName = "Weekend Soft Light"
                     )
                 },
@@ -239,7 +240,7 @@ class DeviceLightProgramListFragment :
             .setOnClickListener {
                 dialog.dismiss()
 
-                navigateToProgramEditor(
+                openProgramEditor(
                     programName = "$programName Copy"
                 )
             }
@@ -308,15 +309,11 @@ class DeviceLightProgramListFragment :
         tvProgramChannels.text = channels
     }
 
-    private fun navigateToProgramEditor(
+    private fun openProgramEditor(
         programName: String
     ) {
-        findNavController().navigate(
-            R.id.deviceLightProgramEditorFragment,
-            bundleOf(
-                ARG_DEVICE_ID to deviceId,
-                ARG_PROGRAM_NAME to programName
-            )
+        lightController?.openProgramEditor(
+            programName = programName
         )
     }
 
@@ -338,7 +335,7 @@ class DeviceLightProgramListFragment :
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
-        private const val ARG_PROGRAM_NAME = "programName"
+        private const val DEFAULT_NEW_PROGRAM_NAME = "New Program"
 
         fun newInstance(
             deviceId: Long

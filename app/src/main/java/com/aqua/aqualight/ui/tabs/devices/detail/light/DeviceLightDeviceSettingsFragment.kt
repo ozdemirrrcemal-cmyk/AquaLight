@@ -6,7 +6,6 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightDeviceSettingsBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -25,14 +24,28 @@ class DeviceLightDeviceSettingsFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        _binding = FragmentDeviceLightDeviceSettingsBinding.bind(view)
+        _binding =
+            FragmentDeviceLightDeviceSettingsBinding.bind(view)
 
         configureSliderRanges()
-        renderDummyState()
+        renderPreviewState()
         setupSafetySlider()
         setupClicks()
+    }
+
+    fun onHeaderSyncClick() {
+        if (_binding == null) {
+            return
+        }
+
+        showMessage(
+            message = "Device data sync will be connected later"
+        )
     }
 
     private fun configureSliderRanges() = with(binding) {
@@ -41,7 +54,7 @@ class DeviceLightDeviceSettingsFragment :
         sliderMaxBrightness.stepSize = 1f
     }
 
-    private fun renderDummyState() = with(binding) {
+    private fun renderPreviewState() = with(binding) {
         tvDeviceSettingsSubtitle.text =
             "Lighting hardware and safety · Device ID: $deviceId"
 
@@ -71,25 +84,19 @@ class DeviceLightDeviceSettingsFragment :
     }
 
     private fun setupClicks() = with(binding) {
-        btnDeviceSettingsBack.setOnClickListener {
-            findNavController().navigateUp()
-        }
-
-        btnDeviceSettingsSync.setOnClickListener {
-            showMessage("Device data sync will be connected later")
-        }
-
         btnRenameLightDevice.setOnClickListener {
             showRenameDeviceSheet()
         }
 
         btnSyncDeviceTime.setOnClickListener {
-            showMessage("Device time sync will be connected later")
+            showMessage(
+                message = "Device time sync will be connected later"
+            )
         }
 
         switchTemperatureProtection.setOnCheckedChangeListener { _, isChecked ->
             showMessage(
-                if (isChecked) {
+                message = if (isChecked) {
                     "Temperature protection enabled"
                 } else {
                     "Temperature protection disabled"
@@ -102,47 +109,73 @@ class DeviceLightDeviceSettingsFragment :
         }
 
         btnRestartLightDevice.setOnClickListener {
-            showMessage("Restart command will be connected later")
+            showMessage(
+                message = "Restart command will be connected later"
+            )
         }
 
         btnFactoryResetLightSettings.setOnClickListener {
-            showMessage("Factory reset confirmation will be added")
+            showMessage(
+                message = "Factory reset confirmation will be added"
+            )
         }
 
         btnRemoveLightDevice.setOnClickListener {
-            showMessage("Remove device confirmation will be added")
+            showMessage(
+                message = "Remove device confirmation will be added"
+            )
         }
     }
 
     private fun showRenameDeviceSheet() = with(binding) {
-        val dialog = BottomSheetDialog(requireContext())
-        val sheetView = layoutInflater.inflate(
-            R.layout.bottom_sheet_light_rename_device,
-            null
-        )
+        val dialog =
+            BottomSheetDialog(
+                requireContext()
+            )
+
+        val sheetView =
+            layoutInflater.inflate(
+                R.layout.bottom_sheet_light_rename_device,
+                null
+            )
 
         val editDeviceName =
-            sheetView.findViewById<EditText>(R.id.editLightDeviceName)
+            sheetView.findViewById<EditText>(
+                R.id.editLightDeviceName
+            )
 
         val btnSave =
-            sheetView.findViewById<TextView>(R.id.btnRenameDeviceSave)
+            sheetView.findViewById<TextView>(
+                R.id.btnRenameDeviceSave
+            )
 
         val btnCancel =
-            sheetView.findViewById<TextView>(R.id.btnRenameDeviceCancel)
+            sheetView.findViewById<TextView>(
+                R.id.btnRenameDeviceCancel
+            )
 
-        val currentName = tvLightDeviceName.text.toString()
+        val currentName =
+            tvLightDeviceName.text.toString()
 
-        editDeviceName.setText(currentName)
-        editDeviceName.setSelection(editDeviceName.text.length)
+        editDeviceName.setText(
+            currentName
+        )
+
+        editDeviceName.setSelection(
+            editDeviceName.text.length
+        )
 
         btnSave.setOnClickListener {
-            val newName = editDeviceName.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
+            val newName =
+                editDeviceName.text
+                    ?.toString()
+                    ?.trim()
+                    .orEmpty()
 
             if (newName.isBlank()) {
-                showMessage("Device name cannot be empty")
+                showMessage(
+                    message = "Device name cannot be empty"
+                )
                 return@setOnClickListener
             }
 
@@ -151,62 +184,106 @@ class DeviceLightDeviceSettingsFragment :
                 "Lighting hardware and safety · Device ID: $deviceId"
 
             dialog.dismiss()
-            showMessage("Device renamed to $newName")
+
+            showMessage(
+                message = "Device renamed to $newName"
+            )
         }
 
         btnCancel.setOnClickListener {
             dialog.dismiss()
         }
 
-        dialog.setContentView(sheetView)
+        dialog.setContentView(
+            sheetView
+        )
+
         dialog.show()
     }
 
     private fun showFanControlSheet() = with(binding) {
-        val dialog = BottomSheetDialog(requireContext())
-        val sheetView = layoutInflater.inflate(
-            R.layout.bottom_sheet_light_fan_control,
-            null
-        )
+        val dialog =
+            BottomSheetDialog(
+                requireContext()
+            )
+
+        val sheetView =
+            layoutInflater.inflate(
+                R.layout.bottom_sheet_light_fan_control,
+                null
+            )
 
         val tvSelectedMode =
-            sheetView.findViewById<TextView>(R.id.tvFanSelectedMode)
+            sheetView.findViewById<TextView>(
+                R.id.tvFanSelectedMode
+            )
 
         val btnAuto =
-            sheetView.findViewById<TextView>(R.id.btnFanModeAuto)
+            sheetView.findViewById<TextView>(
+                R.id.btnFanModeAuto
+            )
 
         val btnSilent =
-            sheetView.findViewById<TextView>(R.id.btnFanModeSilent)
+            sheetView.findViewById<TextView>(
+                R.id.btnFanModeSilent
+            )
 
         val btnPerformance =
-            sheetView.findViewById<TextView>(R.id.btnFanModePerformance)
+            sheetView.findViewById<TextView>(
+                R.id.btnFanModePerformance
+            )
 
         val btnAlwaysOn =
-            sheetView.findViewById<TextView>(R.id.btnFanModeAlwaysOn)
+            sheetView.findViewById<TextView>(
+                R.id.btnFanModeAlwaysOn
+            )
 
         val btnOff =
-            sheetView.findViewById<TextView>(R.id.btnFanModeOff)
+            sheetView.findViewById<TextView>(
+                R.id.btnFanModeOff
+            )
 
         val btnSave =
-            sheetView.findViewById<TextView>(R.id.btnFanControlSave)
+            sheetView.findViewById<TextView>(
+                R.id.btnFanControlSave
+            )
 
         val btnCancel =
-            sheetView.findViewById<TextView>(R.id.btnFanControlCancel)
+            sheetView.findViewById<TextView>(
+                R.id.btnFanControlCancel
+            )
 
-        var selectedMode = tvFanControlValue.text
-            ?.toString()
-            ?.ifBlank { "Auto" }
-            ?: "Auto"
+        var selectedMode =
+            tvFanControlValue.text
+                ?.toString()
+                ?.ifBlank {
+                    "Auto"
+                }
+                ?: "Auto"
 
         fun selectedDescriptionFor(
             mode: String
         ): String {
             return when (mode) {
-                "Silent" -> "Lower fan speed"
-                "Performance" -> "Strong cooling"
-                "Always On" -> "Continuous cooling"
-                "Off" -> "Fan disabled"
-                else -> "Balanced cooling"
+                "Silent" -> {
+                    "Lower fan speed"
+                }
+
+                "Performance" -> {
+                    "Strong cooling"
+                }
+
+                "Always On" -> {
+                    "Continuous cooling"
+                }
+
+                "Off" -> {
+                    "Fan disabled"
+                }
+
+                else -> {
+                    "Balanced cooling"
+                }
             }
         }
 
@@ -214,42 +291,62 @@ class DeviceLightDeviceSettingsFragment :
             mode: String
         ) {
             selectedMode = mode
-            tvSelectedMode.text = "$mode · ${selectedDescriptionFor(mode)}"
+            tvSelectedMode.text =
+                "$mode · ${selectedDescriptionFor(mode)}"
         }
 
-        updateSelectedMode(selectedMode)
+        updateSelectedMode(
+            mode = selectedMode
+        )
 
         btnAuto.setOnClickListener {
-            updateSelectedMode("Auto")
+            updateSelectedMode(
+                mode = "Auto"
+            )
         }
 
         btnSilent.setOnClickListener {
-            updateSelectedMode("Silent")
+            updateSelectedMode(
+                mode = "Silent"
+            )
         }
 
         btnPerformance.setOnClickListener {
-            updateSelectedMode("Performance")
+            updateSelectedMode(
+                mode = "Performance"
+            )
         }
 
         btnAlwaysOn.setOnClickListener {
-            updateSelectedMode("Always On")
+            updateSelectedMode(
+                mode = "Always On"
+            )
         }
 
         btnOff.setOnClickListener {
-            updateSelectedMode("Off")
+            updateSelectedMode(
+                mode = "Off"
+            )
         }
 
         btnSave.setOnClickListener {
             tvFanControlValue.text = selectedMode
+
             dialog.dismiss()
-            showMessage("Fan mode set to $selectedMode")
+
+            showMessage(
+                message = "Fan mode set to $selectedMode"
+            )
         }
 
         btnCancel.setOnClickListener {
             dialog.dismiss()
         }
 
-        dialog.setContentView(sheetView)
+        dialog.setContentView(
+            sheetView
+        )
+
         dialog.show()
     }
 
@@ -265,6 +362,7 @@ class DeviceLightDeviceSettingsFragment :
 
     override fun onDestroyView() {
         _binding = null
+
         super.onDestroyView()
     }
 
@@ -276,7 +374,10 @@ class DeviceLightDeviceSettingsFragment :
         ): DeviceLightDeviceSettingsFragment {
             return DeviceLightDeviceSettingsFragment().apply {
                 arguments = Bundle().apply {
-                    putLong(ARG_DEVICE_ID, deviceId)
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
                 }
             }
         }

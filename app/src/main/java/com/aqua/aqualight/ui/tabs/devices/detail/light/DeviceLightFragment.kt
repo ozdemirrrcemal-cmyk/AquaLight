@@ -4,14 +4,11 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.IdRes
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightOverviewUiState
@@ -68,9 +65,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             return
         }
 
-        navigateWithDeviceId(
-            destinationId = R.id.deviceLightDeviceSettingsFragment
-        )
+        lightController?.openDeviceSettings()
     }
 
     fun onHeaderMoreClick() {
@@ -205,33 +200,29 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         btnEditLightCurve.setOnClickListener {
-            navigateToProgramEditor(
+            lightController?.openProgramEditor(
                 programName = currentProgramName()
             )
         }
 
         cardQuickSetup.setOnClickListener {
-            navigateWithDeviceId(
-                destinationId = R.id.deviceLightQuickSetupFragment
-            )
+            lightController?.openQuickSetup()
         }
 
         cardPresets.setOnClickListener {
-            navigateWithDeviceId(
-                destinationId = R.id.deviceLightPresetsFragment
-            )
+            lightController?.openPresets()
         }
 
         programEveryDayRow.setOnClickListener {
             if (!viewModel.uiState.value.isLoading) {
-                navigateToProgramEditor(
+                lightController?.openProgramEditor(
                     programName = currentProgramName()
                 )
             }
         }
 
         btnAddProgram.setOnClickListener {
-            navigateToProgramEditor(
+            lightController?.openProgramEditor(
                 programName = DEFAULT_PROGRAM_NAME
             )
         }
@@ -241,9 +232,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         cardDeviceHealth.setOnClickListener {
-            navigateWithDeviceId(
-                destinationId = R.id.deviceLightDeviceSettingsFragment
-            )
+            lightController?.openDeviceSettings()
         }
 
         switchProgramEveryDay.setOnCheckedChangeListener { _, isChecked ->
@@ -495,29 +484,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         isProgrammaticSwitchChange = false
     }
 
-    private fun navigateWithDeviceId(
-        @IdRes destinationId: Int
-    ) {
-        findNavController().navigate(
-            destinationId,
-            bundleOf(
-                ARG_DEVICE_ID to deviceId
-            )
-        )
-    }
-
-    private fun navigateToProgramEditor(
-        programName: String
-    ) {
-        findNavController().navigate(
-            R.id.deviceLightProgramEditorFragment,
-            bundleOf(
-                ARG_DEVICE_ID to deviceId,
-                ARG_PROGRAM_NAME to programName
-            )
-        )
-    }
-
     private fun showMessage(
         message: String
     ) {
@@ -536,7 +502,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
-        private const val ARG_PROGRAM_NAME = "programName"
 
         private const val DEFAULT_PROGRAM_NAME = "Every Day Program"
         private const val DURATION_NEXT_EVENT = "next event"

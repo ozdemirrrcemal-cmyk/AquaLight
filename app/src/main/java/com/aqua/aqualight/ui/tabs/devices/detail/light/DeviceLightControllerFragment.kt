@@ -20,9 +20,13 @@ class DeviceLightControllerFragment :
         get() = requireArguments().getString(ARG_DEVICE_IP).orEmpty()
 
     private val deviceTitle: String
-        get() = requireArguments().getString(ARG_DEVICE_TITLE).orEmpty()
+        get() = requireArguments()
+            .getString(ARG_DEVICE_TITLE)
+            .orEmpty()
             .ifBlank {
-                requireArguments().getString(ARG_DEFAULT_DEVICE_TITLE).orEmpty()
+                requireArguments()
+                    .getString(ARG_DEFAULT_DEVICE_TITLE)
+                    .orEmpty()
             }
             .ifBlank {
                 DEFAULT_DEVICE_TITLE
@@ -30,6 +34,9 @@ class DeviceLightControllerFragment :
 
     private var activeScreen: LightScreen =
         LightScreen.Overview
+
+    private var activeProgramName: String =
+        DEFAULT_PROGRAM_NAME
 
     private val chromeHost: DeviceChromeHost?
         get() = parentFragment as? DeviceChromeHost
@@ -56,17 +63,32 @@ class DeviceLightControllerFragment :
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        renderHeaderForActiveScreen()
+    }
+
     private fun restoreState(
         savedInstanceState: Bundle?
     ) {
-        activeScreen = savedInstanceState
-            ?.getString(KEY_ACTIVE_SCREEN)
-            ?.let { screenName ->
-                runCatching {
-                    LightScreen.valueOf(screenName)
-                }.getOrNull()
-            }
-            ?: LightScreen.Overview
+        activeScreen =
+            savedInstanceState
+                ?.getString(KEY_ACTIVE_SCREEN)
+                ?.let { screenName ->
+                    runCatching {
+                        LightScreen.valueOf(screenName)
+                    }.getOrNull()
+                }
+                ?: LightScreen.Overview
+
+        activeProgramName =
+            savedInstanceState
+                ?.getString(KEY_ACTIVE_PROGRAM_NAME)
+                .orEmpty()
+                .ifBlank {
+                    DEFAULT_PROGRAM_NAME
+                }
     }
 
     private fun setupSystemBackHandling() {
@@ -87,8 +109,13 @@ class DeviceLightControllerFragment :
             }
 
             LightScreen.Manual,
-            LightScreen.Programs -> {
+            LightScreen.Programs,
+            LightScreen.DeviceSettings -> {
                 openOverview()
+            }
+
+            LightScreen.ProgramEditor -> {
+                openPrograms()
             }
         }
     }
@@ -96,8 +123,6 @@ class DeviceLightControllerFragment :
     fun openOverview() {
         activeScreen =
             LightScreen.Overview
-
-        renderHeaderForOverview()
 
         childFragmentManager.commit {
             setReorderingAllowed(true)
@@ -108,13 +133,13 @@ class DeviceLightControllerFragment :
                 )
             )
         }
+
+        renderHeaderForOverview()
     }
 
     fun openManual() {
         activeScreen =
             LightScreen.Manual
-
-        renderHeaderForManual()
 
         childFragmentManager.commit {
             setReorderingAllowed(true)
@@ -125,13 +150,13 @@ class DeviceLightControllerFragment :
                 )
             )
         }
+
+        renderHeaderForManual()
     }
 
     fun openPrograms() {
         activeScreen =
             LightScreen.Programs
-
-        renderHeaderForPrograms()
 
         childFragmentManager.commit {
             setReorderingAllowed(true)
@@ -142,6 +167,50 @@ class DeviceLightControllerFragment :
                 )
             )
         }
+
+        renderHeaderForPrograms()
+    }
+
+    fun openProgramEditor(
+        programName: String
+    ) {
+        activeScreen =
+            LightScreen.ProgramEditor
+
+        activeProgramName =
+            programName.ifBlank {
+                DEFAULT_PROGRAM_NAME
+            }
+
+        childFragmentManager.commit {
+            setReorderingAllowed(true)
+            replace(
+                R.id.lightControllerContainer,
+                DeviceLightProgramEditorFragment.newInstance(
+                    deviceId = deviceId,
+                    programName = activeProgramName
+                )
+            )
+        }
+
+        renderHeaderForProgramEditor()
+    }
+
+    fun openDeviceSettings() {
+        activeScreen =
+            LightScreen.DeviceSettings
+
+        childFragmentManager.commit {
+            setReorderingAllowed(true)
+            replace(
+                R.id.lightControllerContainer,
+                DeviceLightDeviceSettingsFragment.newInstance(
+                    deviceId = deviceId
+                )
+            )
+        }
+
+        renderHeaderForDeviceSettings()
     }
 
     private fun renderHeaderForActiveScreen() {
@@ -157,6 +226,14 @@ class DeviceLightControllerFragment :
             LightScreen.Programs -> {
                 renderHeaderForPrograms()
             }
+
+            LightScreen.ProgramEditor -> {
+                renderHeaderForProgramEditor()
+            }
+
+            LightScreen.DeviceSettings -> {
+                renderHeaderForDeviceSettings()
+            }
         }
     }
 
@@ -166,23 +243,32 @@ class DeviceLightControllerFragment :
             actions = listOf(
                 DeviceHeaderAction(
                     iconRes = R.drawable.ic_light_sync_24,
-                    contentDescription = getString(R.string.light_cd_sync),
+                    contentDescription = getString(
+                        R.string.light_cd_sync
+                    ),
                     onClick = {
-                        currentOverviewFragment()?.onHeaderSyncClick()
+                        currentOverviewFragment()
+                            ?.onHeaderSyncClick()
                     }
                 ),
                 DeviceHeaderAction(
                     iconRes = R.drawable.ic_light_settings_24,
-                    contentDescription = getString(R.string.light_cd_settings),
+                    contentDescription = getString(
+                        R.string.light_cd_settings
+                    ),
                     onClick = {
-                        currentOverviewFragment()?.onHeaderSettingsClick()
+                        currentOverviewFragment()
+                            ?.onHeaderSettingsClick()
                     }
                 ),
                 DeviceHeaderAction(
                     iconRes = R.drawable.ic_light_more_vert_24,
-                    contentDescription = getString(R.string.light_cd_more),
+                    contentDescription = getString(
+                        R.string.light_cd_more
+                    ),
                     onClick = {
-                        currentOverviewFragment()?.onHeaderMoreClick()
+                        currentOverviewFragment()
+                            ?.onHeaderMoreClick()
                     }
                 )
             ),
@@ -194,13 +280,18 @@ class DeviceLightControllerFragment :
 
     private fun renderHeaderForManual() {
         chromeHost?.setDeviceHeader(
-            title = getString(R.string.light_manual_title),
+            title = getString(
+                R.string.light_manual_title
+            ),
             actions = listOf(
                 DeviceHeaderAction(
                     iconRes = R.drawable.ic_light_sync_24,
-                    contentDescription = getString(R.string.light_cd_sync),
+                    contentDescription = getString(
+                        R.string.light_cd_sync
+                    ),
                     onClick = {
-                        currentManualFragment()?.onHeaderSyncClick()
+                        currentManualFragment()
+                            ?.onHeaderSyncClick()
                     }
                 )
             ),
@@ -212,13 +303,68 @@ class DeviceLightControllerFragment :
 
     private fun renderHeaderForPrograms() {
         chromeHost?.setDeviceHeader(
-            title = getString(R.string.light_programs_title),
+            title = getString(
+                R.string.light_programs_title
+            ),
             actions = listOf(
                 DeviceHeaderAction(
                     iconRes = R.drawable.ic_add_24,
-                    contentDescription = getString(R.string.light_add_program),
+                    contentDescription = getString(
+                        R.string.light_add_program
+                    ),
                     onClick = {
-                        currentProgramListFragment()?.onHeaderAddClick()
+                        currentProgramListFragment()
+                            ?.onHeaderAddClick()
+                    }
+                )
+            ),
+            onBackClick = {
+                openOverview()
+            }
+        )
+    }
+
+    private fun renderHeaderForProgramEditor() {
+        chromeHost?.setDeviceHeader(
+            title = activeProgramName.ifBlank {
+                DEFAULT_PROGRAM_NAME
+            },
+            actions = listOf(
+                DeviceHeaderAction(
+                    iconRes = R.drawable.ic_light_program_24,
+                    contentDescription = "Preview Program",
+                    onClick = {
+                        currentProgramEditorFragment()
+                            ?.onHeaderPreviewClick()
+                    }
+                ),
+                DeviceHeaderAction(
+                    iconRes = R.drawable.ic_check_24,
+                    contentDescription = "Save Program",
+                    onClick = {
+                        currentProgramEditorFragment()
+                            ?.onHeaderSaveClick()
+                    }
+                )
+            ),
+            onBackClick = {
+                openPrograms()
+            }
+        )
+    }
+
+    private fun renderHeaderForDeviceSettings() {
+        chromeHost?.setDeviceHeader(
+            title = "Device Settings",
+            actions = listOf(
+                DeviceHeaderAction(
+                    iconRes = R.drawable.ic_light_sync_24,
+                    contentDescription = getString(
+                        R.string.light_cd_sync
+                    ),
+                    onClick = {
+                        currentDeviceSettingsFragment()
+                            ?.onHeaderSyncClick()
                     }
                 )
             ),
@@ -246,6 +392,18 @@ class DeviceLightControllerFragment :
         ) as? DeviceLightProgramListFragment
     }
 
+    private fun currentProgramEditorFragment(): DeviceLightProgramEditorFragment? {
+        return childFragmentManager.findFragmentById(
+            R.id.lightControllerContainer
+        ) as? DeviceLightProgramEditorFragment
+    }
+
+    private fun currentDeviceSettingsFragment(): DeviceLightDeviceSettingsFragment? {
+        return childFragmentManager.findFragmentById(
+            R.id.lightControllerContainer
+        ) as? DeviceLightDeviceSettingsFragment
+    }
+
     override fun onSaveInstanceState(
         outState: Bundle
     ) {
@@ -257,12 +415,19 @@ class DeviceLightControllerFragment :
             KEY_ACTIVE_SCREEN,
             activeScreen.name
         )
+
+        outState.putString(
+            KEY_ACTIVE_PROGRAM_NAME,
+            activeProgramName
+        )
     }
 
     private enum class LightScreen {
         Overview,
         Manual,
-        Programs
+        Programs,
+        ProgramEditor,
+        DeviceSettings
     }
 
     companion object {
@@ -272,8 +437,10 @@ class DeviceLightControllerFragment :
         private const val ARG_DEFAULT_DEVICE_TITLE = "defaultDeviceTitle"
 
         private const val KEY_ACTIVE_SCREEN = "activeScreen"
+        private const val KEY_ACTIVE_PROGRAM_NAME = "activeProgramName"
 
         private const val DEFAULT_DEVICE_TITLE = "Device"
+        private const val DEFAULT_PROGRAM_NAME = "New Program"
 
         fun newInstance(
             deviceId: Long,
