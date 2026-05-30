@@ -2,12 +2,13 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light
 
 import android.os.Bundle
 import android.view.View
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualBinding
-import com.google.android.material.slider.Slider
 import kotlin.math.roundToInt
 
 class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual) {
@@ -26,23 +27,21 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
 
         _binding = FragmentDeviceLightManualBinding.bind(view)
 
-        configureSliderRanges()
+        configureSeekBars()
         renderPreviewState()
-        setupSliders()
+        setupSeekBars()
         setupClicks()
     }
 
-    private fun configureSliderRanges() = with(binding) {
+    private fun configureSeekBars() = with(binding) {
         listOf(
             sliderMasterBrightness,
             sliderRed,
             sliderGreen,
             sliderBlue,
             sliderWhite
-        ).forEach { slider ->
-            slider.valueFrom = 0f
-            slider.valueTo = 100f
-            slider.stepSize = 1f
+        ).forEach { seekBar ->
+            seekBar.max = MAX_PERCENT
         }
     }
 
@@ -50,74 +49,105 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         tvManualConnectionStatus.text = "Online · Manual ready"
         tvManualPowerState.text = "LIVE"
 
-        sliderMasterBrightness.value = 78f
-        sliderRed.value = 80f
-        sliderGreen.value = 84f
-        sliderBlue.value = 79f
-        sliderWhite.value = 65f
+        sliderMasterBrightness.progress = 78
+        sliderRed.progress = 80
+        sliderGreen.progress = 84
+        sliderBlue.progress = 79
+        sliderWhite.progress = 65
 
         updateMasterValue()
         updateChannelValues()
         updatePowerState()
         updatePreviewText()
+
+        btnApplyToProgram.isEnabled = false
+        btnApplyToProgram.alpha = DISABLED_ALPHA
     }
 
-    private fun setupSliders() = with(binding) {
-        bindMasterSlider(
-            slider = sliderMasterBrightness
+    private fun setupSeekBars() = with(binding) {
+        bindMasterSeekBar(
+            seekBar = sliderMasterBrightness
         )
 
-        bindChannelSlider(
-            slider = sliderRed,
-            valueView = tvRedValue,
-            summaryView = tvManualRedSummaryValue
+        bindChannelSeekBar(
+            seekBar = sliderRed,
+            valueView = tvRedValue
         )
 
-        bindChannelSlider(
-            slider = sliderGreen,
-            valueView = tvGreenValue,
-            summaryView = tvManualGreenSummaryValue
+        bindChannelSeekBar(
+            seekBar = sliderGreen,
+            valueView = tvGreenValue
         )
 
-        bindChannelSlider(
-            slider = sliderBlue,
-            valueView = tvBlueValue,
-            summaryView = tvManualBlueSummaryValue
+        bindChannelSeekBar(
+            seekBar = sliderBlue,
+            valueView = tvBlueValue
         )
 
-        bindChannelSlider(
-            slider = sliderWhite,
-            valueView = tvWhiteValue,
-            summaryView = tvManualWhiteSummaryValue
+        bindChannelSeekBar(
+            seekBar = sliderWhite,
+            valueView = tvWhiteValue
         )
     }
 
-    private fun bindMasterSlider(
-        slider: Slider
+    private fun bindMasterSeekBar(
+        seekBar: SeekBar
     ) {
-        slider.addOnChangeListener { _, _, _ ->
-            updateMasterValue()
-            updatePowerState()
-            updatePreviewText()
-        }
+        seekBar.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    updateMasterValue()
+                    updatePowerState()
+                    updatePreviewText()
+                }
+
+                override fun onStartTrackingTouch(
+                    seekBar: SeekBar?
+                ) = Unit
+
+                override fun onStopTrackingTouch(
+                    seekBar: SeekBar?
+                ) = Unit
+            }
+        )
     }
 
-    private fun bindChannelSlider(
-        slider: Slider,
-        valueView: TextView,
-        summaryView: TextView
+    private fun bindChannelSeekBar(
+        seekBar: SeekBar,
+        valueView: TextView
     ) {
-        slider.addOnChangeListener { _, value, _ ->
-            val label = formatPercent(value)
+        seekBar.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    valueView.text = formatPercent(progress)
+                    updateChannelValues()
+                    updatePreviewText()
+                }
 
-            valueView.text = label
-            summaryView.text = label
+                override fun onStartTrackingTouch(
+                    seekBar: SeekBar?
+                ) = Unit
 
-            updatePreviewText()
-        }
+                override fun onStopTrackingTouch(
+                    seekBar: SeekBar?
+                ) = Unit
+            }
+        )
     }
 
     private fun setupClicks() = with(binding) {
+        btnManualBack.setOnClickListener {
+            findNavController().navigateUp()
+        }
+
         btnManualSync.setOnClickListener {
             showMessage("Syncing manual light data")
         }
@@ -127,23 +157,23 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         }
 
         btnAll100.setOnClickListener {
-            applyAllChannels(100f)
+            applyAllChannels(100)
         }
 
         btnAll50.setOnClickListener {
-            applyAllChannels(50f)
+            applyAllChannels(50)
         }
 
         btnAllOff.setOnClickListener {
-            applyAllChannels(0f)
+            applyAllChannels(0)
         }
 
         btnResetChannels.setOnClickListener {
-            sliderMasterBrightness.value = 78f
-            sliderRed.value = 80f
-            sliderGreen.value = 84f
-            sliderBlue.value = 79f
-            sliderWhite.value = 65f
+            sliderMasterBrightness.progress = 78
+            sliderRed.progress = 80
+            sliderGreen.progress = 84
+            sliderBlue.progress = 79
+            sliderWhite.progress = 65
 
             updateMasterValue()
             updateChannelValues()
@@ -160,17 +190,23 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         }
 
         btnApplyToProgram.setOnClickListener {
+            if (!btnApplyToProgram.isEnabled) {
+                return@setOnClickListener
+            }
+
             showMessage("Apply to program will be added")
         }
     }
 
     private fun applyAllChannels(
-        value: Float
+        value: Int
     ) = with(binding) {
-        sliderRed.value = value
-        sliderGreen.value = value
-        sliderBlue.value = value
-        sliderWhite.value = value
+        val safeValue = value.coerceIn(0, MAX_PERCENT)
+
+        sliderRed.progress = safeValue
+        sliderGreen.progress = safeValue
+        sliderBlue.progress = safeValue
+        sliderWhite.progress = safeValue
 
         updateChannelValues()
         updatePreviewText()
@@ -178,29 +214,29 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
 
     private fun updateMasterValue() = with(binding) {
         tvManualOutputValue.text = formatPercent(
-            value = sliderMasterBrightness.value
+            value = sliderMasterBrightness.progress
         )
     }
 
     private fun updateChannelValues() = with(binding) {
-        val red = formatPercent(sliderRed.value)
-        val green = formatPercent(sliderGreen.value)
-        val blue = formatPercent(sliderBlue.value)
-        val white = formatPercent(sliderWhite.value)
+        val red = sliderRed.progress
+        val green = sliderGreen.progress
+        val blue = sliderBlue.progress
+        val white = sliderWhite.progress
 
-        tvRedValue.text = red
-        tvGreenValue.text = green
-        tvBlueValue.text = blue
-        tvWhiteValue.text = white
+        tvRedValue.text = formatPercent(red)
+        tvGreenValue.text = formatPercent(green)
+        tvBlueValue.text = formatPercent(blue)
+        tvWhiteValue.text = formatPercent(white)
 
-        tvManualRedSummaryValue.text = red
-        tvManualGreenSummaryValue.text = green
-        tvManualBlueSummaryValue.text = blue
-        tvManualWhiteSummaryValue.text = white
+        tvManualRedSummaryValue.text = "R$red%"
+        tvManualGreenSummaryValue.text = "G$green%"
+        tvManualBlueSummaryValue.text = "B$blue%"
+        tvManualWhiteSummaryValue.text = "W$white%"
     }
 
     private fun updatePowerState() = with(binding) {
-        val master = sliderMasterBrightness.value.roundToInt()
+        val master = sliderMasterBrightness.progress
 
         tvManualPowerState.text = if (master <= 0) {
             "OFF"
@@ -210,11 +246,11 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     }
 
     private fun updatePreviewText() = with(binding) {
-        val master = sliderMasterBrightness.value
-        val red = sliderRed.value
-        val green = sliderGreen.value
-        val blue = sliderBlue.value
-        val white = sliderWhite.value
+        val master = sliderMasterBrightness.progress.toFloat()
+        val red = sliderRed.progress.toFloat()
+        val green = sliderGreen.progress.toFloat()
+        val blue = sliderBlue.progress.toFloat()
+        val white = sliderWhite.progress.toFloat()
 
         val channelAverage = (red + green + blue + white) / 4f
         val effectiveAverage = channelAverage * (master / 100f)
@@ -249,9 +285,9 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     }
 
     private fun formatPercent(
-        value: Float
+        value: Int
     ): String {
-        return "${value.roundToInt().coerceIn(0, 100)}%"
+        return "${value.coerceIn(0, MAX_PERCENT)}%"
     }
 
     private fun showMessage(
@@ -271,6 +307,8 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
+        private const val MAX_PERCENT = 100
+        private const val DISABLED_ALPHA = 0.45f
 
         fun newInstance(
             deviceId: Long

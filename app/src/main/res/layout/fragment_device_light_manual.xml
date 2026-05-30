@@ -22,7 +22,6 @@
         android:paddingEnd="@dimen/light_screen_padding_horizontal"
         android:paddingBottom="@dimen/light_screen_padding_bottom">
 
-        <!-- STATUS / ACTION ROW -->
         <LinearLayout
             android:id="@+id/manualStatusRow"
             android:layout_width="match_parent"
@@ -74,7 +73,6 @@
 
         </LinearLayout>
 
-        <!-- HERO / MASTER OUTPUT -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardManualHero"
             style="@style/Widget.Aqua.Light.Card.Surface"
@@ -151,7 +149,7 @@
                     style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="16dp"
                     android:text="@string/light_manual_current_output" />
 
                 <TextView
@@ -163,14 +161,14 @@
                     android:includeFontPadding="false"
                     android:text="78%"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="42sp"
+                    android:textSize="36sp"
                     tools:text="78%" />
 
                 <LinearLayout
                     android:id="@+id/manualChannelSummaryContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="12dp"
                     android:orientation="horizontal">
 
                     <com.google.android.material.card.MaterialCardView
@@ -178,7 +176,7 @@
                         style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/light_channel_chip_height"
-                        android:layout_marginEnd="@dimen/light_channel_chip_margin"
+                        android:layout_marginEnd="4dp"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -186,22 +184,25 @@
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="horizontal"
-                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
-                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
+                            android:paddingStart="6dp"
+                            android:paddingEnd="6dp">
 
                             <View
-                                android:layout_width="@dimen/light_channel_line_width"
+                                android:layout_width="14dp"
                                 android:layout_height="@dimen/light_channel_line_height"
                                 android:background="@color/light_red" />
 
                             <TextView
                                 android:id="@+id/tvManualRedSummaryValue"
-                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
-                                android:text="80%"
-                                tools:text="80%" />
+                                android:layout_marginStart="5dp"
+                                android:fontFamily="@font/inter_semibold"
+                                android:includeFontPadding="false"
+                                android:text="R80%"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="11sp"
+                                tools:text="R80%" />
 
                         </LinearLayout>
 
@@ -212,8 +213,8 @@
                         style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/light_channel_chip_height"
-                        android:layout_marginStart="@dimen/light_channel_chip_margin"
-                        android:layout_marginEnd="@dimen/light_channel_chip_margin"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -221,22 +222,25 @@
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="horizontal"
-                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
-                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
+                            android:paddingStart="6dp"
+                            android:paddingEnd="6dp">
 
                             <View
-                                android:layout_width="@dimen/light_channel_line_width"
+                                android:layout_width="14dp"
                                 android:layout_height="@dimen/light_channel_line_height"
                                 android:background="@color/light_green" />
 
                             <TextView
                                 android:id="@+id/tvManualGreenSummaryValue"
-                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
-                                android:text="84%"
-                                tools:text="84%" />
+                                android:layout_marginStart="5dp"
+                                android:fontFamily="@font/inter_semibold"
+                                android:includeFontPadding="false"
+                                android:text="G84%"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="11sp"
+                                tools:text="G84%" />
 
                         </LinearLayout>
 
@@ -247,8 +251,8 @@
                         style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/light_channel_chip_height"
-                        android:layout_marginStart="@dimen/light_channel_chip_margin"
-                        android:layout_marginEnd="@dimen/light_channel_chip_margin"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -256,22 +260,25 @@
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="horizontal"
-                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
-                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
+                            android:paddingStart="6dp"
+                            android:paddingEnd="6dp">
 
                             <View
-                                android:layout_width="@dimen/light_channel_line_width"
+                                android:layout_width="14dp"
                                 android:layout_height="@dimen/light_channel_line_height"
                                 android:background="@color/light_blue" />
 
                             <TextView
                                 android:id="@+id/tvManualBlueSummaryValue"
-                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
-                                android:text="79%"
-                                tools:text="79%" />
+                                android:layout_marginStart="5dp"
+                                android:fontFamily="@font/inter_semibold"
+                                android:includeFontPadding="false"
+                                android:text="B79%"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="11sp"
+                                tools:text="B79%" />
 
                         </LinearLayout>
 
@@ -282,7 +289,7 @@
                         style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/light_channel_chip_height"
-                        android:layout_marginStart="@dimen/light_channel_chip_margin"
+                        android:layout_marginStart="4dp"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -290,22 +297,25 @@
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="horizontal"
-                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
-                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
+                            android:paddingStart="6dp"
+                            android:paddingEnd="6dp">
 
                             <View
-                                android:layout_width="@dimen/light_channel_line_width"
+                                android:layout_width="14dp"
                                 android:layout_height="@dimen/light_channel_line_height"
                                 android:background="@color/light_white" />
 
                             <TextView
                                 android:id="@+id/tvManualWhiteSummaryValue"
-                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
-                                android:text="65%"
-                                tools:text="65%" />
+                                android:layout_marginStart="5dp"
+                                android:fontFamily="@font/inter_semibold"
+                                android:includeFontPadding="false"
+                                android:text="W65%"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="11sp"
+                                tools:text="W65%" />
 
                         </LinearLayout>
 
@@ -313,34 +323,32 @@
 
                 </LinearLayout>
 
-                <com.google.android.material.slider.Slider
+                <SeekBar
                     android:id="@+id/sliderMasterBrightness"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:value="78"
-                    android:valueFrom="0"
-                    android:valueTo="100"
-                    app:haloColor="@color/light_accent_soft"
-                    app:labelBehavior="gone"
-                    app:thumbColor="@color/light_accent"
-                    app:trackColorActive="@color/light_accent"
-                    app:trackColorInactive="@color/light_stroke"
-                    app:trackHeight="6dp" />
+                    android:layout_height="34dp"
+                    android:layout_marginTop="13dp"
+                    android:max="100"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
+                    android:progress="78"
+                    android:progressDrawable="@drawable/seekbar_light_master"
+                    android:splitTrack="false"
+                    android:thumb="@drawable/seekbar_thumb_master"
+                    android:thumbOffset="0dp" />
 
                 <TextView
                     android:id="@+id/tvManualNotice"
                     style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="8dp"
                     android:text="@string/light_manual_notice" />
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- CHANNEL CONTROL -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardChannelControl"
             style="@style/Widget.Aqua.Light.Card.Surface"
@@ -368,12 +376,11 @@
                     android:layout_marginTop="5dp"
                     android:text="@string/light_manual_channel_control_subtitle" />
 
-                <!-- RED -->
                 <LinearLayout
                     android:id="@+id/redChannelHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="16dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -403,26 +410,24 @@
 
                 </LinearLayout>
 
-                <com.google.android.material.slider.Slider
+                <SeekBar
                     android:id="@+id/sliderRed"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:value="80"
-                    android:valueFrom="0"
-                    android:valueTo="100"
-                    app:haloColor="@color/light_red"
-                    app:labelBehavior="gone"
-                    app:thumbColor="@color/light_red"
-                    app:trackColorActive="@color/light_red"
-                    app:trackColorInactive="@color/light_stroke"
-                    app:trackHeight="6dp" />
+                    android:layout_height="32dp"
+                    android:max="100"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
+                    android:progress="80"
+                    android:progressDrawable="@drawable/seekbar_light_red"
+                    android:splitTrack="false"
+                    android:thumb="@drawable/seekbar_thumb_red"
+                    android:thumbOffset="0dp" />
 
-                <!-- GREEN -->
                 <LinearLayout
                     android:id="@+id/greenChannelHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -452,26 +457,24 @@
 
                 </LinearLayout>
 
-                <com.google.android.material.slider.Slider
+                <SeekBar
                     android:id="@+id/sliderGreen"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:value="84"
-                    android:valueFrom="0"
-                    android:valueTo="100"
-                    app:haloColor="@color/light_green"
-                    app:labelBehavior="gone"
-                    app:thumbColor="@color/light_green"
-                    app:trackColorActive="@color/light_green"
-                    app:trackColorInactive="@color/light_stroke"
-                    app:trackHeight="6dp" />
+                    android:layout_height="32dp"
+                    android:max="100"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
+                    android:progress="84"
+                    android:progressDrawable="@drawable/seekbar_light_green"
+                    android:splitTrack="false"
+                    android:thumb="@drawable/seekbar_thumb_green"
+                    android:thumbOffset="0dp" />
 
-                <!-- BLUE -->
                 <LinearLayout
                     android:id="@+id/blueChannelHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -501,26 +504,24 @@
 
                 </LinearLayout>
 
-                <com.google.android.material.slider.Slider
+                <SeekBar
                     android:id="@+id/sliderBlue"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:value="79"
-                    android:valueFrom="0"
-                    android:valueTo="100"
-                    app:haloColor="@color/light_blue"
-                    app:labelBehavior="gone"
-                    app:thumbColor="@color/light_blue"
-                    app:trackColorActive="@color/light_blue"
-                    app:trackColorInactive="@color/light_stroke"
-                    app:trackHeight="6dp" />
+                    android:layout_height="32dp"
+                    android:max="100"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
+                    android:progress="79"
+                    android:progressDrawable="@drawable/seekbar_light_blue"
+                    android:splitTrack="false"
+                    android:thumb="@drawable/seekbar_thumb_blue"
+                    android:thumbOffset="0dp" />
 
-                <!-- WHITE -->
                 <LinearLayout
                     android:id="@+id/whiteChannelHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -550,26 +551,24 @@
 
                 </LinearLayout>
 
-                <com.google.android.material.slider.Slider
+                <SeekBar
                     android:id="@+id/sliderWhite"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:value="65"
-                    android:valueFrom="0"
-                    android:valueTo="100"
-                    app:haloColor="@color/light_white"
-                    app:labelBehavior="gone"
-                    app:thumbColor="@color/light_white"
-                    app:trackColorActive="@color/light_white"
-                    app:trackColorInactive="@color/light_stroke"
-                    app:trackHeight="6dp" />
+                    android:layout_height="32dp"
+                    android:max="100"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="0dp"
+                    android:progress="65"
+                    android:progressDrawable="@drawable/seekbar_light_white"
+                    android:splitTrack="false"
+                    android:thumb="@drawable/seekbar_thumb_white"
+                    android:thumbOffset="0dp" />
 
-                <!-- QUICK SET CHIPS -->
                 <LinearLayout
                     android:id="@+id/manualQuickSetRow"
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="8dp"
                     android:orientation="horizontal">
 
                     <com.google.android.material.card.MaterialCardView
@@ -664,7 +663,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- CURRENT MIX -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLivePreview"
             style="@style/Widget.Aqua.Light.Card.SurfaceDeep"
@@ -705,7 +703,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- ACTIONS -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardManualActions"
             style="@style/Widget.Aqua.Light.Card.Surface"
