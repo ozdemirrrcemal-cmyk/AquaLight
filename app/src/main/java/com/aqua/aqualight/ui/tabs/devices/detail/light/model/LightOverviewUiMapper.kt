@@ -7,18 +7,36 @@ object LightOverviewUiMapper {
     fun map(
         snapshot: LightOverviewSnapshot
     ): LightOverviewUiState {
-        val isLoading =
-            snapshot.isLoading
+        if (snapshot.isLoading) {
+            return LightOverviewUiState.loading()
+        }
+
+        val peakRange =
+            snapshot.curvePeakTimeRange.ifBlank {
+                snapshot.curvePeakRange
+            }
+
+        val firmware =
+            snapshot.firmwareVersion.ifBlank {
+                snapshot.firmwareLabel
+            }
+
+        val hasTimelineData =
+            snapshot.curveStartTime.isNotBlank() ||
+                peakRange.isNotBlank() ||
+                snapshot.curveSunsetTime.isNotBlank() ||
+                snapshot.curveRampMinutes != null
 
         return LightOverviewUiState(
-            isLoading = isLoading,
+            isLoading = false,
             isOnline = snapshot.isOnline,
+            isTimelineActive = hasTimelineData,
 
             connectionLabel = snapshot.connectionLabel.ifBlank {
                 if (snapshot.isOnline) {
                     "Online · 4-channel WRGB"
                 } else {
-                    "Connecting · WRGB"
+                    "Offline · WRGB"
                 }
             },
 
@@ -27,38 +45,38 @@ object LightOverviewUiMapper {
             },
 
             programSubtitle = snapshot.programSubtitle.ifBlank {
-                if (isLoading) {
-                    "Waiting for device data"
-                } else {
+                if (snapshot.isOnline) {
                     "Auto mode active · Synced"
+                } else {
+                    "Waiting for device data"
                 }
             },
 
             modeLabel = snapshot.modeLabel.ifBlank {
-                if (isLoading) {
-                    "SYNCING"
-                } else {
+                if (snapshot.isOnline) {
                     "AUTO"
+                } else {
+                    "OFFLINE"
                 }
             },
 
-            currentOutputLabel = percentLabel(
+            currentOutputLabel = formatPercent(
                 value = snapshot.currentOutputPercent
             ),
 
-            redLabel = percentLabel(
+            redLabel = formatPercent(
                 value = snapshot.redPercent
             ),
 
-            greenLabel = percentLabel(
+            greenLabel = formatPercent(
                 value = snapshot.greenPercent
             ),
 
-            blueLabel = percentLabel(
+            blueLabel = formatPercent(
                 value = snapshot.bluePercent
             ),
 
-            whiteLabel = percentLabel(
+            whiteLabel = formatPercent(
                 value = snapshot.whitePercent
             ),
 
@@ -67,10 +85,14 @@ object LightOverviewUiMapper {
             nextLabel = "Next · ${snapshot.nextLabel.ifBlank { LightOverviewUiState.NO_VALUE }}",
 
             curveNowLabel = snapshot.curveNowLabel.ifBlank {
-                if (isLoading) {
-                    "Waiting for curve data"
+                if (hasTimelineData) {
+                    "Now ${snapshot.deviceTime.ifBlank { LightOverviewUiState.NO_VALUE }} · ${
+                        formatPercent(
+                            value = snapshot.currentOutputPercent
+                        )
+                    }"
                 } else {
-                    LightOverviewUiState.NO_VALUE
+                    "Waiting for curve data"
                 }
             },
 
@@ -90,7 +112,7 @@ object LightOverviewUiMapper {
                 LightOverviewUiState.NO_VALUE
             },
 
-            curvePeakLabel = snapshot.curvePeakRange.ifBlank {
+            curvePeakLabel = peakRange.ifBlank {
                 LightOverviewUiState.NO_VALUE
             },
 
@@ -98,55 +120,37 @@ object LightOverviewUiMapper {
                 LightOverviewUiState.NO_VALUE
             },
 
-            curveRampLabel = snapshot.curveRampMinutes?.let {
-                "$it min"
-            } ?: LightOverviewUiState.NO_VALUE,
+            curveRampLabel = snapshot.curveRampMinutes
+                ?.let { "$it min" }
+                ?: LightOverviewUiState.NO_VALUE,
 
-            activeProgramName = if (isLoading) {
+            activeProgramName = snapshot.activeProgramName.ifBlank {
+                "Programs"
+            },
+
+            activeProgramSchedule = snapshot.activeProgramSchedule.ifBlank {
                 "Waiting for program data"
-            } else {
-                snapshot.activeProgramName.ifBlank {
-                    LightOverviewUiState.NO_VALUE
-                }
             },
 
-            activeProgramSchedule = if (isLoading) {
-                ""
-            } else {
-                snapshot.activeProgramSchedule.ifBlank {
-                    LightOverviewUiState.NO_VALUE
-                }
-            },
+            activeProgramChannels = snapshot.activeProgramChannels,
 
-            activeProgramChannels = if (isLoading) {
-                ""
-            } else {
-                snapshot.activeProgramChannels.ifBlank {
-                    LightOverviewUiState.NO_VALUE
-                }
-            },
-
-            activeProgramStatusLabel = if (isLoading) {
-                ""
-            } else if (snapshot.isProgramEnabled) {
+            activeProgramStatusLabel = if (snapshot.isProgramEnabled) {
                 "Active"
             } else {
-                "Off"
+                ""
             },
 
-            isProgramEnabled = snapshot.isProgramEnabled,
-
             healthLabel = snapshot.healthLabel.ifBlank {
-                if (isLoading) {
-                    "Waiting for device data"
+                if (snapshot.isOnline) {
+                    "Online · Synced"
                 } else {
-                    LightOverviewUiState.NO_VALUE
+                    "Connecting"
                 }
             },
 
-            temperatureLabel = snapshot.temperatureC?.let {
-                "$it°C"
-            } ?: LightOverviewUiState.NO_VALUE,
+            temperatureLabel = snapshot.temperatureC
+                ?.let { "$it°C" }
+                ?: LightOverviewUiState.NO_VALUE,
 
             fanLabel = snapshot.fanLabel.ifBlank {
                 LightOverviewUiState.NO_VALUE
@@ -156,13 +160,23 @@ object LightOverviewUiMapper {
                 LightOverviewUiState.NO_VALUE
             },
 
-            firmwareLabel = snapshot.firmwareLabel.ifBlank {
+            firmwareLabel = firmware.ifBlank {
                 LightOverviewUiState.NO_VALUE
-            }
+            },
+
+            isProgramEnabled = snapshot.isProgramEnabled
         )
     }
 
-    private fun percentLabel(
+    fun toUiState(
+        snapshot: LightOverviewSnapshot
+    ): LightOverviewUiState {
+        return map(
+            snapshot = snapshot
+        )
+    }
+
+    private fun formatPercent(
         value: Int?
     ): String {
         return value
@@ -170,9 +184,13 @@ object LightOverviewUiMapper {
                 minimumValue = 0,
                 maximumValue = 100
             )
-            ?.let {
-                "$it%"
-            }
+            ?.let { "$it%" }
             ?: LightOverviewUiState.NO_VALUE
     }
+}
+
+fun LightOverviewSnapshot.toUiState(): LightOverviewUiState {
+    return LightOverviewUiMapper.map(
+        snapshot = this
+    )
 }

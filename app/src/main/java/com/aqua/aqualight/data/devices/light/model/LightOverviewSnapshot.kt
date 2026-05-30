@@ -1,18 +1,16 @@
 package com.aqua.aqualight.data.devices.light.model
 
 data class LightOverviewSnapshot(
-    val deviceId: Long,
+    val isLoading: Boolean = true,
+    val isOnline: Boolean = false,
 
     val connectionLabel: String = "",
-    val isOnline: Boolean = false,
-    val isRefreshing: Boolean = false,
 
     val programTitle: String = "",
     val programSubtitle: String = "",
     val modeLabel: String = "",
 
     val currentOutputPercent: Int? = null,
-
     val redPercent: Int? = null,
     val greenPercent: Int? = null,
     val bluePercent: Int? = null,
@@ -22,9 +20,9 @@ data class LightOverviewSnapshot(
     val nextLabel: String = "",
     val curveNowLabel: String = "",
 
-    val timelineStartLabel: String = "",
-    val timelineMidLabel: String = "",
-    val timelineEndLabel: String = "",
+    val timelineStartLabel: String = "00:00",
+    val timelineMidLabel: String = "12:00",
+    val timelineEndLabel: String = "24:00",
 
     val curveStartTime: String = "",
     val curvePeakTimeRange: String = "",
@@ -40,25 +38,27 @@ data class LightOverviewSnapshot(
     val temperatureC: Int? = null,
     val fanLabel: String = "",
     val deviceTime: String = "",
-    val firmware: String = ""
+    val firmwareVersion: String = "",
+
+    /**
+     * Geriye uyumluluk için tutuldu.
+     * Eski kodda curvePeakRange kullanıldıysa derleme kırılmasın.
+     */
+    val curvePeakRange: String = "",
+
+    /**
+     * Geriye uyumluluk için tutuldu.
+     * Eski kodda firmwareLabel kullanıldıysa derleme kırılmasın.
+     */
+    val firmwareLabel: String = ""
 ) {
 
     companion object {
-        fun loading(
-            deviceId: Long
-        ): LightOverviewSnapshot {
+        fun loading(): LightOverviewSnapshot {
             return LightOverviewSnapshot(
-                deviceId = deviceId,
-                connectionLabel = "Connecting · WRGB",
+                isLoading = true,
                 isOnline = false,
-                isRefreshing = false,
-                programTitle = "Current Program",
-                programSubtitle = "Waiting for device data",
-                modeLabel = "SYNCING",
-                timelineStartLabel = "00:00",
-                timelineMidLabel = "12:00",
-                timelineEndLabel = "24:00",
-                healthLabel = "Connecting"
+                connectionLabel = "Connecting · WRGB"
             )
         }
     }
