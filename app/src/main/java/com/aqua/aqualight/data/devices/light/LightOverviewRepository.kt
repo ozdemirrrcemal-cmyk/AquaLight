@@ -1,24 +1,24 @@
 package com.aqua.aqualight.data.devices.light
 
 import com.aqua.aqualight.data.devices.light.model.LightOverviewSnapshot
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface LightOverviewRepository {
 
     fun observeOverview(
         deviceId: Long
-    ): Flow<LightOverviewSnapshot>
+    ): StateFlow<LightOverviewSnapshot>
 
-    suspend fun refresh(
+    fun refresh(
         deviceId: Long
     )
 
-    suspend fun setProgramEnabled(
+    fun setProgramEnabled(
         deviceId: Long,
         enabled: Boolean
     )
 
-    suspend fun applyTemporaryScene(
+    fun applyTemporaryScene(
         deviceId: Long,
         sceneName: String,
         outputPercent: Int,
@@ -26,7 +26,7 @@ interface LightOverviewRepository {
         resumeLabel: String
     )
 
-    suspend fun restoreAutoProgram(
+    fun restoreAutoProgram(
         deviceId: Long
     )
 }

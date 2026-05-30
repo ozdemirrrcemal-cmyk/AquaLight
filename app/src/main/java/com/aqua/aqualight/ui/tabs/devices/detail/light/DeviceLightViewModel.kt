@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.LightOverviewRepository
 import com.aqua.aqualight.data.devices.light.LightOverviewRepositoryProvider
-import com.aqua.aqualight.data.devices.light.model.LightOverviewSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightOverviewUiMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightOverviewUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,65 +19,17 @@ class DeviceLightViewModel(
 
     private val _uiState =
         MutableStateFlow(
-            LightOverviewUiMapper.map(
-                LightOverviewSnapshot.loading(
-                    deviceId = deviceId
-                )
-            )
+            LightOverviewUiState.loading()
         )
 
     val uiState: StateFlow<LightOverviewUiState> =
         _uiState.asStateFlow()
 
     init {
-        observeLightOverview()
+        observeRepository()
     }
 
-    fun refresh() {
-        viewModelScope.launch {
-            repository.refresh(
-                deviceId = deviceId
-            )
-        }
-    }
-
-    fun setProgramEnabled(
-        enabled: Boolean
-    ) {
-        viewModelScope.launch {
-            repository.setProgramEnabled(
-                deviceId = deviceId,
-                enabled = enabled
-            )
-        }
-    }
-
-    fun applyTemporaryScene(
-        sceneName: String,
-        outputPercent: Int,
-        durationLabel: String,
-        resumeLabel: String
-    ) {
-        viewModelScope.launch {
-            repository.applyTemporaryScene(
-                deviceId = deviceId,
-                sceneName = sceneName,
-                outputPercent = outputPercent,
-                durationLabel = durationLabel,
-                resumeLabel = resumeLabel
-            )
-        }
-    }
-
-    fun restoreAutoProgram() {
-        viewModelScope.launch {
-            repository.restoreAutoProgram(
-                deviceId = deviceId
-            )
-        }
-    }
-
-    private fun observeLightOverview() {
+    private fun observeRepository() {
         viewModelScope.launch {
             repository
                 .observeOverview(
@@ -93,10 +44,44 @@ class DeviceLightViewModel(
         }
     }
 
+    fun refresh() {
+        repository.refresh(
+            deviceId = deviceId
+        )
+    }
+
+    fun setProgramEnabled(
+        enabled: Boolean
+    ) {
+        repository.setProgramEnabled(
+            deviceId = deviceId,
+            enabled = enabled
+        )
+    }
+
+    fun applyTemporaryScene(
+        sceneName: String,
+        outputPercent: Int,
+        durationLabel: String,
+        resumeLabel: String
+    ) {
+        repository.applyTemporaryScene(
+            deviceId = deviceId,
+            sceneName = sceneName,
+            outputPercent = outputPercent,
+            durationLabel = durationLabel,
+            resumeLabel = resumeLabel
+        )
+    }
+
+    fun restoreAutoProgram() {
+        repository.restoreAutoProgram(
+            deviceId = deviceId
+        )
+    }
+
     class Factory(
-        private val deviceId: Long,
-        private val repository: LightOverviewRepository =
-            LightOverviewRepositoryProvider.get()
+        private val deviceId: Long
     ) : ViewModelProvider.Factory {
 
         @Suppress("UNCHECKED_CAST")
@@ -106,7 +91,7 @@ class DeviceLightViewModel(
             if (modelClass.isAssignableFrom(DeviceLightViewModel::class.java)) {
                 return DeviceLightViewModel(
                     deviceId = deviceId,
-                    repository = repository
+                    repository = LightOverviewRepositoryProvider.provide()
                 ) as T
             }
 

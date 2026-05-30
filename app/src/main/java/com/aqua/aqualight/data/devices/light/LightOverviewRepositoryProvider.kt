@@ -6,7 +6,7 @@ object LightOverviewRepositoryProvider {
         LightOverviewRepositoryImpl()
     }
 
-    fun get(): LightOverviewRepository {
+    fun provide(): LightOverviewRepository {
         return repository
     }
 }

@@ -1,166 +1,135 @@
 package com.aqua.aqualight.data.devices.light
 
 import com.aqua.aqualight.data.devices.light.model.LightOverviewSnapshot
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class LightOverviewRepositoryImpl : LightOverviewRepository {
 
-    private val deviceFlows =
-        mutableMapOf<Long, MutableStateFlow<LightOverviewSnapshot>>()
+    private val lock = Any()
 
-    private val lastAutoSnapshots =
-        mutableMapOf<Long, LightOverviewSnapshot>()
+    private val deviceStates =
+        mutableMapOf<Long, MutableStateFlow<LightOverviewSnapshot>>()
 
     override fun observeOverview(
         deviceId: Long
-    ): Flow<LightOverviewSnapshot> {
-        return flowFor(deviceId).asStateFlow()
+    ): StateFlow<LightOverviewSnapshot> {
+        return getDeviceStateFlow(
+            deviceId = deviceId
+        )
     }
 
-    override suspend fun refresh(
+    override fun refresh(
         deviceId: Long
     ) {
-        val flow = flowFor(deviceId)
-
-        flow.value = flow.value.copy(
-            isRefreshing = true,
-            connectionLabel = if (flow.value.isOnline) {
-                flow.value.connectionLabel.ifBlank {
-                    "Online · 4-channel WRGB"
-                }
-            } else {
-                "Syncing · WRGB"
-            },
-            healthLabel = if (flow.value.isOnline) {
-                flow.value.healthLabel.ifBlank {
-                    "Syncing device data"
-                }
-            } else {
-                "Connecting"
-            }
-        )
+        val stateFlow =
+            getDeviceStateFlow(
+                deviceId = deviceId
+            )
 
         /*
-         * TODO:
-         * Burada gerçek ESP32 entegrasyonu bağlanacak.
+         * Şu an ESP32 bağlantısı yok.
+         * Bu yüzden sahte veri basmıyoruz.
+         * Ekran loading / waiting state göstermeye devam eder.
          *
-         * Doğru akış:
-         * 1. Önce DataStore/cache son bilinen cihaz verisini verir.
-         * 2. Sonra ESP32 HTTP/UDP üzerinden taze veri çekilir.
-         * 3. Gelen veri LightOverviewSnapshot'a map edilir.
-         * 4. flow.value = freshSnapshot yapılır.
-         *
-         * Şimdilik fake cihaz datası basmıyoruz.
-         * Bu ticari uygulama için doğru: kullanıcıya sahte değer göstermiyoruz.
+         * ESP32 entegrasyonunda burada:
+         * 1. cache/DataStore okunacak
+         * 2. ESP32 status/program/channel verisi çekilecek
+         * 3. LightOverviewSnapshot güncellenecek
          */
-
-        flow.value = flow.value.copy(
-            isRefreshing = false,
-            connectionLabel = if (flow.value.isOnline) {
-                flow.value.connectionLabel.ifBlank {
-                    "Online · 4-channel WRGB"
-                }
-            } else {
-                "Connecting · WRGB"
-            },
-            healthLabel = if (flow.value.isOnline) {
-                flow.value.healthLabel.ifBlank {
-                    "Online"
-                }
-            } else {
-                "Waiting for device data"
-            }
-        )
+        stateFlow.value =
+            LightOverviewSnapshot.loading()
     }
 
-    override suspend fun setProgramEnabled(
+    override fun setProgramEnabled(
         deviceId: Long,
         enabled: Boolean
     ) {
-        val flow = flowFor(deviceId)
+        val stateFlow =
+            getDeviceStateFlow(
+                deviceId = deviceId
+            )
+
+        val current =
+            stateFlow.value
 
         /*
-         * TODO:
-         * ESP32'ye program enable/disable komutu gönderilecek.
-         * Komut başarılı olunca ESP32’den dönen gerçek state ile güncellenecek.
+         * Şu an ESP32 yok.
+         * Switch komutunu fake veriyle başarılı göstermiyoruz.
+         * Sadece UI tarafında komut gönderildi mesajı gösteriliyor.
          */
-
-        flow.value = flow.value.copy(
-            isProgramEnabled = enabled
-        )
-
-        if (enabled) {
-            lastAutoSnapshots[deviceId] = flow.value
-        }
+        stateFlow.value =
+            current.copy(
+                isLoading = current.isLoading,
+                isProgramEnabled = current.isProgramEnabled
+            )
     }
 
-    override suspend fun applyTemporaryScene(
+    override fun applyTemporaryScene(
         deviceId: Long,
         sceneName: String,
         outputPercent: Int,
         durationLabel: String,
         resumeLabel: String
     ) {
-        val flow = flowFor(deviceId)
+        val stateFlow =
+            getDeviceStateFlow(
+                deviceId = deviceId
+            )
 
-        lastAutoSnapshots[deviceId] = flow.value
+        val current =
+            stateFlow.value
 
         /*
-         * TODO:
-         * ESP32’ye temporary scene komutu gönderilecek.
-         * Komut sonrası gerçek cihaz cevabı gelince flow.value tekrar gerçek veriyle güncellenecek.
+         * Önemli:
+         * Burada outputPercent'i ekrana basmıyoruz.
+         * Çünkü %45 / %55 / %100 gibi değerler ESP32 onayı olmadan
+         * production mantığında gerçek kabul edilmemeli.
+         *
+         * ESP32 entegrasyonunda temporary scene komutu gönderilecek,
+         * cihazdan yeni snapshot gelince UI kendiliğinden güncellenecek.
          */
-
-        flow.value = flow.value.copy(
-            programTitle = "$sceneName Active",
-            programSubtitle = "Temporary scene is running",
-            modeLabel = "OVERRIDE",
-            currentOutputPercent = outputPercent.coerceIn(0, 100),
-            nowLabel = sceneName,
-            nextLabel = resumeLabel,
-            curveNowLabel = "Override · ${outputPercent.coerceIn(0, 100)}%"
-        )
+        stateFlow.value =
+            current.copy(
+                isLoading = current.isLoading,
+                programTitle = current.programTitle,
+                programSubtitle = current.programSubtitle,
+                modeLabel = current.modeLabel
+            )
     }
 
-    override suspend fun restoreAutoProgram(
+    override fun restoreAutoProgram(
         deviceId: Long
     ) {
-        val flow = flowFor(deviceId)
+        val stateFlow =
+            getDeviceStateFlow(
+                deviceId = deviceId
+            )
+
+        val current =
+            stateFlow.value
 
         /*
-         * TODO:
-         * ESP32’ye restore auto komutu gönderilecek.
-         * Cihazdan gerçek program state dönünce flow.value onunla güncellenecek.
+         * ESP32 yokken fake auto state'e dönmüyoruz.
+         * Gerçek cihazdan veri gelene kadar mevcut/loading state korunur.
          */
-
-        val lastAutoSnapshot = lastAutoSnapshots[deviceId]
-
-        flow.value = if (lastAutoSnapshot != null) {
-            lastAutoSnapshot
-        } else {
-            flow.value.copy(
-                programTitle = "Current Program",
-                programSubtitle = "Waiting for device data",
-                modeLabel = "SYNCING",
-                currentOutputPercent = null,
-                nowLabel = "",
-                nextLabel = "",
-                curveNowLabel = ""
+        stateFlow.value =
+            current.copy(
+                isLoading = current.isLoading
             )
-        }
     }
 
-    private fun flowFor(
+    private fun getDeviceStateFlow(
         deviceId: Long
     ): MutableStateFlow<LightOverviewSnapshot> {
-        return deviceFlows.getOrPut(deviceId) {
-            MutableStateFlow(
-                LightOverviewSnapshot.loading(
-                    deviceId = deviceId
+        return synchronized(lock) {
+            deviceStates.getOrPut(
+                key = deviceId
+            ) {
+                MutableStateFlow(
+                    LightOverviewSnapshot.loading()
                 )
-            )
+            }
         }
     }
 }
