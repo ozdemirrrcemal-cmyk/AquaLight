@@ -56,5 +56,10 @@
 
     <!-- Device health -->
     <dimen name="light_health_item_height">58dp</dimen>
+	
+	<!-- Light card style aliases -->
+    <dimen name="light_card_radius_medium">22dp</dimen>
+    <dimen name="light_card_radius_small">16dp</dimen>
+    <dimen name="light_card_stroke_width">1dp</dimen>
 
 </resources>
