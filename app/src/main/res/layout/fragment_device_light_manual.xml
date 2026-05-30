@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/lightManualScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -16,262 +17,361 @@
         android:layout_height="wrap_content"
         android:clipToPadding="false"
         android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingTop="18dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="28dp">
+        android:paddingStart="@dimen/light_screen_padding_horizontal"
+        android:paddingTop="@dimen/light_screen_padding_top"
+        android:paddingEnd="@dimen/light_screen_padding_horizontal"
+        android:paddingBottom="@dimen/light_screen_padding_bottom">
 
+        <!-- STATUS / ACTION ROW -->
         <LinearLayout
-            android:id="@+id/manualHeader"
+            android:id="@+id/manualStatusRow"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/light_header_height"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/btnManualBack"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Back"
-                android:padding="9dp"
-                android:src="@drawable/ic_back"
-                app:tint="?attr/colorOnSurface" />
+            <TextView
+                android:id="@+id/viewManualOnlineDot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/inter_semibold"
+                android:includeFontPadding="false"
+                android:text="●"
+                android:textColor="@color/light_accent"
+                android:textSize="11sp" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/tvManualConnectionStatus"
+                style="@style/TextAppearance.Aqua.Light.BodyMuted"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="7dp"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Online · Manual ready"
+                tools:text="Online · Manual ready" />
 
-                <TextView
-                    android:id="@+id/tvManualTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Manual Control"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+            <ImageButton
+                android:id="@+id/btnManualSync"
+                android:layout_width="@dimen/light_header_icon_size"
+                android:layout_height="@dimen/light_header_icon_size"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/light_manual_sync_desc"
+                android:padding="@dimen/light_header_icon_padding"
+                android:src="@drawable/ic_light_sync_24"
+                app:tint="@color/settings_text_secondary" />
 
-                <TextView
-                    android:id="@+id/tvManualSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
-                    android:text="Live output control"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/chipManualState"
-                android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                app:cardBackgroundColor="@color/light_accent_soft"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/light_accent"
-                app:strokeWidth="1dp">
-
-                <TextView
-                    android:id="@+id/tvManualPowerState"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
-                    android:text="ON"
-                    android:textColor="@color/light_accent"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-            </com.google.android.material.card.MaterialCardView>
+            <ImageButton
+                android:id="@+id/btnManualMore"
+                android:layout_width="@dimen/light_header_more_width"
+                android:layout_height="@dimen/light_header_icon_size"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/light_manual_more_desc"
+                android:padding="@dimen/light_header_more_padding"
+                android:src="@drawable/ic_light_more_vert_24"
+                app:tint="@color/settings_text_secondary" />
 
         </LinearLayout>
 
+        <!-- HERO / MASTER OUTPUT -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardManualNotice"
+            android:id="@+id/cardManualHero"
+            style="@style/Widget.Aqua.Light.Card.Surface"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            app:cardBackgroundColor="@color/light_accent_soft"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_accent"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:gravity="center"
-                    android:text="i"
-                    android:textColor="@color/light_accent"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvManualNotice"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:text="Manual changes are temporary. Auto program will resume at the next scheduled event."
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="13sp" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardMasterBrightness"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/light_hero_margin_top"
+            app:cardCornerRadius="@dimen/light_card_corner_radius_large">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="@dimen/light_card_padding">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvManualTitle"
+                            style="@style/TextAppearance.Aqua.Light.HeroTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/light_manual_title" />
+
+                        <TextView
+                            android:id="@+id/tvManualSubtitle"
+                            style="@style/TextAppearance.Aqua.Light.BodyMuted"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:text="@string/light_manual_subtitle" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/chipManualState"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/light_mode_chip_height"
+                        app:cardBackgroundColor="@color/light_chip_auto"
+                        app:cardCornerRadius="@dimen/light_mode_chip_radius"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@color/light_accent"
+                        app:strokeWidth="@dimen/light_card_stroke_width">
+
+                        <TextView
+                            android:id="@+id/tvManualPowerState"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:fontFamily="@font/inter_semibold"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:paddingStart="@dimen/light_mode_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_mode_chip_padding_horizontal"
+                            android:text="LIVE"
+                            android:textColor="@color/light_accent"
+                            android:textSize="12sp"
+                            tools:text="LIVE" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
 
                 <TextView
+                    android:id="@+id/tvManualOutputLabel"
+                    style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Master Brightness"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="18dp"
+                    android:text="@string/light_manual_current_output" />
 
                 <TextView
-                    android:id="@+id/tvMasterBrightnessValue"
+                    android:id="@+id/tvManualOutputValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/inter_semibold"
+                    android:includeFontPadding="false"
                     android:text="78%"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="42sp"
-                    android:textStyle="bold" />
+                    tools:text="78%" />
+
+                <LinearLayout
+                    android:id="@+id/manualChannelSummaryContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardManualRedSummary"
+                        style="@style/Widget.Aqua.Light.Card.Metric"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/light_channel_chip_height"
+                        android:layout_marginEnd="@dimen/light_channel_chip_margin"
+                        android:layout_weight="1">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
+
+                            <View
+                                android:layout_width="@dimen/light_channel_line_width"
+                                android:layout_height="@dimen/light_channel_line_height"
+                                android:background="@color/light_red" />
+
+                            <TextView
+                                android:id="@+id/tvManualRedSummaryValue"
+                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
+                                android:text="80%"
+                                tools:text="80%" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardManualGreenSummary"
+                        style="@style/Widget.Aqua.Light.Card.Metric"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/light_channel_chip_height"
+                        android:layout_marginStart="@dimen/light_channel_chip_margin"
+                        android:layout_marginEnd="@dimen/light_channel_chip_margin"
+                        android:layout_weight="1">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
+
+                            <View
+                                android:layout_width="@dimen/light_channel_line_width"
+                                android:layout_height="@dimen/light_channel_line_height"
+                                android:background="@color/light_green" />
+
+                            <TextView
+                                android:id="@+id/tvManualGreenSummaryValue"
+                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
+                                android:text="84%"
+                                tools:text="84%" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardManualBlueSummary"
+                        style="@style/Widget.Aqua.Light.Card.Metric"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/light_channel_chip_height"
+                        android:layout_marginStart="@dimen/light_channel_chip_margin"
+                        android:layout_marginEnd="@dimen/light_channel_chip_margin"
+                        android:layout_weight="1">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
+
+                            <View
+                                android:layout_width="@dimen/light_channel_line_width"
+                                android:layout_height="@dimen/light_channel_line_height"
+                                android:background="@color/light_blue" />
+
+                            <TextView
+                                android:id="@+id/tvManualBlueSummaryValue"
+                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
+                                android:text="79%"
+                                tools:text="79%" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardManualWhiteSummary"
+                        style="@style/Widget.Aqua.Light.Card.Metric"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/light_channel_chip_height"
+                        android:layout_marginStart="@dimen/light_channel_chip_margin"
+                        android:layout_weight="1">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
+
+                            <View
+                                android:layout_width="@dimen/light_channel_line_width"
+                                android:layout_height="@dimen/light_channel_line_height"
+                                android:background="@color/light_white" />
+
+                            <TextView
+                                android:id="@+id/tvManualWhiteSummaryValue"
+                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
+                                android:text="65%"
+                                tools:text="65%" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
 
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderMasterBrightness"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"/>
+                    android:layout_marginTop="14dp"
+                    android:value="78"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_accent_soft"
+                    app:labelBehavior="gone"
+                    app:stepSize="1"
+                    app:thumbColor="@color/light_accent"
+                    app:trackColorActive="@color/light_accent"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/tvManualNotice"
+                    style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/btnMasterOff"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="Off"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/btnMaster25"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="6dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="25%"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/btnMaster50"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="6dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="50%"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/btnMaster100"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="100%"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
+                    android:layout_marginTop="10dp"
+                    android:text="@string/light_manual_notice" />
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- CHANNEL CONTROL -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardChannelControl"
+            style="@style/Widget.Aqua.Light.Card.Surface"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/light_card_margin_top"
+            app:cardCornerRadius="@dimen/light_card_corner_radius_large">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="@dimen/light_card_padding">
 
                 <TextView
+                    style="@style/TextAppearance.Aqua.Light.SectionTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Channel Control"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:text="@string/light_manual_channel_control" />
 
                 <TextView
+                    style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Adjust individual LED channels"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
+                    android:layout_marginTop="5dp"
+                    android:text="@string/light_manual_channel_control_subtitle" />
 
+                <!-- RED -->
                 <LinearLayout
+                    android:id="@+id/redChannelHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
@@ -284,34 +384,47 @@
                         android:background="@color/light_red" />
 
                     <TextView
+                        style="@style/TextAppearance.Aqua.Light.ActionTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Red"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:text="@string/light_channel_red" />
 
                     <TextView
                         android:id="@+id/tvRedValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
                         android:text="80%"
                         android:textColor="@color/light_red"
                         android:textSize="14sp"
-                        android:textStyle="bold" />
+                        tools:text="80%" />
 
                 </LinearLayout>
 
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderRed"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:value="80"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_red"
+                    app:labelBehavior="gone"
+                    app:stepSize="1"
+                    app:thumbColor="@color/light_red"
+                    app:trackColorActive="@color/light_red"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
+                <!-- GREEN -->
                 <LinearLayout
+                    android:id="@+id/greenChannelHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -321,34 +434,47 @@
                         android:background="@color/light_green" />
 
                     <TextView
+                        style="@style/TextAppearance.Aqua.Light.ActionTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Green"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:text="@string/light_channel_green" />
 
                     <TextView
                         android:id="@+id/tvGreenValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
                         android:text="84%"
                         android:textColor="@color/light_green"
                         android:textSize="14sp"
-                        android:textStyle="bold" />
+                        tools:text="84%" />
 
                 </LinearLayout>
 
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderGreen"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:value="84"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_green"
+                    app:labelBehavior="gone"
+                    app:stepSize="1"
+                    app:thumbColor="@color/light_green"
+                    app:trackColorActive="@color/light_green"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
+                <!-- BLUE -->
                 <LinearLayout
+                    android:id="@+id/blueChannelHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -358,35 +484,47 @@
                         android:background="@color/light_blue" />
 
                     <TextView
+                        style="@style/TextAppearance.Aqua.Light.ActionTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="Blue"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:text="@string/light_channel_blue" />
 
                     <TextView
                         android:id="@+id/tvBlueValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
                         android:text="79%"
                         android:textColor="@color/light_blue"
                         android:textSize="14sp"
-                        android:textStyle="bold" />
+                        tools:text="79%" />
 
                 </LinearLayout>
 
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderBlue"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:value="79"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_blue"
+                    app:labelBehavior="gone"
+                    app:stepSize="1"
+                    app:thumbColor="@color/light_blue"
+                    app:trackColorActive="@color/light_blue"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
 
+                <!-- WHITE -->
                 <LinearLayout
-                    android:id="@+id/whiteChannelContainer"
+                    android:id="@+id/whiteChannelHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -396,90 +534,134 @@
                         android:background="@color/light_white" />
 
                     <TextView
+                        style="@style/TextAppearance.Aqua.Light.ActionTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
-                        android:text="White"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:text="@string/light_channel_white" />
 
                     <TextView
                         android:id="@+id/tvWhiteValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
                         android:text="65%"
                         android:textColor="@color/light_white"
                         android:textSize="14sp"
-                        android:textStyle="bold" />
+                        tools:text="65%" />
 
                 </LinearLayout>
 
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderWhite"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:value="65"
+                    android:valueFrom="0"
+                    android:valueTo="100"
+                    app:haloColor="@color/light_white"
+                    app:labelBehavior="gone"
+                    app:stepSize="1"
+                    app:thumbColor="@color/light_white"
+                    app:trackColorActive="@color/light_white"
+                    app:trackColorInactive="@color/light_stroke"
+                    app:trackHeight="6dp" />
+
+                <!-- QUICK SET CHIPS -->
+                <LinearLayout
+                    android:id="@+id/manualQuickSetRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="10dp"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnAll100"
+                        style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
+                        android:layout_height="match_parent"
                         android:layout_marginEnd="5dp"
                         android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="All 100"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
 
-                    <TextView
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="@string/light_manual_all_100"
+                            android:textColor="@color/light_accent" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnAll50"
+                        style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
+                        android:layout_height="match_parent"
                         android:layout_marginStart="5dp"
                         android:layout_marginEnd="5dp"
                         android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="All 50"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
 
-                    <TextView
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="@string/light_manual_all_50"
+                            android:textColor="@color/light_accent" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnAllOff"
+                        style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
+                        android:layout_height="match_parent"
                         android:layout_marginStart="5dp"
                         android:layout_marginEnd="5dp"
                         android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="All Off"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
 
-                    <TextView
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="@string/light_manual_all_off"
+                            android:textColor="@color/light_accent" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnResetChannels"
+                        style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
-                        android:layout_height="40dp"
+                        android:layout_height="match_parent"
                         android:layout_marginStart="5dp"
                         android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="Reset"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="@string/light_manual_reset"
+                            android:textColor="@color/settings_text_secondary" />
+
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
 
@@ -487,30 +669,26 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- CURRENT MIX -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLivePreview"
+            style="@style/Widget.Aqua.Light.Card.SurfaceDeep"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface_deep"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/light_card_margin_top"
+            app:cardCornerRadius="@dimen/light_card_corner_radius_large">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="@dimen/light_card_padding">
 
                 <TextView
+                    style="@style/TextAppearance.Aqua.Light.SectionTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Current Mix"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:text="@string/light_manual_current_mix" />
 
                 <View
                     android:id="@+id/viewLivePreviewGradient"
@@ -521,67 +699,100 @@
 
                 <TextView
                     android:id="@+id/tvPreviewAppearance"
-                    android:layout_width="wrap_content"
+                    style="@style/TextAppearance.Aqua.Light.BodyMuted"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:text="Estimated appearance: Neutral daylight"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
+                    tools:text="Estimated appearance: Neutral daylight" />
 
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- ACTIONS -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardManualActions"
+            style="@style/Widget.Aqua.Light.Card.Surface"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/light_card_margin_top"
+            app:cardCornerRadius="@dimen/light_card_corner_radius_large">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="@dimen/light_card_padding">
 
-                <TextView
+                <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnApplyTemporary"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:background="@color/light_accent"
-                    android:gravity="center"
-                    android:text="Apply Temporary"
-                    android:textColor="@color/background_color"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/light_accent"
+                    app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
 
-                <TextView
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fontFamily="@font/inter_semibold"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:text="@string/light_manual_apply_temporary"
+                        android:textColor="@color/background_color"
+                        android:textSize="15sp" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnSaveAsPreset"
+                    style="@style/Widget.Aqua.Light.Card.Metric"
                     android:layout_width="match_parent"
                     android:layout_height="46dp"
                     android:layout_marginTop="10dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center"
-                    android:text="Save as Preset"
-                    android:textColor="@color/light_accent"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
 
-                <TextView
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fontFamily="@font/inter_semibold"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:text="@string/light_manual_save_as_preset"
+                        android:textColor="@color/light_accent"
+                        android:textSize="14sp" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnApplyToProgram"
+                    style="@style/Widget.Aqua.Light.Card.Metric"
                     android:layout_width="match_parent"
                     android:layout_height="46dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center"
-                    android:text="Apply to Program"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="10dp"
+                    android:alpha="0.55"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fontFamily="@font/inter_semibold"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:text="@string/light_manual_apply_to_program"
+                        android:textColor="@color/settings_text_secondary"
+                        android:textSize="14sp" />
+
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 

@@ -5,7 +5,6 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualBinding
 import com.google.android.material.slider.Slider
@@ -28,7 +27,7 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         _binding = FragmentDeviceLightManualBinding.bind(view)
 
         configureSliderRanges()
-        renderDummyState()
+        renderPreviewState()
         setupSliders()
         setupClicks()
     }
@@ -47,9 +46,9 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         }
     }
 
-    private fun renderDummyState() = with(binding) {
-        tvManualSubtitle.text = "Live output control · Device ID: $deviceId"
-        tvManualPowerState.text = "ON"
+    private fun renderPreviewState() = with(binding) {
+        tvManualConnectionStatus.text = "Online · Manual ready"
+        tvManualPowerState.text = "LIVE"
 
         sliderMasterBrightness.value = 78f
         sliderRed.value = 80f
@@ -57,52 +56,47 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         sliderBlue.value = 79f
         sliderWhite.value = 65f
 
-        updateValue(tvMasterBrightnessValue, sliderMasterBrightness.value)
-        updateValue(tvRedValue, sliderRed.value)
-        updateValue(tvGreenValue, sliderGreen.value)
-        updateValue(tvBlueValue, sliderBlue.value)
-        updateValue(tvWhiteValue, sliderWhite.value)
-
+        updateMasterValue()
+        updateChannelValues()
         updatePowerState()
         updatePreviewText()
     }
 
     private fun setupSliders() = with(binding) {
         bindMasterSlider(
-            slider = sliderMasterBrightness,
-            valueView = tvMasterBrightnessValue
+            slider = sliderMasterBrightness
         )
 
         bindChannelSlider(
             slider = sliderRed,
-            valueView = tvRedValue
+            valueView = tvRedValue,
+            summaryView = tvManualRedSummaryValue
         )
 
         bindChannelSlider(
             slider = sliderGreen,
-            valueView = tvGreenValue
+            valueView = tvGreenValue,
+            summaryView = tvManualGreenSummaryValue
         )
 
         bindChannelSlider(
             slider = sliderBlue,
-            valueView = tvBlueValue
+            valueView = tvBlueValue,
+            summaryView = tvManualBlueSummaryValue
         )
 
         bindChannelSlider(
             slider = sliderWhite,
-            valueView = tvWhiteValue
+            valueView = tvWhiteValue,
+            summaryView = tvManualWhiteSummaryValue
         )
     }
 
     private fun bindMasterSlider(
-        slider: Slider,
-        valueView: TextView
+        slider: Slider
     ) {
-        slider.addOnChangeListener { _, value, _ ->
-            updateValue(
-                valueView = valueView,
-                value = value
-            )
+        slider.addOnChangeListener { _, _, _ ->
+            updateMasterValue()
             updatePowerState()
             updatePreviewText()
         }
@@ -110,51 +104,26 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
 
     private fun bindChannelSlider(
         slider: Slider,
-        valueView: TextView
+        valueView: TextView,
+        summaryView: TextView
     ) {
         slider.addOnChangeListener { _, value, _ ->
-            updateValue(
-                valueView = valueView,
-                value = value
-            )
+            val label = formatPercent(value)
+
+            valueView.text = label
+            summaryView.text = label
+
             updatePreviewText()
         }
-    }
-
-    private fun updateValue(
-        valueView: TextView,
-        value: Float
-    ) {
-        valueView.text = "${value.roundToInt()}%"
     }
 
     private fun setupClicks() = with(binding) {
-        btnManualBack.setOnClickListener {
-            findNavController().navigateUp()
+        btnManualSync.setOnClickListener {
+            showMessage("Syncing manual light data")
         }
 
-        btnMasterOff.setOnClickListener {
-            sliderMasterBrightness.value = 0f
-            updatePowerState()
-            updatePreviewText()
-        }
-
-        btnMaster25.setOnClickListener {
-            sliderMasterBrightness.value = 25f
-            updatePowerState()
-            updatePreviewText()
-        }
-
-        btnMaster50.setOnClickListener {
-            sliderMasterBrightness.value = 50f
-            updatePowerState()
-            updatePreviewText()
-        }
-
-        btnMaster100.setOnClickListener {
-            sliderMasterBrightness.value = 100f
-            updatePowerState()
-            updatePreviewText()
+        btnManualMore.setOnClickListener {
+            showMessage("Manual options will be added")
         }
 
         btnAll100.setOnClickListener {
@@ -170,15 +139,20 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         }
 
         btnResetChannels.setOnClickListener {
+            sliderMasterBrightness.value = 78f
             sliderRed.value = 80f
             sliderGreen.value = 84f
             sliderBlue.value = 79f
             sliderWhite.value = 65f
+
+            updateMasterValue()
+            updateChannelValues()
+            updatePowerState()
             updatePreviewText()
         }
 
         btnApplyTemporary.setOnClickListener {
-            showMessage("Temporary manual output will be sent later")
+            showMessage("Temporary manual output command will be sent")
         }
 
         btnSaveAsPreset.setOnClickListener {
@@ -197,7 +171,32 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         sliderGreen.value = value
         sliderBlue.value = value
         sliderWhite.value = value
+
+        updateChannelValues()
         updatePreviewText()
+    }
+
+    private fun updateMasterValue() = with(binding) {
+        tvManualOutputValue.text = formatPercent(
+            value = sliderMasterBrightness.value
+        )
+    }
+
+    private fun updateChannelValues() = with(binding) {
+        val red = formatPercent(sliderRed.value)
+        val green = formatPercent(sliderGreen.value)
+        val blue = formatPercent(sliderBlue.value)
+        val white = formatPercent(sliderWhite.value)
+
+        tvRedValue.text = red
+        tvGreenValue.text = green
+        tvBlueValue.text = blue
+        tvWhiteValue.text = white
+
+        tvManualRedSummaryValue.text = red
+        tvManualGreenSummaryValue.text = green
+        tvManualBlueSummaryValue.text = blue
+        tvManualWhiteSummaryValue.text = white
     }
 
     private fun updatePowerState() = with(binding) {
@@ -206,7 +205,7 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         tvManualPowerState.text = if (master <= 0) {
             "OFF"
         } else {
-            "ON"
+            "LIVE"
         }
     }
 
@@ -249,6 +248,12 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         tvPreviewAppearance.text = description
     }
 
+    private fun formatPercent(
+        value: Float
+    ): String {
+        return "${value.roundToInt().coerceIn(0, 100)}%"
+    }
+
     private fun showMessage(
         message: String
     ) {
@@ -272,7 +277,10 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         ): DeviceLightManualFragment {
             return DeviceLightManualFragment().apply {
                 arguments = Bundle().apply {
-                    putLong(ARG_DEVICE_ID, deviceId)
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
                 }
             }
         }

@@ -1389,4 +1389,32 @@ Delete Failed
 <string name="light_health_fan">Fan</string>
 <string name="light_health_time">Time</string>
 <string name="light_health_firmware">FW</string>
+
+<!-- Light Manual Control -->
+<string name="light_manual_title">Manual Control</string>
+<string name="light_manual_subtitle">Temporary live output</string>
+<string name="light_manual_current_output">Current Output</string>
+<string name="light_manual_notice">Manual changes are temporary. Auto program will resume at the next scheduled event.</string>
+
+<string name="light_manual_channel_control">Channel Control</string>
+<string name="light_manual_channel_control_subtitle">Adjust individual LED channels</string>
+
+<string name="light_channel_red">Red</string>
+<string name="light_channel_green">Green</string>
+<string name="light_channel_blue">Blue</string>
+<string name="light_channel_white">White</string>
+
+<string name="light_manual_current_mix">Current Mix</string>
+
+<string name="light_manual_all_100">All 100</string>
+<string name="light_manual_all_50">All 50</string>
+<string name="light_manual_all_off">All Off</string>
+<string name="light_manual_reset">Reset</string>
+
+<string name="light_manual_apply_temporary">Apply Temporary</string>
+<string name="light_manual_save_as_preset">Save as Preset</string>
+<string name="light_manual_apply_to_program">Apply to Program</string>
+
+<string name="light_manual_sync_desc">Sync manual light data</string>
+<string name="light_manual_more_desc">More manual light options</string>
 </resources>

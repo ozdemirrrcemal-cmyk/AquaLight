@@ -27,6 +27,11 @@ object LightOverviewUiMapper {
                 snapshot.curveSunsetTime.isNotBlank() ||
                 snapshot.curveRampMinutes != null
 
+        val hasProgramData =
+            snapshot.activeProgramName.isNotBlank() ||
+                snapshot.activeProgramSchedule.isNotBlank() ||
+                snapshot.activeProgramChannels.isNotBlank()
+
         return LightOverviewUiState(
             isLoading = false,
             isOnline = snapshot.isOnline,
@@ -124,17 +129,27 @@ object LightOverviewUiMapper {
                 ?.let { "$it min" }
                 ?: LightOverviewUiState.NO_VALUE,
 
-            activeProgramName = snapshot.activeProgramName.ifBlank {
-                "Programs"
-            },
-
-            activeProgramSchedule = snapshot.activeProgramSchedule.ifBlank {
+            activeProgramName = if (hasProgramData) {
+                snapshot.activeProgramName.ifBlank {
+                    "Program"
+                }
+            } else {
                 "Waiting for program data"
             },
 
-            activeProgramChannels = snapshot.activeProgramChannels,
+            activeProgramSchedule = if (hasProgramData) {
+                snapshot.activeProgramSchedule
+            } else {
+                ""
+            },
 
-            activeProgramStatusLabel = if (snapshot.isProgramEnabled) {
+            activeProgramChannels = if (hasProgramData) {
+                snapshot.activeProgramChannels
+            } else {
+                ""
+            },
+
+            activeProgramStatusLabel = if (hasProgramData && snapshot.isProgramEnabled) {
                 "Active"
             } else {
                 ""
