@@ -262,8 +262,19 @@
 
 
 <!-- Light Overview Card Styles -->
+<!-- Aqua Light Overview Styles -->
+
+<style name="Widget.Aqua.Light.Card.Hero" parent="Widget.MaterialComponents.CardView">
+    <item name="cardBackgroundColor">@color/light_surface</item>
+    <item name="cardCornerRadius">@dimen/light_card_radius_large</item>
+    <item name="cardElevation">0dp</item>
+    <item name="strokeColor">@color/light_stroke</item>
+    <item name="strokeWidth">@dimen/light_card_stroke_width</item>
+</style>
+
 <style name="Widget.Aqua.Light.Card.Surface" parent="Widget.MaterialComponents.CardView">
     <item name="cardBackgroundColor">@color/light_surface</item>
+    <item name="cardCornerRadius">@dimen/light_card_radius_medium</item>
     <item name="cardElevation">0dp</item>
     <item name="strokeColor">@color/light_stroke</item>
     <item name="strokeWidth">@dimen/light_card_stroke_width</item>
@@ -271,6 +282,7 @@
 
 <style name="Widget.Aqua.Light.Card.SurfaceDeep" parent="Widget.MaterialComponents.CardView">
     <item name="cardBackgroundColor">@color/light_surface_deep</item>
+    <item name="cardCornerRadius">@dimen/light_card_radius_medium</item>
     <item name="cardElevation">0dp</item>
     <item name="strokeColor">@color/light_stroke</item>
     <item name="strokeWidth">@dimen/light_card_stroke_width</item>
@@ -278,13 +290,21 @@
 
 <style name="Widget.Aqua.Light.Card.Action" parent="Widget.MaterialComponents.CardView">
     <item name="cardBackgroundColor">@color/light_surface</item>
-    <item name="cardCornerRadius">@dimen/light_card_radius_medium</item>
+    <item name="cardCornerRadius">@dimen/light_card_radius_action</item>
     <item name="cardElevation">0dp</item>
     <item name="strokeColor">@color/light_stroke</item>
     <item name="strokeWidth">@dimen/light_card_stroke_width</item>
     <item name="android:clickable">true</item>
     <item name="android:focusable">true</item>
     <item name="android:foreground">?attr/selectableItemBackground</item>
+</style>
+
+<style name="Widget.Aqua.Light.Card.Channel" parent="Widget.MaterialComponents.CardView">
+    <item name="cardBackgroundColor">@color/light_surface_deep</item>
+    <item name="cardCornerRadius">@dimen/light_channel_chip_radius</item>
+    <item name="cardElevation">0dp</item>
+    <item name="strokeColor">@color/light_stroke</item>
+    <item name="strokeWidth">@dimen/light_card_stroke_width</item>
 </style>
 
 <style name="Widget.Aqua.Light.Card.Metric" parent="Widget.MaterialComponents.CardView">
@@ -295,11 +315,41 @@
     <item name="strokeWidth">@dimen/light_card_stroke_width</item>
 </style>
 
-<style name="TextAppearance.Aqua.Light.SectionTitle" parent="TextAppearance.MaterialComponents.Body1">
-    <item name="android:fontFamily">@font/inter_semibold</item>
-    <item name="android:includeFontPadding">false</item>
-    <item name="android:textColor">?attr/colorOnSurface</item>
-    <item name="android:textSize">16sp</item>
+<style name="Widget.Aqua.Light.Card.SceneButton" parent="Widget.MaterialComponents.CardView">
+    <item name="cardBackgroundColor">@color/light_surface</item>
+    <item name="cardCornerRadius">@dimen/light_card_radius_small</item>
+    <item name="cardElevation">0dp</item>
+    <item name="strokeColor">@color/light_stroke</item>
+    <item name="strokeWidth">@dimen/light_card_stroke_width</item>
+    <item name="android:clickable">true</item>
+    <item name="android:focusable">true</item>
+    <item name="android:foreground">?attr/selectableItemBackground</item>
+</style>
+
+<style name="Widget.Aqua.Light.Card.AddButton" parent="Widget.MaterialComponents.CardView">
+    <item name="cardBackgroundColor">@color/light_surface_deep</item>
+    <item name="cardCornerRadius">@dimen/light_card_radius_small</item>
+    <item name="cardElevation">0dp</item>
+    <item name="strokeColor">@color/light_stroke</item>
+    <item name="strokeWidth">@dimen/light_card_stroke_width</item>
+    <item name="android:clickable">true</item>
+    <item name="android:focusable">true</item>
+    <item name="android:foreground">?attr/selectableItemBackground</item>
+</style>
+
+<style name="Widget.Aqua.Light.Card.IconSoft" parent="Widget.MaterialComponents.CardView">
+    <item name="cardBackgroundColor">@color/light_accent_soft</item>
+    <item name="cardCornerRadius">17dp</item>
+    <item name="cardElevation">0dp</item>
+    <item name="strokeWidth">0dp</item>
+</style>
+
+<style name="Widget.Aqua.Light.Card.ModeChip" parent="Widget.MaterialComponents.CardView">
+    <item name="cardBackgroundColor">@color/light_chip_auto</item>
+    <item name="cardCornerRadius">@dimen/light_chip_radius</item>
+    <item name="cardElevation">0dp</item>
+    <item name="strokeColor">@color/light_accent</item>
+    <item name="strokeWidth">@dimen/light_card_stroke_width</item>
 </style>
 
 <style name="TextAppearance.Aqua.Light.HeroTitle" parent="TextAppearance.MaterialComponents.Body1">
@@ -307,6 +357,20 @@
     <item name="android:includeFontPadding">false</item>
     <item name="android:textColor">?attr/colorOnSurface</item>
     <item name="android:textSize">19sp</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.SectionTitle" parent="TextAppearance.MaterialComponents.Body1">
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:textColor">?attr/colorOnSurface</item>
+    <item name="android:textSize">16sp</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.CurveTitle" parent="TextAppearance.MaterialComponents.Body1">
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:textColor">?attr/colorOnSurface</item>
+    <item name="android:textSize">17sp</item>
 </style>
 
 <style name="TextAppearance.Aqua.Light.BodyMuted" parent="TextAppearance.MaterialComponents.Body1">
@@ -323,6 +387,13 @@
     <item name="android:textSize">11sp</item>
 </style>
 
+<style name="TextAppearance.Aqua.Light.LabelTiny" parent="TextAppearance.MaterialComponents.Body2">
+    <item name="android:fontFamily">@font/inter_regular</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:textColor">@color/settings_text_secondary</item>
+    <item name="android:textSize">10sp</item>
+</style>
+
 <style name="TextAppearance.Aqua.Light.ValueMedium" parent="TextAppearance.MaterialComponents.Body1">
     <item name="android:fontFamily">@font/inter_semibold</item>
     <item name="android:includeFontPadding">false</item>
@@ -337,6 +408,20 @@
     <item name="android:textSize">13sp</item>
 </style>
 
+<style name="TextAppearance.Aqua.Light.ChannelValue" parent="TextAppearance.MaterialComponents.Body2">
+    <item name="android:fontFamily">@font/inter_medium</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:textColor">?attr/colorOnSurface</item>
+    <item name="android:textSize">12sp</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.OutputValue" parent="TextAppearance.MaterialComponents.Body1">
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:textColor">?attr/colorOnSurface</item>
+    <item name="android:textSize">42sp</item>
+</style>
+
 <style name="TextAppearance.Aqua.Light.ActionTitle" parent="TextAppearance.MaterialComponents.Body1">
     <item name="android:fontFamily">@font/inter_semibold</item>
     <item name="android:includeFontPadding">false</item>
@@ -349,6 +434,27 @@
     <item name="android:includeFontPadding">false</item>
     <item name="android:textColor">@color/settings_text_secondary</item>
     <item name="android:textSize">10sp</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.AccentSmall" parent="TextAppearance.MaterialComponents.Body2">
+    <item name="android:fontFamily">@font/inter_medium</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:textColor">@color/light_accent</item>
+    <item name="android:textSize">12sp</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.ButtonText" parent="TextAppearance.MaterialComponents.Body2">
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:textColor">@color/light_accent</item>
+    <item name="android:textSize">13sp</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.SceneButtonText" parent="TextAppearance.MaterialComponents.Body2">
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:includeFontPadding">false</item>
+    <item name="android:textColor">?attr/colorOnSurface</item>
+    <item name="android:textSize">13sp</item>
 </style>
 
 </resources>

@@ -1352,34 +1352,14 @@ Delete Failed
 
 
 
-
-<!-- Light Overview -->
-<string name="light_cd_sync">Sync</string>
-<string name="light_cd_settings">Settings</string>
-<string name="light_cd_more">More</string>
+<!-- Aqua Light Overview Strings -->
+<string name="light_cd_sync">Sync light device</string>
+<string name="light_cd_settings">Light settings</string>
+<string name="light_cd_more">More light options</string>
 <string name="light_cd_edit_curve">Edit light curve</string>
 
-<string name="light_status_connecting_wrgb">Connecting · WRGB</string>
-<string name="light_status_online_wrgb">Online · 4-channel WRGB</string>
-
-<string name="light_current_program">Current Program</string>
-<string name="light_waiting_device_data">Waiting for device data</string>
-<string name="light_waiting_curve_data">Waiting for curve data</string>
-<string name="light_waiting_program_data">Waiting for program data</string>
-
-<string name="light_mode_syncing">SYNCING</string>
-<string name="light_mode_auto">AUTO</string>
-<string name="light_mode_override">OVERRIDE</string>
-
 <string name="light_current_output">Current Output</string>
-<string name="light_today_curve">Today’s Curve</string>
-
-<string name="light_now_placeholder">Now · —</string>
-<string name="light_next_placeholder">Next · —</string>
-
-<string name="light_timeline_start">00:00</string>
-<string name="light_timeline_mid">12:00</string>
-<string name="light_timeline_end">24:00</string>
+<string name="light_todays_curve">Today’s Curve</string>
 
 <string name="light_curve_start">Start</string>
 <string name="light_curve_peak">Peak</string>
@@ -1395,20 +1375,18 @@ Delete Failed
 <string name="light_action_presets">Presets</string>
 <string name="light_action_presets_subtitle">Scenes</string>
 
-<string name="light_programs">Programs</string>
-<string name="light_program_active">Active</string>
-<string name="light_program_off">Off</string>
+<string name="light_programs_title">Programs</string>
 <string name="light_add_program">+ Add Program</string>
 
-<string name="light_quick_scenes">Quick Scenes</string>
-<string name="light_quick_scenes_subtitle">Temporary lighting without changing your program.</string>
+<string name="light_quick_scenes_title">Quick Scenes</string>
+<string name="light_quick_scenes_description">Temporary lighting without changing your program.</string>
 <string name="light_scene_photo">Photo</string>
 <string name="light_scene_care">Care</string>
 <string name="light_scene_evening">Evening</string>
 
-<string name="light_device_health">Device Health</string>
+<string name="light_device_health_title">Device Health</string>
 <string name="light_health_temp">Temp</string>
 <string name="light_health_fan">Fan</string>
 <string name="light_health_time">Time</string>
-<string name="light_health_fw">FW</string>
+<string name="light_health_firmware">FW</string>
 </resources>

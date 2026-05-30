@@ -22,7 +22,6 @@
         android:paddingEnd="@dimen/light_overview_padding_horizontal"
         android:paddingBottom="@dimen/light_overview_padding_bottom">
 
-        <!-- COMPACT STATUS / ACTION ROW -->
         <LinearLayout
             android:id="@+id/lightHeader"
             android:layout_width="match_parent"
@@ -52,12 +51,12 @@
                     style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="7dp"
+                    android:layout_marginStart="@dimen/light_status_text_margin_start"
                     android:layout_weight="1"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text=""
-                    tools:text="@string/light_status_online_wrgb" />
+                    android:text="Online · 4-channel WRGB"
+                    tools:text="Online · 4-channel WRGB" />
 
             </LinearLayout>
 
@@ -93,14 +92,12 @@
 
         </LinearLayout>
 
-        <!-- HERO STATUS CARD -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLightHeroStatus"
-            style="@style/Widget.Aqua.Light.Card.Surface"
+            style="@style/Widget.Aqua.Light.Card.Hero"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:cardCornerRadius="@dimen/light_card_radius_large">
+            android:layout_marginTop="@dimen/light_hero_margin_top">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -125,8 +122,8 @@
                             style="@style/TextAppearance.Aqua.Light.HeroTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text=""
-                            tools:text="@string/light_current_program" />
+                            android:text="Current Program"
+                            tools:text="Current Program" />
 
                         <TextView
                             android:id="@+id/tvLightRunningSubtitle"
@@ -134,20 +131,16 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="5dp"
-                            android:text=""
-                            tools:text="@string/light_waiting_device_data" />
+                            android:text="Auto mode active · Synced"
+                            tools:text="Auto mode active · Synced" />
 
                     </LinearLayout>
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/chipLightMode"
+                        style="@style/Widget.Aqua.Light.Card.ModeChip"
                         android:layout_width="wrap_content"
-                        android:layout_height="@dimen/light_chip_height"
-                        app:cardBackgroundColor="@color/light_chip_auto"
-                        app:cardCornerRadius="@dimen/light_chip_radius"
-                        app:cardElevation="0dp"
-                        app:strokeColor="@color/light_accent"
-                        app:strokeWidth="@dimen/light_card_stroke_width">
+                        android:layout_height="@dimen/light_chip_height">
 
                         <TextView
                             android:id="@+id/tvLightMode"
@@ -158,10 +151,10 @@
                             android:includeFontPadding="false"
                             android:paddingStart="@dimen/light_chip_padding_horizontal"
                             android:paddingEnd="@dimen/light_chip_padding_horizontal"
-                            android:text=""
+                            android:text="AUTO"
                             android:textColor="@color/light_accent"
                             android:textSize="12sp"
-                            tools:text="@string/light_mode_syncing" />
+                            tools:text="AUTO" />
 
                     </com.google.android.material.card.MaterialCardView>
 
@@ -172,45 +165,40 @@
                     style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/light_current_output_margin_top"
                     android:text="@string/light_current_output" />
 
                 <TextView
                     android:id="@+id/tvCurrentOutputValue"
+                    style="@style/TextAppearance.Aqua.Light.OutputValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:fontFamily="@font/inter_semibold"
-                    android:includeFontPadding="false"
-                    android:text=""
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="42sp"
+                    android:layout_marginTop="@dimen/light_current_output_value_margin_top"
+                    android:text="78%"
                     tools:text="78%" />
 
-                <!-- CHANNEL CHIPS -->
                 <LinearLayout
                     android:id="@+id/channelSummaryContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="@dimen/light_channel_container_margin_top"
                     android:orientation="horizontal">
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cardChannelRed"
-                        style="@style/Widget.Aqua.Light.Card.Metric"
+                        style="@style/Widget.Aqua.Light.Card.Channel"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/light_channel_chip_height"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        app:cardCornerRadius="@dimen/light_channel_chip_radius">
+                        android:layout_marginEnd="@dimen/light_channel_gap"
+                        android:layout_weight="1">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="horizontal"
-                            android:paddingStart="8dp"
-                            android:paddingEnd="8dp">
+                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
 
                             <View
                                 android:id="@+id/viewChannelRedLine"
@@ -220,11 +208,11 @@
 
                             <TextView
                                 android:id="@+id/tvChannelRedValue"
-                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
+                                style="@style/TextAppearance.Aqua.Light.ChannelValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="6dp"
-                                android:text=""
+                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
+                                android:text="80%"
                                 tools:text="80%" />
 
                         </LinearLayout>
@@ -233,21 +221,20 @@
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cardChannelGreen"
-                        style="@style/Widget.Aqua.Light.Card.Metric"
+                        style="@style/Widget.Aqua.Light.Card.Channel"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/light_channel_chip_height"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        app:cardCornerRadius="@dimen/light_channel_chip_radius">
+                        android:layout_marginStart="@dimen/light_channel_gap"
+                        android:layout_marginEnd="@dimen/light_channel_gap"
+                        android:layout_weight="1">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="horizontal"
-                            android:paddingStart="8dp"
-                            android:paddingEnd="8dp">
+                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
 
                             <View
                                 android:id="@+id/viewChannelGreenLine"
@@ -257,11 +244,11 @@
 
                             <TextView
                                 android:id="@+id/tvChannelGreenValue"
-                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
+                                style="@style/TextAppearance.Aqua.Light.ChannelValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="6dp"
-                                android:text=""
+                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
+                                android:text="84%"
                                 tools:text="84%" />
 
                         </LinearLayout>
@@ -270,21 +257,20 @@
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cardChannelBlue"
-                        style="@style/Widget.Aqua.Light.Card.Metric"
+                        style="@style/Widget.Aqua.Light.Card.Channel"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/light_channel_chip_height"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        app:cardCornerRadius="@dimen/light_channel_chip_radius">
+                        android:layout_marginStart="@dimen/light_channel_gap"
+                        android:layout_marginEnd="@dimen/light_channel_gap"
+                        android:layout_weight="1">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="horizontal"
-                            android:paddingStart="8dp"
-                            android:paddingEnd="8dp">
+                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
 
                             <View
                                 android:id="@+id/viewChannelBlueLine"
@@ -294,11 +280,11 @@
 
                             <TextView
                                 android:id="@+id/tvChannelBlueValue"
-                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
+                                style="@style/TextAppearance.Aqua.Light.ChannelValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="6dp"
-                                android:text=""
+                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
+                                android:text="79%"
                                 tools:text="79%" />
 
                         </LinearLayout>
@@ -307,20 +293,19 @@
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cardChannelWhite"
-                        style="@style/Widget.Aqua.Light.Card.Metric"
+                        style="@style/Widget.Aqua.Light.Card.Channel"
                         android:layout_width="0dp"
                         android:layout_height="@dimen/light_channel_chip_height"
-                        android:layout_marginStart="5dp"
-                        android:layout_weight="1"
-                        app:cardCornerRadius="@dimen/light_channel_chip_radius">
+                        android:layout_marginStart="@dimen/light_channel_gap"
+                        android:layout_weight="1">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:gravity="center"
                             android:orientation="horizontal"
-                            android:paddingStart="8dp"
-                            android:paddingEnd="8dp">
+                            android:paddingStart="@dimen/light_channel_chip_padding_horizontal"
+                            android:paddingEnd="@dimen/light_channel_chip_padding_horizontal">
 
                             <View
                                 android:id="@+id/viewChannelWhiteLine"
@@ -330,11 +315,11 @@
 
                             <TextView
                                 android:id="@+id/tvChannelWhiteValue"
-                                style="@style/TextAppearance.Aqua.Light.ValueSmall"
+                                style="@style/TextAppearance.Aqua.Light.ChannelValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="6dp"
-                                android:text=""
+                                android:layout_marginStart="@dimen/light_channel_text_margin_start"
+                                android:text="65%"
                                 tools:text="65%" />
 
                         </LinearLayout>
@@ -345,7 +330,7 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="@dimen/light_divider_height"
                     android:layout_marginTop="16dp"
                     android:background="@color/light_stroke" />
 
@@ -353,20 +338,18 @@
                     android:id="@+id/currentProgramCompactStateRow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="@dimen/light_program_state_margin_top"
+                    android:gravity="center_vertical"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tvLightNowState"
+                        style="@style/TextAppearance.Aqua.Light.ValueMedium"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
-                        android:fontFamily="@font/inter_medium"
-                        android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text=""
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="14sp"
+                        android:text="Now · Day Peak"
                         tools:text="Now · Day Peak" />
 
                     <TextView
@@ -374,10 +357,10 @@
                         style="@style/TextAppearance.Aqua.Light.BodyMuted"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="7dp"
+                        android:layout_marginTop="@dimen/light_program_state_next_margin_top"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text=""
+                        android:text="Next · Sunset ramp at 18:30"
                         tools:text="Next · Sunset ramp at 18:30" />
 
                 </LinearLayout>
@@ -386,14 +369,12 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- TODAY CURVE -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardDailyTimeline"
             style="@style/Widget.Aqua.Light.Card.SurfaceDeep"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/light_card_margin_top"
-            app:cardCornerRadius="@dimen/light_card_radius">
+            android:layout_marginTop="@dimen/light_card_spacing">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -408,20 +389,19 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        style="@style/TextAppearance.Aqua.Light.CurveTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/light_today_curve"
-                        android:textSize="17sp" />
+                        android:text="@string/light_todays_curve" />
 
                     <ImageButton
                         android:id="@+id/btnEditLightCurve"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="@dimen/light_header_more_button_width"
+                        android:layout_height="@dimen/light_header_more_button_width"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/light_cd_edit_curve"
-                        android:padding="8dp"
+                        android:padding="@dimen/light_header_more_icon_padding"
                         android:src="@drawable/ic_light_program_24"
                         app:tint="@color/light_accent" />
 
@@ -432,16 +412,16 @@
                     style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:text=""
-                    tools:text="@string/light_waiting_curve_data" />
+                    android:layout_marginTop="@dimen/light_curve_now_margin_top"
+                    android:text="Now 14:25 · 78%"
+                    tools:text="Now 14:25 · 78%" />
 
                 <LinearLayout
                     android:id="@+id/lightTimelineBar"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/light_timeline_height"
-                    android:layout_marginTop="18dp"
-                    android:background="@color/light_stroke"
+                    android:layout_marginTop="@dimen/light_timeline_margin_top"
+                    android:alpha="0.55"
                     android:orientation="horizontal">
 
                     <View
@@ -449,47 +429,42 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="3"
-                        android:alpha="0"
-                        android:background="#263A56" />
+                        android:background="@color/light_stroke" />
 
                     <View
                         android:id="@+id/viewTimelineSunrise"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:alpha="0"
-                        android:background="#287B8E" />
+                        android:background="@color/light_stroke" />
 
                     <View
                         android:id="@+id/viewTimelinePeak"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="5"
-                        android:alpha="0"
-                        android:background="@color/light_accent" />
+                        android:background="@color/light_stroke" />
 
                     <View
                         android:id="@+id/viewTimelineSunset"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:alpha="0"
-                        android:background="#287B8E" />
+                        android:background="@color/light_stroke" />
 
                     <View
                         android:id="@+id/viewTimelineNightEnd"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="4"
-                        android:alpha="0"
-                        android:background="#263A56" />
+                        android:background="@color/light_stroke" />
 
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="@dimen/light_timeline_label_margin_top"
                     android:orientation="horizontal">
 
                     <TextView
@@ -498,8 +473,8 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text=""
-                        tools:text="@string/light_timeline_start" />
+                        android:text="00:00"
+                        tools:text="00:00" />
 
                     <TextView
                         android:id="@+id/tvTimelineMidLabel"
@@ -508,8 +483,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text=""
-                        tools:text="@string/light_timeline_mid" />
+                        android:text="12:00"
+                        tools:text="12:00" />
 
                     <TextView
                         android:id="@+id/tvTimelineEndLabel"
@@ -518,8 +493,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="end"
-                        android:text=""
-                        tools:text="@string/light_timeline_end" />
+                        android:text="24:00"
+                        tools:text="24:00" />
 
                 </LinearLayout>
 
@@ -527,7 +502,7 @@
                     android:id="@+id/todayCurveStatsGrid"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/light_stats_margin_top"
                     android:orientation="vertical">
 
                     <LinearLayout
@@ -552,8 +527,8 @@
                                 style="@style/TextAppearance.Aqua.Light.ValueMedium"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:text=""
+                                android:layout_marginTop="@dimen/light_stats_value_margin_top"
+                                android:text="09:00"
                                 tools:text="09:00" />
 
                         </LinearLayout>
@@ -575,10 +550,10 @@
                                 style="@style/TextAppearance.Aqua.Light.ValueMedium"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
+                                android:layout_marginTop="@dimen/light_stats_value_margin_top"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text=""
+                                android:text="12:00 – 16:00"
                                 tools:text="12:00 – 16:00" />
 
                         </LinearLayout>
@@ -587,9 +562,9 @@
 
                     <View
                         android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="13dp"
-                        android:layout_marginBottom="13dp"
+                        android:layout_height="@dimen/light_divider_height"
+                        android:layout_marginTop="@dimen/light_stats_divider_margin_vertical"
+                        android:layout_marginBottom="@dimen/light_stats_divider_margin_vertical"
                         android:background="@color/light_stroke" />
 
                     <LinearLayout
@@ -614,8 +589,8 @@
                                 style="@style/TextAppearance.Aqua.Light.ValueMedium"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:text=""
+                                android:layout_marginTop="@dimen/light_stats_value_margin_top"
+                                android:text="19:15"
                                 tools:text="19:15" />
 
                         </LinearLayout>
@@ -637,8 +612,8 @@
                                 style="@style/TextAppearance.Aqua.Light.ValueMedium"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:text=""
+                                android:layout_marginTop="@dimen/light_stats_value_margin_top"
+                                android:text="60 min"
                                 tools:text="60 min" />
 
                         </LinearLayout>
@@ -651,12 +626,11 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- QUICK ACTIONS -->
         <LinearLayout
             android:id="@+id/quickActionsGrid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/light_card_margin_top"
+            android:layout_marginTop="@dimen/light_card_spacing"
             android:orientation="vertical">
 
             <LinearLayout
@@ -669,7 +643,7 @@
                     style="@style/Widget.Aqua.Light.Card.Action"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/light_quick_action_height"
-                    android:layout_marginEnd="6dp"
+                    android:layout_marginEnd="@dimen/light_quick_action_gap"
                     android:layout_weight="1">
 
                     <LinearLayout
@@ -677,16 +651,13 @@
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="10dp">
+                        android:paddingStart="@dimen/light_quick_action_padding_start"
+                        android:paddingEnd="@dimen/light_quick_action_padding_end">
 
                         <com.google.android.material.card.MaterialCardView
-                            android:layout_width="@dimen/light_quick_action_icon_container"
-                            android:layout_height="@dimen/light_quick_action_icon_container"
-                            app:cardBackgroundColor="@color/light_accent_soft"
-                            app:cardCornerRadius="17dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="0dp">
+                            style="@style/Widget.Aqua.Light.Card.IconSoft"
+                            android:layout_width="@dimen/light_quick_action_icon_container_size"
+                            android:layout_height="@dimen/light_quick_action_icon_container_size">
 
                             <ImageView
                                 android:layout_width="@dimen/light_quick_action_icon_size"
@@ -701,7 +672,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="9dp"
+                            android:layout_marginStart="@dimen/light_quick_action_text_margin_start"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -717,7 +688,7 @@
                                 style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
+                                android:layout_marginTop="@dimen/light_quick_action_subtitle_margin_top"
                                 android:ellipsize="end"
                                 android:maxLines="1"
                                 android:text="@string/light_action_manual_subtitle" />
@@ -733,7 +704,7 @@
                     style="@style/Widget.Aqua.Light.Card.Action"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/light_quick_action_height"
-                    android:layout_marginStart="6dp"
+                    android:layout_marginStart="@dimen/light_quick_action_gap"
                     android:layout_weight="1">
 
                     <LinearLayout
@@ -741,16 +712,13 @@
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="10dp">
+                        android:paddingStart="@dimen/light_quick_action_padding_start"
+                        android:paddingEnd="@dimen/light_quick_action_padding_end">
 
                         <com.google.android.material.card.MaterialCardView
-                            android:layout_width="@dimen/light_quick_action_icon_container"
-                            android:layout_height="@dimen/light_quick_action_icon_container"
-                            app:cardBackgroundColor="@color/light_accent_soft"
-                            app:cardCornerRadius="17dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="0dp">
+                            style="@style/Widget.Aqua.Light.Card.IconSoft"
+                            android:layout_width="@dimen/light_quick_action_icon_container_size"
+                            android:layout_height="@dimen/light_quick_action_icon_container_size">
 
                             <ImageView
                                 android:layout_width="@dimen/light_quick_action_icon_size"
@@ -765,7 +733,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="9dp"
+                            android:layout_marginStart="@dimen/light_quick_action_text_margin_start"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -781,7 +749,7 @@
                                 style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
+                                android:layout_marginTop="@dimen/light_quick_action_subtitle_margin_top"
                                 android:ellipsize="end"
                                 android:maxLines="1"
                                 android:text="@string/light_action_programs_subtitle" />
@@ -797,7 +765,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="@dimen/light_card_spacing"
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
@@ -805,7 +773,7 @@
                     style="@style/Widget.Aqua.Light.Card.Action"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/light_quick_action_height"
-                    android:layout_marginEnd="6dp"
+                    android:layout_marginEnd="@dimen/light_quick_action_gap"
                     android:layout_weight="1">
 
                     <LinearLayout
@@ -813,16 +781,13 @@
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="10dp">
+                        android:paddingStart="@dimen/light_quick_action_padding_start"
+                        android:paddingEnd="@dimen/light_quick_action_padding_end">
 
                         <com.google.android.material.card.MaterialCardView
-                            android:layout_width="@dimen/light_quick_action_icon_container"
-                            android:layout_height="@dimen/light_quick_action_icon_container"
-                            app:cardBackgroundColor="@color/light_accent_soft"
-                            app:cardCornerRadius="17dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="0dp">
+                            style="@style/Widget.Aqua.Light.Card.IconSoft"
+                            android:layout_width="@dimen/light_quick_action_icon_container_size"
+                            android:layout_height="@dimen/light_quick_action_icon_container_size">
 
                             <ImageView
                                 android:layout_width="@dimen/light_quick_action_icon_size"
@@ -837,7 +802,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="9dp"
+                            android:layout_marginStart="@dimen/light_quick_action_text_margin_start"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -853,7 +818,7 @@
                                 style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
+                                android:layout_marginTop="@dimen/light_quick_action_subtitle_margin_top"
                                 android:ellipsize="end"
                                 android:maxLines="1"
                                 android:text="@string/light_action_quick_setup_subtitle" />
@@ -869,7 +834,7 @@
                     style="@style/Widget.Aqua.Light.Card.Action"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/light_quick_action_height"
-                    android:layout_marginStart="6dp"
+                    android:layout_marginStart="@dimen/light_quick_action_gap"
                     android:layout_weight="1">
 
                     <LinearLayout
@@ -877,16 +842,13 @@
                         android:layout_height="match_parent"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="10dp">
+                        android:paddingStart="@dimen/light_quick_action_padding_start"
+                        android:paddingEnd="@dimen/light_quick_action_padding_end">
 
                         <com.google.android.material.card.MaterialCardView
-                            android:layout_width="@dimen/light_quick_action_icon_container"
-                            android:layout_height="@dimen/light_quick_action_icon_container"
-                            app:cardBackgroundColor="@color/light_accent_soft"
-                            app:cardCornerRadius="17dp"
-                            app:cardElevation="0dp"
-                            app:strokeWidth="0dp">
+                            style="@style/Widget.Aqua.Light.Card.IconSoft"
+                            android:layout_width="@dimen/light_quick_action_icon_container_size"
+                            android:layout_height="@dimen/light_quick_action_icon_container_size">
 
                             <ImageView
                                 android:layout_width="@dimen/light_quick_action_icon_size"
@@ -901,7 +863,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="9dp"
+                            android:layout_marginStart="@dimen/light_quick_action_text_margin_start"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -917,7 +879,7 @@
                                 style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
+                                android:layout_marginTop="@dimen/light_quick_action_subtitle_margin_top"
                                 android:ellipsize="end"
                                 android:maxLines="1"
                                 android:text="@string/light_action_presets_subtitle" />
@@ -932,14 +894,12 @@
 
         </LinearLayout>
 
-        <!-- PROGRAMS -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardActivePrograms"
             style="@style/Widget.Aqua.Light.Card.Surface"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/light_card_margin_top"
-            app:cardCornerRadius="@dimen/light_card_radius">
+            android:layout_marginTop="@dimen/light_card_spacing">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -951,13 +911,16 @@
                     style="@style/TextAppearance.Aqua.Light.SectionTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/light_programs" />
+                    android:text="@string/light_programs_title" />
 
                 <LinearLayout
                     android:id="@+id/programEveryDayRow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="@dimen/light_program_row_margin_top"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -969,43 +932,34 @@
 
                         <TextView
                             android:id="@+id/tvActiveProgramName"
+                            style="@style/TextAppearance.Aqua.Light.ValueSmall"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:ellipsize="end"
-                            android:fontFamily="@font/inter_medium"
-                            android:includeFontPadding="false"
                             android:maxLines="1"
-                            android:text=""
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="15sp"
-                            tools:text="@string/light_waiting_program_data" />
+                            android:text="Programs"
+                            tools:text="Programs" />
 
                         <TextView
                             android:id="@+id/tvActiveProgramSchedule"
+                            style="@style/TextAppearance.Aqua.Light.BodyMuted"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
+                            android:layout_marginTop="@dimen/light_program_subtitle_margin_top"
                             android:ellipsize="end"
-                            android:fontFamily="@font/inter_regular"
-                            android:includeFontPadding="false"
                             android:maxLines="1"
-                            android:text=""
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp"
-                            tools:text="09:00 – 19:15 · Ramp 60 min" />
+                            android:text="Waiting for program data"
+                            tools:text="Waiting for program data" />
 
                         <TextView
                             android:id="@+id/tvActiveProgramChannels"
+                            style="@style/TextAppearance.Aqua.Light.AccentSmall"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
+                            android:layout_marginTop="@dimen/light_program_channels_margin_top"
                             android:ellipsize="end"
-                            android:fontFamily="@font/inter_medium"
-                            android:includeFontPadding="false"
                             android:maxLines="1"
-                            android:text=""
-                            android:textColor="@color/light_accent"
-                            android:textSize="12sp"
+                            android:text="R80  G84  B79  W65"
                             tools:text="R80  G84  B79  W65" />
 
                     </LinearLayout>
@@ -1015,9 +969,9 @@
                         style="@style/TextAppearance.Aqua.Light.LabelSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:text=""
-                        tools:text="@string/light_program_active" />
+                        android:layout_marginEnd="@dimen/light_program_status_margin_end"
+                        android:text="Active"
+                        tools:text="Active" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/switchProgramEveryDay"
@@ -1030,30 +984,23 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="14dp"
+                    android:layout_height="@dimen/light_divider_height"
+                    android:layout_marginTop="@dimen/light_program_row_margin_top"
                     android:background="@color/light_stroke" />
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnAddProgram"
-                    style="@style/Widget.Aqua.Light.Card.Metric"
+                    style="@style/Widget.Aqua.Light.Card.AddButton"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/light_add_program_height"
-                    android:layout_marginTop="8dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="@dimen/light_card_radius_small">
+                    android:layout_marginTop="@dimen/light_add_program_margin_top">
 
                     <TextView
+                        style="@style/TextAppearance.Aqua.Light.ButtonText"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:fontFamily="@font/inter_semibold"
                         android:gravity="center"
-                        android:includeFontPadding="false"
-                        android:text="@string/light_add_program"
-                        android:textColor="@color/light_accent"
-                        android:textSize="13sp" />
+                        android:text="@string/light_add_program" />
 
                 </com.google.android.material.card.MaterialCardView>
 
@@ -1061,14 +1008,12 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- QUICK SCENES -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardTemporaryModes"
             style="@style/Widget.Aqua.Light.Card.SurfaceDeep"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/light_card_margin_top"
-            app:cardCornerRadius="@dimen/light_card_radius">
+            android:layout_marginTop="@dimen/light_card_spacing">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -1080,14 +1025,15 @@
                     style="@style/TextAppearance.Aqua.Light.SectionTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/light_quick_scenes" />
+                    android:text="@string/light_quick_scenes_title" />
 
                 <TextView
                     style="@style/TextAppearance.Aqua.Light.BodyMuted"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    android:text="@string/light_quick_scenes_subtitle" />
+                    android:text="@string/light_quick_scenes_description"
+                    android:textSize="12sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -1097,65 +1043,53 @@
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnScenePhoto"
-                        style="@style/Widget.Aqua.Light.Card.Action"
+                        style="@style/Widget.Aqua.Light.Card.SceneButton"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        app:cardCornerRadius="@dimen/light_card_radius_small">
+                        android:layout_marginEnd="@dimen/light_scene_button_gap"
+                        android:layout_weight="1">
 
                         <TextView
+                            style="@style/TextAppearance.Aqua.Light.SceneButtonText"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
-                            android:includeFontPadding="false"
-                            android:text="@string/light_scene_photo"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp" />
+                            android:text="@string/light_scene_photo" />
 
                     </com.google.android.material.card.MaterialCardView>
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnSceneMaintenance"
-                        style="@style/Widget.Aqua.Light.Card.Action"
+                        style="@style/Widget.Aqua.Light.Card.SceneButton"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginStart="6dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        app:cardCornerRadius="@dimen/light_card_radius_small">
+                        android:layout_marginStart="@dimen/light_scene_button_gap"
+                        android:layout_marginEnd="@dimen/light_scene_button_gap"
+                        android:layout_weight="1">
 
                         <TextView
+                            style="@style/TextAppearance.Aqua.Light.SceneButtonText"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
-                            android:includeFontPadding="false"
-                            android:text="@string/light_scene_care"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp" />
+                            android:text="@string/light_scene_care" />
 
                     </com.google.android.material.card.MaterialCardView>
 
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/btnSceneEvening"
-                        style="@style/Widget.Aqua.Light.Card.Action"
+                        style="@style/Widget.Aqua.Light.Card.SceneButton"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        app:cardCornerRadius="@dimen/light_card_radius_small">
+                        android:layout_marginStart="@dimen/light_scene_button_gap"
+                        android:layout_weight="1">
 
                         <TextView
+                            style="@style/TextAppearance.Aqua.Light.SceneButtonText"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
-                            android:includeFontPadding="false"
-                            android:text="@string/light_scene_evening"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp" />
+                            android:text="@string/light_scene_evening" />
 
                     </com.google.android.material.card.MaterialCardView>
 
@@ -1165,14 +1099,12 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- DEVICE HEALTH -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardDeviceHealth"
             style="@style/Widget.Aqua.Light.Card.Surface"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/light_card_margin_top"
-            app:cardCornerRadius="@dimen/light_card_radius">
+            android:layout_marginTop="@dimen/light_card_spacing">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -1184,7 +1116,7 @@
                     style="@style/TextAppearance.Aqua.Light.SectionTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/light_device_health" />
+                    android:text="@string/light_device_health_title" />
 
                 <TextView
                     android:id="@+id/tvDeviceHealthSync"
@@ -1192,12 +1124,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    android:text=""
-                    tools:text="@string/light_waiting_device_data" />
+                    android:text="Online · Synced 1 min ago"
+                    android:textSize="12sp"
+                    tools:text="Online · Synced 1 min ago" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/light_health_metric_height"
+                    android:layout_height="@dimen/light_health_item_height"
                     android:layout_marginTop="15dp"
                     android:orientation="horizontal">
 
@@ -1206,7 +1139,7 @@
                         style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginEnd="5dp"
+                        android:layout_marginEnd="@dimen/light_health_item_gap"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -1214,23 +1147,22 @@
                             android:layout_height="match_parent"
                             android:gravity="center_vertical"
                             android:orientation="vertical"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="8dp">
+                            android:paddingStart="@dimen/light_health_item_padding_start"
+                            android:paddingEnd="@dimen/light_health_item_padding_end">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.LabelSmall"
+                                style="@style/TextAppearance.Aqua.Light.LabelTiny"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/light_health_temp"
-                                android:textSize="10sp" />
+                                android:text="@string/light_health_temp" />
 
                             <TextView
                                 android:id="@+id/tvLightTemperature"
                                 style="@style/TextAppearance.Aqua.Light.ValueSmall"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:text=""
+                                android:layout_marginTop="@dimen/light_health_value_margin_top"
+                                android:text="38°C"
                                 tools:text="38°C" />
 
                         </LinearLayout>
@@ -1242,8 +1174,8 @@
                         style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginEnd="5dp"
+                        android:layout_marginStart="@dimen/light_health_item_gap"
+                        android:layout_marginEnd="@dimen/light_health_item_gap"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -1251,23 +1183,22 @@
                             android:layout_height="match_parent"
                             android:gravity="center_vertical"
                             android:orientation="vertical"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="8dp">
+                            android:paddingStart="@dimen/light_health_item_padding_start"
+                            android:paddingEnd="@dimen/light_health_item_padding_end">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.LabelSmall"
+                                style="@style/TextAppearance.Aqua.Light.LabelTiny"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/light_health_fan"
-                                android:textSize="10sp" />
+                                android:text="@string/light_health_fan" />
 
                             <TextView
                                 android:id="@+id/tvLightFan"
                                 style="@style/TextAppearance.Aqua.Light.ValueSmall"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:text=""
+                                android:layout_marginTop="@dimen/light_health_value_margin_top"
+                                android:text="Normal"
                                 tools:text="Normal" />
 
                         </LinearLayout>
@@ -1279,8 +1210,8 @@
                         style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginEnd="5dp"
+                        android:layout_marginStart="@dimen/light_health_item_gap"
+                        android:layout_marginEnd="@dimen/light_health_item_gap"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -1288,23 +1219,22 @@
                             android:layout_height="match_parent"
                             android:gravity="center_vertical"
                             android:orientation="vertical"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="8dp">
+                            android:paddingStart="@dimen/light_health_item_padding_start"
+                            android:paddingEnd="@dimen/light_health_item_padding_end">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.LabelSmall"
+                                style="@style/TextAppearance.Aqua.Light.LabelTiny"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/light_health_time"
-                                android:textSize="10sp" />
+                                android:text="@string/light_health_time" />
 
                             <TextView
                                 android:id="@+id/tvLightDeviceTime"
                                 style="@style/TextAppearance.Aqua.Light.ValueSmall"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:text=""
+                                android:layout_marginTop="@dimen/light_health_value_margin_top"
+                                android:text="14:32"
                                 tools:text="14:32" />
 
                         </LinearLayout>
@@ -1316,7 +1246,7 @@
                         style="@style/Widget.Aqua.Light.Card.Metric"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_marginStart="5dp"
+                        android:layout_marginStart="@dimen/light_health_item_gap"
                         android:layout_weight="1">
 
                         <LinearLayout
@@ -1324,23 +1254,22 @@
                             android:layout_height="match_parent"
                             android:gravity="center_vertical"
                             android:orientation="vertical"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="8dp">
+                            android:paddingStart="@dimen/light_health_item_padding_start"
+                            android:paddingEnd="@dimen/light_health_item_padding_end">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.LabelSmall"
+                                style="@style/TextAppearance.Aqua.Light.LabelTiny"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/light_health_fw"
-                                android:textSize="10sp" />
+                                android:text="@string/light_health_firmware" />
 
                             <TextView
                                 android:id="@+id/tvLightFirmware"
                                 style="@style/TextAppearance.Aqua.Light.ValueSmall"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:text=""
+                                android:layout_marginTop="@dimen/light_health_value_margin_top"
+                                android:text="1.0.4"
                                 tools:text="1.0.4" />
 
                         </LinearLayout>
