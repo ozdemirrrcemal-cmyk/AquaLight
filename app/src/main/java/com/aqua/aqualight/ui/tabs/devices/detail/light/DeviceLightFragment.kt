@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightOverviewUiState
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.launch
@@ -174,9 +175,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         cardManualControl.setOnClickListener {
-            navigateWithDeviceId(
-                destinationId = R.id.deviceLightManualFragment
-            )
+            (parentFragment as? DeviceRouterFragment)?.openManualControl()
         }
 
         cardProgram.setOnClickListener {

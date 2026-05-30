@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualBinding
-import kotlin.math.roundToInt
 
 class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual) {
 
@@ -126,7 +125,10 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
                     progress: Int,
                     fromUser: Boolean
                 ) {
-                    valueView.text = formatPercent(progress)
+                    valueView.text = formatPercent(
+                        value = progress
+                    )
+
                     updateChannelValues()
                     updatePreviewText()
                 }
@@ -143,25 +145,22 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     }
 
     private fun setupClicks() = with(binding) {
-
-        btnManualSync.setOnClickListener {
-            showMessage("Syncing manual light data")
-        }
-
-        btnManualMore.setOnClickListener {
-            showMessage("Manual options will be added")
-        }
-
         btnAll100.setOnClickListener {
-            applyAllChannels(100)
+            applyAllChannels(
+                value = 100
+            )
         }
 
         btnAll50.setOnClickListener {
-            applyAllChannels(50)
+            applyAllChannels(
+                value = 50
+            )
         }
 
         btnAllOff.setOnClickListener {
-            applyAllChannels(0)
+            applyAllChannels(
+                value = 0
+            )
         }
 
         btnResetChannels.setOnClickListener {
@@ -197,7 +196,10 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     private fun applyAllChannels(
         value: Int
     ) = with(binding) {
-        val safeValue = value.coerceIn(0, MAX_PERCENT)
+        val safeValue = value.coerceIn(
+            minimumValue = 0,
+            maximumValue = MAX_PERCENT
+        )
 
         sliderRed.progress = safeValue
         sliderGreen.progress = safeValue
@@ -220,15 +222,26 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         val blue = sliderBlue.progress
         val white = sliderWhite.progress
 
-        tvRedValue.text = formatPercent(red)
-        tvGreenValue.text = formatPercent(green)
-        tvBlueValue.text = formatPercent(blue)
-        tvWhiteValue.text = formatPercent(white)
+        tvRedValue.text = formatPercent(
+            value = red
+        )
 
-        tvManualRedSummaryValue.text = "R$red%"
-        tvManualGreenSummaryValue.text = "G$green%"
-        tvManualBlueSummaryValue.text = "B$blue%"
-        tvManualWhiteSummaryValue.text = "W$white%"
+        tvGreenValue.text = formatPercent(
+            value = green
+        )
+
+        tvBlueValue.text = formatPercent(
+            value = blue
+        )
+
+        tvWhiteValue.text = formatPercent(
+            value = white
+        )
+
+        tvManualRedSummaryValue.text = "R${formatPercent(red)}"
+        tvManualGreenSummaryValue.text = "G${formatPercent(green)}"
+        tvManualBlueSummaryValue.text = "B${formatPercent(blue)}"
+        tvManualWhiteSummaryValue.text = "W${formatPercent(white)}"
     }
 
     private fun updatePowerState() = with(binding) {

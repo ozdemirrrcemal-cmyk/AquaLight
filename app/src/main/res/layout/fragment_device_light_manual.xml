@@ -51,26 +51,6 @@
                 android:text="Online · Manual ready"
                 tools:text="Online · Manual ready" />
 
-            <ImageButton
-                android:id="@+id/btnManualSync"
-                android:layout_width="@dimen/light_header_icon_size"
-                android:layout_height="@dimen/light_header_icon_size"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/light_manual_sync_desc"
-                android:padding="@dimen/light_header_icon_padding"
-                android:src="@drawable/ic_light_sync_24"
-                app:tint="@color/settings_text_secondary" />
-
-            <ImageButton
-                android:id="@+id/btnManualMore"
-                android:layout_width="@dimen/light_header_more_width"
-                android:layout_height="@dimen/light_header_icon_size"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/light_manual_more_desc"
-                android:padding="@dimen/light_header_more_padding"
-                android:src="@drawable/ic_light_more_vert_24"
-                app:tint="@color/settings_text_secondary" />
-
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
