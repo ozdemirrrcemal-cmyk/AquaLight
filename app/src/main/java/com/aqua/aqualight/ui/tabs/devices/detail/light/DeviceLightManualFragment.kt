@@ -47,7 +47,6 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     }
 
     private fun renderPreviewState() = with(binding) {
-        tvManualConnectionStatus.text = "Online · Manual ready"
         tvManualPowerState.text = "LIVE"
 
         sliderMasterBrightness.value = 78f
