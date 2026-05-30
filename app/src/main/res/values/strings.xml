@@ -1417,5 +1417,4 @@ Delete Failed
 
 <string name="light_manual_sync_desc">Sync manual light data</string>
 <string name="light_manual_more_desc">More manual light options</string>
-<string name="light_manual_title">Manual Control</string>
 </resources>
