@@ -6,7 +6,6 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualBinding
 import kotlin.math.roundToInt
@@ -144,9 +143,6 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     }
 
     private fun setupClicks() = with(binding) {
-        btnManualBack.setOnClickListener {
-            findNavController().navigateUp()
-        }
 
         btnManualSync.setOnClickListener {
             showMessage("Syncing manual light data")
