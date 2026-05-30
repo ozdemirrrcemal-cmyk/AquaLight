@@ -26,6 +26,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightControllerFrag
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerFragment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import android.widget.ImageView
 
 class DeviceRouterFragment :
     Fragment(R.layout.fragment_device_router),
@@ -138,7 +139,7 @@ class DeviceRouterFragment :
 
                 background = resolveSelectableBorderlessBackground()
                 contentDescription = action.contentDescription
-                scaleType = ImageButton.ScaleType.CENTER
+                scaleType = ImageView.ScaleType.CENTER
                 setImageResource(action.iconRes)
                 setPadding(HEADER_ACTION_PADDING_DP.dp())
                 setColorFilter(
