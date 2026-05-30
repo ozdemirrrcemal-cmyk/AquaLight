@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.IdRes
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -85,6 +86,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         tvTimelineMidLabel.text = state.timelineMidLabel
         tvTimelineEndLabel.text = state.timelineEndLabel
 
+        renderTimelineState(
+            hasCurveData = state.hasRealCurveData()
+        )
+
         tvCurveStartValue.text = state.curveStartLabel
         tvCurvePeakValue.text = state.curvePeakLabel
         tvCurveSunsetValue.text = state.curveSunsetLabel
@@ -104,6 +109,52 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         setProgramSwitchChecked(
             checked = state.isProgramEnabled
         )
+    }
+
+    private fun renderTimelineState(
+        hasCurveData: Boolean
+    ) = with(binding) {
+        val inactiveColor =
+            ContextCompat.getColor(
+                requireContext(),
+                R.color.light_timeline_inactive
+            )
+
+        val nightColor =
+            ContextCompat.getColor(
+                requireContext(),
+                R.color.light_timeline_night
+            )
+
+        val transitionColor =
+            ContextCompat.getColor(
+                requireContext(),
+                R.color.light_timeline_transition
+            )
+
+        val peakColor =
+            ContextCompat.getColor(
+                requireContext(),
+                R.color.light_accent
+            )
+
+        if (hasCurveData) {
+            viewTimelineNightStart.setBackgroundColor(nightColor)
+            viewTimelineSunrise.setBackgroundColor(transitionColor)
+            viewTimelinePeak.setBackgroundColor(peakColor)
+            viewTimelineSunset.setBackgroundColor(transitionColor)
+            viewTimelineNightEnd.setBackgroundColor(nightColor)
+
+            lightTimelineBar.alpha = 1f
+        } else {
+            viewTimelineNightStart.setBackgroundColor(inactiveColor)
+            viewTimelineSunrise.setBackgroundColor(inactiveColor)
+            viewTimelinePeak.setBackgroundColor(inactiveColor)
+            viewTimelineSunset.setBackgroundColor(inactiveColor)
+            viewTimelineNightEnd.setBackgroundColor(inactiveColor)
+
+            lightTimelineBar.alpha = 0.55f
+        }
     }
 
     private fun setupClicks() = with(binding) {
@@ -232,6 +283,12 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         durationLabel: String,
         resumeLabel: String
     ) {
+        /*
+         * Burada ekrana fake değer basmıyoruz.
+         *
+         * outputPercent sadece ESP32'ye gönderilecek komut parametresi.
+         * Ekranda 45%, 55%, 100% ancak ESP32 geri dönerse görünmeli.
+         */
         viewModel.applyTemporaryScene(
             sceneName = sceneName,
             outputPercent = outputPercent,
@@ -389,6 +446,13 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                     it != LightOverviewUiState.NO_VALUE
             }
             ?: DEFAULT_PROGRAM_NAME
+    }
+
+    private fun LightOverviewUiState.hasRealCurveData(): Boolean {
+        return curveStartLabel != LightOverviewUiState.NO_VALUE &&
+            curvePeakLabel != LightOverviewUiState.NO_VALUE &&
+            curveSunsetLabel != LightOverviewUiState.NO_VALUE &&
+            curveRampLabel != LightOverviewUiState.NO_VALUE
     }
 
     private fun setProgramSwitchChecked(

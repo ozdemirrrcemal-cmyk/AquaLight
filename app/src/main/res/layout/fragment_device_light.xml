@@ -492,6 +492,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="16dp"
                     android:layout_marginTop="18dp"
+                    android:alpha="0.55"
                     android:orientation="horizontal">
 
                     <View
@@ -499,38 +500,37 @@
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="3"
-                        android:background="#263A56" />
+                        android:background="@color/light_timeline_inactive" />
 
                     <View
                         android:id="@+id/viewTimelineSunrise"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#287B8E" />
+                        android:background="@color/light_timeline_inactive" />
 
                     <View
                         android:id="@+id/viewTimelinePeak"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="5"
-                        android:background="@color/light_accent" />
+                        android:background="@color/light_timeline_inactive" />
 
                     <View
                         android:id="@+id/viewTimelineSunset"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:background="#287B8E" />
+                        android:background="@color/light_timeline_inactive" />
 
                     <View
                         android:id="@+id/viewTimelineNightEnd"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="4"
-                        android:background="#263A56" />
+                        android:background="@color/light_timeline_inactive" />
 
                 </LinearLayout>
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
