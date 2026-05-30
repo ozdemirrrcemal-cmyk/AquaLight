@@ -39,7 +39,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentDeviceLightBinding.bind(view)
 
@@ -49,9 +52,38 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         viewModel.refresh()
     }
 
+    fun onHeaderSyncClick() {
+        if (_binding == null) {
+            return
+        }
+
+        showMessage("Syncing device data")
+        viewModel.refresh()
+    }
+
+    fun onHeaderSettingsClick() {
+        if (_binding == null) {
+            return
+        }
+
+        navigateWithDeviceId(
+            destinationId = R.id.deviceLightDeviceSettingsFragment
+        )
+    }
+
+    fun onHeaderMoreClick() {
+        if (_binding == null) {
+            return
+        }
+
+        showTemporaryModeSheet()
+    }
+
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
                 viewModel.uiState.collect { state ->
                     renderLightState(
                         state = state
@@ -64,8 +96,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private fun renderLightState(
         state: LightOverviewUiState
     ) = with(binding) {
-        tvLightSubtitle.text = state.connectionLabel
-
         tvLightRunningTitle.text = state.programTitle
         tvLightRunningSubtitle.text = state.programSubtitle
         tvLightMode.text = state.modeLabel
@@ -124,7 +154,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 View.VISIBLE
             }
 
-        switchProgramEveryDay.isEnabled = !state.isLoading
+        switchProgramEveryDay.isEnabled =
+            !state.isLoading
 
         tvDeviceHealthSync.text = state.healthLabel
         tvLightTemperature.text = state.temperatureLabel
@@ -159,21 +190,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     }
 
     private fun setupClicks() = with(binding) {
-        btnLightSync.setOnClickListener {
-            showMessage("Syncing device data")
-            viewModel.refresh()
-        }
-
-        btnLightSettings.setOnClickListener {
-            navigateWithDeviceId(
-                destinationId = R.id.deviceLightDeviceSettingsFragment
-            )
-        }
-
-        btnLightMore.setOnClickListener {
-            showTemporaryModeSheet()
-        }
-
         cardManualControl.setOnClickListener {
             (parentFragment as? DeviceRouterFragment)?.openManualControl()
         }
@@ -291,7 +307,9 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             resumeLabel = resumeLabel
         )
 
-        showMessage("$sceneName command sent")
+        showMessage(
+            message = "$sceneName command sent"
+        )
     }
 
     private fun showTemporaryModeSheet() {
@@ -312,31 +330,49 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         var selectedResumeLabel = "Auto resumes in $selectedDurationLabel"
 
         val tvTempDurationValue =
-            sheetView.findViewById<TextView>(R.id.tvTempDurationValue)
+            sheetView.findViewById<TextView>(
+                R.id.tvTempDurationValue
+            )
 
         val btnPhoto =
-            sheetView.findViewById<TextView>(R.id.btnTempModePhoto)
+            sheetView.findViewById<TextView>(
+                R.id.btnTempModePhoto
+            )
 
         val btnMaintenance =
-            sheetView.findViewById<TextView>(R.id.btnTempModeMaintenance)
+            sheetView.findViewById<TextView>(
+                R.id.btnTempModeMaintenance
+            )
 
         val btnEvening =
-            sheetView.findViewById<TextView>(R.id.btnTempModeEvening)
+            sheetView.findViewById<TextView>(
+                R.id.btnTempModeEvening
+            )
 
         val btnMoonlight =
-            sheetView.findViewById<TextView>(R.id.btnTempModeMoonlight)
+            sheetView.findViewById<TextView>(
+                R.id.btnTempModeMoonlight
+            )
 
         val chip15 =
-            sheetView.findViewById<TextView>(R.id.chipTempDuration15)
+            sheetView.findViewById<TextView>(
+                R.id.chipTempDuration15
+            )
 
         val chip30 =
-            sheetView.findViewById<TextView>(R.id.chipTempDuration30)
+            sheetView.findViewById<TextView>(
+                R.id.chipTempDuration30
+            )
 
         val chip60 =
-            sheetView.findViewById<TextView>(R.id.chipTempDuration60)
+            sheetView.findViewById<TextView>(
+                R.id.chipTempDuration60
+            )
 
         val chipNext =
-            sheetView.findViewById<TextView>(R.id.chipTempDurationNext)
+            sheetView.findViewById<TextView>(
+                R.id.chipTempDurationNext
+            )
 
         fun updateResumeLabel() {
             selectedResumeLabel =
@@ -400,7 +436,9 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         sheetView
-            .findViewById<TextView>(R.id.btnTempModeApply)
+            .findViewById<TextView>(
+                R.id.btnTempModeApply
+            )
             .setOnClickListener {
                 dialog.dismiss()
 
@@ -413,7 +451,9 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             }
 
         sheetView
-            .findViewById<TextView>(R.id.btnTempModeRestoreAuto)
+            .findViewById<TextView>(
+                R.id.btnTempModeRestoreAuto
+            )
             .setOnClickListener {
                 dialog.dismiss()
 
@@ -422,12 +462,17 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             }
 
         sheetView
-            .findViewById<TextView>(R.id.btnTempModeCancel)
+            .findViewById<TextView>(
+                R.id.btnTempModeCancel
+            )
             .setOnClickListener {
                 dialog.dismiss()
             }
 
-        dialog.setContentView(sheetView)
+        dialog.setContentView(
+            sheetView
+        )
+
         dialog.show()
     }
 
@@ -487,6 +532,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     override fun onDestroyView() {
         _binding = null
+
         super.onDestroyView()
     }
 

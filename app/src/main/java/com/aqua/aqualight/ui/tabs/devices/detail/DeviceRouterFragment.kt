@@ -5,7 +5,6 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -60,7 +59,12 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         )
 
         binding.tvSubtitle.visibility = View.GONE
-        binding.headerActions.visibility = View.GONE
+
+        showHeaderActions(
+            sync = false,
+            settings = false,
+            more = false
+        )
 
         setupHeaderClicks()
         setupSystemBackHandling()
@@ -90,27 +94,37 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
         btnHeaderSync.setOnClickListener {
             when (activeRouterScreen) {
-                RouterScreen.LightManual -> {
-                    showMessage("Syncing manual light data")
+                RouterScreen.LightOverview -> {
+                    currentLightOverviewFragment()?.onHeaderSyncClick()
                 }
 
-                RouterScreen.LightOverview,
-                RouterScreen.Controller -> {
-                    showMessage("Syncing device data")
+                RouterScreen.LightManual -> {
+                    currentLightManualFragment()?.onHeaderSyncClick()
                 }
+
+                RouterScreen.Controller -> Unit
+            }
+        }
+
+        btnHeaderSettings.setOnClickListener {
+            when (activeRouterScreen) {
+                RouterScreen.LightOverview -> {
+                    currentLightOverviewFragment()?.onHeaderSettingsClick()
+                }
+
+                RouterScreen.LightManual,
+                RouterScreen.Controller -> Unit
             }
         }
 
         btnHeaderMore.setOnClickListener {
             when (activeRouterScreen) {
-                RouterScreen.LightManual -> {
-                    showMessage("Manual options will be added")
+                RouterScreen.LightOverview -> {
+                    currentLightOverviewFragment()?.onHeaderMoreClick()
                 }
 
-                RouterScreen.LightOverview,
-                RouterScreen.Controller -> {
-                    showMessage("Device options will be added")
-                }
+                RouterScreen.LightManual,
+                RouterScreen.Controller -> Unit
             }
         }
     }
@@ -261,7 +275,14 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 activeRouterScreen = RouterScreen.LightOverview
                 activeLightDeviceId = deviceId
                 activeLightTitle = routerTitle
-                binding.headerActions.visibility = View.GONE
+
+                binding.tvTitle.text = routerTitle
+
+                showHeaderActions(
+                    sync = true,
+                    settings = true,
+                    more = true
+                )
 
                 DeviceLightFragment.newInstance(
                     deviceId = deviceId
@@ -273,7 +294,12 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             AquaDeviceUiController.CUSTOM_TIMER_SCENE_PRO -> {
                 activeRouterScreen = RouterScreen.Controller
                 activeLightDeviceId = null
-                binding.headerActions.visibility = View.GONE
+
+                showHeaderActions(
+                    sync = false,
+                    settings = false,
+                    more = false
+                )
 
                 DeviceTimerFragment.newInstance(
                     deviceId = deviceId,
@@ -289,7 +315,12 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             AquaDeviceUiController.CUSTOM_COOLING_ADVANCED -> {
                 activeRouterScreen = RouterScreen.Controller
                 activeLightDeviceId = null
-                binding.headerActions.visibility = View.GONE
+
+                showHeaderActions(
+                    sync = false,
+                    settings = false,
+                    more = false
+                )
 
                 DeviceCoolingFragment.newInstance(
                     deviceId = deviceId,
@@ -301,7 +332,12 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             AquaDeviceUiController.CUSTOM_DOSING_4CH -> {
                 activeRouterScreen = RouterScreen.Controller
                 activeLightDeviceId = null
-                binding.headerActions.visibility = View.GONE
+
+                showHeaderActions(
+                    sync = false,
+                    settings = false,
+                    more = false
+                )
 
                 DeviceDosingFragment.newInstance(
                     deviceId = deviceId,
@@ -319,7 +355,12 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             AquaDeviceUiController.UNSUPPORTED -> {
                 activeRouterScreen = RouterScreen.Controller
                 activeLightDeviceId = null
-                binding.headerActions.visibility = View.GONE
+
+                showHeaderActions(
+                    sync = false,
+                    settings = false,
+                    more = false
+                )
 
                 null
             }
@@ -350,7 +391,11 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             DEFAULT_DEVICE_TITLE
         }
 
-        binding.headerActions.visibility = View.GONE
+        showHeaderActions(
+            sync = true,
+            settings = true,
+            more = true
+        )
 
         childFragmentManager.commit {
             replace(
@@ -371,7 +416,11 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             R.string.light_manual_title
         )
 
-        binding.headerActions.visibility = View.VISIBLE
+        showHeaderActions(
+            sync = true,
+            settings = false,
+            more = false
+        )
 
         childFragmentManager.commit {
             replace(
@@ -381,6 +430,54 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 )
             )
         }
+    }
+
+    private fun currentLightOverviewFragment(): DeviceLightFragment? {
+        return childFragmentManager.findFragmentById(
+            R.id.deviceControllerContainer
+        ) as? DeviceLightFragment
+    }
+
+    private fun currentLightManualFragment(): DeviceLightManualFragment? {
+        return childFragmentManager.findFragmentById(
+            R.id.deviceControllerContainer
+        ) as? DeviceLightManualFragment
+    }
+
+    private fun showHeaderActions(
+        sync: Boolean,
+        settings: Boolean,
+        more: Boolean
+    ) = with(binding) {
+        val showAnyAction = sync || settings || more
+
+        headerActions.visibility =
+            if (showAnyAction) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        btnHeaderSync.visibility =
+            if (sync) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        btnHeaderSettings.visibility =
+            if (settings) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        btnHeaderMore.visibility =
+            if (more) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
     }
 
     private fun showUnavailableState(
@@ -396,7 +493,12 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
         binding.tvTitle.text = title
         binding.tvSubtitle.visibility = View.GONE
-        binding.headerActions.visibility = View.GONE
+
+        showHeaderActions(
+            sync = false,
+            settings = false,
+            more = false
+        )
 
         binding.deviceControllerContainer.removeAllViews()
 
@@ -464,16 +566,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 LinearLayout.LayoutParams.MATCH_PARENT
             )
         )
-    }
-
-    private fun showMessage(
-        message: String
-    ) {
-        Toast.makeText(
-            requireContext(),
-            message,
-            Toast.LENGTH_SHORT
-        ).show()
     }
 
     private fun Int.dp(): Int {

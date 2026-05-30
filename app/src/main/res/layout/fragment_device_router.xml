@@ -34,24 +34,24 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
-       <TextView
-    android:id="@+id/tvTitle"
-    style="@style/TextAppearance.Aqua.EditProfileTitle"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="14dp"
-    android:layout_marginEnd="8dp"
-    android:ellipsize="end"
-    android:gravity="start|center_vertical"
-    android:maxLines="1"
-    android:text="Device"
-    android:textColor="?attr/colorOnSurface"
-    android:importantForAccessibility="yes"
-    app:layout_constraintStart_toEndOf="@id/btnBack"
-    app:layout_constraintEnd_toStartOf="@id/headerActions"
-    app:layout_constraintTop_toTopOf="@id/btnBack"
-    app:layout_constraintBottom_toBottomOf="@id/btnBack"
-    tools:text="Manual Control" />
+        <TextView
+            android:id="@+id/tvTitle"
+            style="@style/TextAppearance.Aqua.EditProfileTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:gravity="start|center_vertical"
+            android:maxLines="1"
+            android:text="Device"
+            android:textColor="?attr/colorOnSurface"
+            android:importantForAccessibility="yes"
+            app:layout_constraintStart_toEndOf="@id/btnBack"
+            app:layout_constraintEnd_toStartOf="@id/headerActions"
+            app:layout_constraintTop_toTopOf="@id/btnBack"
+            app:layout_constraintBottom_toBottomOf="@id/btnBack"
+            tools:text="WRGB Pro2" />
 
         <LinearLayout
             android:id="@+id/headerActions"
@@ -60,6 +60,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:visibility="gone"
+            tools:visibility="visible"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/btnBack"
             app:layout_constraintBottom_toBottomOf="@id/btnBack">
@@ -69,9 +70,19 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/light_manual_sync_desc"
+                android:contentDescription="@string/light_cd_sync"
                 android:padding="9dp"
                 android:src="@drawable/ic_light_sync_24"
+                app:tint="@color/settings_text_secondary" />
+
+            <ImageButton
+                android:id="@+id/btnHeaderSettings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/light_cd_settings"
+                android:padding="9dp"
+                android:src="@drawable/ic_light_settings_24"
                 app:tint="@color/settings_text_secondary" />
 
             <ImageButton
@@ -79,7 +90,7 @@
                 android:layout_width="36dp"
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/light_manual_more_desc"
+                android:contentDescription="@string/light_cd_more"
                 android:padding="8dp"
                 android:src="@drawable/ic_light_more_vert_24"
                 app:tint="@color/settings_text_secondary" />

@@ -264,6 +264,10 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     ): String {
         return "${value.coerceIn(0, MAX_PERCENT)}%"
     }
+	
+	fun onHeaderSyncClick() {
+    showMessage("Syncing manual light data")
+}
 
     private fun showMessage(
         message: String
