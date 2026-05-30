@@ -34,23 +34,24 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
-        <TextView
-            android:id="@+id/tvTitle"
-            style="@style/TextAppearance.Aqua.EditProfileTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="Device"
-            android:textColor="?attr/colorOnSurface"
-            android:importantForAccessibility="yes"
-            app:layout_constrainedWidth="true"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/btnBack"
-            app:layout_constraintBottom_toBottomOf="@id/btnBack"
-            tools:text="Manual Control" />
+       <TextView
+    android:id="@+id/tvTitle"
+    style="@style/TextAppearance.Aqua.EditProfileTitle"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="14dp"
+    android:layout_marginEnd="8dp"
+    android:ellipsize="end"
+    android:gravity="start|center_vertical"
+    android:maxLines="1"
+    android:text="Device"
+    android:textColor="?attr/colorOnSurface"
+    android:importantForAccessibility="yes"
+    app:layout_constraintStart_toEndOf="@id/btnBack"
+    app:layout_constraintEnd_toStartOf="@id/headerActions"
+    app:layout_constraintTop_toTopOf="@id/btnBack"
+    app:layout_constraintBottom_toBottomOf="@id/btnBack"
+    tools:text="Manual Control" />
 
         <LinearLayout
             android:id="@+id/headerActions"

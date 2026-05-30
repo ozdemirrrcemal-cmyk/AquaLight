@@ -1393,6 +1393,7 @@ Delete Failed
 <!-- Light Manual Control -->
 <string name="light_manual_title">Manual Control</string>
 <string name="light_manual_subtitle">Temporary live output</string>
+<string name="light_manual_master_brightness">Master Brightness</string>
 <string name="light_manual_current_output">Current Output</string>
 <string name="light_manual_notice">Manual changes are temporary. Auto program will resume at the next scheduled event.</string>
 
@@ -1404,7 +1405,7 @@ Delete Failed
 <string name="light_channel_blue">Blue</string>
 <string name="light_channel_white">White</string>
 
-<string name="light_manual_current_mix">Current Mix</string>
+<string name="light_manual_light_preview">Light Preview</string>
 
 <string name="light_manual_all_100">All 100</string>
 <string name="light_manual_all_50">All 50</string>
