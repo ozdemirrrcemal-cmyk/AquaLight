@@ -380,7 +380,7 @@ class DeviceLightProgramEditorFragment :
                 includeFontPadding = false
 
                 setTextColor(
-                    color(R.color.settings_text_primary)
+                    color(R.color.light_white)
                 )
 
                 layoutParams =
@@ -414,7 +414,7 @@ class DeviceLightProgramEditorFragment :
             EditText(requireContext()).apply {
                 setText(editableProgramName)
                 setSelection(text.length)
-                singleLine = true
+                setSingleLine(true)
                 inputType =
                     InputType.TYPE_CLASS_TEXT or
                         InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
@@ -423,7 +423,7 @@ class DeviceLightProgramEditorFragment :
                 hint = "Program name"
 
                 setTextColor(
-                    color(R.color.settings_text_primary)
+                    color(R.color.light_white)
                 )
 
                 setHintTextColor(
@@ -1836,7 +1836,7 @@ class DeviceLightProgramEditorFragment :
             createPreviewText(
                 text = "Preview Day",
                 textSizeSp = 20f,
-                colorRes = R.color.settings_text_primary,
+                colorRes = R.color.light_white,
                 bottomMarginDp = 6
             )
 
@@ -1886,7 +1886,7 @@ class DeviceLightProgramEditorFragment :
             createPreviewText(
                 text = "Main 0%",
                 textSizeSp = 15f,
-                colorRes = R.color.settings_text_primary,
+                colorRes = R.color.light_white,
                 bottomMarginDp = 10
             )
 
@@ -2107,8 +2107,7 @@ class DeviceLightProgramEditorFragment :
                 proChannelCurves.mapValues { entry ->
                     entry.value.toList()
                 },
-            channelBalance =
-                currentChannelBalanceDraft(),
+            channelBalance = currentChannelBalanceDraft(),
             dayMinute = dayMinute
         )
     }
@@ -2172,11 +2171,6 @@ class DeviceLightProgramEditorFragment :
         showMessage(
             message = "${draft.name} is ready to save"
         )
-
-        // Later:
-        // viewModel.saveLightProgram(draft)
-        // repository.saveLightProgram(deviceId, draft)
-        // esp32LightRepository.saveProgram(deviceId, draft)
     }
 
     private fun currentChannelBalanceDraft(): ProgramChannelBalanceDraft {
