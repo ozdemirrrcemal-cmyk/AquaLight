@@ -20,26 +20,29 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 
 class DeviceLightProgramListFragment :
-    Fragment(R.layout.fragment_device_light_program_list) {
+Fragment(R.layout.fragment_device_light_program_list) {
 
     private var _binding: FragmentDeviceLightProgramListBinding? = null
     private val binding get() = _binding!!
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+    get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val programsAdapter = LightProgramsAdapter(
-        onProgramClick = { program ->
+        onProgramClick = {
+            program ->
             openProgramEditor(
                 programName = program.title
             )
         },
-        onProgramLongClick = { program ->
+        onProgramLongClick = {
+            program ->
             showProgramActions(
                 program = program
             )
         },
-        onProgramEnabledChanged = { program, isEnabled ->
+        onProgramEnabledChanged = {
+            program, isEnabled ->
             updateProgramEnabled(
                 programId = program.id,
                 isEnabled = isEnabled
@@ -137,15 +140,18 @@ class DeviceLightProgramListFragment :
         allPrograms = programs
 
         activeProgramId =
-            preferredActiveProgramId
-                ?.takeIf { id ->
-                    programs.any { program ->
-                        program.id == id
-                    }
-                }
-                ?: programs.firstOrNull { program ->
-                    program.isEnabled
-                }?.id
+        preferredActiveProgramId
+        ?.takeIf {
+            id ->
+            programs.any {
+                program ->
+                program.id == id
+            }
+        }
+        ?: programs.firstOrNull {
+            program ->
+            program.isEnabled
+        }?.id
 
         renderActiveProgramSummary()
         renderFilterChips()
@@ -154,18 +160,20 @@ class DeviceLightProgramListFragment :
 
     private fun renderActiveProgramSummary() = with(binding) {
         val activeProgram =
-            allPrograms.firstOrNull { program ->
-                program.id == activeProgramId
-            } ?: allPrograms.firstOrNull { program ->
-                program.isEnabled
-            }
+        allPrograms.firstOrNull {
+            program ->
+            program.id == activeProgramId
+        } ?: allPrograms.firstOrNull {
+            program ->
+            program.isEnabled
+        }
 
         cardProgramSummary.visibility =
-            if (activeProgram == null) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
+        if (activeProgram == null) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         if (activeProgram == null) {
             return@with
@@ -178,58 +186,74 @@ class DeviceLightProgramListFragment :
         tvProgramSummaryPeak.text = "${activeProgram.peakPercent}%"
         tvProgramPhotoperiod.text = activeProgram.photoperiodLabel
 
-        viewActiveProgramCurve.setProgramCurve(
-            start = activeProgram.startTime,
-            sunriseEnd = activeProgram.sunriseEndTime,
-            peakEnd = activeProgram.peakEndTime,
-            end = activeProgram.endTime,
-            startIntensity = activeProgram.startIntensity,
-            sunriseEndIntensity = activeProgram.sunriseEndIntensity,
-            peakEndIntensity = activeProgram.peakEndIntensity,
-            endIntensity = activeProgram.endIntensity
+        viewActiveProgramCurve.setCurveDisplayMode(
+            mode = LightProgramCurveView.CurveDisplayMode.SIMPLE
+        )
+
+        viewActiveProgramCurve.setCurvePoints(
+            points = listOf(
+                LightProgramCurveView.CurvePoint(
+                    time = activeProgram.startTime,
+                    intensity = activeProgram.startIntensity
+                ),
+                LightProgramCurveView.CurvePoint(
+                    time = activeProgram.sunriseEndTime,
+                    intensity = activeProgram.sunriseEndIntensity
+                ),
+                LightProgramCurveView.CurvePoint(
+                    time = activeProgram.peakEndTime,
+                    intensity = activeProgram.peakEndIntensity
+                ),
+                LightProgramCurveView.CurvePoint(
+                    time = activeProgram.endTime,
+                    intensity = activeProgram.endIntensity
+                )
+            )
         )
     }
 
     private fun renderProgramList() = with(binding) {
         val filteredPrograms =
-            when (currentFilter) {
-                ProgramFilter.ALL -> {
-                    allPrograms
-                }
+        when (currentFilter) {
+            ProgramFilter.ALL -> {
+                allPrograms
+            }
 
-                ProgramFilter.ACTIVE -> {
-                    allPrograms.filter { program ->
-                        program.isEnabled
-                    }
-                }
-
-                ProgramFilter.DISABLED -> {
-                    allPrograms.filter { program ->
-                        !program.isEnabled
-                    }
+            ProgramFilter.ACTIVE -> {
+                allPrograms.filter {
+                    program ->
+                    program.isEnabled
                 }
             }
+
+            ProgramFilter.DISABLED -> {
+                allPrograms.filter {
+                    program ->
+                    !program.isEnabled
+                }
+            }
+        }
 
         programFilterRow.visibility =
-            if (allPrograms.isEmpty()) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
+        if (allPrograms.isEmpty()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         programsRecyclerView.visibility =
-            if (filteredPrograms.isEmpty()) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
+        if (filteredPrograms.isEmpty()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         programsEmptyState.visibility =
-            if (filteredPrograms.isEmpty()) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (filteredPrograms.isEmpty()) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         programsAdapter.submitPrograms(
             programs = filteredPrograms,
@@ -265,21 +289,23 @@ class DeviceLightProgramListFragment :
         isEnabled: Boolean
     ) {
         allPrograms =
-            allPrograms.map { program ->
-                if (program.id == programId) {
-                    program.copy(
-                        isEnabled = isEnabled
-                    )
-                } else {
-                    program
-                }
+        allPrograms.map {
+            program ->
+            if (program.id == programId) {
+                program.copy(
+                    isEnabled = isEnabled
+                )
+            } else {
+                program
             }
+        }
 
         if (!isEnabled && activeProgramId == programId) {
             activeProgramId =
-                allPrograms.firstOrNull { program ->
-                    program.isEnabled && program.id != programId
-                }?.id
+            allPrograms.firstOrNull {
+                program ->
+                program.isEnabled && program.id != programId
+            }?.id
         }
 
         if (isEnabled && activeProgramId == null) {
@@ -290,17 +316,18 @@ class DeviceLightProgramListFragment :
         renderProgramList()
 
         val programTitle =
-            allPrograms.firstOrNull { program ->
-                program.id == programId
-            }?.title.orEmpty()
+        allPrograms.firstOrNull {
+            program ->
+            program.id == programId
+        }?.title.orEmpty()
 
         showMessage(
             message =
-                if (isEnabled) {
-                    "$programTitle enabled"
-                } else {
-                    "$programTitle disabled"
-                }
+            if (isEnabled) {
+                "$programTitle enabled"
+            } else {
+                "$programTitle disabled"
+            }
         )
     }
 
@@ -308,22 +335,24 @@ class DeviceLightProgramListFragment :
         programId: String
     ) {
         val program =
-            allPrograms.firstOrNull { item ->
-                item.id == programId
-            } ?: return
+        allPrograms.firstOrNull {
+            item ->
+            item.id == programId
+        } ?: return
 
         activeProgramId = programId
 
         allPrograms =
-            allPrograms.map { item ->
-                if (item.id == programId) {
-                    item.copy(
-                        isEnabled = true
-                    )
-                } else {
-                    item
-                }
+        allPrograms.map {
+            item ->
+            if (item.id == programId) {
+                item.copy(
+                    isEnabled = true
+                )
+            } else {
+                item
             }
+        }
 
         renderActiveProgramSummary()
         renderProgramList()
@@ -339,11 +368,11 @@ class DeviceLightProgramListFragment :
         val copyId = "${sourceProgram.id}_copy_${System.currentTimeMillis()}"
 
         val copiedProgram =
-            sourceProgram.copy(
-                id = copyId,
-                title = "${sourceProgram.title} Copy",
-                isEnabled = false
-            )
+        sourceProgram.copy(
+            id = copyId,
+            title = "${sourceProgram.title} Copy",
+            isEnabled = false
+        )
 
         allPrograms = allPrograms + copiedProgram
         currentFilter = ProgramFilter.ALL
@@ -361,20 +390,23 @@ class DeviceLightProgramListFragment :
         programId: String
     ) {
         val deletedProgram =
-            allPrograms.firstOrNull { program ->
-                program.id == programId
-            } ?: return
+        allPrograms.firstOrNull {
+            program ->
+            program.id == programId
+        } ?: return
 
         allPrograms =
-            allPrograms.filterNot { program ->
-                program.id == programId
-            }
+        allPrograms.filterNot {
+            program ->
+            program.id == programId
+        }
 
         if (activeProgramId == programId) {
             activeProgramId =
-                allPrograms.firstOrNull { program ->
-                    program.isEnabled
-                }?.id
+            allPrograms.firstOrNull {
+                program ->
+                program.isEnabled
+            }?.id
         }
 
         renderActiveProgramSummary()
@@ -391,10 +423,10 @@ class DeviceLightProgramListFragment :
         val dialog = BottomSheetDialog(requireContext())
 
         val sheetView =
-            layoutInflater.inflate(
-                R.layout.bottom_sheet_light_program_actions,
-                null
-            )
+        layoutInflater.inflate(
+            R.layout.bottom_sheet_light_program_actions,
+            null
+        )
 
         sheetView.findViewById<TextView>(
             R.id.tvProgramActionTitle
@@ -405,39 +437,39 @@ class DeviceLightProgramListFragment :
         ).text = program.scheduleSummary
 
         val toggleButton =
-            sheetView.findViewById<TextView>(
-                R.id.btnProgramActionToggle
-            )
+        sheetView.findViewById<TextView>(
+            R.id.btnProgramActionToggle
+        )
 
         toggleButton.text =
-            if (program.isEnabled) {
-                "Disable Program"
-            } else {
-                "Enable Program"
-            }
+        if (program.isEnabled) {
+            "Disable Program"
+        } else {
+            "Enable Program"
+        }
 
         val setActiveButton =
-            sheetView.findViewById<TextView>(
-                R.id.btnProgramActionSetActive
-            )
+        sheetView.findViewById<TextView>(
+            R.id.btnProgramActionSetActive
+        )
 
         val isCurrentActiveProgram =
-            program.id == activeProgramId
+        program.id == activeProgramId
 
         setActiveButton.text =
-            if (isCurrentActiveProgram) {
-                "Active Program"
-            } else {
-                "Set as Active Program"
-            }
+        if (isCurrentActiveProgram) {
+            "Active Program"
+        } else {
+            "Set as Active Program"
+        }
 
         setActiveButton.isEnabled = !isCurrentActiveProgram
         setActiveButton.alpha =
-            if (isCurrentActiveProgram) {
-                DISABLED_ACTION_ALPHA
-            } else {
-                ENABLED_ACTION_ALPHA
-            }
+        if (isCurrentActiveProgram) {
+            DISABLED_ACTION_ALPHA
+        } else {
+            ENABLED_ACTION_ALPHA
+        }
 
         sheetView.findViewById<TextView>(
             R.id.btnProgramActionEdit
@@ -536,13 +568,13 @@ class DeviceLightProgramListFragment :
         )
 
         strokeColor =
-            color(
-                if (selected) {
-                    R.color.light_accent
-                } else {
-                    R.color.light_stroke
-                }
-            )
+        color(
+            if (selected) {
+                R.color.light_accent
+            } else {
+                R.color.light_stroke
+            }
+        )
 
         findFirstTextView()?.setTextColor(
             color(
@@ -561,7 +593,8 @@ class DeviceLightProgramListFragment :
         }
 
         if (this is ViewGroup) {
-            children.forEach { child ->
+            children.forEach {
+                child ->
                 val result = child.findFirstTextView()
 
                 if (result != null) {
