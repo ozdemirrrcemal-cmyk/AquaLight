@@ -16,6 +16,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceLightProgramListBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter.LightProgramsAdapter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
+import com.aqua.aqualight.ui.tabs.devices.detail.light.view.LightProgramCurveView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 
