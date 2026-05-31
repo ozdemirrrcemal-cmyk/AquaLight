@@ -25,7 +25,7 @@ class LightProgramCurveView @JvmOverloads constructor(
 
     private val timePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#E0E6ED")
-        textSize = 12f.sp()
+        textSize = 10f.sp()
     }
 
     private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -74,13 +74,13 @@ class LightProgramCurveView @JvmOverloads constructor(
 
     private val sunrisePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#FFA32B")
-        textSize = 15f.sp()
+        textSize = 14f.sp()
         textAlign = Paint.Align.CENTER
     }
 
     private val sunsetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#E26FD7")
-        textSize = 15f.sp()
+        textSize = 14f.sp()
         textAlign = Paint.Align.CENTER
     }
 
@@ -460,8 +460,8 @@ class LightProgramCurveView @JvmOverloads constructor(
     ) {
         val labelY = bottom + 23f.dp()
 
-        sunrisePaint.textSize = 15f.sp()
-        sunsetPaint.textSize = 15f.sp()
+        sunrisePaint.textSize = 14f.sp()
+        sunsetPaint.textSize = 14f.sp()
 
         canvas.drawText(
             "☀",
@@ -477,7 +477,7 @@ class LightProgramCurveView @JvmOverloads constructor(
             sunsetPaint
         )
 
-        timePaint.textSize = 12f.sp()
+        timePaint.textSize = 10f.sp()
         timePaint.color = Color.parseColor("#E0E6ED")
 
         timePaint.textAlign = Paint.Align.LEFT
