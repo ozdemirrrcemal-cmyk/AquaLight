@@ -39,201 +39,198 @@
         android:paddingEnd="16dp"
         android:paddingBottom="28dp">
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardProgramSummary"
+
+
+
+
+
+
+
+
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/cardProgramSummary"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@color/light_surface"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/light_stroke"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/light_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvActiveProgramTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/inter_semibold"
+                android:includeFontPadding="false"
+                android:text=""
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="24sp"
+                tools:text="Every Day Program" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                app:cardBackgroundColor="@color/light_chip_auto"
+                app:cardCornerRadius="17dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/light_accent"
+                app:strokeWidth="1dp">
+
+                <TextView
+                    android:id="@+id/tvActiveProgramChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:fontFamily="@font/inter_semibold"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text=""
+                    android:textColor="@color/light_accent"
+                    android:textSize="13sp"
+                    tools:text="ACTIVE" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+        <com.aqua.aqualight.ui.tabs.devices.detail.light.view.LightProgramCurveView
+            android:id="@+id/viewActiveProgramCurve"
+            android:layout_width="match_parent"
+            android:layout_height="210dp"
+            android:layout_marginTop="18dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="@color/light_stroke" />
+
+        <LinearLayout
+            android:id="@+id/programSummaryStats"
+            android:layout_width="match_parent"
+            android:layout_height="74dp"
+            android:layout_marginTop="14dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_light_metric_circle"
+                    android:fontFamily="@font/inter_semibold"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:text="▥"
+                    android:textColor="@color/light_accent"
+                    android:textSize="26sp" />
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Active Program"
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvActiveProgramTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:text=""
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="19sp"
-                            android:textStyle="bold"
-                            tools:text="Every Day Program" />
-
-                        <TextView
-                            android:id="@+id/tvActiveProgramSubtitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text=""
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="13sp"
-                            tools:text="09:00 → 19:15 · Ramp 60 min" />
-
-                    </LinearLayout>
-
-                    <com.google.android.material.card.MaterialCardView
+                    <TextView
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
-                        app:cardBackgroundColor="@color/light_chip_auto"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="@color/light_accent"
-                        app:strokeWidth="1dp">
-
-                        <TextView
-                            android:id="@+id/tvActiveProgramChip"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:paddingStart="13dp"
-                            android:paddingEnd="13dp"
-                            android:text=""
-                            android:textColor="@color/light_accent"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            tools:text="ACTIVE" />
-
-                    </com.google.android.material.card.MaterialCardView>
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvProgramSummaryOutput"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:text="Peak Output"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/tvProgramSummaryPeak"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text=""
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="36sp"
-                    android:textStyle="bold"
-                    tools:text="100%" />
-
-                <LinearLayout
-                    android:id="@+id/programSummaryStats"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:text="Peak Output"
+                        android:textColor="@color/settings_text_secondary"
+                        android:textSize="13sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Photoperiod"
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/tvProgramPhotoperiod"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text=""
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            tools:text="10h 15m" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
+                    <TextView
+                        android:id="@+id/tvProgramSummaryPeak"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1.12"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Peak Time"
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/tvProgramPeakRange"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text=""
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            tools:text="12:00–16:00" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1.05"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Channels"
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/tvProgramChannels"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text=""
-                            android:textColor="@color/light_accent"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            tools:text="R80 G84 B79 W65" />
-
-                    </LinearLayout>
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
+                        android:text=""
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="22sp"
+                        tools:text="100%" />
 
                 </LinearLayout>
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@color/light_stroke" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_light_metric_circle"
+                    android:fontFamily="@font/inter_semibold"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:text="◷"
+                    android:textColor="@color/light_accent"
+                    android:textSize="28sp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Photoperiod"
+                        android:textColor="@color/settings_text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvProgramPhotoperiod"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
+                        android:text=""
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="22sp"
+                        tools:text="10h 15m" />
+
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
             android:id="@+id/programFilterRow"

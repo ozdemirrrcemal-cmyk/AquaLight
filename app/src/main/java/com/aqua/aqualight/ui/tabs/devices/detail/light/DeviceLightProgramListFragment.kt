@@ -57,13 +57,17 @@ class DeviceLightProgramListFragment :
 
     private fun renderPreviewState() = with(binding) {
         tvActiveProgramTitle.text = "Every Day Program"
-        tvActiveProgramSubtitle.text = "09:00 → 19:15 · Ramp 60 min"
         tvActiveProgramChip.text = "ACTIVE"
 
         tvProgramSummaryPeak.text = "100%"
         tvProgramPhotoperiod.text = "10h 15m"
-        tvProgramPeakRange.text = "12:00–16:00"
-        tvProgramChannels.text = "R80 G84 B79 W65"
+
+        viewActiveProgramCurve.setProgramCurve(
+            start = "09:00",
+            peakStart = "12:00",
+            peakEnd = "16:00",
+            end = "19:15"
+        )
 
         switchEveryDayProgram.isChecked = true
         switchWeekendProgram.isChecked = false
@@ -93,11 +97,12 @@ class DeviceLightProgramListFragment :
                 onSetActive = {
                     setActiveProgram(
                         title = "Every Day Program",
-                        subtitle = "09:00 → 19:15 · Ramp 60 min",
                         peak = "100%",
                         photoperiod = "10h 15m",
-                        peakRange = "12:00–16:00",
-                        channels = "R80 G84 B79 W65"
+                        start = "09:00",
+                        peakStart = "12:00",
+                        peakEnd = "16:00",
+                        end = "19:15"
                     )
                 }
             )
@@ -128,11 +133,12 @@ class DeviceLightProgramListFragment :
                 onSetActive = {
                     setActiveProgram(
                         title = "Weekend Soft Light",
-                        subtitle = "10:00 → 18:00 · Ramp 90 min",
                         peak = "75%",
                         photoperiod = "8h",
-                        peakRange = "12:00–15:00",
-                        channels = "R70 G76 B72 W55"
+                        start = "10:00",
+                        peakStart = "12:00",
+                        peakEnd = "15:00",
+                        end = "18:00"
                     )
                 }
             )
@@ -273,20 +279,25 @@ class DeviceLightProgramListFragment :
 
     private fun setActiveProgram(
         title: String,
-        subtitle: String,
         peak: String,
         photoperiod: String,
-        peakRange: String,
-        channels: String
+        start: String,
+        peakStart: String,
+        peakEnd: String,
+        end: String
     ) = with(binding) {
         tvActiveProgramTitle.text = title
-        tvActiveProgramSubtitle.text = subtitle
         tvActiveProgramChip.text = "ACTIVE"
 
         tvProgramSummaryPeak.text = peak
         tvProgramPhotoperiod.text = photoperiod
-        tvProgramPeakRange.text = peakRange
-        tvProgramChannels.text = channels
+
+        viewActiveProgramCurve.setProgramCurve(
+            start = start,
+            peakStart = peakStart,
+            peakEnd = peakEnd,
+            end = end
+        )
     }
 
     private fun openProgramEditor(

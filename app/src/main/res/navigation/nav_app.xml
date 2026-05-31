@@ -240,11 +240,6 @@
             android:id="@+id/action_deviceMenuFragment_to_deviceDosingCalibrationFragment"
             app:destination="@id/deviceDosingCalibrationFragment" />
 
-        <!-- Light Root -->
-        <action
-            android:id="@+id/action_deviceMenuFragment_to_deviceLightFragment"
-            app:destination="@id/deviceLightFragment" />
-
         <!-- Light Sub Screens - needed because current Nav destination stays deviceMenuFragment -->
         <action
             android:id="@+id/action_deviceMenuFragment_to_deviceLightManualFragment"
@@ -368,52 +363,7 @@
         android:label="Timer" />
 
     <!-- 💡 Light Device -->
-    <fragment
-        android:id="@+id/deviceLightFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment"
-        android:label="Lighting"
-        tools:layout="@layout/fragment_device_light">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceIp"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <action
-            android:id="@+id/action_deviceLightFragment_to_deviceLightManualFragment"
-            app:destination="@id/deviceLightManualFragment" />
-
-        <action
-            android:id="@+id/action_deviceLightFragment_to_deviceLightProgramListFragment"
-            app:destination="@id/deviceLightProgramListFragment" />
-
-        <action
-            android:id="@+id/action_deviceLightFragment_to_deviceLightProgramEditorFragment"
-            app:destination="@id/deviceLightProgramEditorFragment" />
-
-        <action
-            android:id="@+id/action_deviceLightFragment_to_deviceLightQuickSetupFragment"
-            app:destination="@id/deviceLightQuickSetupFragment" />
-
-        <action
-            android:id="@+id/action_deviceLightFragment_to_deviceLightPresetsFragment"
-            app:destination="@id/deviceLightPresetsFragment" />
-
-        <action
-            android:id="@+id/action_deviceLightFragment_to_deviceLightDeviceSettingsFragment"
-            app:destination="@id/deviceLightDeviceSettingsFragment" />
-
-    </fragment>
-
+   
     <fragment
         android:id="@+id/deviceLightManualFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightManualFragment"
