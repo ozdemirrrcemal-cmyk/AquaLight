@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightOverviewUiState
@@ -23,8 +25,13 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
 
-    private val lightController: DeviceLightControllerFragment?
-        get() = parentFragment as? DeviceLightControllerFragment
+    private val deviceTitle: String
+        get() = requireArguments()
+            .getString(ARG_DEVICE_TITLE)
+            .orEmpty()
+            .ifBlank {
+                DEFAULT_DEVICE_TITLE
+            }
 
     private val viewModel: DeviceLightViewModel by viewModels {
         DeviceLightViewModel.Factory(
@@ -38,42 +45,51 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceLightBinding.bind(view)
 
+        setupHeader()
         setupClicks()
         observeUiState()
 
         viewModel.refresh()
     }
 
-    fun onHeaderSyncClick() {
-        if (_binding == null) {
-            return
+    private fun setupHeader() = with(binding.deviceHeader) {
+        tvTitle.text = deviceTitle
+
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
         }
 
+        headerActionsContainer.visibility = View.VISIBLE
+
+        btnActionOne.visibility = View.VISIBLE
+        btnActionOne.setImageResource(R.drawable.ic_light_sync_24)
+        btnActionOne.contentDescription = getString(R.string.light_cd_sync)
+        btnActionOne.setOnClickListener {
+            onHeaderSyncClick()
+        }
+
+        btnActionTwo.visibility = View.VISIBLE
+        btnActionTwo.setImageResource(R.drawable.ic_light_settings_24)
+        btnActionTwo.contentDescription = getString(R.string.light_cd_settings)
+        btnActionTwo.setOnClickListener {
+            openDeviceSettings()
+        }
+
+        btnActionThree.visibility = View.VISIBLE
+        btnActionThree.setImageResource(R.drawable.ic_light_more_vert_24)
+        btnActionThree.contentDescription = getString(R.string.light_cd_more)
+        btnActionThree.setOnClickListener {
+            showTemporaryModeSheet()
+        }
+    }
+
+    private fun onHeaderSyncClick() {
         showMessage("Syncing device data")
         viewModel.refresh()
-    }
-
-    fun onHeaderSettingsClick() {
-        if (_binding == null) {
-            return
-        }
-
-        lightController?.openDeviceSettings()
-    }
-
-    fun onHeaderMoreClick() {
-        if (_binding == null) {
-            return
-        }
-
-        showTemporaryModeSheet()
     }
 
     private fun observeUiState() {
@@ -96,7 +112,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         tvLightRunningTitle.text = state.programTitle
         tvLightRunningSubtitle.text = state.programSubtitle
         tvLightMode.text = state.modeLabel
-
         tvCurrentOutputValue.text = state.currentOutputLabel
 
         tvChannelRedValue.text = state.redLabel
@@ -106,7 +121,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
         tvLightNowState.text = state.nowLabel
         tvLightNextState.text = state.nextLabel
-
         tvLightCurveNow.text = state.curveNowLabel
 
         tvTimelineStartLabel.text = state.timelineStartLabel
@@ -151,8 +165,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 View.VISIBLE
             }
 
-        switchProgramEveryDay.isEnabled =
-            !state.isLoading
+        switchProgramEveryDay.isEnabled = !state.isLoading
 
         tvDeviceHealthSync.text = state.healthLabel
         tvLightTemperature.text = state.temperatureLabel
@@ -188,41 +201,41 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun setupClicks() = with(binding) {
         cardManualControl.setOnClickListener {
-            lightController?.openManual()
+            openManual()
         }
 
         cardProgram.setOnClickListener {
-            lightController?.openPrograms()
+            openPrograms()
         }
 
         cardActivePrograms.setOnClickListener {
-            lightController?.openPrograms()
+            openPrograms()
         }
 
         btnEditLightCurve.setOnClickListener {
-            lightController?.openProgramEditor(
+            openProgramEditor(
                 programName = currentProgramName()
             )
         }
 
         cardQuickSetup.setOnClickListener {
-            lightController?.openQuickSetup()
+            openQuickSetup()
         }
 
         cardPresets.setOnClickListener {
-            lightController?.openPresets()
+            openPresets()
         }
 
         programEveryDayRow.setOnClickListener {
             if (!viewModel.uiState.value.isLoading) {
-                lightController?.openProgramEditor(
+                openProgramEditor(
                     programName = currentProgramName()
                 )
             }
         }
 
         btnAddProgram.setOnClickListener {
-            lightController?.openProgramEditor(
+            openProgramEditor(
                 programName = DEFAULT_PROGRAM_NAME
             )
         }
@@ -232,7 +245,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         cardDeviceHealth.setOnClickListener {
-            lightController?.openDeviceSettings()
+            openDeviceSettings()
         }
 
         switchProgramEveryDay.setOnCheckedChangeListener { _, isChecked ->
@@ -281,6 +294,63 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
     }
 
+    private fun openManual() {
+        findNavController().navigate(
+            R.id.action_deviceLightFragment_to_deviceLightManualFragment,
+            bundleOf(
+                ARG_DEVICE_ID to deviceId
+            )
+        )
+    }
+
+    private fun openPrograms() {
+        findNavController().navigate(
+            R.id.action_deviceLightFragment_to_deviceLightProgramListFragment,
+            bundleOf(
+                ARG_DEVICE_ID to deviceId
+            )
+        )
+    }
+
+    private fun openProgramEditor(
+        programName: String
+    ) {
+        findNavController().navigate(
+            R.id.action_deviceLightFragment_to_deviceLightProgramEditorFragment,
+            bundleOf(
+                ARG_DEVICE_ID to deviceId,
+                ARG_PROGRAM_NAME to programName
+            )
+        )
+    }
+
+    private fun openQuickSetup() {
+        findNavController().navigate(
+            R.id.action_deviceLightFragment_to_deviceLightQuickSetupFragment,
+            bundleOf(
+                ARG_DEVICE_ID to deviceId
+            )
+        )
+    }
+
+    private fun openPresets() {
+        findNavController().navigate(
+            R.id.action_deviceLightFragment_to_deviceLightPresetsFragment,
+            bundleOf(
+                ARG_DEVICE_ID to deviceId
+            )
+        )
+    }
+
+    private fun openDeviceSettings() {
+        findNavController().navigate(
+            R.id.action_deviceLightFragment_to_deviceLightDeviceSettingsFragment,
+            bundleOf(
+                ARG_DEVICE_ID to deviceId
+            )
+        )
+    }
+
     private fun applyTemporaryScene(
         sceneName: String,
         outputPercent: Int,
@@ -294,22 +364,16 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             resumeLabel = resumeLabel
         )
 
-        showMessage(
-            message = "$sceneName command sent"
-        )
+        showMessage("$sceneName command sent")
     }
 
     private fun showTemporaryModeSheet() {
-        val dialog =
-            BottomSheetDialog(
-                requireContext()
-            )
+        val dialog = BottomSheetDialog(requireContext())
 
-        val sheetView =
-            layoutInflater.inflate(
-                R.layout.bottom_sheet_light_temporary_mode,
-                null
-            )
+        val sheetView = layoutInflater.inflate(
+            R.layout.bottom_sheet_light_temporary_mode,
+            null
+        )
 
         var selectedSceneName = "Photo Mode"
         var selectedOutputPercent = 100
@@ -422,50 +486,40 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             updateResumeLabel()
         }
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnTempModeApply
+        sheetView.findViewById<TextView>(
+            R.id.btnTempModeApply
+        ).setOnClickListener {
+            dialog.dismiss()
+
+            applyTemporaryScene(
+                sceneName = selectedSceneName,
+                outputPercent = selectedOutputPercent,
+                durationLabel = selectedDurationLabel,
+                resumeLabel = selectedResumeLabel
             )
-            .setOnClickListener {
-                dialog.dismiss()
+        }
 
-                applyTemporaryScene(
-                    sceneName = selectedSceneName,
-                    outputPercent = selectedOutputPercent,
-                    durationLabel = selectedDurationLabel,
-                    resumeLabel = selectedResumeLabel
-                )
-            }
+        sheetView.findViewById<TextView>(
+            R.id.btnTempModeRestoreAuto
+        ).setOnClickListener {
+            dialog.dismiss()
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnTempModeRestoreAuto
-            )
-            .setOnClickListener {
-                dialog.dismiss()
+            viewModel.restoreAutoProgram()
+            showMessage("Restore auto command sent")
+        }
 
-                viewModel.restoreAutoProgram()
-                showMessage("Restore auto command sent")
-            }
+        sheetView.findViewById<TextView>(
+            R.id.btnTempModeCancel
+        ).setOnClickListener {
+            dialog.dismiss()
+        }
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnTempModeCancel
-            )
-            .setOnClickListener {
-                dialog.dismiss()
-            }
-
-        dialog.setContentView(
-            sheetView
-        )
-
+        dialog.setContentView(sheetView)
         dialog.show()
     }
 
     private fun currentProgramName(): String {
-        val currentName =
-            viewModel.uiState.value.activeProgramName
+        val currentName = viewModel.uiState.value.activeProgramName
 
         return currentName
             .takeIf {
@@ -496,25 +550,26 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     override fun onDestroyView() {
         _binding = null
-
         super.onDestroyView()
     }
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
+        private const val ARG_DEVICE_TITLE = "deviceTitle"
+        private const val ARG_PROGRAM_NAME = "programName"
 
+        private const val DEFAULT_DEVICE_TITLE = "Device"
         private const val DEFAULT_PROGRAM_NAME = "Every Day Program"
         private const val DURATION_NEXT_EVENT = "next event"
 
         fun newInstance(
-            deviceId: Long
+            deviceId: Long,
+            deviceTitle: String = DEFAULT_DEVICE_TITLE
         ): DeviceLightFragment {
             return DeviceLightFragment().apply {
                 arguments = Bundle().apply {
-                    putLong(
-                        ARG_DEVICE_ID,
-                        deviceId
-                    )
+                    putLong(ARG_DEVICE_ID, deviceId)
+                    putString(ARG_DEVICE_TITLE, deviceTitle)
                 }
             }
         }

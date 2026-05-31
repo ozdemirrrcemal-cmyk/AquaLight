@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.setPadding
@@ -18,19 +17,14 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceRouterBinding
-import com.aqua.aqualight.ui.tabs.devices.detail.chrome.DeviceChromeHost
-import com.aqua.aqualight.ui.tabs.devices.detail.chrome.DeviceHeaderAction
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingFragment
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightControllerFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerFragment
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import android.widget.ImageView
 
-class DeviceRouterFragment :
-    Fragment(R.layout.fragment_device_router),
-    DeviceChromeHost {
+class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     private var _binding: FragmentDeviceRouterBinding? = null
     private val binding get() = _binding!!
@@ -40,16 +34,11 @@ class DeviceRouterFragment :
 
     private var routedDeviceId: Long? = null
 
-    private var currentBackClick: (() -> Unit)? = null
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceRouterBinding.bind(view)
 
@@ -60,21 +49,6 @@ class DeviceRouterFragment :
         tankStore = AquariumTankDataStoreManager(
             requireContext().applicationContext
         )
-
-        setDeviceHeader(
-            title = DEFAULT_DEVICE_TITLE,
-            actions = emptyList(),
-            onBackClick = {
-                findNavController().popBackStack()
-            }
-        )
-
-        binding.tvSubtitle.visibility = View.GONE
-
-        binding.btnBack.setOnClickListener {
-            currentBackClick?.invoke()
-                ?: findNavController().popBackStack()
-        }
 
         val deviceId = requireArguments().getLong(
             ARG_DEVICE_ID,
@@ -92,69 +66,6 @@ class DeviceRouterFragment :
         routeDevice(
             deviceId = deviceId
         )
-    }
-
-    override fun setDeviceHeader(
-        title: String,
-        actions: List<DeviceHeaderAction>,
-        onBackClick: (() -> Unit)?
-    ) {
-        if (_binding == null) {
-            return
-        }
-
-        binding.tvTitle.text = title.ifBlank {
-            DEFAULT_DEVICE_TITLE
-        }
-
-        binding.tvSubtitle.visibility = View.GONE
-
-        currentBackClick = onBackClick ?: {
-            findNavController().popBackStack()
-        }
-
-        renderHeaderActions(
-            actions = actions
-        )
-    }
-
-    private fun renderHeaderActions(
-        actions: List<DeviceHeaderAction>
-    ) = with(binding) {
-        headerActionsContainer.removeAllViews()
-
-        if (actions.isEmpty()) {
-            headerActionsContainer.visibility = View.GONE
-            return@with
-        }
-
-        headerActionsContainer.visibility = View.VISIBLE
-
-        actions.forEach { action ->
-            val button = ImageButton(requireContext()).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    HEADER_ACTION_SIZE_DP.dp(),
-                    HEADER_ACTION_SIZE_DP.dp()
-                )
-
-                background = resolveSelectableBorderlessBackground()
-                contentDescription = action.contentDescription
-                scaleType = ImageView.ScaleType.CENTER
-                setImageResource(action.iconRes)
-                setPadding(HEADER_ACTION_PADDING_DP.dp())
-                setColorFilter(
-                    requireContext().getColorCompat(
-                        android.R.attr.textColorSecondary
-                    )
-                )
-
-                setOnClickListener {
-                    action.onClick.invoke()
-                }
-            }
-
-            headerActionsContainer.addView(button)
-        }
     }
 
     private fun routeDevice(
@@ -225,14 +136,6 @@ class DeviceRouterFragment :
                 fallbackDeviceTitle = routerTitle
             )
 
-            setDeviceHeader(
-                title = routerTitle,
-                actions = emptyList(),
-                onBackClick = {
-                    findNavController().popBackStack()
-                }
-            )
-
             routeToController(
                 deviceId = device.id,
                 deviceIp = deviceIp,
@@ -281,11 +184,9 @@ class DeviceRouterFragment :
     ) {
         val controllerFragment = when (definition.uiController) {
             AquaDeviceUiController.GENERIC_LIGHT -> {
-                DeviceLightControllerFragment.newInstance(
+                DeviceLightFragment.newInstance(
                     deviceId = deviceId,
-                    deviceIp = deviceIp,
-                    deviceTitle = controllerTitle,
-                    defaultDeviceTitle = defaultDeviceTitle
+                    deviceTitle = controllerTitle
                 )
             }
 
@@ -360,14 +261,6 @@ class DeviceRouterFragment :
         if (_binding == null) {
             return
         }
-
-        setDeviceHeader(
-            title = title,
-            actions = emptyList(),
-            onBackClick = {
-                findNavController().popBackStack()
-            }
-        )
 
         currentControllerFragment()?.let { existingFragment ->
             childFragmentManager.commit {
@@ -444,21 +337,6 @@ class DeviceRouterFragment :
         )
     }
 
-    private fun resolveSelectableBorderlessBackground(): android.graphics.drawable.Drawable? {
-        val typedValue = android.util.TypedValue()
-
-        requireContext().theme.resolveAttribute(
-            android.R.attr.selectableItemBackgroundBorderless,
-            typedValue,
-            true
-        )
-
-        return androidx.appcompat.content.res.AppCompatResources.getDrawable(
-            requireContext(),
-            typedValue.resourceId
-        )
-    }
-
     private fun Int.dp(): Int {
         return (this * resources.displayMetrics.density).toInt()
     }
@@ -478,7 +356,6 @@ class DeviceRouterFragment :
     }
 
     override fun onDestroyView() {
-        currentBackClick = null
         _binding = null
 
         super.onDestroyView()
@@ -490,8 +367,5 @@ class DeviceRouterFragment :
 
         private const val INVALID_DEVICE_ID = -1L
         private const val DEFAULT_DEVICE_TITLE = "Device"
-
-        private const val HEADER_ACTION_SIZE_DP = 40
-        private const val HEADER_ACTION_PADDING_DP = 9
     }
 }

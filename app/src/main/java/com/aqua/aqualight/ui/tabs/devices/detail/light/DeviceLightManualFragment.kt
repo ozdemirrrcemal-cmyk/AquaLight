@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualBinding
 import com.google.android.material.slider.Slider
@@ -15,27 +16,42 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     private var _binding: FragmentDeviceLightManualBinding? = null
     private val binding get() = _binding!!
 
-    private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceLightManualBinding.bind(view)
 
+        setupHeader()
         configureSliders()
         renderPreviewState()
         setupSliders()
         setupClicks()
     }
 
-    fun onHeaderSyncClick() {
+    private fun setupHeader() = with(binding.deviceHeader) {
+        tvTitle.text = getString(R.string.light_manual_title)
+
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
+
+        headerActionsContainer.visibility = View.VISIBLE
+
+        btnActionOne.visibility = View.VISIBLE
+        btnActionOne.setImageResource(R.drawable.ic_light_sync_24)
+        btnActionOne.contentDescription = getString(R.string.light_cd_sync)
+        btnActionOne.setOnClickListener {
+            onHeaderSyncClick()
+        }
+
+        btnActionTwo.visibility = View.GONE
+        btnActionThree.visibility = View.GONE
+    }
+
+    private fun onHeaderSyncClick() {
         if (_binding == null) {
             return
         }
@@ -43,10 +59,6 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         showMessage(
             message = "Syncing manual light data"
         )
-
-        // ESP32 bağlantısı eklendiğinde manuel ekran verileri burada yenilenecek.
-        // Örnek:
-        // viewModel.refreshManualState(deviceId)
     }
 
     private fun configureSliders() = with(binding) {
@@ -310,22 +322,7 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     }
 
     companion object {
-        private const val ARG_DEVICE_ID = "deviceId"
-
         private const val MAX_PERCENT = 100
         private const val DISABLED_ALPHA = 0.45f
-
-        fun newInstance(
-            deviceId: Long
-        ): DeviceLightManualFragment {
-            return DeviceLightManualFragment().apply {
-                arguments = Bundle().apply {
-                    putLong(
-                        ARG_DEVICE_ID,
-                        deviceId
-                    )
-                }
-            }
-        }
     }
 }

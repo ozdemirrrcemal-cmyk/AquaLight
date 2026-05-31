@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/deviceHeaderRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/background_color"
+    android:elevation="8dp"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="12dp">
+
+    <ImageView
+        android:id="@+id/btnBack"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:clickable="true"
+        android:contentDescription="@string/change_email_back_button_desc"
+        android:focusable="true"
+        android:scaleType="center"
+        android:src="@drawable/ic_back"
+        app:tint="?attr/colorOnSurface"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <LinearLayout
+    android:id="@+id/headerActionsContainer"
+    android:layout_width="wrap_content"
+    android:layout_height="40dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:visibility="gone"
+    tools:visibility="visible"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="@id/btnBack"
+    app:layout_constraintBottom_toBottomOf="@id/btnBack">
+
+    <ImageButton
+        android:id="@+id/btnActionOne"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="9dp"
+        android:scaleType="center"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:tint="?attr/colorOnSurface" />
+
+    <ImageButton
+        android:id="@+id/btnActionTwo"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="9dp"
+        android:scaleType="center"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:tint="?attr/colorOnSurface" />
+
+    <ImageButton
+        android:id="@+id/btnActionThree"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="9dp"
+        android:scaleType="center"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:tint="?attr/colorOnSurface" />
+
+</LinearLayout>
+
+    <TextView
+        android:id="@+id/tvTitle"
+        style="@style/TextAppearance.Aqua.EditProfileTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
+        android:gravity="start|center_vertical"
+        android:maxLines="1"
+        android:text="Device"
+        android:textColor="?attr/colorOnSurface"
+        app:layout_constraintStart_toEndOf="@id/btnBack"
+        app:layout_constraintEnd_toStartOf="@id/headerActionsContainer"
+        app:layout_constraintTop_toTopOf="@id/btnBack"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack"
+        tools:text="WRGB Pro2" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

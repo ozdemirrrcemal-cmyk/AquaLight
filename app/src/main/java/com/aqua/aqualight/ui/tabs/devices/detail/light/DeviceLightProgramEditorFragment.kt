@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -12,16 +13,19 @@ import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlin.math.roundToInt
 
-class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light_program_editor) {
+class DeviceLightProgramEditorFragment :
+    Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
 
-    private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
-
     private val programName: String
-        get() = requireArguments().getString(ARG_PROGRAM_NAME) ?: DEFAULT_PROGRAM_NAME
+        get() = requireArguments()
+            .getString(ARG_PROGRAM_NAME)
+            .orEmpty()
+            .ifBlank {
+                DEFAULT_PROGRAM_NAME
+            }
 
     private var isProMode: Boolean = false
 
@@ -43,26 +47,37 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
 
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
+        setupHeader()
         configureSliderRanges()
         renderPreviewState()
         setupSliders()
         setupClicks()
     }
 
-    fun onHeaderPreviewClick() {
-        if (_binding == null) {
-            return
+    private fun setupHeader() = with(binding.deviceHeader) {
+        tvTitle.text = programName
+
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
         }
 
-        showPreviewMessage()
-    }
+        headerActionsContainer.visibility = View.VISIBLE
 
-    fun onHeaderSaveClick() {
-        if (_binding == null) {
-            return
+        btnActionOne.visibility = View.VISIBLE
+        btnActionOne.setImageResource(R.drawable.ic_light_program_24)
+        btnActionOne.contentDescription = "Preview Program"
+        btnActionOne.setOnClickListener {
+            showPreviewMessage()
         }
 
-        saveProgram()
+        btnActionTwo.visibility = View.VISIBLE
+        btnActionTwo.setImageResource(R.drawable.ic_check_24)
+        btnActionTwo.contentDescription = "Save Program"
+        btnActionTwo.setOnClickListener {
+            saveProgram()
+        }
+
+        btnActionThree.visibility = View.GONE
     }
 
     private fun configureSliderRanges() = with(binding) {
@@ -184,44 +199,21 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
 
         chipRepeatEveryDay.setOnClickListener {
             customRepeatDays.clear()
-            customRepeatDays.addAll(
-                listOf(
-                    DAY_MON,
-                    DAY_TUE,
-                    DAY_WED,
-                    DAY_THU,
-                    DAY_FRI,
-                    DAY_SAT,
-                    DAY_SUN
-                )
-            )
+            customRepeatDays.addAll(allDays())
             setRepeatChipState("Every")
             showMessage("Repeat: Every day")
         }
 
         chipRepeatWeekdays.setOnClickListener {
             customRepeatDays.clear()
-            customRepeatDays.addAll(
-                listOf(
-                    DAY_MON,
-                    DAY_TUE,
-                    DAY_WED,
-                    DAY_THU,
-                    DAY_FRI
-                )
-            )
+            customRepeatDays.addAll(weekDays())
             setRepeatChipState("Weekdays")
             showMessage("Repeat: Weekdays")
         }
 
         chipRepeatWeekend.setOnClickListener {
             customRepeatDays.clear()
-            customRepeatDays.addAll(
-                listOf(
-                    DAY_SAT,
-                    DAY_SUN
-                )
-            )
+            customRepeatDays.addAll(weekendDays())
             setRepeatChipState("Weekend")
             showMessage("Repeat: Weekend")
         }
@@ -301,21 +293,25 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         sliderPointIntensity.stepSize = 1f
         sliderPointIntensity.value = selectedIntensity.toFloat()
 
-        btnPointDelete.visibility = if (canDelete) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
+        btnPointDelete.visibility =
+            if (canDelete) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         btnPointTimeMinus.setOnClickListener {
             selectedMinutes =
                 (selectedMinutes - POINT_STEP_MINUTES).coerceAtLeast(0)
+
             tvPointTime.text = minutesToTime(selectedMinutes)
         }
 
         btnPointTimePlus.setOnClickListener {
-            selectedMinutes = (selectedMinutes + POINT_STEP_MINUTES)
-                .coerceAtMost(MINUTES_IN_DAY - POINT_STEP_MINUTES)
+            selectedMinutes =
+                (selectedMinutes + POINT_STEP_MINUTES)
+                    .coerceAtMost(MINUTES_IN_DAY - POINT_STEP_MINUTES)
+
             tvPointTime.text = minutesToTime(selectedMinutes)
         }
 
@@ -326,6 +322,7 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
 
         btnPointSave.setOnClickListener {
             dialog.dismiss()
+
             showMessage(
                 "Point saved: ${minutesToTime(selectedMinutes)} · $selectedIntensity%"
             )
@@ -391,11 +388,12 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         tvStartValue.text = "$startIntensity%"
 
         fun updateSummary() {
-            tvSummary.text = if (enabled) {
-                "Starts at $startIntensity% and gradually reaches full program intensity over $selectedDays days."
-            } else {
-                "Acclimation is disabled. The program will run at normal intensity."
-            }
+            tvSummary.text =
+                if (enabled) {
+                    "Starts at $startIntensity% and gradually reaches full program intensity over $selectedDays days."
+                } else {
+                    "Acclimation is disabled. The program will run at normal intensity."
+                }
         }
 
         fun setDuration(
@@ -432,11 +430,12 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         }
 
         btnSave.setOnClickListener {
-            tvAcclimationValue.text = if (enabled) {
-                "$selectedDays days · Start $startIntensity%"
-            } else {
-                "Off"
-            }
+            tvAcclimationValue.text =
+                if (enabled) {
+                    "$selectedDays days · Start $startIntensity%"
+                } else {
+                    "Off"
+                }
 
             dialog.dismiss()
 
@@ -514,17 +513,11 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
                     "Every day selected"
                 }
 
-                selectedDays == setOf(
-                    DAY_MON,
-                    DAY_TUE,
-                    DAY_WED,
-                    DAY_THU,
-                    DAY_FRI
-                ) -> {
+                selectedDays == weekDays() -> {
                     "Weekdays selected"
                 }
 
-                selectedDays == setOf(DAY_SAT, DAY_SUN) -> {
+                selectedDays == weekendDays() -> {
                     "Weekend selected"
                 }
 
@@ -593,42 +586,19 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
 
         btnWeekdays.setOnClickListener {
             selectedDays.clear()
-            selectedDays.addAll(
-                listOf(
-                    DAY_MON,
-                    DAY_TUE,
-                    DAY_WED,
-                    DAY_THU,
-                    DAY_FRI
-                )
-            )
+            selectedDays.addAll(weekDays())
             renderAll()
         }
 
         btnWeekend.setOnClickListener {
             selectedDays.clear()
-            selectedDays.addAll(
-                listOf(
-                    DAY_SAT,
-                    DAY_SUN
-                )
-            )
+            selectedDays.addAll(weekendDays())
             renderAll()
         }
 
         btnEveryDay.setOnClickListener {
             selectedDays.clear()
-            selectedDays.addAll(
-                listOf(
-                    DAY_MON,
-                    DAY_TUE,
-                    DAY_WED,
-                    DAY_THU,
-                    DAY_FRI,
-                    DAY_SAT,
-                    DAY_SUN
-                )
-            )
+            selectedDays.addAll(allDays())
             renderAll()
         }
 
@@ -738,7 +708,9 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         time: String
     ): Int {
         val parts = time.split(":")
-        if (parts.size != 2) return 0
+        if (parts.size != 2) {
+            return 0
+        }
 
         val hour = parts[0].toIntOrNull() ?: 0
         val minute = parts[1].toIntOrNull() ?: 0
@@ -752,6 +724,7 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         val safeMinutes = minutes.coerceIn(0, MINUTES_IN_DAY - 1)
         val hour = safeMinutes / 60
         val minute = safeMinutes % 60
+
         return "%02d:%02d".format(hour, minute)
     }
 
@@ -778,6 +751,35 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         return startPart ?: 40
     }
 
+    private fun allDays(): Set<Int> {
+        return setOf(
+            DAY_MON,
+            DAY_TUE,
+            DAY_WED,
+            DAY_THU,
+            DAY_FRI,
+            DAY_SAT,
+            DAY_SUN
+        )
+    }
+
+    private fun weekDays(): Set<Int> {
+        return setOf(
+            DAY_MON,
+            DAY_TUE,
+            DAY_WED,
+            DAY_THU,
+            DAY_FRI
+        )
+    }
+
+    private fun weekendDays(): Set<Int> {
+        return setOf(
+            DAY_SAT,
+            DAY_SUN
+        )
+    }
+
     private fun showMessage(
         message: String
     ) {
@@ -794,7 +796,6 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
     }
 
     companion object {
-        private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_PROGRAM_NAME = "programName"
 
         private const val DEFAULT_PROGRAM_NAME = "Every Day Program"
@@ -808,17 +809,5 @@ class DeviceLightProgramEditorFragment : Fragment(R.layout.fragment_device_light
         private const val DAY_FRI = 5
         private const val DAY_SAT = 6
         private const val DAY_SUN = 7
-
-        fun newInstance(
-            deviceId: Long,
-            programName: String = DEFAULT_PROGRAM_NAME
-        ): DeviceLightProgramEditorFragment {
-            return DeviceLightProgramEditorFragment().apply {
-                arguments = Bundle().apply {
-                    putLong(ARG_DEVICE_ID, deviceId)
-                    putString(ARG_PROGRAM_NAME, programName)
-                }
-            }
-        }
     }
 }

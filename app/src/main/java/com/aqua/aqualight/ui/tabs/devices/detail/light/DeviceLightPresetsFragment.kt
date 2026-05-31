@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -22,41 +23,44 @@ class DeviceLightPresetsFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
-        _binding =
-            FragmentDeviceLightPresetsBinding.bind(view)
+        _binding = FragmentDeviceLightPresetsBinding.bind(view)
 
+        setupHeader()
         renderPreviewState()
         setupClicks()
     }
 
-    fun onHeaderCreatePresetClick() {
-        if (_binding == null) {
-            return
+    private fun setupHeader() = with(binding.deviceHeader) {
+        tvTitle.text = "Presets & Scenes"
+
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
         }
 
-        showCreatePresetMessage()
+        headerActionsContainer.visibility = View.VISIBLE
+
+        btnActionOne.visibility = View.VISIBLE
+        btnActionOne.setImageResource(R.drawable.ic_add_24)
+        btnActionOne.contentDescription = "Create Preset"
+        btnActionOne.setOnClickListener {
+            showCreatePresetMessage()
+        }
+
+        btnActionTwo.visibility = View.GONE
+        btnActionThree.visibility = View.GONE
     }
 
     private fun renderPreviewState() = with(binding) {
-        tvTemporarySceneTitle.text =
-            "No temporary scene active"
-
-        tvTemporarySceneDesc.text =
-            "Auto program is running normally"
+        tvTemporarySceneTitle.text = "No temporary scene active"
+        tvTemporarySceneDesc.text = "Auto program is running normally"
     }
 
     private fun setupClicks() = with(binding) {
         btnEndTemporaryScene.setOnClickListener {
-            tvTemporarySceneTitle.text =
-                "No temporary scene active"
-
-            tvTemporarySceneDesc.text =
-                "Auto program is running normally"
+            tvTemporarySceneTitle.text = "No temporary scene active"
+            tvTemporarySceneDesc.text = "Auto program is running normally"
 
             showMessage(
                 message = "Temporary scene ended"
@@ -173,88 +177,68 @@ class DeviceLightPresetsFragment :
         master: Int,
         channels: String
     ) {
-        val dialog =
-            BottomSheetDialog(
-                requireContext()
-            )
+        val dialog = BottomSheetDialog(requireContext())
 
-        val sheetView =
-            layoutInflater.inflate(
-                R.layout.bottom_sheet_light_preset_detail,
-                null
-            )
-
-        sheetView
-            .findViewById<TextView>(
-                R.id.tvPresetDetailTitle
-            ).text = title
-
-        sheetView
-            .findViewById<TextView>(
-                R.id.tvPresetDetailDesc
-            ).text = description
-
-        sheetView
-            .findViewById<TextView>(
-                R.id.tvPresetDetailMaster
-            ).text = "Master $master%"
-
-        sheetView
-            .findViewById<TextView>(
-                R.id.tvPresetDetailChannels
-            ).text = channels
-
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnPresetApplyTemporary
-            )
-            .setOnClickListener {
-                dialog.dismiss()
-
-                applyTemporaryScene(
-                    sceneName = title
-                )
-            }
-
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnPresetSaveToProgram
-            )
-            .setOnClickListener {
-                dialog.dismiss()
-
-                showMessage(
-                    message = "$title will be assigned to program later"
-                )
-            }
-
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnPresetEditCopy
-            )
-            .setOnClickListener {
-                dialog.dismiss()
-
-                showMessage(
-                    message = "Edit copy will be added"
-                )
-            }
-
-        dialog.setContentView(
-            sheetView
+        val sheetView = layoutInflater.inflate(
+            R.layout.bottom_sheet_light_preset_detail,
+            null
         )
 
+        sheetView.findViewById<TextView>(
+            R.id.tvPresetDetailTitle
+        ).text = title
+
+        sheetView.findViewById<TextView>(
+            R.id.tvPresetDetailDesc
+        ).text = description
+
+        sheetView.findViewById<TextView>(
+            R.id.tvPresetDetailMaster
+        ).text = "Master $master%"
+
+        sheetView.findViewById<TextView>(
+            R.id.tvPresetDetailChannels
+        ).text = channels
+
+        sheetView.findViewById<TextView>(
+            R.id.btnPresetApplyTemporary
+        ).setOnClickListener {
+            dialog.dismiss()
+
+            applyTemporaryScene(
+                sceneName = title
+            )
+        }
+
+        sheetView.findViewById<TextView>(
+            R.id.btnPresetSaveToProgram
+        ).setOnClickListener {
+            dialog.dismiss()
+
+            showMessage(
+                message = "$title will be assigned to program later"
+            )
+        }
+
+        sheetView.findViewById<TextView>(
+            R.id.btnPresetEditCopy
+        ).setOnClickListener {
+            dialog.dismiss()
+
+            showMessage(
+                message = "Edit copy will be added"
+            )
+        }
+
+        dialog.setContentView(sheetView)
         dialog.show()
     }
 
     private fun applyTemporaryScene(
         sceneName: String
     ) = with(binding) {
-        tvTemporarySceneTitle.text =
-            "$sceneName active"
-
-        tvTemporarySceneDesc.text =
-            "30 min remaining · Program resumes automatically"
+        tvTemporarySceneTitle.text = "$sceneName active"
+        tvTemporarySceneDesc.text = "30 min remaining · Program resumes automatically"
 
         showMessage(
             message = "$sceneName applied temporarily"
@@ -279,7 +263,6 @@ class DeviceLightPresetsFragment :
 
     override fun onDestroyView() {
         _binding = null
-
         super.onDestroyView()
     }
 
@@ -291,10 +274,7 @@ class DeviceLightPresetsFragment :
         ): DeviceLightPresetsFragment {
             return DeviceLightPresetsFragment().apply {
                 arguments = Bundle().apply {
-                    putLong(
-                        ARG_DEVICE_ID,
-                        deviceId
-                    )
+                    putLong(ARG_DEVICE_ID, deviceId)
                 }
             }
         }

@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramListBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -18,33 +20,39 @@ class DeviceLightProgramListFragment :
     private val deviceId: Long
         get() = requireArguments().getLong(ARG_DEVICE_ID)
 
-    private val lightController: DeviceLightControllerFragment?
-        get() = parentFragment as? DeviceLightControllerFragment
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
-        _binding =
-            FragmentDeviceLightProgramListBinding.bind(view)
+        _binding = FragmentDeviceLightProgramListBinding.bind(view)
 
+        setupHeader()
         renderPreviewState()
         setupClicks()
     }
 
-    fun onHeaderAddClick() {
-        if (_binding == null) {
-            return
+    private fun setupHeader() = with(binding.deviceHeader) {
+        tvTitle.text = getString(R.string.light_programs_title)
+
+        btnBack.setOnClickListener {
+            findNavController().popBackStack()
         }
 
-        openProgramEditor(
-            programName = DEFAULT_NEW_PROGRAM_NAME
-        )
+        headerActionsContainer.visibility = View.VISIBLE
+
+        btnActionOne.visibility = View.VISIBLE
+        btnActionOne.setImageResource(R.drawable.ic_add_24)
+        btnActionOne.contentDescription = getString(R.string.light_add_program)
+        btnActionOne.setOnClickListener {
+            openProgramEditor(
+                programName = DEFAULT_NEW_PROGRAM_NAME
+            )
+        }
+
+        btnActionTwo.visibility = View.GONE
+        btnActionThree.visibility = View.GONE
     }
 
     private fun renderPreviewState() = with(binding) {
@@ -133,26 +141,20 @@ class DeviceLightProgramListFragment :
         }
 
         chipProgramsAll.setOnClickListener {
-            showMessage(
-                message = "All programs"
-            )
+            showMessage("All programs")
         }
 
         chipProgramsActive.setOnClickListener {
-            showMessage(
-                message = "Active programs"
-            )
+            showMessage("Active programs")
         }
 
         chipProgramsDisabled.setOnClickListener {
-            showMessage(
-                message = "Disabled programs"
-            )
+            showMessage("Disabled programs")
         }
 
         switchEveryDayProgram.setOnCheckedChangeListener { _, isChecked ->
             showMessage(
-                message = if (isChecked) {
+                if (isChecked) {
                     "Every Day program enabled"
                 } else {
                     "Every Day program disabled"
@@ -162,7 +164,7 @@ class DeviceLightProgramListFragment :
 
         switchWeekendProgram.setOnCheckedChangeListener { _, isChecked ->
             showMessage(
-                message = if (isChecked) {
+                if (isChecked) {
                     "Weekend program enabled"
                 } else {
                     "Weekend program disabled"
@@ -179,31 +181,24 @@ class DeviceLightProgramListFragment :
         onToggle: () -> Unit,
         onSetActive: () -> Unit
     ) {
-        val dialog =
-            BottomSheetDialog(
-                requireContext()
-            )
+        val dialog = BottomSheetDialog(requireContext())
 
-        val sheetView =
-            layoutInflater.inflate(
-                R.layout.bottom_sheet_light_program_actions,
-                null
-            )
+        val sheetView = layoutInflater.inflate(
+            R.layout.bottom_sheet_light_program_actions,
+            null
+        )
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.tvProgramActionTitle
-            ).text = programName
+        sheetView.findViewById<TextView>(
+            R.id.tvProgramActionTitle
+        ).text = programName
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.tvProgramActionSubtitle
-            ).text = subtitle
+        sheetView.findViewById<TextView>(
+            R.id.tvProgramActionSubtitle
+        ).text = subtitle
 
-        val toggleButton =
-            sheetView.findViewById<TextView>(
-                R.id.btnProgramActionToggle
-            )
+        val toggleButton = sheetView.findViewById<TextView>(
+            R.id.btnProgramActionToggle
+        )
 
         toggleButton.text =
             if (isEnabled) {
@@ -212,82 +207,67 @@ class DeviceLightProgramListFragment :
                 "Enable Program"
             }
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnProgramActionEdit
+        sheetView.findViewById<TextView>(
+            R.id.btnProgramActionEdit
+        ).setOnClickListener {
+            dialog.dismiss()
+            onEdit()
+        }
+
+        sheetView.findViewById<TextView>(
+            R.id.btnProgramActionPreview
+        ).setOnClickListener {
+            dialog.dismiss()
+
+            showMessage(
+                message = "Preview day for $programName will be added"
             )
-            .setOnClickListener {
-                dialog.dismiss()
-                onEdit()
-            }
+        }
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnProgramActionPreview
+        sheetView.findViewById<TextView>(
+            R.id.btnProgramActionDuplicate
+        ).setOnClickListener {
+            dialog.dismiss()
+
+            openProgramEditor(
+                programName = "$programName Copy"
             )
-            .setOnClickListener {
-                dialog.dismiss()
+        }
 
-                showMessage(
-                    message = "Preview day for $programName will be added"
-                )
-            }
+        sheetView.findViewById<TextView>(
+            R.id.btnProgramActionSetActive
+        ).setOnClickListener {
+            dialog.dismiss()
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnProgramActionDuplicate
+            onSetActive()
+
+            showMessage(
+                message = "$programName set as active"
             )
-            .setOnClickListener {
-                dialog.dismiss()
-
-                openProgramEditor(
-                    programName = "$programName Copy"
-                )
-            }
-
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnProgramActionSetActive
-            )
-            .setOnClickListener {
-                dialog.dismiss()
-
-                onSetActive()
-
-                showMessage(
-                    message = "$programName set as active"
-                )
-            }
+        }
 
         toggleButton.setOnClickListener {
             dialog.dismiss()
             onToggle()
         }
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnProgramActionDelete
+        sheetView.findViewById<TextView>(
+            R.id.btnProgramActionDelete
+        ).setOnClickListener {
+            dialog.dismiss()
+
+            showMessage(
+                message = "Delete confirmation for $programName will be added"
             )
-            .setOnClickListener {
-                dialog.dismiss()
+        }
 
-                showMessage(
-                    message = "Delete confirmation for $programName will be added"
-                )
-            }
+        sheetView.findViewById<TextView>(
+            R.id.btnProgramActionCancel
+        ).setOnClickListener {
+            dialog.dismiss()
+        }
 
-        sheetView
-            .findViewById<TextView>(
-                R.id.btnProgramActionCancel
-            )
-            .setOnClickListener {
-                dialog.dismiss()
-            }
-
-        dialog.setContentView(
-            sheetView
-        )
-
+        dialog.setContentView(sheetView)
         dialog.show()
     }
 
@@ -312,8 +292,12 @@ class DeviceLightProgramListFragment :
     private fun openProgramEditor(
         programName: String
     ) {
-        lightController?.openProgramEditor(
-            programName = programName
+        findNavController().navigate(
+            R.id.action_deviceLightProgramListFragment_to_deviceLightProgramEditorFragment,
+            bundleOf(
+                ARG_DEVICE_ID to deviceId,
+                ARG_PROGRAM_NAME to programName
+            )
         )
     }
 
@@ -329,25 +313,12 @@ class DeviceLightProgramListFragment :
 
     override fun onDestroyView() {
         _binding = null
-
         super.onDestroyView()
     }
 
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
+        private const val ARG_PROGRAM_NAME = "programName"
         private const val DEFAULT_NEW_PROGRAM_NAME = "New Program"
-
-        fun newInstance(
-            deviceId: Long
-        ): DeviceLightProgramListFragment {
-            return DeviceLightProgramListFragment().apply {
-                arguments = Bundle().apply {
-                    putLong(
-                        ARG_DEVICE_ID,
-                        deviceId
-                    )
-                }
-            }
-        }
     }
 }
