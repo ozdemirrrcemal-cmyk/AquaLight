@@ -174,7 +174,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         tvLightFirmware.text = state.firmwareLabel
 
         updateTimelineAvailability(
-            hasCurveData = !state.isLoading
+            hasCurveData = state.isTimelineActive && !state.isLoading
         )
 
         setProgramSwitchChecked(
@@ -214,6 +214,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
         btnEditLightCurve.setOnClickListener {
             openProgramEditor(
+                programId = currentProgramId(),
                 programName = currentProgramName()
             )
         }
@@ -229,6 +230,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         programEveryDayRow.setOnClickListener {
             if (!viewModel.uiState.value.isLoading) {
                 openProgramEditor(
+                    programId = currentProgramId(),
                     programName = currentProgramName()
                 )
             }
@@ -236,6 +238,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
         btnAddProgram.setOnClickListener {
             openProgramEditor(
+                programId = null,
                 programName = DEFAULT_PROGRAM_NAME
             )
         }
@@ -253,52 +256,59 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 return@setOnCheckedChangeListener
             }
 
-            viewModel.setProgramEnabled(
+            setActiveProgramEnabled(
                 enabled = isChecked
-            )
-
-            showMessage(
-                if (isChecked) {
-                    "Program enable command sent"
-                } else {
-                    "Program disable command sent"
-                }
             )
         }
 
         btnScenePhoto.setOnClickListener {
             applyTemporaryScene(
-                sceneName = "Photo Mode",
-                outputPercent = 100,
-                durationLabel = "30 min",
-                resumeLabel = "Auto resumes in 30 min"
+                scene = TemporaryLightScene.photoMode(),
+                duration = TemporaryDuration.minutes(30)
             )
         }
 
         btnSceneMaintenance.setOnClickListener {
             applyTemporaryScene(
-                sceneName = "Care Mode",
-                outputPercent = 55,
-                durationLabel = "45 min",
-                resumeLabel = "Auto resumes in 45 min"
+                scene = TemporaryLightScene.careMode(),
+                duration = TemporaryDuration.minutes(45)
             )
         }
 
         btnSceneEvening.setOnClickListener {
             applyTemporaryScene(
-                sceneName = "Evening Mode",
-                outputPercent = 45,
-                durationLabel = "2 hours",
-                resumeLabel = "Auto resumes in 2 hours"
+                scene = TemporaryLightScene.eveningMode(),
+                duration = TemporaryDuration.hours(2)
             )
         }
+    }
+
+    private fun setActiveProgramEnabled(
+        enabled: Boolean
+    ) {
+        val programId = currentProgramId()
+
+        // Veri bağlanınca program enable/disable komutu programId ile gönderilmeli.
+        // Şu an mevcut ViewModel imzasını bozmamak için aktif program üzerinden çalışıyor.
+        viewModel.setProgramEnabled(
+            enabled = enabled
+        )
+
+        showMessage(
+            if (enabled) {
+                "Program enable command sent"
+            } else {
+                "Program disable command sent"
+            }
+        )
     }
 
     private fun openManual() {
         findNavController().navigate(
             R.id.deviceLightManualFragment,
             bundleOf(
-                ARG_DEVICE_ID to deviceId
+                ARG_DEVICE_ID to deviceId,
+                ARG_DEVICE_TITLE to deviceTitle
             )
         )
     }
@@ -307,18 +317,22 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         findNavController().navigate(
             R.id.deviceLightProgramListFragment,
             bundleOf(
-                ARG_DEVICE_ID to deviceId
+                ARG_DEVICE_ID to deviceId,
+                ARG_DEVICE_TITLE to deviceTitle
             )
         )
     }
 
     private fun openProgramEditor(
+        programId: String?,
         programName: String
     ) {
         findNavController().navigate(
             R.id.deviceLightProgramEditorFragment,
             bundleOf(
                 ARG_DEVICE_ID to deviceId,
+                ARG_DEVICE_TITLE to deviceTitle,
+                ARG_PROGRAM_ID to programId,
                 ARG_PROGRAM_NAME to programName
             )
         )
@@ -328,7 +342,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         findNavController().navigate(
             R.id.deviceLightQuickSetupFragment,
             bundleOf(
-                ARG_DEVICE_ID to deviceId
+                ARG_DEVICE_ID to deviceId,
+                ARG_DEVICE_TITLE to deviceTitle
             )
         )
     }
@@ -337,7 +352,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         findNavController().navigate(
             R.id.deviceLightPresetsFragment,
             bundleOf(
-                ARG_DEVICE_ID to deviceId
+                ARG_DEVICE_ID to deviceId,
+                ARG_DEVICE_TITLE to deviceTitle
             )
         )
     }
@@ -346,25 +362,36 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         findNavController().navigate(
             R.id.deviceLightDeviceSettingsFragment,
             bundleOf(
-                ARG_DEVICE_ID to deviceId
+                ARG_DEVICE_ID to deviceId,
+                ARG_DEVICE_TITLE to deviceTitle
             )
         )
     }
 
     private fun applyTemporaryScene(
-        sceneName: String,
-        outputPercent: Int,
-        durationLabel: String,
-        resumeLabel: String
+        scene: TemporaryLightScene,
+        duration: TemporaryDuration
     ) {
+        val resumeLabel =
+            if (duration.untilNextEvent) {
+                "Auto resumes at next event"
+            } else {
+                "Auto resumes in ${duration.label}"
+            }
+
+        // Veri bağlanınca burada ESP32'ye şu model gönderilmeli:
+        // scene.master, scene.red, scene.green, scene.blue, scene.white,
+        // duration.minutes veya duration.untilNextEvent.
+        //
+        // Şu an mevcut ViewModel imzası korunuyor.
         viewModel.applyTemporaryScene(
-            sceneName = sceneName,
-            outputPercent = outputPercent,
-            durationLabel = durationLabel,
+            sceneName = scene.name,
+            outputPercent = scene.master,
+            durationLabel = duration.label,
             resumeLabel = resumeLabel
         )
 
-        showMessage("$sceneName command sent")
+        showMessage("${scene.name} command sent")
     }
 
     private fun showTemporaryModeSheet() {
@@ -375,10 +402,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             null
         )
 
-        var selectedSceneName = "Photo Mode"
-        var selectedOutputPercent = 100
-        var selectedDurationLabel = "30 min"
-        var selectedResumeLabel = "Auto resumes in $selectedDurationLabel"
+        var selectedScene = TemporaryLightScene.photoMode()
+        var selectedDuration = TemporaryDuration.minutes(30)
 
         val tvTempDurationValue =
             sheetView.findViewById<TextView>(
@@ -425,65 +450,44 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 R.id.chipTempDurationNext
             )
 
-        fun updateResumeLabel() {
-            selectedResumeLabel =
-                if (selectedDurationLabel == DURATION_NEXT_EVENT) {
-                    "Auto resumes at next event"
-                } else {
-                    "Auto resumes in $selectedDurationLabel"
-                }
-        }
-
         btnPhoto.setOnClickListener {
-            selectedSceneName = "Photo Mode"
-            selectedOutputPercent = 100
-            updateResumeLabel()
-            showMessage("Photo Mode selected")
+            selectedScene = TemporaryLightScene.photoMode()
+            showMessage("${selectedScene.name} selected")
         }
 
         btnMaintenance.setOnClickListener {
-            selectedSceneName = "Care Mode"
-            selectedOutputPercent = 55
-            updateResumeLabel()
-            showMessage("Care Mode selected")
+            selectedScene = TemporaryLightScene.careMode()
+            showMessage("${selectedScene.name} selected")
         }
 
         btnEvening.setOnClickListener {
-            selectedSceneName = "Evening Mode"
-            selectedOutputPercent = 45
-            updateResumeLabel()
-            showMessage("Evening Mode selected")
+            selectedScene = TemporaryLightScene.eveningMode()
+            showMessage("${selectedScene.name} selected")
         }
 
         btnMoonlight.setOnClickListener {
-            selectedSceneName = "Moonlight"
-            selectedOutputPercent = 12
-            updateResumeLabel()
-            showMessage("Moonlight selected")
+            selectedScene = TemporaryLightScene.moonlight()
+            showMessage("${selectedScene.name} selected")
         }
 
         chip15.setOnClickListener {
-            selectedDurationLabel = "15 min"
-            tvTempDurationValue.text = selectedDurationLabel
-            updateResumeLabel()
+            selectedDuration = TemporaryDuration.minutes(15)
+            tvTempDurationValue.text = selectedDuration.displayLabel
         }
 
         chip30.setOnClickListener {
-            selectedDurationLabel = "30 min"
-            tvTempDurationValue.text = selectedDurationLabel
-            updateResumeLabel()
+            selectedDuration = TemporaryDuration.minutes(30)
+            tvTempDurationValue.text = selectedDuration.displayLabel
         }
 
         chip60.setOnClickListener {
-            selectedDurationLabel = "60 min"
-            tvTempDurationValue.text = selectedDurationLabel
-            updateResumeLabel()
+            selectedDuration = TemporaryDuration.minutes(60)
+            tvTempDurationValue.text = selectedDuration.displayLabel
         }
 
         chipNext.setOnClickListener {
-            selectedDurationLabel = DURATION_NEXT_EVENT
-            tvTempDurationValue.text = "Until next event"
-            updateResumeLabel()
+            selectedDuration = TemporaryDuration.nextEvent()
+            tvTempDurationValue.text = selectedDuration.displayLabel
         }
 
         sheetView.findViewById<TextView>(
@@ -492,10 +496,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             dialog.dismiss()
 
             applyTemporaryScene(
-                sceneName = selectedSceneName,
-                outputPercent = selectedOutputPercent,
-                durationLabel = selectedDurationLabel,
-                resumeLabel = selectedResumeLabel
+                scene = selectedScene,
+                duration = selectedDuration
             )
         }
 
@@ -518,6 +520,13 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         dialog.show()
     }
 
+    private fun currentProgramId(): String? {
+        // Veri bağlanınca LightOverviewUiState içine activeProgramId eklenip buradan döndürülmeli.
+        // Örnek:
+        // return viewModel.uiState.value.activeProgramId
+        return null
+    }
+
     private fun currentProgramName(): String {
         val currentName = viewModel.uiState.value.activeProgramName
 
@@ -534,8 +543,12 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         checked: Boolean
     ) = with(binding) {
         isProgrammaticSwitchChange = true
-        switchProgramEveryDay.isChecked = checked
-        isProgrammaticSwitchChange = false
+
+        try {
+            switchProgramEveryDay.isChecked = checked
+        } finally {
+            isProgrammaticSwitchChange = false
+        }
     }
 
     private fun showMessage(
@@ -553,9 +566,107 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         super.onDestroyView()
     }
 
+    private data class TemporaryLightScene(
+        val name: String,
+        val master: Int,
+        val red: Int,
+        val green: Int,
+        val blue: Int,
+        val white: Int
+    ) {
+
+        companion object {
+            fun photoMode(): TemporaryLightScene {
+                return TemporaryLightScene(
+                    name = "Photo Mode",
+                    master = 100,
+                    red = 90,
+                    green = 92,
+                    blue = 90,
+                    white = 100
+                )
+            }
+
+            fun careMode(): TemporaryLightScene {
+                return TemporaryLightScene(
+                    name = "Care Mode",
+                    master = 55,
+                    red = 70,
+                    green = 70,
+                    blue = 70,
+                    white = 85
+                )
+            }
+
+            fun eveningMode(): TemporaryLightScene {
+                return TemporaryLightScene(
+                    name = "Evening Mode",
+                    master = 45,
+                    red = 80,
+                    green = 55,
+                    blue = 35,
+                    white = 30
+                )
+            }
+
+            fun moonlight(): TemporaryLightScene {
+                return TemporaryLightScene(
+                    name = "Moonlight",
+                    master = 12,
+                    red = 10,
+                    green = 18,
+                    blue = 70,
+                    white = 5
+                )
+            }
+        }
+    }
+
+    private data class TemporaryDuration(
+        val label: String,
+        val displayLabel: String,
+        val minutes: Int?,
+        val untilNextEvent: Boolean
+    ) {
+
+        companion object {
+            fun minutes(
+                value: Int
+            ): TemporaryDuration {
+                return TemporaryDuration(
+                    label = "$value min",
+                    displayLabel = "$value min",
+                    minutes = value,
+                    untilNextEvent = false
+                )
+            }
+
+            fun hours(
+                value: Int
+            ): TemporaryDuration {
+                return TemporaryDuration(
+                    label = "$value hours",
+                    displayLabel = "$value hours",
+                    minutes = value * 60,
+                    untilNextEvent = false
+                )
+            }
+
+            fun nextEvent(): TemporaryDuration {
+                return TemporaryDuration(
+                    label = DURATION_NEXT_EVENT,
+                    displayLabel = "Until next event",
+                    minutes = null,
+                    untilNextEvent = true
+                )
+            }
+        }
+    }
+
     companion object {
         private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_DEVICE_TITLE = "deviceTitle"
+        private const val ARG_PROGRAM_ID = "programId"
         private const val ARG_PROGRAM_NAME = "programName"
 
         private const val DEFAULT_DEVICE_TITLE = "Device"

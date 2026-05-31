@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light
 
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -15,6 +17,14 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
 
     private var _binding: FragmentDeviceLightManualBinding? = null
     private val binding get() = _binding!!
+
+    private var lastSyncedManualState = ManualLightState(
+        master = DEFAULT_MASTER,
+        red = DEFAULT_RED,
+        green = DEFAULT_GREEN,
+        blue = DEFAULT_BLUE,
+        white = DEFAULT_WHITE
+    )
 
     override fun onViewCreated(
         view: View,
@@ -56,6 +66,7 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
             return
         }
 
+        // Veri bağlanınca burada ESP32/manual output refresh çağrısı yapılacak.
         showMessage(
             message = "Syncing manual light data"
         )
@@ -71,22 +82,14 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         ).forEach { slider ->
             slider.valueFrom = 0f
             slider.valueTo = MAX_PERCENT.toFloat()
+            slider.stepSize = 1f
         }
     }
 
     private fun renderPreviewState() = with(binding) {
-        tvManualPowerState.text = "LIVE"
-
-        sliderMasterBrightness.value = 78f
-        sliderRed.value = 80f
-        sliderGreen.value = 84f
-        sliderBlue.value = 79f
-        sliderWhite.value = 65f
-
-        updateMasterValue()
-        updateChannelValues()
-        updatePowerState()
-        updatePreviewText()
+        applyManualValues(
+            state = lastSyncedManualState
+        )
 
         btnApplyToProgram.isEnabled = false
         btnApplyToProgram.alpha = DISABLED_ALPHA
@@ -122,9 +125,7 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         slider: Slider
     ) {
         slider.addOnChangeListener { _, _, _ ->
-            updateMasterValue()
-            updatePowerState()
-            updatePreviewText()
+            refreshManualUi()
         }
     }
 
@@ -137,8 +138,7 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
                 value = value.roundToInt()
             )
 
-            updateChannelValues()
-            updatePreviewText()
+            refreshManualUi()
         }
     }
 
@@ -162,25 +162,26 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         }
 
         btnResetChannels.setOnClickListener {
-            sliderMasterBrightness.value = 78f
-            sliderRed.value = 80f
-            sliderGreen.value = 84f
-            sliderBlue.value = 79f
-            sliderWhite.value = 65f
-
-            updateMasterValue()
-            updateChannelValues()
-            updatePowerState()
-            updatePreviewText()
+            applyManualValues(
+                state = lastSyncedManualState
+            )
         }
 
         btnApplyTemporary.setOnClickListener {
+            val state = currentManualState()
+
+            // Veri bağlanınca burada ESP32 temporary manual output komutu gönderilecek.
+            // state.master, state.red, state.green, state.blue, state.white kullanılacak.
             showMessage(
                 message = "Temporary manual output command will be sent"
             )
         }
 
         btnSaveAsPreset.setOnClickListener {
+            val state = currentManualState()
+
+            // Veri bağlanınca burada Custom Preset create flow açılacak.
+            // Manual > Save as Preset ile Presets & Scenes > Custom Presets aynı yapıyı kullanmalı.
             showMessage(
                 message = "Save as preset will be added"
             )
@@ -200,19 +201,55 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     private fun applyAllChannels(
         value: Int
     ) = with(binding) {
-        val safeValue = value
-            .coerceIn(
-                minimumValue = 0,
-                maximumValue = MAX_PERCENT
-            )
+        val safeValue = value.coerceIn(
+            minimumValue = 0,
+            maximumValue = MAX_PERCENT
+        )
+
+        if (safeValue == 0) {
+            sliderMasterBrightness.value = 0f
+        } else if (sliderMasterBrightness.value.roundToInt() == 0) {
+            sliderMasterBrightness.value = safeValue.toFloat()
+        }
+
+        sliderRed.value = safeValue.toFloat()
+        sliderGreen.value = safeValue.toFloat()
+        sliderBlue.value = safeValue.toFloat()
+        sliderWhite.value = safeValue.toFloat()
+
+        refreshManualUi()
+    }
+
+    private fun applyManualValues(
+        state: ManualLightState
+    ) = with(binding) {
+        sliderMasterBrightness.value = state.master
+            .coerceIn(0, MAX_PERCENT)
             .toFloat()
 
-        sliderRed.value = safeValue
-        sliderGreen.value = safeValue
-        sliderBlue.value = safeValue
-        sliderWhite.value = safeValue
+        sliderRed.value = state.red
+            .coerceIn(0, MAX_PERCENT)
+            .toFloat()
 
+        sliderGreen.value = state.green
+            .coerceIn(0, MAX_PERCENT)
+            .toFloat()
+
+        sliderBlue.value = state.blue
+            .coerceIn(0, MAX_PERCENT)
+            .toFloat()
+
+        sliderWhite.value = state.white
+            .coerceIn(0, MAX_PERCENT)
+            .toFloat()
+
+        refreshManualUi()
+    }
+
+    private fun refreshManualUi() {
+        updateMasterValue()
         updateChannelValues()
+        updatePowerState()
         updatePreviewText()
     }
 
@@ -223,33 +260,40 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     }
 
     private fun updateChannelValues() = with(binding) {
-        val red = sliderRed.value.roundToInt()
-        val green = sliderGreen.value.roundToInt()
-        val blue = sliderBlue.value.roundToInt()
-        val white = sliderWhite.value.roundToInt()
+        val state = currentManualState()
 
         tvRedValue.text = formatPercent(
-            value = red
+            value = state.red
         )
 
         tvGreenValue.text = formatPercent(
-            value = green
+            value = state.green
         )
 
         tvBlueValue.text = formatPercent(
-            value = blue
+            value = state.blue
         )
 
         tvWhiteValue.text = formatPercent(
-            value = white
+            value = state.white
         )
     }
 
     private fun updatePowerState() = with(binding) {
-        val master = sliderMasterBrightness.value.roundToInt()
+        val state = currentManualState()
+
+        val allChannelsOff =
+            state.red == 0 &&
+                state.green == 0 &&
+                state.blue == 0 &&
+                state.white == 0
+
+        val isOff =
+            state.master <= 0 ||
+                allChannelsOff
 
         tvManualPowerState.text =
-            if (master <= 0) {
+            if (isOff) {
                 "OFF"
             } else {
                 "LIVE"
@@ -257,33 +301,29 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     }
 
     private fun updatePreviewText() = with(binding) {
-        val master = sliderMasterBrightness.value
-        val red = sliderRed.value
-        val green = sliderGreen.value
-        val blue = sliderBlue.value
-        val white = sliderWhite.value
+        val state = currentManualState()
 
         val channelAverage =
-            (red + green + blue + white) / 4f
+            (state.red + state.green + state.blue + state.white) / 4f
 
         val effectiveAverage =
-            channelAverage * (master / 100f)
+            channelAverage * (state.master / 100f)
 
         val description =
             when {
-                master <= 0f || effectiveAverage <= 5f -> {
+                state.master <= 0 || effectiveAverage <= 5f -> {
                     "Estimated appearance: Lights off"
                 }
 
-                blue > red + 20f -> {
+                state.blue > state.red + 20 -> {
                     "Estimated appearance: Cool blue display"
                 }
 
-                red > blue + 20f -> {
+                state.red > state.blue + 20 -> {
                     "Estimated appearance: Warm evening tone"
                 }
 
-                white >= 70f && effectiveAverage >= 70f -> {
+                state.white >= 70 && effectiveAverage >= 70f -> {
                     "Estimated appearance: Bright daylight"
                 }
 
@@ -297,6 +337,84 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
             }
 
         tvPreviewAppearance.text = description
+
+        updatePreviewGradient(
+            state = state
+        )
+    }
+
+    private fun updatePreviewGradient(
+        state: ManualLightState
+    ) = with(binding) {
+        val masterRatio = state.master.coerceIn(0, MAX_PERCENT) / 100f
+
+        val mixedRed = ((state.red + state.white) / 2f * masterRatio)
+            .roundToInt()
+            .coerceIn(0, MAX_PERCENT)
+
+        val mixedGreen = ((state.green + state.white) / 2f * masterRatio)
+            .roundToInt()
+            .coerceIn(0, MAX_PERCENT)
+
+        val mixedBlue = ((state.blue + state.white) / 2f * masterRatio)
+            .roundToInt()
+            .coerceIn(0, MAX_PERCENT)
+
+        val startColor = Color.rgb(
+            percentToColorChannel(mixedRed),
+            percentToColorChannel((mixedGreen * 1.15f).roundToInt()),
+            percentToColorChannel((mixedBlue * 0.85f).roundToInt())
+        )
+
+        val centerColor = Color.rgb(
+            percentToColorChannel(mixedRed),
+            percentToColorChannel(mixedGreen),
+            percentToColorChannel(mixedBlue)
+        )
+
+        val endColor = Color.rgb(
+            percentToColorChannel((mixedRed * 0.85f).roundToInt()),
+            percentToColorChannel(mixedGreen),
+            percentToColorChannel((mixedBlue * 1.25f).roundToInt())
+        )
+
+        val drawable = GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            intArrayOf(
+                startColor,
+                centerColor,
+                endColor
+            )
+        ).apply {
+            cornerRadius = resources.getDimension(
+                R.dimen.light_card_corner_radius_large
+            )
+        }
+
+        viewLivePreviewGradient.background = drawable
+    }
+
+    private fun percentToColorChannel(
+        value: Int
+    ): Int {
+        return (value.coerceIn(0, MAX_PERCENT) * COLOR_CHANNEL_MULTIPLIER)
+            .roundToInt()
+            .coerceIn(0, RGB_MAX)
+    }
+
+    private fun currentManualState(): ManualLightState = with(binding) {
+        return ManualLightState(
+            master = sliderMasterBrightness.value.roundToInt()
+                .coerceIn(0, MAX_PERCENT),
+            red = sliderRed.value.roundToInt()
+                .coerceIn(0, MAX_PERCENT),
+            green = sliderGreen.value.roundToInt()
+                .coerceIn(0, MAX_PERCENT),
+            blue = sliderBlue.value.roundToInt()
+                .coerceIn(0, MAX_PERCENT),
+            white = sliderWhite.value.roundToInt()
+                .coerceIn(0, MAX_PERCENT)
+        )
     }
 
     private fun formatPercent(
@@ -321,8 +439,24 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         super.onDestroyView()
     }
 
+    private data class ManualLightState(
+        val master: Int,
+        val red: Int,
+        val green: Int,
+        val blue: Int,
+        val white: Int
+    )
+
     companion object {
         private const val MAX_PERCENT = 100
+        private const val RGB_MAX = 255
+        private const val COLOR_CHANNEL_MULTIPLIER = 2.55f
         private const val DISABLED_ALPHA = 0.45f
+
+        private const val DEFAULT_MASTER = 78
+        private const val DEFAULT_RED = 80
+        private const val DEFAULT_GREEN = 84
+        private const val DEFAULT_BLUE = 79
+        private const val DEFAULT_WHITE = 65
     }
 }
