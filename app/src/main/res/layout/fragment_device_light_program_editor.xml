@@ -925,7 +925,7 @@
                             android:includeFontPadding="false"
                             android:text="Every"
                             android:textColor="@color/background_color"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipRepeatWeekdays"
@@ -940,7 +940,7 @@
                             android:includeFontPadding="false"
                             android:text="Weekdays"
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipRepeatWeekend"
@@ -955,7 +955,7 @@
                             android:includeFontPadding="false"
                             android:text="Weekend"
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipRepeatCustom"
@@ -969,7 +969,7 @@
                             android:includeFontPadding="false"
                             android:text="Custom"
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
                     </LinearLayout>
 
                     <TextView
@@ -1002,7 +1002,7 @@
                             android:includeFontPadding="false"
                             android:text="Linear"
                             android:textColor="@color/background_color"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipRampSoft"
@@ -1017,7 +1017,7 @@
                             android:includeFontPadding="false"
                             android:text="Soft"
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipRampNatural"
@@ -1031,7 +1031,7 @@
                             android:includeFontPadding="false"
                             android:text="Natural"
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                     </LinearLayout>
 

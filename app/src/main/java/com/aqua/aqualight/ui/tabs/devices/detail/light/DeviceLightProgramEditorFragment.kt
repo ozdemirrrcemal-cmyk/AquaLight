@@ -87,22 +87,10 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             findNavController().popBackStack()
         }
 
-        headerActionsContainer.visibility = View.VISIBLE
+        headerActionsContainer.visibility = View.GONE
 
-        btnActionOne.visibility = View.VISIBLE
-        btnActionOne.setImageResource(R.drawable.ic_light_program_24)
-        btnActionOne.contentDescription = "Preview Program"
-        btnActionOne.setOnClickListener {
-            showPreviewMessage()
-        }
-
-        btnActionTwo.visibility = View.VISIBLE
-        btnActionTwo.setImageResource(R.drawable.ic_check_24)
-        btnActionTwo.contentDescription = "Save Program"
-        btnActionTwo.setOnClickListener {
-            saveProgram()
-        }
-
+        btnActionOne.visibility = View.GONE
+        btnActionTwo.visibility = View.GONE
         btnActionThree.visibility = View.GONE
     }
 
@@ -340,7 +328,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         cardProgramChannelBalance.visibility = View.VISIBLE
 
         tvEditorModeDescription.text =
-        "One daily intensity curve with fixed RGB/W balance."
+    "One daily intensity curve with planted WRGB balance."
 
         tvCurveTitle.text = "Daily Light Curve"
         tvCurveSubtitle.text = "Tap a point or row to edit time and output"
@@ -348,8 +336,9 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         tvCurvePointsSubtitle.text =
         "Start, peak and end points used by the daily curve"
 
-        tvChannelBalanceTitle.text = "Channel Balance"
-        tvChannelBalanceSubtitle.text = "Used across the whole simple curve"
+        tvChannelBalanceTitle.text = "Planted Channel Balance"
+        tvChannelBalanceSubtitle.text =
+    "White base with red/blue support and moderate green for planted tanks"
 
         renderCurrentCurve()
     }
@@ -1700,31 +1689,31 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     )
 
     private enum class ProChannel(
-        val label: String,
-        @ColorRes val colorRes: Int,
-        val defaultPeak: Int
-    ) {
-        RED(
-            label = "Red",
-            colorRes = R.color.light_red,
-            defaultPeak = 80
-        ),
-        GREEN(
-            label = "Green",
-            colorRes = R.color.light_green,
-            defaultPeak = 84
-        ),
-        BLUE(
-            label = "Blue",
-            colorRes = R.color.light_blue,
-            defaultPeak = 79
-        ),
-        WHITE(
-            label = "White",
-            colorRes = R.color.light_white,
-            defaultPeak = 65
-        )
-    }
+    val label: String,
+    @ColorRes val colorRes: Int,
+    val defaultPeak: Int
+) {
+    RED(
+        label = "Red",
+        colorRes = R.color.light_red,
+        defaultPeak = 80
+    ),
+    GREEN(
+        label = "Green",
+        colorRes = R.color.light_green,
+        defaultPeak = 72
+    ),
+    BLUE(
+        label = "Blue",
+        colorRes = R.color.light_blue,
+        defaultPeak = 82
+    ),
+    WHITE(
+        label = "White",
+        colorRes = R.color.light_white,
+        defaultPeak = 78
+    )
+}
 
     private enum class RepeatMode(
         val label: String
