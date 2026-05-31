@@ -64,9 +64,13 @@ class DeviceLightProgramListFragment :
 
         viewActiveProgramCurve.setProgramCurve(
             start = "09:00",
-            peakStart = "12:00",
+            sunriseEnd = "12:00",
             peakEnd = "16:00",
-            end = "19:15"
+            end = "19:15",
+            startIntensity = 0,
+            sunriseEndIntensity = 100,
+            peakEndIntensity = 100,
+            endIntensity = 0
         )
 
         switchEveryDayProgram.isChecked = true
@@ -100,9 +104,13 @@ class DeviceLightProgramListFragment :
                         peak = "100%",
                         photoperiod = "10h 15m",
                         start = "09:00",
-                        peakStart = "12:00",
+                        sunriseEnd = "12:00",
                         peakEnd = "16:00",
-                        end = "19:15"
+                        end = "19:15",
+                        startIntensity = 0,
+                        sunriseEndIntensity = 100,
+                        peakEndIntensity = 100,
+                        endIntensity = 0
                     )
                 }
             )
@@ -136,9 +144,13 @@ class DeviceLightProgramListFragment :
                         peak = "75%",
                         photoperiod = "8h",
                         start = "10:00",
-                        peakStart = "12:00",
+                        sunriseEnd = "12:00",
                         peakEnd = "15:00",
-                        end = "18:00"
+                        end = "18:00",
+                        startIntensity = 0,
+                        sunriseEndIntensity = 75,
+                        peakEndIntensity = 75,
+                        endIntensity = 0
                     )
                 }
             )
@@ -282,9 +294,13 @@ class DeviceLightProgramListFragment :
         peak: String,
         photoperiod: String,
         start: String,
-        peakStart: String,
+        sunriseEnd: String,
         peakEnd: String,
-        end: String
+        end: String,
+        startIntensity: Int,
+        sunriseEndIntensity: Int,
+        peakEndIntensity: Int,
+        endIntensity: Int
     ) = with(binding) {
         tvActiveProgramTitle.text = title
         tvActiveProgramChip.text = "ACTIVE"
@@ -294,9 +310,13 @@ class DeviceLightProgramListFragment :
 
         viewActiveProgramCurve.setProgramCurve(
             start = start,
-            peakStart = peakStart,
+            sunriseEnd = sunriseEnd,
             peakEnd = peakEnd,
-            end = end
+            end = end,
+            startIntensity = startIntensity,
+            sunriseEndIntensity = sunriseEndIntensity,
+            peakEndIntensity = peakEndIntensity,
+            endIntensity = endIntensity
         )
     }
 

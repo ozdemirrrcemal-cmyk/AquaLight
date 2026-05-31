@@ -12,9 +12,8 @@ import android.graphics.PointF
 import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
-import androidx.core.content.ContextCompat
-import com.aqua.aqualight.R
-import kotlin.math.roundToInt
+import kotlin.math.max
+import kotlin.math.min
 
 class LightProgramCurveView @JvmOverloads constructor(
     context: Context,
@@ -63,20 +62,25 @@ class LightProgramCurveView @JvmOverloads constructor(
 
     private val sunrisePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#FFA32B")
-        textSize = 25f.sp()
+        textSize = 23f.sp()
         textAlign = Paint.Align.CENTER
     }
 
     private val sunsetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#E26FD7")
-        textSize = 25f.sp()
+        textSize = 23f.sp()
         textAlign = Paint.Align.CENTER
     }
 
     private var startTime = "09:00"
-    private var peakStartTime = "12:00"
+    private var sunriseEndTime = "12:00"
     private var peakEndTime = "16:00"
     private var endTime = "19:15"
+
+    private var startIntensity = 0
+    private var sunriseEndIntensity = 100
+    private var peakEndIntensity = 100
+    private var endIntensity = 0
 
     private val colors = intArrayOf(
         Color.parseColor("#FF9F2D"),
@@ -89,6 +93,8 @@ class LightProgramCurveView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+
+        if (width <= 0 || height <= 0) return
 
         val left = 62f.dp()
         val right = width - 14f.dp()
@@ -106,37 +112,50 @@ class LightProgramCurveView @JvmOverloads constructor(
 
         drawGrid(canvas, left, right, y0, y25, y50, y75, y100)
 
-        val p0 = PointF(left + chartWidth * 0.02f, y0)
-        val p1 = PointF(left + chartWidth * 0.23f, bottom - chartHeight * 0.45f)
-        val p2 = PointF(left + chartWidth * 0.36f, y100)
-        val p3 = PointF(left + chartWidth * 0.62f, y100)
-        val p4 = PointF(left + chartWidth * 0.75f, bottom - chartHeight * 0.45f)
-        val p5 = PointF(right - chartWidth * 0.02f, y0)
+        val p0 = PointF(left + chartWidth * 0.02f, intensityToY(startIntensity, top, bottom))
+        val p1 = PointF(left + chartWidth * 0.23f, intensityToY(midIntensity(startIntensity, sunriseEndIntensity), top, bottom))
+        val p2 = PointF(left + chartWidth * 0.36f, intensityToY(sunriseEndIntensity, top, bottom))
+        val p3 = PointF(left + chartWidth * 0.62f, intensityToY(peakEndIntensity, top, bottom))
+        val p4 = PointF(left + chartWidth * 0.75f, intensityToY(midIntensity(peakEndIntensity, endIntensity), top, bottom))
+        val p5 = PointF(right - chartWidth * 0.02f, intensityToY(endIntensity, top, bottom))
 
         val curvePath = Path().apply {
             moveTo(p0.x, p0.y)
+
             cubicTo(
-                left + chartWidth * 0.10f, y0,
-                left + chartWidth * 0.18f, bottom - chartHeight * 0.22f,
+                left + chartWidth * 0.10f,
+                p0.y,
+                left + chartWidth * 0.18f,
+                p1.y,
                 p1.x,
                 p1.y
             )
+
             cubicTo(
-                left + chartWidth * 0.30f, bottom - chartHeight * 0.70f,
-                left + chartWidth * 0.32f, y100,
+                left + chartWidth * 0.30f,
+                p1.y,
+                left + chartWidth * 0.32f,
+                p2.y,
                 p2.x,
                 p2.y
             )
+
             lineTo(p3.x, p3.y)
+
             cubicTo(
-                left + chartWidth * 0.66f, y100,
-                left + chartWidth * 0.69f, bottom - chartHeight * 0.25f,
+                left + chartWidth * 0.66f,
+                p3.y,
+                left + chartWidth * 0.69f,
+                p4.y,
                 p4.x,
                 p4.y
             )
+
             cubicTo(
-                left + chartWidth * 0.84f, bottom - chartHeight * 0.08f,
-                left + chartWidth * 0.91f, y0,
+                left + chartWidth * 0.84f,
+                p4.y,
+                left + chartWidth * 0.91f,
+                p5.y,
                 p5.x,
                 p5.y
             )
@@ -147,16 +166,6 @@ class LightProgramCurveView @JvmOverloads constructor(
             lineTo(p0.x, y0)
             close()
         }
-
-        val gradient = LinearGradient(
-            left,
-            0f,
-            right,
-            0f,
-            colors,
-            null,
-            Shader.TileMode.CLAMP
-        )
 
         fillPaint.shader = LinearGradient(
             0f,
@@ -170,7 +179,18 @@ class LightProgramCurveView @JvmOverloads constructor(
             null,
             Shader.TileMode.CLAMP
         )
+
         canvas.drawPath(fillPath, fillPaint)
+
+        val gradient = LinearGradient(
+            left,
+            0f,
+            right,
+            0f,
+            colors,
+            null,
+            Shader.TileMode.CLAMP
+        )
 
         linePaint.shader = gradient
         glowPaint.shader = gradient
@@ -185,7 +205,7 @@ class LightProgramCurveView @JvmOverloads constructor(
         drawPoint(canvas, p4, "#9B86FF")
         drawPoint(canvas, p5, "#FF6D8C")
 
-        drawBottomLabels(canvas, left, right, bottom, chartWidth, p2, p3)
+        drawBottomLabels(canvas, left, right, bottom, p2, p3)
     }
 
     private fun drawGrid(
@@ -199,6 +219,8 @@ class LightProgramCurveView @JvmOverloads constructor(
         y100: Float
     ) {
         textPaint.textAlign = Paint.Align.RIGHT
+        textPaint.textSize = 12f.sp()
+        textPaint.color = Color.parseColor("#E0E6ED")
 
         canvas.drawText("100%", left - 10f.dp(), y100 + 4f.dp(), textPaint)
         canvas.drawText("75%", left - 10f.dp(), y75 + 4f.dp(), textPaint)
@@ -219,33 +241,26 @@ class LightProgramCurveView @JvmOverloads constructor(
         left: Float,
         right: Float,
         bottom: Float,
-        chartWidth: Float,
         p2: PointF,
         p3: PointF
     ) {
         val labelY = bottom + 31f.dp()
 
-        sunrisePaint.textSize = 23f.sp()
-        sunsetPaint.textSize = 23f.sp()
-
         canvas.drawText("☀", left - 27f.dp(), labelY, sunrisePaint)
         canvas.drawText("☾", right - 45f.dp(), labelY, sunsetPaint)
 
-        textPaint.textAlign = Paint.Align.LEFT
         textPaint.textSize = 18f.sp()
         textPaint.color = Color.parseColor("#F1F6FF")
 
+        textPaint.textAlign = Paint.Align.LEFT
         canvas.drawText(startTime, left + 4f.dp(), labelY, textPaint)
 
         textPaint.textAlign = Paint.Align.CENTER
-        canvas.drawText(peakStartTime, p2.x, labelY, textPaint)
+        canvas.drawText(sunriseEndTime, p2.x, labelY, textPaint)
         canvas.drawText(peakEndTime, p3.x, labelY, textPaint)
 
         textPaint.textAlign = Paint.Align.RIGHT
         canvas.drawText(endTime, right, labelY, textPaint)
-
-        textPaint.textSize = 12f.sp()
-        textPaint.color = Color.parseColor("#E0E6ED")
     }
 
     private fun drawPoint(
@@ -259,15 +274,41 @@ class LightProgramCurveView @JvmOverloads constructor(
 
     fun setProgramCurve(
         start: String,
-        peakStart: String,
+        sunriseEnd: String,
         peakEnd: String,
-        end: String
+        end: String,
+        startIntensity: Int,
+        sunriseEndIntensity: Int,
+        peakEndIntensity: Int,
+        endIntensity: Int
     ) {
         startTime = start
-        peakStartTime = peakStart
+        sunriseEndTime = sunriseEnd
         peakEndTime = peakEnd
         endTime = end
+
+        this.startIntensity = startIntensity.coerceIn(0, 100)
+        this.sunriseEndIntensity = sunriseEndIntensity.coerceIn(0, 100)
+        this.peakEndIntensity = peakEndIntensity.coerceIn(0, 100)
+        this.endIntensity = endIntensity.coerceIn(0, 100)
+
         invalidate()
+    }
+
+    private fun intensityToY(
+        intensity: Int,
+        top: Float,
+        bottom: Float
+    ): Float {
+        val safeIntensity = intensity.coerceIn(0, 100)
+        return bottom - ((bottom - top) * safeIntensity / 100f)
+    }
+
+    private fun midIntensity(
+        first: Int,
+        second: Int
+    ): Int {
+        return ((first + second) / 2f).toInt().coerceIn(0, 100)
     }
 
     private fun Float.dp(): Float {
