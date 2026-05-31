@@ -23,18 +23,18 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlin.math.roundToInt
 
 class DeviceLightProgramEditorFragment :
-    Fragment(R.layout.fragment_device_light_program_editor) {
+Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
 
     private val programName: String
-        get() = requireArguments()
-            .getString(ARG_PROGRAM_NAME)
-            .orEmpty()
-            .ifBlank {
-                DEFAULT_PROGRAM_NAME
-            }
+    get() = requireArguments()
+    .getString(ARG_PROGRAM_NAME)
+    .orEmpty()
+    .ifBlank {
+        DEFAULT_PROGRAM_NAME
+    }
 
     private var isProMode: Boolean = false
     private var selectedProChannel: ProChannel = ProChannel.RED
@@ -42,15 +42,15 @@ class DeviceLightProgramEditorFragment :
     private var selectedRampSmoothing: RampSmoothing = RampSmoothing.LINEAR
 
     private var simpleCurvePoints: MutableList<CurvePointState> =
-        createSimpleCurvePoints()
+    createSimpleCurvePoints()
 
     private val proChannelCurves: MutableMap<ProChannel, MutableList<CurvePointState>> =
-        mutableMapOf(
-            ProChannel.RED to createChannelCurvePoints(ProChannel.RED.defaultPeak),
-            ProChannel.GREEN to createChannelCurvePoints(ProChannel.GREEN.defaultPeak),
-            ProChannel.BLUE to createChannelCurvePoints(ProChannel.BLUE.defaultPeak),
-            ProChannel.WHITE to createChannelCurvePoints(ProChannel.WHITE.defaultPeak)
-        )
+    mutableMapOf(
+        ProChannel.RED to createChannelCurvePoints(ProChannel.RED.defaultPeak),
+        ProChannel.GREEN to createChannelCurvePoints(ProChannel.GREEN.defaultPeak),
+        ProChannel.BLUE to createChannelCurvePoints(ProChannel.BLUE.defaultPeak),
+        ProChannel.WHITE to createChannelCurvePoints(ProChannel.WHITE.defaultPeak)
+    )
 
     private val customRepeatDays = mutableSetOf(
         DAY_MON,
@@ -112,7 +112,8 @@ class DeviceLightProgramEditorFragment :
             sliderProgramGreen,
             sliderProgramBlue,
             sliderProgramWhite
-        ).forEach { slider ->
+        ).forEach {
+            slider ->
             slider.valueFrom = 0f
             slider.valueTo = MAX_PERCENT.toFloat()
             slider.stepSize = 1f
@@ -173,7 +174,8 @@ class DeviceLightProgramEditorFragment :
         valueView: TextView,
         label: String
     ) {
-        slider.addOnChangeListener { _, value, _ ->
+        slider.addOnChangeListener {
+            _, value, _ ->
             updateChannelValue(
                 valueView = valueView,
                 label = label,
@@ -338,13 +340,13 @@ class DeviceLightProgramEditorFragment :
         cardProgramChannelBalance.visibility = View.VISIBLE
 
         tvEditorModeDescription.text =
-            "One daily intensity curve with fixed RGB/W balance."
+        "One daily intensity curve with fixed RGB/W balance."
 
         tvCurveTitle.text = "Daily Light Curve"
         tvCurveSubtitle.text = "Tap a point or row to edit time and output"
 
         tvCurvePointsSubtitle.text =
-            "Start, peak and end points used by the daily curve"
+        "Start, peak and end points used by the daily curve"
 
         tvChannelBalanceTitle.text = "Channel Balance"
         tvChannelBalanceSubtitle.text = "Used across the whole simple curve"
@@ -369,10 +371,10 @@ class DeviceLightProgramEditorFragment :
         cardProgramChannelBalance.visibility = View.GONE
 
         tvEditorModeDescription.text =
-            "Each WRGB channel can have its own daily curve."
+        "Each WRGB channel can have its own daily curve."
 
         tvCurvePointsSubtitle.text =
-            "Start, peak and end points for the selected channel"
+        "Start, peak and end points for the selected channel"
 
         selectProChannel(
             channel = selectedProChannel
@@ -386,7 +388,7 @@ class DeviceLightProgramEditorFragment :
 
         tvCurveTitle.text = "${channel.label} Channel Curve"
         tvCurveSubtitle.text =
-            "Edit time and output points for ${channel.label.lowercase()} only"
+        "Edit time and output points for ${channel.label.lowercase()} only"
 
         renderProChannelChips()
         renderCurrentCurve()
@@ -420,31 +422,32 @@ class DeviceLightProgramEditorFragment :
 
         viewProgramEditorCurve.setCurveDisplayMode(
             mode =
-                if (isProMode) {
-                    when (selectedProChannel) {
-                        ProChannel.RED -> LightProgramCurveView.CurveDisplayMode.PRO_RED
-                        ProChannel.GREEN -> LightProgramCurveView.CurveDisplayMode.PRO_GREEN
-                        ProChannel.BLUE -> LightProgramCurveView.CurveDisplayMode.PRO_BLUE
-                        ProChannel.WHITE -> LightProgramCurveView.CurveDisplayMode.PRO_WHITE
-                    }
-                } else {
-                    LightProgramCurveView.CurveDisplayMode.SIMPLE
+            if (isProMode) {
+                when (selectedProChannel) {
+                    ProChannel.RED -> LightProgramCurveView.CurveDisplayMode.PRO_RED
+                    ProChannel.GREEN -> LightProgramCurveView.CurveDisplayMode.PRO_GREEN
+                    ProChannel.BLUE -> LightProgramCurveView.CurveDisplayMode.PRO_BLUE
+                    ProChannel.WHITE -> LightProgramCurveView.CurveDisplayMode.PRO_WHITE
                 }
+            } else {
+                LightProgramCurveView.CurveDisplayMode.SIMPLE
+            }
         )
 
         viewProgramEditorCurve.setCurvePoints(
             points =
-                sortedCurve.map { point ->
-                    LightProgramCurveView.CurvePoint(
-                        time = point.time,
-                        intensity = point.intensity
-                    )
-                }
+            sortedCurve.map {
+                point ->
+                LightProgramCurveView.CurvePoint(
+                    time = point.time,
+                    intensity = point.intensity
+                )
+            }
         )
 
         tvCurveStartSummary.text = start.time
         tvCurvePeakSummary.text =
-            "${maxOf(peakStart.intensity, peakEnd.intensity)}%"
+        "${maxOf(peakStart.intensity, peakEnd.intensity)}%"
         tvCurveEndSummary.text = end.time
 
         tvPointStartTime.text = start.time
@@ -464,11 +467,11 @@ class DeviceLightProgramEditorFragment :
         tvPointEndPercent.text = "${end.intensity}%"
 
         tvCurveHint.text =
-            if (isProMode) {
-                "${selectedProChannel.label} curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
-            } else {
-                "Simple curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
-            }
+        if (isProMode) {
+            "${selectedProChannel.label} curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
+        } else {
+            "Simple curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
+        }
 
         renderExtraCurvePointRows()
     }
@@ -477,23 +480,24 @@ class DeviceLightProgramEditorFragment :
         pointId: String
     ) {
         val currentPoint =
-            currentCurvePoints()
-                .pointById(
-                    pointId = pointId
-                ) ?: return
+        currentCurvePoints()
+        .pointById(
+            pointId = pointId
+        ) ?: return
 
         showPointEditorSheet(
             label = currentPoint.label,
             time = currentPoint.time,
             intensity = currentPoint.intensity,
             canDelete = currentPoint.canDelete,
-            onSave = { selectedTime, selectedIntensity ->
+            onSave = {
+                selectedTime, selectedIntensity ->
                 updateCurvePoint(
                     updatedPoint =
-                        currentPoint.copy(
-                            time = selectedTime,
-                            intensity = selectedIntensity
-                        )
+                    currentPoint.copy(
+                        time = selectedTime,
+                        intensity = selectedIntensity
+                    )
                 )
 
                 renderCurrentCurve()
@@ -528,7 +532,8 @@ class DeviceLightProgramEditorFragment :
             time = suggestedPoint.time,
             intensity = suggestedPoint.intensity,
             canDelete = false,
-            onSave = { selectedTime, selectedIntensity ->
+            onSave = {
+                selectedTime, selectedIntensity ->
                 currentCurvePoints().add(
                     suggestedPoint.copy(
                         time = selectedTime,
@@ -552,25 +557,29 @@ class DeviceLightProgramEditorFragment :
         val container = curvePointsContainer
 
         container.children
-            .filter { child ->
-                child.tag == EXTRA_CURVE_POINT_ROW_TAG
-            }
-            .toList()
-            .forEach { child ->
-                container.removeView(child)
-            }
+        .filter {
+            child ->
+            child.tag == EXTRA_CURVE_POINT_ROW_TAG
+        }
+        .toList()
+        .forEach {
+            child ->
+            container.removeView(child)
+        }
 
         val extraPoints =
-            currentCurvePointsSorted()
-                .filter { point ->
-                    point.kind == CurvePointKind.INTERMEDIATE
-                }
+        currentCurvePointsSorted()
+        .filter {
+            point ->
+            point.kind == CurvePointKind.INTERMEDIATE
+        }
 
-        extraPoints.forEach { point ->
+        extraPoints.forEach {
+            point ->
             val insertIndex =
-                findCurvePointInsertIndex(
-                    point = point
-                )
+            findCurvePointInsertIndex(
+                point = point
+            )
 
             container.addView(
                 createExtraCurvePointRow(
@@ -588,20 +597,21 @@ class DeviceLightProgramEditorFragment :
         val pointMinutes = timeToMinutes(point.time)
 
         val staticRows =
-            listOf(
-                currentCurvePoints().pointById(POINT_ID_START) to rowPointStart,
-                currentCurvePoints().pointById(POINT_ID_PEAK_START) to rowPointPeakStart,
-                currentCurvePoints().pointById(POINT_ID_PEAK_END) to rowPointPeakEnd,
-                currentCurvePoints().pointById(POINT_ID_END) to rowPointEnd
-            )
+        listOf(
+            currentCurvePoints().pointById(POINT_ID_START) to rowPointStart,
+            currentCurvePoints().pointById(POINT_ID_PEAK_START) to rowPointPeakStart,
+            currentCurvePoints().pointById(POINT_ID_PEAK_END) to rowPointPeakEnd,
+            currentCurvePoints().pointById(POINT_ID_END) to rowPointEnd
+        )
 
         val targetRow =
-            staticRows.firstOrNull { pair ->
-                val staticPoint = pair.first
+        staticRows.firstOrNull {
+            pair ->
+            val staticPoint = pair.first
 
-                staticPoint != null &&
-                    pointMinutes < timeToMinutes(staticPoint.time)
-            }?.second
+            staticPoint != null &&
+            pointMinutes < timeToMinutes(staticPoint.time)
+        }?.second
 
         return if (targetRow != null) {
             container.indexOfChild(targetRow).coerceAtLeast(0)
@@ -614,84 +624,84 @@ class DeviceLightProgramEditorFragment :
         point: CurvePointState
     ): View {
         val row =
-            LinearLayout(requireContext()).apply {
-                tag = EXTRA_CURVE_POINT_ROW_TAG
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                isClickable = true
-                isFocusable = true
-                setBackgroundResource(selectableItemBackgroundRes())
+        LinearLayout(requireContext()).apply {
+            tag = EXTRA_CURVE_POINT_ROW_TAG
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            isClickable = true
+            isFocusable = true
+            setBackgroundResource(selectableItemBackgroundRes())
 
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        46.dp()
-                    )
+            layoutParams =
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                46.dp()
+            )
 
-                setOnClickListener {
-                    showPointEditor(
-                        pointId = point.id
-                    )
-                }
+            setOnClickListener {
+                showPointEditor(
+                    pointId = point.id
+                )
             }
+        }
 
         val timeView =
-            TextView(requireContext()).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        50.dp(),
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
+        TextView(requireContext()).apply {
+            layoutParams =
+            LinearLayout.LayoutParams(
+                50.dp(),
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
 
-                text = point.time
-                textSize = 13f
-                includeFontPadding = false
-                typeface = ResourcesCompat.getFont(
-                    requireContext(),
-                    R.font.inter_semibold
+            text = point.time
+            textSize = 13f
+            includeFontPadding = false
+            typeface = ResourcesCompat.getFont(
+                requireContext(),
+                R.font.inter_semibold
+            )
+            setTextColor(
+                themeColor(
+                    com.google.android.material.R.attr.colorOnSurface
                 )
-                setTextColor(
-                    themeColor(
-                        com.google.android.material.R.attr.colorOnSurface
-                    )
-                )
-            }
+            )
+        }
 
         val labelView =
-            TextView(requireContext()).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        1f
-                    )
+        TextView(requireContext()).apply {
+            layoutParams =
+            LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f
+            )
 
-                text = point.label
-                textSize = 12f
-                setTextColor(
-                    color(R.color.settings_text_secondary)
-                )
-            }
+            text = point.label
+            textSize = 12f
+            setTextColor(
+                color(R.color.settings_text_secondary)
+            )
+        }
 
         val percentView =
-            TextView(requireContext()).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
+        TextView(requireContext()).apply {
+            layoutParams =
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
 
-                text = "${point.intensity}%"
-                textSize = 13f
-                includeFontPadding = false
-                typeface = ResourcesCompat.getFont(
-                    requireContext(),
-                    R.font.inter_semibold
-                )
-                setTextColor(
-                    color(R.color.light_accent)
-                )
-            }
+            text = "${point.intensity}%"
+            textSize = 13f
+            includeFontPadding = false
+            typeface = ResourcesCompat.getFont(
+                requireContext(),
+                R.font.inter_semibold
+            )
+            setTextColor(
+                color(R.color.light_accent)
+            )
+        }
 
         row.addView(timeView)
         row.addView(labelView)
@@ -704,34 +714,36 @@ class DeviceLightProgramEditorFragment :
         val sortedPoints = currentCurvePointsSorted()
 
         val biggestGap =
-            sortedPoints
-                .zipWithNext()
-                .maxByOrNull { pair ->
-                    timeToMinutes(pair.second.time) - timeToMinutes(pair.first.time)
-                }
+        sortedPoints
+        .zipWithNext()
+        .maxByOrNull {
+            pair ->
+            timeToMinutes(pair.second.time) - timeToMinutes(pair.first.time)
+        }
 
         val suggestedMinutes =
-            if (biggestGap == null) {
-                timeToMinutes("11:00")
-            } else {
-                val startMinutes = timeToMinutes(biggestGap.first.time)
-                val endMinutes = timeToMinutes(biggestGap.second.time)
+        if (biggestGap == null) {
+            timeToMinutes("11:00")
+        } else {
+            val startMinutes = timeToMinutes(biggestGap.first.time)
+            val endMinutes = timeToMinutes(biggestGap.second.time)
 
-                roundToPointStep(
-                    minutes = startMinutes + ((endMinutes - startMinutes) / 2)
-                )
-            }
+            roundToPointStep(
+                minutes = startMinutes + ((endMinutes - startMinutes) / 2)
+            )
+        }
 
         val safeMinutes =
-            findAvailablePointMinute(
-                preferredMinutes = suggestedMinutes
-            )
+        findAvailablePointMinute(
+            preferredMinutes = suggestedMinutes
+        )
 
         val extraPointNumber =
-            currentCurvePoints()
-                .count { point ->
-                    point.kind == CurvePointKind.INTERMEDIATE
-                } + 1
+        currentCurvePoints()
+        .count {
+            point ->
+            point.kind == CurvePointKind.INTERMEDIATE
+        } + 1
 
         return CurvePointState(
             id = "extra_${System.currentTimeMillis()}",
@@ -749,30 +761,32 @@ class DeviceLightProgramEditorFragment :
         val curve = currentCurvePoints()
 
         val index =
-            curve.indexOfFirst { point ->
-                point.id == updatedPoint.id
-            }
+        curve.indexOfFirst {
+            point ->
+            point.id == updatedPoint.id
+        }
 
         if (index == -1) {
             return
         }
 
         curve[index] =
-            updatedPoint.copy(
-                intensity = updatedPoint.intensity.coerceIn(
-                    minimumValue = 0,
-                    maximumValue = MAX_PERCENT
-                )
+        updatedPoint.copy(
+            intensity = updatedPoint.intensity.coerceIn(
+                minimumValue = 0,
+                maximumValue = MAX_PERCENT
             )
+        )
     }
 
     private fun deleteCurvePoint(
         pointId: String
     ) {
         currentCurvePoints()
-            .removeAll { point ->
-                point.id == pointId && point.canDelete
-            }
+        .removeAll {
+            point ->
+            point.id == pointId && point.canDelete
+        }
     }
 
     private fun showPointEditorSheet(
@@ -786,37 +800,37 @@ class DeviceLightProgramEditorFragment :
         val dialog = BottomSheetDialog(requireContext())
 
         val sheetView =
-            layoutInflater.inflate(
-                R.layout.bottom_sheet_light_point_editor,
-                null
-            )
+        layoutInflater.inflate(
+            R.layout.bottom_sheet_light_point_editor,
+            null
+        )
 
         val tvPointLabel =
-            sheetView.findViewById<TextView>(R.id.tvPointLabel)
+        sheetView.findViewById<TextView>(R.id.tvPointLabel)
 
         val tvPointTime =
-            sheetView.findViewById<TextView>(R.id.tvPointTime)
+        sheetView.findViewById<TextView>(R.id.tvPointTime)
 
         val tvPointIntensityValue =
-            sheetView.findViewById<TextView>(R.id.tvPointIntensityValue)
+        sheetView.findViewById<TextView>(R.id.tvPointIntensityValue)
 
         val sliderPointIntensity =
-            sheetView.findViewById<Slider>(R.id.sliderPointIntensity)
+        sheetView.findViewById<Slider>(R.id.sliderPointIntensity)
 
         val btnPointTimeMinus =
-            sheetView.findViewById<TextView>(R.id.btnPointTimeMinus)
+        sheetView.findViewById<TextView>(R.id.btnPointTimeMinus)
 
         val btnPointTimePlus =
-            sheetView.findViewById<TextView>(R.id.btnPointTimePlus)
+        sheetView.findViewById<TextView>(R.id.btnPointTimePlus)
 
         val btnPointSave =
-            sheetView.findViewById<TextView>(R.id.btnPointSave)
+        sheetView.findViewById<TextView>(R.id.btnPointSave)
 
         val btnPointDelete =
-            sheetView.findViewById<TextView>(R.id.btnPointDelete)
+        sheetView.findViewById<TextView>(R.id.btnPointDelete)
 
         val btnPointCancel =
-            sheetView.findViewById<TextView>(R.id.btnPointCancel)
+        sheetView.findViewById<TextView>(R.id.btnPointCancel)
 
         var selectedMinutes = timeToMinutes(time)
         var selectedIntensity = intensity.coerceIn(0, MAX_PERCENT)
@@ -831,29 +845,30 @@ class DeviceLightProgramEditorFragment :
         sliderPointIntensity.value = selectedIntensity.toFloat()
 
         btnPointDelete.visibility =
-            if (canDelete) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (canDelete) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         btnPointTimeMinus.setOnClickListener {
             selectedMinutes =
-                (selectedMinutes - POINT_STEP_MINUTES)
-                    .coerceAtLeast(0)
+            (selectedMinutes - POINT_STEP_MINUTES)
+            .coerceAtLeast(0)
 
             tvPointTime.text = minutesToTime(selectedMinutes)
         }
 
         btnPointTimePlus.setOnClickListener {
             selectedMinutes =
-                (selectedMinutes + POINT_STEP_MINUTES)
-                    .coerceAtMost(MINUTES_IN_DAY - POINT_STEP_MINUTES)
+            (selectedMinutes + POINT_STEP_MINUTES)
+            .coerceAtMost(MINUTES_IN_DAY - POINT_STEP_MINUTES)
 
             tvPointTime.text = minutesToTime(selectedMinutes)
         }
 
-        sliderPointIntensity.addOnChangeListener { _, value, _ ->
+        sliderPointIntensity.addOnChangeListener {
+            _, value, _ ->
             selectedIntensity = value.roundToInt()
             tvPointIntensityValue.text = "$selectedIntensity%"
         }
@@ -884,47 +899,47 @@ class DeviceLightProgramEditorFragment :
         val dialog = BottomSheetDialog(requireContext())
 
         val sheetView =
-            layoutInflater.inflate(
-                R.layout.bottom_sheet_light_acclimation_settings,
-                null
-            )
+        layoutInflater.inflate(
+            R.layout.bottom_sheet_light_acclimation_settings,
+            null
+        )
 
         val switchEnabled =
-            sheetView.findViewById<SwitchMaterial>(R.id.switchAcclimationEnabled)
+        sheetView.findViewById<SwitchMaterial>(R.id.switchAcclimationEnabled)
 
         val tvDurationValue =
-            sheetView.findViewById<TextView>(R.id.tvAcclimationDurationValue)
+        sheetView.findViewById<TextView>(R.id.tvAcclimationDurationValue)
 
         val tvStartValue =
-            sheetView.findViewById<TextView>(R.id.tvAcclimationStartValue)
+        sheetView.findViewById<TextView>(R.id.tvAcclimationStartValue)
 
         val tvSummary =
-            sheetView.findViewById<TextView>(R.id.tvAcclimationSummary)
+        sheetView.findViewById<TextView>(R.id.tvAcclimationSummary)
 
         val sliderStart =
-            sheetView.findViewById<Slider>(R.id.sliderAcclimationStart)
+        sheetView.findViewById<Slider>(R.id.sliderAcclimationStart)
 
         val chip3Days =
-            sheetView.findViewById<TextView>(R.id.chipAcclimation3Days)
+        sheetView.findViewById<TextView>(R.id.chipAcclimation3Days)
 
         val chip7Days =
-            sheetView.findViewById<TextView>(R.id.chipAcclimation7Days)
+        sheetView.findViewById<TextView>(R.id.chipAcclimation7Days)
 
         val chip14Days =
-            sheetView.findViewById<TextView>(R.id.chipAcclimation14Days)
+        sheetView.findViewById<TextView>(R.id.chipAcclimation14Days)
 
         val btnSave =
-            sheetView.findViewById<TextView>(R.id.btnAcclimationSave)
+        sheetView.findViewById<TextView>(R.id.btnAcclimationSave)
 
         val btnCancel =
-            sheetView.findViewById<TextView>(R.id.btnAcclimationCancel)
+        sheetView.findViewById<TextView>(R.id.btnAcclimationCancel)
 
         var enabled = tvAcclimationValue.text.toString() != "Off"
         var selectedDays = extractAcclimationDays(tvAcclimationValue.text.toString())
         var startIntensity =
-            extractAcclimationStartIntensity(
-                text = tvAcclimationValue.text.toString()
-            ).coerceIn(20, 80)
+        extractAcclimationStartIntensity(
+            text = tvAcclimationValue.text.toString()
+        ).coerceIn(20, 80)
 
         switchEnabled.isChecked = enabled
         tvDurationValue.text = "$selectedDays days"
@@ -938,11 +953,11 @@ class DeviceLightProgramEditorFragment :
 
         fun updateSummary() {
             tvSummary.text =
-                if (enabled) {
-                    "Starts at $startIntensity% and gradually reaches full program intensity over $selectedDays days."
-                } else {
-                    "Acclimation is disabled. The program will run at normal intensity."
-                }
+            if (enabled) {
+                "Starts at $startIntensity% and gradually reaches full program intensity over $selectedDays days."
+            } else {
+                "Acclimation is disabled. The program will run at normal intensity."
+            }
         }
 
         fun setDuration(
@@ -955,7 +970,8 @@ class DeviceLightProgramEditorFragment :
 
         updateSummary()
 
-        switchEnabled.setOnCheckedChangeListener { _, isChecked ->
+        switchEnabled.setOnCheckedChangeListener {
+            _, isChecked ->
             enabled = isChecked
             updateSummary()
         }
@@ -972,7 +988,8 @@ class DeviceLightProgramEditorFragment :
             setDuration(14)
         }
 
-        sliderStart.addOnChangeListener { _, value, _ ->
+        sliderStart.addOnChangeListener {
+            _, value, _ ->
             startIntensity = value.roundToInt()
             tvStartValue.text = "$startIntensity%"
             updateSummary()
@@ -980,11 +997,11 @@ class DeviceLightProgramEditorFragment :
 
         btnSave.setOnClickListener {
             tvAcclimationValue.text =
-                if (enabled) {
-                    "$selectedDays days · Start $startIntensity%"
-                } else {
-                    "Off"
-                }
+            if (enabled) {
+                "$selectedDays days · Start $startIntensity%"
+            } else {
+                "Off"
+            }
 
             dialog.dismiss()
 
@@ -1009,10 +1026,10 @@ class DeviceLightProgramEditorFragment :
         val dialog = BottomSheetDialog(requireContext())
 
         val sheetView =
-            layoutInflater.inflate(
-                R.layout.bottom_sheet_light_day_picker,
-                null
-            )
+        layoutInflater.inflate(
+            R.layout.bottom_sheet_light_day_picker,
+            null
+        )
 
         val selectedDays = customRepeatDays.toMutableSet()
 
@@ -1025,22 +1042,22 @@ class DeviceLightProgramEditorFragment :
         val chipSun = sheetView.findViewById<TextView>(R.id.chipPickerSun)
 
         val tvSummary =
-            sheetView.findViewById<TextView>(R.id.tvDayPickerSummary)
+        sheetView.findViewById<TextView>(R.id.tvDayPickerSummary)
 
         val btnWeekdays =
-            sheetView.findViewById<TextView>(R.id.btnDayPickerWeekdays)
+        sheetView.findViewById<TextView>(R.id.btnDayPickerWeekdays)
 
         val btnWeekend =
-            sheetView.findViewById<TextView>(R.id.btnDayPickerWeekend)
+        sheetView.findViewById<TextView>(R.id.btnDayPickerWeekend)
 
         val btnEveryDay =
-            sheetView.findViewById<TextView>(R.id.btnDayPickerEveryDay)
+        sheetView.findViewById<TextView>(R.id.btnDayPickerEveryDay)
 
         val btnSave =
-            sheetView.findViewById<TextView>(R.id.btnDayPickerSave)
+        sheetView.findViewById<TextView>(R.id.btnDayPickerSave)
 
         val btnCancel =
-            sheetView.findViewById<TextView>(R.id.btnDayPickerCancel)
+        sheetView.findViewById<TextView>(R.id.btnDayPickerCancel)
 
         fun renderChip(
             chip: TextView,
@@ -1075,9 +1092,7 @@ class DeviceLightProgramEditorFragment :
 
                 selectedDays == weekendDays() -> {
                     "Weekend selected"
-                }
-
-                else -> {
+                } else -> {
                     "${selectedDays.size} days selected"
                 }
             }
@@ -1283,14 +1298,18 @@ class DeviceLightProgramEditorFragment :
         selected: Boolean
     ) {
         if (selected) {
-            chip.setBackgroundColor(
-                color(R.color.light_accent)
+            chip.setBackgroundResource(
+                R.drawable.bg_light_editor_chip_selected
             )
+
             chip.setTextColor(
                 color(R.color.background_color)
             )
         } else {
-            chip.setBackgroundResource(android.R.color.transparent)
+            chip.setBackgroundResource(
+                R.drawable.bg_light_editor_chip_unselected
+            )
+
             chip.setTextColor(
                 color(R.color.settings_text_secondary)
             )
@@ -1313,13 +1332,13 @@ class DeviceLightProgramEditorFragment :
         )
 
         strokeColor =
-            color(
-                if (selected) {
-                    channel.colorRes
-                } else {
-                    R.color.light_stroke
-                }
-            )
+        color(
+            if (selected) {
+                channel.colorRes
+            } else {
+                R.color.light_stroke
+            }
+        )
 
         val textView = getChildAt(0) as? TextView
 
@@ -1344,21 +1363,22 @@ class DeviceLightProgramEditorFragment :
 
     private fun currentCurvePointsSorted(): List<CurvePointState> {
         return currentCurvePoints()
-            .sortedWith(
-                compareBy<CurvePointState> {
-                    timeToMinutes(
-                        time = it.time
-                    )
-                }.thenBy {
-                    it.kind.sortOrder
-                }
-            )
+        .sortedWith(
+            compareBy<CurvePointState> {
+                timeToMinutes(
+                    time = it.time
+                )
+            }.thenBy {
+                it.kind.sortOrder
+            }
+        )
     }
 
     private fun MutableList<CurvePointState>.pointById(
         pointId: String
     ): CurvePointState? {
-        return firstOrNull { point ->
+        return firstOrNull {
+            point ->
             point.id == pointId
         }
     }
@@ -1366,7 +1386,8 @@ class DeviceLightProgramEditorFragment :
     private fun List<CurvePointState>.pointById(
         pointId: String
     ): CurvePointState? {
-        return firstOrNull { point ->
+        return firstOrNull {
+            point ->
             point.id == pointId
         }
     }
@@ -1445,26 +1466,27 @@ class DeviceLightProgramEditorFragment :
         minutes: Int
     ): Int {
         return ((minutes + (POINT_STEP_MINUTES / 2)) / POINT_STEP_MINUTES) *
-            POINT_STEP_MINUTES
+        POINT_STEP_MINUTES
     }
 
     private fun findAvailablePointMinute(
         preferredMinutes: Int
     ): Int {
         val usedMinutes =
-            currentCurvePoints()
-                .map { point ->
-                    timeToMinutes(
-                        time = point.time
-                    )
-                }
-                .toSet()
+        currentCurvePoints()
+        .map {
+            point ->
+            timeToMinutes(
+                time = point.time
+            )
+        }
+        .toSet()
 
         var candidate =
-            preferredMinutes.coerceIn(
-                minimumValue = 0,
-                maximumValue = MINUTES_IN_DAY - POINT_STEP_MINUTES
-            )
+        preferredMinutes.coerceIn(
+            minimumValue = 0,
+            maximumValue = MINUTES_IN_DAY - POINT_STEP_MINUTES
+        )
 
         while (
             usedMinutes.contains(candidate) &&
@@ -1478,10 +1500,10 @@ class DeviceLightProgramEditorFragment :
         }
 
         candidate =
-            preferredMinutes.coerceIn(
-                minimumValue = POINT_STEP_MINUTES,
-                maximumValue = MINUTES_IN_DAY - 1
-            )
+        preferredMinutes.coerceIn(
+            minimumValue = POINT_STEP_MINUTES,
+            maximumValue = MINUTES_IN_DAY - 1
+        )
 
         while (
             usedMinutes.contains(candidate) &&
@@ -1498,11 +1520,11 @@ class DeviceLightProgramEditorFragment :
 
     private fun showPreviewMessage() {
         val modeLabel =
-            if (isProMode) {
-                "Pro ${selectedProChannel.label}"
-            } else {
-                "Simple"
-            }
+        if (isProMode) {
+            "Pro ${selectedProChannel.label}"
+        } else {
+            "Simple"
+        }
 
         showMessage("$modeLabel preview day simulation will be added")
     }
@@ -1524,20 +1546,20 @@ class DeviceLightProgramEditorFragment :
         val minute = parts[1].toIntOrNull() ?: 0
 
         return (hour * 60 + minute)
-            .coerceIn(
-                0,
-                MINUTES_IN_DAY - 1
-            )
+        .coerceIn(
+            0,
+            MINUTES_IN_DAY - 1
+        )
     }
 
     private fun minutesToTime(
         minutes: Int
     ): String {
         val safeMinutes =
-            minutes.coerceIn(
-                0,
-                MINUTES_IN_DAY - 1
-            )
+        minutes.coerceIn(
+            0,
+            MINUTES_IN_DAY - 1
+        )
 
         val hour = safeMinutes / 60
         val minute = safeMinutes % 60
@@ -1552,9 +1574,9 @@ class DeviceLightProgramEditorFragment :
         text: String
     ): Int {
         val firstNumber =
-            text.split(" ")
-                .firstOrNull()
-                ?.toIntOrNull()
+        text.split(" ")
+        .firstOrNull()
+        ?.toIntOrNull()
 
         return firstNumber ?: 7
     }
@@ -1563,17 +1585,17 @@ class DeviceLightProgramEditorFragment :
         text: String
     ): Int {
         return text
-            .substringAfter(
-                delimiter = "Start",
-                missingDelimiterValue = ""
-            )
-            .trim()
-            .replace(
-                oldValue = "%",
-                newValue = ""
-            )
-            .toIntOrNull()
-            ?: 40
+        .substringAfter(
+            delimiter = "Start",
+            missingDelimiterValue = ""
+        )
+        .trim()
+        .replace(
+            oldValue = "%",
+            newValue = ""
+        )
+        .toIntOrNull()
+        ?: 40
     }
 
     private fun allDays(): Set<Int> {
@@ -1609,12 +1631,12 @@ class DeviceLightProgramEditorFragment :
         val typedValue = TypedValue()
 
         requireContext()
-            .theme
-            .resolveAttribute(
-                android.R.attr.selectableItemBackground,
-                typedValue,
-                true
-            )
+        .theme
+        .resolveAttribute(
+            android.R.attr.selectableItemBackground,
+            typedValue,
+            true
+        )
 
         return typedValue.resourceId
     }
@@ -1625,12 +1647,12 @@ class DeviceLightProgramEditorFragment :
         val typedValue = TypedValue()
 
         requireContext()
-            .theme
-            .resolveAttribute(
-                attrRes,
-                typedValue,
-                true
-            )
+        .theme
+        .resolveAttribute(
+            attrRes,
+            typedValue,
+            true
+        )
 
         return if (typedValue.resourceId != 0) {
             color(typedValue.resourceId)
