@@ -34,25 +34,29 @@ class DeviceLightPresetsFragment :
         setupClicks()
     }
 
-    fun onHeaderAddClick() {
+    fun onHeaderCreatePresetClick() {
         if (_binding == null) {
             return
         }
 
-        showMessage(
-            message = "Create preset will be added"
-        )
+        showCreatePresetMessage()
     }
 
     private fun renderPreviewState() = with(binding) {
-        tvTemporarySceneTitle.text = "No temporary scene active"
-        tvTemporarySceneDesc.text = "Auto program is running normally"
+        tvTemporarySceneTitle.text =
+            "No temporary scene active"
+
+        tvTemporarySceneDesc.text =
+            "Auto program is running normally"
     }
 
     private fun setupClicks() = with(binding) {
         btnEndTemporaryScene.setOnClickListener {
-            tvTemporarySceneTitle.text = "No temporary scene active"
-            tvTemporarySceneDesc.text = "Auto program is running normally"
+            tvTemporarySceneTitle.text =
+                "No temporary scene active"
+
+            tvTemporarySceneDesc.text =
+                "Auto program is running normally"
 
             showMessage(
                 message = "Temporary scene ended"
@@ -159,9 +163,7 @@ class DeviceLightPresetsFragment :
         }
 
         btnCreateCustomPreset.setOnClickListener {
-            showMessage(
-                message = "Custom preset creation will be added"
-            )
+            showCreatePresetMessage()
         }
     }
 
@@ -256,6 +258,12 @@ class DeviceLightPresetsFragment :
 
         showMessage(
             message = "$sceneName applied temporarily"
+        )
+    }
+
+    private fun showCreatePresetMessage() {
+        showMessage(
+            message = "Create preset will be added"
         )
     }
 

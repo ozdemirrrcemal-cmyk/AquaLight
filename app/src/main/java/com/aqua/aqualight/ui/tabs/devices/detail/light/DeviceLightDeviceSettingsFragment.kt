@@ -17,9 +17,6 @@ class DeviceLightDeviceSettingsFragment :
     private var _binding: FragmentDeviceLightDeviceSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -55,9 +52,6 @@ class DeviceLightDeviceSettingsFragment :
     }
 
     private fun renderPreviewState() = with(binding) {
-        tvDeviceSettingsSubtitle.text =
-            "Lighting hardware and safety · Device ID: $deviceId"
-
         tvLightDeviceName.text = "WRGB Light"
         tvLightDeviceTank.text = "Assigned to Living Tank"
         tvDeviceOnlineState.text = "ONLINE"
@@ -180,8 +174,6 @@ class DeviceLightDeviceSettingsFragment :
             }
 
             tvLightDeviceName.text = newName
-            tvDeviceSettingsSubtitle.text =
-                "Lighting hardware and safety · Device ID: $deviceId"
 
             dialog.dismiss()
 

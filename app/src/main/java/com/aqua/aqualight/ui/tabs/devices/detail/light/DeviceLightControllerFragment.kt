@@ -110,7 +110,9 @@ class DeviceLightControllerFragment :
 
             LightScreen.Manual,
             LightScreen.Programs,
-            LightScreen.DeviceSettings -> {
+            LightScreen.DeviceSettings,
+            LightScreen.QuickSetup,
+            LightScreen.Presets -> {
                 openOverview()
             }
 
@@ -213,6 +215,40 @@ class DeviceLightControllerFragment :
         renderHeaderForDeviceSettings()
     }
 
+    fun openQuickSetup() {
+        activeScreen =
+            LightScreen.QuickSetup
+
+        childFragmentManager.commit {
+            setReorderingAllowed(true)
+            replace(
+                R.id.lightControllerContainer,
+                DeviceLightQuickSetupFragment.newInstance(
+                    deviceId = deviceId
+                )
+            )
+        }
+
+        renderHeaderForQuickSetup()
+    }
+
+    fun openPresets() {
+        activeScreen =
+            LightScreen.Presets
+
+        childFragmentManager.commit {
+            setReorderingAllowed(true)
+            replace(
+                R.id.lightControllerContainer,
+                DeviceLightPresetsFragment.newInstance(
+                    deviceId = deviceId
+                )
+            )
+        }
+
+        renderHeaderForPresets()
+    }
+
     private fun renderHeaderForActiveScreen() {
         when (activeScreen) {
             LightScreen.Overview -> {
@@ -233,6 +269,14 @@ class DeviceLightControllerFragment :
 
             LightScreen.DeviceSettings -> {
                 renderHeaderForDeviceSettings()
+            }
+
+            LightScreen.QuickSetup -> {
+                renderHeaderForQuickSetup()
+            }
+
+            LightScreen.Presets -> {
+                renderHeaderForPresets()
             }
         }
     }
@@ -374,6 +418,35 @@ class DeviceLightControllerFragment :
         )
     }
 
+    private fun renderHeaderForQuickSetup() {
+        chromeHost?.setDeviceHeader(
+            title = "Quick Setup",
+            actions = emptyList(),
+            onBackClick = {
+                openOverview()
+            }
+        )
+    }
+
+    private fun renderHeaderForPresets() {
+        chromeHost?.setDeviceHeader(
+            title = "Presets & Scenes",
+            actions = listOf(
+                DeviceHeaderAction(
+                    iconRes = R.drawable.ic_add_24,
+                    contentDescription = "Create Preset",
+                    onClick = {
+                        currentPresetsFragment()
+                            ?.onHeaderCreatePresetClick()
+                    }
+                )
+            ),
+            onBackClick = {
+                openOverview()
+            }
+        )
+    }
+
     private fun currentOverviewFragment(): DeviceLightFragment? {
         return childFragmentManager.findFragmentById(
             R.id.lightControllerContainer
@@ -404,6 +477,18 @@ class DeviceLightControllerFragment :
         ) as? DeviceLightDeviceSettingsFragment
     }
 
+    private fun currentQuickSetupFragment(): DeviceLightQuickSetupFragment? {
+        return childFragmentManager.findFragmentById(
+            R.id.lightControllerContainer
+        ) as? DeviceLightQuickSetupFragment
+    }
+
+    private fun currentPresetsFragment(): DeviceLightPresetsFragment? {
+        return childFragmentManager.findFragmentById(
+            R.id.lightControllerContainer
+        ) as? DeviceLightPresetsFragment
+    }
+
     override fun onSaveInstanceState(
         outState: Bundle
     ) {
@@ -427,7 +512,9 @@ class DeviceLightControllerFragment :
         Manual,
         Programs,
         ProgramEditor,
-        DeviceSettings
+        DeviceSettings,
+        QuickSetup,
+        Presets
     }
 
     companion object {
