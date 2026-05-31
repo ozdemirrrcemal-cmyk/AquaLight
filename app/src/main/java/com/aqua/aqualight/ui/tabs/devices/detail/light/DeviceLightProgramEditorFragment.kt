@@ -1,14 +1,21 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light
 
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorRes
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.children
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.light.view.LightProgramCurveView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.slider.Slider
@@ -34,10 +41,10 @@ class DeviceLightProgramEditorFragment :
     private var selectedRepeatMode: RepeatMode = RepeatMode.EVERY
     private var selectedRampSmoothing: RampSmoothing = RampSmoothing.LINEAR
 
-    private var simpleCurvePoints: MutableMap<CurvePointId, CurvePointState> =
+    private var simpleCurvePoints: MutableList<CurvePointState> =
         createSimpleCurvePoints()
 
-    private val proChannelCurves: MutableMap<ProChannel, MutableMap<CurvePointId, CurvePointState>> =
+    private val proChannelCurves: MutableMap<ProChannel, MutableList<CurvePointState>> =
         mutableMapOf(
             ProChannel.RED to createChannelCurvePoints(ProChannel.RED.defaultPeak),
             ProChannel.GREEN to createChannelCurvePoints(ProChannel.GREEN.defaultPeak),
@@ -59,7 +66,10 @@ class DeviceLightProgramEditorFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
@@ -211,31 +221,31 @@ class DeviceLightProgramEditorFragment :
 
         viewProgramEditorCurve.setOnClickListener {
             showPointEditor(
-                pointId = CurvePointId.PEAK_START
+                pointId = POINT_ID_PEAK_START
             )
         }
 
         rowPointStart.setOnClickListener {
             showPointEditor(
-                pointId = CurvePointId.START
+                pointId = POINT_ID_START
             )
         }
 
         rowPointPeakStart.setOnClickListener {
             showPointEditor(
-                pointId = CurvePointId.PEAK_START
+                pointId = POINT_ID_PEAK_START
             )
         }
 
         rowPointPeakEnd.setOnClickListener {
             showPointEditor(
-                pointId = CurvePointId.PEAK_END
+                pointId = POINT_ID_PEAK_END
             )
         }
 
         rowPointEnd.setOnClickListener {
             showPointEditor(
-                pointId = CurvePointId.END
+                pointId = POINT_ID_END
             )
         }
 
@@ -401,22 +411,35 @@ class DeviceLightProgramEditorFragment :
     }
 
     private fun renderCurrentCurve() = with(binding) {
-        val curve = currentCurvePoints()
+        val sortedCurve = currentCurvePointsSorted()
 
-        val start = curve.getValue(CurvePointId.START)
-        val peakStart = curve.getValue(CurvePointId.PEAK_START)
-        val peakEnd = curve.getValue(CurvePointId.PEAK_END)
-        val end = curve.getValue(CurvePointId.END)
+        val start = sortedCurve.pointById(POINT_ID_START) ?: return@with
+        val peakStart = sortedCurve.pointById(POINT_ID_PEAK_START) ?: return@with
+        val peakEnd = sortedCurve.pointById(POINT_ID_PEAK_END) ?: return@with
+        val end = sortedCurve.pointById(POINT_ID_END) ?: return@with
 
-        viewProgramEditorCurve.setProgramCurve(
-            start = start.time,
-            sunriseEnd = peakStart.time,
-            peakEnd = peakEnd.time,
-            end = end.time,
-            startIntensity = start.intensity,
-            sunriseEndIntensity = peakStart.intensity,
-            peakEndIntensity = peakEnd.intensity,
-            endIntensity = end.intensity
+        viewProgramEditorCurve.setCurveDisplayMode(
+            mode =
+                if (isProMode) {
+                    when (selectedProChannel) {
+                        ProChannel.RED -> LightProgramCurveView.CurveDisplayMode.PRO_RED
+                        ProChannel.GREEN -> LightProgramCurveView.CurveDisplayMode.PRO_GREEN
+                        ProChannel.BLUE -> LightProgramCurveView.CurveDisplayMode.PRO_BLUE
+                        ProChannel.WHITE -> LightProgramCurveView.CurveDisplayMode.PRO_WHITE
+                    }
+                } else {
+                    LightProgramCurveView.CurveDisplayMode.SIMPLE
+                }
+        )
+
+        viewProgramEditorCurve.setCurvePoints(
+            points =
+                sortedCurve.map { point ->
+                    LightProgramCurveView.CurvePoint(
+                        time = point.time,
+                        intensity = point.intensity
+                    )
+                }
         )
 
         tvCurveStartSummary.text = start.time
@@ -446,13 +469,18 @@ class DeviceLightProgramEditorFragment :
             } else {
                 "Simple curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
             }
+
+        renderExtraCurvePointRows()
     }
 
     private fun showPointEditor(
-        pointId: CurvePointId
+        pointId: String
     ) {
         val currentPoint =
-            currentCurvePoints()[pointId] ?: return
+            currentCurvePoints()
+                .pointById(
+                    pointId = pointId
+                ) ?: return
 
         showPointEditorSheet(
             label = currentPoint.label,
@@ -460,11 +488,13 @@ class DeviceLightProgramEditorFragment :
             intensity = currentPoint.intensity,
             canDelete = currentPoint.canDelete,
             onSave = { selectedTime, selectedIntensity ->
-                currentCurvePoints()[pointId] =
-                    currentPoint.copy(
-                        time = selectedTime,
-                        intensity = selectedIntensity
-                    )
+                updateCurvePoint(
+                    updatedPoint =
+                        currentPoint.copy(
+                            time = selectedTime,
+                            intensity = selectedIntensity
+                        )
+                )
 
                 renderCurrentCurve()
 
@@ -473,26 +503,276 @@ class DeviceLightProgramEditorFragment :
                 )
             },
             onDelete = {
-                showMessage("Default points cannot be deleted")
+                if (currentPoint.canDelete) {
+                    deleteCurvePoint(
+                        pointId = currentPoint.id
+                    )
+
+                    renderCurrentCurve()
+
+                    showMessage(
+                        "Point deleted: ${currentPoint.label}"
+                    )
+                } else {
+                    showMessage("Default points cannot be deleted")
+                }
             }
         )
     }
 
     private fun showNewPointEditor() {
+        val suggestedPoint = createSuggestedIntermediatePoint()
+
         showPointEditorSheet(
-            label = "New intermediate point",
-            time = "11:00",
-            intensity = 60,
+            label = suggestedPoint.label,
+            time = suggestedPoint.time,
+            intensity = suggestedPoint.intensity,
             canDelete = false,
             onSave = { selectedTime, selectedIntensity ->
+                currentCurvePoints().add(
+                    suggestedPoint.copy(
+                        time = selectedTime,
+                        intensity = selectedIntensity
+                    )
+                )
+
+                renderCurrentCurve()
+
                 showMessage(
-                    "Intermediate point ready: $selectedTime · $selectedIntensity%"
+                    "Point added: $selectedTime · $selectedIntensity%"
                 )
             },
             onDelete = {
                 Unit
             }
         )
+    }
+
+    private fun renderExtraCurvePointRows() = with(binding) {
+        val container = curvePointsContainer
+
+        container.children
+            .filter { child ->
+                child.tag == EXTRA_CURVE_POINT_ROW_TAG
+            }
+            .toList()
+            .forEach { child ->
+                container.removeView(child)
+            }
+
+        val extraPoints =
+            currentCurvePointsSorted()
+                .filter { point ->
+                    point.kind == CurvePointKind.INTERMEDIATE
+                }
+
+        extraPoints.forEach { point ->
+            val insertIndex =
+                findCurvePointInsertIndex(
+                    point = point
+                )
+
+            container.addView(
+                createExtraCurvePointRow(
+                    point = point
+                ),
+                insertIndex
+            )
+        }
+    }
+
+    private fun findCurvePointInsertIndex(
+        point: CurvePointState
+    ): Int = with(binding) {
+        val container = curvePointsContainer
+        val pointMinutes = timeToMinutes(point.time)
+
+        val staticRows =
+            listOf(
+                currentCurvePoints().pointById(POINT_ID_START) to rowPointStart,
+                currentCurvePoints().pointById(POINT_ID_PEAK_START) to rowPointPeakStart,
+                currentCurvePoints().pointById(POINT_ID_PEAK_END) to rowPointPeakEnd,
+                currentCurvePoints().pointById(POINT_ID_END) to rowPointEnd
+            )
+
+        val targetRow =
+            staticRows.firstOrNull { pair ->
+                val staticPoint = pair.first
+
+                staticPoint != null &&
+                    pointMinutes < timeToMinutes(staticPoint.time)
+            }?.second
+
+        return if (targetRow != null) {
+            container.indexOfChild(targetRow).coerceAtLeast(0)
+        } else {
+            container.indexOfChild(rowPointEnd) + 1
+        }
+    }
+
+    private fun createExtraCurvePointRow(
+        point: CurvePointState
+    ): View {
+        val row =
+            LinearLayout(requireContext()).apply {
+                tag = EXTRA_CURVE_POINT_ROW_TAG
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                isClickable = true
+                isFocusable = true
+                setBackgroundResource(selectableItemBackgroundRes())
+
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        46.dp()
+                    )
+
+                setOnClickListener {
+                    showPointEditor(
+                        pointId = point.id
+                    )
+                }
+            }
+
+        val timeView =
+            TextView(requireContext()).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        50.dp(),
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+
+                text = point.time
+                textSize = 13f
+                includeFontPadding = false
+                typeface = ResourcesCompat.getFont(
+                    requireContext(),
+                    R.font.inter_semibold
+                )
+                setTextColor(
+                    themeColor(
+                        com.google.android.material.R.attr.colorOnSurface
+                    )
+                )
+            }
+
+        val labelView =
+            TextView(requireContext()).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1f
+                    )
+
+                text = point.label
+                textSize = 12f
+                setTextColor(
+                    color(R.color.settings_text_secondary)
+                )
+            }
+
+        val percentView =
+            TextView(requireContext()).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+
+                text = "${point.intensity}%"
+                textSize = 13f
+                includeFontPadding = false
+                typeface = ResourcesCompat.getFont(
+                    requireContext(),
+                    R.font.inter_semibold
+                )
+                setTextColor(
+                    color(R.color.light_accent)
+                )
+            }
+
+        row.addView(timeView)
+        row.addView(labelView)
+        row.addView(percentView)
+
+        return row
+    }
+
+    private fun createSuggestedIntermediatePoint(): CurvePointState {
+        val sortedPoints = currentCurvePointsSorted()
+
+        val biggestGap =
+            sortedPoints
+                .zipWithNext()
+                .maxByOrNull { pair ->
+                    timeToMinutes(pair.second.time) - timeToMinutes(pair.first.time)
+                }
+
+        val suggestedMinutes =
+            if (biggestGap == null) {
+                timeToMinutes("11:00")
+            } else {
+                val startMinutes = timeToMinutes(biggestGap.first.time)
+                val endMinutes = timeToMinutes(biggestGap.second.time)
+
+                roundToPointStep(
+                    minutes = startMinutes + ((endMinutes - startMinutes) / 2)
+                )
+            }
+
+        val safeMinutes =
+            findAvailablePointMinute(
+                preferredMinutes = suggestedMinutes
+            )
+
+        val extraPointNumber =
+            currentCurvePoints()
+                .count { point ->
+                    point.kind == CurvePointKind.INTERMEDIATE
+                } + 1
+
+        return CurvePointState(
+            id = "extra_${System.currentTimeMillis()}",
+            label = "Point $extraPointNumber",
+            time = minutesToTime(safeMinutes),
+            intensity = 60,
+            kind = CurvePointKind.INTERMEDIATE,
+            canDelete = true
+        )
+    }
+
+    private fun updateCurvePoint(
+        updatedPoint: CurvePointState
+    ) {
+        val curve = currentCurvePoints()
+
+        val index =
+            curve.indexOfFirst { point ->
+                point.id == updatedPoint.id
+            }
+
+        if (index == -1) {
+            return
+        }
+
+        curve[index] =
+            updatedPoint.copy(
+                intensity = updatedPoint.intensity.coerceIn(
+                    minimumValue = 0,
+                    maximumValue = MAX_PERCENT
+                )
+            )
+    }
+
+    private fun deleteCurvePoint(
+        pointId: String
+    ) {
+        currentCurvePoints()
+            .removeAll { point ->
+                point.id == pointId && point.canDelete
+            }
     }
 
     private fun showPointEditorSheet(
@@ -1054,7 +1334,7 @@ class DeviceLightProgramEditorFragment :
         )
     }
 
-    private fun currentCurvePoints(): MutableMap<CurvePointId, CurvePointState> {
+    private fun currentCurvePoints(): MutableList<CurvePointState> {
         return if (isProMode) {
             proChannelCurves.getValue(selectedProChannel)
         } else {
@@ -1062,65 +1342,157 @@ class DeviceLightProgramEditorFragment :
         }
     }
 
-    private fun createSimpleCurvePoints(): MutableMap<CurvePointId, CurvePointState> {
-        return mutableMapOf(
-            CurvePointId.START to CurvePointState(
-                id = CurvePointId.START,
+    private fun currentCurvePointsSorted(): List<CurvePointState> {
+        return currentCurvePoints()
+            .sortedWith(
+                compareBy<CurvePointState> {
+                    timeToMinutes(
+                        time = it.time
+                    )
+                }.thenBy {
+                    it.kind.sortOrder
+                }
+            )
+    }
+
+    private fun MutableList<CurvePointState>.pointById(
+        pointId: String
+    ): CurvePointState? {
+        return firstOrNull { point ->
+            point.id == pointId
+        }
+    }
+
+    private fun List<CurvePointState>.pointById(
+        pointId: String
+    ): CurvePointState? {
+        return firstOrNull { point ->
+            point.id == pointId
+        }
+    }
+
+    private fun createSimpleCurvePoints(): MutableList<CurvePointState> {
+        return mutableListOf(
+            CurvePointState(
+                id = POINT_ID_START,
                 label = "Start",
                 time = "08:00",
-                intensity = 0
+                intensity = 0,
+                kind = CurvePointKind.START
             ),
-            CurvePointId.PEAK_START to CurvePointState(
-                id = CurvePointId.PEAK_START,
+            CurvePointState(
+                id = POINT_ID_PEAK_START,
                 label = "Peak start",
                 time = "12:00",
-                intensity = 100
+                intensity = 100,
+                kind = CurvePointKind.PEAK_START
             ),
-            CurvePointId.PEAK_END to CurvePointState(
-                id = CurvePointId.PEAK_END,
+            CurvePointState(
+                id = POINT_ID_PEAK_END,
                 label = "Peak end",
                 time = "16:00",
-                intensity = 100
+                intensity = 100,
+                kind = CurvePointKind.PEAK_END
             ),
-            CurvePointId.END to CurvePointState(
-                id = CurvePointId.END,
+            CurvePointState(
+                id = POINT_ID_END,
                 label = "End",
                 time = "20:00",
-                intensity = 0
+                intensity = 0,
+                kind = CurvePointKind.END
             )
         )
     }
 
     private fun createChannelCurvePoints(
         peak: Int
-    ): MutableMap<CurvePointId, CurvePointState> {
+    ): MutableList<CurvePointState> {
         val safePeak = peak.coerceIn(0, MAX_PERCENT)
 
-        return mutableMapOf(
-            CurvePointId.START to CurvePointState(
-                id = CurvePointId.START,
+        return mutableListOf(
+            CurvePointState(
+                id = POINT_ID_START,
                 label = "Start",
                 time = "08:00",
-                intensity = 0
+                intensity = 0,
+                kind = CurvePointKind.START
             ),
-            CurvePointId.PEAK_START to CurvePointState(
-                id = CurvePointId.PEAK_START,
+            CurvePointState(
+                id = POINT_ID_PEAK_START,
                 label = "Peak start",
                 time = "12:00",
-                intensity = safePeak
+                intensity = safePeak,
+                kind = CurvePointKind.PEAK_START
             ),
-            CurvePointId.PEAK_END to CurvePointState(
-                id = CurvePointId.PEAK_END,
+            CurvePointState(
+                id = POINT_ID_PEAK_END,
                 label = "Peak end",
                 time = "16:00",
-                intensity = safePeak
+                intensity = safePeak,
+                kind = CurvePointKind.PEAK_END
             ),
-            CurvePointId.END to CurvePointState(
-                id = CurvePointId.END,
+            CurvePointState(
+                id = POINT_ID_END,
                 label = "End",
                 time = "20:00",
-                intensity = 0
+                intensity = 0,
+                kind = CurvePointKind.END
             )
+        )
+    }
+
+    private fun roundToPointStep(
+        minutes: Int
+    ): Int {
+        return ((minutes + (POINT_STEP_MINUTES / 2)) / POINT_STEP_MINUTES) *
+            POINT_STEP_MINUTES
+    }
+
+    private fun findAvailablePointMinute(
+        preferredMinutes: Int
+    ): Int {
+        val usedMinutes =
+            currentCurvePoints()
+                .map { point ->
+                    timeToMinutes(
+                        time = point.time
+                    )
+                }
+                .toSet()
+
+        var candidate =
+            preferredMinutes.coerceIn(
+                minimumValue = 0,
+                maximumValue = MINUTES_IN_DAY - POINT_STEP_MINUTES
+            )
+
+        while (
+            usedMinutes.contains(candidate) &&
+            candidate < MINUTES_IN_DAY - POINT_STEP_MINUTES
+        ) {
+            candidate += POINT_STEP_MINUTES
+        }
+
+        if (!usedMinutes.contains(candidate)) {
+            return candidate
+        }
+
+        candidate =
+            preferredMinutes.coerceIn(
+                minimumValue = POINT_STEP_MINUTES,
+                maximumValue = MINUTES_IN_DAY - 1
+            )
+
+        while (
+            usedMinutes.contains(candidate) &&
+            candidate > 0
+        ) {
+            candidate -= POINT_STEP_MINUTES
+        }
+
+        return candidate.coerceIn(
+            minimumValue = 0,
+            maximumValue = MINUTES_IN_DAY - 1
         )
     }
 
@@ -1233,12 +1605,50 @@ class DeviceLightProgramEditorFragment :
         )
     }
 
+    private fun selectableItemBackgroundRes(): Int {
+        val typedValue = TypedValue()
+
+        requireContext()
+            .theme
+            .resolveAttribute(
+                android.R.attr.selectableItemBackground,
+                typedValue,
+                true
+            )
+
+        return typedValue.resourceId
+    }
+
+    private fun themeColor(
+        attrRes: Int
+    ): Int {
+        val typedValue = TypedValue()
+
+        requireContext()
+            .theme
+            .resolveAttribute(
+                attrRes,
+                typedValue,
+                true
+            )
+
+        return if (typedValue.resourceId != 0) {
+            color(typedValue.resourceId)
+        } else {
+            typedValue.data
+        }
+    }
+
     private fun color(
         @ColorRes colorRes: Int
     ): Int {
         return requireContext().getColor(
             colorRes
         )
+    }
+
+    private fun Int.dp(): Int {
+        return (this * resources.displayMetrics.density).roundToInt()
     }
 
     private fun showMessage(
@@ -1257,18 +1667,22 @@ class DeviceLightProgramEditorFragment :
         super.onDestroyView()
     }
 
-    private enum class CurvePointId {
-        START,
-        PEAK_START,
-        PEAK_END,
-        END
+    private enum class CurvePointKind(
+        val sortOrder: Int
+    ) {
+        START(0),
+        PEAK_START(1),
+        PEAK_END(2),
+        END(3),
+        INTERMEDIATE(4)
     }
 
     private data class CurvePointState(
-        val id: CurvePointId,
+        val id: String,
         val label: String,
         val time: String,
         val intensity: Int,
+        val kind: CurvePointKind,
         val canDelete: Boolean = false
     )
 
@@ -1323,6 +1737,13 @@ class DeviceLightProgramEditorFragment :
         private const val POINT_STEP_MINUTES = 15
         private const val MINUTES_IN_DAY = 24 * 60
         private const val MAX_PERCENT = 100
+
+        private const val POINT_ID_START = "start"
+        private const val POINT_ID_PEAK_START = "peak_start"
+        private const val POINT_ID_PEAK_END = "peak_end"
+        private const val POINT_ID_END = "end"
+
+        private const val EXTRA_CURVE_POINT_ROW_TAG = "extra_curve_point_row"
 
         private const val DAY_MON = 1
         private const val DAY_TUE = 2

@@ -18,6 +18,19 @@ class LightProgramCurveView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
+    enum class CurveDisplayMode {
+        SIMPLE,
+        PRO_RED,
+        PRO_GREEN,
+        PRO_BLUE,
+        PRO_WHITE
+    }
+
+    data class CurvePoint(
+        val time: String,
+        val intensity: Int
+    )
+
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#AEB9C6")
         textSize = 10f.sp()
@@ -84,38 +97,63 @@ class LightProgramCurveView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
     }
 
-    private var startTime = "09:00"
-    private var sunriseEndTime = "12:00"
-    private var peakEndTime = "16:00"
-    private var endTime = "19:15"
+    private var displayMode: CurveDisplayMode = CurveDisplayMode.SIMPLE
 
-    private var startIntensity = 0
-    private var sunriseEndIntensity = 100
-    private var peakEndIntensity = 100
-    private var endIntensity = 0
+    private var curvePoints: List<CurvePoint> =
+        listOf(
+            CurvePoint(
+                time = "08:00",
+                intensity = 0
+            ),
+            CurvePoint(
+                time = "12:00",
+                intensity = 100
+            ),
+            CurvePoint(
+                time = "16:00",
+                intensity = 100
+            ),
+            CurvePoint(
+                time = "20:00",
+                intensity = 0
+            )
+        )
 
-    private val colors = intArrayOf(
-        Color.parseColor("#FF9F2D"),
-        Color.parseColor("#C9F36B"),
-        Color.parseColor("#28E6F0"),
-        Color.parseColor("#28E6F0"),
-        Color.parseColor("#8D7CFF"),
-        Color.parseColor("#FF6D8C")
-    )
+    private val simpleGradientColors =
+        intArrayOf(
+            Color.parseColor("#FF9F2D"),
+            Color.parseColor("#C9F36B"),
+            Color.parseColor("#28E6F0"),
+            Color.parseColor("#28E6F0"),
+            Color.parseColor("#8D7CFF"),
+            Color.parseColor("#FF6D8C")
+        )
 
-    override fun onDraw(canvas: Canvas) {
+    override fun onDraw(
+        canvas: Canvas
+    ) {
         super.onDraw(canvas)
 
         if (width <= 0 || height <= 0) {
             return
         }
 
+        val sortedPoints =
+            curvePoints
+                .sortedBy {
+                    timeToMinutes(
+                        time = it.time
+                    )
+                }
+                .ifEmpty {
+                    return
+                }
+
         val left = 46f.dp()
         val right = width - 8f.dp()
         val top = 9f.dp()
         val bottom = height - 34f.dp()
 
-        val chartWidth = right - left
         val chartHeight = bottom - top
 
         val y0 = bottom
@@ -135,125 +173,153 @@ class LightProgramCurveView @JvmOverloads constructor(
             y100 = y100
         )
 
-        val p0 = PointF(
-            left + chartWidth * 0.02f,
-            intensityToY(
-                intensity = startIntensity,
+        val drawablePoints =
+            buildDrawablePoints(
+                points = sortedPoints,
+                left = left,
+                right = right,
                 top = top,
                 bottom = bottom
             )
-        )
 
-        val p1 = PointF(
-            left + chartWidth * 0.23f,
-            intensityToY(
-                intensity = midIntensity(
-                    first = startIntensity,
-                    second = sunriseEndIntensity
-                ),
-                top = top,
-                bottom = bottom
+        if (drawablePoints.isEmpty()) {
+            return
+        }
+
+        val curvePath =
+            buildSmoothPath(
+                points = drawablePoints
             )
+
+        drawCurveFill(
+            canvas = canvas,
+            curvePath = curvePath,
+            drawablePoints = drawablePoints,
+            y0 = y0,
+            y100 = y100
         )
 
-        val p2 = PointF(
-            left + chartWidth * 0.36f,
-            intensityToY(
-                intensity = sunriseEndIntensity,
-                top = top,
-                bottom = bottom
+        drawCurveLine(
+            canvas = canvas,
+            curvePath = curvePath,
+            left = left,
+            right = right
+        )
+
+        drawablePoints.forEachIndexed { index, point ->
+            drawPoint(
+                canvas = canvas,
+                point = point,
+                color = pointColor(
+                    index = index,
+                    lastIndex = drawablePoints.lastIndex
+                )
             )
-        )
+        }
 
-        val p3 = PointF(
-            left + chartWidth * 0.62f,
-            intensityToY(
-                intensity = peakEndIntensity,
-                top = top,
-                bottom = bottom
+        drawBottomLabels(
+            canvas = canvas,
+            left = left,
+            right = right,
+            bottom = bottom,
+            points = sortedPoints,
+            drawablePoints = drawablePoints
+        )
+    }
+
+    private fun buildDrawablePoints(
+        points: List<CurvePoint>,
+        left: Float,
+        right: Float,
+        top: Float,
+        bottom: Float
+    ): List<PointF> {
+        val startMinutes =
+            timeToMinutes(
+                time = points.first().time
             )
-        )
 
-        val p4 = PointF(
-            left + chartWidth * 0.75f,
-            intensityToY(
-                intensity = midIntensity(
-                    first = peakEndIntensity,
-                    second = endIntensity
-                ),
-                top = top,
-                bottom = bottom
+        val endMinutes =
+            timeToMinutes(
+                time = points.last().time
             )
-        )
 
-        val p5 = PointF(
-            right - chartWidth * 0.02f,
-            intensityToY(
-                intensity = endIntensity,
-                top = top,
-                bottom = bottom
+        val rangeMinutes =
+            (endMinutes - startMinutes)
+                .coerceAtLeast(1)
+
+        val chartWidth = right - left
+
+        return points.map { point ->
+            val pointMinutes =
+                timeToMinutes(
+                    time = point.time
+                )
+
+            val xProgress =
+                ((pointMinutes - startMinutes).toFloat() / rangeMinutes.toFloat())
+                    .coerceIn(
+                        minimumValue = 0f,
+                        maximumValue = 1f
+                    )
+
+            PointF(
+                left + chartWidth * xProgress,
+                intensityToY(
+                    intensity = point.intensity,
+                    top = top,
+                    bottom = bottom
+                )
             )
-        )
+        }
+    }
 
-        val curvePath = Path().apply {
+    private fun buildSmoothPath(
+        points: List<PointF>
+    ): Path {
+        return Path().apply {
+            val firstPoint = points.first()
+
             moveTo(
-                p0.x,
-                p0.y
+                firstPoint.x,
+                firstPoint.y
             )
 
-            cubicTo(
-                left + chartWidth * 0.10f,
-                p0.y,
-                left + chartWidth * 0.18f,
-                p1.y,
-                p1.x,
-                p1.y
-            )
+            if (points.size == 1) {
+                return@apply
+            }
 
-            cubicTo(
-                left + chartWidth * 0.30f,
-                p1.y,
-                left + chartWidth * 0.32f,
-                p2.y,
-                p2.x,
-                p2.y
-            )
+            for (index in 1 until points.size) {
+                val previous = points[index - 1]
+                val current = points[index]
+                val midX = (previous.x + current.x) / 2f
 
-            lineTo(
-                p3.x,
-                p3.y
-            )
+                cubicTo(
+                    midX,
+                    previous.y,
+                    midX,
+                    current.y,
+                    current.x,
+                    current.y
+                )
+            }
+        }
+    }
 
-            cubicTo(
-                left + chartWidth * 0.66f,
-                p3.y,
-                left + chartWidth * 0.69f,
-                p4.y,
-                p4.x,
-                p4.y
-            )
-
-            cubicTo(
-                left + chartWidth * 0.84f,
-                p4.y,
-                left + chartWidth * 0.91f,
-                p5.y,
-                p5.x,
-                p5.y
-            )
+    private fun drawCurveFill(
+        canvas: Canvas,
+        curvePath: Path,
+        drawablePoints: List<PointF>,
+        y0: Float,
+        y100: Float
+    ) {
+        if (drawablePoints.size < 2) {
+            return
         }
 
-        val fillPath = Path(curvePath).apply {
-            lineTo(
-                p5.x,
-                y0
-            )
-            lineTo(
-                p0.x,
-                y0
-            )
-            close()
-        }
+        val firstPoint = drawablePoints.first()
+        val lastPoint = drawablePoints.last()
+        val accentColor = currentAccentColor()
 
         fillPaint.shader = LinearGradient(
             0f,
@@ -263,38 +329,69 @@ class LightProgramCurveView @JvmOverloads constructor(
             intArrayOf(
                 Color.argb(
                     120,
-                    40,
-                    230,
-                    240
+                    Color.red(accentColor),
+                    Color.green(accentColor),
+                    Color.blue(accentColor)
                 ),
                 Color.argb(
                     14,
-                    40,
-                    230,
-                    240
+                    Color.red(accentColor),
+                    Color.green(accentColor),
+                    Color.blue(accentColor)
                 )
             ),
             null,
             Shader.TileMode.CLAMP
         )
 
+        val fillPath =
+            Path(curvePath).apply {
+                lineTo(
+                    lastPoint.x,
+                    y0
+                )
+                lineTo(
+                    firstPoint.x,
+                    y0
+                )
+                close()
+            }
+
         canvas.drawPath(
             fillPath,
             fillPaint
         )
+    }
 
-        val gradient = LinearGradient(
-            left,
-            0f,
-            right,
-            0f,
-            colors,
-            null,
-            Shader.TileMode.CLAMP
-        )
+    private fun drawCurveLine(
+        canvas: Canvas,
+        curvePath: Path,
+        left: Float,
+        right: Float
+    ) {
+        if (displayMode == CurveDisplayMode.SIMPLE) {
+            val gradient =
+                LinearGradient(
+                    left,
+                    0f,
+                    right,
+                    0f,
+                    simpleGradientColors,
+                    null,
+                    Shader.TileMode.CLAMP
+                )
 
-        linePaint.shader = gradient
-        glowPaint.shader = gradient
+            linePaint.shader = gradient
+            glowPaint.shader = gradient
+        } else {
+            val accentColor = currentAccentColor()
+
+            linePaint.shader = null
+            glowPaint.shader = null
+
+            linePaint.color = accentColor
+            glowPaint.color = accentColor
+        }
 
         canvas.drawPath(
             curvePath,
@@ -304,51 +401,6 @@ class LightProgramCurveView @JvmOverloads constructor(
         canvas.drawPath(
             curvePath,
             linePaint
-        )
-
-        drawPoint(
-            canvas = canvas,
-            point = p0,
-            colorHex = "#FFA32B"
-        )
-
-        drawPoint(
-            canvas = canvas,
-            point = p1,
-            colorHex = "#B9F57D"
-        )
-
-        drawPoint(
-            canvas = canvas,
-            point = p2,
-            colorHex = "#28E6F0"
-        )
-
-        drawPoint(
-            canvas = canvas,
-            point = p3,
-            colorHex = "#28E6F0"
-        )
-
-        drawPoint(
-            canvas = canvas,
-            point = p4,
-            colorHex = "#9B86FF"
-        )
-
-        drawPoint(
-            canvas = canvas,
-            point = p5,
-            colorHex = "#FF6D8C"
-        )
-
-        drawBottomLabels(
-            canvas = canvas,
-            left = left,
-            right = right,
-            bottom = bottom,
-            p2 = p2,
-            p3 = p3
         )
     }
 
@@ -455,13 +507,28 @@ class LightProgramCurveView @JvmOverloads constructor(
         left: Float,
         right: Float,
         bottom: Float,
-        p2: PointF,
-        p3: PointF
+        points: List<CurvePoint>,
+        drawablePoints: List<PointF>
     ) {
         val labelY = bottom + 23f.dp()
+        val accentColor = currentAccentColor()
 
         sunrisePaint.textSize = 14f.sp()
         sunsetPaint.textSize = 14f.sp()
+
+        sunrisePaint.color =
+            if (displayMode == CurveDisplayMode.SIMPLE) {
+                Color.parseColor("#FFA32B")
+            } else {
+                accentColor
+            }
+
+        sunsetPaint.color =
+            if (displayMode == CurveDisplayMode.SIMPLE) {
+                Color.parseColor("#E26FD7")
+            } else {
+                accentColor
+            }
 
         canvas.drawText(
             "☀",
@@ -482,30 +549,28 @@ class LightProgramCurveView @JvmOverloads constructor(
 
         timePaint.textAlign = Paint.Align.LEFT
         canvas.drawText(
-            startTime,
+            points.first().time,
             left + 4f.dp(),
             labelY,
             timePaint
         )
 
-        timePaint.textAlign = Paint.Align.CENTER
-        canvas.drawText(
-            sunriseEndTime,
-            p2.x,
-            labelY,
-            timePaint
-        )
+        if (points.size <= 6) {
+            for (index in 1 until points.lastIndex) {
+                timePaint.textAlign = Paint.Align.CENTER
 
-        canvas.drawText(
-            peakEndTime,
-            p3.x,
-            labelY,
-            timePaint
-        )
+                canvas.drawText(
+                    points[index].time,
+                    drawablePoints[index].x,
+                    labelY,
+                    timePaint
+                )
+            }
+        }
 
         timePaint.textAlign = Paint.Align.RIGHT
         canvas.drawText(
-            endTime,
+            points.last().time,
             right,
             labelY,
             timePaint
@@ -515,9 +580,9 @@ class LightProgramCurveView @JvmOverloads constructor(
     private fun drawPoint(
         canvas: Canvas,
         point: PointF,
-        colorHex: String
+        color: Int
     ) {
-        pointPaint.color = Color.parseColor(colorHex)
+        pointPaint.color = color
 
         canvas.drawCircle(
             point.x,
@@ -525,6 +590,118 @@ class LightProgramCurveView @JvmOverloads constructor(
             4.7f.dp(),
             pointPaint
         )
+    }
+
+    private fun pointColor(
+        index: Int,
+        lastIndex: Int
+    ): Int {
+        if (displayMode != CurveDisplayMode.SIMPLE) {
+            return currentAccentColor()
+        }
+
+        if (lastIndex <= 0) {
+            return simpleGradientColors.first()
+        }
+
+        val fraction =
+            index.toFloat() / lastIndex.toFloat()
+
+        return interpolateGradientColor(
+            colors = simpleGradientColors,
+            fraction = fraction
+        )
+    }
+
+    private fun interpolateGradientColor(
+        colors: IntArray,
+        fraction: Float
+    ): Int {
+        val safeFraction =
+            fraction.coerceIn(
+                minimumValue = 0f,
+                maximumValue = 1f
+            )
+
+        val scaled =
+            safeFraction * (colors.size - 1)
+
+        val startIndex =
+            scaled.toInt()
+                .coerceIn(
+                    minimumValue = 0,
+                    maximumValue = colors.lastIndex
+                )
+
+        val endIndex =
+            (startIndex + 1)
+                .coerceAtMost(colors.lastIndex)
+
+        val localFraction =
+            scaled - startIndex
+
+        val startColor = colors[startIndex]
+        val endColor = colors[endIndex]
+
+        return Color.rgb(
+            lerpColorChannel(
+                start = Color.red(startColor),
+                end = Color.red(endColor),
+                fraction = localFraction
+            ),
+            lerpColorChannel(
+                start = Color.green(startColor),
+                end = Color.green(endColor),
+                fraction = localFraction
+            ),
+            lerpColorChannel(
+                start = Color.blue(startColor),
+                end = Color.blue(endColor),
+                fraction = localFraction
+            )
+        )
+    }
+
+    private fun lerpColorChannel(
+        start: Int,
+        end: Int,
+        fraction: Float
+    ): Int {
+        return (start + ((end - start) * fraction))
+            .toInt()
+            .coerceIn(
+                minimumValue = 0,
+                maximumValue = 255
+            )
+    }
+
+    fun setCurveDisplayMode(
+        mode: CurveDisplayMode
+    ) {
+        displayMode = mode
+        invalidate()
+    }
+
+    fun setCurvePoints(
+        points: List<CurvePoint>
+    ) {
+        curvePoints =
+            points
+                .map { point ->
+                    point.copy(
+                        intensity = point.intensity.coerceIn(
+                            minimumValue = 0,
+                            maximumValue = 100
+                        )
+                    )
+                }
+                .sortedBy {
+                    timeToMinutes(
+                        time = it.time
+                    )
+                }
+
+        invalidate()
     }
 
     fun setProgramCurve(
@@ -537,32 +714,51 @@ class LightProgramCurveView @JvmOverloads constructor(
         peakEndIntensity: Int,
         endIntensity: Int
     ) {
-        startTime = start
-        sunriseEndTime = sunriseEnd
-        peakEndTime = peakEnd
-        endTime = end
-
-        this.startIntensity = startIntensity.coerceIn(
-            minimumValue = 0,
-            maximumValue = 100
+        setCurvePoints(
+            points =
+                listOf(
+                    CurvePoint(
+                        time = start,
+                        intensity = startIntensity
+                    ),
+                    CurvePoint(
+                        time = sunriseEnd,
+                        intensity = sunriseEndIntensity
+                    ),
+                    CurvePoint(
+                        time = peakEnd,
+                        intensity = peakEndIntensity
+                    ),
+                    CurvePoint(
+                        time = end,
+                        intensity = endIntensity
+                    )
+                )
         )
+    }
 
-        this.sunriseEndIntensity = sunriseEndIntensity.coerceIn(
-            minimumValue = 0,
-            maximumValue = 100
-        )
+    private fun currentAccentColor(): Int {
+        return when (displayMode) {
+            CurveDisplayMode.SIMPLE -> {
+                Color.parseColor("#28E6F0")
+            }
 
-        this.peakEndIntensity = peakEndIntensity.coerceIn(
-            minimumValue = 0,
-            maximumValue = 100
-        )
+            CurveDisplayMode.PRO_RED -> {
+                Color.parseColor("#F04D4D")
+            }
 
-        this.endIntensity = endIntensity.coerceIn(
-            minimumValue = 0,
-            maximumValue = 100
-        )
+            CurveDisplayMode.PRO_GREEN -> {
+                Color.parseColor("#6CC56C")
+            }
 
-        invalidate()
+            CurveDisplayMode.PRO_BLUE -> {
+                Color.parseColor("#48A9F8")
+            }
+
+            CurveDisplayMode.PRO_WHITE -> {
+                Color.parseColor("#E0E6ED")
+            }
+        }
     }
 
     private fun intensityToY(
@@ -570,22 +766,32 @@ class LightProgramCurveView @JvmOverloads constructor(
         top: Float,
         bottom: Float
     ): Float {
-        val safeIntensity = intensity.coerceIn(
-            minimumValue = 0,
-            maximumValue = 100
-        )
+        val safeIntensity =
+            intensity.coerceIn(
+                minimumValue = 0,
+                maximumValue = 100
+            )
 
         return bottom - ((bottom - top) * safeIntensity / 100f)
     }
 
-    private fun midIntensity(
-        first: Int,
-        second: Int
+    private fun timeToMinutes(
+        time: String
     ): Int {
-        return ((first + second) / 2f).toInt().coerceIn(
-            minimumValue = 0,
-            maximumValue = 100
-        )
+        val parts = time.split(":")
+
+        if (parts.size != 2) {
+            return 0
+        }
+
+        val hour = parts[0].toIntOrNull() ?: 0
+        val minute = parts[1].toIntOrNull() ?: 0
+
+        return (hour * 60 + minute)
+            .coerceIn(
+                minimumValue = 0,
+                maximumValue = 24 * 60 - 1
+            )
     }
 
     private fun Float.dp(): Float {
