@@ -1,175 +1,222 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/lightPointEditorRoot"
+    android:id="@+id/lightPointEditorScroll"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_light_bottom_sheet_surface"
-    android:orientation="vertical"
-    android:paddingStart="20dp"
-    android:paddingTop="12dp"
-    android:paddingEnd="20dp"
-    android:paddingBottom="24dp">
-
-    <View
-        android:layout_width="42dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:background="@color/light_stroke" />
-
-    <TextView
-        android:id="@+id/tvPointTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Edit Point"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="22sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tvPointLabel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="Sunrise start"
-        android:textColor="@color/settings_text_secondary"
-        android:textSize="13sp" />
-		
-	<TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="22dp"
-    android:text="Program Name"
-    android:textColor="?attr/colorOnSurface"
-    android:textSize="15sp"
-    android:textStyle="bold" />
-
-<EditText
-    android:id="@+id/inputPointSheetProgramName"
-    android:layout_width="match_parent"
-    android:layout_height="54dp"
-    android:layout_marginTop="10dp"
-    android:background="@drawable/bg_light_editor_chip_unselected"
-    android:hint="Program name"
-    android:imeOptions="actionDone"
-    android:inputType="textCapSentences"
-    android:maxLines="1"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:singleLine="true"
-    android:textColor="?attr/colorOnSurface"
-    android:textColorHint="@color/settings_text_secondary"
-    android:textSize="16sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="22dp"
-        android:text="Time"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="15sp"
-        android:textStyle="bold" />
+    android:clipToPadding="false"
+    android:fillViewport="false"
+    android:overScrollMode="never"
+    android:scrollbars="none">
 
     <LinearLayout
+        android:id="@+id/lightPointEditorRoot"
         android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="24dp">
+
+        <View
+            android:layout_width="42dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@color/light_stroke" />
 
         <TextView
-            android:id="@+id/btnPointTimeMinus"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackground"
-            android:gravity="center"
-            android:text="-"
-            android:textColor="@color/light_accent"
-            android:textSize="26sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvPointTime"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="10:00"
+            android:id="@+id/tvPointTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Edit Point"
             android:textColor="?attr/colorOnSurface"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:textSize="24sp" />
 
         <TextView
-            android:id="@+id/btnPointTimePlus"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackground"
-            android:gravity="center"
-            android:text="+"
+            android:id="@+id/tvPointLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:lineSpacingExtra="3dp"
+            android:text="Edit this curve point time and intensity."
+            android:textColor="@color/settings_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvPointNameLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Point Name"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/inputPointName"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_light_editor_chip_unselected"
+            android:fontFamily="@font/inter_regular"
+            android:hint="Point name"
+            android:imeOptions="actionDone"
+            android:includeFontPadding="false"
+            android:inputType="textCapSentences"
+            android:maxLines="1"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:singleLine="true"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="@color/settings_text_secondary"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvPointNameHelper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:lineSpacingExtra="2dp"
+            android:text="This name will be shown in the curve points list."
+            android:textColor="@color/settings_text_secondary"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tvPointTimeLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Time"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:id="@+id/pointTimeControlRow"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_light_editor_chip_unselected"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <TextView
+                android:id="@+id/btnPointTimeMinus"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:fontFamily="@font/inter_semibold"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="-"
+                android:textColor="@color/light_accent"
+                android:textSize="28sp" />
+
+            <TextView
+                android:id="@+id/tvPointTime"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:fontFamily="@font/inter_semibold"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="10:00"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="32sp" />
+
+            <TextView
+                android:id="@+id/btnPointTimePlus"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:fontFamily="@font/inter_semibold"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="+"
+                android:textColor="@color/light_accent"
+                android:textSize="28sp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvPointIntensityLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Intensity"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tvPointIntensityValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="80%"
             android:textColor="@color/light_accent"
-            android:textSize="26sp"
-            android:textStyle="bold" />
+            android:textSize="34sp" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sliderPointIntensity"
+            style="@style/Widget.Aqua.Light.Slider.Master"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:value="80"
+            android:valueFrom="0"
+            android:valueTo="100" />
+
+        <TextView
+            android:id="@+id/btnPointSave"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_light_primary_action"
+            android:fontFamily="@font/inter_semibold"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="Save Point"
+            android:textColor="@color/background_color"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/btnPointDelete"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="10dp"
+            android:background="?attr/selectableItemBackground"
+            android:fontFamily="@font/inter_semibold"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="Delete Point"
+            android:textColor="@color/light_error"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnPointCancel"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:background="?attr/selectableItemBackground"
+            android:fontFamily="@font/inter_semibold"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="Cancel"
+            android:textColor="@color/settings_text_secondary"
+            android:textSize="14sp" />
 
     </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="18dp"
-        android:text="Intensity"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="15sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tvPointIntensityValue"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="80%"
-        android:textColor="@color/light_accent"
-        android:textSize="30sp"
-        android:textStyle="bold" />
-
-    <com.google.android.material.slider.Slider
-        android:id="@+id/sliderPointIntensity"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <TextView
-        android:id="@+id/btnPointSave"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="20dp"
-        android:background="@color/light_accent"
-        android:gravity="center"
-        android:text="Save Point"
-        android:textColor="@color/background_color"
-        android:textSize="15sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/btnPointDelete"
-        android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_marginTop="8dp"
-        android:background="?attr/selectableItemBackground"
-        android:gravity="center"
-        android:text="Delete Point"
-        android:textColor="@color/light_error"
-        android:textSize="14sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/btnPointCancel"
-        android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:background="?attr/selectableItemBackground"
-        android:gravity="center"
-        android:text="Cancel"
-        android:textColor="@color/settings_text_secondary"
-        android:textSize="14sp"
-        android:textStyle="bold" />
-
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>
