@@ -38,6 +38,64 @@
             android:paddingTop="14dp"
             android:paddingEnd="14dp"
             android:paddingBottom="28dp">
+            
+            <com.google.android.material.card.MaterialCardView
+    android:id="@+id/cardProgramIdentity"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="@color/light_surface"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/light_stroke"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:id="@+id/rowProgramName"
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/inter_semibold"
+                android:includeFontPadding="false"
+                android:text="Program Name"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvProgramNameValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Every Day Program"
+                android:textColor="@color/settings_text_secondary"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="›"
+            android:textColor="@color/light_accent"
+            android:textSize="24sp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardEditorMode"
@@ -1084,52 +1142,6 @@
                             android:textSize="24sp" />
 
                     </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/rowCloudSimulation"
-                        android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/inter_semibold"
-                                android:includeFontPadding="false"
-                                android:text="Cloud Simulation"
-                                android:textColor="?attr/colorOnSurface"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/tvCloudSimulationValue"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="3dp"
-                                android:text="Coming later"
-                                android:textColor="@color/settings_text_secondary"
-                                android:textSize="12sp" />
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:includeFontPadding="false"
-                            android:text="›"
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="24sp" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
