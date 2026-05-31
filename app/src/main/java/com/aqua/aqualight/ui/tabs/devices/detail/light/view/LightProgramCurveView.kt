@@ -19,14 +19,40 @@ class LightProgramCurveView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-    private enum class CurveRenderStyle {
-        SPECTRUM,
-        SIMPLE_INTENSITY,
-        CHANNEL
+    enum class CurveDisplayMode {
+        SIMPLE,
+        PRO_RED,
+        PRO_GREEN,
+        PRO_BLUE,
+        PRO_WHITE
     }
 
-    private var renderStyle: CurveRenderStyle = CurveRenderStyle.SPECTRUM
-    private var singleCurveColor: Int = Color.parseColor("#3FD1D0")
+    data class CurvePoint(
+        val time: String,
+        val intensity: Int
+    )
+
+    private var displayMode: CurveDisplayMode = CurveDisplayMode.SIMPLE
+
+    private var curvePoints: List<CurvePoint> =
+        listOf(
+            CurvePoint(
+                time = "08:00",
+                intensity = 0
+            ),
+            CurvePoint(
+                time = "12:00",
+                intensity = 100
+            ),
+            CurvePoint(
+                time = "16:00",
+                intensity = 100
+            ),
+            CurvePoint(
+                time = "20:00",
+                intensity = 0
+            )
+        )
 
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#AEB9C6")
@@ -42,13 +68,14 @@ class LightProgramCurveView @JvmOverloads constructor(
         color = Color.parseColor("#52708F")
         strokeWidth = 1f.dp()
         alpha = 95
-        pathEffect = DashPathEffect(
-            floatArrayOf(
-                3f.dp(),
-                7f.dp()
-            ),
-            0f
-        )
+        pathEffect =
+            DashPathEffect(
+                floatArrayOf(
+                    3f.dp(),
+                    7f.dp()
+                ),
+                0f
+            )
     }
 
     private val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -66,10 +93,11 @@ class LightProgramCurveView @JvmOverloads constructor(
         strokeWidth = 7f.dp()
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
-        maskFilter = BlurMaskFilter(
-            10f.dp(),
-            BlurMaskFilter.Blur.NORMAL
-        )
+        maskFilter =
+            BlurMaskFilter(
+                10f.dp(),
+                BlurMaskFilter.Blur.NORMAL
+            )
         alpha = 95
     }
 
@@ -94,28 +122,32 @@ class LightProgramCurveView @JvmOverloads constructor(
         textAlign = Paint.Align.CENTER
     }
 
-    private var startTime = "08:00"
-    private var peakStartTime = "12:00"
-    private var peakEndTime = "16:00"
-    private var endTime = "20:00"
-
-    private var startIntensity = 0
-    private var peakStartIntensity = 100
-    private var peakEndIntensity = 100
-    private var endIntensity = 0
-
-    private val spectrumColors = intArrayOf(
-        Color.parseColor("#FF9F2D"),
-        Color.parseColor("#C9F36B"),
-        Color.parseColor("#28E6F0"),
-        Color.parseColor("#8D7CFF"),
-        Color.parseColor("#FF6D8C")
-    )
-
-    override fun onDraw(canvas: Canvas) {
+    override fun onDraw(
+        canvas: Canvas
+    ) {
         super.onDraw(canvas)
 
         if (width <= 0 || height <= 0) {
+            return
+        }
+
+        val sortedPoints =
+            curvePoints
+                .map { point ->
+                    point.copy(
+                        intensity = point.intensity.coerceIn(
+                            minimumValue = 0,
+                            maximumValue = MAX_PERCENT
+                        )
+                    )
+                }
+                .sortedBy { point ->
+                    timeToMinutes(
+                        time = point.time
+                    )
+                }
+
+        if (sortedPoints.isEmpty()) {
             return
         }
 
@@ -124,7 +156,6 @@ class LightProgramCurveView @JvmOverloads constructor(
         val top = 9f.dp()
         val bottom = height - 34f.dp()
 
-        val chartWidth = right - left
         val chartHeight = bottom - top
 
         val y0 = bottom
@@ -144,11 +175,75 @@ class LightProgramCurveView @JvmOverloads constructor(
             y100 = y100
         )
 
-        val startMinutes = timeToMinutes(startTime)
-        val endMinutes = adjustedMinutes(
-            time = endTime,
-            startMinutes = startMinutes
+        val drawablePoints =
+            buildDrawablePoints(
+                points = sortedPoints,
+                left = left,
+                right = right,
+                top = top,
+                bottom = bottom
+            )
+
+        if (drawablePoints.isEmpty()) {
+            return
+        }
+
+        val curvePath =
+            buildSmoothPath(
+                points = drawablePoints
+            )
+
+        drawCurveFill(
+            canvas = canvas,
+            curvePath = curvePath,
+            drawablePoints = drawablePoints,
+            y0 = y0,
+            y100 = y100
         )
+
+        drawCurveLine(
+            canvas = canvas,
+            curvePath = curvePath
+        )
+
+        drawablePoints.forEachIndexed { index, point ->
+            drawPoint(
+                canvas = canvas,
+                point = point,
+                color = pointColor(
+                    index = index,
+                    lastIndex = drawablePoints.lastIndex
+                )
+            )
+        }
+
+        drawBottomLabels(
+            canvas = canvas,
+            left = left,
+            right = right,
+            bottom = bottom,
+            points = sortedPoints,
+            drawablePoints = drawablePoints
+        )
+    }
+
+    private fun buildDrawablePoints(
+        points: List<CurvePoint>,
+        left: Float,
+        right: Float,
+        top: Float,
+        bottom: Float
+    ): List<PointF> {
+        val startMinutes =
+            timeToMinutes(
+                time = points.first().time
+            )
+
+        val endMinutes =
+            adjustedMinutes(
+                time = points.last().time,
+                startMinutes = startMinutes
+            )
 
         val rangeMinutes =
             max(
@@ -156,95 +251,137 @@ class LightProgramCurveView @JvmOverloads constructor(
                 endMinutes - startMinutes
             ).toFloat()
 
-        fun xForTime(
-            time: String
-        ): Float {
-            val minutes =
+        val chartWidth = right - left
+
+        return points.map { point ->
+            val pointMinutes =
                 adjustedMinutes(
-                    time = time,
+                    time = point.time,
                     startMinutes = startMinutes
                 )
 
-            val progress =
-                ((minutes - startMinutes) / rangeMinutes)
-                    .coerceIn(0f, 1f)
+            val xProgress =
+                ((pointMinutes - startMinutes) / rangeMinutes)
+                    .coerceIn(
+                        minimumValue = 0f,
+                        maximumValue = 1f
+                    )
 
-            return left + chartWidth * progress
+            PointF(
+                left + chartWidth * xProgress,
+                intensityToY(
+                    intensity = point.intensity,
+                    top = top,
+                    bottom = bottom
+                )
+            )
+        }
+    }
+
+    private fun buildSmoothPath(
+        points: List<PointF>
+    ): Path {
+        return Path().apply {
+            val firstPoint = points.first()
+
+            moveTo(
+                firstPoint.x,
+                firstPoint.y
+            )
+
+            if (points.size == 1) {
+                return@apply
+            }
+
+            for (index in 1 until points.size) {
+                val previous = points[index - 1]
+                val current = points[index]
+                val distance = current.x - previous.x
+                val controlOffset = distance * 0.45f
+
+                cubicTo(
+                    previous.x + controlOffset,
+                    previous.y,
+                    current.x - controlOffset,
+                    current.y,
+                    current.x,
+                    current.y
+                )
+            }
+        }
+    }
+
+    private fun drawCurveFill(
+        canvas: Canvas,
+        curvePath: Path,
+        drawablePoints: List<PointF>,
+        y0: Float,
+        y100: Float
+    ) {
+        if (drawablePoints.size < 2) {
+            return
         }
 
-        val startPoint =
-            PointF(
-                xForTime(startTime),
-                intensityToY(
-                    intensity = startIntensity,
-                    top = top,
-                    bottom = bottom
-                )
-            )
+        val firstPoint = drawablePoints.first()
+        val lastPoint = drawablePoints.last()
+        val accentColor = currentAccentColor()
 
-        val peakStartPoint =
-            PointF(
-                xForTime(peakStartTime),
-                intensityToY(
-                    intensity = peakStartIntensity,
-                    top = top,
-                    bottom = bottom
-                )
-            )
-
-        val peakEndPoint =
-            PointF(
-                xForTime(peakEndTime),
-                intensityToY(
-                    intensity = peakEndIntensity,
-                    top = top,
-                    bottom = bottom
-                )
-            )
-
-        val endPoint =
-            PointF(
-                xForTime(endTime),
-                intensityToY(
-                    intensity = endIntensity,
-                    top = top,
-                    bottom = bottom
-                )
-            )
-
-        val curvePath =
-            createCurvePath(
-                startPoint = startPoint,
-                peakStartPoint = peakStartPoint,
-                peakEndPoint = peakEndPoint,
-                endPoint = endPoint,
-                chartWidth = chartWidth
+        fillPaint.shader =
+            LinearGradient(
+                0f,
+                y100,
+                0f,
+                y0,
+                intArrayOf(
+                    Color.argb(
+                        100,
+                        Color.red(accentColor),
+                        Color.green(accentColor),
+                        Color.blue(accentColor)
+                    ),
+                    Color.argb(
+                        12,
+                        Color.red(accentColor),
+                        Color.green(accentColor),
+                        Color.blue(accentColor)
+                    )
+                ),
+                null,
+                Shader.TileMode.CLAMP
             )
 
         val fillPath =
             Path(curvePath).apply {
                 lineTo(
-                    endPoint.x,
+                    lastPoint.x,
                     y0
                 )
+
                 lineTo(
-                    startPoint.x,
+                    firstPoint.x,
                     y0
                 )
+
                 close()
             }
-
-        configurePaints(
-            left = left,
-            right = right,
-            top = y100,
-            bottom = y0
-        )
 
         canvas.drawPath(
             fillPath,
             fillPaint
         )
+    }
+
+    private fun drawCurveLine(
+        canvas: Canvas,
+        curvePath: Path
+    ) {
+        val accentColor = currentAccentColor()
+
+        linePaint.shader = null
+        glowPaint.shader = null
+
+        linePaint.color = accentColor
+        glowPaint.color = accentColor
 
         canvas.drawPath(
             curvePath,
@@ -255,145 +392,6 @@ class LightProgramCurveView @JvmOverloads constructor(
             curvePath,
             linePaint
         )
-
-        drawCurvePoints(
-            canvas = canvas,
-            startPoint = startPoint,
-            peakStartPoint = peakStartPoint,
-            peakEndPoint = peakEndPoint,
-            endPoint = endPoint
-        )
-
-        drawBottomLabels(
-            canvas = canvas,
-            left = left,
-            right = right,
-            bottom = bottom,
-            startPoint = startPoint,
-            peakStartPoint = peakStartPoint,
-            peakEndPoint = peakEndPoint,
-            endPoint = endPoint
-        )
-    }
-
-    private fun createCurvePath(
-        startPoint: PointF,
-        peakStartPoint: PointF,
-        peakEndPoint: PointF,
-        endPoint: PointF,
-        chartWidth: Float
-    ): Path {
-        return Path().apply {
-            moveTo(
-                startPoint.x,
-                startPoint.y
-            )
-
-            cubicTo(
-                startPoint.x + chartWidth * 0.14f,
-                startPoint.y,
-                peakStartPoint.x - chartWidth * 0.10f,
-                peakStartPoint.y,
-                peakStartPoint.x,
-                peakStartPoint.y
-            )
-
-            lineTo(
-                peakEndPoint.x,
-                peakEndPoint.y
-            )
-
-            cubicTo(
-                peakEndPoint.x + chartWidth * 0.10f,
-                peakEndPoint.y,
-                endPoint.x - chartWidth * 0.14f,
-                endPoint.y,
-                endPoint.x,
-                endPoint.y
-            )
-        }
-    }
-
-    private fun configurePaints(
-        left: Float,
-        right: Float,
-        top: Float,
-        bottom: Float
-    ) {
-        when (renderStyle) {
-            CurveRenderStyle.SPECTRUM -> {
-                val gradient =
-                    LinearGradient(
-                        left,
-                        0f,
-                        right,
-                        0f,
-                        spectrumColors,
-                        null,
-                        Shader.TileMode.CLAMP
-                    )
-
-                linePaint.shader = gradient
-                glowPaint.shader = gradient
-
-                fillPaint.shader =
-                    LinearGradient(
-                        0f,
-                        top,
-                        0f,
-                        bottom,
-                        intArrayOf(
-                            Color.argb(
-                                120,
-                                40,
-                                230,
-                                240
-                            ),
-                            Color.argb(
-                                14,
-                                40,
-                                230,
-                                240
-                            )
-                        ),
-                        null,
-                        Shader.TileMode.CLAMP
-                    )
-            }
-
-            CurveRenderStyle.SIMPLE_INTENSITY,
-            CurveRenderStyle.CHANNEL -> {
-                linePaint.shader = null
-                glowPaint.shader = null
-
-                linePaint.color = singleCurveColor
-                glowPaint.color = singleCurveColor
-
-                fillPaint.shader =
-                    LinearGradient(
-                        0f,
-                        top,
-                        0f,
-                        bottom,
-                        intArrayOf(
-                            Color.argb(
-                                110,
-                                Color.red(singleCurveColor),
-                                Color.green(singleCurveColor),
-                                Color.blue(singleCurveColor)
-                            ),
-                            Color.argb(
-                                12,
-                                Color.red(singleCurveColor),
-                                Color.green(singleCurveColor),
-                                Color.blue(singleCurveColor)
-                            )
-                        ),
-                        null,
-                        Shader.TileMode.CLAMP
-                    )
-            }
-        }
     }
 
     private fun drawGrid(
@@ -410,49 +408,88 @@ class LightProgramCurveView @JvmOverloads constructor(
         labelPaint.textSize = 10f.sp()
         labelPaint.color = Color.parseColor("#AEB9C6")
 
-        canvas.drawText("100%", left - 8f.dp(), y100 + 4f.dp(), labelPaint)
-        canvas.drawText("75%", left - 8f.dp(), y75 + 4f.dp(), labelPaint)
-        canvas.drawText("50%", left - 8f.dp(), y50 + 4f.dp(), labelPaint)
-        canvas.drawText("25%", left - 8f.dp(), y25 + 4f.dp(), labelPaint)
-        canvas.drawText("0%", left - 8f.dp(), y0 + 4f.dp(), labelPaint)
+        canvas.drawText(
+            "100%",
+            left - 8f.dp(),
+            y100 + 4f.dp(),
+            labelPaint
+        )
 
-        canvas.drawLine(left, y100, right, y100, gridPaint)
-        canvas.drawLine(left, y75, right, y75, gridPaint)
-        canvas.drawLine(left, y50, right, y50, gridPaint)
-        canvas.drawLine(left, y25, right, y25, gridPaint)
-        canvas.drawLine(left, y0, right, y0, axisPaint)
-        canvas.drawLine(left, y100 - 6f.dp(), left, y0, axisPaint)
-    }
+        canvas.drawText(
+            "75%",
+            left - 8f.dp(),
+            y75 + 4f.dp(),
+            labelPaint
+        )
 
-    private fun drawCurvePoints(
-        canvas: Canvas,
-        startPoint: PointF,
-        peakStartPoint: PointF,
-        peakEndPoint: PointF,
-        endPoint: PointF
-    ) {
-        when (renderStyle) {
-            CurveRenderStyle.SPECTRUM -> {
-                drawPoint(canvas, startPoint, Color.parseColor("#FFA32B"))
-                drawPoint(canvas, peakStartPoint, Color.parseColor("#28E6F0"))
-                drawPoint(canvas, peakEndPoint, Color.parseColor("#28E6F0"))
-                drawPoint(canvas, endPoint, Color.parseColor("#FF6D8C"))
-            }
+        canvas.drawText(
+            "50%",
+            left - 8f.dp(),
+            y50 + 4f.dp(),
+            labelPaint
+        )
 
-            CurveRenderStyle.SIMPLE_INTENSITY -> {
-                drawPoint(canvas, startPoint, Color.parseColor("#FFA32B"))
-                drawPoint(canvas, peakStartPoint, singleCurveColor)
-                drawPoint(canvas, peakEndPoint, singleCurveColor)
-                drawPoint(canvas, endPoint, Color.parseColor("#FF8A65"))
-            }
+        canvas.drawText(
+            "25%",
+            left - 8f.dp(),
+            y25 + 4f.dp(),
+            labelPaint
+        )
 
-            CurveRenderStyle.CHANNEL -> {
-                drawPoint(canvas, startPoint, singleCurveColor)
-                drawPoint(canvas, peakStartPoint, singleCurveColor)
-                drawPoint(canvas, peakEndPoint, singleCurveColor)
-                drawPoint(canvas, endPoint, singleCurveColor)
-            }
-        }
+        canvas.drawText(
+            "0%",
+            left - 8f.dp(),
+            y0 + 4f.dp(),
+            labelPaint
+        )
+
+        canvas.drawLine(
+            left,
+            y100,
+            right,
+            y100,
+            gridPaint
+        )
+
+        canvas.drawLine(
+            left,
+            y75,
+            right,
+            y75,
+            gridPaint
+        )
+
+        canvas.drawLine(
+            left,
+            y50,
+            right,
+            y50,
+            gridPaint
+        )
+
+        canvas.drawLine(
+            left,
+            y25,
+            right,
+            y25,
+            gridPaint
+        )
+
+        canvas.drawLine(
+            left,
+            y0,
+            right,
+            y0,
+            axisPaint
+        )
+
+        canvas.drawLine(
+            left,
+            y100 - 6f.dp(),
+            left,
+            y0,
+            axisPaint
+        )
     }
 
     private fun drawBottomLabels(
@@ -460,15 +497,32 @@ class LightProgramCurveView @JvmOverloads constructor(
         left: Float,
         right: Float,
         bottom: Float,
-        startPoint: PointF,
-        peakStartPoint: PointF,
-        peakEndPoint: PointF,
-        endPoint: PointF
+        points: List<CurvePoint>,
+        drawablePoints: List<PointF>
     ) {
+        if (points.isEmpty() || drawablePoints.isEmpty()) {
+            return
+        }
+
         val labelY = bottom + 23f.dp()
+        val accentColor = currentAccentColor()
 
         sunrisePaint.textSize = 14f.sp()
         sunsetPaint.textSize = 14f.sp()
+
+        sunrisePaint.color =
+            if (displayMode == CurveDisplayMode.SIMPLE) {
+                Color.parseColor("#FFA32B")
+            } else {
+                accentColor
+            }
+
+        sunsetPaint.color =
+            if (displayMode == CurveDisplayMode.SIMPLE) {
+                Color.parseColor("#E26FD7")
+            } else {
+                accentColor
+            }
 
         canvas.drawText(
             "☀",
@@ -487,36 +541,38 @@ class LightProgramCurveView @JvmOverloads constructor(
         timePaint.textSize = 10f.sp()
         timePaint.color = Color.parseColor("#E0E6ED")
 
-        timePaint.textAlign = Paint.Align.LEFT
-        canvas.drawText(
-            startTime,
-            startPoint.x + 4f.dp(),
-            labelY,
-            timePaint
-        )
+        points.forEachIndexed { index, point ->
+            val drawablePoint = drawablePoints[index]
 
-        timePaint.textAlign = Paint.Align.CENTER
-        canvas.drawText(
-            peakStartTime,
-            peakStartPoint.x,
-            labelY,
-            timePaint
-        )
+            if (index == 0) {
+                timePaint.textAlign = Paint.Align.LEFT
 
-        canvas.drawText(
-            peakEndTime,
-            peakEndPoint.x,
-            labelY,
-            timePaint
-        )
+                canvas.drawText(
+                    point.time,
+                    drawablePoint.x + 4f.dp(),
+                    labelY,
+                    timePaint
+                )
+            } else if (index == points.lastIndex) {
+                timePaint.textAlign = Paint.Align.RIGHT
 
-        timePaint.textAlign = Paint.Align.RIGHT
-        canvas.drawText(
-            endTime,
-            endPoint.x,
-            labelY,
-            timePaint
-        )
+                canvas.drawText(
+                    point.time,
+                    drawablePoint.x,
+                    labelY,
+                    timePaint
+                )
+            } else if (points.size <= MAX_VISIBLE_TIME_LABELS) {
+                timePaint.textAlign = Paint.Align.CENTER
+
+                canvas.drawText(
+                    point.time,
+                    drawablePoint.x,
+                    labelY,
+                    timePaint
+                )
+            }
+        }
     }
 
     private fun drawPoint(
@@ -527,7 +583,7 @@ class LightProgramCurveView @JvmOverloads constructor(
         pointPaint.shader = null
         pointPaint.style = Paint.Style.FILL
         pointPaint.color = color
-        pointPaint.alpha = 230
+        pointPaint.alpha = 235
 
         canvas.drawCircle(
             point.x,
@@ -539,102 +595,80 @@ class LightProgramCurveView @JvmOverloads constructor(
         pointPaint.alpha = 255
     }
 
-    fun setProgramCurve(
-        start: String,
-        sunriseEnd: String,
-        peakEnd: String,
-        end: String,
-        startIntensity: Int,
-        sunriseEndIntensity: Int,
-        peakEndIntensity: Int,
-        endIntensity: Int
-    ) {
-        renderStyle = CurveRenderStyle.SPECTRUM
+    private fun pointColor(
+        index: Int,
+        lastIndex: Int
+    ): Int {
+        return when (displayMode) {
+            CurveDisplayMode.SIMPLE -> {
+                when (index) {
+                    0 -> Color.parseColor("#FFA32B")
+                    lastIndex -> Color.parseColor("#FF8A65")
+                    else -> currentAccentColor()
+                }
+            }
 
-        setInternalCurve(
-            start = start,
-            peakStart = sunriseEnd,
-            peakEnd = peakEnd,
-            end = end,
-            startIntensity = startIntensity,
-            peakStartIntensity = sunriseEndIntensity,
-            peakEndIntensity = peakEndIntensity,
-            endIntensity = endIntensity
-        )
+            CurveDisplayMode.PRO_RED,
+            CurveDisplayMode.PRO_GREEN,
+            CurveDisplayMode.PRO_BLUE,
+            CurveDisplayMode.PRO_WHITE -> {
+                currentAccentColor()
+            }
+        }
     }
 
-    fun setSimpleIntensityCurve(
-        start: String,
-        peakStart: String,
-        peakEnd: String,
-        end: String,
-        startIntensity: Int,
-        peakStartIntensity: Int,
-        peakEndIntensity: Int,
-        endIntensity: Int
+    fun setCurveDisplayMode(
+        mode: CurveDisplayMode
     ) {
-        renderStyle = CurveRenderStyle.SIMPLE_INTENSITY
-        singleCurveColor = Color.parseColor("#3FD1D0")
-
-        setInternalCurve(
-            start = start,
-            peakStart = peakStart,
-            peakEnd = peakEnd,
-            end = end,
-            startIntensity = startIntensity,
-            peakStartIntensity = peakStartIntensity,
-            peakEndIntensity = peakEndIntensity,
-            endIntensity = endIntensity
-        )
+        displayMode = mode
+        invalidate()
     }
 
-    fun setChannelCurve(
-        start: String,
-        peakStart: String,
-        peakEnd: String,
-        end: String,
-        startIntensity: Int,
-        peakStartIntensity: Int,
-        peakEndIntensity: Int,
-        endIntensity: Int,
-        curveColor: Int
+    fun setCurvePoints(
+        points: List<CurvePoint>
     ) {
-        renderStyle = CurveRenderStyle.CHANNEL
-        singleCurveColor = curveColor
-
-        setInternalCurve(
-            start = start,
-            peakStart = peakStart,
-            peakEnd = peakEnd,
-            end = end,
-            startIntensity = startIntensity,
-            peakStartIntensity = peakStartIntensity,
-            peakEndIntensity = peakEndIntensity,
-            endIntensity = endIntensity
-        )
-    }
-
-    private fun setInternalCurve(
-        start: String,
-        peakStart: String,
-        peakEnd: String,
-        end: String,
-        startIntensity: Int,
-        peakStartIntensity: Int,
-        peakEndIntensity: Int,
-        endIntensity: Int
-    ) {
-        startTime = start
-        peakStartTime = peakStart
-        peakEndTime = peakEnd
-        endTime = end
-
-        this.startIntensity = startIntensity.coerceIn(0, 100)
-        this.peakStartIntensity = peakStartIntensity.coerceIn(0, 100)
-        this.peakEndIntensity = peakEndIntensity.coerceIn(0, 100)
-        this.endIntensity = endIntensity.coerceIn(0, 100)
+        curvePoints =
+            points
+                .map { point ->
+                    CurvePoint(
+                        time = point.time,
+                        intensity = point.intensity.coerceIn(
+                            minimumValue = 0,
+                            maximumValue = MAX_PERCENT
+                        )
+                    )
+                }
+                .sortedBy { point ->
+                    timeToMinutes(
+                        time = point.time
+                    )
+                }
 
         invalidate()
+    }
+
+    private fun currentAccentColor(): Int {
+        return when (displayMode) {
+            CurveDisplayMode.SIMPLE -> {
+                Color.parseColor("#28E6F0")
+            }
+
+            CurveDisplayMode.PRO_RED -> {
+                Color.parseColor("#F04D4D")
+            }
+
+            CurveDisplayMode.PRO_GREEN -> {
+                Color.parseColor("#6CC56C")
+            }
+
+            CurveDisplayMode.PRO_BLUE -> {
+                Color.parseColor("#48A9F8")
+            }
+
+            CurveDisplayMode.PRO_WHITE -> {
+                Color.parseColor("#E0E6ED")
+            }
+        }
     }
 
     private fun intensityToY(
@@ -642,9 +676,13 @@ class LightProgramCurveView @JvmOverloads constructor(
         top: Float,
         bottom: Float
     ): Float {
-        val safeIntensity = intensity.coerceIn(0, 100)
+        val safeIntensity =
+            intensity.coerceIn(
+                minimumValue = 0,
+                maximumValue = MAX_PERCENT
+            )
 
-        return bottom - ((bottom - top) * safeIntensity / 100f)
+        return bottom - ((bottom - top) * safeIntensity / MAX_PERCENT.toFloat())
     }
 
     private fun timeToMinutes(
@@ -659,14 +697,21 @@ class LightProgramCurveView @JvmOverloads constructor(
         val hour = parts[0].toIntOrNull() ?: 0
         val minute = parts[1].toIntOrNull() ?: 0
 
-        return (hour * 60 + minute).coerceIn(0, MINUTES_IN_DAY - 1)
+        return (hour * 60 + minute)
+            .coerceIn(
+                minimumValue = 0,
+                maximumValue = MINUTES_IN_DAY - 1
+            )
     }
 
     private fun adjustedMinutes(
         time: String,
         startMinutes: Int
     ): Int {
-        var minutes = timeToMinutes(time)
+        var minutes =
+            timeToMinutes(
+                time = time
+            )
 
         if (minutes < startMinutes) {
             minutes += MINUTES_IN_DAY
@@ -684,7 +729,9 @@ class LightProgramCurveView @JvmOverloads constructor(
     }
 
     private companion object {
+        private const val MAX_PERCENT = 100
         private const val MINUTES_IN_DAY = 24 * 60
         private const val MIN_VISIBLE_MINUTES = 60
+        private const val MAX_VISIBLE_TIME_LABELS = 6
     }
 }
