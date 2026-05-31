@@ -296,7 +296,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun openManual() {
         findNavController().navigate(
-            R.id.action_deviceLightFragment_to_deviceLightManualFragment,
+            R.id.deviceLightManualFragment,
             bundleOf(
                 ARG_DEVICE_ID to deviceId
             )
@@ -305,7 +305,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun openPrograms() {
         findNavController().navigate(
-            R.id.action_deviceLightFragment_to_deviceLightProgramListFragment,
+            R.id.deviceLightProgramListFragment,
             bundleOf(
                 ARG_DEVICE_ID to deviceId
             )
@@ -316,7 +316,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         programName: String
     ) {
         findNavController().navigate(
-            R.id.action_deviceLightFragment_to_deviceLightProgramEditorFragment,
+            R.id.deviceLightProgramEditorFragment,
             bundleOf(
                 ARG_DEVICE_ID to deviceId,
                 ARG_PROGRAM_NAME to programName
@@ -326,7 +326,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun openQuickSetup() {
         findNavController().navigate(
-            R.id.action_deviceLightFragment_to_deviceLightQuickSetupFragment,
+            R.id.deviceLightQuickSetupFragment,
             bundleOf(
                 ARG_DEVICE_ID to deviceId
             )
@@ -335,7 +335,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun openPresets() {
         findNavController().navigate(
-            R.id.action_deviceLightFragment_to_deviceLightPresetsFragment,
+            R.id.deviceLightPresetsFragment,
             bundleOf(
                 ARG_DEVICE_ID to deviceId
             )
@@ -344,7 +344,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun openDeviceSettings() {
         findNavController().navigate(
-            R.id.action_deviceLightFragment_to_deviceLightDeviceSettingsFragment,
+            R.id.deviceLightDeviceSettingsFragment,
             bundleOf(
                 ARG_DEVICE_ID to deviceId
             )
