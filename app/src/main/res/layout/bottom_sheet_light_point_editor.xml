@@ -35,6 +35,32 @@
         android:text="Sunrise start"
         android:textColor="@color/settings_text_secondary"
         android:textSize="13sp" />
+		
+	<TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="22dp"
+    android:text="Program Name"
+    android:textColor="?attr/colorOnSurface"
+    android:textSize="15sp"
+    android:textStyle="bold" />
+
+<EditText
+    android:id="@+id/inputPointSheetProgramName"
+    android:layout_width="match_parent"
+    android:layout_height="54dp"
+    android:layout_marginTop="10dp"
+    android:background="@drawable/bg_light_editor_chip_unselected"
+    android:hint="Program name"
+    android:imeOptions="actionDone"
+    android:inputType="textCapSentences"
+    android:maxLines="1"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:singleLine="true"
+    android:textColor="?attr/colorOnSurface"
+    android:textColorHint="@color/settings_text_secondary"
+    android:textSize="16sp" />
 
     <TextView
         android:layout_width="wrap_content"

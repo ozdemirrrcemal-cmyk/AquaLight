@@ -353,183 +353,8 @@ class DeviceLightProgramEditorFragment :
             saveProgram()
         }
 
-        rowProgramName.setOnClickListener {
-            showProgramNameEditorSheet()
-        }
     }
-
-    private fun showProgramNameEditorSheet() {
-        val dialog = BottomSheetDialog(requireContext())
-
-        val root =
-            LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.VERTICAL
-
-                setPadding(
-                    24.dp(),
-                    20.dp(),
-                    24.dp(),
-                    20.dp()
-                )
-            }
-
-        val tvTitle =
-            TextView(requireContext()).apply {
-                text = "Program Name"
-                textSize = 20f
-                includeFontPadding = false
-
-                setTextColor(
-                    color(R.color.light_white)
-                )
-
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        bottomMargin = 8.dp()
-                    }
-            }
-
-        val tvSubtitle =
-            TextView(requireContext()).apply {
-                text = "Choose a clear name for this light schedule."
-                textSize = 13f
-
-                setTextColor(
-                    color(R.color.settings_text_secondary)
-                )
-
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        bottomMargin = 14.dp()
-                    }
-            }
-
-        val inputProgramName =
-            EditText(requireContext()).apply {
-                setText(editableProgramName)
-                setSelection(text.length)
-                setSingleLine(true)
-                inputType =
-                    InputType.TYPE_CLASS_TEXT or
-                        InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-
-                textSize = 16f
-                hint = "Program name"
-
-                setTextColor(
-                    color(R.color.light_white)
-                )
-
-                setHintTextColor(
-                    color(R.color.settings_text_secondary)
-                )
-
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        bottomMargin = 18.dp()
-                    }
-            }
-
-        val btnSave =
-            TextView(requireContext()).apply {
-                text = "Save Name"
-                textSize = 15f
-                gravity = Gravity.CENTER
-                includeFontPadding = false
-
-                setTextColor(
-                    color(R.color.background_color)
-                )
-
-                setBackgroundResource(
-                    R.drawable.bg_light_editor_chip_selected
-                )
-
-                setPadding(
-                    16.dp(),
-                    14.dp(),
-                    16.dp(),
-                    14.dp()
-                )
-
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        bottomMargin = 10.dp()
-                    }
-            }
-
-        val btnCancel =
-            TextView(requireContext()).apply {
-                text = "Cancel"
-                textSize = 14f
-                gravity = Gravity.CENTER
-                includeFontPadding = false
-
-                setTextColor(
-                    color(R.color.settings_text_secondary)
-                )
-
-                setBackgroundResource(
-                    R.drawable.bg_light_editor_chip_unselected
-                )
-
-                setPadding(
-                    16.dp(),
-                    13.dp(),
-                    16.dp(),
-                    13.dp()
-                )
-
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-            }
-
-        btnSave.setOnClickListener {
-            val newName =
-                inputProgramName.text
-                    .toString()
-                    .trim()
-
-            if (newName.isBlank()) {
-                inputProgramName.error = "Program name cannot be empty"
-                return@setOnClickListener
-            }
-
-            editableProgramName = newName
-            renderProgramName()
-
-            dialog.dismiss()
-        }
-
-        btnCancel.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        root.addView(tvTitle)
-        root.addView(tvSubtitle)
-        root.addView(inputProgramName)
-        root.addView(btnSave)
-        root.addView(btnCancel)
-
-        dialog.setContentView(root)
-        dialog.show()
-    }
-
+    
     private fun setSimpleMode() = with(binding) {
         isProMode = false
 
@@ -1031,6 +856,9 @@ class DeviceLightProgramEditorFragment :
 
         val tvPointLabel =
             sheetView.findViewById<TextView>(R.id.tvPointLabel)
+        
+        val inputProgramName =
+    sheetView.findViewById<EditText>(R.id.inputPointSheetProgramName)
 
         val tvPointTime =
             sheetView.findViewById<TextView>(R.id.tvPointTime)
@@ -1062,6 +890,10 @@ class DeviceLightProgramEditorFragment :
         tvPointLabel.text = label
         tvPointTime.text = minutesToTime(selectedMinutes)
         tvPointIntensityValue.text = "$selectedIntensity%"
+        
+        inputProgramName.setText(editableProgramName)
+inputProgramName.setSelection(inputProgramName.text.length)
+inputProgramName.setSingleLine(true)
 
         sliderPointIntensity.valueFrom = 0f
         sliderPointIntensity.valueTo = MAX_PERCENT.toFloat()
@@ -1097,13 +929,26 @@ class DeviceLightProgramEditorFragment :
         }
 
         btnPointSave.setOnClickListener {
-            dialog.dismiss()
+    val newProgramName =
+        inputProgramName.text
+            .toString()
+            .trim()
 
-            onSave(
-                minutesToTime(selectedMinutes),
-                selectedIntensity
-            )
-        }
+    if (newProgramName.isBlank()) {
+        inputProgramName.error = "Program name cannot be empty"
+        return@setOnClickListener
+    }
+
+    editableProgramName = newProgramName
+    renderProgramName()
+
+    dialog.dismiss()
+
+    onSave(
+        minutesToTime(selectedMinutes),
+        selectedIntensity
+    )
+}
 
         btnPointDelete.setOnClickListener {
             dialog.dismiss()
