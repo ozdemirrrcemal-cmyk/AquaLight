@@ -1374,15 +1374,6 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         )
     }
 
-    private fun MutableList<CurvePointState>.pointById(
-        pointId: String
-    ): CurvePointState? {
-        return firstOrNull {
-            point ->
-            point.id == pointId
-        }
-    }
-
     private fun List<CurvePointState>.pointById(
         pointId: String
     ): CurvePointState? {
