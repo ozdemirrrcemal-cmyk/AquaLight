@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -12,10 +11,11 @@ import androidx.core.view.children
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramListBinding
-import com.aqua.aqualight.databinding.ItemLightProgramCardBinding
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter.LightProgramsAdapter
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 
@@ -55,7 +55,10 @@ class DeviceLightProgramListFragment :
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentDeviceLightProgramListBinding.bind(view)
 
@@ -153,10 +156,9 @@ class DeviceLightProgramListFragment :
         val activeProgram =
             allPrograms.firstOrNull { program ->
                 program.id == activeProgramId
+            } ?: allPrograms.firstOrNull { program ->
+                program.isEnabled
             }
-                ?: allPrograms.firstOrNull { program ->
-                    program.isEnabled
-                }
 
         cardProgramSummary.visibility =
             if (activeProgram == null) {
@@ -170,9 +172,8 @@ class DeviceLightProgramListFragment :
         }
 
         tvActiveProgramTitle.text = activeProgram.title
-        tvActiveProgramSummary.text =
-            "${activeProgram.startTime} → ${activeProgram.endTime} · ${activeProgram.repeatLabel}"
-        tvActiveProgramChip.text = "ACTIVE"
+        tvActiveProgramSummary.text = activeProgram.scheduleSummary
+        tvActiveProgramChip.text = ACTIVE_PROGRAM_LABEL
 
         tvProgramSummaryPeak.text = "${activeProgram.peakPercent}%"
         tvProgramPhotoperiod.text = activeProgram.photoperiodLabel
@@ -230,7 +231,7 @@ class DeviceLightProgramListFragment :
                 View.GONE
             }
 
-        programsAdapter.submitList(
+        programsAdapter.submitPrograms(
             programs = filteredPrograms,
             activeProgramId = activeProgramId
         )
@@ -294,11 +295,12 @@ class DeviceLightProgramListFragment :
             }?.title.orEmpty()
 
         showMessage(
-            if (isEnabled) {
-                "$programTitle enabled"
-            } else {
-                "$programTitle disabled"
-            }
+            message =
+                if (isEnabled) {
+                    "$programTitle enabled"
+                } else {
+                    "$programTitle disabled"
+                }
         )
     }
 
@@ -344,7 +346,6 @@ class DeviceLightProgramListFragment :
             )
 
         allPrograms = allPrograms + copiedProgram
-
         currentFilter = ProgramFilter.ALL
 
         renderActiveProgramSummary()
@@ -389,10 +390,11 @@ class DeviceLightProgramListFragment :
     ) {
         val dialog = BottomSheetDialog(requireContext())
 
-        val sheetView = layoutInflater.inflate(
-            R.layout.bottom_sheet_light_program_actions,
-            null
-        )
+        val sheetView =
+            layoutInflater.inflate(
+                R.layout.bottom_sheet_light_program_actions,
+                null
+            )
 
         sheetView.findViewById<TextView>(
             R.id.tvProgramActionTitle
@@ -400,7 +402,7 @@ class DeviceLightProgramListFragment :
 
         sheetView.findViewById<TextView>(
             R.id.tvProgramActionSubtitle
-        ).text = "${program.startTime} → ${program.endTime} · ${program.repeatLabel}"
+        ).text = program.scheduleSummary
 
         val toggleButton =
             sheetView.findViewById<TextView>(
@@ -432,9 +434,9 @@ class DeviceLightProgramListFragment :
         setActiveButton.isEnabled = !isCurrentActiveProgram
         setActiveButton.alpha =
             if (isCurrentActiveProgram) {
-                0.45f
+                DISABLED_ACTION_ALPHA
             } else {
-                1f
+                ENABLED_ACTION_ALPHA
             }
 
         sheetView.findViewById<TextView>(
@@ -599,170 +601,9 @@ class DeviceLightProgramListFragment :
         private const val ARG_DEVICE_ID = "deviceId"
         private const val ARG_PROGRAM_NAME = "programName"
         private const val DEFAULT_NEW_PROGRAM_NAME = "New Program"
-    }
-}
+        private const val ACTIVE_PROGRAM_LABEL = "ACTIVE"
 
-private enum class ProgramFilter {
-    ALL,
-    ACTIVE,
-    DISABLED
-}
-
-private data class LightProgramListItem(
-    val id: String,
-    val title: String,
-    val subtitle: String,
-    val startTime: String,
-    val sunriseEndTime: String,
-    val peakEndTime: String,
-    val endTime: String,
-    val rampLabel: String,
-    val repeatLabel: String,
-    val peakPercent: Int,
-    val photoperiodLabel: String,
-    val redPercent: Int,
-    val greenPercent: Int,
-    val bluePercent: Int,
-    val whitePercent: Int,
-    val startIntensity: Int,
-    val sunriseEndIntensity: Int,
-    val peakEndIntensity: Int,
-    val endIntensity: Int,
-    val isEnabled: Boolean
-)
-
-private class LightProgramsAdapter(
-    private val onProgramClick: (LightProgramListItem) -> Unit,
-    private val onProgramLongClick: (LightProgramListItem) -> Unit,
-    private val onProgramEnabledChanged: (LightProgramListItem, Boolean) -> Unit
-) : RecyclerView.Adapter<LightProgramsAdapter.ProgramViewHolder>() {
-
-    private val programs = mutableListOf<LightProgramListItem>()
-    private var activeProgramId: String? = null
-
-    fun submitList(
-        programs: List<LightProgramListItem>,
-        activeProgramId: String?
-    ) {
-        this.programs.clear()
-        this.programs.addAll(programs)
-        this.activeProgramId = activeProgramId
-
-        notifyDataSetChanged()
-    }
-
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): ProgramViewHolder {
-        val binding =
-            ItemLightProgramCardBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
-
-        return ProgramViewHolder(
-            binding = binding,
-            onProgramClick = onProgramClick,
-            onProgramLongClick = onProgramLongClick,
-            onProgramEnabledChanged = onProgramEnabledChanged
-        )
-    }
-
-    override fun onBindViewHolder(
-        holder: ProgramViewHolder,
-        position: Int
-    ) {
-        holder.bind(
-            program = programs[position],
-            isActiveProgram = programs[position].id == activeProgramId
-        )
-    }
-
-    override fun getItemCount(): Int {
-        return programs.size
-    }
-
-    class ProgramViewHolder(
-        private val binding: ItemLightProgramCardBinding,
-        private val onProgramClick: (LightProgramListItem) -> Unit,
-        private val onProgramLongClick: (LightProgramListItem) -> Unit,
-        private val onProgramEnabledChanged: (LightProgramListItem, Boolean) -> Unit
-    ) : RecyclerView.ViewHolder(binding.root) {
-
-        fun bind(
-            program: LightProgramListItem,
-            isActiveProgram: Boolean
-        ) = with(binding) {
-            tvProgramCardTitle.text = program.title
-            tvProgramCardSubtitle.text = program.subtitle
-            tvProgramCardStartTime.text = program.startTime
-            tvProgramCardRamp.text = program.rampLabel
-            tvProgramCardEndTime.text = program.endTime
-            tvProgramCardRepeat.text = program.repeatLabel
-
-            tvProgramCardPeak.text = "Peak ${program.peakPercent} · "
-            tvProgramCardRed.text = "R${program.redPercent} "
-            tvProgramCardGreen.text = "G${program.greenPercent} "
-            tvProgramCardBlue.text = "B${program.bluePercent} "
-            tvProgramCardWhite.text = "W${program.whitePercent}"
-
-            switchProgramCardEnabled.setOnCheckedChangeListener(null)
-            switchProgramCardEnabled.isChecked = program.isEnabled
-            switchProgramCardEnabled.setOnCheckedChangeListener { _, isChecked ->
-                onProgramEnabledChanged(
-                    program,
-                    isChecked
-                )
-            }
-
-            cardProgramItem.strokeColor =
-                root.context.getColor(
-                    if (isActiveProgram) {
-                        R.color.light_accent
-                    } else {
-                        R.color.light_stroke
-                    }
-                )
-
-            cardProgramItem.setCardBackgroundColor(
-                root.context.getColor(
-                    if (isActiveProgram) {
-                        R.color.light_surface
-                    } else {
-                        R.color.light_surface_deep
-                    }
-                )
-            )
-
-            programCardMiniCurve.alpha =
-                if (program.isEnabled) {
-                    1f
-                } else {
-                    0.55f
-                }
-
-            programCardContent.alpha =
-                if (program.isEnabled) {
-                    1f
-                } else {
-                    0.68f
-                }
-
-            cardProgramItem.setOnClickListener {
-                onProgramClick(
-                    program
-                )
-            }
-
-            cardProgramItem.setOnLongClickListener {
-                onProgramLongClick(
-                    program
-                )
-
-                true
-            }
-        }
+        private const val DISABLED_ACTION_ALPHA = 0.45f
+        private const val ENABLED_ACTION_ALPHA = 1f
     }
 }
