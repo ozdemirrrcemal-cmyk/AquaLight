@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.ColorRes
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlin.math.roundToInt
@@ -28,6 +30,20 @@ class DeviceLightProgramEditorFragment :
             }
 
     private var isProMode: Boolean = false
+    private var selectedProChannel: ProChannel = ProChannel.RED
+    private var selectedRepeatMode: RepeatMode = RepeatMode.EVERY
+    private var selectedRampSmoothing: RampSmoothing = RampSmoothing.LINEAR
+
+    private var simpleCurvePoints: MutableMap<CurvePointId, CurvePointState> =
+        createSimpleCurvePoints()
+
+    private val proChannelCurves: MutableMap<ProChannel, MutableMap<CurvePointId, CurvePointState>> =
+        mutableMapOf(
+            ProChannel.RED to createChannelCurvePoints(ProChannel.RED.defaultPeak),
+            ProChannel.GREEN to createChannelCurvePoints(ProChannel.GREEN.defaultPeak),
+            ProChannel.BLUE to createChannelCurvePoints(ProChannel.BLUE.defaultPeak),
+            ProChannel.WHITE to createChannelCurvePoints(ProChannel.WHITE.defaultPeak)
+        )
 
     private val customRepeatDays = mutableSetOf(
         DAY_MON,
@@ -88,33 +104,58 @@ class DeviceLightProgramEditorFragment :
             sliderProgramWhite
         ).forEach { slider ->
             slider.valueFrom = 0f
-            slider.valueTo = 100f
+            slider.valueTo = MAX_PERCENT.toFloat()
             slider.stepSize = 1f
         }
     }
 
     private fun renderPreviewState() = with(binding) {
-        sliderProgramRed.value = 80f
-        sliderProgramGreen.value = 84f
-        sliderProgramBlue.value = 79f
-        sliderProgramWhite.value = 65f
+        sliderProgramRed.value = ProChannel.RED.defaultPeak.toFloat()
+        sliderProgramGreen.value = ProChannel.GREEN.defaultPeak.toFloat()
+        sliderProgramBlue.value = ProChannel.BLUE.defaultPeak.toFloat()
+        sliderProgramWhite.value = ProChannel.WHITE.defaultPeak.toFloat()
 
-        updateChannelValue(tvProgramRedValue, "Red", sliderProgramRed.value)
-        updateChannelValue(tvProgramGreenValue, "Green", sliderProgramGreen.value)
-        updateChannelValue(tvProgramBlueValue, "Blue", sliderProgramBlue.value)
-        updateChannelValue(tvProgramWhiteValue, "White", sliderProgramWhite.value)
+        renderChannelValues()
 
         tvAcclimationValue.text = "Off"
 
-        setRepeatChipState("Every")
+        setRepeatMode(
+            mode = RepeatMode.EVERY,
+            showToast = false
+        )
+
+        setRampSmoothing(
+            smoothing = RampSmoothing.LINEAR,
+            showToast = false
+        )
+
         setSimpleMode()
     }
 
     private fun setupSliders() = with(binding) {
-        bindChannelSlider(sliderProgramRed, tvProgramRedValue, "Red")
-        bindChannelSlider(sliderProgramGreen, tvProgramGreenValue, "Green")
-        bindChannelSlider(sliderProgramBlue, tvProgramBlueValue, "Blue")
-        bindChannelSlider(sliderProgramWhite, tvProgramWhiteValue, "White")
+        bindChannelSlider(
+            slider = sliderProgramRed,
+            valueView = tvProgramRedValue,
+            label = "Red"
+        )
+
+        bindChannelSlider(
+            slider = sliderProgramGreen,
+            valueView = tvProgramGreenValue,
+            label = "Green"
+        )
+
+        bindChannelSlider(
+            slider = sliderProgramBlue,
+            valueView = tvProgramBlueValue,
+            label = "Blue"
+        )
+
+        bindChannelSlider(
+            slider = sliderProgramWhite,
+            valueView = tvProgramWhiteValue,
+            label = "White"
+        )
     }
 
     private fun bindChannelSlider(
@@ -131,14 +172,6 @@ class DeviceLightProgramEditorFragment :
         }
     }
 
-    private fun updateChannelValue(
-        valueView: TextView,
-        label: String,
-        value: Float
-    ) {
-        valueView.text = "$label ${value.roundToInt()}%"
-    }
-
     private fun setupClicks() = with(binding) {
         btnSimpleMode.setOnClickListener {
             setSimpleMode()
@@ -148,74 +181,92 @@ class DeviceLightProgramEditorFragment :
             setProMode()
         }
 
-        btnAddCurvePoint.setOnClickListener {
-            showPointEditor(
-                label = "New point",
-                time = "11:00",
-                intensity = 60,
-                canDelete = false
+        chipProRed.setOnClickListener {
+            selectProChannel(
+                channel = ProChannel.RED
             )
         }
 
-        pointStart.setOnClickListener {
-            showPointEditor("Sunrise start", "08:00", 0)
+        chipProGreen.setOnClickListener {
+            selectProChannel(
+                channel = ProChannel.GREEN
+            )
         }
 
-        pointRampUp.setOnClickListener {
-            showPointEditor("Ramp complete", "10:00", 80)
+        chipProBlue.setOnClickListener {
+            selectProChannel(
+                channel = ProChannel.BLUE
+            )
         }
 
-        pointPeakStart.setOnClickListener {
-            showPointEditor("Peak start", "12:00", 100)
+        chipProWhite.setOnClickListener {
+            selectProChannel(
+                channel = ProChannel.WHITE
+            )
         }
 
-        pointPeakEnd.setOnClickListener {
-            showPointEditor("Peak end", "16:00", 100)
+        btnAddCurvePoint.setOnClickListener {
+            showNewPointEditor()
         }
 
-        pointEnd.setOnClickListener {
-            showPointEditor("Lights off", "20:00", 0)
+        viewProgramEditorCurve.setOnClickListener {
+            showPointEditor(
+                pointId = CurvePointId.PEAK_START
+            )
         }
 
         rowPointStart.setOnClickListener {
-            showPointEditor("Sunrise start", "08:00", 0)
-        }
-
-        rowPointRamp.setOnClickListener {
-            showPointEditor("Ramp complete", "10:00", 80)
+            showPointEditor(
+                pointId = CurvePointId.START
+            )
         }
 
         rowPointPeakStart.setOnClickListener {
-            showPointEditor("Peak start", "12:00", 100)
+            showPointEditor(
+                pointId = CurvePointId.PEAK_START
+            )
         }
 
         rowPointPeakEnd.setOnClickListener {
-            showPointEditor("Peak end", "16:00", 100)
+            showPointEditor(
+                pointId = CurvePointId.PEAK_END
+            )
         }
 
         rowPointEnd.setOnClickListener {
-            showPointEditor("Lights off", "20:00", 0)
+            showPointEditor(
+                pointId = CurvePointId.END
+            )
         }
 
         chipRepeatEveryDay.setOnClickListener {
             customRepeatDays.clear()
             customRepeatDays.addAll(allDays())
-            setRepeatChipState("Every")
-            showMessage("Repeat: Every day")
+
+            setRepeatMode(
+                mode = RepeatMode.EVERY,
+                showToast = true
+            )
         }
 
         chipRepeatWeekdays.setOnClickListener {
             customRepeatDays.clear()
             customRepeatDays.addAll(weekDays())
-            setRepeatChipState("Weekdays")
-            showMessage("Repeat: Weekdays")
+
+            setRepeatMode(
+                mode = RepeatMode.WEEKDAYS,
+                showToast = true
+            )
         }
 
         chipRepeatWeekend.setOnClickListener {
             customRepeatDays.clear()
             customRepeatDays.addAll(weekendDays())
-            setRepeatChipState("Weekend")
-            showMessage("Repeat: Weekend")
+
+            setRepeatMode(
+                mode = RepeatMode.WEEKEND,
+                showToast = true
+            )
         }
 
         chipRepeatCustom.setOnClickListener {
@@ -223,15 +274,24 @@ class DeviceLightProgramEditorFragment :
         }
 
         chipRampLinear.setOnClickListener {
-            showMessage("Ramp smoothing: Linear")
+            setRampSmoothing(
+                smoothing = RampSmoothing.LINEAR,
+                showToast = true
+            )
         }
 
         chipRampSoft.setOnClickListener {
-            showMessage("Ramp smoothing: Soft")
+            setRampSmoothing(
+                smoothing = RampSmoothing.SOFT,
+                showToast = true
+            )
         }
 
         chipRampNatural.setOnClickListener {
-            showMessage("Ramp smoothing: Natural")
+            setRampSmoothing(
+                smoothing = RampSmoothing.NATURAL,
+                showToast = true
+            )
         }
 
         rowAcclimation.setOnClickListener {
@@ -251,45 +311,242 @@ class DeviceLightProgramEditorFragment :
         }
     }
 
+    private fun setSimpleMode() = with(binding) {
+        isProMode = false
+
+        applyTextChipState(
+            chip = btnSimpleMode,
+            selected = true
+        )
+
+        applyTextChipState(
+            chip = btnProMode,
+            selected = false
+        )
+
+        proChannelSelectorRow.visibility = View.GONE
+        cardProgramChannelBalance.visibility = View.VISIBLE
+
+        tvEditorModeDescription.text =
+            "One daily intensity curve with fixed RGB/W balance."
+
+        tvCurveTitle.text = "Daily Light Curve"
+        tvCurveSubtitle.text = "Tap a point or row to edit time and output"
+
+        tvCurvePointsSubtitle.text =
+            "Start, peak and end points used by the daily curve"
+
+        tvChannelBalanceTitle.text = "Channel Balance"
+        tvChannelBalanceSubtitle.text = "Used across the whole simple curve"
+
+        renderCurrentCurve()
+    }
+
+    private fun setProMode() = with(binding) {
+        isProMode = true
+
+        applyTextChipState(
+            chip = btnSimpleMode,
+            selected = false
+        )
+
+        applyTextChipState(
+            chip = btnProMode,
+            selected = true
+        )
+
+        proChannelSelectorRow.visibility = View.VISIBLE
+        cardProgramChannelBalance.visibility = View.GONE
+
+        tvEditorModeDescription.text =
+            "Each WRGB channel can have its own daily curve."
+
+        tvCurvePointsSubtitle.text =
+            "Start, peak and end points for the selected channel"
+
+        selectProChannel(
+            channel = selectedProChannel
+        )
+    }
+
+    private fun selectProChannel(
+        channel: ProChannel
+    ) = with(binding) {
+        selectedProChannel = channel
+
+        tvCurveTitle.text = "${channel.label} Channel Curve"
+        tvCurveSubtitle.text =
+            "Edit time and output points for ${channel.label.lowercase()} only"
+
+        renderProChannelChips()
+        renderCurrentCurve()
+    }
+
+    private fun renderProChannelChips() = with(binding) {
+        chipProRed.applyProChannelStyle(
+            channel = ProChannel.RED
+        )
+
+        chipProGreen.applyProChannelStyle(
+            channel = ProChannel.GREEN
+        )
+
+        chipProBlue.applyProChannelStyle(
+            channel = ProChannel.BLUE
+        )
+
+        chipProWhite.applyProChannelStyle(
+            channel = ProChannel.WHITE
+        )
+    }
+
+    private fun renderCurrentCurve() = with(binding) {
+        val curve = currentCurvePoints()
+
+        val start = curve.getValue(CurvePointId.START)
+        val peakStart = curve.getValue(CurvePointId.PEAK_START)
+        val peakEnd = curve.getValue(CurvePointId.PEAK_END)
+        val end = curve.getValue(CurvePointId.END)
+
+        viewProgramEditorCurve.setProgramCurve(
+            start = start.time,
+            sunriseEnd = peakStart.time,
+            peakEnd = peakEnd.time,
+            end = end.time,
+            startIntensity = start.intensity,
+            sunriseEndIntensity = peakStart.intensity,
+            peakEndIntensity = peakEnd.intensity,
+            endIntensity = end.intensity
+        )
+
+        tvCurveStartSummary.text = start.time
+        tvCurvePeakSummary.text =
+            "${maxOf(peakStart.intensity, peakEnd.intensity)}%"
+        tvCurveEndSummary.text = end.time
+
+        tvPointStartTime.text = start.time
+        tvPointStartLabel.text = start.label
+        tvPointStartPercent.text = "${start.intensity}%"
+
+        tvPointPeakStartTime.text = peakStart.time
+        tvPointPeakStartLabel.text = peakStart.label
+        tvPointPeakStartPercent.text = "${peakStart.intensity}%"
+
+        tvPointPeakEndTime.text = peakEnd.time
+        tvPointPeakEndLabel.text = peakEnd.label
+        tvPointPeakEndPercent.text = "${peakEnd.intensity}%"
+
+        tvPointEndTime.text = end.time
+        tvPointEndLabel.text = end.label
+        tvPointEndPercent.text = "${end.intensity}%"
+
+        tvCurveHint.text =
+            if (isProMode) {
+                "${selectedProChannel.label} curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
+            } else {
+                "Simple curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
+            }
+    }
+
     private fun showPointEditor(
+        pointId: CurvePointId
+    ) {
+        val currentPoint =
+            currentCurvePoints()[pointId] ?: return
+
+        showPointEditorSheet(
+            label = currentPoint.label,
+            time = currentPoint.time,
+            intensity = currentPoint.intensity,
+            canDelete = currentPoint.canDelete,
+            onSave = { selectedTime, selectedIntensity ->
+                currentCurvePoints()[pointId] =
+                    currentPoint.copy(
+                        time = selectedTime,
+                        intensity = selectedIntensity
+                    )
+
+                renderCurrentCurve()
+
+                showMessage(
+                    "Point saved: $selectedTime · $selectedIntensity%"
+                )
+            },
+            onDelete = {
+                showMessage("Default points cannot be deleted")
+            }
+        )
+    }
+
+    private fun showNewPointEditor() {
+        showPointEditorSheet(
+            label = "New intermediate point",
+            time = "11:00",
+            intensity = 60,
+            canDelete = false,
+            onSave = { selectedTime, selectedIntensity ->
+                showMessage(
+                    "Intermediate point ready: $selectedTime · $selectedIntensity%"
+                )
+            },
+            onDelete = {
+                Unit
+            }
+        )
+    }
+
+    private fun showPointEditorSheet(
         label: String,
         time: String,
         intensity: Int,
-        canDelete: Boolean = true
+        canDelete: Boolean,
+        onSave: (String, Int) -> Unit,
+        onDelete: () -> Unit
     ) {
         val dialog = BottomSheetDialog(requireContext())
-        val sheetView = layoutInflater.inflate(
-            R.layout.bottom_sheet_light_point_editor,
-            null
-        )
 
-        val tvPointLabel = sheetView.findViewById<TextView>(R.id.tvPointLabel)
-        val tvPointTime = sheetView.findViewById<TextView>(R.id.tvPointTime)
+        val sheetView =
+            layoutInflater.inflate(
+                R.layout.bottom_sheet_light_point_editor,
+                null
+            )
+
+        val tvPointLabel =
+            sheetView.findViewById<TextView>(R.id.tvPointLabel)
+
+        val tvPointTime =
+            sheetView.findViewById<TextView>(R.id.tvPointTime)
+
         val tvPointIntensityValue =
             sheetView.findViewById<TextView>(R.id.tvPointIntensityValue)
+
         val sliderPointIntensity =
             sheetView.findViewById<Slider>(R.id.sliderPointIntensity)
 
         val btnPointTimeMinus =
             sheetView.findViewById<TextView>(R.id.btnPointTimeMinus)
+
         val btnPointTimePlus =
             sheetView.findViewById<TextView>(R.id.btnPointTimePlus)
+
         val btnPointSave =
             sheetView.findViewById<TextView>(R.id.btnPointSave)
+
         val btnPointDelete =
             sheetView.findViewById<TextView>(R.id.btnPointDelete)
+
         val btnPointCancel =
             sheetView.findViewById<TextView>(R.id.btnPointCancel)
 
         var selectedMinutes = timeToMinutes(time)
-        var selectedIntensity = intensity.coerceIn(0, 100)
+        var selectedIntensity = intensity.coerceIn(0, MAX_PERCENT)
 
         tvPointLabel.text = label
         tvPointTime.text = minutesToTime(selectedMinutes)
         tvPointIntensityValue.text = "$selectedIntensity%"
 
         sliderPointIntensity.valueFrom = 0f
-        sliderPointIntensity.valueTo = 100f
+        sliderPointIntensity.valueTo = MAX_PERCENT.toFloat()
         sliderPointIntensity.stepSize = 1f
         sliderPointIntensity.value = selectedIntensity.toFloat()
 
@@ -302,7 +559,8 @@ class DeviceLightProgramEditorFragment :
 
         btnPointTimeMinus.setOnClickListener {
             selectedMinutes =
-                (selectedMinutes - POINT_STEP_MINUTES).coerceAtLeast(0)
+                (selectedMinutes - POINT_STEP_MINUTES)
+                    .coerceAtLeast(0)
 
             tvPointTime.text = minutesToTime(selectedMinutes)
         }
@@ -323,14 +581,15 @@ class DeviceLightProgramEditorFragment :
         btnPointSave.setOnClickListener {
             dialog.dismiss()
 
-            showMessage(
-                "Point saved: ${minutesToTime(selectedMinutes)} · $selectedIntensity%"
+            onSave(
+                minutesToTime(selectedMinutes),
+                selectedIntensity
             )
         }
 
         btnPointDelete.setOnClickListener {
             dialog.dismiss()
-            showMessage("Point deleted: $label")
+            onDelete()
         }
 
         btnPointCancel.setOnClickListener {
@@ -343,39 +602,49 @@ class DeviceLightProgramEditorFragment :
 
     private fun showAcclimationSettingsSheet() = with(binding) {
         val dialog = BottomSheetDialog(requireContext())
-        val sheetView = layoutInflater.inflate(
-            R.layout.bottom_sheet_light_acclimation_settings,
-            null
-        )
+
+        val sheetView =
+            layoutInflater.inflate(
+                R.layout.bottom_sheet_light_acclimation_settings,
+                null
+            )
 
         val switchEnabled =
             sheetView.findViewById<SwitchMaterial>(R.id.switchAcclimationEnabled)
+
         val tvDurationValue =
             sheetView.findViewById<TextView>(R.id.tvAcclimationDurationValue)
+
         val tvStartValue =
             sheetView.findViewById<TextView>(R.id.tvAcclimationStartValue)
+
         val tvSummary =
             sheetView.findViewById<TextView>(R.id.tvAcclimationSummary)
+
         val sliderStart =
             sheetView.findViewById<Slider>(R.id.sliderAcclimationStart)
 
         val chip3Days =
             sheetView.findViewById<TextView>(R.id.chipAcclimation3Days)
+
         val chip7Days =
             sheetView.findViewById<TextView>(R.id.chipAcclimation7Days)
+
         val chip14Days =
             sheetView.findViewById<TextView>(R.id.chipAcclimation14Days)
 
         val btnSave =
             sheetView.findViewById<TextView>(R.id.btnAcclimationSave)
+
         val btnCancel =
             sheetView.findViewById<TextView>(R.id.btnAcclimationCancel)
 
         var enabled = tvAcclimationValue.text.toString() != "Off"
         var selectedDays = extractAcclimationDays(tvAcclimationValue.text.toString())
-        var startIntensity = extractAcclimationStartIntensity(
-            tvAcclimationValue.text.toString()
-        ).coerceIn(20, 80)
+        var startIntensity =
+            extractAcclimationStartIntensity(
+                text = tvAcclimationValue.text.toString()
+            ).coerceIn(20, 80)
 
         switchEnabled.isChecked = enabled
         tvDurationValue.text = "$selectedDays days"
@@ -458,10 +727,12 @@ class DeviceLightProgramEditorFragment :
 
     private fun showCustomDayPickerSheet() {
         val dialog = BottomSheetDialog(requireContext())
-        val sheetView = layoutInflater.inflate(
-            R.layout.bottom_sheet_light_day_picker,
-            null
-        )
+
+        val sheetView =
+            layoutInflater.inflate(
+                R.layout.bottom_sheet_light_day_picker,
+                null
+            )
 
         val selectedDays = customRepeatDays.toMutableSet()
 
@@ -473,16 +744,21 @@ class DeviceLightProgramEditorFragment :
         val chipSat = sheetView.findViewById<TextView>(R.id.chipPickerSat)
         val chipSun = sheetView.findViewById<TextView>(R.id.chipPickerSun)
 
-        val tvSummary = sheetView.findViewById<TextView>(R.id.tvDayPickerSummary)
+        val tvSummary =
+            sheetView.findViewById<TextView>(R.id.tvDayPickerSummary)
 
         val btnWeekdays =
             sheetView.findViewById<TextView>(R.id.btnDayPickerWeekdays)
+
         val btnWeekend =
             sheetView.findViewById<TextView>(R.id.btnDayPickerWeekend)
+
         val btnEveryDay =
             sheetView.findViewById<TextView>(R.id.btnDayPickerEveryDay)
+
         val btnSave =
             sheetView.findViewById<TextView>(R.id.btnDayPickerSave)
+
         val btnCancel =
             sheetView.findViewById<TextView>(R.id.btnDayPickerCancel)
 
@@ -494,15 +770,15 @@ class DeviceLightProgramEditorFragment :
 
             if (isSelected) {
                 chip.setBackgroundColor(
-                    requireContext().getColor(R.color.light_accent)
+                    color(R.color.light_accent)
                 )
                 chip.setTextColor(
-                    requireContext().getColor(R.color.background_color)
+                    color(R.color.background_color)
                 )
             } else {
                 chip.setBackgroundResource(android.R.color.transparent)
                 chip.setTextColor(
-                    requireContext().getColor(R.color.settings_text_secondary)
+                    color(R.color.settings_text_secondary)
                 )
             }
         }
@@ -606,7 +882,8 @@ class DeviceLightProgramEditorFragment :
             customRepeatDays.clear()
             customRepeatDays.addAll(selectedDays)
 
-            setRepeatChipState("Custom")
+            selectedRepeatMode = RepeatMode.CUSTOM
+            renderRepeatChips()
 
             dialog.dismiss()
             showMessage(selectedDaysLabel())
@@ -622,82 +899,240 @@ class DeviceLightProgramEditorFragment :
         dialog.show()
     }
 
-    private fun setRepeatChipState(
-        selected: String
-    ) = with(binding) {
-        val selectedBg = requireContext().getColor(R.color.light_accent)
-        val selectedText = requireContext().getColor(R.color.background_color)
-        val normalText = requireContext().getColor(R.color.settings_text_secondary)
+    private fun setRepeatMode(
+        mode: RepeatMode,
+        showToast: Boolean
+    ) {
+        selectedRepeatMode = mode
 
-        fun applyState(
-            chip: TextView,
-            isSelected: Boolean
-        ) {
-            if (isSelected) {
-                chip.setBackgroundColor(selectedBg)
-                chip.setTextColor(selectedText)
-            } else {
-                chip.setBackgroundResource(android.R.color.transparent)
-                chip.setTextColor(normalText)
-            }
+        renderRepeatChips()
+
+        if (showToast) {
+            showMessage("Repeat: ${mode.label}")
         }
-
-        applyState(chipRepeatEveryDay, selected == "Every")
-        applyState(chipRepeatWeekdays, selected == "Weekdays")
-        applyState(chipRepeatWeekend, selected == "Weekend")
-        applyState(chipRepeatCustom, selected == "Custom")
     }
 
-    private fun setSimpleMode() = with(binding) {
-        isProMode = false
-
-        btnSimpleMode.setBackgroundColor(
-            requireContext().getColor(R.color.light_accent)
-        )
-        btnSimpleMode.setTextColor(
-            requireContext().getColor(R.color.background_color)
+    private fun renderRepeatChips() = with(binding) {
+        applyTextChipState(
+            chip = chipRepeatEveryDay,
+            selected = selectedRepeatMode == RepeatMode.EVERY
         )
 
-        btnProMode.setBackgroundResource(android.R.color.transparent)
-        btnProMode.setTextColor(
-            requireContext().getColor(R.color.settings_text_secondary)
+        applyTextChipState(
+            chip = chipRepeatWeekdays,
+            selected = selectedRepeatMode == RepeatMode.WEEKDAYS
         )
 
-        tvEditorModeDescription.text =
-            "Simple mode uses one main intensity curve and keeps RGB/W balance separate."
+        applyTextChipState(
+            chip = chipRepeatWeekend,
+            selected = selectedRepeatMode == RepeatMode.WEEKEND
+        )
 
-        tvCurveTitle.text = "Overall Intensity Curve"
-        tvCurveSubtitle.text = "Tap a point to edit time and intensity"
-        tvChannelBalanceTitle.text = "Channel Balance"
-        tvChannelBalanceSubtitle.text = "Used by the simple intensity curve"
+        applyTextChipState(
+            chip = chipRepeatCustom,
+            selected = selectedRepeatMode == RepeatMode.CUSTOM
+        )
     }
 
-    private fun setProMode() = with(binding) {
-        isProMode = true
+    private fun setRampSmoothing(
+        smoothing: RampSmoothing,
+        showToast: Boolean
+    ) {
+        selectedRampSmoothing = smoothing
 
-        btnProMode.setBackgroundColor(
-            requireContext().getColor(R.color.light_accent)
+        renderRampSmoothingChips()
+
+        if (showToast) {
+            showMessage("Ramp smoothing: ${smoothing.label}")
+        }
+    }
+
+    private fun renderRampSmoothingChips() = with(binding) {
+        applyTextChipState(
+            chip = chipRampLinear,
+            selected = selectedRampSmoothing == RampSmoothing.LINEAR
         )
-        btnProMode.setTextColor(
-            requireContext().getColor(R.color.background_color)
+
+        applyTextChipState(
+            chip = chipRampSoft,
+            selected = selectedRampSmoothing == RampSmoothing.SOFT
         )
 
-        btnSimpleMode.setBackgroundResource(android.R.color.transparent)
-        btnSimpleMode.setTextColor(
-            requireContext().getColor(R.color.settings_text_secondary)
+        applyTextChipState(
+            chip = chipRampNatural,
+            selected = selectedRampSmoothing == RampSmoothing.NATURAL
+        )
+    }
+
+    private fun renderChannelValues() = with(binding) {
+        updateChannelValue(
+            valueView = tvProgramRedValue,
+            label = "Red",
+            value = sliderProgramRed.value
         )
 
-        tvEditorModeDescription.text =
-            "Pro mode will allow separate curves for Red, Green, Blue and White channels."
+        updateChannelValue(
+            valueView = tvProgramGreenValue,
+            label = "Green",
+            value = sliderProgramGreen.value
+        )
 
-        tvCurveTitle.text = "Pro Channel Curves"
-        tvCurveSubtitle.text = "Separate channel curves will be connected later"
-        tvChannelBalanceTitle.text = "Base Channel Values"
-        tvChannelBalanceSubtitle.text = "Temporary base values until pro curves are connected"
+        updateChannelValue(
+            valueView = tvProgramBlueValue,
+            label = "Blue",
+            value = sliderProgramBlue.value
+        )
+
+        updateChannelValue(
+            valueView = tvProgramWhiteValue,
+            label = "White",
+            value = sliderProgramWhite.value
+        )
+    }
+
+    private fun updateChannelValue(
+        valueView: TextView,
+        label: String,
+        value: Float
+    ) {
+        valueView.text = "$label ${value.roundToInt()}%"
+    }
+
+    private fun applyTextChipState(
+        chip: TextView,
+        selected: Boolean
+    ) {
+        if (selected) {
+            chip.setBackgroundColor(
+                color(R.color.light_accent)
+            )
+            chip.setTextColor(
+                color(R.color.background_color)
+            )
+        } else {
+            chip.setBackgroundResource(android.R.color.transparent)
+            chip.setTextColor(
+                color(R.color.settings_text_secondary)
+            )
+        }
+    }
+
+    private fun MaterialCardView.applyProChannelStyle(
+        channel: ProChannel
+    ) {
+        val selected = selectedProChannel == channel
+
+        setCardBackgroundColor(
+            color(
+                if (selected) {
+                    R.color.light_accent_soft
+                } else {
+                    R.color.light_surface
+                }
+            )
+        )
+
+        strokeColor =
+            color(
+                if (selected) {
+                    channel.colorRes
+                } else {
+                    R.color.light_stroke
+                }
+            )
+
+        val textView = getChildAt(0) as? TextView
+
+        textView?.setTextColor(
+            color(
+                if (selected) {
+                    channel.colorRes
+                } else {
+                    R.color.settings_text_secondary
+                }
+            )
+        )
+    }
+
+    private fun currentCurvePoints(): MutableMap<CurvePointId, CurvePointState> {
+        return if (isProMode) {
+            proChannelCurves.getValue(selectedProChannel)
+        } else {
+            simpleCurvePoints
+        }
+    }
+
+    private fun createSimpleCurvePoints(): MutableMap<CurvePointId, CurvePointState> {
+        return mutableMapOf(
+            CurvePointId.START to CurvePointState(
+                id = CurvePointId.START,
+                label = "Start",
+                time = "08:00",
+                intensity = 0
+            ),
+            CurvePointId.PEAK_START to CurvePointState(
+                id = CurvePointId.PEAK_START,
+                label = "Peak start",
+                time = "12:00",
+                intensity = 100
+            ),
+            CurvePointId.PEAK_END to CurvePointState(
+                id = CurvePointId.PEAK_END,
+                label = "Peak end",
+                time = "16:00",
+                intensity = 100
+            ),
+            CurvePointId.END to CurvePointState(
+                id = CurvePointId.END,
+                label = "End",
+                time = "20:00",
+                intensity = 0
+            )
+        )
+    }
+
+    private fun createChannelCurvePoints(
+        peak: Int
+    ): MutableMap<CurvePointId, CurvePointState> {
+        val safePeak = peak.coerceIn(0, MAX_PERCENT)
+
+        return mutableMapOf(
+            CurvePointId.START to CurvePointState(
+                id = CurvePointId.START,
+                label = "Start",
+                time = "08:00",
+                intensity = 0
+            ),
+            CurvePointId.PEAK_START to CurvePointState(
+                id = CurvePointId.PEAK_START,
+                label = "Peak start",
+                time = "12:00",
+                intensity = safePeak
+            ),
+            CurvePointId.PEAK_END to CurvePointState(
+                id = CurvePointId.PEAK_END,
+                label = "Peak end",
+                time = "16:00",
+                intensity = safePeak
+            ),
+            CurvePointId.END to CurvePointState(
+                id = CurvePointId.END,
+                label = "End",
+                time = "20:00",
+                intensity = 0
+            )
+        )
     }
 
     private fun showPreviewMessage() {
-        showMessage("Preview day simulation will be added")
+        val modeLabel =
+            if (isProMode) {
+                "Pro ${selectedProChannel.label}"
+            } else {
+                "Simple"
+            }
+
+        showMessage("$modeLabel preview day simulation will be added")
     }
 
     private fun saveProgram() {
@@ -708,6 +1143,7 @@ class DeviceLightProgramEditorFragment :
         time: String
     ): Int {
         val parts = time.split(":")
+
         if (parts.size != 2) {
             return 0
         }
@@ -715,26 +1151,38 @@ class DeviceLightProgramEditorFragment :
         val hour = parts[0].toIntOrNull() ?: 0
         val minute = parts[1].toIntOrNull() ?: 0
 
-        return (hour * 60 + minute).coerceIn(0, MINUTES_IN_DAY - 1)
+        return (hour * 60 + minute)
+            .coerceIn(
+                0,
+                MINUTES_IN_DAY - 1
+            )
     }
 
     private fun minutesToTime(
         minutes: Int
     ): String {
-        val safeMinutes = minutes.coerceIn(0, MINUTES_IN_DAY - 1)
+        val safeMinutes =
+            minutes.coerceIn(
+                0,
+                MINUTES_IN_DAY - 1
+            )
+
         val hour = safeMinutes / 60
         val minute = safeMinutes % 60
 
-        return "%02d:%02d".format(hour, minute)
+        return "%02d:%02d".format(
+            hour,
+            minute
+        )
     }
 
     private fun extractAcclimationDays(
         text: String
     ): Int {
-        val firstNumber = text
-            .split(" ")
-            .firstOrNull()
-            ?.toIntOrNull()
+        val firstNumber =
+            text.split(" ")
+                .firstOrNull()
+                ?.toIntOrNull()
 
         return firstNumber ?: 7
     }
@@ -742,13 +1190,18 @@ class DeviceLightProgramEditorFragment :
     private fun extractAcclimationStartIntensity(
         text: String
     ): Int {
-        val startPart = text
-            .substringAfter("Start", "")
+        return text
+            .substringAfter(
+                delimiter = "Start",
+                missingDelimiterValue = ""
+            )
             .trim()
-            .replace("%", "")
+            .replace(
+                oldValue = "%",
+                newValue = ""
+            )
             .toIntOrNull()
-
-        return startPart ?: 40
+            ?: 40
     }
 
     private fun allDays(): Set<Int> {
@@ -780,6 +1233,14 @@ class DeviceLightProgramEditorFragment :
         )
     }
 
+    private fun color(
+        @ColorRes colorRes: Int
+    ): Int {
+        return requireContext().getColor(
+            colorRes
+        )
+    }
+
     private fun showMessage(
         message: String
     ) {
@@ -792,7 +1253,67 @@ class DeviceLightProgramEditorFragment :
 
     override fun onDestroyView() {
         _binding = null
+
         super.onDestroyView()
+    }
+
+    private enum class CurvePointId {
+        START,
+        PEAK_START,
+        PEAK_END,
+        END
+    }
+
+    private data class CurvePointState(
+        val id: CurvePointId,
+        val label: String,
+        val time: String,
+        val intensity: Int,
+        val canDelete: Boolean = false
+    )
+
+    private enum class ProChannel(
+        val label: String,
+        @ColorRes val colorRes: Int,
+        val defaultPeak: Int
+    ) {
+        RED(
+            label = "Red",
+            colorRes = R.color.light_red,
+            defaultPeak = 80
+        ),
+        GREEN(
+            label = "Green",
+            colorRes = R.color.light_green,
+            defaultPeak = 84
+        ),
+        BLUE(
+            label = "Blue",
+            colorRes = R.color.light_blue,
+            defaultPeak = 79
+        ),
+        WHITE(
+            label = "White",
+            colorRes = R.color.light_white,
+            defaultPeak = 65
+        )
+    }
+
+    private enum class RepeatMode(
+        val label: String
+    ) {
+        EVERY("Every day"),
+        WEEKDAYS("Weekdays"),
+        WEEKEND("Weekend"),
+        CUSTOM("Custom")
+    }
+
+    private enum class RampSmoothing(
+        val label: String
+    ) {
+        LINEAR("Linear"),
+        SOFT("Soft"),
+        NATURAL("Natural")
     }
 
     companion object {
@@ -801,6 +1322,7 @@ class DeviceLightProgramEditorFragment :
         private const val DEFAULT_PROGRAM_NAME = "Every Day Program"
         private const val POINT_STEP_MINUTES = 15
         private const val MINUTES_IN_DAY = 24 * 60
+        private const val MAX_PERCENT = 100
 
         private const val DAY_MON = 1
         private const val DAY_TUE = 2
