@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/previewDayRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_light_bottom_sheet_surface"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="24dp">
+
+    <View
+        android:layout_width="42dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/light_stroke" />
+
+    <TextView
+        android:id="@+id/tvPreviewDayTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:fontFamily="@font/inter_semibold"
+        android:includeFontPadding="false"
+        android:text="Preview Day"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="22sp" />
+
+    <TextView
+        android:id="@+id/tvPreviewDaySubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:lineSpacingExtra="2dp"
+        android:text="Accelerated 24-hour light simulation. This does not save or send data to the device."
+        android:textColor="@color/settings_text_secondary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvPreviewDayTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/inter_semibold"
+        android:includeFontPadding="false"
+        android:text="00:00"
+        android:textColor="@color/light_accent"
+        android:textSize="34sp" />
+
+    <TextView
+        android:id="@+id/tvPreviewDayMode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Simple preview · Linear · Every day"
+        android:textColor="@color/settings_text_secondary"
+        android:textSize="13sp" />
+
+    <ProgressBar
+        android:id="@+id/progressPreviewDay"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="20dp"
+        android:max="1000"
+        android:progress="0"
+        android:progressTint="@color/light_accent"
+        android:progressBackgroundTint="@color/light_stroke" />
+
+    <LinearLayout
+        android:id="@+id/previewValuesContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvPreviewMain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Main 0%"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvPreviewRed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Red 0%"
+            android:textColor="@color/light_red"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tvPreviewGreen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Green 0%"
+            android:textColor="@color/light_green"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tvPreviewBlue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Blue 0%"
+            android:textColor="@color/light_blue"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tvPreviewWhite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="White 0%"
+            android:textColor="@color/light_white"
+            android:textSize="15sp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/btnPreviewDayClose"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="28dp"
+        android:background="@drawable/bg_light_primary_action"
+        android:fontFamily="@font/inter_semibold"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="Close"
+        android:textColor="@color/background_color"
+        android:textSize="15sp" />
+
+</LinearLayout>

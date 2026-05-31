@@ -1679,178 +1679,71 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         )
     }
 
-    private fun showPreviewDaySheet() {
-        stopPreviewSimulation()
+private fun showPreviewDaySheet() {
+    stopPreviewSimulation()
 
-        val dialog = BottomSheetDialog(requireContext())
-        previewDialog = dialog
+    val dialog = BottomSheetDialog(requireContext())
+    previewDialog = dialog
 
-        val root =
-        LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-
-            setPadding(
-                24.dp(),
-                20.dp(),
-                24.dp(),
-                20.dp()
-            )
-        }
-
-        val tvTitle =
-        createPreviewText(
-            text = "Preview Day",
-            textSizeSp = 20f,
-            colorRes = R.color.light_white,
-            bottomMarginDp = 6
+    val sheetView =
+        layoutInflater.inflate(
+            R.layout.bottom_sheet_light_preview_day,
+            null
         )
 
-        val tvSubtitle =
-        createPreviewText(
-            text = "Accelerated 24-hour light simulation. This does not save or send data to the device.",
-            textSizeSp = 13f,
-            colorRes = R.color.settings_text_secondary,
-            bottomMarginDp = 16
-        )
+    val tvTime =
+        sheetView.findViewById<TextView>(R.id.tvPreviewDayTime)
 
-        val tvTime =
-        createPreviewText(
-            text = "00:00",
-            textSizeSp = 28f,
-            colorRes = R.color.light_accent,
-            bottomMarginDp = 4
-        )
+    val tvMode =
+        sheetView.findViewById<TextView>(R.id.tvPreviewDayMode)
 
-        val tvMode =
-        createPreviewText(
-            text = "",
-            textSizeSp = 13f,
-            colorRes = R.color.settings_text_secondary,
-            bottomMarginDp = 14
-        )
+    val progressBar =
+        sheetView.findViewById<ProgressBar>(R.id.progressPreviewDay)
 
-        val progressBar =
-        ProgressBar(
-            requireContext(),
-            null,
-            android.R.attr.progressBarStyleHorizontal
-        ).apply {
-            max = PREVIEW_PROGRESS_MAX
-            progress = 0
+    val tvMain =
+        sheetView.findViewById<TextView>(R.id.tvPreviewMain)
 
-            layoutParams =
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                8.dp()
-            ).apply {
-                bottomMargin = 18.dp()
-            }
-        }
+    val tvRed =
+        sheetView.findViewById<TextView>(R.id.tvPreviewRed)
 
-        val tvMain =
-        createPreviewText(
-            text = "Main 0%",
-            textSizeSp = 15f,
-            colorRes = R.color.light_white,
-            bottomMarginDp = 10
-        )
+    val tvGreen =
+        sheetView.findViewById<TextView>(R.id.tvPreviewGreen)
 
-        val tvRed =
-        createPreviewText(
-            text = "Red 0%",
-            textSizeSp = 15f,
-            colorRes = R.color.light_red,
-            bottomMarginDp = 8
-        )
+    val tvBlue =
+        sheetView.findViewById<TextView>(R.id.tvPreviewBlue)
 
-        val tvGreen =
-        createPreviewText(
-            text = "Green 0%",
-            textSizeSp = 15f,
-            colorRes = R.color.light_green,
-            bottomMarginDp = 8
-        )
+    val tvWhite =
+        sheetView.findViewById<TextView>(R.id.tvPreviewWhite)
 
-        val tvBlue =
-        createPreviewText(
-            text = "Blue 0%",
-            textSizeSp = 15f,
-            colorRes = R.color.light_blue,
-            bottomMarginDp = 8
-        )
+    val btnClose =
+        sheetView.findViewById<TextView>(R.id.btnPreviewDayClose)
 
-        val tvWhite =
-        createPreviewText(
-            text = "White 0%",
-            textSizeSp = 15f,
-            colorRes = R.color.light_white,
-            bottomMarginDp = 18
-        )
+    progressBar.max = PREVIEW_PROGRESS_MAX
+    progressBar.progress = 0
 
-        val btnClose =
-        TextView(requireContext()).apply {
-            text = "Close"
-            textSize = 15f
-            gravity = Gravity.CENTER
-            includeFontPadding = false
-
-            setTextColor(
-                color(R.color.background_color)
-            )
-
-            setBackgroundResource(
-                R.drawable.bg_light_editor_chip_selected
-            )
-
-            setPadding(
-                16.dp(),
-                14.dp(),
-                16.dp(),
-                14.dp()
-            )
-
-            layoutParams =
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-
-            setOnClickListener {
-                dialog.dismiss()
-            }
-        }
-
-        root.addView(tvTitle)
-        root.addView(tvSubtitle)
-        root.addView(tvTime)
-        root.addView(tvMode)
-        root.addView(progressBar)
-        root.addView(tvMain)
-        root.addView(tvRed)
-        root.addView(tvGreen)
-        root.addView(tvBlue)
-        root.addView(tvWhite)
-        root.addView(btnClose)
-
-        dialog.setOnDismissListener {
-            stopPreviewSimulation()
-            previewDialog = null
-        }
-
-        dialog.setContentView(root)
-        dialog.show()
-
-        startPreviewSimulation(
-            progressBar = progressBar,
-            tvTime = tvTime,
-            tvMode = tvMode,
-            tvMain = tvMain,
-            tvRed = tvRed,
-            tvGreen = tvGreen,
-            tvBlue = tvBlue,
-            tvWhite = tvWhite
-        )
+    btnClose.setOnClickListener {
+        dialog.dismiss()
     }
+
+    dialog.setOnDismissListener {
+        stopPreviewSimulation()
+        previewDialog = null
+    }
+
+    dialog.setContentView(sheetView)
+    dialog.show()
+
+    startPreviewSimulation(
+        progressBar = progressBar,
+        tvTime = tvTime,
+        tvMode = tvMode,
+        tvMain = tvMain,
+        tvRed = tvRed,
+        tvGreen = tvGreen,
+        tvBlue = tvBlue,
+        tvWhite = tvWhite
+    )
+}
 
     private fun startPreviewSimulation(
         progressBar: ProgressBar,
@@ -1977,31 +1870,6 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             channelBalance = currentChannelBalanceDraft(),
             dayMinute = dayMinute
         )
-    }
-
-    private fun createPreviewText(
-        text: String,
-        textSizeSp: Float,
-        @ColorRes colorRes: Int,
-        bottomMarginDp: Int = 0
-    ): TextView {
-        return TextView(requireContext()).apply {
-            this.text = text
-            textSize = textSizeSp
-            includeFontPadding = true
-
-            setTextColor(
-                color(colorRes)
-            )
-
-            layoutParams =
-            LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = bottomMarginDp.dp()
-            }
-        }
     }
 
     private fun saveProgram() {
