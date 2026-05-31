@@ -44,6 +44,8 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     private var simpleCurvePoints: MutableList<CurvePointState> =
     createSimpleCurvePoints()
 
+    private var selectedCurvePointId: String = POINT_ID_PEAK_START
+
     private val proChannelCurves: MutableMap<ProChannel, MutableList<CurvePointState>> =
     mutableMapOf(
         ProChannel.RED to createChannelCurvePoints(ProChannel.RED.defaultPeak),
@@ -328,7 +330,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         cardProgramChannelBalance.visibility = View.VISIBLE
 
         tvEditorModeDescription.text =
-    "One daily intensity curve with planted WRGB balance."
+        "One daily intensity curve with planted WRGB balance."
 
         tvCurveTitle.text = "Daily Light Curve"
         tvCurveSubtitle.text = "Tap a point or row to edit time and output"
@@ -338,7 +340,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
         tvChannelBalanceTitle.text = "Planted Channel Balance"
         tvChannelBalanceSubtitle.text =
-    "White base with red/blue support and moderate green for planted tanks"
+        "White base with red/blue support and moderate green for planted tanks"
 
         renderCurrentCurve()
     }
@@ -409,30 +411,31 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         val peakEnd = sortedCurve.pointById(POINT_ID_PEAK_END) ?: return@with
         val end = sortedCurve.pointById(POINT_ID_END) ?: return@with
 
-        viewProgramEditorCurve.setCurveDisplayMode(
-            mode =
-            if (isProMode) {
-                when (selectedProChannel) {
-                    ProChannel.RED -> LightProgramCurveView.CurveDisplayMode.PRO_RED
-                    ProChannel.GREEN -> LightProgramCurveView.CurveDisplayMode.PRO_GREEN
-                    ProChannel.BLUE -> LightProgramCurveView.CurveDisplayMode.PRO_BLUE
-                    ProChannel.WHITE -> LightProgramCurveView.CurveDisplayMode.PRO_WHITE
-                }
-            } else {
-                LightProgramCurveView.CurveDisplayMode.SIMPLE
-            }
-        )
+        if (isProMode) {
+            viewProgramEditorCurve.setProChannelCurves(
+                activeMode = selectedProChannel.toCurveDisplayMode(),
+                redPoints = proChannelCurves
+                .getValue(ProChannel.RED)
+                .toCurveViewPoints(),
+                greenPoints = proChannelCurves
+                .getValue(ProChannel.GREEN)
+                .toCurveViewPoints(),
+                bluePoints = proChannelCurves
+                .getValue(ProChannel.BLUE)
+                .toCurveViewPoints(),
+                whitePoints = proChannelCurves
+                .getValue(ProChannel.WHITE)
+                .toCurveViewPoints()
+            )
+        } else {
+            viewProgramEditorCurve.setCurveDisplayMode(
+                mode = LightProgramCurveView.CurveDisplayMode.SIMPLE
+            )
 
-        viewProgramEditorCurve.setCurvePoints(
-            points =
-            sortedCurve.map {
-                point ->
-                LightProgramCurveView.CurvePoint(
-                    time = point.time,
-                    intensity = point.intensity
-                )
-            }
-        )
+            viewProgramEditorCurve.setCurvePoints(
+                points = sortedCurve.toCurveViewPoints()
+            )
+        }
 
         tvCurveStartSummary.text = start.time
         tvCurvePeakSummary.text =
@@ -468,6 +471,8 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     private fun showPointEditor(
         pointId: String
     ) {
+
+        selectedCurvePointId = pointId
         val currentPoint =
         currentCurvePoints()
         .pointById(
@@ -501,6 +506,10 @@ Fragment(R.layout.fragment_device_light_program_editor) {
                         pointId = currentPoint.id
                     )
 
+                    if (selectedCurvePointId == currentPoint.id) {
+                        selectedCurvePointId = POINT_ID_PEAK_START
+                    }
+
                     renderCurrentCurve()
 
                     showMessage(
@@ -523,12 +532,17 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             canDelete = false,
             onSave = {
                 selectedTime, selectedIntensity ->
-                currentCurvePoints().add(
-                    suggestedPoint.copy(
-                        time = selectedTime,
-                        intensity = selectedIntensity
-                    )
+                val newPoint =
+                suggestedPoint.copy(
+                    time = selectedTime,
+                    intensity = selectedIntensity
                 )
+
+                currentCurvePoints().add(
+                    newPoint
+                )
+
+                selectedCurvePointId = newPoint.id
 
                 renderCurrentCurve()
 
@@ -1363,6 +1377,45 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         )
     }
 
+    private fun List<CurvePointState>.toCurveViewPoints(): List<LightProgramCurveView.CurvePoint> {
+        return sortedWith(
+            compareBy<CurvePointState> {
+                timeToMinutes(
+                    time = it.time
+                )
+            }.thenBy {
+                it.kind.sortOrder
+            }
+        ).map {
+            point ->
+            LightProgramCurveView.CurvePoint(
+                time = point.time,
+                intensity = point.intensity,
+                isMajor = point.kind != CurvePointKind.INTERMEDIATE
+            )
+        }
+    }
+
+    private fun ProChannel.toCurveDisplayMode(): LightProgramCurveView.CurveDisplayMode {
+        return when (this) {
+            ProChannel.RED -> {
+                LightProgramCurveView.CurveDisplayMode.PRO_RED
+            }
+
+            ProChannel.GREEN -> {
+                LightProgramCurveView.CurveDisplayMode.PRO_GREEN
+            }
+
+            ProChannel.BLUE -> {
+                LightProgramCurveView.CurveDisplayMode.PRO_BLUE
+            }
+
+            ProChannel.WHITE -> {
+                LightProgramCurveView.CurveDisplayMode.PRO_WHITE
+            }
+        }
+    }
+
     private fun List<CurvePointState>.pointById(
         pointId: String
     ): CurvePointState? {
@@ -1689,31 +1742,31 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     )
 
     private enum class ProChannel(
-    val label: String,
-    @ColorRes val colorRes: Int,
-    val defaultPeak: Int
-) {
-    RED(
-        label = "Red",
-        colorRes = R.color.light_red,
-        defaultPeak = 80
-    ),
-    GREEN(
-        label = "Green",
-        colorRes = R.color.light_green,
-        defaultPeak = 72
-    ),
-    BLUE(
-        label = "Blue",
-        colorRes = R.color.light_blue,
-        defaultPeak = 82
-    ),
-    WHITE(
-        label = "White",
-        colorRes = R.color.light_white,
-        defaultPeak = 78
-    )
-}
+        val label: String,
+        @ColorRes val colorRes: Int,
+        val defaultPeak: Int
+    ) {
+        RED(
+            label = "Red",
+            colorRes = R.color.light_red,
+            defaultPeak = 80
+        ),
+        GREEN(
+            label = "Green",
+            colorRes = R.color.light_green,
+            defaultPeak = 72
+        ),
+        BLUE(
+            label = "Blue",
+            colorRes = R.color.light_blue,
+            defaultPeak = 82
+        ),
+        WHITE(
+            label = "White",
+            colorRes = R.color.light_white,
+            defaultPeak = 78
+        )
+    }
 
     private enum class RepeatMode(
         val label: String
