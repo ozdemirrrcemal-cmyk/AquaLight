@@ -3,7 +3,7 @@
     android:id="@+id/lightDayPickerRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/light_surface"
+    android:background="@drawable/bg_light_bottom_sheet_surface"
     android:orientation="vertical"
     android:paddingStart="20dp"
     android:paddingTop="12dp"
