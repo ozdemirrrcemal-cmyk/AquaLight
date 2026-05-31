@@ -40,18 +40,6 @@
             android:paddingBottom="28dp">
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardProgramIdentity"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/light_surface"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/light_stroke"
-                app:strokeWidth="1dp">
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardEditorMode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -379,22 +367,23 @@
                     <LinearLayout
                         android:id="@+id/curveSummaryRow"
                         android:layout_width="match_parent"
-                        android:layout_height="46dp"
+                        android:layout_height="74dp"
                         android:layout_marginTop="10dp"
+                        android:gravity="center"
                         android:orientation="horizontal">
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
                             <com.google.android.material.card.MaterialCardView
-                                android:layout_width="26dp"
-                                android:layout_height="26dp"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
                                 app:cardBackgroundColor="@color/light_chip_auto"
-                                app:cardCornerRadius="13dp"
+                                app:cardCornerRadius="14dp"
                                 app:cardElevation="0dp"
                                 app:strokeColor="#F9C74F"
                                 app:strokeWidth="1dp">
@@ -407,35 +396,30 @@
                                     android:includeFontPadding="false"
                                     android:text="☀"
                                     android:textColor="#F9C74F"
-                                    android:textSize="12sp" />
+                                    android:textSize="13sp" />
 
                             </com.google.android.material.card.MaterialCardView>
 
-                            <LinearLayout
+                            <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="7dp"
-                                android:orientation="vertical">
+                                android:layout_marginTop="6dp"
+                                android:gravity="center"
+                                android:text="Start"
+                                android:textColor="@color/settings_text_secondary"
+                                android:textSize="10sp" />
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Start"
-                                    android:textColor="@color/settings_text_secondary"
-                                    android:textSize="10sp" />
-
-                                <TextView
-                                    android:id="@+id/tvCurveStartSummary"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="3dp"
-                                    android:fontFamily="@font/inter_semibold"
-                                    android:includeFontPadding="false"
-                                    android:text="08:00"
-                                    android:textColor="?attr/colorOnSurface"
-                                    android:textSize="13sp" />
-
-                            </LinearLayout>
+                            <TextView
+                                android:id="@+id/tvCurveStartSummary"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:fontFamily="@font/inter_semibold"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:text="08:00"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="14sp" />
 
                         </LinearLayout>
 
@@ -443,14 +427,14 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
                             <com.google.android.material.card.MaterialCardView
-                                android:layout_width="26dp"
-                                android:layout_height="26dp"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
                                 app:cardBackgroundColor="@color/light_chip_auto"
-                                app:cardCornerRadius="13dp"
+                                app:cardCornerRadius="14dp"
                                 app:cardElevation="0dp"
                                 app:strokeColor="@color/light_accent"
                                 app:strokeWidth="1dp">
@@ -463,35 +447,30 @@
                                     android:includeFontPadding="false"
                                     android:text="↗"
                                     android:textColor="@color/light_accent"
-                                    android:textSize="12sp" />
+                                    android:textSize="13sp" />
 
                             </com.google.android.material.card.MaterialCardView>
 
-                            <LinearLayout
+                            <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="7dp"
-                                android:orientation="vertical">
+                                android:layout_marginTop="6dp"
+                                android:gravity="center"
+                                android:text="Peak"
+                                android:textColor="@color/settings_text_secondary"
+                                android:textSize="10sp" />
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Peak"
-                                    android:textColor="@color/settings_text_secondary"
-                                    android:textSize="10sp" />
-
-                                <TextView
-                                    android:id="@+id/tvCurvePeakSummary"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="3dp"
-                                    android:fontFamily="@font/inter_semibold"
-                                    android:includeFontPadding="false"
-                                    android:text="100%"
-                                    android:textColor="?attr/colorOnSurface"
-                                    android:textSize="13sp" />
-
-                            </LinearLayout>
+                            <TextView
+                                android:id="@+id/tvCurvePeakSummary"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:fontFamily="@font/inter_semibold"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:text="100%"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="14sp" />
 
                         </LinearLayout>
 
@@ -499,14 +478,14 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
                             <com.google.android.material.card.MaterialCardView
-                                android:layout_width="26dp"
-                                android:layout_height="26dp"
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
                                 app:cardBackgroundColor="@color/light_chip_auto"
-                                app:cardCornerRadius="13dp"
+                                app:cardCornerRadius="14dp"
                                 app:cardElevation="0dp"
                                 app:strokeColor="#FF8A65"
                                 app:strokeWidth="1dp">
@@ -519,35 +498,30 @@
                                     android:includeFontPadding="false"
                                     android:text="☾"
                                     android:textColor="#FF8A65"
-                                    android:textSize="12sp" />
+                                    android:textSize="13sp" />
 
                             </com.google.android.material.card.MaterialCardView>
 
-                            <LinearLayout
+                            <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="7dp"
-                                android:orientation="vertical">
+                                android:layout_marginTop="6dp"
+                                android:gravity="center"
+                                android:text="Off"
+                                android:textColor="@color/settings_text_secondary"
+                                android:textSize="10sp" />
 
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Off"
-                                    android:textColor="@color/settings_text_secondary"
-                                    android:textSize="10sp" />
-
-                                <TextView
-                                    android:id="@+id/tvCurveEndSummary"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="3dp"
-                                    android:fontFamily="@font/inter_semibold"
-                                    android:includeFontPadding="false"
-                                    android:text="20:00"
-                                    android:textColor="?attr/colorOnSurface"
-                                    android:textSize="13sp" />
-
-                            </LinearLayout>
+                            <TextView
+                                android:id="@+id/tvCurveEndSummary"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:fontFamily="@font/inter_semibold"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:text="20:00"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="14sp" />
 
                         </LinearLayout>
 
@@ -557,7 +531,7 @@
                         android:id="@+id/tvCurveHint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="2dp"
                         android:lineSpacingExtra="2dp"
                         android:text="Selected point · 12:00 · Peak start · 100%"
                         android:textColor="@color/settings_text_secondary"
@@ -982,6 +956,7 @@
                             android:text="Custom"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="11sp" />
+
                     </LinearLayout>
 
                     <TextView
@@ -1050,58 +1025,103 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="18dp"
                         android:background="@color/light_stroke" />
 
-
-
-
-
-
-                    <LinearLayout
+                    <com.google.android.material.card.MaterialCardView
                         android:id="@+id/rowAcclimation"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_height="72dp"
+                        android:layout_marginTop="14dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        app:cardBackgroundColor="@color/light_surface"
+                        app:cardCornerRadius="18dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@color/light_stroke"
+                        app:strokeWidth="1dp">
 
                         <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="12dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                app:cardBackgroundColor="@color/light_chip_auto"
+                                app:cardCornerRadius="18dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/light_accent"
+                                app:strokeWidth="1dp">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:fontFamily="@font/inter_semibold"
+                                    android:gravity="center"
+                                    android:includeFontPadding="false"
+                                    android:text="↗"
+                                    android:textColor="@color/light_accent"
+                                    android:textSize="17sp" />
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="@font/inter_semibold"
-                                android:includeFontPadding="false"
-                                android:text="Acclimation"
-                                android:textColor="?attr/colorOnSurface"
-                                android:textSize="14sp" />
+                                android:layout_marginStart="12dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/inter_semibold"
+                                    android:includeFontPadding="false"
+                                    android:text="Acclimation"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="Gradually increases light for new setups"
+                                    android:textColor="@color/settings_text_secondary"
+                                    android:textSize="11sp" />
+
+                            </LinearLayout>
 
                             <TextView
                                 android:id="@+id/tvAcclimationValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="3dp"
+                                android:fontFamily="@font/inter_semibold"
+                                android:includeFontPadding="false"
                                 android:text="Off"
                                 android:textColor="@color/settings_text_secondary"
                                 android:textSize="12sp" />
 
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:includeFontPadding="false"
+                                android:text="›"
+                                android:textColor="@color/light_accent"
+                                android:textSize="24sp" />
+
                         </LinearLayout>
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:includeFontPadding="false"
-                            android:text="›"
-                            android:textColor="@color/light_accent"
-                            android:textSize="24sp" />
+                    </com.google.android.material.card.MaterialCardView>
 
-                    </LinearLayout>
                 </LinearLayout>
+
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
