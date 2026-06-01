@@ -251,5 +251,53 @@
     <string name="light_ramp_linear">Linear</string>
     <string name="light_ramp_soft">Soft</string>
     <string name="light_ramp_natural">Natural</string>
+	
+	<!-- Quick Setup -->
+<string name="light_quick_setup_title">Quick Setup</string>
+<string name="light_quick_setup_intro_title">Simple Daily Light Plan</string>
+<string name="light_quick_setup_intro_description">Set the light period, ramp duration and channel balance. AquaLight will generate a professional daily curve for you.</string>
+
+<string name="light_quick_setup_step_repeat_days">1. Repeat Days</string>
+<string name="light_quick_setup_repeat_days_description">Choose the days this program should run.</string>
+
+<string name="light_quick_setup_step_time_range">2. Time Range</string>
+<string name="light_quick_setup_sunrise_start">Sunrise Start</string>
+<string name="light_quick_setup_sunset_end">Sunset End</string>
+
+<string name="light_quick_setup_step_ramp_duration">3. Ramp Duration</string>
+<string name="light_quick_setup_ramp_value_format">%1$d min</string>
+<string name="light_quick_setup_ramp_30">30 min</string>
+<string name="light_quick_setup_ramp_60">60 min</string>
+<string name="light_quick_setup_ramp_90">90 min</string>
+
+<string name="light_quick_setup_step_peak_intensity">4. Peak Intensity</string>
+<string name="light_quick_setup_channel_balance">Channel Balance</string>
+
+<string name="light_quick_setup_balance_natural">Natural</string>
+<string name="light_quick_setup_balance_plant">Plant</string>
+<string name="light_quick_setup_balance_warm">Warm</string>
+<string name="light_quick_setup_balance_blue">Blue</string>
+
+<string name="light_quick_setup_channel_summary_format">R%1$d  G%2$d  B%3$d  W%4$d</string>
+
+<string name="light_quick_setup_step_preview">5. Preview</string>
+<string name="light_quick_setup_preview_summary_format">%1$s sunrise → %2$s peak → %3$s sunset ramp → %4$s off · %5$s</string>
+<string name="light_quick_setup_create_program">Create Program</string>
+<string name="light_quick_setup_generated_program_name">Quick Setup Program</string>
+
+<string name="light_quick_setup_days_every_day">Every day</string>
+<string name="light_quick_setup_days_weekdays">Weekdays</string>
+<string name="light_quick_setup_days_weekend">Weekend</string>
+<string name="light_quick_setup_days_count_format">%1$d days</string>
+<string name="light_quick_setup_error_one_day_required">At least one day must be selected</string>
+
+<!-- Quick Setup Time Picker -->
+<string name="light_time_picker_title">Select Time</string>
+<string name="light_time_picker_subtitle">Adjust the schedule time in 15 minute steps.</string>
+<string name="light_time_picker_minus_hour">-1h</string>
+<string name="light_time_picker_minus_step">-15m</string>
+<string name="light_time_picker_plus_step">+15m</string>
+<string name="light_time_picker_plus_hour">+1h</string>
+<string name="light_time_picker_save">Save Time</string>
 
 </resources>

@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color">
@@ -27,638 +28,678 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-    <LinearLayout
-        android:id="@+id/lightQuickSetupRoot"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clipToPadding="false"
-        android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingTop="18dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="28dp">
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardQuickSetupIntro"
+        <LinearLayout
+            android:id="@+id/lightQuickSetupRoot"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/light_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
+            android:clipToPadding="false"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/light_screen_padding_horizontal"
+            android:paddingTop="@dimen/light_screen_padding_top"
+            android:paddingEnd="@dimen/light_screen_padding_horizontal"
+            android:paddingBottom="@dimen/light_screen_padding_bottom">
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardQuickSetupIntro"
+                style="@style/Widget.Aqua.Light.Card.Surface"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:id="@+id/tvQuickIntroTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Simple Daily Light Plan"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvQuickIntroDesc"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Set the light period, ramp duration and channel balance. AquaLight will generate a professional daily curve for you."
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
-
-                <LinearLayout
-                    android:id="@+id/quickIntroMiniCurve"
-                    android:layout_width="match_parent"
-                    android:layout_height="14dp"
-                    android:layout_marginTop="18dp"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="3"
-                        android:background="#263A56" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="#287B8E" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="5"
-                        android:background="@color/light_accent" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="#287B8E" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="4"
-                        android:background="#263A56" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardQuickDays"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface_deep"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="1. Repeat Days"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Choose the days this program should run."
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
-
-                <LinearLayout
-                    android:id="@+id/dayChipsRow"
-                    android:layout_width="match_parent"
-                    android:layout_height="42dp"
-                    android:layout_marginTop="16dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/chipDayMon"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="M"
-                        android:textColor="@color/background_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/chipDayTue"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="T"
-                        android:textColor="@color/background_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/chipDayWed"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="W"
-                        android:textColor="@color/background_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/chipDayThu"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="T"
-                        android:textColor="@color/background_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/chipDayFri"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="F"
-                        android:textColor="@color/background_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/chipDaySat"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="S"
-                        android:textColor="@color/background_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/chipDaySun"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="4dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="S"
-                        android:textColor="@color/background_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardQuickTimeRange"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="2. Time Range"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                android:layout_marginTop="@dimen/light_hero_margin_top"
+                app:cardCornerRadius="@dimen/light_card_corner_radius_large">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:orientation="horizontal">
+                    android:orientation="vertical"
+                    android:padding="@dimen/light_card_padding">
+
+                    <TextView
+                        android:id="@+id/tvQuickIntroTitle"
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/light_quick_setup_intro_title" />
+
+                    <TextView
+                        android:id="@+id/tvQuickIntroDesc"
+                        style="@style/TextAppearance.Aqua.Light.BodyMuted"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="@string/light_quick_setup_intro_description" />
 
                     <LinearLayout
-                        android:id="@+id/btnSunriseStart"
-                        android:layout_width="0dp"
-                        android:layout_height="86dp"
-                        android:layout_marginEnd="7dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        android:id="@+id/quickIntroMiniCurve"
+                        android:layout_width="match_parent"
+                        android:layout_height="14dp"
+                        android:layout_marginTop="18dp"
+                        android:orientation="horizontal">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Sunrise Start"
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="3"
+                            android:background="@color/light_stroke" />
 
-                        <TextView
-                            android:id="@+id/tvSunriseStartTime"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="09:00"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="26sp"
-                            android:textStyle="bold" />
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/light_accent_soft" />
 
-                    </LinearLayout>
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="5"
+                            android:background="@color/light_accent" />
 
-                    <LinearLayout
-                        android:id="@+id/btnSunsetEnd"
-                        android:layout_width="0dp"
-                        android:layout_height="86dp"
-                        android:layout_marginStart="7dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/light_accent_soft" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Sunset End"
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:id="@+id/tvSunsetEndTime"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="19:15"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="26sp"
-                            android:textStyle="bold" />
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="4"
+                            android:background="@color/light_stroke" />
 
                     </LinearLayout>
 
                 </LinearLayout>
 
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardQuickRamp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardQuickDays"
+                style="@style/Widget.Aqua.Light.Card.SurfaceDeep"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="3. Ramp Duration"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvRampDurationValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="60 min"
-                    android:textColor="@color/light_accent"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.slider.Slider
-                    android:id="@+id/sliderRampDuration"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                android:layout_marginTop="@dimen/light_card_margin_top"
+                app:cardCornerRadius="@dimen/light_card_corner_radius_large">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/light_card_padding">
 
                     <TextView
-                        android:id="@+id/btnRamp30"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="30 min"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/light_quick_setup_step_repeat_days" />
 
                     <TextView
-                        android:id="@+id/btnRamp60"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="6dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="60 min"
-                        android:textColor="@color/background_color"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                        style="@style/TextAppearance.Aqua.Light.BodyMuted"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/light_quick_setup_repeat_days_description" />
 
-                    <TextView
-                        android:id="@+id/btnRamp90"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="90 min"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                    <LinearLayout
+                        android:id="@+id/dayChipsRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/chipDayMon"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/common_day_mon_short"
+                            android:textColor="@color/background_color"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/chipDayTue"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/common_day_tue_short"
+                            android:textColor="@color/background_color"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/chipDayWed"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/common_day_wed_short"
+                            android:textColor="@color/background_color"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/chipDayThu"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/common_day_thu_short"
+                            android:textColor="@color/background_color"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/chipDayFri"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/common_day_fri_short"
+                            android:textColor="@color/background_color"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/chipDaySat"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/common_day_sat_short"
+                            android:textColor="@color/background_color"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/chipDaySun"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/common_day_sun_short"
+                            android:textColor="@color/background_color"
+                            android:textSize="13sp" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardQuickIntensity"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface_deep"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_stroke"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardQuickTimeRange"
+                style="@style/Widget.Aqua.Light.Card.Surface"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="4. Peak Intensity"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvPeakIntensityValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="100%"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="38sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.slider.Slider
-                    android:id="@+id/sliderPeakIntensity"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:text="Channel Balance"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                android:layout_marginTop="@dimen/light_card_margin_top"
+                app:cardCornerRadius="@dimen/light_card_corner_radius_large">
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/light_card_padding">
 
                     <TextView
-                        android:id="@+id/chipBalanceNatural"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        android:background="@color/light_accent"
-                        android:gravity="center"
-                        android:text="Natural"
-                        android:textColor="@color/background_color"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/light_quick_setup_step_time_range" />
 
-                    <TextView
-                        android:id="@+id/chipBalancePlant"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="Plant"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/chipBalanceWarm"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="Warm"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        <LinearLayout
+                            android:id="@+id/btnSunriseStart"
+                            android:layout_width="0dp"
+                            android:layout_height="86dp"
+                            android:layout_marginEnd="7dp"
+                            android:layout_weight="1"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/chipBalanceBlue"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginStart="5dp"
-                        android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center"
-                        android:text="Blue"
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.LabelSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/light_quick_setup_sunrise_start" />
+
+                            <TextView
+                                android:id="@+id/tvSunriseStartTime"
+                                style="@style/TextAppearance.Aqua.Light.OutputValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:text=""
+                                tools:text="09:00" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnSunsetEnd"
+                            android:layout_width="0dp"
+                            android:layout_height="86dp"
+                            android:layout_marginStart="7dp"
+                            android:layout_weight="1"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.LabelSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/light_quick_setup_sunset_end" />
+
+                            <TextView
+                                android:id="@+id/tvSunsetEndTime"
+                                style="@style/TextAppearance.Aqua.Light.OutputValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:text=""
+                                tools:text="19:15" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvQuickChannelSummary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:text="R80  G84  B79  W65"
-                    android:textColor="@color/light_accent"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardQuickPreview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/light_surface"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_accent"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardQuickRamp"
+                style="@style/Widget.Aqua.Light.Card.Surface"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="5. Preview"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvQuickPreviewSummary"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="09:00 sunrise → 10:00 peak → 18:15 sunset ramp → 19:15 off"
-                    android:textColor="@color/settings_text_secondary"
-                    android:textSize="13sp" />
+                android:layout_marginTop="@dimen/light_card_margin_top"
+                app:cardCornerRadius="@dimen/light_card_corner_radius_large">
 
                 <LinearLayout
-                    android:id="@+id/quickPreviewCurve"
                     android:layout_width="match_parent"
-                    android:layout_height="16dp"
-                    android:layout_marginTop="18dp"
-                    android:orientation="horizontal">
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/light_card_padding">
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="3"
-                        android:background="#263A56" />
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/light_quick_setup_step_ramp_duration" />
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="#287B8E" />
+                    <TextView
+                        android:id="@+id/tvRampDurationValue"
+                        style="@style/TextAppearance.Aqua.Light.OutputValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text=""
+                        android:textColor="@color/light_accent"
+                        tools:text="60 min" />
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="5"
-                        android:background="@color/light_accent" />
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderRampDuration"
+                        style="@style/Widget.Aqua.Light.Slider.Master"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:valueFrom="15"
+                        android:valueTo="120"
+                        android:stepSize="15"
+                        tools:value="60" />
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="#287B8E" />
+                    <LinearLayout
+                        android:id="@+id/rampPresetRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="4"
-                        android:background="#263A56" />
+                        <TextView
+                            android:id="@+id/btnRamp30"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_unselected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/light_quick_setup_ramp_30"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/btnRamp60"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="6dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/light_quick_setup_ramp_60"
+                            android:textColor="@color/background_color"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/btnRamp90"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_unselected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/light_quick_setup_ramp_90"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="13sp" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/btnCreateQuickProgram"
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardQuickIntensity"
+                style="@style/Widget.Aqua.Light.Card.SurfaceDeep"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/light_card_margin_top"
+                app:cardCornerRadius="@dimen/light_card_corner_radius_large">
+
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="20dp"
-                    android:background="@color/light_accent"
-                    android:gravity="center"
-                    android:text="Create Program"
-                    android:textColor="@color/background_color"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/light_card_padding">
 
-            </LinearLayout>
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/light_quick_setup_step_peak_intensity" />
 
-        </com.google.android.material.card.MaterialCardView>
+                    <TextView
+                        android:id="@+id/tvPeakIntensityValue"
+                        style="@style/TextAppearance.Aqua.Light.OutputValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text=""
+                        tools:text="100%" />
 
-    </LinearLayout>
-</ScrollView>
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderPeakIntensity"
+                        style="@style/Widget.Aqua.Light.Slider.Master"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:valueFrom="10"
+                        android:valueTo="100"
+                        android:stepSize="1"
+                        tools:value="100" />
+
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.ActionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="@string/light_quick_setup_channel_balance" />
+
+                    <LinearLayout
+                        android:id="@+id/balancePresetRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/chipBalanceNatural"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_selected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/light_quick_setup_balance_natural"
+                            android:textColor="@color/background_color"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/chipBalancePlant"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_unselected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/light_quick_setup_balance_plant"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/chipBalanceWarm"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_unselected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/light_quick_setup_balance_warm"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/chipBalanceBlue"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_editor_chip_unselected"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="@font/inter_semibold"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/light_quick_setup_balance_blue"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvQuickChannelSummary"
+                        style="@style/TextAppearance.Aqua.Light.AccentSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text=""
+                        tools:text="R80  G84  B79  W65" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardQuickPreview"
+                style="@style/Widget.Aqua.Light.Card.Surface"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/light_card_margin_top"
+                app:cardCornerRadius="@dimen/light_card_corner_radius_large"
+                app:strokeColor="@color/light_accent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/light_card_padding">
+
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/light_quick_setup_step_preview" />
+
+                    <TextView
+                        android:id="@+id/tvQuickPreviewSummary"
+                        style="@style/TextAppearance.Aqua.Light.BodyMuted"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text=""
+                        tools:text="09:00 sunrise → 10:00 peak → 18:15 sunset ramp → 19:15 off · Every day" />
+
+                    <LinearLayout
+                        android:id="@+id/quickPreviewCurve"
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:layout_marginTop="18dp"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="3"
+                            android:background="@color/light_stroke" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/light_accent_soft" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="5"
+                            android:background="@color/light_accent" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@color/light_accent_soft" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="4"
+                            android:background="@color/light_stroke" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/btnCreateQuickProgram"
+                        style="@style/TextAppearance.Aqua.Light.ButtonText"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="20dp"
+                        android:background="@drawable/bg_light_primary_action"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:text="@string/light_quick_setup_create_program" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/lightTimePickerRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -21,7 +23,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="Select Time"
+        android:text="@string/light_time_picker_title"
         android:textColor="?attr/colorOnSurface"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -31,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="Adjust the schedule time in 15 minute steps."
+        android:text="@string/light_time_picker_subtitle"
         android:textColor="@color/settings_text_secondary"
         android:textSize="13sp" />
 
@@ -41,12 +43,14 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:gravity="center"
-        android:text="09:00"
+        android:text=""
         android:textColor="@color/light_accent"
         android:textSize="42sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:text="09:00" />
 
     <LinearLayout
+        android:id="@+id/lightTimePickerControlsRow"
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_marginTop="18dp"
@@ -60,7 +64,7 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
-            android:text="-1h"
+            android:text="@string/light_time_picker_minus_hour"
             android:textColor="@color/light_accent"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -74,7 +78,7 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
-            android:text="-15m"
+            android:text="@string/light_time_picker_minus_step"
             android:textColor="@color/light_accent"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -88,7 +92,7 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
-            android:text="+15m"
+            android:text="@string/light_time_picker_plus_step"
             android:textColor="@color/light_accent"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -101,7 +105,7 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
-            android:text="+1h"
+            android:text="@string/light_time_picker_plus_hour"
             android:textColor="@color/light_accent"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -115,7 +119,7 @@
         android:layout_marginTop="22dp"
         android:background="@color/light_accent"
         android:gravity="center"
-        android:text="Save Time"
+        android:text="@string/light_time_picker_save"
         android:textColor="@color/background_color"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -127,7 +131,7 @@
         android:layout_marginTop="8dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Cancel"
+        android:text="@string/common_cancel"
         android:textColor="@color/settings_text_secondary"
         android:textSize="14sp"
         android:textStyle="bold" />
