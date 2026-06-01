@@ -31,6 +31,13 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveCh
 import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveChannel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveSeries
+import androidx.core.os.bundleOf
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.data.LightProgramDraftStore
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramBalance
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramCurvePointKind
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramMode
 
 class DeviceLightProgramEditorFragment :
 Fragment(R.layout.fragment_device_light_program_editor) {
@@ -278,8 +285,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         }
 
         btnSaveProgram.setOnClickListener {
-            // TODO: Validate and save program through ViewModel when program data layer is enabled.
-            findNavController().popBackStack()
+            saveProgram()
         }
     }
 
@@ -849,6 +855,267 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         }
     }
 
+    private fun saveProgram() {
+        val savedProgram =
+        quickSetupGeneratedDraft()
+        ?.toSavedLightProgram()
+        ?: createDefaultSavedProgram()
+
+        LightProgramDraftStore.upsertProgram(
+            program = savedProgram
+        )
+
+        val navController = findNavController()
+
+        val returnedToProgramList =
+        navController.popBackStack(
+            R.id.deviceLightProgramListFragment,
+            false
+        )
+
+        if (!returnedToProgramList) {
+            navController.navigate(
+                R.id.deviceLightProgramListFragment,
+                bundleOf(
+                    ARG_DEVICE_ID to deviceId,
+                    ARG_DEVICE_TITLE to deviceTitle
+                )
+            )
+        }
+    }
+
+    private fun GeneratedQuickSetupProgramDraft.toSavedLightProgram(): SavedLightProgram {
+        return SavedLightProgram(
+            id = programId ?: createProgramId(),
+            deviceId = deviceId,
+            title = programName,
+            isEnabled = true,
+            isActive = true,
+            mode = SavedLightProgramMode.SIMPLE,
+            repeatDays = repeatDays,
+            rampMinutes = rampMinutes,
+            peakIntensityPercent = peakIntensityPercent,
+            balance =
+            SavedLightProgramBalance(
+                red = balance.red,
+                green = balance.green,
+                blue = balance.blue,
+                white = balance.white
+            ),
+            curvePoints =
+            curvePoints.map {
+                point ->
+                SavedLightProgramCurvePoint(
+                    kind = point.kind.toSavedCurvePointKind(),
+                    minuteOfDay = point.timeMinutes,
+                    masterPercent = point.masterPercent,
+                    red = point.channelOutput.red,
+                    green = point.channelOutput.green,
+                    blue = point.channelOutput.blue,
+                    white = point.channelOutput.white
+                )
+            }
+        )
+    }
+
+    private fun createDefaultSavedProgram(): SavedLightProgram {
+        val balance =
+        SavedLightProgramBalance(
+            red =
+            sliderValueOrDefault(
+                value = binding.sliderProgramRed.value.roundToInt(),
+                defaultValue = DEFAULT_RED
+            ),
+            green =
+            sliderValueOrDefault(
+                value = binding.sliderProgramGreen.value.roundToInt(),
+                defaultValue = DEFAULT_GREEN
+            ),
+            blue =
+            sliderValueOrDefault(
+                value = binding.sliderProgramBlue.value.roundToInt(),
+                defaultValue = DEFAULT_BLUE
+            ),
+            white =
+            sliderValueOrDefault(
+                value = binding.sliderProgramWhite.value.roundToInt(),
+                defaultValue = DEFAULT_WHITE
+            )
+        )
+
+        return SavedLightProgram(
+            id = programId ?: createProgramId(),
+            deviceId = deviceId,
+            title = programName,
+            isEnabled = true,
+            isActive = true,
+            mode = SavedLightProgramMode.SIMPLE,
+            repeatDays = selectedRepeatDays.toSavedRepeatDays(),
+            rampMinutes = DEFAULT_RAMP_MINUTES,
+            peakIntensityPercent = MAX_PERCENT,
+            balance = balance,
+            curvePoints =
+            listOf(
+                createSavedCurvePoint(
+                    kind = SavedLightProgramCurvePointKind.START,
+                    minuteOfDay = DEFAULT_START_MINUTES,
+                    masterPercent = MIN_PERCENT,
+                    balance = balance
+                ),
+                createSavedCurvePoint(
+                    kind = SavedLightProgramCurvePointKind.PEAK_START,
+                    minuteOfDay = DEFAULT_PEAK_START_MINUTES,
+                    masterPercent = MAX_PERCENT,
+                    balance = balance
+                ),
+                createSavedCurvePoint(
+                    kind = SavedLightProgramCurvePointKind.PEAK_END,
+                    minuteOfDay = DEFAULT_PEAK_END_MINUTES,
+                    masterPercent = MAX_PERCENT,
+                    balance = balance
+                ),
+                createSavedCurvePoint(
+                    kind = SavedLightProgramCurvePointKind.END,
+                    minuteOfDay = DEFAULT_END_MINUTES,
+                    masterPercent = MIN_PERCENT,
+                    balance = balance
+                )
+            )
+        )
+    }
+
+    private fun createSavedCurvePoint(
+        kind: SavedLightProgramCurvePointKind,
+        minuteOfDay: Int,
+        masterPercent: Int,
+        balance: SavedLightProgramBalance
+    ): SavedLightProgramCurvePoint {
+        val safeMasterPercent =
+        masterPercent.coerceIn(
+            MIN_PERCENT,
+            MAX_PERCENT
+        )
+
+        return SavedLightProgramCurvePoint(
+            kind = kind,
+            minuteOfDay =
+            minuteOfDay.coerceIn(
+                MINUTES_IN_DAY_MIN,
+                MINUTES_IN_DAY_MAX
+            ),
+            masterPercent = safeMasterPercent,
+            red =
+            scaledChannelOutput(
+                channelPercent = balance.red,
+                masterPercent = safeMasterPercent
+            ),
+            green =
+            scaledChannelOutput(
+                channelPercent = balance.green,
+                masterPercent = safeMasterPercent
+            ),
+            blue =
+            scaledChannelOutput(
+                channelPercent = balance.blue,
+                masterPercent = safeMasterPercent
+            ),
+            white =
+            scaledChannelOutput(
+                channelPercent = balance.white,
+                masterPercent = safeMasterPercent
+            )
+        )
+    }
+
+    private fun GeneratedQuickSetupCurvePointKind.toSavedCurvePointKind(): SavedLightProgramCurvePointKind {
+        return when (this) {
+            GeneratedQuickSetupCurvePointKind.START -> {
+                SavedLightProgramCurvePointKind.START
+            }
+
+            GeneratedQuickSetupCurvePointKind.PEAK_START -> {
+                SavedLightProgramCurvePointKind.PEAK_START
+            }
+
+            GeneratedQuickSetupCurvePointKind.PEAK_END -> {
+                SavedLightProgramCurvePointKind.PEAK_END
+            }
+
+            GeneratedQuickSetupCurvePointKind.END -> {
+                SavedLightProgramCurvePointKind.END
+            }
+        }
+    }
+
+    private fun Set<LightRepeatDay>.toSavedRepeatDays(): Set<Int> {
+        return map {
+            day ->
+            when (day) {
+                LightRepeatDay.MONDAY -> DAY_MON
+                LightRepeatDay.TUESDAY -> DAY_TUE
+                LightRepeatDay.WEDNESDAY -> DAY_WED
+                LightRepeatDay.THURSDAY -> DAY_THU
+                LightRepeatDay.FRIDAY -> DAY_FRI
+                LightRepeatDay.SATURDAY -> DAY_SAT
+                LightRepeatDay.SUNDAY -> DAY_SUN
+            }
+        }
+        .toSet()
+        .ifEmpty {
+            setOf(
+                DAY_MON,
+                DAY_TUE,
+                DAY_WED,
+                DAY_THU,
+                DAY_FRI,
+                DAY_SAT,
+                DAY_SUN
+            )
+        }
+    }
+
+    private fun scaledChannelOutput(
+        channelPercent: Int,
+        masterPercent: Int
+    ): Int {
+        val safeChannel =
+        channelPercent.coerceIn(
+            MIN_PERCENT,
+            MAX_PERCENT
+        )
+
+        val safeMaster =
+        masterPercent.coerceIn(
+            MIN_PERCENT,
+            MAX_PERCENT
+        )
+
+        return ((safeChannel * safeMaster) / 100f)
+        .roundToInt()
+        .coerceIn(
+            MIN_PERCENT,
+            MAX_PERCENT
+        )
+    }
+
+    private fun sliderValueOrDefault(
+        value: Int,
+        defaultValue: Int
+    ): Int {
+        return if (value <= MIN_PERCENT) {
+            defaultValue
+        } else {
+            value.coerceIn(
+                MIN_PERCENT,
+                MAX_PERCENT
+            )
+        }
+    }
+
+    private fun createProgramId(): String {
+        return "$PROGRAM_ID_PREFIX${System.currentTimeMillis()}"
+    }
+
     private fun minutesToTime(
         minutes: Int
     ): String {
@@ -978,5 +1245,22 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         private const val DAY_FRI = 5
         private const val DAY_SAT = 6
         private const val DAY_SUN = 7
+
+        private const val MINUTES_IN_DAY_MIN = 0
+        private const val MINUTES_IN_DAY_MAX = MINUTES_IN_DAY - 1
+
+        private const val DEFAULT_RAMP_MINUTES = 60
+
+        private const val DEFAULT_START_MINUTES = 9 * MINUTES_IN_HOUR
+        private const val DEFAULT_PEAK_START_MINUTES = 10 * MINUTES_IN_HOUR
+        private const val DEFAULT_PEAK_END_MINUTES = (18 * MINUTES_IN_HOUR) + 15
+        private const val DEFAULT_END_MINUTES = (19 * MINUTES_IN_HOUR) + 15
+
+        private const val DEFAULT_RED = 80
+        private const val DEFAULT_GREEN = 84
+        private const val DEFAULT_BLUE = 79
+        private const val DEFAULT_WHITE = 65
+
+        private const val PROGRAM_ID_PREFIX = "light_program_"
     }
 }
