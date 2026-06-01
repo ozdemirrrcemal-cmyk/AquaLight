@@ -311,9 +311,9 @@
 <string name="light_editor_point_label_peak_end">Peak end</string>
 <string name="light_editor_point_label_end">End</string>
 
-<string name="light_program_generated_subtitle">Generated light program</string>
-<string name="light_program_schedule_summary_format">%1$s → %2$s · %3$s</string>
-<string name="light_program_photoperiod_hours_format">%1$dh</string>
-<string name="light_program_photoperiod_hours_minutes_format">%1$dh %2$dm</string>
+<string name="light_program_channel_short_red_format">R%1$d</string>
+<string name="light_program_channel_short_green_format">G%1$d</string>
+<string name="light_program_channel_short_blue_format">B%1$d</string>
+<string name="light_program_channel_short_white_format">W%1$d</string>
 
 </resources>
