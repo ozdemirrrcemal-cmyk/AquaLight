@@ -531,15 +531,30 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         ) ?: return
 
         showPointEditorSheet(
-            label = currentPoint.label,
+            title = "Edit Point",
+            description =
+            if (currentPoint.canDelete) {
+                "Edit this custom curve point."
+            } else {
+                "Default curve point name cannot be changed."
+            },
+            pointName = currentPoint.label,
             time = currentPoint.time,
             intensity = currentPoint.intensity,
+            canRename = currentPoint.canDelete,
             canDelete = currentPoint.canDelete,
+            saveButtonText = "Save Point",
             onSave = {
-                selectedTime, selectedIntensity ->
+                savedPointName, selectedTime, selectedIntensity ->
                 updateCurvePoint(
                     updatedPoint =
                     currentPoint.copy(
+                        label =
+                        if (currentPoint.canDelete) {
+                            savedPointName
+                        } else {
+                            currentPoint.label
+                        },
                         time = selectedTime,
                         intensity = selectedIntensity
                     )
@@ -573,20 +588,27 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         )
     }
 
+
     private fun showNewPointEditor() {
         val suggestedPoint = createSuggestedIntermediatePoint()
 
         showPointEditorSheet(
-            label = suggestedPoint.label,
+            title = "Add Point",
+            description = "Add a custom intermediate point to this curve.",
+            pointName = suggestedPoint.label,
             time = suggestedPoint.time,
             intensity = suggestedPoint.intensity,
+            canRename = true,
             canDelete = false,
+            saveButtonText = "Add Point",
             onSave = {
-                selectedTime, selectedIntensity ->
+                savedPointName, selectedTime, selectedIntensity ->
                 val newPoint =
                 suggestedPoint.copy(
+                    label = savedPointName,
                     time = selectedTime,
-                    intensity = selectedIntensity
+                    intensity = selectedIntensity,
+                    canDelete = true
                 )
 
                 currentCurvePoints().add(
@@ -598,7 +620,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
                 renderCurrentCurve()
 
                 showMessage(
-                    "Point added: $selectedTime · $selectedIntensity%"
+                    "Point added: $savedPointName · $selectedTime · $selectedIntensity%"
                 )
             },
             onDelete = {
@@ -851,11 +873,15 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     }
 
     private fun showPointEditorSheet(
-        label: String,
+        title: String,
+        description: String,
+        pointName: String,
         time: String,
         intensity: Int,
+        canRename: Boolean,
         canDelete: Boolean,
-        onSave: (String, Int) -> Unit,
+        saveButtonText: String,
+        onSave: (String, String, Int) -> Unit,
         onDelete: () -> Unit
     ) {
         val dialog = BottomSheetDialog(requireContext())
@@ -866,11 +892,17 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             null
         )
 
+        val tvPointTitle =
+        sheetView.findViewById<TextView>(R.id.tvPointTitle)
+
         val tvPointLabel =
         sheetView.findViewById<TextView>(R.id.tvPointLabel)
 
-        val inputProgramName =
-        sheetView.findViewById<EditText>(R.id.inputPointSheetProgramName)
+        val inputPointName =
+        sheetView.findViewById<EditText>(R.id.inputPointName)
+
+        val tvPointNameHelper =
+        sheetView.findViewById<TextView>(R.id.tvPointNameHelper)
 
         val tvPointTime =
         sheetView.findViewById<TextView>(R.id.tvPointTime)
@@ -896,21 +928,51 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         val btnPointCancel =
         sheetView.findViewById<TextView>(R.id.btnPointCancel)
 
-        var selectedMinutes = timeToMinutes(time)
-        var selectedIntensity = intensity.coerceIn(0, MAX_PERCENT)
+        var selectedMinutes =
+        timeToMinutes(
+            time = time
+        )
 
-        tvPointLabel.text = label
-        tvPointTime.text = minutesToTime(selectedMinutes)
+        var selectedIntensity =
+        intensity.coerceIn(
+            minimumValue = 0,
+            maximumValue = MAX_PERCENT
+        )
+
+        tvPointTitle.text = title
+        tvPointLabel.text = description
+
+        inputPointName.setText(pointName)
+        inputPointName.setSelection(inputPointName.text.length)
+        inputPointName.setSingleLine(true)
+        inputPointName.isEnabled = canRename
+        inputPointName.alpha =
+        if (canRename) {
+            1f
+        } else {
+            0.65f
+        }
+
+        tvPointNameHelper.text =
+        if (canRename) {
+            "This name will be shown in the curve points list."
+        } else {
+            "This is a default curve point. Its name cannot be changed."
+        }
+
+        tvPointTime.text =
+        minutesToTime(
+            minutes = selectedMinutes
+        )
+
         tvPointIntensityValue.text = "$selectedIntensity%"
-
-        inputProgramName.setText(editableProgramName)
-        inputProgramName.setSelection(inputProgramName.text.length)
-        inputProgramName.setSingleLine(true)
 
         sliderPointIntensity.valueFrom = 0f
         sliderPointIntensity.valueTo = MAX_PERCENT.toFloat()
         sliderPointIntensity.stepSize = 1f
         sliderPointIntensity.value = selectedIntensity.toFloat()
+
+        btnPointSave.text = saveButtonText
 
         btnPointDelete.visibility =
         if (canDelete) {
@@ -924,7 +986,10 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             (selectedMinutes - POINT_STEP_MINUTES)
             .coerceAtLeast(0)
 
-            tvPointTime.text = minutesToTime(selectedMinutes)
+            tvPointTime.text =
+            minutesToTime(
+                minutes = selectedMinutes
+            )
         }
 
         btnPointTimePlus.setOnClickListener {
@@ -932,33 +997,46 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             (selectedMinutes + POINT_STEP_MINUTES)
             .coerceAtMost(MINUTES_IN_DAY - POINT_STEP_MINUTES)
 
-            tvPointTime.text = minutesToTime(selectedMinutes)
+            tvPointTime.text =
+            minutesToTime(
+                minutes = selectedMinutes
+            )
         }
 
         sliderPointIntensity.addOnChangeListener {
             _, value, _ ->
-            selectedIntensity = value.roundToInt()
+            selectedIntensity =
+            value.roundToInt()
+            .coerceIn(
+                minimumValue = 0,
+                maximumValue = MAX_PERCENT
+            )
+
             tvPointIntensityValue.text = "$selectedIntensity%"
         }
 
         btnPointSave.setOnClickListener {
-            val newProgramName =
-            inputProgramName.text
-            .toString()
-            .trim()
-
-            if (newProgramName.isBlank()) {
-                inputProgramName.error = "Program name cannot be empty"
-                return@setOnClickListener
+            val savedPointName =
+            if (canRename) {
+                inputPointName.text
+                .toString()
+                .trim()
+            } else {
+                pointName
             }
 
-            editableProgramName = newProgramName
-            renderProgramName()
+            if (savedPointName.isBlank()) {
+                inputPointName.error = "Point name cannot be empty"
+                return@setOnClickListener
+            }
 
             dialog.dismiss()
 
             onSave(
-                minutesToTime(selectedMinutes),
+                savedPointName,
+                minutesToTime(
+                    minutes = selectedMinutes
+                ),
                 selectedIntensity
             )
         }
@@ -1679,71 +1757,71 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         )
     }
 
-private fun showPreviewDaySheet() {
-    stopPreviewSimulation()
+    private fun showPreviewDaySheet() {
+        stopPreviewSimulation()
 
-    val dialog = BottomSheetDialog(requireContext())
-    previewDialog = dialog
+        val dialog = BottomSheetDialog(requireContext())
+        previewDialog = dialog
 
-    val sheetView =
+        val sheetView =
         layoutInflater.inflate(
             R.layout.bottom_sheet_light_preview_day,
             null
         )
 
-    val tvTime =
+        val tvTime =
         sheetView.findViewById<TextView>(R.id.tvPreviewDayTime)
 
-    val tvMode =
+        val tvMode =
         sheetView.findViewById<TextView>(R.id.tvPreviewDayMode)
 
-    val progressBar =
+        val progressBar =
         sheetView.findViewById<ProgressBar>(R.id.progressPreviewDay)
 
-    val tvMain =
+        val tvMain =
         sheetView.findViewById<TextView>(R.id.tvPreviewMain)
 
-    val tvRed =
+        val tvRed =
         sheetView.findViewById<TextView>(R.id.tvPreviewRed)
 
-    val tvGreen =
+        val tvGreen =
         sheetView.findViewById<TextView>(R.id.tvPreviewGreen)
 
-    val tvBlue =
+        val tvBlue =
         sheetView.findViewById<TextView>(R.id.tvPreviewBlue)
 
-    val tvWhite =
+        val tvWhite =
         sheetView.findViewById<TextView>(R.id.tvPreviewWhite)
 
-    val btnClose =
+        val btnClose =
         sheetView.findViewById<TextView>(R.id.btnPreviewDayClose)
 
-    progressBar.max = PREVIEW_PROGRESS_MAX
-    progressBar.progress = 0
+        progressBar.max = PREVIEW_PROGRESS_MAX
+        progressBar.progress = 0
 
-    btnClose.setOnClickListener {
-        dialog.dismiss()
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.setOnDismissListener {
+            stopPreviewSimulation()
+            previewDialog = null
+        }
+
+        dialog.setContentView(sheetView)
+        dialog.show()
+
+        startPreviewSimulation(
+            progressBar = progressBar,
+            tvTime = tvTime,
+            tvMode = tvMode,
+            tvMain = tvMain,
+            tvRed = tvRed,
+            tvGreen = tvGreen,
+            tvBlue = tvBlue,
+            tvWhite = tvWhite
+        )
     }
-
-    dialog.setOnDismissListener {
-        stopPreviewSimulation()
-        previewDialog = null
-    }
-
-    dialog.setContentView(sheetView)
-    dialog.show()
-
-    startPreviewSimulation(
-        progressBar = progressBar,
-        tvTime = tvTime,
-        tvMode = tvMode,
-        tvMain = tvMain,
-        tvRed = tvRed,
-        tvGreen = tvGreen,
-        tvBlue = tvBlue,
-        tvWhite = tvWhite
-    )
-}
 
     private fun startPreviewSimulation(
         progressBar: ProgressBar,
