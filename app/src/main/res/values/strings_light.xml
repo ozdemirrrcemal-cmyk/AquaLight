@@ -300,4 +300,15 @@
 <string name="light_time_picker_plus_hour">+1h</string>
 <string name="light_time_picker_save">Save Time</string>
 
+<string name="light_quick_setup_error_time_order">Sunset end must be after sunrise start.</string>
+<string name="light_quick_setup_error_ramp_invalid">Ramp duration is outside the supported range.</string>
+<string name="light_quick_setup_error_peak_invalid">Peak intensity is outside the supported range.</string>
+<string name="light_quick_setup_error_time_range_too_short">Time range is too short for the selected ramp duration.</string>
+<string name="light_quick_setup_error_curve_invalid">Generated curve is not valid. Please adjust time range or ramp duration.</string>
+
+<string name="light_editor_point_label_start">Start</string>
+<string name="light_editor_point_label_peak_start">Peak start</string>
+<string name="light_editor_point_label_peak_end">Peak end</string>
+<string name="light_editor_point_label_end">End</string>
+
 </resources>

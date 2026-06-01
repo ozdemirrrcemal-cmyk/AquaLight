@@ -15,9 +15,13 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_DEVIC
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_DEVICE_TITLE
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_PROGRAM_ID
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_PROGRAM_NAME
+import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.mapper.LightQuickSetupProgramMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.GeneratedQuickSetupProgramDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.LightQuickSetupDays
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.LightQuickSetupDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupChannelBalancePreset
+import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.validation.LightQuickSetupValidationResult
+import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.validation.LightQuickSetupValidator
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlin.math.roundToInt
 
@@ -430,9 +434,10 @@ class DeviceLightQuickSetupFragment :
         if (updatedDays.contains(day)) {
             if (updatedDays.size == 1) {
                 showMessage(
-                    message = getString(
-                        R.string.light_quick_setup_error_one_day_required
-                    )
+                    message =
+                        getString(
+                            R.string.light_quick_setup_error_one_day_required
+                        )
                 )
 
                 return
@@ -623,25 +628,49 @@ class DeviceLightQuickSetupFragment :
     private fun channelSummaryLabel(
         preset: QuickSetupChannelBalancePreset
     ): String {
+        val balance = preset.balance
+
         return getString(
             R.string.light_quick_setup_channel_summary_format,
-            preset.red,
-            preset.green,
-            preset.blue,
-            preset.white
+            balance.red,
+            balance.green,
+            balance.blue,
+            balance.white
         )
     }
 
     private fun openGeneratedProgram() {
+        val validation =
+            LightQuickSetupValidator.validate(
+                draft = draft
+            )
+
+        if (validation is LightQuickSetupValidationResult.Invalid) {
+            showMessage(
+                message = getString(validation.messageRes)
+            )
+
+            return
+        }
+
+        val generatedDraft =
+            LightQuickSetupProgramMapper.mapToGeneratedProgram(
+                deviceId = deviceId,
+                programName =
+                    getString(
+                        R.string.light_quick_setup_generated_program_name
+                    ),
+                draft = draft
+            )
+
         findNavController().navigate(
             R.id.action_deviceLightQuickSetupFragment_to_deviceLightProgramEditorFragment,
             bundleOf(
                 ARG_DEVICE_ID to deviceId,
                 ARG_DEVICE_TITLE to deviceTitle,
                 ARG_PROGRAM_ID to null,
-                ARG_PROGRAM_NAME to getString(
-                    R.string.light_quick_setup_generated_program_name
-                )
+                ARG_PROGRAM_NAME to generatedDraft.programName,
+                GeneratedQuickSetupProgramDraft.ARG_QUICK_SETUP_GENERATED_DRAFT to generatedDraft
             )
         )
     }
