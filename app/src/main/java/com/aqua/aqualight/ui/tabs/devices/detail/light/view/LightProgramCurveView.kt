@@ -13,7 +13,6 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
-import kotlin.math.roundToInt
 
 class LightProgramCurveView @JvmOverloads constructor(
     context: Context,
@@ -50,7 +49,6 @@ class LightProgramCurveView @JvmOverloads constructor(
     private var displayMode: CurveDisplayMode = CurveDisplayMode.SIMPLE
 
     private var currentTimeMinutes: Int? = null
-    private var currentOutputLabel: String? = null
 
     private var curvePoints: List<CurvePoint> =
         listOf(
@@ -81,33 +79,34 @@ class LightProgramCurveView @JvmOverloads constructor(
     }
 
     private val timePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#E0E6ED")
-        textSize = 10f.sp()
+        color = Color.parseColor("#D6E4EF")
+        textSize = 9.5f.sp()
     }
 
     private val horizontalGridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#52708F")
         strokeWidth = 1f.dp()
-        alpha = 90
-        pathEffect = DashPathEffect(
-            floatArrayOf(
-                3f.dp(),
-                7f.dp()
-            ),
-            0f
-        )
+        alpha = 58
+        pathEffect =
+            DashPathEffect(
+                floatArrayOf(
+                    3f.dp(),
+                    7f.dp()
+                ),
+                0f
+            )
     }
 
     private val verticalGridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#52708F")
         strokeWidth = 0.7f.dp()
-        alpha = 55
+        alpha = 32
     }
 
     private val axisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#52708F")
         strokeWidth = 1f.dp()
-        alpha = 130
+        alpha = 115
     }
 
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -119,10 +118,11 @@ class LightProgramCurveView @JvmOverloads constructor(
         strokeWidth = 7f.dp()
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
-        maskFilter = BlurMaskFilter(
-            10f.dp(),
-            BlurMaskFilter.Blur.NORMAL
-        )
+        maskFilter =
+            BlurMaskFilter(
+                10f.dp(),
+                BlurMaskFilter.Blur.NORMAL
+            )
         alpha = ACTIVE_GLOW_ALPHA
     }
 
@@ -142,7 +142,7 @@ class LightProgramCurveView @JvmOverloads constructor(
     }
 
     private val currentTimeBadgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#2DD6D6")
+        color = CURRENT_TIME_COLOR
         alpha = 205
         style = Paint.Style.FILL
     }
@@ -152,13 +152,6 @@ class LightProgramCurveView @JvmOverloads constructor(
         textSize = 9.5f.sp()
         textAlign = Paint.Align.CENTER
         isFakeBoldText = true
-    }
-
-    private val currentOutputPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#D6E4EF")
-        textSize = 9f.sp()
-        textAlign = Paint.Align.CENTER
-        alpha = 210
     }
 
     override fun onDraw(
@@ -172,9 +165,9 @@ class LightProgramCurveView @JvmOverloads constructor(
 
         val activePoints =
             activeCurvePoints()
-                .sortedBy {
+                .sortedBy { point ->
                     timeToMinutes(
-                        time = it.time
+                        time = point.time
                     )
                 }
 
@@ -228,7 +221,6 @@ class LightProgramCurveView @JvmOverloads constructor(
 
             drawCurrentTimeIndicator(
                 canvas = canvas,
-                points = activePoints,
                 left = left,
                 right = right,
                 top = top,
@@ -253,9 +245,9 @@ class LightProgramCurveView @JvmOverloads constructor(
             .forEach { mode ->
                 val points =
                     proChannelCurves[mode]
-                        ?.sortedBy {
+                        ?.sortedBy { point ->
                             timeToMinutes(
-                                time = it.time
+                                time = point.time
                             )
                         }
                         .orEmpty()
@@ -295,7 +287,6 @@ class LightProgramCurveView @JvmOverloads constructor(
 
         drawCurrentTimeIndicator(
             canvas = canvas,
-            points = activePoints,
             left = left,
             right = right,
             top = top,
@@ -451,25 +442,48 @@ class LightProgramCurveView @JvmOverloads constructor(
         timePaint.color = Color.parseColor("#D6E4EF")
 
         for (hour in 0..24 step 4) {
-            val x =
+            val baseX =
                 minuteToX(
                     minute = hour * 60,
                     left = left,
                     right = right
                 )
 
+            val labelX =
+                when (hour) {
+                    0 -> {
+                        baseX + 3f.dp()
+                    }
+
+                    24 -> {
+                        baseX + 3f.dp()
+                    }
+
+                    else -> {
+                        baseX
+                    }
+                }
+
             timePaint.textAlign =
                 when (hour) {
-                    0 -> Paint.Align.LEFT
-                    24 -> Paint.Align.RIGHT
-                    else -> Paint.Align.CENTER
+                    0 -> {
+                        Paint.Align.LEFT
+                    }
+
+                    24 -> {
+                        Paint.Align.RIGHT
+                    }
+
+                    else -> {
+                        Paint.Align.CENTER
+                    }
                 }
 
             canvas.drawText(
                 timeAxisLabel(
                     hour = hour
                 ),
-                x,
+                labelX,
                 y,
                 timePaint
             )
@@ -727,6 +741,7 @@ class LightProgramCurveView @JvmOverloads constructor(
 
         val firstPoint = drawablePoints.first().screenPoint
         val lastPoint = drawablePoints.last().screenPoint
+
         val accentColor =
             currentAccentColor(
                 mode = mode
@@ -769,10 +784,12 @@ class LightProgramCurveView @JvmOverloads constructor(
                     lastPoint.x,
                     y0
                 )
+
                 lineTo(
                     firstPoint.x,
                     y0
                 )
+
                 close()
             }
 
@@ -860,14 +877,12 @@ class LightProgramCurveView @JvmOverloads constructor(
 
     private fun drawCurrentTimeIndicator(
         canvas: Canvas,
-        points: List<CurvePoint>,
         left: Float,
         right: Float,
         top: Float,
         bottom: Float
     ) {
-        val nowMinutes =
-            currentTimeMinutes ?: return
+        val nowMinutes = currentTimeMinutes ?: return
 
         val x =
             minuteToX(
@@ -890,25 +905,11 @@ class LightProgramCurveView @JvmOverloads constructor(
             chartLeft = left,
             chartRight = right,
             chartTop = top,
-            text = minutesToTime(
-                minutes = nowMinutes
-            )
+            text =
+                minutesToTime(
+                    minutes = nowMinutes
+                )
         )
-
-        val outputText =
-            currentOutputLabel
-                ?: "${intensityAtMinute(points = points, minute = nowMinutes).roundToInt()}%"
-
-        if ((right - left) >= 230f.dp()) {
-            drawCurrentOutputLabel(
-                canvas = canvas,
-                x = x,
-                chartLeft = left,
-                chartRight = right,
-                chartTop = top,
-                text = outputText
-            )
-        }
     }
 
     private fun drawCurrentTimeBadge(
@@ -924,7 +925,8 @@ class LightProgramCurveView @JvmOverloads constructor(
         val horizontalPadding = 8f.dp()
         val badgeHeight = 18f.dp()
         val badgeWidth =
-            currentTimeBadgeTextPaint.measureText(text) + (horizontalPadding * 2f)
+            currentTimeBadgeTextPaint.measureText(text) +
+                (horizontalPadding * 2f)
 
         val badgeTop = chartTop - badgeHeight - 4f.dp()
         val badgeBottom = chartTop - 4f.dp()
@@ -954,7 +956,8 @@ class LightProgramCurveView @JvmOverloads constructor(
 
         val textBaseline =
             rect.centerY() -
-                ((currentTimeBadgeTextPaint.descent() + currentTimeBadgeTextPaint.ascent()) / 2f)
+                ((currentTimeBadgeTextPaint.descent() +
+                    currentTimeBadgeTextPaint.ascent()) / 2f)
 
         canvas.drawText(
             text,
@@ -964,35 +967,7 @@ class LightProgramCurveView @JvmOverloads constructor(
         )
     }
 
-    private fun drawCurrentOutputLabel(
-        canvas: Canvas,
-        x: Float,
-        chartLeft: Float,
-        chartRight: Float,
-        chartTop: Float,
-        text: String
-    ) {
-        currentOutputPaint.textSize = 9f.sp()
-
-        val textWidth =
-            currentOutputPaint.measureText(
-                text
-            )
-
-        val safeX =
-            x.coerceIn(
-                chartLeft + (textWidth / 2f),
-                chartRight - (textWidth / 2f)
-            )
-
-        canvas.drawText(
-            text,
-            safeX,
-            chartTop + 17f.dp(),
-            currentOutputPaint
-        )
-    }
-
+    @Suppress("UNUSED_PARAMETER")
     fun setCurrentTimeMinutes(
         minutes: Int,
         outputLabel: String? = null
@@ -1003,29 +978,27 @@ class LightProgramCurveView @JvmOverloads constructor(
                 maximumValue = MINUTES_IN_DAY - 1
             )
 
-        currentOutputLabel = outputLabel
-
         invalidate()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun setCurrentTime(
         time: String,
         outputLabel: String? = null
     ) {
         setCurrentTimeMinutes(
-            minutes = timeToMinutes(
-                time = time
-            ).coerceIn(
-                minimumValue = 0,
-                maximumValue = MINUTES_IN_DAY - 1
-            ),
-            outputLabel = outputLabel
+            minutes =
+                timeToMinutes(
+                    time = time
+                ).coerceIn(
+                    minimumValue = 0,
+                    maximumValue = MINUTES_IN_DAY - 1
+                )
         )
     }
 
     fun clearCurrentTimeIndicator() {
         currentTimeMinutes = null
-        currentOutputLabel = null
         invalidate()
     }
 
@@ -1067,18 +1040,22 @@ class LightProgramCurveView @JvmOverloads constructor(
 
         proChannelCurves =
             mapOf(
-                CurveDisplayMode.PRO_RED to normalizePoints(
-                    points = redPoints
-                ),
-                CurveDisplayMode.PRO_GREEN to normalizePoints(
-                    points = greenPoints
-                ),
-                CurveDisplayMode.PRO_BLUE to normalizePoints(
-                    points = bluePoints
-                ),
-                CurveDisplayMode.PRO_WHITE to normalizePoints(
-                    points = whitePoints
-                )
+                CurveDisplayMode.PRO_RED to
+                    normalizePoints(
+                        points = redPoints
+                    ),
+                CurveDisplayMode.PRO_GREEN to
+                    normalizePoints(
+                        points = greenPoints
+                    ),
+                CurveDisplayMode.PRO_BLUE to
+                    normalizePoints(
+                        points = bluePoints
+                    ),
+                CurveDisplayMode.PRO_WHITE to
+                    normalizePoints(
+                        points = whitePoints
+                    )
             )
 
         curvePoints =
@@ -1137,9 +1114,9 @@ class LightProgramCurveView @JvmOverloads constructor(
                         )
                 )
             }
-            .sortedBy {
+            .sortedBy { point ->
                 timeToMinutes(
-                    time = it.time
+                    time = point.time
                 )
             }
     }
@@ -1197,103 +1174,8 @@ class LightProgramCurveView @JvmOverloads constructor(
                 maximumValue = 100
             )
 
-        return bottom - ((bottom - top) * safeIntensity / 100f)
-    }
-
-    private fun intensityAtMinute(
-        points: List<CurvePoint>,
-        minute: Int
-    ): Float {
-        val normalized =
-            normalizePoints(
-                points = points
-            )
-
-        if (normalized.isEmpty()) {
-            return 0f
-        }
-
-        val renderPoints = mutableListOf<CurvePoint>()
-
-        val firstMinute =
-            timeToMinutes(
-                time = normalized.first().time
-            )
-
-        val lastMinute =
-            timeToMinutes(
-                time = normalized.last().time
-            )
-
-        if (firstMinute > 0) {
-            renderPoints.add(
-                CurvePoint(
-                    time = "00:00",
-                    intensity = 0
-                )
-            )
-        }
-
-        renderPoints.addAll(
-            normalized
-        )
-
-        if (lastMinute < MINUTES_IN_DAY) {
-            renderPoints.add(
-                CurvePoint(
-                    time = "24:00",
-                    intensity = 0
-                )
-            )
-        }
-
-        val safeMinute =
-            minute.coerceIn(
-                minimumValue = 0,
-                maximumValue = MINUTES_IN_DAY
-            )
-
-        val firstPoint = renderPoints.first()
-        val lastPoint = renderPoints.last()
-
-        if (safeMinute <= timeToMinutes(firstPoint.time)) {
-            return firstPoint.intensity.toFloat()
-        }
-
-        if (safeMinute >= timeToMinutes(lastPoint.time)) {
-            return lastPoint.intensity.toFloat()
-        }
-
-        renderPoints
-            .zipWithNext()
-            .forEach { pair ->
-                val start = pair.first
-                val end = pair.second
-
-                val startMinute =
-                    timeToMinutes(
-                        time = start.time
-                    )
-
-                val endMinute =
-                    timeToMinutes(
-                        time = end.time
-                    )
-
-                if (safeMinute in startMinute..endMinute) {
-                    val range =
-                        (endMinute - startMinute)
-                            .coerceAtLeast(1)
-
-                    val progress =
-                        (safeMinute - startMinute).toFloat() / range.toFloat()
-
-                    return start.intensity +
-                        ((end.intensity - start.intensity) * progress)
-                }
-            }
-
-        return 0f
+        return bottom -
+            ((bottom - top) * safeIntensity / 100f)
     }
 
     private fun minuteToX(
