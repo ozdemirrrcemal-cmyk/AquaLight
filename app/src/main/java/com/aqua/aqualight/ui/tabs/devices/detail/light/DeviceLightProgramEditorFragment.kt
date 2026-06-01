@@ -102,6 +102,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     private val previewHandler = Handler(Looper.getMainLooper())
     private var previewRunnable: Runnable? = null
     private var previewDialog: BottomSheetDialog? = null
+    private var nowSummaryRunnable: Runnable? = null
 
     override fun onViewCreated(
         view: View,
@@ -120,6 +121,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         renderPreviewState()
         setupSliders()
         setupClicks()
+        startNowSummaryTicker()
     }
 
     private fun setupInitialState() {
@@ -509,14 +511,197 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         tvPointEndLabel.text = end.label
         tvPointEndPercent.text = "${end.intensity}%"
 
-        tvCurveHint.text =
-        if (isProMode) {
-            "${selectedProChannel.label} curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
-        } else {
-            "Simple curve · ${peakStart.time} · Peak start · ${peakStart.intensity}%"
+        renderExtraCurvePointRows()
+        renderNowSummary()
+    }
+
+    private fun startNowSummaryTicker() {
+        stopNowSummaryTicker()
+
+        val runnable =
+        object : Runnable {
+            override fun run() {
+                if (_binding == null) {
+                    return
+                }
+
+                renderNowSummary()
+
+                previewHandler.postDelayed(
+                    this,
+                    millisUntilNextMinute()
+                )
+            }
         }
 
-        renderExtraCurvePointRows()
+        nowSummaryRunnable = runnable
+        previewHandler.post(runnable)
+    }
+
+    private fun stopNowSummaryTicker() {
+        nowSummaryRunnable?.let {
+            runnable ->
+            previewHandler.removeCallbacks(runnable)
+        }
+
+        nowSummaryRunnable = null
+    }
+
+    private fun renderNowSummary() {
+        val nowMinutes = currentPhoneMinute()
+        val nowTime = minutesToTime(nowMinutes)
+
+        val points = currentCurvePointsSorted()
+
+        if (points.isEmpty()) {
+            binding.viewProgramEditorCurve.setCurrentTimeMinutes(
+                minutes = nowMinutes,
+                outputLabel = "0%"
+            )
+
+            binding.tvCurveHint.text =
+            "Now · $nowTime · 0%\nNext · No point"
+
+            return
+        }
+
+        val nowIntensity =
+        intensityAtMinute(
+            points = points,
+            minute = nowMinutes
+        ).roundToInt()
+        .coerceIn(
+            minimumValue = 0,
+            maximumValue = MAX_PERCENT
+        )
+
+        val nextPoint =
+        points.firstOrNull {
+            point ->
+            timeToMinutes(point.time) > nowMinutes
+        } ?: points.firstOrNull()
+
+        val nextText =
+        if (nextPoint != null) {
+            "Next · ${nextPoint.nextPointActionLabel()} at ${nextPoint.time}"
+        } else {
+            "Next · No point"
+        }
+
+        binding.viewProgramEditorCurve.setCurrentTimeMinutes(
+            minutes = nowMinutes,
+            outputLabel = "$nowIntensity%"
+        )
+
+        binding.tvCurveHint.text =
+        "Now · $nowTime · $nowIntensity%\n$nextText"
+    }
+
+    private fun CurvePointState.nextPointActionLabel(): String {
+        return when (id) {
+            POINT_ID_START -> {
+                "Starts"
+            }
+
+            POINT_ID_PEAK_START -> {
+                "Peak starts"
+            }
+
+            POINT_ID_PEAK_END -> {
+                "Peak ends"
+            }
+
+            POINT_ID_END -> {
+                "Ends"
+            } else -> {
+                label
+            }
+        }
+    }
+
+    private fun currentPhoneMinute(): Int {
+        val calendar = java.util.Calendar.getInstance()
+
+        return calendar.get(java.util.Calendar.HOUR_OF_DAY) * 60 +
+        calendar.get(java.util.Calendar.MINUTE)
+    }
+
+    private fun millisUntilNextMinute(): Long {
+        val calendar = java.util.Calendar.getInstance()
+
+        val second = calendar.get(java.util.Calendar.SECOND)
+        val millisecond = calendar.get(java.util.Calendar.MILLISECOND)
+
+        return (((60 - second) * 1000L) - millisecond)
+        .coerceAtLeast(
+            minimumValue = 1000L
+        )
+    }
+
+    private fun intensityAtMinute(
+        points: List<CurvePointState>,
+        minute: Int
+    ): Float {
+        val sortedPoints =
+        points.sortedBy {
+            point ->
+            timeToMinutes(point.time)
+        }
+
+        if (sortedPoints.isEmpty()) {
+            return 0f
+        }
+
+        val firstPoint = sortedPoints.first()
+        val lastPoint = sortedPoints.last()
+
+        val firstMinute =
+        timeToMinutes(
+            time = firstPoint.time
+        )
+
+        val lastMinute =
+        timeToMinutes(
+            time = lastPoint.time
+        )
+
+        if (minute < firstMinute || minute > lastMinute) {
+            return 0f
+        }
+
+        sortedPoints
+        .zipWithNext()
+        .forEach {
+            pair ->
+            val start = pair.first
+            val end = pair.second
+
+            val startMinute =
+            timeToMinutes(
+                time = start.time
+            )
+
+            val endMinute =
+            timeToMinutes(
+                time = end.time
+            )
+
+            if (minute in startMinute..endMinute) {
+                val range =
+                (endMinute - startMinute)
+                .coerceAtLeast(
+                    minimumValue = 1
+                )
+
+                val progress =
+                (minute - startMinute).toFloat() / range.toFloat()
+
+                return start.intensity +
+                ((end.intensity - start.intensity) * progress)
+            }
+        }
+
+        return 0f
     }
 
     private fun showPointEditor(
@@ -2164,6 +2349,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
     override fun onDestroyView() {
         stopPreviewSimulation()
+        stopNowSummaryTicker()
 
         previewDialog?.setOnDismissListener(null)
         previewDialog?.dismiss()
