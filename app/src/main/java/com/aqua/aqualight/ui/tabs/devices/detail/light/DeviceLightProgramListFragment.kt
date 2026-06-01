@@ -17,12 +17,19 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_DEVIC
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_PROGRAM_ID
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_PROGRAM_NAME
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter.LightProgramsAdapter
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.data.LightProgramDraftStore
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramCurvePointKind
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramAction
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramActionSheetModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramActionsBottomSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveChannel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveChartData
+import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveSeries
 import com.google.android.material.card.MaterialCardView
 
 class DeviceLightProgramListFragment :
@@ -45,38 +52,48 @@ class DeviceLightProgramListFragment :
     private var currentFilter: ProgramFilter = ProgramFilter.ALL
     private var currentState: LightProgramListUiState = LightProgramListUiState()
 
-    private val programsAdapter = LightProgramsAdapter(
-        onProgramClick = { program ->
-            openProgramEditor(
-                programId = program.id,
-                programName = program.title
-            )
-        },
-        onProgramLongClick = { program ->
-            showProgramActions(
-                program = program
-            )
-        },
-        onProgramEnabledChanged = { program, isEnabled ->
-            // TODO: Send enable / disable event to ViewModel when ESP32 program layer is enabled.
-        }
-    )
+    private val programsAdapter =
+        LightProgramsAdapter(
+            onProgramClick = { program ->
+                openProgramEditor(
+                    programId = program.id,
+                    programName = program.title
+                )
+            },
+            onProgramLongClick = { program ->
+                showProgramActions(
+                    program = program
+                )
+            },
+            onProgramEnabledChanged = { _, _ ->
+                // TODO: Enable / disable will be connected to real program storage layer later.
+                loadProgramsFromStore()
+            }
+        )
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding = FragmentDeviceLightProgramListBinding.bind(view)
 
         setupHeader()
         setupRecyclerView()
         setupClicks()
+        loadProgramsFromStore()
+    }
 
-        renderState(
-            state = currentState
-        )
+    override fun onResume() {
+        super.onResume()
+
+        if (_binding != null) {
+            loadProgramsFromStore()
+        }
     }
 
     private fun setupHeader() = with(binding.deviceHeader) {
@@ -111,15 +128,21 @@ class DeviceLightProgramListFragment :
 
     private fun setupClicks() = with(binding) {
         chipProgramsAll.setOnClickListener {
-            setFilter(ProgramFilter.ALL)
+            setFilter(
+                filter = ProgramFilter.ALL
+            )
         }
 
         chipProgramsActive.setOnClickListener {
-            setFilter(ProgramFilter.ACTIVE)
+            setFilter(
+                filter = ProgramFilter.ACTIVE
+            )
         }
 
         chipProgramsDisabled.setOnClickListener {
-            setFilter(ProgramFilter.DISABLED)
+            setFilter(
+                filter = ProgramFilter.DISABLED
+            )
         }
 
         btnEmptyAddProgram.setOnClickListener {
@@ -130,12 +153,180 @@ class DeviceLightProgramListFragment :
         }
     }
 
+    private fun loadProgramsFromStore() {
+        val savedPrograms =
+            LightProgramDraftStore.programsForDevice(
+                deviceId = deviceId
+            )
+
+        val listItems =
+            savedPrograms.map { program ->
+                program.toListItem()
+            }
+
+        val activeProgramId =
+            savedPrograms.firstOrNull { program ->
+                program.isActive
+            }?.id ?: savedPrograms.firstOrNull { program ->
+                program.isEnabled
+            }?.id
+
+        renderState(
+            state =
+                LightProgramListUiState(
+                    programs = listItems,
+                    activeProgram =
+                        listItems.firstOrNull { item ->
+                            item.id == activeProgramId
+                        }
+                )
+        )
+    }
+
+    private fun SavedLightProgram.toListItem(): LightProgramListItem {
+        val startPoint =
+            curvePoints.firstOrNull { point ->
+                point.kind == SavedLightProgramCurvePointKind.START
+            }
+
+        val peakStartPoint =
+            curvePoints.firstOrNull { point ->
+                point.kind == SavedLightProgramCurvePointKind.PEAK_START
+            }
+
+        val peakEndPoint =
+            curvePoints.firstOrNull { point ->
+                point.kind == SavedLightProgramCurvePointKind.PEAK_END
+            }
+
+        val endPoint =
+            curvePoints.firstOrNull { point ->
+                point.kind == SavedLightProgramCurvePointKind.END
+            }
+
+        val startMinutes =
+            startPoint?.minuteOfDay ?: DEFAULT_START_MINUTES
+
+        val peakStartMinutes =
+            peakStartPoint?.minuteOfDay ?: DEFAULT_PEAK_START_MINUTES
+
+        val peakEndMinutes =
+            peakEndPoint?.minuteOfDay ?: DEFAULT_PEAK_END_MINUTES
+
+        val endMinutes =
+            endPoint?.minuteOfDay ?: DEFAULT_END_MINUTES
+
+        val startTime =
+            minutesToTime(
+                minutes = startMinutes
+            )
+
+        val endTime =
+            minutesToTime(
+                minutes = endMinutes
+            )
+
+        val repeatLabel =
+            repeatDaysLabel(
+                days = repeatDays
+            )
+
+        return LightProgramListItem(
+            id = id,
+            title = title,
+            subtitle = getString(R.string.light_program_generated_subtitle),
+            scheduleSummary =
+                getString(
+                    R.string.light_program_schedule_summary_format,
+                    startTime,
+                    endTime,
+                    repeatLabel
+                ),
+            isEnabled = isEnabled,
+            startTimeLabel = startTime,
+            rampLabel =
+                getString(
+                    R.string.light_quick_setup_ramp_value_format,
+                    rampMinutes
+                ),
+            endTimeLabel = endTime,
+            repeatLabel = repeatLabel,
+            peakLabel =
+                getString(
+                    R.string.common_percent_value,
+                    peakIntensityPercent
+                ),
+            redLabel =
+                getString(
+                    R.string.light_program_channel_short_red_format,
+                    balance.red
+                ),
+            greenLabel =
+                getString(
+                    R.string.light_program_channel_short_green_format,
+                    balance.green
+                ),
+            blueLabel =
+                getString(
+                    R.string.light_program_channel_short_blue_format,
+                    balance.blue
+                ),
+            whiteLabel =
+                getString(
+                    R.string.light_program_channel_short_white_format,
+                    balance.white
+                ),
+            photoperiodLabel =
+                photoperiodLabel(
+                    startMinutes = startMinutes,
+                    endMinutes = endMinutes
+                ),
+            curveData =
+                LightCurveChartData(
+                    series =
+                        listOf(
+                            LightCurveSeries(
+                                channel = LightCurveChannel.MASTER,
+                                isActive = true,
+                                points =
+                                    listOf(
+                                        LightCurvePoint(
+                                            minuteOfDay = startMinutes,
+                                            intensityPercent = startPoint?.masterPercent ?: 0,
+                                            isMajor = true
+                                        ),
+                                        LightCurvePoint(
+                                            minuteOfDay = peakStartMinutes,
+                                            intensityPercent = peakStartPoint?.masterPercent
+                                                ?: peakIntensityPercent,
+                                            isMajor = true
+                                        ),
+                                        LightCurvePoint(
+                                            minuteOfDay = peakEndMinutes,
+                                            intensityPercent = peakEndPoint?.masterPercent
+                                                ?: peakIntensityPercent,
+                                            isMajor = true
+                                        ),
+                                        LightCurvePoint(
+                                            minuteOfDay = endMinutes,
+                                            intensityPercent = endPoint?.masterPercent ?: 0,
+                                            isMajor = true
+                                        )
+                                    )
+                            )
+                        ),
+                    currentTimeMinutes = null
+                )
+        )
+    }
+
     private fun setFilter(
         filter: ProgramFilter
     ) {
         currentFilter = filter
 
         renderFilterChips()
+
         renderProgramList(
             state = currentState
         )
@@ -260,12 +451,13 @@ class DeviceLightProgramListFragment :
     ) {
         LightProgramActionsBottomSheet.show(
             fragment = this,
-            model = LightProgramActionSheetModel(
-                title = program.title,
-                subtitle = program.scheduleSummary,
-                isEnabled = program.isEnabled,
-                isActiveProgram = currentState.activeProgram?.id == program.id
-            ),
+            model =
+                LightProgramActionSheetModel(
+                    title = program.title,
+                    subtitle = program.scheduleSummary,
+                    isEnabled = program.isEnabled,
+                    isActiveProgram = currentState.activeProgram?.id == program.id
+                ),
             onAction = { action ->
                 handleProgramAction(
                     action = action,
@@ -288,23 +480,23 @@ class DeviceLightProgramListFragment :
             }
 
             LightProgramAction.PREVIEW -> {
-                // TODO: Navigate to Preview Day screen when implemented.
+                // TODO: Preview Day flow will be connected later.
             }
 
             LightProgramAction.DUPLICATE -> {
-                // TODO: Send duplicate action to ViewModel when ESP32/local program storage layer is enabled.
+                // TODO: Duplicate will be connected to program storage layer later.
             }
 
             LightProgramAction.SET_ACTIVE -> {
-                // TODO: Send set-active action to ViewModel.
+                // TODO: Set active will be connected to program storage layer later.
             }
 
             LightProgramAction.TOGGLE_ENABLED -> {
-                // TODO: Send enable / disable action to ViewModel.
+                // TODO: Enable / disable will be connected to program storage layer later.
             }
 
             LightProgramAction.DELETE -> {
-                // TODO: Show confirm dialog, then send delete action to ViewModel.
+                // TODO: Delete confirmation and storage delete will be connected later.
             }
         }
     }
@@ -321,6 +513,91 @@ class DeviceLightProgramListFragment :
                 ARG_PROGRAM_ID to programId,
                 ARG_PROGRAM_NAME to programName
             )
+        )
+    }
+
+    private fun repeatDaysLabel(
+        days: Set<Int>
+    ): String {
+        return when (days) {
+            setOf(
+                DAY_MON,
+                DAY_TUE,
+                DAY_WED,
+                DAY_THU,
+                DAY_FRI,
+                DAY_SAT,
+                DAY_SUN
+            ) -> {
+                getString(R.string.light_quick_setup_days_every_day)
+            }
+
+            setOf(
+                DAY_MON,
+                DAY_TUE,
+                DAY_WED,
+                DAY_THU,
+                DAY_FRI
+            ) -> {
+                getString(R.string.light_quick_setup_days_weekdays)
+            }
+
+            setOf(
+                DAY_SAT,
+                DAY_SUN
+            ) -> {
+                getString(R.string.light_quick_setup_days_weekend)
+            }
+
+            else -> {
+                getString(
+                    R.string.light_quick_setup_days_count_format,
+                    days.size
+                )
+            }
+        }
+    }
+
+    private fun photoperiodLabel(
+        startMinutes: Int,
+        endMinutes: Int
+    ): String {
+        val durationMinutes =
+            if (endMinutes >= startMinutes) {
+                endMinutes - startMinutes
+            } else {
+                MINUTES_IN_DAY - startMinutes + endMinutes
+            }
+
+        val hours = durationMinutes / MINUTES_IN_HOUR
+        val minutes = durationMinutes % MINUTES_IN_HOUR
+
+        return if (minutes == 0) {
+            getString(
+                R.string.light_program_photoperiod_hours_format,
+                hours
+            )
+        } else {
+            getString(
+                R.string.light_program_photoperiod_hours_minutes_format,
+                hours,
+                minutes
+            )
+        }
+    }
+
+    private fun minutesToTime(
+        minutes: Int
+    ): String {
+        val safeMinutes =
+            ((minutes % MINUTES_IN_DAY) + MINUTES_IN_DAY) % MINUTES_IN_DAY
+
+        val hour = safeMinutes / MINUTES_IN_HOUR
+        val minute = safeMinutes % MINUTES_IN_HOUR
+
+        return "%02d:%02d".format(
+            hour,
+            minute
         )
     }
 
@@ -383,6 +660,25 @@ class DeviceLightProgramListFragment :
 
     override fun onDestroyView() {
         _binding = null
+
         super.onDestroyView()
+    }
+
+    companion object {
+        private const val MINUTES_IN_HOUR = 60
+        private const val MINUTES_IN_DAY = 24 * MINUTES_IN_HOUR
+
+        private const val DEFAULT_START_MINUTES = 9 * MINUTES_IN_HOUR
+        private const val DEFAULT_PEAK_START_MINUTES = 10 * MINUTES_IN_HOUR
+        private const val DEFAULT_PEAK_END_MINUTES = (18 * MINUTES_IN_HOUR) + 15
+        private const val DEFAULT_END_MINUTES = (19 * MINUTES_IN_HOUR) + 15
+
+        private const val DAY_MON = 1
+        private const val DAY_TUE = 2
+        private const val DAY_WED = 3
+        private const val DAY_THU = 4
+        private const val DAY_FRI = 5
+        private const val DAY_SAT = 6
+        private const val DAY_SUN = 7
     }
 }
