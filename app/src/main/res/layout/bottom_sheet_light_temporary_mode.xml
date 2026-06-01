@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/temporaryModeRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -21,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="Temporary Mode"
+        android:text="@string/light_temporary_mode_title"
         android:textColor="?attr/colorOnSurface"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -31,15 +32,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="Run a scene temporarily without changing the saved program."
+        android:text="@string/light_temporary_mode_subtitle"
         android:textColor="@color/settings_text_secondary"
         android:textSize="13sp" />
 
     <TextView
+        android:id="@+id/tvTemporaryModeSceneLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
-        android:text="Scene"
+        android:text="@string/light_temporary_mode_scene_label"
         android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -53,7 +55,7 @@
         android:gravity="center_vertical"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
-        android:text="Photo Mode · Master 100 · R90 G92 B90 W100"
+        android:text="@string/light_temp_scene_photo"
         android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -66,7 +68,7 @@
         android:gravity="center_vertical"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
-        android:text="Maintenance · Master 55 · R70 G70 B70 W85"
+        android:text="@string/light_temp_scene_maintenance"
         android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -79,7 +81,7 @@
         android:gravity="center_vertical"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
-        android:text="Evening View · Master 45 · R80 G55 B35 W30"
+        android:text="@string/light_temp_scene_evening"
         android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -92,7 +94,7 @@
         android:gravity="center_vertical"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
-        android:text="Moonlight · Master 12 · R10 G18 B70 W5"
+        android:text="@string/light_temp_scene_moonlight"
         android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -102,7 +104,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
-        android:text="Duration"
+        android:text="@string/light_temporary_mode_duration_label"
         android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -112,7 +114,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="30 min"
+        android:text="@string/light_duration_30_min"
         android:textColor="@color/light_accent"
         android:textSize="24sp"
         android:textStyle="bold" />
@@ -132,7 +134,7 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
-            android:text="15 min"
+            android:text="@string/light_duration_15_min"
             android:textColor="@color/settings_text_secondary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -144,10 +146,10 @@
             android:layout_marginStart="5dp"
             android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:background="@color/light_accent"
+            android:background="?attr/selectableItemBackground"
             android:gravity="center"
-            android:text="30 min"
-            android:textColor="@color/background_color"
+            android:text="@string/light_duration_30_min"
+            android:textColor="@color/settings_text_secondary"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -160,7 +162,7 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
-            android:text="60 min"
+            android:text="@string/light_duration_60_min"
             android:textColor="@color/settings_text_secondary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -173,7 +175,7 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackground"
             android:gravity="center"
-            android:text="Next"
+            android:text="@string/light_duration_next"
             android:textColor="@color/settings_text_secondary"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -187,7 +189,7 @@
         android:layout_marginTop="22dp"
         android:background="@color/light_accent"
         android:gravity="center"
-        android:text="Apply Temporary Mode"
+        android:text="@string/light_temporary_mode_apply"
         android:textColor="@color/background_color"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -199,7 +201,7 @@
         android:layout_marginTop="8dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Restore Auto Program"
+        android:text="@string/light_restore_auto_program"
         android:textColor="@color/light_accent"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -210,7 +212,7 @@
         android:layout_height="46dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Cancel"
+        android:text="@string/common_cancel"
         android:textColor="@color/settings_text_secondary"
         android:textSize="14sp"
         android:textStyle="bold" />

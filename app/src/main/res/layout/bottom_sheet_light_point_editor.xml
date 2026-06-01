@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/lightPointEditorScroll"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -33,9 +35,10 @@
             android:layout_marginTop="22dp"
             android:fontFamily="@font/inter_semibold"
             android:includeFontPadding="false"
-            android:text="Edit Point"
+            android:text=""
             android:textColor="?attr/colorOnSurface"
-            android:textSize="24sp" />
+            android:textSize="24sp"
+            tools:text="Edit Point" />
 
         <TextView
             android:id="@+id/tvPointLabel"
@@ -43,9 +46,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:lineSpacingExtra="3dp"
-            android:text="Edit this curve point time and intensity."
+            android:text=""
             android:textColor="@color/settings_text_secondary"
-            android:textSize="13sp" />
+            android:textSize="13sp"
+            tools:text="Edit this curve point time and intensity." />
 
         <TextView
             android:id="@+id/tvPointNameLabel"
@@ -54,7 +58,7 @@
             android:layout_marginTop="24dp"
             android:fontFamily="@font/inter_semibold"
             android:includeFontPadding="false"
-            android:text="Point Name"
+            android:text="@string/light_point_editor_name_label"
             android:textColor="?attr/colorOnSurface"
             android:textSize="15sp" />
 
@@ -65,7 +69,7 @@
             android:layout_marginTop="10dp"
             android:background="@drawable/bg_light_editor_chip_unselected"
             android:fontFamily="@font/inter_regular"
-            android:hint="Point name"
+            android:hint="@string/light_point_editor_name_hint"
             android:imeOptions="actionDone"
             android:includeFontPadding="false"
             android:inputType="textCapSentences"
@@ -83,9 +87,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="7dp"
             android:lineSpacingExtra="2dp"
-            android:text="This name will be shown in the curve points list."
+            android:text=""
             android:textColor="@color/settings_text_secondary"
-            android:textSize="11sp" />
+            android:textSize="11sp"
+            tools:text="This name will be shown in the curve points list." />
 
         <TextView
             android:id="@+id/tvPointTimeLabel"
@@ -94,7 +99,7 @@
             android:layout_marginTop="24dp"
             android:fontFamily="@font/inter_semibold"
             android:includeFontPadding="false"
-            android:text="Time"
+            android:text="@string/light_point_editor_time_label"
             android:textColor="?attr/colorOnSurface"
             android:textSize="15sp" />
 
@@ -117,7 +122,7 @@
                 android:fontFamily="@font/inter_semibold"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="-"
+                android:text="@string/common_minus"
                 android:textColor="@color/light_accent"
                 android:textSize="28sp" />
 
@@ -129,9 +134,10 @@
                 android:fontFamily="@font/inter_semibold"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="10:00"
+                android:text=""
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="32sp" />
+                android:textSize="32sp"
+                tools:text="10:00" />
 
             <TextView
                 android:id="@+id/btnPointTimePlus"
@@ -141,7 +147,7 @@
                 android:fontFamily="@font/inter_semibold"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="+"
+                android:text="@string/common_plus"
                 android:textColor="@color/light_accent"
                 android:textSize="28sp" />
 
@@ -173,7 +179,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
-                    android:text="Intensity"
+                    android:text="@string/light_point_editor_intensity_label"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="15sp" />
 
@@ -184,9 +190,10 @@
                     android:layout_marginTop="12dp"
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
-                    android:text="80%"
+                    android:text=""
                     android:textColor="@color/light_accent"
-                    android:textSize="34sp" />
+                    android:textSize="34sp"
+                    tools:text="80%" />
 
                 <com.google.android.material.slider.Slider
                     android:id="@+id/sliderPointIntensity"
@@ -194,9 +201,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:value="80"
                     android:valueFrom="0"
-                    android:valueTo="100" />
+                    android:valueTo="100"
+                    tools:value="80" />
 
             </LinearLayout>
 
@@ -211,9 +218,10 @@
             android:fontFamily="@font/inter_semibold"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="Save Point"
+            android:text=""
             android:textColor="@color/background_color"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            tools:text="Save Point" />
 
         <TextView
             android:id="@+id/btnPointDelete"
@@ -224,7 +232,7 @@
             android:fontFamily="@font/inter_semibold"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="Delete Point"
+            android:text="@string/light_point_editor_delete"
             android:textColor="@color/light_error"
             android:textSize="14sp" />
 
@@ -236,7 +244,7 @@
             android:fontFamily="@font/inter_semibold"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="Cancel"
+            android:text="@string/common_cancel"
             android:textColor="@color/settings_text_secondary"
             android:textSize="14sp" />
 

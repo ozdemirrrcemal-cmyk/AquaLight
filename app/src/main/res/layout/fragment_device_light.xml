@@ -361,7 +361,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/light_curve_now_margin_top"
-                    android:text="Now 14:25 · 78%"
+                    android:text=""
                     tools:text="Now 14:25 · 78%" />
 
                 <LinearLayout
@@ -421,7 +421,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="00:00"
+                        android:text=""
                         tools:text="00:00" />
 
                     <TextView
@@ -431,7 +431,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="center"
-                        android:text="12:00"
+                        android:text=""
                         tools:text="12:00" />
 
                     <TextView
@@ -441,7 +441,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="end"
-                        android:text="24:00"
+                        android:text=""
                         tools:text="24:00" />
 
                 </LinearLayout>
@@ -476,7 +476,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/light_stats_value_margin_top"
-                                android:text="09:00"
+                                android:text=""
                                 tools:text="09:00" />
 
                         </LinearLayout>
@@ -501,7 +501,7 @@
                                 android:layout_marginTop="@dimen/light_stats_value_margin_top"
                                 android:ellipsize="end"
                                 android:maxLines="1"
-                                android:text="12:00 – 16:00"
+                                android:text=""
                                 tools:text="12:00 – 16:00" />
 
                         </LinearLayout>
@@ -538,7 +538,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/light_stats_value_margin_top"
-                                android:text="19:15"
+                                android:text=""
                                 tools:text="19:15" />
 
                         </LinearLayout>
@@ -561,7 +561,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/light_stats_value_margin_top"
-                                android:text="60 min"
+                                android:text=""
                                 tools:text="60 min" />
 
                         </LinearLayout>
@@ -885,7 +885,7 @@
                             android:layout_height="wrap_content"
                             android:ellipsize="end"
                             android:maxLines="1"
-                            android:text="Programs"
+                            android:text=""
                             tools:text="Programs" />
 
                         <TextView
@@ -896,7 +896,7 @@
                             android:layout_marginTop="@dimen/light_program_subtitle_margin_top"
                             android:ellipsize="end"
                             android:maxLines="1"
-                            android:text="Waiting for program data"
+                            android:text=""
                             tools:text="Waiting for program data" />
 
                         <TextView
@@ -907,7 +907,7 @@
                             android:layout_marginTop="@dimen/light_program_channels_margin_top"
                             android:ellipsize="end"
                             android:maxLines="1"
-                            android:text="R80  G84  B79  W65"
+                            android:text=""
                             tools:text="R80  G84  B79  W65" />
 
                     </LinearLayout>
@@ -918,7 +918,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/light_program_status_margin_end"
-                        android:text="Active"
+                        android:text=""
                         tools:text="Active" />
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
@@ -1072,7 +1072,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
-                    android:text="Online · Synced 1 min ago"
+                    android:text=""
                     android:textSize="12sp"
                     tools:text="Online · Synced 1 min ago" />
 
@@ -1110,7 +1110,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/light_health_value_margin_top"
-                                android:text="38°C"
+                                android:text=""
                                 tools:text="38°C" />
 
                         </LinearLayout>
@@ -1146,7 +1146,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/light_health_value_margin_top"
-                                android:text="Normal"
+                                android:text=""
                                 tools:text="Normal" />
 
                         </LinearLayout>
@@ -1182,7 +1182,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/light_health_value_margin_top"
-                                android:text="14:32"
+                                android:text=""
                                 tools:text="14:32" />
 
                         </LinearLayout>
@@ -1217,7 +1217,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="@dimen/light_health_value_margin_top"
-                                android:text="1.0.4"
+                                android:text=""
                                 tools:text="1.0.4" />
 
                         </LinearLayout>

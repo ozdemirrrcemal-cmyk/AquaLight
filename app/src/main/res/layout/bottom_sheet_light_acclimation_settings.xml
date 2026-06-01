@@ -2,6 +2,7 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/acclimationRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -25,7 +26,7 @@
         android:layout_marginTop="20dp"
         android:fontFamily="@font/inter_semibold"
         android:includeFontPadding="false"
-        android:text="Acclimation"
+        android:text="@string/light_acclimation_title"
         android:textColor="?attr/colorOnSurface"
         android:textSize="21sp" />
 
@@ -35,7 +36,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="7dp"
         android:lineSpacingExtra="2dp"
-        android:text="Gradually increase light intensity to protect new plants, shrimp or fish."
+        android:text="@string/light_acclimation_subtitle"
         android:textColor="@color/settings_text_secondary"
         android:textSize="13sp" />
 
@@ -74,7 +75,7 @@
                     android:fontFamily="@font/inter_semibold"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="↗"
+                    android:text="@string/light_editor_icon_ramp"
                     android:textColor="@color/light_accent"
                     android:textSize="17sp" />
 
@@ -92,7 +93,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
-                    android:text="Enable Acclimation"
+                    android:text="@string/light_acclimation_enable_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp" />
 
@@ -101,7 +102,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Apply reduced output temporarily"
+                    android:text="@string/light_acclimation_enable_subtitle"
                     android:textColor="@color/settings_text_secondary"
                     android:textSize="11sp" />
 
@@ -143,7 +144,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/inter_semibold"
                 android:includeFontPadding="false"
-                android:text="Duration"
+                android:text="@string/light_acclimation_duration_label"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="14sp" />
 
@@ -154,9 +155,10 @@
                 android:layout_marginTop="8dp"
                 android:fontFamily="@font/inter_semibold"
                 android:includeFontPadding="false"
-                android:text="7 days"
+                android:text=""
                 android:textColor="@color/light_accent"
-                android:textSize="26sp" />
+                android:textSize="26sp"
+                tools:text="7 days" />
 
             <LinearLayout
                 android:id="@+id/acclimationDurationRow"
@@ -175,7 +177,7 @@
                     android:fontFamily="@font/inter_semibold"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="3 days"
+                    android:text="@string/light_acclimation_3_days"
                     android:textColor="@color/settings_text_secondary"
                     android:textSize="12sp" />
 
@@ -186,12 +188,12 @@
                     android:layout_marginStart="5dp"
                     android:layout_marginEnd="5dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_light_editor_chip_selected"
+                    android:background="@drawable/bg_light_editor_chip_unselected"
                     android:fontFamily="@font/inter_semibold"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="7 days"
-                    android:textColor="@color/background_color"
+                    android:text="@string/light_acclimation_7_days"
+                    android:textColor="@color/settings_text_secondary"
                     android:textSize="12sp" />
 
                 <TextView
@@ -204,7 +206,7 @@
                     android:fontFamily="@font/inter_semibold"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="14 days"
+                    android:text="@string/light_acclimation_14_days"
                     android:textColor="@color/settings_text_secondary"
                     android:textSize="12sp" />
 
@@ -240,7 +242,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/inter_semibold"
                 android:includeFontPadding="false"
-                android:text="Start Intensity"
+                android:text="@string/light_acclimation_start_intensity_label"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="14sp" />
 
@@ -251,9 +253,10 @@
                 android:layout_marginTop="8dp"
                 android:fontFamily="@font/inter_semibold"
                 android:includeFontPadding="false"
-                android:text="40%"
+                android:text=""
                 android:textColor="@color/light_accent"
-                android:textSize="30sp" />
+                android:textSize="30sp"
+                tools:text="40%" />
 
             <com.google.android.material.slider.Slider
                 android:id="@+id/sliderAcclimationStart"
@@ -261,9 +264,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:value="40"
-                android:valueFrom="20"
-                android:valueTo="80" />
+                tools:value="40" />
 
         </LinearLayout>
 
@@ -275,9 +276,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
         android:lineSpacingExtra="2dp"
-        android:text="Starts at 40% and gradually reaches full program intensity over 7 days."
+        android:text=""
         android:textColor="@color/settings_text_secondary"
-        android:textSize="12sp" />
+        android:textSize="12sp"
+        tools:text="Starts at 40% and gradually reaches full program intensity over 7 days." />
 
     <TextView
         android:id="@+id/btnAcclimationSave"
@@ -288,7 +290,7 @@
         android:fontFamily="@font/inter_semibold"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:text="Save Acclimation"
+        android:text="@string/light_acclimation_save"
         android:textColor="@color/background_color"
         android:textSize="15sp" />
 
@@ -301,7 +303,7 @@
         android:fontFamily="@font/inter_semibold"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:text="Cancel"
+        android:text="@string/common_cancel"
         android:textColor="@color/settings_text_secondary"
         android:textSize="14sp" />
 

@@ -2,12 +2,13 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualBinding
-import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.LightManualUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_DEVICE_ID
+import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_DEVICE_TITLE
 import com.google.android.material.slider.Slider
 import kotlin.math.roundToInt
 
@@ -16,28 +17,31 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
     private var _binding: FragmentDeviceLightManualBinding? = null
     private val binding get() = _binding!!
 
-    private var currentState: LightManualUiState = LightManualUiState.preview()
     private var isProgrammaticSliderChange = false
+
+    private val deviceId: Long
+        get() = requireArguments().getLong(ARG_DEVICE_ID)
+
+    private val deviceTitle: String
+        get() = requireArguments()
+            .getString(ARG_DEVICE_TITLE)
+            .orEmpty()
+            .ifBlank {
+                getString(R.string.light_default_device_title)
+            }
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceLightManualBinding.bind(view)
 
         setupHeader()
         configureSliders()
-        setupSliders()
+        setupSliderListeners()
         setupClicks()
-
-        renderManualState(
-            state = currentState
-        )
     }
 
     private fun setupHeader() = with(binding.deviceHeader) {
@@ -53,17 +57,11 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
         btnActionOne.setImageResource(R.drawable.ic_light_sync_24)
         btnActionOne.contentDescription = getString(R.string.light_cd_sync)
         btnActionOne.setOnClickListener {
-            onHeaderSyncClick()
+            // TODO: Connect manual refresh when ESP32 read layer is enabled.
         }
 
         btnActionTwo.visibility = View.GONE
         btnActionThree.visibility = View.GONE
-    }
-
-    private fun onHeaderSyncClick() {
-        showMessage(
-            message = "Syncing manual light data"
-        )
     }
 
     private fun configureSliders() = with(binding) {
@@ -74,31 +72,24 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
             sliderBlue,
             sliderWhite
         ).forEach { slider ->
-            slider.valueFrom = 0f
-            slider.valueTo = LightManualUiState.MAX_PERCENT.toFloat()
+            slider.valueFrom = MIN_PERCENT.toFloat()
+            slider.valueTo = MAX_PERCENT.toFloat()
+            slider.stepSize = SLIDER_STEP_SIZE
+            slider.setLabelFormatter { value ->
+                getString(
+                    R.string.common_percent_value,
+                    value.roundToInt()
+                )
+            }
         }
     }
 
-    private fun setupSliders() = with(binding) {
-        bindSlider(
-            slider = sliderMasterBrightness
-        )
-
-        bindSlider(
-            slider = sliderRed
-        )
-
-        bindSlider(
-            slider = sliderGreen
-        )
-
-        bindSlider(
-            slider = sliderBlue
-        )
-
-        bindSlider(
-            slider = sliderWhite
-        )
+    private fun setupSliderListeners() = with(binding) {
+        bindSlider(sliderMasterBrightness)
+        bindSlider(sliderRed)
+        bindSlider(sliderGreen)
+        bindSlider(sliderBlue)
+        bindSlider(sliderWhite)
     }
 
     private fun bindSlider(
@@ -109,156 +100,137 @@ class DeviceLightManualFragment : Fragment(R.layout.fragment_device_light_manual
                 return@addOnChangeListener
             }
 
-            updateStateFromSliders()
+            renderCurrentSliderLabels()
         }
     }
 
     private fun setupClicks() = with(binding) {
         btnAll100.setOnClickListener {
-            applyAllChannels(
-                value = 100
-            )
+            applyAllChannels(MAX_PERCENT)
         }
 
         btnAll50.setOnClickListener {
-            applyAllChannels(
-                value = 50
-            )
+            applyAllChannels(HALF_PERCENT)
         }
 
         btnAllOff.setOnClickListener {
-            applyAllChannels(
-                value = 0
-            )
+            applyAllChannels(MIN_PERCENT)
         }
 
         btnResetChannels.setOnClickListener {
-            currentState = LightManualUiState.preview()
-
-            renderManualState(
-                state = currentState
-            )
+            clearManualSelection()
         }
 
         btnApplyTemporary.setOnClickListener {
-            showMessage(
-                message = "Temporary manual output command will be sent"
-            )
+            // TODO: Send current manual values as temporary output when ESP32 command layer is enabled.
         }
 
         btnSaveAsPreset.setOnClickListener {
-            showMessage(
-                message = "Save as preset will be added"
-            )
+            openPresets()
         }
 
         btnApplyToProgram.setOnClickListener {
-            if (!btnApplyToProgram.isEnabled) {
-                return@setOnClickListener
-            }
-
-            showMessage(
-                message = "Apply to program will be added"
-            )
+            // TODO: Enable when applying manual values into a saved program is implemented.
         }
     }
 
     private fun applyAllChannels(
         value: Int
-    ) {
-        val safeValue =
-            value.coerceIn(
-                minimumValue = 0,
-                maximumValue = LightManualUiState.MAX_PERCENT
-            )
-
-        currentState =
-            currentState.copy(
-                redPercent = safeValue,
-                greenPercent = safeValue,
-                bluePercent = safeValue,
-                whitePercent = safeValue
-            )
-
-        renderManualState(
-            state = currentState
-        )
-    }
-
-    private fun updateStateFromSliders() = with(binding) {
-        currentState =
-            currentState.copy(
-                masterPercent = sliderMasterBrightness.value.roundToInt(),
-                redPercent = sliderRed.value.roundToInt(),
-                greenPercent = sliderGreen.value.roundToInt(),
-                bluePercent = sliderBlue.value.roundToInt(),
-                whitePercent = sliderWhite.value.roundToInt()
-            )
-
-        renderManualLabels(
-            state = currentState
-        )
-    }
-
-    private fun renderManualState(
-        state: LightManualUiState
     ) = with(binding) {
+        val safeValue = value.coerceIn(
+            minimumValue = MIN_PERCENT,
+            maximumValue = MAX_PERCENT
+        ).toFloat()
+
         isProgrammaticSliderChange = true
 
-        sliderMasterBrightness.value = state.safeMasterPercent.toFloat()
-        sliderRed.value = state.safeRedPercent.toFloat()
-        sliderGreen.value = state.safeGreenPercent.toFloat()
-        sliderBlue.value = state.safeBluePercent.toFloat()
-        sliderWhite.value = state.safeWhitePercent.toFloat()
+        sliderRed.value = safeValue
+        sliderGreen.value = safeValue
+        sliderBlue.value = safeValue
+        sliderWhite.value = safeValue
 
         isProgrammaticSliderChange = false
 
-        renderManualLabels(
-            state = state
-        )
+        renderCurrentSliderLabels()
+    }
 
-        btnApplyToProgram.isEnabled = state.isApplyToProgramEnabled
-        btnApplyToProgram.alpha =
-            if (state.isApplyToProgramEnabled) {
-                ENABLED_ALPHA
+    private fun clearManualSelection() = with(binding) {
+        isProgrammaticSliderChange = true
+
+        sliderMasterBrightness.value = MIN_PERCENT.toFloat()
+        sliderRed.value = MIN_PERCENT.toFloat()
+        sliderGreen.value = MIN_PERCENT.toFloat()
+        sliderBlue.value = MIN_PERCENT.toFloat()
+        sliderWhite.value = MIN_PERCENT.toFloat()
+
+        isProgrammaticSliderChange = false
+
+        tvManualPowerState.text = ""
+        tvManualOutputValue.text = ""
+        tvRedValue.text = ""
+        tvGreenValue.text = ""
+        tvBlueValue.text = ""
+        tvWhiteValue.text = ""
+        tvPreviewAppearance.text = ""
+
+        // TODO: Reset preview view when LightWrgbOutputPreviewView API is finalized.
+    }
+
+    private fun renderCurrentSliderLabels() = with(binding) {
+        val master = sliderMasterBrightness.value.roundToInt()
+        val red = sliderRed.value.roundToInt()
+        val green = sliderGreen.value.roundToInt()
+        val blue = sliderBlue.value.roundToInt()
+        val white = sliderWhite.value.roundToInt()
+
+        tvManualOutputValue.text = formatPercent(master)
+        tvRedValue.text = formatPercent(red)
+        tvGreenValue.text = formatPercent(green)
+        tvBlueValue.text = formatPercent(blue)
+        tvWhiteValue.text = formatPercent(white)
+
+        tvManualPowerState.text =
+            if (master > MIN_PERCENT || red > MIN_PERCENT || green > MIN_PERCENT || blue > MIN_PERCENT || white > MIN_PERCENT) {
+                getString(R.string.light_manual_state_live)
             } else {
-                DISABLED_ALPHA
+                getString(R.string.light_manual_state_off)
             }
+
+        // TODO: Update LightWrgbOutputPreviewView with current local slider values when its API is finalized.
+        // TODO: Fill tvPreviewAppearance from real calculation or ESP32 response later.
     }
 
-    private fun renderManualLabels(
-        state: LightManualUiState
-    ) = with(binding) {
-        tvManualPowerState.text = state.powerStateLabel
-
-        tvManualOutputValue.text = state.masterLabel
-
-        tvRedValue.text = state.redLabel
-        tvGreenValue.text = state.greenLabel
-        tvBlueValue.text = state.blueLabel
-        tvWhiteValue.text = state.whiteLabel
-
-        tvPreviewAppearance.text = state.previewAppearanceLabel
+    private fun formatPercent(
+        value: Int
+    ): String {
+        return getString(
+            R.string.common_percent_value,
+            value.coerceIn(
+                minimumValue = MIN_PERCENT,
+                maximumValue = MAX_PERCENT
+            )
+        )
     }
 
-    private fun showMessage(
-        message: String
-    ) {
-        Toast.makeText(
-            requireContext(),
-            message,
-            Toast.LENGTH_SHORT
-        ).show()
+    private fun openPresets() {
+        findNavController().navigate(
+            R.id.deviceLightPresetsFragment,
+            bundleOf(
+                ARG_DEVICE_ID to deviceId,
+                ARG_DEVICE_TITLE to deviceTitle
+            )
+        )
     }
 
     override fun onDestroyView() {
         _binding = null
-
         super.onDestroyView()
     }
 
     companion object {
-        private const val ENABLED_ALPHA = 1f
-        private const val DISABLED_ALPHA = 0.45f
+        private const val MIN_PERCENT = 0
+        private const val HALF_PERCENT = 50
+        private const val MAX_PERCENT = 100
+        private const val SLIDER_STEP_SIZE = 1f
     }
 }

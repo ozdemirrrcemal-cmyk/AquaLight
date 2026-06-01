@@ -60,7 +60,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Editing Mode"
+                        android:text="@string/light_editor_section_editing_mode"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="15sp" />
 
@@ -77,11 +77,11 @@
                             android:layout_height="match_parent"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1"
-                            android:background="@color/light_accent"
+                            android:background="@drawable/bg_light_editor_chip_selected"
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Simple Curve"
+                            android:text="@string/light_editor_mode_simple_title"
                             android:textColor="@color/background_color"
                             android:textSize="13sp" />
 
@@ -91,11 +91,11 @@
                             android:layout_height="match_parent"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1"
-                            android:background="?attr/selectableItemBackground"
+                            android:background="@drawable/bg_light_editor_chip_unselected"
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Pro Channels"
+                            android:text="@string/light_editor_mode_pro_title"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="13sp" />
 
@@ -107,9 +107,10 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="9dp"
                         android:lineSpacingExtra="2dp"
-                        android:text="One daily intensity curve with fixed RGB/W balance."
+                        android:text=""
                         android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="12sp"
+                        tools:text="One daily intensity curve with planted WRGB balance." />
 
                 </LinearLayout>
 
@@ -153,18 +154,20 @@
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/inter_semibold"
                                 android:includeFontPadding="false"
-                                android:text="Daily Light Curve"
+                                android:text=""
                                 android:textColor="?attr/colorOnSurface"
-                                android:textSize="16sp" />
+                                android:textSize="16sp"
+                                tools:text="Daily Light Curve" />
 
                             <TextView
                                 android:id="@+id/tvCurveSubtitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="5dp"
-                                android:text="Tap a point or row to edit time and output"
+                                android:text=""
                                 android:textColor="@color/settings_text_secondary"
-                                android:textSize="12sp" />
+                                android:textSize="12sp"
+                                tools:text="Tap a point or row to edit time and output" />
 
                         </LinearLayout>
 
@@ -173,10 +176,11 @@
                             android:layout_width="36dp"
                             android:layout_height="36dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/light_editor_add_curve_point_content_description"
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="+"
+                            android:text="@string/light_editor_icon_add"
                             android:textColor="@color/light_accent"
                             android:textSize="24sp" />
 
@@ -212,7 +216,7 @@
                                 android:fontFamily="@font/inter_semibold"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
-                                android:text="Red"
+                                android:text="@string/light_channel_red"
                                 android:textColor="@color/light_red"
                                 android:textSize="12sp" />
 
@@ -240,7 +244,7 @@
                                 android:fontFamily="@font/inter_semibold"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
-                                android:text="Green"
+                                android:text="@string/light_channel_green"
                                 android:textColor="@color/light_green"
                                 android:textSize="12sp" />
 
@@ -268,7 +272,7 @@
                                 android:fontFamily="@font/inter_semibold"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
-                                android:text="Blue"
+                                android:text="@string/light_channel_blue"
                                 android:textColor="@color/light_blue"
                                 android:textSize="12sp" />
 
@@ -295,7 +299,7 @@
                                 android:fontFamily="@font/inter_semibold"
                                 android:gravity="center"
                                 android:includeFontPadding="false"
-                                android:text="White"
+                                android:text="@string/light_channel_white"
                                 android:textColor="@color/light_white"
                                 android:textSize="12sp" />
 
@@ -309,250 +313,209 @@
                         android:layout_height="178dp"
                         android:layout_marginTop="14dp">
 
-                        <com.aqua.aqualight.ui.tabs.devices.detail.light.view.LightProgramCurveView
+                        <com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveChartView
                             android:id="@+id/viewProgramEditorCurve"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent" />
 
-                        <View
-                            android:id="@+id/graphBackgroundTop"
-                            android:layout_width="1dp"
-                            android:layout_height="1dp"
-                            android:visibility="gone" />
-
-                        <View
-                            android:id="@+id/graphBackgroundMid"
-                            android:layout_width="1dp"
-                            android:layout_height="1dp"
-                            android:visibility="gone" />
-
-                        <View
-                            android:id="@+id/graphBackgroundBottom"
-                            android:layout_width="1dp"
-                            android:layout_height="1dp"
-                            android:visibility="gone" />
-
-                        <TextView
-                            android:id="@+id/pointStart"
-                            android:layout_width="1dp"
-                            android:layout_height="1dp"
-                            android:visibility="gone" />
-
-                        <TextView
-                            android:id="@+id/pointRampUp"
-                            android:layout_width="1dp"
-                            android:layout_height="1dp"
-                            android:visibility="gone" />
-
-                        <TextView
-                            android:id="@+id/pointPeakStart"
-                            android:layout_width="1dp"
-                            android:layout_height="1dp"
-                            android:visibility="gone" />
-
-                        <TextView
-                            android:id="@+id/pointPeakEnd"
-                            android:layout_width="1dp"
-                            android:layout_height="1dp"
-                            android:visibility="gone" />
-
-                        <TextView
-                            android:id="@+id/pointEnd"
-                            android:layout_width="1dp"
-                            android:layout_height="1dp"
-                            android:visibility="gone" />
-
                     </FrameLayout>
 
-<LinearLayout
-    android:id="@+id/curveSummaryRow"
-    android:layout_width="match_parent"
-    android:layout_height="52dp"
-    android:layout_marginTop="10dp"
-    android:gravity="center"
-    android:orientation="horizontal">
+                    <LinearLayout
+                        android:id="@+id/curveSummaryRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:orientation="horizontal">
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="horizontal">
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            app:cardBackgroundColor="@color/light_chip_auto"
-            app:cardCornerRadius="13dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#F9C74F"
-            app:strokeWidth="1dp">
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="26dp"
+                                android:layout_height="26dp"
+                                app:cardBackgroundColor="@color/light_chip_auto"
+                                app:cardCornerRadius="13dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/light_sun_marker"
+                                app:strokeWidth="1dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fontFamily="@font/inter_semibold"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:text="☀"
-                android:textColor="#F9C74F"
-                android:textSize="12sp" />
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:fontFamily="@font/inter_semibold"
+                                    android:gravity="center"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/light_editor_icon_sun"
+                                    android:textColor="@color/light_sun_marker"
+                                    android:textSize="12sp" />
 
-        </com.google.android.material.card.MaterialCardView>
+                            </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="7dp"
-            android:orientation="vertical">
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="7dp"
+                                android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:includeFontPadding="false"
-                android:text="Start"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="10sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/light_editor_summary_start_label"
+                                    android:textColor="@color/settings_text_secondary"
+                                    android:textSize="10sp" />
 
-            <TextView
-                android:id="@+id/tvCurveStartSummary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:fontFamily="@font/inter_semibold"
-                android:includeFontPadding="false"
-                android:text="08:00"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="13sp" />
+                                <TextView
+                                    android:id="@+id/tvCurveStartSummary"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="@font/inter_semibold"
+                                    android:includeFontPadding="false"
+                                    android:text=""
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textSize="13sp"
+                                    tools:text="08:00" />
 
-        </LinearLayout>
+                            </LinearLayout>
 
-    </LinearLayout>
+                        </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="horizontal">
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            app:cardBackgroundColor="@color/light_chip_auto"
-            app:cardCornerRadius="13dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/light_accent"
-            app:strokeWidth="1dp">
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="26dp"
+                                android:layout_height="26dp"
+                                app:cardBackgroundColor="@color/light_chip_auto"
+                                app:cardCornerRadius="13dp"
+                                app:cardElevation="0dp"
+                                app:strokeColor="@color/light_accent"
+                                app:strokeWidth="1dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fontFamily="@font/inter_semibold"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:text="↗"
-                android:textColor="@color/light_accent"
-                android:textSize="12sp" />
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:fontFamily="@font/inter_semibold"
+                                    android:gravity="center"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/light_editor_icon_ramp"
+                                    android:textColor="@color/light_accent"
+                                    android:textSize="12sp" />
 
-        </com.google.android.material.card.MaterialCardView>
+                            </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="7dp"
-            android:orientation="vertical">
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="7dp"
+                                android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:includeFontPadding="false"
-                android:text="Peak"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="10sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/light_editor_summary_peak_label"
+                                    android:textColor="@color/settings_text_secondary"
+                                    android:textSize="10sp" />
 
-            <TextView
-                android:id="@+id/tvCurvePeakSummary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:fontFamily="@font/inter_semibold"
-                android:includeFontPadding="false"
-                android:text="100%"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="13sp" />
+                                <TextView
+                                    android:id="@+id/tvCurvePeakSummary"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="@font/inter_semibold"
+                                    android:includeFontPadding="false"
+                                    android:text=""
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textSize="13sp"
+                                    tools:text="100%" />
 
-        </LinearLayout>
+                            </LinearLayout>
 
-    </LinearLayout>
+                        </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="horizontal">
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            app:cardBackgroundColor="@color/light_chip_auto"
-            app:cardCornerRadius="13dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#FF8A65"
-            app:strokeWidth="1dp">
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="26dp"
+                                android:layout_height="26dp"
+                                app:cardBackgroundColor="@color/light_chip_auto"
+                                app:cardCornerRadius="13dp"
+                                app:cardElevation="0dp"
+                                android:textColor="@color/light_warm_marker"
+                                app:strokeWidth="1dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fontFamily="@font/inter_semibold"
-                android:gravity="center"
-                android:includeFontPadding="false"
-                android:text="☾"
-                android:textColor="#FF8A65"
-                android:textSize="12sp" />
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:fontFamily="@font/inter_semibold"
+                                    android:gravity="center"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/light_editor_icon_moon"
+                                    app:strokeColor="@color/light_warm_marker"
+                                    android:textSize="12sp" />
 
-        </com.google.android.material.card.MaterialCardView>
+                            </com.google.android.material.card.MaterialCardView>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="7dp"
-            android:orientation="vertical">
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="7dp"
+                                android:orientation="vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:includeFontPadding="false"
-                android:text="Off"
-                android:textColor="@color/settings_text_secondary"
-                android:textSize="10sp" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:includeFontPadding="false"
+                                    android:text="@string/light_editor_summary_off_label"
+                                    android:textColor="@color/settings_text_secondary"
+                                    android:textSize="10sp" />
 
-            <TextView
-                android:id="@+id/tvCurveEndSummary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:fontFamily="@font/inter_semibold"
-                android:includeFontPadding="false"
-                android:text="20:00"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="13sp" />
+                                <TextView
+                                    android:id="@+id/tvCurveEndSummary"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="3dp"
+                                    android:fontFamily="@font/inter_semibold"
+                                    android:includeFontPadding="false"
+                                    android:text=""
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textSize="13sp"
+                                    tools:text="20:00" />
 
-        </LinearLayout>
+                            </LinearLayout>
 
-    </LinearLayout>
+                        </LinearLayout>
 
-</LinearLayout>
+                    </LinearLayout>
+
                     <TextView
                         android:id="@+id/tvCurveHint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:lineSpacingExtra="2dp"
-                        android:text="Selected point · 12:00 · Peak start · 100%"
+                        android:text=""
                         android:textColor="@color/settings_text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="11sp"
+                        android:visibility="gone"
+                        tools:text="Ramp up · Output 43% · Est. 18W&#10;WRGB · R 35% · G 30% · B 42% · W 43%"
+                        tools:visibility="visible" />
 
                 </LinearLayout>
 
@@ -581,7 +544,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Curve Points"
+                        android:text="@string/light_editor_curve_points_title"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="16sp" />
 
@@ -590,9 +553,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
-                        android:text="Program points used by the daily curve"
+                        android:text=""
                         android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="12sp"
+                        tools:text="Program points used by the daily curve" />
 
                     <LinearLayout
                         android:id="@+id/rowPointStart"
@@ -609,18 +573,20 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter_semibold"
                             android:includeFontPadding="false"
-                            android:text="08:00"
+                            android:text=""
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            tools:text="08:00" />
 
                         <TextView
                             android:id="@+id/tvPointStartLabel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Sunrise start"
+                            android:text=""
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="12sp"
+                            tools:text="Start" />
 
                         <TextView
                             android:id="@+id/tvPointStartPercent"
@@ -628,9 +594,10 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter_semibold"
                             android:includeFontPadding="false"
-                            android:text="0%"
+                            android:text=""
                             android:textColor="@color/light_accent"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            tools:text="0%" />
 
                     </LinearLayout>
 
@@ -648,18 +615,20 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter_semibold"
                             android:includeFontPadding="false"
-                            android:text="12:00"
+                            android:text=""
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            tools:text="12:00" />
 
                         <TextView
                             android:id="@+id/tvPointPeakStartLabel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Peak start"
+                            android:text=""
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="12sp"
+                            tools:text="Peak start" />
 
                         <TextView
                             android:id="@+id/tvPointPeakStartPercent"
@@ -667,9 +636,10 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter_semibold"
                             android:includeFontPadding="false"
-                            android:text="100%"
+                            android:text=""
                             android:textColor="@color/light_accent"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            tools:text="100%" />
 
                     </LinearLayout>
 
@@ -687,18 +657,20 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter_semibold"
                             android:includeFontPadding="false"
-                            android:text="16:00"
+                            android:text=""
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            tools:text="16:00" />
 
                         <TextView
                             android:id="@+id/tvPointPeakEndLabel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Peak end"
+                            android:text=""
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="12sp"
+                            tools:text="Peak end" />
 
                         <TextView
                             android:id="@+id/tvPointPeakEndPercent"
@@ -706,9 +678,10 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter_semibold"
                             android:includeFontPadding="false"
-                            android:text="100%"
+                            android:text=""
                             android:textColor="@color/light_accent"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            tools:text="100%" />
 
                     </LinearLayout>
 
@@ -726,18 +699,20 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter_semibold"
                             android:includeFontPadding="false"
-                            android:text="20:00"
+                            android:text=""
                             android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            tools:text="20:00" />
 
                         <TextView
                             android:id="@+id/tvPointEndLabel"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Lights off"
+                            android:text=""
                             android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp" />
+                            android:textSize="12sp"
+                            tools:text="End" />
 
                         <TextView
                             android:id="@+id/tvPointEndPercent"
@@ -745,9 +720,10 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter_semibold"
                             android:includeFontPadding="false"
-                            android:text="0%"
+                            android:text=""
                             android:textColor="@color/light_accent"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            tools:text="0%" />
 
                     </LinearLayout>
 
@@ -778,18 +754,20 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Channel Balance"
+                        android:text=""
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="16sp" />
+                        android:textSize="16sp"
+                        tools:text="Channel Balance" />
 
                     <TextView
                         android:id="@+id/tvChannelBalanceSubtitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp"
-                        android:text="Used across the whole simple curve"
+                        android:text=""
                         android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="12sp"
+                        tools:text="Used across the whole simple curve" />
 
                     <TextView
                         android:id="@+id/tvProgramRedValue"
@@ -798,18 +776,19 @@
                         android:layout_marginTop="14dp"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Red 80%"
+                        android:text=""
                         android:textColor="@color/light_red"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        tools:text="Red 80%" />
 
                     <com.google.android.material.slider.Slider
                         android:id="@+id/sliderProgramRed"
                         style="@style/Widget.Aqua.Light.Slider.Red"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:value="80"
                         android:valueFrom="0"
-                        android:valueTo="100" />
+                        android:valueTo="100"
+                        tools:value="80" />
 
                     <TextView
                         android:id="@+id/tvProgramGreenValue"
@@ -817,18 +796,19 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Green 84%"
+                        android:text=""
                         android:textColor="@color/light_green"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        tools:text="Green 84%" />
 
                     <com.google.android.material.slider.Slider
                         android:id="@+id/sliderProgramGreen"
                         style="@style/Widget.Aqua.Light.Slider.Green"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:value="84"
                         android:valueFrom="0"
-                        android:valueTo="100" />
+                        android:valueTo="100"
+                        tools:value="84" />
 
                     <TextView
                         android:id="@+id/tvProgramBlueValue"
@@ -836,18 +816,19 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Blue 79%"
+                        android:text=""
                         android:textColor="@color/light_blue"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        tools:text="Blue 79%" />
 
                     <com.google.android.material.slider.Slider
                         android:id="@+id/sliderProgramBlue"
                         style="@style/Widget.Aqua.Light.Slider.Blue"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:value="79"
                         android:valueFrom="0"
-                        android:valueTo="100" />
+                        android:valueTo="100"
+                        tools:value="79" />
 
                     <TextView
                         android:id="@+id/tvProgramWhiteValue"
@@ -855,18 +836,19 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="White 65%"
+                        android:text=""
                         android:textColor="@color/light_white"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        tools:text="White 65%" />
 
                     <com.google.android.material.slider.Slider
                         android:id="@+id/sliderProgramWhite"
                         style="@style/Widget.Aqua.Light.Slider.White"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:value="65"
                         android:valueFrom="0"
-                        android:valueTo="100" />
+                        android:valueTo="100"
+                        tools:value="65" />
 
                 </LinearLayout>
 
@@ -894,7 +876,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Program Settings"
+                        android:text="@string/light_editor_program_settings_title"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="16sp" />
 
@@ -905,7 +887,7 @@
                         android:layout_marginTop="16dp"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Repeat"
+                        android:text="@string/light_editor_repeat_title"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp" />
 
@@ -926,7 +908,7 @@
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Every"
+                            android:text="@string/light_repeat_every_short"
                             android:textColor="@color/background_color"
                             android:textSize="11sp" />
 
@@ -941,7 +923,7 @@
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Weekdays"
+                            android:text="@string/light_repeat_weekdays"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="11sp" />
 
@@ -956,7 +938,7 @@
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Weekend"
+                            android:text="@string/light_repeat_weekend"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="11sp" />
 
@@ -970,7 +952,7 @@
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Custom"
+                            android:text="@string/light_repeat_custom"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="11sp" />
 
@@ -983,7 +965,7 @@
                         android:layout_marginTop="18dp"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
-                        android:text="Ramp Smoothing"
+                        android:text="@string/light_editor_ramp_smoothing_title"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp" />
 
@@ -1004,7 +986,7 @@
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Linear"
+                            android:text="@string/light_ramp_linear"
                             android:textColor="@color/background_color"
                             android:textSize="11sp" />
 
@@ -1019,7 +1001,7 @@
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Soft"
+                            android:text="@string/light_ramp_soft"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="11sp" />
 
@@ -1033,7 +1015,7 @@
                             android:fontFamily="@font/inter_semibold"
                             android:gravity="center"
                             android:includeFontPadding="false"
-                            android:text="Natural"
+                            android:text="@string/light_ramp_natural"
                             android:textColor="@color/settings_text_secondary"
                             android:textSize="11sp" />
 
@@ -1082,7 +1064,7 @@
                                     android:fontFamily="@font/inter_semibold"
                                     android:gravity="center"
                                     android:includeFontPadding="false"
-                                    android:text="↗"
+                                    android:text="@string/light_editor_icon_ramp"
                                     android:textColor="@color/light_accent"
                                     android:textSize="17sp" />
 
@@ -1100,7 +1082,7 @@
                                     android:layout_height="wrap_content"
                                     android:fontFamily="@font/inter_semibold"
                                     android:includeFontPadding="false"
-                                    android:text="Acclimation"
+                                    android:text="@string/light_editor_acclimation_title"
                                     android:textColor="?attr/colorOnSurface"
                                     android:textSize="14sp" />
 
@@ -1108,7 +1090,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="4dp"
-                                    android:text="Gradually increases light for new setups"
+                                    android:text="@string/light_editor_acclimation_subtitle"
                                     android:textColor="@color/settings_text_secondary"
                                     android:textSize="11sp" />
 
@@ -1120,16 +1102,17 @@
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/inter_semibold"
                                 android:includeFontPadding="false"
-                                android:text="Off"
+                                android:text=""
                                 android:textColor="@color/settings_text_secondary"
-                                android:textSize="12sp" />
+                                android:textSize="12sp"
+                                tools:text="Off" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="8dp"
                                 android:includeFontPadding="false"
-                                android:text="›"
+                                android:text="@string/light_editor_icon_chevron"
                                 android:textColor="@color/light_accent"
                                 android:textSize="24sp" />
 
@@ -1166,7 +1149,7 @@
                         android:fontFamily="@font/inter_semibold"
                         android:gravity="center"
                         android:includeFontPadding="false"
-                        android:text="Preview Day"
+                        android:text="@string/light_editor_preview_day_button"
                         android:textColor="@color/light_accent"
                         android:textSize="14sp" />
 
@@ -1179,7 +1162,7 @@
                         android:fontFamily="@font/inter_semibold"
                         android:gravity="center"
                         android:includeFontPadding="false"
-                        android:text="Save Program"
+                        android:text="@string/light_editor_save_program_button"
                         android:textColor="@color/background_color"
                         android:textSize="14sp" />
 

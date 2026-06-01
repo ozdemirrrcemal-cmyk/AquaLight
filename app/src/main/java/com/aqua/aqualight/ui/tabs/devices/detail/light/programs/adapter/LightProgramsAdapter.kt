@@ -1,11 +1,11 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemLightProgramCardBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 
@@ -14,7 +14,7 @@ class LightProgramsAdapter(
     private val onProgramLongClick: (LightProgramListItem) -> Unit,
     private val onProgramEnabledChanged: (LightProgramListItem, Boolean) -> Unit
 ) : ListAdapter<LightProgramListItem, LightProgramsAdapter.ProgramViewHolder>(
-    LightProgramDiffCallback
+    DiffCallback
 ) {
 
     private var activeProgramId: String? = null
@@ -23,27 +23,19 @@ class LightProgramsAdapter(
         programs: List<LightProgramListItem>,
         activeProgramId: String?
     ) {
-        val oldActiveProgramId = this.activeProgramId
         this.activeProgramId = activeProgramId
-
-        submitList(programs.toList()) {
-            notifyActiveProgramChanged(
-                oldActiveProgramId = oldActiveProgramId,
-                newActiveProgramId = activeProgramId
-            )
-        }
+        submitList(programs)
     }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
     ): ProgramViewHolder {
-        val binding =
-            ItemLightProgramCardBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
+        val binding = ItemLightProgramCardBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
 
         return ProgramViewHolder(
             binding = binding,
@@ -57,46 +49,10 @@ class LightProgramsAdapter(
         holder: ProgramViewHolder,
         position: Int
     ) {
-        val program = getItem(position)
-
         holder.bind(
-            program = program,
-            isActiveProgram = program.id == activeProgramId
+            item = getItem(position),
+            isActiveProgram = getItem(position).id == activeProgramId
         )
-    }
-
-    private fun notifyActiveProgramChanged(
-        oldActiveProgramId: String?,
-        newActiveProgramId: String?
-    ) {
-        if (oldActiveProgramId == newActiveProgramId) {
-            return
-        }
-
-        notifyProgramChangedById(
-            programId = oldActiveProgramId
-        )
-
-        notifyProgramChangedById(
-            programId = newActiveProgramId
-        )
-    }
-
-    private fun notifyProgramChangedById(
-        programId: String?
-    ) {
-        if (programId.isNullOrBlank()) {
-            return
-        }
-
-        val index =
-            currentList.indexOfFirst { program ->
-                program.id == programId
-            }
-
-        if (index >= 0) {
-            notifyItemChanged(index)
-        }
     }
 
     class ProgramViewHolder(
@@ -107,88 +63,80 @@ class LightProgramsAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
-            program: LightProgramListItem,
+            item: LightProgramListItem,
             isActiveProgram: Boolean
         ) = with(binding) {
-            tvProgramCardTitle.text = program.title
-            tvProgramCardSubtitle.text = program.subtitle
-            tvProgramCardStartTime.text = program.startTime
-            tvProgramCardRamp.text = program.rampLabel
-            tvProgramCardEndTime.text = program.endTime
-            tvProgramCardRepeat.text = program.repeatLabel
+            tvProgramCardTitle.text = item.title
+            tvProgramCardSubtitle.text = item.subtitle
 
-            tvProgramCardPeak.text = program.peakLabel
-            tvProgramCardRed.text = program.redLabel
-            tvProgramCardGreen.text = program.greenLabel
-            tvProgramCardBlue.text = program.blueLabel
-            tvProgramCardWhite.text = program.whiteLabel
+            tvProgramCardSubtitle.visibility =
+                if (item.subtitle.isBlank()) {
+                    View.GONE
+                } else {
+                    View.VISIBLE
+                }
+
+            tvProgramCardStartTime.text = item.startTimeLabel
+            tvProgramCardRamp.text = item.rampLabel
+            tvProgramCardEndTime.text = item.endTimeLabel
+            tvProgramCardRepeat.text = item.repeatLabel
+
+            tvProgramCardPeak.text = item.peakLabel
+            tvProgramCardRed.text = item.redLabel
+            tvProgramCardGreen.text = item.greenLabel
+            tvProgramCardBlue.text = item.blueLabel
+            tvProgramCardWhite.text = item.whiteLabel
+
+            programCardChannelsRow.visibility =
+                if (
+                    item.peakLabel.isBlank() &&
+                    item.redLabel.isBlank() &&
+                    item.greenLabel.isBlank() &&
+                    item.blueLabel.isBlank() &&
+                    item.whiteLabel.isBlank()
+                ) {
+                    View.GONE
+                } else {
+                    View.VISIBLE
+                }
+
+            viewProgramCardMiniCurve.submitData(
+                data = item.curveData
+            )
 
             switchProgramCardEnabled.setOnCheckedChangeListener(null)
-            switchProgramCardEnabled.isChecked = program.isEnabled
+            switchProgramCardEnabled.isChecked = item.isEnabled
             switchProgramCardEnabled.setOnCheckedChangeListener { _, isChecked ->
                 onProgramEnabledChanged(
-                    program,
+                    item,
                     isChecked
                 )
             }
 
-            cardProgramItem.strokeColor =
-                root.context.getColor(
-                    if (isActiveProgram) {
-                        R.color.light_accent
-                    } else {
-                        R.color.light_stroke
-                    }
-                )
-
-            cardProgramItem.setCardBackgroundColor(
-                root.context.getColor(
-                    if (isActiveProgram) {
-                        R.color.light_surface
-                    } else {
-                        R.color.light_surface_deep
-                    }
-                )
-            )
-
-            programCardMiniCurve.alpha =
-                if (program.isEnabled) {
-                    ENABLED_ITEM_ALPHA
+            cardProgramItem.alpha =
+                if (isActiveProgram || item.isEnabled) {
+                    ENABLED_ALPHA
                 } else {
-                    DISABLED_CURVE_ALPHA
+                    DISABLED_ALPHA
                 }
 
-            programCardContent.alpha =
-                if (program.isEnabled) {
-                    ENABLED_ITEM_ALPHA
-                } else {
-                    DISABLED_ITEM_ALPHA
-                }
-
-            cardProgramItem.setOnClickListener {
-                onProgramClick(
-                    program
-                )
+            root.setOnClickListener {
+                onProgramClick(item)
             }
 
-            cardProgramItem.setOnLongClickListener {
-                onProgramLongClick(
-                    program
-                )
-
+            root.setOnLongClickListener {
+                onProgramLongClick(item)
                 true
             }
         }
 
         private companion object {
-            private const val ENABLED_ITEM_ALPHA = 1f
-            private const val DISABLED_ITEM_ALPHA = 0.68f
-            private const val DISABLED_CURVE_ALPHA = 0.55f
+            private const val ENABLED_ALPHA = 1f
+            private const val DISABLED_ALPHA = 0.68f
         }
     }
 
-    private object LightProgramDiffCallback :
-        DiffUtil.ItemCallback<LightProgramListItem>() {
+    private object DiffCallback : DiffUtil.ItemCallback<LightProgramListItem>() {
 
         override fun areItemsTheSame(
             oldItem: LightProgramListItem,

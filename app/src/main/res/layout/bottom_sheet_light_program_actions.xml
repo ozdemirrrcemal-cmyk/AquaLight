@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/programActionsRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -18,22 +20,28 @@
 
     <TextView
         android:id="@+id/tvProgramActionTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="Every Day Program"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text=""
         android:textColor="?attr/colorOnSurface"
         android:textSize="22sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:text="Every Day Program" />
 
     <TextView
         android:id="@+id/tvProgramActionSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="09:00 → 19:15 · Every day"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text=""
         android:textColor="@color/settings_text_secondary"
-        android:textSize="13sp" />
+        android:textSize="13sp"
+        tools:text="09:00 → 19:15 · Every day" />
 
     <TextView
         android:id="@+id/btnProgramActionEdit"
@@ -42,7 +50,7 @@
         android:layout_marginTop="20dp"
         android:background="@color/light_accent"
         android:gravity="center"
-        android:text="Edit Program"
+        android:text="@string/light_program_action_edit"
         android:textColor="@color/background_color"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -54,7 +62,7 @@
         android:layout_marginTop="8dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Preview Day"
+        android:text="@string/light_program_action_preview"
         android:textColor="@color/light_accent"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -65,7 +73,7 @@
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Duplicate Program"
+        android:text="@string/light_program_action_duplicate"
         android:textColor="@color/light_accent"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -76,7 +84,7 @@
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Set as Active Program"
+        android:text="@string/light_program_action_set_active"
         android:textColor="@color/light_accent"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -87,7 +95,7 @@
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Disable Program"
+        android:text="@string/light_program_action_disable"
         android:textColor="@color/light_warning"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -98,7 +106,7 @@
         android:layout_height="48dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Delete Program"
+        android:text="@string/light_program_action_delete"
         android:textColor="@color/light_error"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -109,7 +117,7 @@
         android:layout_height="46dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center"
-        android:text="Cancel"
+        android:text="@string/common_cancel"
         android:textColor="@color/settings_text_secondary"
         android:textSize="14sp"
         android:textStyle="bold" />

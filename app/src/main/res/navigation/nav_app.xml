@@ -363,91 +363,127 @@
         android:label="Timer" />
 
     <!-- 💡 Light Device -->
-   
-    <fragment
-        android:id="@+id/deviceLightManualFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightManualFragment"
-        android:label="Manual Control"
-        tools:layout="@layout/fragment_device_light_manual">
 
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
+<fragment
+    android:id="@+id/deviceLightManualFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightManualFragment"
+    android:label="Manual Control"
+    tools:layout="@layout/fragment_device_light_manual">
 
-    </fragment>
+    <argument
+        android:name="deviceId"
+        app:argType="long" />
 
-    <fragment
-        android:id="@+id/deviceLightProgramListFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightProgramListFragment"
-        android:label="Programs"
-        tools:layout="@layout/fragment_device_light_program_list">
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
 
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
+</fragment>
 
-        <action
-            android:id="@+id/action_deviceLightProgramListFragment_to_deviceLightProgramEditorFragment"
-            app:destination="@id/deviceLightProgramEditorFragment" />
+<fragment
+    android:id="@+id/deviceLightProgramListFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightProgramListFragment"
+    android:label="Programs"
+    tools:layout="@layout/fragment_device_light_program_list">
 
-    </fragment>
+    <argument
+        android:name="deviceId"
+        app:argType="long" />
 
-    <fragment
-        android:id="@+id/deviceLightProgramEditorFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightProgramEditorFragment"
-        android:label="Program Editor"
-        tools:layout="@layout/fragment_device_light_program_editor">
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
 
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
+    <action
+        android:id="@+id/action_deviceLightProgramListFragment_to_deviceLightProgramEditorFragment"
+        app:destination="@id/deviceLightProgramEditorFragment" />
 
-        <argument
-            android:name="programName"
-            app:argType="string"
-            android:defaultValue="Every Day Program" />
+</fragment>
 
-    </fragment>
+<fragment
+    android:id="@+id/deviceLightProgramEditorFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightProgramEditorFragment"
+    android:label="Program Editor"
+    tools:layout="@layout/fragment_device_light_program_editor">
 
-    <fragment
-        android:id="@+id/deviceLightQuickSetupFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightQuickSetupFragment"
-        android:label="Quick Setup"
-        tools:layout="@layout/fragment_device_light_quick_setup">
+    <argument
+        android:name="deviceId"
+        app:argType="long" />
 
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
 
-        <action
-            android:id="@+id/action_deviceLightQuickSetupFragment_to_deviceLightProgramEditorFragment"
-            app:destination="@id/deviceLightProgramEditorFragment" />
+    <argument
+        android:name="programId"
+        app:argType="string"
+        app:nullable="true"
+        android:defaultValue="@null" />
 
-    </fragment>
+    <argument
+        android:name="programName"
+        app:argType="string"
+        android:defaultValue="" />
 
-    <fragment
-        android:id="@+id/deviceLightPresetsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightPresetsFragment"
-        android:label="Presets"
-        tools:layout="@layout/fragment_device_light_presets">
+</fragment>
 
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
+<fragment
+    android:id="@+id/deviceLightQuickSetupFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightQuickSetupFragment"
+    android:label="Quick Setup"
+    tools:layout="@layout/fragment_device_light_quick_setup">
 
-    </fragment>
+    <argument
+        android:name="deviceId"
+        app:argType="long" />
 
-    <fragment
-        android:id="@+id/deviceLightDeviceSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightDeviceSettingsFragment"
-        android:label="Device Settings"
-        tools:layout="@layout/fragment_device_light_device_settings">
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
 
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
+    <action
+        android:id="@+id/action_deviceLightQuickSetupFragment_to_deviceLightProgramEditorFragment"
+        app:destination="@id/deviceLightProgramEditorFragment" />
 
-    </fragment>
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightPresetsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightPresetsFragment"
+    android:label="Presets"
+    tools:layout="@layout/fragment_device_light_presets">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightDeviceSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightDeviceSettingsFragment"
+    android:label="Device Settings"
+    tools:layout="@layout/fragment_device_light_device_settings">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+</fragment>
 
     <!-- ⚙️ Settings Tab -->
     <fragment

@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+<!-- Light Overview / Common -->
+<string name="light_default_device_title">Device</string>
+<string name="light_default_program_name">Every Day Program</string>
+
+<string name="light_cd_sync">Sync light device</string>
+<string name="light_cd_settings">Light settings</string>
+<string name="light_cd_more">More light options</string>
+<string name="light_cd_edit_curve">Edit light curve</string>
+
+<string name="light_current_output">Current Output</string>
+<string name="light_todays_curve">Today’s Curve</string>
+
+<string name="light_curve_start">Start</string>
+<string name="light_curve_peak">Peak</string>
+<string name="light_curve_sunset">Sunset</string>
+<string name="light_curve_ramp">Ramp</string>
+
+<string name="light_action_manual">Manual</string>
+<string name="light_action_manual_subtitle">Live control</string>
+
+<string name="light_action_programs">Programs</string>
+<string name="light_action_programs_subtitle">Daily schedule</string>
+
+<string name="light_action_quick_setup">Quick Setup</string>
+<string name="light_action_quick_setup_subtitle">Fast configuration</string>
+
+<string name="light_action_presets">Presets</string>
+<string name="light_action_presets_subtitle">Saved scenes</string>
+
+<string name="light_programs_title">Programs</string>
+<string name="light_add_program">+ Add Program</string>
+
+<string name="light_quick_scenes_title">Quick Scenes</string>
+<string name="light_quick_scenes_description">Apply a temporary scene without changing the saved program.</string>
+
+<string name="light_scene_photo">Photo</string>
+<string name="light_scene_care">Care</string>
+<string name="light_scene_evening">Evening</string>
+
+<string name="light_device_health_title">Device Health</string>
+<string name="light_health_temp">Temp</string>
+<string name="light_health_fan">Fan</string>
+<string name="light_health_time">Time</string>
+<string name="light_health_firmware">Firmware</string>
+
+
+<!-- Temporary Mode BottomSheet -->
+<string name="light_temporary_mode_title">Temporary Mode</string>
+<string name="light_temporary_mode_subtitle">Run a temporary light scene without changing the saved program.</string>
+<string name="light_temporary_mode_scene_label">Scene</string>
+<string name="light_temporary_mode_duration_label">Duration</string>
+<string name="light_temporary_mode_apply">Apply Temporary Mode</string>
+<string name="light_restore_auto_program">Restore Auto Program</string>
+
+<string name="light_temp_scene_photo">Photo Mode</string>
+<string name="light_temp_scene_maintenance">Maintenance</string>
+<string name="light_temp_scene_evening">Evening View</string>
+<string name="light_temp_scene_moonlight">Moonlight</string>
+
+<string name="light_duration_15_min">15 min</string>
+<string name="light_duration_30_min">30 min</string>
+<string name="light_duration_60_min">60 min</string>
+<string name="light_duration_next">Next</string>
+<string name="light_duration_until_next_event">Until next event</string>
+
+
+<!-- Common -->
+<string name="common_cancel">Cancel</string>
+
+<!-- Manual Control -->
+<string name="light_manual_title">Manual Control</string>
+<string name="light_manual_master_brightness">Master Brightness</string>
+<string name="light_manual_subtitle">Control the light output manually.</string>
+<string name="light_manual_current_output">Current Output</string>
+<string name="light_manual_notice">Manual changes are temporary. Auto program can resume later.</string>
+
+<string name="light_manual_channel_control">Channel Control</string>
+<string name="light_manual_channel_control_subtitle">Adjust each WRGB channel independently.</string>
+
+<string name="light_channel_red">Red</string>
+<string name="light_channel_green">Green</string>
+<string name="light_channel_blue">Blue</string>
+<string name="light_channel_white">White</string>
+
+<string name="light_manual_all_100">All 100</string>
+<string name="light_manual_all_50">All 50</string>
+<string name="light_manual_all_off">All Off</string>
+<string name="light_manual_reset">Reset</string>
+
+<string name="light_manual_light_preview">Light Preview</string>
+<string name="light_manual_apply_temporary">Apply Temporary</string>
+<string name="light_manual_save_as_preset">Save as Preset</string>
+<string name="light_manual_apply_to_program">Apply to Program</string>
+
+<string name="light_manual_state_live">LIVE</string>
+<string name="light_manual_state_off">OFF</string>
+
+<!-- Common formatting -->
+<string name="common_percent_value">%1$d%%</string>
+
+
+<!-- Program List -->
+<string name="light_programs_title">Programs</string>
+<string name="light_program_new_program">New Program</string>
+<string name="light_program_status_active">ACTIVE</string>
+
+<string name="light_program_summary_peak_output">Peak Output</string>
+<string name="light_program_summary_photoperiod">Photoperiod</string>
+
+<string name="light_program_filter_all">All</string>
+<string name="light_program_filter_active">Active</string>
+<string name="light_program_filter_disabled">Disabled</string>
+
+<string name="light_programs_empty_title">No light programs yet</string>
+<string name="light_programs_empty_description">Create your first daily lighting schedule for this aquarium.</string>
+<string name="light_programs_empty_filtered_title">No programs in this filter</string>
+<string name="light_programs_empty_filtered_description">Try another filter or create a new light program.</string>
+
+<string name="light_add_program">+ Add Program</string>
+
+<!-- Program Card -->
+<string name="light_program_card_enabled_cd">Enable or disable program</string>
+<string name="light_program_card_start_icon">☀</string>
+<string name="light_program_card_ramp_icon">↗</string>
+<string name="light_program_card_off_icon">◒</string>
+<string name="light_program_card_start">Start</string>
+<string name="light_program_card_ramp">Ramp</string>
+<string name="light_program_card_off">Off</string>
+
+<!-- Program Actions BottomSheet -->
+<string name="light_program_action_edit">Edit Program</string>
+<string name="light_program_action_preview">Preview Day</string>
+<string name="light_program_action_duplicate">Duplicate Program</string>
+<string name="light_program_action_set_active">Set as Active Program</string>
+<string name="light_program_action_active">Active Program</string>
+<string name="light_program_action_enable">Enable Program</string>
+<string name="light_program_action_disable">Disable Program</string>
+<string name="light_program_action_delete">Delete Program</string>
+
+<!-- Common -->
+<string name="common_plus">+</string>
+<string name="common_cancel">Cancel</string>
+<string name="common_percent_value">%1$d%%</string>
+<string name="common_time_hour_label">%1$02d:00</string>
+
+<!-- Common -->
+<string name="common_cancel">Cancel</string>
+<string name="common_close">Close</string>
+<string name="common_plus">+</string>
+<string name="common_minus">-</string>
+
+<string name="common_day_mon_short">M</string>
+<string name="common_day_tue_short">T</string>
+<string name="common_day_wed_short">W</string>
+<string name="common_day_thu_short">T</string>
+<string name="common_day_fri_short">F</string>
+<string name="common_day_sat_short">S</string>
+<string name="common_day_sun_short">S</string>
+
+<!-- Day Picker -->
+<string name="light_day_picker_title">Custom Repeat Days</string>
+<string name="light_day_picker_subtitle">Choose the days this lighting program should run.</string>
+<string name="light_day_picker_select_weekdays">Select Weekdays</string>
+<string name="light_day_picker_select_weekend">Select Weekend</string>
+<string name="light_day_picker_select_every_day">Select Every Day</string>
+<string name="light_day_picker_save">Save Days</string>
+
+<string name="light_day_picker_summary_every_day">Every day selected</string>
+<string name="light_day_picker_summary_weekdays">Weekdays selected</string>
+<string name="light_day_picker_summary_weekend">Weekend selected</string>
+<string name="light_day_picker_summary_days_selected">%1$d days selected</string>
+<string name="light_day_picker_error_one_day_required">At least one day must stay selected</string>
+
+<!-- Point Editor -->
+<string name="light_point_editor_name_label">Point Name</string>
+<string name="light_point_editor_name_hint">Point name</string>
+<string name="light_point_editor_time_label">Time</string>
+<string name="light_point_editor_intensity_label">Intensity</string>
+<string name="light_point_editor_delete">Delete Point</string>
+
+<string name="light_point_editor_title_edit">Edit Point</string>
+<string name="light_point_editor_title_add">Add Point</string>
+<string name="light_point_editor_description_custom">Edit this custom curve point.</string>
+<string name="light_point_editor_description_default">Default curve point name cannot be changed.</string>
+<string name="light_point_editor_description_add">Add a custom intermediate point to this curve.</string>
+<string name="light_point_editor_helper_rename">This name will be shown in the curve points list.</string>
+<string name="light_point_editor_helper_locked">This is a default curve point. Its name cannot be changed.</string>
+<string name="light_point_editor_save">Save Point</string>
+<string name="light_point_editor_add">Add Point</string>
+<string name="light_point_editor_error_empty_name">Point name cannot be empty</string>
+
+<!-- Preview Day -->
+<string name="light_preview_day_title">Preview Day</string>
+<string name="light_preview_day_subtitle">Accelerated 24-hour light simulation. This does not save or send data to the device.</string>
+
+<!-- Acclimation -->
+<string name="light_acclimation_title">Acclimation</string>
+<string name="light_acclimation_subtitle">Gradually increase light intensity to protect new plants, shrimp or fish.</string>
+<string name="light_acclimation_enable_title">Enable Acclimation</string>
+<string name="light_acclimation_enable_subtitle">Apply reduced output temporarily</string>
+<string name="light_acclimation_duration_label">Duration</string>
+<string name="light_acclimation_start_intensity_label">Start Intensity</string>
+<string name="light_acclimation_3_days">3 days</string>
+<string name="light_acclimation_7_days">7 days</string>
+<string name="light_acclimation_14_days">14 days</string>
+<string name="light_acclimation_save">Save Acclimation</string>
+
+<string name="light_acclimation_duration_value">%1$d days</string>
+<string name="light_acclimation_summary_enabled">Starts at %1$d%% and gradually reaches full program intensity over %2$d days.</string>
+<string name="light_acclimation_summary_disabled">Acclimation is disabled. The program will run at normal intensity.</string>
+<string name="light_acclimation_value_off">Off</string>
+<string name="light_acclimation_value_on">%1$d days · Start %2$d%%</string>
+
+
+<!-- Program Editor -->
+<string name="light_editor_mode_simple_description">One daily intensity curve with planted WRGB balance.</string>
+<string name="light_editor_mode_pro_description">Each WRGB channel can have its own daily curve.</string>
+
+<string name="light_editor_curve_title_simple">Daily Light Curve</string>
+<string name="light_editor_curve_subtitle_simple">Tap a point or row to edit time and output</string>
+
+<string name="light_editor_curve_title_pro_channel">%1$s Channel Curve</string>
+<string name="light_editor_curve_subtitle_pro_channel">Edit time and output points for %1$s only</string>
+
+<string name="light_editor_curve_points_subtitle_simple">Start, peak and end points used by the daily curve</string>
+<string name="light_editor_curve_points_subtitle_pro">Start, peak and end points for the selected channel</string>
+
+<string name="light_editor_channel_balance_title_simple">Planted Channel Balance</string>
+<string name="light_editor_channel_balance_subtitle_simple">White base with red/blue support and moderate green for planted tanks</string>
+
+<string name="light_channel_value_format">%1$s %2$d%%</string>
+
+
+<!-- Program Editor - Main -->
+<string name="light_editor_section_editing_mode">Editing Mode</string>
+<string name="light_editor_mode_simple_title">Simple Curve</string>
+<string name="light_editor_mode_pro_title">Pro Channels</string>
+
+<string name="light_editor_mode_simple_description">One daily intensity curve with planted WRGB balance.</string>
+<string name="light_editor_mode_pro_description">Each WRGB channel can have its own daily curve.</string>
+
+<string name="light_editor_curve_title_simple">Daily Light Curve</string>
+<string name="light_editor_curve_subtitle_simple">Tap a point or row to edit time and output</string>
+
+<string name="light_editor_curve_title_pro_channel">%1$s Channel Curve</string>
+<string name="light_editor_curve_subtitle_pro_channel">Edit time and output points for %1$s only</string>
+
+<string name="light_editor_add_curve_point_content_description">Add curve point</string>
+<string name="light_editor_icon_add">+</string>
+
+<string name="light_editor_curve_points_title">Curve Points</string>
+<string name="light_editor_curve_points_subtitle_simple">Start, peak and end points used by the daily curve</string>
+<string name="light_editor_curve_points_subtitle_pro">Start, peak and end points for the selected channel</string>
+
+<string name="light_editor_channel_balance_title_simple">Planted Channel Balance</string>
+<string name="light_editor_channel_balance_subtitle_simple">White base with red/blue support and moderate green for planted tanks</string>
+
+<string name="light_editor_program_settings_title">Program Settings</string>
+<string name="light_editor_repeat_title">Repeat</string>
+<string name="light_editor_ramp_smoothing_title">Ramp Smoothing</string>
+
+<string name="light_editor_acclimation_title">Acclimation</string>
+<string name="light_editor_acclimation_subtitle">Gradually increase light intensity when adapting new livestock or plants.</string>
+
+<string name="light_editor_preview_day_button">Preview Day</string>
+<string name="light_editor_save_program_button">Save Program</string>
+
+<!-- Program Editor - Summary Icons / Labels -->
+<string name="light_editor_icon_sun">☀</string>
+<string name="light_editor_icon_ramp">↗</string>
+<string name="light_editor_icon_moon">◒</string>
+<string name="light_editor_icon_chevron">›</string>
+
+<string name="light_editor_summary_start_label">Start</string>
+<string name="light_editor_summary_peak_label">Peak</string>
+<string name="light_editor_summary_off_label">Off</string>
+
+<!-- Repeat -->
+<string name="light_repeat_every_short">Every</string>
+<string name="light_repeat_weekdays">Weekdays</string>
+<string name="light_repeat_weekend">Weekend</string>
+<string name="light_repeat_custom">Custom</string>
+
+<!-- Ramp -->
+<string name="light_ramp_linear">Linear</string>
+<string name="light_ramp_soft">Soft</string>
+<string name="light_ramp_natural">Natural</string>
+
+<!-- Channels -->
+<string name="light_channel_red">Red</string>
+<string name="light_channel_green">Green</string>
+<string name="light_channel_blue">Blue</string>
+<string name="light_channel_white">White</string>
+<string name="light_channel_value_format">%1$s %2$d%%</string>
+
+<!-- Program names -->
+<string name="light_program_new_program">New Program</string>
+<string name="light_default_device_title">Device</string>
+
+<!-- Acclimation display -->
+<string name="light_acclimation_value_off">Off</string>
+<string name="light_acclimation_value_on">%1$d days · Start %2$d%%</string>
+
+<!-- Common -->
+<string name="common_percent_value">%1$d%%</string>
+
+</resources>

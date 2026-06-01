@@ -46,6 +46,7 @@
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
                     android:maxLines="1"
+                    android:text=""
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     tools:text="Every Day" />
@@ -57,6 +58,7 @@
                     android:layout_marginTop="5dp"
                     android:ellipsize="end"
                     android:maxLines="1"
+                    android:text=""
                     android:textColor="@color/settings_text_secondary"
                     android:textSize="12sp"
                     tools:text="Default planted tank schedule" />
@@ -67,6 +69,7 @@
                 android:id="@+id/switchProgramCardEnabled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="@string/light_program_card_enabled_cd"
                 tools:checked="true" />
 
         </LinearLayout>
@@ -92,7 +95,7 @@
                     android:fontFamily="@font/inter_semibold"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="☀"
+                    android:text="@string/light_program_card_start_icon"
                     android:textColor="#F9C74F"
                     android:textSize="13sp" />
 
@@ -105,7 +108,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Start"
+                        android:text="@string/light_program_card_start"
                         android:textColor="@color/settings_text_secondary"
                         android:textSize="10sp" />
 
@@ -116,6 +119,7 @@
                         android:layout_marginTop="3dp"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
+                        android:text=""
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="13sp"
                         tools:text="09:00" />
@@ -138,7 +142,7 @@
                     android:fontFamily="@font/inter_semibold"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="↗"
+                    android:text="@string/light_program_card_ramp_icon"
                     android:textColor="@color/light_accent"
                     android:textSize="13sp" />
 
@@ -151,7 +155,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Ramp"
+                        android:text="@string/light_program_card_ramp"
                         android:textColor="@color/settings_text_secondary"
                         android:textSize="10sp" />
 
@@ -162,6 +166,7 @@
                         android:layout_marginTop="3dp"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
+                        android:text=""
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="13sp"
                         tools:text="60 min" />
@@ -184,7 +189,7 @@
                     android:fontFamily="@font/inter_semibold"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="☾"
+                    android:text="@string/light_program_card_off_icon"
                     android:textColor="#FF8A65"
                     android:textSize="13sp" />
 
@@ -197,7 +202,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Off"
+                        android:text="@string/light_program_card_off"
                         android:textColor="@color/settings_text_secondary"
                         android:textSize="10sp" />
 
@@ -208,6 +213,7 @@
                         android:layout_marginTop="3dp"
                         android:fontFamily="@font/inter_semibold"
                         android:includeFontPadding="false"
+                        android:text=""
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="13sp"
                         tools:text="19:15" />
@@ -218,49 +224,11 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/programCardMiniCurve"
+        <com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightMiniCurveView
+            android:id="@+id/viewProgramCardMiniCurve"
             android:layout_width="match_parent"
-            android:layout_height="7dp"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
-
-            <View
-                android:id="@+id/viewProgramCardNightStart"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="3"
-                android:background="#263A56" />
-
-            <View
-                android:id="@+id/viewProgramCardRampUp"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#287B8E" />
-
-            <View
-                android:id="@+id/viewProgramCardPeak"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="5"
-                android:background="@color/light_accent" />
-
-            <View
-                android:id="@+id/viewProgramCardRampDown"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#287B8E" />
-
-            <View
-                android:id="@+id/viewProgramCardNightEnd"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="4"
-                android:background="#263A56" />
-
-        </LinearLayout>
+            android:layout_height="34dp"
+            android:layout_marginTop="10dp" />
 
         <LinearLayout
             android:id="@+id/programCardBottomRow"
@@ -277,6 +245,7 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:text=""
                 android:textColor="@color/settings_text_secondary"
                 android:textSize="12sp"
                 tools:text="Every day" />
@@ -294,6 +263,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
+                    android:text=""
                     android:textColor="@color/light_accent"
                     android:textSize="12sp"
                     tools:text="Peak 100 · " />
@@ -304,6 +274,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
+                    android:text=""
                     android:textColor="@color/light_red"
                     android:textSize="12sp"
                     tools:text="R80 " />
@@ -314,6 +285,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
+                    android:text=""
                     android:textColor="@color/light_green"
                     android:textSize="12sp"
                     tools:text="G84 " />
@@ -324,6 +296,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
+                    android:text=""
                     android:textColor="@color/light_blue"
                     android:textSize="12sp"
                     tools:text="B79 " />
@@ -334,6 +307,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/inter_semibold"
                     android:includeFontPadding="false"
+                    android:text=""
                     android:textColor="@color/light_white"
                     android:textSize="12sp"
                     tools:text="W65" />
