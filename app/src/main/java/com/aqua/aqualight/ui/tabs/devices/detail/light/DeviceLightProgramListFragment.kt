@@ -154,20 +154,21 @@ Fragment(R.layout.fragment_device_light_program_list) {
     }
 
     private fun loadPrograms() {
-        val savedPrograms =
+    val savedPrograms =
         LightProgramDraftStore.getPrograms(
             deviceId = deviceId
         )
 
-        val uiState =
+    val uiState =
         SavedLightProgramListMapper.map(
+            context = requireContext(),
             programs = savedPrograms
         )
 
-        renderState(
-            state = uiState
-        )
-    }
+    renderState(
+        state = uiState
+    )
+}
 
     private fun setFilter(
         filter: ProgramFilter
