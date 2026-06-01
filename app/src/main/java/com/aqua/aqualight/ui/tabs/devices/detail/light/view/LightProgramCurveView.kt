@@ -151,7 +151,7 @@ class LightProgramCurveView @JvmOverloads constructor(
         color = Color.parseColor("#092238")
         textSize = 9.5f.sp()
         textAlign = Paint.Align.CENTER
-        fakeBoldText = true
+        isFakeBoldText = true
     }
 
     private val currentOutputPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
