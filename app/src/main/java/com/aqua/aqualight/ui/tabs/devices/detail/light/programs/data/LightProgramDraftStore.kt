@@ -139,6 +139,84 @@ object LightProgramDraftStore {
 
         programsByDeviceId[deviceId] = filteredPrograms
     }
+	
+	fun setProgramEnabled(
+    deviceId: Long,
+    programId: String,
+    isEnabled: Boolean
+) {
+    val currentPrograms =
+        programsByDeviceId[deviceId] ?: return
+
+    val updatedPrograms =
+        currentPrograms
+            .map { program ->
+                if (program.id == programId) {
+                    program.copy(
+                        isEnabled = isEnabled,
+                        isActive =
+                            if (isEnabled) {
+                                program.isActive
+                            } else {
+                                false
+                            },
+                        updatedAtMillis = System.currentTimeMillis()
+                    )
+                } else {
+                    program
+                }
+            }
+            .toMutableList()
+
+    if (
+        updatedPrograms.none { program ->
+            program.isActive && program.isEnabled
+        }
+    ) {
+        val firstEnabledIndex =
+            updatedPrograms.indexOfFirst { program ->
+                program.isEnabled
+            }
+
+        if (firstEnabledIndex >= 0) {
+            val firstEnabledProgram = updatedPrograms[firstEnabledIndex]
+
+            updatedPrograms[firstEnabledIndex] =
+                firstEnabledProgram.copy(
+                    isActive = true,
+                    updatedAtMillis = System.currentTimeMillis()
+                )
+        }
+    }
+
+    programsByDeviceId[deviceId] = updatedPrograms
+}
+
+fun duplicateProgram(
+    deviceId: Long,
+    programId: String
+) {
+    val currentPrograms =
+        programsByDeviceId[deviceId] ?: return
+
+    val sourceProgram =
+        currentPrograms.firstOrNull { program ->
+            program.id == programId
+        } ?: return
+
+    val duplicatedProgram =
+        sourceProgram.copy(
+            id = "light_program_${System.currentTimeMillis()}",
+            title = "${sourceProgram.title} Copy",
+            isActive = false,
+            createdAtMillis = System.currentTimeMillis(),
+            updatedAtMillis = System.currentTimeMillis()
+        )
+
+    upsertProgram(
+        program = duplicatedProgram
+    )
+}
 
     fun clearDevicePrograms(
         deviceId: Long

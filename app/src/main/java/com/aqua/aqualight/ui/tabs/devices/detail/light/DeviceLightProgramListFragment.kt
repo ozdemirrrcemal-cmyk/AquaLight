@@ -320,38 +320,59 @@ Fragment(R.layout.fragment_device_light_program_list) {
     }
 
     private fun handleProgramAction(
-        action: LightProgramAction,
-        program: LightProgramListItem
-    ) {
-        when (action) {
-            LightProgramAction.EDIT -> {
-                openProgramEditor(
-                    programId = program.id,
-                    programName = program.title
-                )
-            }
+    action: LightProgramAction,
+    program: LightProgramListItem
+) {
+    when (action) {
+        LightProgramAction.EDIT -> {
+            openProgramEditor(
+                programId = program.id,
+                programName = program.title
+            )
+        }
 
-            LightProgramAction.PREVIEW -> {
-                // Preview Day daha sonra gerçek program verisiyle bağlanacak.
-            }
+        LightProgramAction.PREVIEW -> {
+            // Preview Day daha sonra gerçek program verisiyle bağlanacak.
+        }
 
-            LightProgramAction.DUPLICATE -> {
-                // Data layer bağlanınca duplicate event'i buraya gelecek.
-            }
+        LightProgramAction.DUPLICATE -> {
+            LightProgramDraftStore.duplicateProgram(
+                deviceId = deviceId,
+                programId = program.id
+            )
 
-            LightProgramAction.SET_ACTIVE -> {
-                // Data layer bağlanınca active program event'i buraya gelecek.
-            }
+            loadPrograms()
+        }
 
-            LightProgramAction.TOGGLE_ENABLED -> {
-                // Data layer bağlanınca enable / disable event'i buraya gelecek.
-            }
+        LightProgramAction.SET_ACTIVE -> {
+            LightProgramDraftStore.setActiveProgram(
+                deviceId = deviceId,
+                programId = program.id
+            )
 
-            LightProgramAction.DELETE -> {
-                // Data layer bağlanınca delete confirm + delete event'i buraya gelecek.
-            }
+            loadPrograms()
+        }
+
+        LightProgramAction.TOGGLE_ENABLED -> {
+            LightProgramDraftStore.setProgramEnabled(
+                deviceId = deviceId,
+                programId = program.id,
+                isEnabled = !program.isEnabled
+            )
+
+            loadPrograms()
+        }
+
+        LightProgramAction.DELETE -> {
+            LightProgramDraftStore.deleteProgram(
+                deviceId = deviceId,
+                programId = program.id
+            )
+
+            loadPrograms()
         }
     }
+}
 
     private fun openProgramEditor(
         programId: String?,
