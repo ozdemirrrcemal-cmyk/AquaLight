@@ -25,6 +25,16 @@ object LightProgramDraftStore {
                 program.isActive && program.isEnabled
             }
     }
+	
+	fun getProgram(
+    deviceId: Long,
+    programId: String
+): SavedLightProgram? {
+    return programsByDeviceId[deviceId]
+        ?.firstOrNull { program ->
+            program.id == programId
+        }
+}
 
     fun upsertProgram(
         program: SavedLightProgram
