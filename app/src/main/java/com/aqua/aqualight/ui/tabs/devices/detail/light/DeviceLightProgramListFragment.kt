@@ -24,46 +24,51 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgr
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramActionSheetModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramActionsBottomSheet
 import com.google.android.material.card.MaterialCardView
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.data.LightProgramDraftStore
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper.SavedLightProgramListMapper
 
 class DeviceLightProgramListFragment :
-    Fragment(R.layout.fragment_device_light_program_list) {
+Fragment(R.layout.fragment_device_light_program_list) {
 
     private var _binding: FragmentDeviceLightProgramListBinding? = null
     private val binding get() = _binding!!
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+    get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceTitle: String
-        get() = requireArguments()
-            .getString(ARG_DEVICE_TITLE)
-            .orEmpty()
-            .ifBlank {
-                getString(R.string.light_default_device_title)
-            }
+    get() = requireArguments()
+    .getString(ARG_DEVICE_TITLE)
+    .orEmpty()
+    .ifBlank {
+        getString(R.string.light_default_device_title)
+    }
 
     private var currentFilter: ProgramFilter = ProgramFilter.ALL
 
     private var currentState: LightProgramListUiState =
-        LightProgramListUiState()
+    LightProgramListUiState()
 
     private val programsAdapter =
-        LightProgramsAdapter(
-            onProgramClick = { program ->
-                openProgramEditor(
-                    programId = program.id,
-                    programName = program.title
-                )
-            },
-            onProgramLongClick = { program ->
-                showProgramActions(
-                    program = program
-                )
-            },
-            onProgramEnabledChanged = { _, _ ->
-                // Data layer bağlanınca ViewModel event'i buraya gelecek.
-            }
-        )
+    LightProgramsAdapter(
+        onProgramClick = {
+            program ->
+            openProgramEditor(
+                programId = program.id,
+                programName = program.title
+            )
+        },
+        onProgramLongClick = {
+            program ->
+            showProgramActions(
+                program = program
+            )
+        },
+        onProgramEnabledChanged = {
+            _, _ ->
+            // Data layer bağlanınca ViewModel event'i buraya gelecek.
+        }
+    )
 
     override fun onViewCreated(
         view: View,
@@ -80,9 +85,7 @@ class DeviceLightProgramListFragment :
         setupRecyclerView()
         setupClicks()
 
-        renderState(
-            state = currentState
-        )
+        loadPrograms()
     }
 
     private fun setupHeader() = with(binding.deviceHeader) {
@@ -142,6 +145,30 @@ class DeviceLightProgramListFragment :
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        if (_binding != null) {
+            loadPrograms()
+        }
+    }
+
+    private fun loadPrograms() {
+        val savedPrograms =
+        LightProgramDraftStore.getPrograms(
+            deviceId = deviceId
+        )
+
+        val uiState =
+        SavedLightProgramListMapper.map(
+            programs = savedPrograms
+        )
+
+        renderState(
+            state = uiState
+        )
+    }
+
     private fun setFilter(
         filter: ProgramFilter
     ) {
@@ -173,11 +200,11 @@ class DeviceLightProgramListFragment :
         activeProgram: LightProgramListItem?
     ) = with(binding) {
         cardProgramSummary.visibility =
-            if (activeProgram == null) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
+        if (activeProgram == null) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         if (activeProgram == null) {
             viewActiveProgramCurve.clear()
@@ -200,44 +227,46 @@ class DeviceLightProgramListFragment :
         state: LightProgramListUiState
     ) = with(binding) {
         val filteredPrograms =
-            when (currentFilter) {
-                ProgramFilter.ALL -> {
-                    state.programs
-                }
+        when (currentFilter) {
+            ProgramFilter.ALL -> {
+                state.programs
+            }
 
-                ProgramFilter.ACTIVE -> {
-                    state.programs.filter { program ->
-                        program.isEnabled
-                    }
-                }
-
-                ProgramFilter.DISABLED -> {
-                    state.programs.filter { program ->
-                        !program.isEnabled
-                    }
+            ProgramFilter.ACTIVE -> {
+                state.programs.filter {
+                    program ->
+                    program.isEnabled
                 }
             }
+
+            ProgramFilter.DISABLED -> {
+                state.programs.filter {
+                    program ->
+                    !program.isEnabled
+                }
+            }
+        }
 
         programFilterRow.visibility =
-            if (state.programs.isEmpty()) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
+        if (state.programs.isEmpty()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         programsRecyclerView.visibility =
-            if (filteredPrograms.isEmpty()) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
+        if (filteredPrograms.isEmpty()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         programsEmptyState.visibility =
-            if (filteredPrograms.isEmpty()) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (filteredPrograms.isEmpty()) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         if (state.programs.isEmpty()) {
             tvProgramsEmptyTitle.setText(R.string.light_programs_empty_title)
@@ -273,13 +302,14 @@ class DeviceLightProgramListFragment :
         LightProgramActionsBottomSheet.show(
             fragment = this,
             model =
-                LightProgramActionSheetModel(
-                    title = program.title,
-                    subtitle = program.scheduleSummary,
-                    isEnabled = program.isEnabled,
-                    isActiveProgram = currentState.activeProgram?.id == program.id
-                ),
-            onAction = { action ->
+            LightProgramActionSheetModel(
+                title = program.title,
+                subtitle = program.scheduleSummary,
+                isEnabled = program.isEnabled,
+                isActiveProgram = currentState.activeProgram?.id == program.id
+            ),
+            onAction = {
+                action ->
                 handleProgramAction(
                     action = action,
                     program = program
@@ -351,13 +381,13 @@ class DeviceLightProgramListFragment :
         )
 
         strokeColor =
-            color(
-                if (selected) {
-                    R.color.light_accent
-                } else {
-                    R.color.light_stroke
-                }
-            )
+        color(
+            if (selected) {
+                R.color.light_accent
+            } else {
+                R.color.light_stroke
+            }
+        )
 
         findFirstTextView()?.setTextColor(
             color(
@@ -376,7 +406,8 @@ class DeviceLightProgramListFragment :
         }
 
         if (this is ViewGroup) {
-            children.forEach { child ->
+            children.forEach {
+                child ->
                 val result = child.findFirstTextView()
 
                 if (result != null) {
