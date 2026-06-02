@@ -93,27 +93,4 @@
 <color name="white">#FFFFFF</color>
 
 
-
- <!-- 🧾 Light Controller(LIGHT) -->
-<color name="light_surface">#1B3554</color>
-<color name="light_surface_soft">#203D61</color>
-<color name="light_surface_deep">#162D49</color>
-<color name="light_stroke">#2D557A</color>
-<color name="light_accent">#39D5D5</color>
-<color name="light_accent_soft">#183F52</color>
-<color name="light_chip_auto">#193F4F</color>
-<color name="light_warning">#FFB74D</color>
-<color name="light_error">#EF5350</color>
-<color name="light_red">#EF5350</color>
-<color name="light_green">#66BB6A</color>
-<color name="light_blue">#42A5F5</color>
-<color name="light_white">#ECEFF1</color>
-
-<color name="light_timeline_night">#263A56</color>
-<color name="light_timeline_transition">#287B8E</color>
-<color name="light_timeline_inactive">#2B3C55</color>
-
-<color name="light_sun_marker">#F9C74F</color>
-<color name="light_warm_marker">#FF8A65</color>
-
 </resources>

@@ -457,54 +457,5 @@
     <item name="android:textSize">13sp</item>
 </style>
 
-<!-- ========================================================= -->
-<!-- LIGHT MODULE / SLIDERS                                   -->
-<!-- ========================================================= -->
-
-<style name="Widget.Aqua.Light.Slider.Base" parent="Widget.MaterialComponents.Slider">
-    <item name="labelBehavior">gone</item>
-
-    <item name="trackHeight">6dp</item>
-    <item name="trackColorInactive">@color/light_stroke</item>
-
-    <item name="thumbWidth">18dp</item>
-    <item name="thumbHeight">18dp</item>
-    <item name="thumbRadius">9dp</item>
-    <item name="thumbTrackGapSize">0dp</item>
-
-    <item name="haloRadius">0dp</item>
-    <item name="tickVisible">false</item>
-    <item name="trackStopIndicatorSize">0dp</item>
-</style>
-
-<style name="Widget.Aqua.Light.Slider.Master" parent="Widget.Aqua.Light.Slider.Base">
-    <item name="thumbColor">@color/light_accent</item>
-    <item name="haloColor">@color/light_accent_soft</item>
-    <item name="trackColorActive">@color/light_accent</item>
-</style>
-
-<style name="Widget.Aqua.Light.Slider.Red" parent="Widget.Aqua.Light.Slider.Base">
-    <item name="thumbColor">@color/light_red</item>
-    <item name="haloColor">@color/light_red</item>
-    <item name="trackColorActive">@color/light_red</item>
-</style>
-
-<style name="Widget.Aqua.Light.Slider.Green" parent="Widget.Aqua.Light.Slider.Base">
-    <item name="thumbColor">@color/light_green</item>
-    <item name="haloColor">@color/light_green</item>
-    <item name="trackColorActive">@color/light_green</item>
-</style>
-
-<style name="Widget.Aqua.Light.Slider.Blue" parent="Widget.Aqua.Light.Slider.Base">
-    <item name="thumbColor">@color/light_blue</item>
-    <item name="haloColor">@color/light_blue</item>
-    <item name="trackColorActive">@color/light_blue</item>
-</style>
-
-<style name="Widget.Aqua.Light.Slider.White" parent="Widget.Aqua.Light.Slider.Base">
-    <item name="thumbColor">@color/light_white</item>
-    <item name="haloColor">@color/light_white</item>
-    <item name="trackColorActive">@color/light_white</item>
-</style>
 
 </resources>
