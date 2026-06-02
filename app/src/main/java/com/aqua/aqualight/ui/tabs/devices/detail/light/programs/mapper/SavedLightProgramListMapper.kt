@@ -77,7 +77,7 @@ object SavedLightProgramListMapper {
                 startMinute = startMinute,
                 endMinute = endMinute
             ),
-            isEnabled = isEnabled,
+            isEnabled = isActive && isEnabled,
             curveData = toCurveData()
         )
     }

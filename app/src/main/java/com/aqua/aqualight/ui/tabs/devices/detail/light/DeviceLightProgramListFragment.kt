@@ -65,8 +65,15 @@ Fragment(R.layout.fragment_device_light_program_list) {
             )
         },
         onProgramEnabledChanged = {
-            _, _ ->
-            // Data layer bağlanınca ViewModel event'i buraya gelecek.
+            program, isChecked ->
+            if (isChecked) {
+                LightProgramDraftStore.setActiveProgram(
+                    deviceId = deviceId,
+                    programId = program.id
+                )
+            }
+
+            loadPrograms()
         }
     )
 
@@ -154,21 +161,21 @@ Fragment(R.layout.fragment_device_light_program_list) {
     }
 
     private fun loadPrograms() {
-    val savedPrograms =
+        val savedPrograms =
         LightProgramDraftStore.getPrograms(
             deviceId = deviceId
         )
 
-    val uiState =
+        val uiState =
         SavedLightProgramListMapper.map(
             context = requireContext(),
             programs = savedPrograms
         )
 
-    renderState(
-        state = uiState
-    )
-}
+        renderState(
+            state = uiState
+        )
+    }
 
     private fun setFilter(
         filter: ProgramFilter
@@ -320,59 +327,59 @@ Fragment(R.layout.fragment_device_light_program_list) {
     }
 
     private fun handleProgramAction(
-    action: LightProgramAction,
-    program: LightProgramListItem
-) {
-    when (action) {
-        LightProgramAction.EDIT -> {
-            openProgramEditor(
-                programId = program.id,
-                programName = program.title
-            )
-        }
+        action: LightProgramAction,
+        program: LightProgramListItem
+    ) {
+        when (action) {
+            LightProgramAction.EDIT -> {
+                openProgramEditor(
+                    programId = program.id,
+                    programName = program.title
+                )
+            }
 
-        LightProgramAction.PREVIEW -> {
-            // Preview Day daha sonra gerçek program verisiyle bağlanacak.
-        }
+            LightProgramAction.PREVIEW -> {
+                // Preview Day daha sonra gerçek program verisiyle bağlanacak.
+            }
 
-        LightProgramAction.DUPLICATE -> {
-            LightProgramDraftStore.duplicateProgram(
-                deviceId = deviceId,
-                programId = program.id
-            )
+            LightProgramAction.DUPLICATE -> {
+                LightProgramDraftStore.duplicateProgram(
+                    deviceId = deviceId,
+                    programId = program.id
+                )
 
-            loadPrograms()
-        }
+                loadPrograms()
+            }
 
-        LightProgramAction.SET_ACTIVE -> {
-            LightProgramDraftStore.setActiveProgram(
-                deviceId = deviceId,
-                programId = program.id
-            )
+            LightProgramAction.SET_ACTIVE -> {
+                LightProgramDraftStore.setActiveProgram(
+                    deviceId = deviceId,
+                    programId = program.id
+                )
 
-            loadPrograms()
-        }
+                loadPrograms()
+            }
 
-        LightProgramAction.TOGGLE_ENABLED -> {
-            LightProgramDraftStore.setProgramEnabled(
-                deviceId = deviceId,
-                programId = program.id,
-                isEnabled = !program.isEnabled
-            )
+            LightProgramAction.TOGGLE_ENABLED -> {
+                LightProgramDraftStore.setProgramEnabled(
+                    deviceId = deviceId,
+                    programId = program.id,
+                    isEnabled = !program.isEnabled
+                )
 
-            loadPrograms()
-        }
+                loadPrograms()
+            }
 
-        LightProgramAction.DELETE -> {
-            LightProgramDraftStore.deleteProgram(
-                deviceId = deviceId,
-                programId = program.id
-            )
+            LightProgramAction.DELETE -> {
+                LightProgramDraftStore.deleteProgram(
+                    deviceId = deviceId,
+                    programId = program.id
+                )
 
-            loadPrograms()
+                loadPrograms()
+            }
         }
     }
-}
 
     private fun openProgramEditor(
         programId: String?,

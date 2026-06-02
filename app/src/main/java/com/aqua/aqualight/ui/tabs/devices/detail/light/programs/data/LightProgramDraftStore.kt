@@ -17,6 +17,16 @@ object LightProgramDraftStore {
             .orEmpty()
     }
 
+    fun getProgram(
+        deviceId: Long,
+        programId: String
+    ): SavedLightProgram? {
+        return programsByDeviceId[deviceId]
+            ?.firstOrNull { program ->
+                program.id == programId
+            }
+    }
+
     fun getActiveProgram(
         deviceId: Long
     ): SavedLightProgram? {
@@ -25,16 +35,6 @@ object LightProgramDraftStore {
                 program.isActive && program.isEnabled
             }
     }
-	
-	fun getProgram(
-    deviceId: Long,
-    programId: String
-): SavedLightProgram? {
-    return programsByDeviceId[deviceId]
-        ?.firstOrNull { program ->
-            program.id == programId
-        }
-}
 
     fun upsertProgram(
         program: SavedLightProgram
@@ -45,15 +45,8 @@ object LightProgramDraftStore {
                     mutableListOf()
                 }
 
-        val shouldBeActive =
-            program.isActive ||
-                currentPrograms.none { item ->
-                    item.isActive && item.isEnabled
-                }
-
         val normalizedProgram =
             program.copy(
-                isActive = shouldBeActive,
                 updatedAtMillis = System.currentTimeMillis()
             )
 
@@ -63,7 +56,7 @@ object LightProgramDraftStore {
                     item.id == normalizedProgram.id
                 }
                 .map { item ->
-                    if (shouldBeActive) {
+                    if (normalizedProgram.isActive) {
                         item.copy(
                             isActive = false
                         )
@@ -88,26 +81,88 @@ object LightProgramDraftStore {
         val currentPrograms =
             programsByDeviceId[deviceId] ?: return
 
+        val targetExists =
+            currentPrograms.any { program ->
+                program.id == programId
+            }
+
+        if (!targetExists) {
+            return
+        }
+
         programsByDeviceId[deviceId] =
             currentPrograms
                 .map { program ->
-                    program.copy(
-                        isActive = program.id == programId,
-                        isEnabled =
-                            if (program.id == programId) {
-                                true
-                            } else {
-                                program.isEnabled
-                            },
-                        updatedAtMillis =
-                            if (program.id == programId) {
-                                System.currentTimeMillis()
-                            } else {
-                                program.updatedAtMillis
-                            }
-                    )
+                    if (program.id == programId) {
+                        program.copy(
+                            isEnabled = true,
+                            isActive = true,
+                            updatedAtMillis = System.currentTimeMillis()
+                        )
+                    } else {
+                        program.copy(
+                            isActive = false
+                        )
+                    }
                 }
                 .toMutableList()
+    }
+
+    fun setProgramEnabled(
+        deviceId: Long,
+        programId: String,
+        isEnabled: Boolean
+    ) {
+        val currentPrograms =
+            programsByDeviceId[deviceId] ?: return
+
+        programsByDeviceId[deviceId] =
+            currentPrograms
+                .map { program ->
+                    if (program.id == programId) {
+                        program.copy(
+                            isEnabled = isEnabled,
+                            isActive =
+                                if (isEnabled) {
+                                    program.isActive
+                                } else {
+                                    false
+                                },
+                            updatedAtMillis = System.currentTimeMillis()
+                        )
+                    } else {
+                        program
+                    }
+                }
+                .toMutableList()
+    }
+
+    fun duplicateProgram(
+        deviceId: Long,
+        programId: String
+    ) {
+        val currentPrograms =
+            programsByDeviceId[deviceId] ?: return
+
+        val sourceProgram =
+            currentPrograms.firstOrNull { program ->
+                program.id == programId
+            } ?: return
+
+        val now = System.currentTimeMillis()
+
+        val duplicatedProgram =
+            sourceProgram.copy(
+                id = "light_program_$now",
+                title = "${sourceProgram.title} Copy",
+                isActive = false,
+                createdAtMillis = now,
+                updatedAtMillis = now
+            )
+
+        upsertProgram(
+            program = duplicatedProgram
+        )
     }
 
     fun deleteProgram(
@@ -117,116 +172,13 @@ object LightProgramDraftStore {
         val currentPrograms =
             programsByDeviceId[deviceId] ?: return
 
-        val filteredPrograms =
+        programsByDeviceId[deviceId] =
             currentPrograms
                 .filterNot { program ->
                     program.id == programId
                 }
                 .toMutableList()
-
-        if (
-            filteredPrograms.none { program ->
-                program.isActive && program.isEnabled
-            }
-        ) {
-            val firstEnabledProgram =
-                filteredPrograms.firstOrNull { program ->
-                    program.isEnabled
-                }
-
-            if (firstEnabledProgram != null) {
-                val index =
-                    filteredPrograms.indexOfFirst { program ->
-                        program.id == firstEnabledProgram.id
-                    }
-
-                filteredPrograms[index] =
-                    firstEnabledProgram.copy(
-                        isActive = true
-                    )
-            }
-        }
-
-        programsByDeviceId[deviceId] = filteredPrograms
     }
-	
-	fun setProgramEnabled(
-    deviceId: Long,
-    programId: String,
-    isEnabled: Boolean
-) {
-    val currentPrograms =
-        programsByDeviceId[deviceId] ?: return
-
-    val updatedPrograms =
-        currentPrograms
-            .map { program ->
-                if (program.id == programId) {
-                    program.copy(
-                        isEnabled = isEnabled,
-                        isActive =
-                            if (isEnabled) {
-                                program.isActive
-                            } else {
-                                false
-                            },
-                        updatedAtMillis = System.currentTimeMillis()
-                    )
-                } else {
-                    program
-                }
-            }
-            .toMutableList()
-
-    if (
-        updatedPrograms.none { program ->
-            program.isActive && program.isEnabled
-        }
-    ) {
-        val firstEnabledIndex =
-            updatedPrograms.indexOfFirst { program ->
-                program.isEnabled
-            }
-
-        if (firstEnabledIndex >= 0) {
-            val firstEnabledProgram = updatedPrograms[firstEnabledIndex]
-
-            updatedPrograms[firstEnabledIndex] =
-                firstEnabledProgram.copy(
-                    isActive = true,
-                    updatedAtMillis = System.currentTimeMillis()
-                )
-        }
-    }
-
-    programsByDeviceId[deviceId] = updatedPrograms
-}
-
-fun duplicateProgram(
-    deviceId: Long,
-    programId: String
-) {
-    val currentPrograms =
-        programsByDeviceId[deviceId] ?: return
-
-    val sourceProgram =
-        currentPrograms.firstOrNull { program ->
-            program.id == programId
-        } ?: return
-
-    val duplicatedProgram =
-        sourceProgram.copy(
-            id = "light_program_${System.currentTimeMillis()}",
-            title = "${sourceProgram.title} Copy",
-            isActive = false,
-            createdAtMillis = System.currentTimeMillis(),
-            updatedAtMillis = System.currentTimeMillis()
-        )
-
-    upsertProgram(
-        program = duplicatedProgram
-    )
-}
 
     fun clearDevicePrograms(
         deviceId: Long
