@@ -8,6 +8,8 @@
 
     <!-- Borders -->
     <color name="light_stroke">#293240</color>
+	<color name="light_surface_deep">#0F1318</color>
+<color name="light_chip_auto">#1A3A63</color>
 
     <!-- Text -->
     <color name="light_text_primary">#F2F5F8</color>

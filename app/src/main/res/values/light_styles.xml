@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Page Title -->
-
     <style name="TextAppearance.Aqua.Light.PageTitle">
         <item name="android:textSize">24sp</item>
         <item name="android:textStyle">bold</item>
@@ -10,24 +8,18 @@
         <item name="fontFamily">@font/inter_semibold</item>
     </style>
 
-    <!-- Subtitle -->
-
     <style name="TextAppearance.Aqua.Light.Subtitle">
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/light_text_secondary</item>
         <item name="fontFamily">@font/inter_regular</item>
     </style>
 
-    <!-- Value Large -->
-
     <style name="TextAppearance.Aqua.Light.HeroValue">
         <item name="android:textSize">48sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textColor">@color/light_text_primary</item>
-        <item name="fontFamily">@font/inter_bold</item>
+        <item name="fontFamily">@font/inter_semibold</item>
     </style>
-
-    <!-- Value Medium -->
 
     <style name="TextAppearance.Aqua.Light.Value">
         <item name="android:textSize">20sp</item>
