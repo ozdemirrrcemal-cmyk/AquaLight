@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.common.header
 
 import android.view.View
-import com.aqua.aqualight.databinding.LayoutDeviceDetailHeaderBinding
+import com.aqua.aqualight.databinding.LayoutAquaHeaderBinding
 
-fun LayoutDeviceDetailHeaderBinding.setupAquaHeader(
+fun LayoutAquaHeaderBinding.setupAquaHeader(
     config: AquaHeaderConfig
 ) {
     tvTitle.text = config.title
