@@ -71,6 +71,10 @@ Fragment(R.layout.fragment_device_light_program_list) {
                     deviceId = deviceId,
                     programId = program.id
                 )
+            } else {
+                LightProgramDraftStore.clearActiveProgram(
+                    deviceId = deviceId
+                )
             }
 
             loadPrograms()
@@ -361,11 +365,16 @@ Fragment(R.layout.fragment_device_light_program_list) {
             }
 
             LightProgramAction.TOGGLE_ENABLED -> {
-                LightProgramDraftStore.setProgramEnabled(
-                    deviceId = deviceId,
-                    programId = program.id,
-                    isEnabled = !program.isEnabled
-                )
+                if (program.isEnabled) {
+                    LightProgramDraftStore.clearActiveProgram(
+                        deviceId = deviceId
+                    )
+                } else {
+                    LightProgramDraftStore.setActiveProgram(
+                        deviceId = deviceId,
+                        programId = program.id
+                    )
+                }
 
                 loadPrograms()
             }

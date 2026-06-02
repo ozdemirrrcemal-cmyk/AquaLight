@@ -107,6 +107,27 @@ object LightProgramDraftStore {
                 }
                 .toMutableList()
     }
+	
+	fun clearActiveProgram(
+    deviceId: Long
+) {
+    val currentPrograms =
+        programsByDeviceId[deviceId] ?: return
+
+    programsByDeviceId[deviceId] =
+        currentPrograms
+            .map { program ->
+                if (program.isActive) {
+                    program.copy(
+                        isActive = false,
+                        updatedAtMillis = System.currentTimeMillis()
+                    )
+                } else {
+                    program
+                }
+            }
+            .toMutableList()
+}
 
     fun setProgramEnabled(
         deviceId: Long,
