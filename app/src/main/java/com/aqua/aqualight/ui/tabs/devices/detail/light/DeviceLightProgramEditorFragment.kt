@@ -217,25 +217,34 @@ class DeviceLightProgramEditorFragment :
         }
 
         viewProgramEditorCurve.setOnClickListener {
-            showEditPointSheet()
-        }
+    showEditPointSheet(
+        kind = ProgramEditorCurvePointKind.PEAK_START
+    )
+}
 
-        rowPointStart.setOnClickListener {
-            showEditPointSheet()
-        }
+rowPointStart.setOnClickListener {
+    showEditPointSheet(
+        kind = ProgramEditorCurvePointKind.START
+    )
+}
 
-        rowPointPeakStart.setOnClickListener {
-            showEditPointSheet()
-        }
+rowPointPeakStart.setOnClickListener {
+    showEditPointSheet(
+        kind = ProgramEditorCurvePointKind.PEAK_START
+    )
+}
 
-        rowPointPeakEnd.setOnClickListener {
-            showEditPointSheet()
-        }
+rowPointPeakEnd.setOnClickListener {
+    showEditPointSheet(
+        kind = ProgramEditorCurvePointKind.PEAK_END
+    )
+}
 
-        rowPointEnd.setOnClickListener {
-            showEditPointSheet()
-        }
-
+rowPointEnd.setOnClickListener {
+    showEditPointSheet(
+        kind = ProgramEditorCurvePointKind.END
+    )
+}
         chipRepeatEveryDay.setOnClickListener {
             selectedRepeatDays = LightRepeatDay.everyDay()
 
@@ -824,28 +833,177 @@ try {
             }
     }
 
-    private fun showEditPointSheet() {
-        LightPointEditorBottomSheet.show(
-            fragment = this,
-            model =
-                LightPointEditorSheetModel(
-                    titleRes = R.string.light_point_editor_title_edit,
-                    descriptionRes = R.string.light_point_editor_description_default,
-                    saveButtonTextRes = R.string.light_point_editor_save,
-                    pointName = "",
-                    timeLabel = "",
-                    intensityPercent = null,
-                    canRename = false,
-                    canDelete = false
+    private fun showEditPointSheet(
+    kind: ProgramEditorCurvePointKind
+) {
+    val draft = editorDraft ?: return
+
+    val point =
+        draft.curvePoints.firstOrNull { item ->
+            item.kind == kind
+        } ?: return
+
+    LightPointEditorBottomSheet.show(
+        fragment = this,
+        model =
+            LightPointEditorSheetModel(
+                titleRes = R.string.light_point_editor_title_edit,
+                descriptionRes = R.string.light_point_editor_description_default,
+                saveButtonTextRes = R.string.light_point_editor_save,
+                pointName = pointLabel(
+                    kind = kind
                 ),
-            onSave = { _, _, _ ->
-                // TODO: Update selected curve point when editor state layer is enabled.
-            },
-            onDelete = {
-                // No-op for default/static placeholder point.
+                timeLabel = minutesToTime(
+                    minutes = point.minuteOfDay
+                ),
+                intensityPercent = point.masterPercent,
+                canRename = false,
+                canDelete = false
+            ),
+        onSave = { _, timeLabel, intensityPercent ->
+            updateCurvePoint(
+                kind = kind,
+                timeLabel = timeLabel,
+                intensityPercent = intensityPercent
+            )
+        },
+        onDelete = {
+            // Default 4 point silinmez.
+        }
+    )
+}
+
+private fun updateCurvePoint(
+    kind: ProgramEditorCurvePointKind,
+    timeLabel: String,
+    intensityPercent: Int?
+) {
+    val currentDraft = editorDraft ?: return
+
+    val selectedMinutes =
+        timeLabelToMinutes(
+            timeLabel = timeLabel
+        ) ?: return
+
+    val selectedIntensity =
+        intensityPercent
+            ?.coerceIn(
+                MIN_PERCENT,
+                MAX_PERCENT
+            )
+            ?: return
+
+    val balance =
+        currentDraft.balance
+
+    val updatedPoints =
+        currentDraft.curvePoints.map { point ->
+            if (point.kind != kind) {
+                point
+            } else {
+                point.copy(
+                    minuteOfDay =
+                        selectedMinutes.coerceIn(
+                            MINUTES_IN_DAY_MIN,
+                            MINUTES_IN_DAY_MAX
+                        ),
+                    masterPercent = selectedIntensity,
+                    red =
+                        scaledChannelOutput(
+                            channelPercent = balance.red,
+                            masterPercent = selectedIntensity
+                        ),
+                    green =
+                        scaledChannelOutput(
+                            channelPercent = balance.green,
+                            masterPercent = selectedIntensity
+                        ),
+                    blue =
+                        scaledChannelOutput(
+                            channelPercent = balance.blue,
+                            masterPercent = selectedIntensity
+                        ),
+                    white =
+                        scaledChannelOutput(
+                            channelPercent = balance.white,
+                            masterPercent = selectedIntensity
+                        )
+                )
             }
+        }
+
+    editorDraft =
+        currentDraft.copy(
+            curvePoints = updatedPoints,
+            peakIntensityPercent =
+                updatedPoints
+                    .maxOfOrNull { point ->
+                        point.masterPercent
+                    }
+                    ?: currentDraft.peakIntensityPercent
+        )
+
+    editorDraft?.let { draft ->
+        renderDraft(
+            draft = draft
         )
     }
+}
+
+private fun pointLabel(
+    kind: ProgramEditorCurvePointKind
+): String {
+    return when (kind) {
+        ProgramEditorCurvePointKind.START -> {
+            getString(R.string.light_editor_point_label_start)
+        }
+
+        ProgramEditorCurvePointKind.PEAK_START -> {
+            getString(R.string.light_editor_point_label_peak_start)
+        }
+
+        ProgramEditorCurvePointKind.PEAK_END -> {
+            getString(R.string.light_editor_point_label_peak_end)
+        }
+
+        ProgramEditorCurvePointKind.END -> {
+            getString(R.string.light_editor_point_label_end)
+        }
+
+        ProgramEditorCurvePointKind.CUSTOM -> {
+            getString(R.string.light_point_editor_custom_point)
+        }
+    }
+}
+
+private fun timeLabelToMinutes(
+    timeLabel: String
+): Int? {
+    val parts =
+        timeLabel
+            .trim()
+            .split(":")
+
+    if (parts.size != 2) {
+        return null
+    }
+
+    val hour =
+        parts[0].toIntOrNull()
+            ?: return null
+
+    val minute =
+        parts[1].toIntOrNull()
+            ?: return null
+
+    if (hour !in 0..23 || minute !in 0..59) {
+        return null
+    }
+
+    return (hour * MINUTES_IN_HOUR) + minute
+}
+
+
 
     private fun showAddPointSheet() {
         LightPointEditorBottomSheet.show(

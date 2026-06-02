@@ -316,4 +316,6 @@
 <string name="light_program_channel_short_blue_format">B%1$d</string>
 <string name="light_program_channel_short_white_format">W%1$d</string>
 
+<string name="light_point_editor_custom_point">Custom Point</string>
+
 </resources>
