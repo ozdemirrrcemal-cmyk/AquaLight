@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Backgrounds -->
+    <color name="light_background">#0F1318</color>
+    <color name="light_surface">#171C22</color>
+    <color name="light_surface_elevated">#1D242D</color>
+
+    <!-- Borders -->
+    <color name="light_stroke">#293240</color>
+
+    <!-- Text -->
+    <color name="light_text_primary">#F2F5F8</color>
+    <color name="light_text_secondary">#A8B3C2</color>
+    <color name="light_text_tertiary">#7A8593</color>
+
+    <!-- Accent -->
+    <color name="light_accent">#6EA8FE</color>
+    <color name="light_accent_soft">#203A5A</color>
+
+    <!-- Status -->
+    <color name="light_success">#63C38F</color>
+    <color name="light_warning">#D7B267</color>
+    <color name="light_error">#E06C75</color>
+
+    <!-- WRGB -->
+    <color name="light_red">#FF6B6B</color>
+    <color name="light_green">#59D38A</color>
+    <color name="light_blue">#63A8FF</color>
+    <color name="light_white">#D8DEE9</color>
+
+</resources>

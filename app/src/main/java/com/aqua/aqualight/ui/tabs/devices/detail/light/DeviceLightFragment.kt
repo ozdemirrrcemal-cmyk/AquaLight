@@ -34,7 +34,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         _binding = FragmentDeviceLightBinding.bind(view)
 
         setupHeader()
-        bindEmptyState()
     }
 
     private fun setupHeader() {
@@ -47,12 +46,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 }
             )
         )
-    }
-
-    private fun bindEmptyState() {
-        binding.tvEmptyTitle.text = deviceTitle
-        binding.tvEmptyMessage.text =
-            "Device ID: $deviceId\nLight controller screen will be built here."
     }
 
     override fun onDestroyView() {
