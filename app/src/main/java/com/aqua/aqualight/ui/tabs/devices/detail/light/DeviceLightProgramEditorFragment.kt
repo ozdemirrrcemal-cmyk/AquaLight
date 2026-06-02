@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.annotation.ColorRes
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -12,7 +13,11 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_DEVIC
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_DEVICE_TITLE
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_PROGRAM_ID
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightArgs.ARG_PROGRAM_NAME
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.data.LightProgramDraftStore
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightRepeatDay
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramEditorCurvePointKind
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramEditorDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramEditorDraftFactory
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramEditorMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramRampSmoothing
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramRepeatMode
@@ -22,54 +27,48 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.Lig
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPointEditorBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPointEditorSheetModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPreviewDayBottomSheet
-import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.GeneratedQuickSetupCurvePointKind
-import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.GeneratedQuickSetupProgramDraft
-import com.google.android.material.card.MaterialCardView
-import com.google.android.material.slider.Slider
-import kotlin.math.roundToInt
-import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveChartData
-import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveChannel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveSeries
-import androidx.core.os.bundleOf
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.data.LightProgramDraftStore
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramBalance
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramCurvePointKind
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgramMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramEditorCurvePointKind
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramEditorDraft
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramEditorDraftFactory
-
+import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.GeneratedQuickSetupProgramDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveChannel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveChartData
+import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.shared.curve.LightCurveSeries
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.slider.Slider
+import kotlin.math.roundToInt
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.ProgramEditorChannelBalance
 
 class DeviceLightProgramEditorFragment :
-Fragment(R.layout.fragment_device_light_program_editor) {
+    Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
 
     private val deviceId: Long
-    get() = requireArguments().getLong(ARG_DEVICE_ID)
+        get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceTitle: String
-    get() = requireArguments()
-    .getString(ARG_DEVICE_TITLE)
-    .orEmpty()
-    .ifBlank {
-        getString(R.string.light_default_device_title)
-    }
+        get() = requireArguments()
+            .getString(ARG_DEVICE_TITLE)
+            .orEmpty()
+            .ifBlank {
+                getString(R.string.light_default_device_title)
+            }
 
     private val programId: String?
-    get() = requireArguments().getString(ARG_PROGRAM_ID)
+        get() = requireArguments().getString(ARG_PROGRAM_ID)
 
     private val programName: String
-    get() = requireArguments()
-    .getString(ARG_PROGRAM_NAME)
-    .orEmpty()
-    .ifBlank {
-        getString(R.string.light_program_new_program)
-    }
+        get() = requireArguments()
+            .getString(ARG_PROGRAM_NAME)
+            .orEmpty()
+            .ifBlank {
+                getString(R.string.light_program_new_program)
+            }
 
     private var editorMode: ProgramEditorMode = ProgramEditorMode.SIMPLE
     private var selectedProChannel: ProChannelUi = ProChannelUi.RED
@@ -77,8 +76,10 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     private var selectedRampSmoothing: ProgramRampSmoothing = ProgramRampSmoothing.LINEAR
     private var selectedRepeatDays: Set<LightRepeatDay> = LightRepeatDay.everyDay()
     private var acclimationState: LightAcclimationSheetState = LightAcclimationSheetState()
+
     private var loadedSavedProgram: SavedLightProgram? = null
     private var editorDraft: ProgramEditorDraft? = null
+    private var isProgrammaticSliderChange = false
 
     override fun onViewCreated(
         view: View,
@@ -114,13 +115,11 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             sliderProgramGreen,
             sliderProgramBlue,
             sliderProgramWhite
-        ).forEach {
-            slider ->
+        ).forEach { slider ->
             slider.valueFrom = MIN_PERCENT.toFloat()
             slider.valueTo = MAX_PERCENT.toFloat()
             slider.stepSize = SLIDER_STEP_SIZE
-            slider.setLabelFormatter {
-                value ->
+            slider.setLabelFormatter { value ->
                 getString(
                     R.string.common_percent_value,
                     value.roundToInt()
@@ -156,22 +155,25 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     }
 
     private fun bindChannelSlider(
-        slider: Slider,
-        valueView: TextView,
-        channelLabelRes: Int
-    ) {
-        slider.addOnChangeListener {
-            _, value, _ ->
-            valueView.text =
+    slider: Slider,
+    valueView: TextView,
+    channelLabelRes: Int
+) {
+    slider.addOnChangeListener { _, value, _ ->
+        if (isProgrammaticSliderChange) {
+            return@addOnChangeListener
+        }
+
+        valueView.text =
             getString(
                 R.string.light_channel_value_format,
                 getString(channelLabelRes),
                 value.roundToInt()
             )
 
-            // TODO: Update local editor draft when editor state layer is enabled.
-        }
+        updateEditorDraftBalanceFromSliders()
     }
+}
 
     private fun setupClicks() = with(binding) {
         btnSimpleMode.setOnClickListener {
@@ -301,33 +303,35 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         val generatedDraft = quickSetupGeneratedDraft()
 
         val savedProgram =
-        if (generatedDraft == null) {
-            savedProgramFromStore()
-        } else {
-            null
-        }
+            if (generatedDraft == null) {
+                savedProgramFromStore()
+            } else {
+                null
+            }
 
         loadedSavedProgram = savedProgram
 
         val draft =
-        when {
-            generatedDraft != null -> {
-                ProgramEditorDraftFactory.fromQuickSetupDraft(
-                    generatedDraft = generatedDraft
-                )
-            }
+            when {
+                generatedDraft != null -> {
+                    ProgramEditorDraftFactory.fromQuickSetupDraft(
+                        generatedDraft = generatedDraft
+                    )
+                }
 
-            savedProgram != null -> {
-                ProgramEditorDraftFactory.fromSavedProgram(
-                    savedProgram = savedProgram
-                )
-            } else -> {
-                ProgramEditorDraftFactory.createNewProgramDraft(
-                    deviceId = deviceId,
-                    title = programName
-                )
+                savedProgram != null -> {
+                    ProgramEditorDraftFactory.fromSavedProgram(
+                        savedProgram = savedProgram
+                    )
+                }
+
+                else -> {
+                    ProgramEditorDraftFactory.createNewProgramDraft(
+                        deviceId = deviceId,
+                        title = programName
+                    )
+                }
             }
-        }
 
         editorDraft = draft
 
@@ -339,9 +343,9 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     @Suppress("DEPRECATION")
     private fun quickSetupGeneratedDraft(): GeneratedQuickSetupProgramDraft? {
         return requireArguments()
-        .getSerializable(
-            GeneratedQuickSetupProgramDraft.ARG_QUICK_SETUP_GENERATED_DRAFT
-        ) as? GeneratedQuickSetupProgramDraft
+            .getSerializable(
+                GeneratedQuickSetupProgramDraft.ARG_QUICK_SETUP_GENERATED_DRAFT
+            ) as? GeneratedQuickSetupProgramDraft
     }
 
     private fun savedProgramFromStore(): SavedLightProgram? {
@@ -363,9 +367,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         )
 
         selectedRepeatDays = draft.repeatDays
-
-        selectedRepeatMode =
-        selectedRepeatDays.toRepeatMode()
+        selectedRepeatMode = selectedRepeatDays.toRepeatMode()
 
         renderRepeatChips()
 
@@ -389,337 +391,100 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     ) = with(binding) {
         val balance = draft.balance
 
-        sliderProgramRed.value =
+        isProgrammaticSliderChange = true
+
+try {
+    sliderProgramRed.value =
         balance.red
-        .coerceIn(
-            MIN_PERCENT,
-            MAX_PERCENT
-        )
-        .toFloat()
+            .coerceIn(
+                MIN_PERCENT,
+                MAX_PERCENT
+            )
+            .toFloat()
 
-        sliderProgramGreen.value =
+    sliderProgramGreen.value =
         balance.green
-        .coerceIn(
-            MIN_PERCENT,
-            MAX_PERCENT
-        )
-        .toFloat()
+            .coerceIn(
+                MIN_PERCENT,
+                MAX_PERCENT
+            )
+            .toFloat()
 
-        sliderProgramBlue.value =
+    sliderProgramBlue.value =
         balance.blue
-        .coerceIn(
-            MIN_PERCENT,
-            MAX_PERCENT
-        )
-        .toFloat()
+            .coerceIn(
+                MIN_PERCENT,
+                MAX_PERCENT
+            )
+            .toFloat()
 
-        sliderProgramWhite.value =
+    sliderProgramWhite.value =
         balance.white
-        .coerceIn(
-            MIN_PERCENT,
-            MAX_PERCENT
-        )
-        .toFloat()
-
+            .coerceIn(
+                MIN_PERCENT,
+                MAX_PERCENT
+            )
+            .toFloat()
+} finally {
+    isProgrammaticSliderChange = false
+}
         tvProgramRedValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_red),
-            balance.red
-        )
+            getString(
+                R.string.light_channel_value_format,
+                getString(R.string.light_channel_red),
+                balance.red
+            )
 
         tvProgramGreenValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_green),
-            balance.green
-        )
+            getString(
+                R.string.light_channel_value_format,
+                getString(R.string.light_channel_green),
+                balance.green
+            )
 
         tvProgramBlueValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_blue),
-            balance.blue
-        )
+            getString(
+                R.string.light_channel_value_format,
+                getString(R.string.light_channel_blue),
+                balance.blue
+            )
 
         tvProgramWhiteValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_white),
-            balance.white
-        )
+            getString(
+                R.string.light_channel_value_format,
+                getString(R.string.light_channel_white),
+                balance.white
+            )
     }
 
     private fun renderDraftCurvePoints(
         draft: ProgramEditorDraft
     ) = with(binding) {
         val sortedPoints =
-        draft.curvePoints
-        .sortedBy {
-            point ->
-            point.minuteOfDay
-        }
+            draft.curvePoints
+                .sortedBy { point ->
+                    point.minuteOfDay
+                }
 
         val startPoint =
-        sortedPoints.firstOrNull {
-            point ->
-            point.kind == ProgramEditorCurvePointKind.START
-        }
-
-        val peakStartPoint =
-        sortedPoints.firstOrNull {
-            point ->
-            point.kind == ProgramEditorCurvePointKind.PEAK_START
-        }
-
-        val peakEndPoint =
-        sortedPoints.firstOrNull {
-            point ->
-            point.kind == ProgramEditorCurvePointKind.PEAK_END
-        }
-
-        val endPoint =
-        sortedPoints.firstOrNull {
-            point ->
-            point.kind == ProgramEditorCurvePointKind.END
-        }
-
-        if (
-            startPoint == null ||
-            peakStartPoint == null ||
-            peakEndPoint == null ||
-            endPoint == null
-        ) {
-            viewProgramEditorCurve.clear()
-            return@with
-        }
-
-        tvCurveStartSummary.text =
-        minutesToTime(
-            minutes = startPoint.minuteOfDay
-        )
-
-        tvCurvePeakSummary.text =
-        getString(
-            R.string.common_percent_value,
-            draft.peakIntensityPercent
-        )
-
-        tvCurveEndSummary.text =
-        minutesToTime(
-            minutes = endPoint.minuteOfDay
-        )
-
-        tvPointStartTime.text =
-        minutesToTime(
-            minutes = startPoint.minuteOfDay
-        )
-
-        tvPointStartLabel.setText(
-            R.string.light_editor_point_label_start
-        )
-
-        tvPointStartPercent.text =
-        getString(
-            R.string.common_percent_value,
-            startPoint.masterPercent
-        )
-
-        tvPointPeakStartTime.text =
-        minutesToTime(
-            minutes = peakStartPoint.minuteOfDay
-        )
-
-        tvPointPeakStartLabel.setText(
-            R.string.light_editor_point_label_peak_start
-        )
-
-        tvPointPeakStartPercent.text =
-        getString(
-            R.string.common_percent_value,
-            peakStartPoint.masterPercent
-        )
-
-        tvPointPeakEndTime.text =
-        minutesToTime(
-            minutes = peakEndPoint.minuteOfDay
-        )
-
-        tvPointPeakEndLabel.setText(
-            R.string.light_editor_point_label_peak_end
-        )
-
-        tvPointPeakEndPercent.text =
-        getString(
-            R.string.common_percent_value,
-            peakEndPoint.masterPercent
-        )
-
-        tvPointEndTime.text =
-        minutesToTime(
-            minutes = endPoint.minuteOfDay
-        )
-
-        tvPointEndLabel.setText(
-            R.string.light_editor_point_label_end
-        )
-
-        tvPointEndPercent.text =
-        getString(
-            R.string.common_percent_value,
-            endPoint.masterPercent
-        )
-
-        viewProgramEditorCurve.submitData(
-            data =
-            LightCurveChartData(
-                series =
-                listOf(
-                    LightCurveSeries(
-                        channel = LightCurveChannel.MASTER,
-                        isActive = true,
-                        points =
-                        sortedPoints.map {
-                            point ->
-                            LightCurvePoint(
-                                minuteOfDay = point.minuteOfDay,
-                                intensityPercent = point.masterPercent,
-                                isMajor = point.kind != ProgramEditorCurvePointKind.CUSTOM
-                            )
-                        }
-                    )
-                ),
-                currentTimeMinutes = null
-            )
-        )
-    }
-
-    private fun applySavedLightProgram(
-        savedProgram: SavedLightProgram
-    ) {
-        loadedSavedProgram = savedProgram
-
-        binding.deviceHeader.tvTitle.text = savedProgram.title
-
-        setEditorMode(
-            mode =
-            when (savedProgram.mode) {
-                SavedLightProgramMode.SIMPLE -> {
-                    ProgramEditorMode.SIMPLE
-                }
-
-                SavedLightProgramMode.PRO -> {
-                    ProgramEditorMode.PRO
-                }
+            sortedPoints.firstOrNull { point ->
+                point.kind == ProgramEditorCurvePointKind.START
             }
-        )
-
-        selectedRepeatDays =
-        savedProgram.repeatDays.toEditorRepeatDays()
-
-        selectedRepeatMode =
-        selectedRepeatDays.toRepeatMode()
-
-        renderRepeatChips()
-
-        setRampSmoothing(
-            smoothing = ProgramRampSmoothing.LINEAR
-        )
-
-        renderSavedProgramChannelBalance(
-            savedProgram = savedProgram
-        )
-
-        renderSavedProgramCurvePoints(
-            savedProgram = savedProgram
-        )
-
-        renderAcclimationValue()
-    }
-
-    private fun renderSavedProgramChannelBalance(
-        savedProgram: SavedLightProgram
-    ) = with(binding) {
-        val balance = savedProgram.balance
-
-        sliderProgramRed.value = balance.red
-        .coerceIn(MIN_PERCENT, MAX_PERCENT)
-        .toFloat()
-
-        sliderProgramGreen.value = balance.green
-        .coerceIn(MIN_PERCENT, MAX_PERCENT)
-        .toFloat()
-
-        sliderProgramBlue.value = balance.blue
-        .coerceIn(MIN_PERCENT, MAX_PERCENT)
-        .toFloat()
-
-        sliderProgramWhite.value = balance.white
-        .coerceIn(MIN_PERCENT, MAX_PERCENT)
-        .toFloat()
-
-        tvProgramRedValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_red),
-            balance.red
-        )
-
-        tvProgramGreenValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_green),
-            balance.green
-        )
-
-        tvProgramBlueValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_blue),
-            balance.blue
-        )
-
-        tvProgramWhiteValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_white),
-            balance.white
-        )
-    }
-
-    private fun renderSavedProgramCurvePoints(
-        savedProgram: SavedLightProgram
-    ) = with(binding) {
-        val sortedPoints =
-        savedProgram.curvePoints
-        .sortedBy {
-            point ->
-            point.minuteOfDay
-        }
-
-        val startPoint =
-        sortedPoints.firstOrNull {
-            point ->
-            point.kind == SavedLightProgramCurvePointKind.START
-        }
 
         val peakStartPoint =
-        sortedPoints.firstOrNull {
-            point ->
-            point.kind == SavedLightProgramCurvePointKind.PEAK_START
-        }
+            sortedPoints.firstOrNull { point ->
+                point.kind == ProgramEditorCurvePointKind.PEAK_START
+            }
 
         val peakEndPoint =
-        sortedPoints.firstOrNull {
-            point ->
-            point.kind == SavedLightProgramCurvePointKind.PEAK_END
-        }
+            sortedPoints.firstOrNull { point ->
+                point.kind == ProgramEditorCurvePointKind.PEAK_END
+            }
 
         val endPoint =
-        sortedPoints.firstOrNull {
-            point ->
-            point.kind == SavedLightProgramCurvePointKind.END
-        }
+            sortedPoints.firstOrNull { point ->
+                point.kind == ProgramEditorCurvePointKind.END
+            }
 
         if (
             startPoint == null ||
@@ -732,321 +497,101 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         }
 
         tvCurveStartSummary.text =
-        minutesToTime(
-            minutes = startPoint.minuteOfDay
-        )
+            minutesToTime(
+                minutes = startPoint.minuteOfDay
+            )
 
         tvCurvePeakSummary.text =
-        getString(
-            R.string.common_percent_value,
-            savedProgram.peakIntensityPercent
-        )
+            getString(
+                R.string.common_percent_value,
+                draft.peakIntensityPercent
+            )
 
         tvCurveEndSummary.text =
-        minutesToTime(
-            minutes = endPoint.minuteOfDay
-        )
+            minutesToTime(
+                minutes = endPoint.minuteOfDay
+            )
 
         tvPointStartTime.text =
-        minutesToTime(
-            minutes = startPoint.minuteOfDay
-        )
+            minutesToTime(
+                minutes = startPoint.minuteOfDay
+            )
 
         tvPointStartLabel.setText(
             R.string.light_editor_point_label_start
         )
 
         tvPointStartPercent.text =
-        getString(
-            R.string.common_percent_value,
-            startPoint.masterPercent
-        )
+            getString(
+                R.string.common_percent_value,
+                startPoint.masterPercent
+            )
 
         tvPointPeakStartTime.text =
-        minutesToTime(
-            minutes = peakStartPoint.minuteOfDay
-        )
+            minutesToTime(
+                minutes = peakStartPoint.minuteOfDay
+            )
 
         tvPointPeakStartLabel.setText(
             R.string.light_editor_point_label_peak_start
         )
 
         tvPointPeakStartPercent.text =
-        getString(
-            R.string.common_percent_value,
-            peakStartPoint.masterPercent
-        )
+            getString(
+                R.string.common_percent_value,
+                peakStartPoint.masterPercent
+            )
 
         tvPointPeakEndTime.text =
-        minutesToTime(
-            minutes = peakEndPoint.minuteOfDay
-        )
+            minutesToTime(
+                minutes = peakEndPoint.minuteOfDay
+            )
 
         tvPointPeakEndLabel.setText(
             R.string.light_editor_point_label_peak_end
         )
 
         tvPointPeakEndPercent.text =
-        getString(
-            R.string.common_percent_value,
-            peakEndPoint.masterPercent
-        )
+            getString(
+                R.string.common_percent_value,
+                peakEndPoint.masterPercent
+            )
 
         tvPointEndTime.text =
-        minutesToTime(
-            minutes = endPoint.minuteOfDay
-        )
+            minutesToTime(
+                minutes = endPoint.minuteOfDay
+            )
 
         tvPointEndLabel.setText(
             R.string.light_editor_point_label_end
         )
 
         tvPointEndPercent.text =
-        getString(
-            R.string.common_percent_value,
-            endPoint.masterPercent
-        )
+            getString(
+                R.string.common_percent_value,
+                endPoint.masterPercent
+            )
 
         viewProgramEditorCurve.submitData(
             data =
-            LightCurveChartData(
-                series =
-                listOf(
-                    LightCurveSeries(
-                        channel = LightCurveChannel.MASTER,
-                        isActive = true,
-                        points =
-                        sortedPoints.map {
-                            point ->
-                            LightCurvePoint(
-                                minuteOfDay = point.minuteOfDay,
-                                intensityPercent = point.masterPercent,
-                                isMajor = point.kind != SavedLightProgramCurvePointKind.CUSTOM
-                            )
-                        }
-                    )
-                ),
-                currentTimeMinutes = null
-            )
-        )
-    }
-
-    private fun applyQuickSetupGeneratedDraft(
-        generatedDraft: GeneratedQuickSetupProgramDraft
-    ) {
-        setEditorMode(
-            mode = ProgramEditorMode.SIMPLE
-        )
-
-        selectedRepeatDays =
-        generatedDraft.repeatDays.toEditorRepeatDays()
-
-        selectedRepeatMode =
-        selectedRepeatDays.toRepeatMode()
-
-        renderRepeatChips()
-
-        setRampSmoothing(
-            smoothing = ProgramRampSmoothing.LINEAR
-        )
-
-        renderQuickSetupChannelBalance(
-            generatedDraft = generatedDraft
-        )
-
-        renderQuickSetupCurvePoints(
-            generatedDraft = generatedDraft
-        )
-
-        renderAcclimationValue()
-    }
-
-    private fun renderQuickSetupChannelBalance(
-        generatedDraft: GeneratedQuickSetupProgramDraft
-    ) = with(binding) {
-        val balance = generatedDraft.balance
-
-        sliderProgramRed.value = balance.red.toFloat()
-        sliderProgramGreen.value = balance.green.toFloat()
-        sliderProgramBlue.value = balance.blue.toFloat()
-        sliderProgramWhite.value = balance.white.toFloat()
-
-        tvProgramRedValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_red),
-            balance.red
-        )
-
-        tvProgramGreenValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_green),
-            balance.green
-        )
-
-        tvProgramBlueValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_blue),
-            balance.blue
-        )
-
-        tvProgramWhiteValue.text =
-        getString(
-            R.string.light_channel_value_format,
-            getString(R.string.light_channel_white),
-            balance.white
-        )
-    }
-
-    private fun renderQuickSetupCurvePoints(
-        generatedDraft: GeneratedQuickSetupProgramDraft
-    ) = with(binding) {
-        val startPoint =
-        generatedDraft.curvePoints.firstOrNull {
-            point ->
-            point.kind == GeneratedQuickSetupCurvePointKind.START
-        }
-
-        val peakStartPoint =
-        generatedDraft.curvePoints.firstOrNull {
-            point ->
-            point.kind == GeneratedQuickSetupCurvePointKind.PEAK_START
-        }
-
-        val peakEndPoint =
-        generatedDraft.curvePoints.firstOrNull {
-            point ->
-            point.kind == GeneratedQuickSetupCurvePointKind.PEAK_END
-        }
-
-        val endPoint =
-        generatedDraft.curvePoints.firstOrNull {
-            point ->
-            point.kind == GeneratedQuickSetupCurvePointKind.END
-        }
-
-        if (
-            startPoint == null ||
-            peakStartPoint == null ||
-            peakEndPoint == null ||
-            endPoint == null
-        ) {
-            viewProgramEditorCurve.clear()
-            return@with
-        }
-
-        tvCurveStartSummary.text =
-        minutesToTime(
-            minutes = startPoint.timeMinutes
-        )
-
-        tvCurvePeakSummary.text =
-        getString(
-            R.string.common_percent_value,
-            generatedDraft.peakIntensityPercent
-        )
-
-        tvCurveEndSummary.text =
-        minutesToTime(
-            minutes = endPoint.timeMinutes
-        )
-
-        tvPointStartTime.text =
-        minutesToTime(
-            minutes = startPoint.timeMinutes
-        )
-
-        tvPointStartLabel.setText(
-            R.string.light_editor_point_label_start
-        )
-
-        tvPointStartPercent.text =
-        getString(
-            R.string.common_percent_value,
-            startPoint.masterPercent
-        )
-
-        tvPointPeakStartTime.text =
-        minutesToTime(
-            minutes = peakStartPoint.timeMinutes
-        )
-
-        tvPointPeakStartLabel.setText(
-            R.string.light_editor_point_label_peak_start
-        )
-
-        tvPointPeakStartPercent.text =
-        getString(
-            R.string.common_percent_value,
-            peakStartPoint.masterPercent
-        )
-
-        tvPointPeakEndTime.text =
-        minutesToTime(
-            minutes = peakEndPoint.timeMinutes
-        )
-
-        tvPointPeakEndLabel.setText(
-            R.string.light_editor_point_label_peak_end
-        )
-
-        tvPointPeakEndPercent.text =
-        getString(
-            R.string.common_percent_value,
-            peakEndPoint.masterPercent
-        )
-
-        tvPointEndTime.text =
-        minutesToTime(
-            minutes = endPoint.timeMinutes
-        )
-
-        tvPointEndLabel.setText(
-            R.string.light_editor_point_label_end
-        )
-
-        tvPointEndPercent.text =
-        getString(
-            R.string.common_percent_value,
-            endPoint.masterPercent
-        )
-
-        viewProgramEditorCurve.submitData(
-            LightCurveChartData(
-                series =
-                listOf(
-                    LightCurveSeries(
-                        channel = LightCurveChannel.MASTER,
-                        isActive = true,
-                        points =
+                LightCurveChartData(
+                    series =
                         listOf(
-                            LightCurvePoint(
-                                minuteOfDay = startPoint.timeMinutes,
-                                intensityPercent = startPoint.masterPercent,
-                                isMajor = true
-                            ),
-                            LightCurvePoint(
-                                minuteOfDay = peakStartPoint.timeMinutes,
-                                intensityPercent = peakStartPoint.masterPercent,
-                                isMajor = true
-                            ),
-                            LightCurvePoint(
-                                minuteOfDay = peakEndPoint.timeMinutes,
-                                intensityPercent = peakEndPoint.masterPercent,
-                                isMajor = true
-                            ),
-                            LightCurvePoint(
-                                minuteOfDay = endPoint.timeMinutes,
-                                intensityPercent = endPoint.masterPercent,
-                                isMajor = true
+                            LightCurveSeries(
+                                channel = LightCurveChannel.MASTER,
+                                isActive = true,
+                                points =
+                                    sortedPoints.map { point ->
+                                        LightCurvePoint(
+                                            minuteOfDay = point.minuteOfDay,
+                                            intensityPercent = point.masterPercent,
+                                            isMajor = point.kind != ProgramEditorCurvePointKind.CUSTOM
+                                        )
+                                    }
                             )
-                        )
-                    )
-                ),
-                currentTimeMinutes = null
-            )
+                        ),
+                    currentTimeMinutes = null
+                )
         )
     }
 
@@ -1154,16 +699,16 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         selectedProChannel = channel
 
         tvCurveTitle.text =
-        getString(
-            R.string.light_editor_curve_title_pro_channel,
-            getString(channel.labelRes)
-        )
+            getString(
+                R.string.light_editor_curve_title_pro_channel,
+                getString(channel.labelRes)
+            )
 
         tvCurveSubtitle.text =
-        getString(
-            R.string.light_editor_curve_subtitle_pro_channel,
-            getString(channel.labelRes).lowercase()
-        )
+            getString(
+                R.string.light_editor_curve_subtitle_pro_channel,
+                getString(channel.labelRes).lowercase()
+            )
 
         renderProChannelChips()
 
@@ -1222,8 +767,6 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     ) {
         selectedRampSmoothing = smoothing
         renderRampSmoothingChips()
-
-        // TODO: Re-render curve with smoothing mode when curve data exists.
     }
 
     private fun renderRampSmoothingChips() = with(binding) {
@@ -1247,13 +790,10 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         LightDayPickerBottomSheet.show(
             fragment = this,
             initialDays = selectedRepeatDays,
-            onSave = {
-                days ->
+            onSave = { days ->
                 selectedRepeatDays = days
                 selectedRepeatMode = ProgramRepeatMode.CUSTOM
                 renderRepeatChips()
-
-                // TODO: Store selected repeat days in editor draft when state layer is enabled.
             }
         )
     }
@@ -1262,47 +802,43 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         LightAcclimationBottomSheet.show(
             fragment = this,
             initialState = acclimationState,
-            onSave = {
-                state ->
+            onSave = { state ->
                 acclimationState = state
                 renderAcclimationValue()
-
-                // TODO: Store acclimation settings in editor draft when state layer is enabled.
             }
         )
     }
 
     private fun renderAcclimationValue() = with(binding) {
         tvAcclimationValue.text =
-        if (acclimationState.enabled) {
-            getString(
-                R.string.light_acclimation_value_on,
-                acclimationState.durationDays,
-                acclimationState.startIntensityPercent
-            )
-        } else {
-            getString(
-                R.string.light_acclimation_value_off
-            )
-        }
+            if (acclimationState.enabled) {
+                getString(
+                    R.string.light_acclimation_value_on,
+                    acclimationState.durationDays,
+                    acclimationState.startIntensityPercent
+                )
+            } else {
+                getString(
+                    R.string.light_acclimation_value_off
+                )
+            }
     }
 
     private fun showEditPointSheet() {
         LightPointEditorBottomSheet.show(
             fragment = this,
             model =
-            LightPointEditorSheetModel(
-                titleRes = R.string.light_point_editor_title_edit,
-                descriptionRes = R.string.light_point_editor_description_default,
-                saveButtonTextRes = R.string.light_point_editor_save,
-                pointName = "",
-                timeLabel = "",
-                intensityPercent = null,
-                canRename = false,
-                canDelete = false
-            ),
-            onSave = {
-                _, _, _ ->
+                LightPointEditorSheetModel(
+                    titleRes = R.string.light_point_editor_title_edit,
+                    descriptionRes = R.string.light_point_editor_description_default,
+                    saveButtonTextRes = R.string.light_point_editor_save,
+                    pointName = "",
+                    timeLabel = "",
+                    intensityPercent = null,
+                    canRename = false,
+                    canDelete = false
+                ),
+            onSave = { _, _, _ ->
                 // TODO: Update selected curve point when editor state layer is enabled.
             },
             onDelete = {
@@ -1315,43 +851,23 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         LightPointEditorBottomSheet.show(
             fragment = this,
             model =
-            LightPointEditorSheetModel(
-                titleRes = R.string.light_point_editor_title_add,
-                descriptionRes = R.string.light_point_editor_description_add,
-                saveButtonTextRes = R.string.light_point_editor_add,
-                pointName = "",
-                timeLabel = "",
-                intensityPercent = null,
-                canRename = true,
-                canDelete = false
-            ),
-            onSave = {
-                _, _, _ ->
+                LightPointEditorSheetModel(
+                    titleRes = R.string.light_point_editor_title_add,
+                    descriptionRes = R.string.light_point_editor_description_add,
+                    saveButtonTextRes = R.string.light_point_editor_add,
+                    pointName = "",
+                    timeLabel = "",
+                    intensityPercent = null,
+                    canRename = true,
+                    canDelete = false
+                ),
+            onSave = { _, _, _ ->
                 // TODO: Add custom curve point when editor state layer is enabled.
             },
             onDelete = {
                 // No-op.
             }
         )
-    }
-
-    private fun Set<Int>.toEditorRepeatDays(): Set<LightRepeatDay> {
-        return mapNotNull {
-            day ->
-            when (day) {
-                DAY_MON -> LightRepeatDay.MONDAY
-                DAY_TUE -> LightRepeatDay.TUESDAY
-                DAY_WED -> LightRepeatDay.WEDNESDAY
-                DAY_THU -> LightRepeatDay.THURSDAY
-                DAY_FRI -> LightRepeatDay.FRIDAY
-                DAY_SAT -> LightRepeatDay.SATURDAY
-                DAY_SUN -> LightRepeatDay.SUNDAY
-                else -> null
-            }
-        }.toSet()
-        .ifEmpty {
-            LightRepeatDay.everyDay()
-        }
     }
 
     private fun Set<LightRepeatDay>.toRepeatMode(): ProgramRepeatMode {
@@ -1365,7 +881,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
     private fun saveProgram() {
         val savedProgram =
-        createSavedProgramFromCurrentEditor()
+            createSavedProgramFromCurrentEditor()
 
         LightProgramDraftStore.upsertProgram(
             program = savedProgram
@@ -1374,10 +890,10 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         val navController = findNavController()
 
         val returnedToProgramList =
-        navController.popBackStack(
-            R.id.deviceLightProgramListFragment,
-            false
-        )
+            navController.popBackStack(
+                R.id.deviceLightProgramListFragment,
+                false
+            )
 
         if (!returnedToProgramList) {
             navController.navigate(
@@ -1392,14 +908,14 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
     private fun createSavedProgramFromCurrentEditor(): SavedLightProgram {
         val draft =
-        editorDraft
-        ?: ProgramEditorDraftFactory.createNewProgramDraft(
-            deviceId = deviceId,
-            title = programName
-        )
+            editorDraft
+                ?: ProgramEditorDraftFactory.createNewProgramDraft(
+                    deviceId = deviceId,
+                    title = programName
+                )
 
         val balance =
-        currentEditorBalance()
+            currentEditorBalance()
 
         val now = System.currentTimeMillis()
 
@@ -1410,353 +926,193 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             isEnabled = true,
             isActive = true,
             mode =
-            when (editorMode) {
-                ProgramEditorMode.SIMPLE -> {
-                    SavedLightProgramMode.SIMPLE
-                }
+                when (editorMode) {
+                    ProgramEditorMode.SIMPLE -> {
+                        SavedLightProgramMode.SIMPLE
+                    }
 
-                ProgramEditorMode.PRO -> {
-                    SavedLightProgramMode.PRO
-                }
-            },
+                    ProgramEditorMode.PRO -> {
+                        SavedLightProgramMode.PRO
+                    }
+                },
             repeatDays = selectedRepeatDays.toSavedRepeatDays(),
             rampMinutes = draft.rampMinutes,
             peakIntensityPercent = draft.peakIntensityPercent,
             balance = balance,
             curvePoints =
-            draft.curvePoints.map {
-                point ->
-                val safeMasterPercent =
-                point.masterPercent.coerceIn(
-                    MIN_PERCENT,
-                    MAX_PERCENT
-                )
+                draft.curvePoints.map { point ->
+                    val safeMasterPercent =
+                        point.masterPercent.coerceIn(
+                            MIN_PERCENT,
+                            MAX_PERCENT
+                        )
 
-                SavedLightProgramCurvePoint(
-                    kind = point.kind.toSavedCurvePointKind(),
-                    minuteOfDay =
-                    point.minuteOfDay.coerceIn(
-                        MINUTES_IN_DAY_MIN,
-                        MINUTES_IN_DAY_MAX
-                    ),
-                    masterPercent = safeMasterPercent,
-                    red =
-                    scaledChannelOutput(
-                        channelPercent = balance.red,
-                        masterPercent = safeMasterPercent
-                    ),
-                    green =
-                    scaledChannelOutput(
-                        channelPercent = balance.green,
-                        masterPercent = safeMasterPercent
-                    ),
-                    blue =
-                    scaledChannelOutput(
-                        channelPercent = balance.blue,
-                        masterPercent = safeMasterPercent
-                    ),
-                    white =
-                    scaledChannelOutput(
-                        channelPercent = balance.white,
-                        masterPercent = safeMasterPercent
+                    SavedLightProgramCurvePoint(
+                        kind = point.kind.toSavedCurvePointKind(),
+                        minuteOfDay =
+                            point.minuteOfDay.coerceIn(
+                                MINUTES_IN_DAY_MIN,
+                                MINUTES_IN_DAY_MAX
+                            ),
+                        masterPercent = safeMasterPercent,
+                        red =
+                            scaledChannelOutput(
+                                channelPercent = balance.red,
+                                masterPercent = safeMasterPercent
+                            ),
+                        green =
+                            scaledChannelOutput(
+                                channelPercent = balance.green,
+                                masterPercent = safeMasterPercent
+                            ),
+                        blue =
+                            scaledChannelOutput(
+                                channelPercent = balance.blue,
+                                masterPercent = safeMasterPercent
+                            ),
+                        white =
+                            scaledChannelOutput(
+                                channelPercent = balance.white,
+                                masterPercent = safeMasterPercent
+                            )
                     )
-                )
-            },
+                },
             createdAtMillis = loadedSavedProgram?.createdAtMillis ?: now,
             updatedAtMillis = now
         )
     }
     
-    private fun currentEditorBalance(): SavedLightProgramBalance {
-    return SavedLightProgramBalance(
-        red =
-            binding.sliderProgramRed.value
-                .roundToInt()
-                .coerceIn(
-                    MIN_PERCENT,
-                    MAX_PERCENT
-                ),
-        green =
-            binding.sliderProgramGreen.value
-                .roundToInt()
-                .coerceIn(
-                    MIN_PERCENT,
-                    MAX_PERCENT
-                ),
-        blue =
-            binding.sliderProgramBlue.value
-                .roundToInt()
-                .coerceIn(
-                    MIN_PERCENT,
-                    MAX_PERCENT
-                ),
-        white =
-            binding.sliderProgramWhite.value
-                .roundToInt()
-                .coerceIn(
-                    MIN_PERCENT,
-                    MAX_PERCENT
-                )
-    )
-}
+    private fun updateEditorDraftBalanceFromSliders() {
+    val currentDraft = editorDraft ?: return
 
-private fun ProgramEditorCurvePointKind.toSavedCurvePointKind(): SavedLightProgramCurvePointKind {
-    return when (this) {
-        ProgramEditorCurvePointKind.START -> {
-            SavedLightProgramCurvePointKind.START
-        }
-
-        ProgramEditorCurvePointKind.PEAK_START -> {
-            SavedLightProgramCurvePointKind.PEAK_START
-        }
-
-        ProgramEditorCurvePointKind.PEAK_END -> {
-            SavedLightProgramCurvePointKind.PEAK_END
-        }
-
-        ProgramEditorCurvePointKind.END -> {
-            SavedLightProgramCurvePointKind.END
-        }
-
-        ProgramEditorCurvePointKind.CUSTOM -> {
-            SavedLightProgramCurvePointKind.CUSTOM
-        }
-    }
-}
-
-    private fun SavedLightProgram.toUpdatedSavedProgramFromCurrentUi(): SavedLightProgram {
-        val balance =
-        SavedLightProgramBalance(
-            red = binding.sliderProgramRed.value
-            .roundToInt()
-            .coerceIn(MIN_PERCENT, MAX_PERCENT),
-            green = binding.sliderProgramGreen.value
-            .roundToInt()
-            .coerceIn(MIN_PERCENT, MAX_PERCENT),
-            blue = binding.sliderProgramBlue.value
-            .roundToInt()
-            .coerceIn(MIN_PERCENT, MAX_PERCENT),
-            white = binding.sliderProgramWhite.value
-            .roundToInt()
-            .coerceIn(MIN_PERCENT, MAX_PERCENT)
-        )
-
-        return copy(
-            title = programName,
-            mode =
-            when (editorMode) {
-                ProgramEditorMode.SIMPLE -> {
-                    SavedLightProgramMode.SIMPLE
-                }
-
-                ProgramEditorMode.PRO -> {
-                    SavedLightProgramMode.PRO
-                }
-            },
-            repeatDays = selectedRepeatDays.toSavedRepeatDays(),
-            balance = balance,
-            curvePoints =
-            curvePoints.map {
-                point ->
-                val safeMasterPercent =
-                point.masterPercent.coerceIn(
-                    MIN_PERCENT,
-                    MAX_PERCENT
-                )
-
-                point.copy(
-                    red =
-                    scaledChannelOutput(
-                        channelPercent = balance.red,
-                        masterPercent = safeMasterPercent
+    val balance =
+        ProgramEditorChannelBalance(
+            red =
+                binding.sliderProgramRed.value
+                    .roundToInt()
+                    .coerceIn(
+                        MIN_PERCENT,
+                        MAX_PERCENT
                     ),
-                    green =
-                    scaledChannelOutput(
-                        channelPercent = balance.green,
-                        masterPercent = safeMasterPercent
+            green =
+                binding.sliderProgramGreen.value
+                    .roundToInt()
+                    .coerceIn(
+                        MIN_PERCENT,
+                        MAX_PERCENT
                     ),
-                    blue =
-                    scaledChannelOutput(
-                        channelPercent = balance.blue,
-                        masterPercent = safeMasterPercent
+            blue =
+                binding.sliderProgramBlue.value
+                    .roundToInt()
+                    .coerceIn(
+                        MIN_PERCENT,
+                        MAX_PERCENT
                     ),
-                    white =
-                    scaledChannelOutput(
-                        channelPercent = balance.white,
-                        masterPercent = safeMasterPercent
+            white =
+                binding.sliderProgramWhite.value
+                    .roundToInt()
+                    .coerceIn(
+                        MIN_PERCENT,
+                        MAX_PERCENT
                     )
-                )
-            },
-            updatedAtMillis = System.currentTimeMillis()
-        )
-    }
-
-    private fun GeneratedQuickSetupProgramDraft.toSavedLightProgram(): SavedLightProgram {
-        return SavedLightProgram(
-            id = programId ?: createProgramId(),
-            deviceId = deviceId,
-            title = programName,
-            isEnabled = true,
-            isActive = true,
-            mode = SavedLightProgramMode.SIMPLE,
-            repeatDays = repeatDays,
-            rampMinutes = rampMinutes,
-            peakIntensityPercent = peakIntensityPercent,
-            balance =
-            SavedLightProgramBalance(
-                red = balance.red,
-                green = balance.green,
-                blue = balance.blue,
-                white = balance.white
-            ),
-            curvePoints =
-            curvePoints.map {
-                point ->
-                SavedLightProgramCurvePoint(
-                    kind = point.kind.toSavedCurvePointKind(),
-                    minuteOfDay = point.timeMinutes,
-                    masterPercent = point.masterPercent,
-                    red = point.channelOutput.red,
-                    green = point.channelOutput.green,
-                    blue = point.channelOutput.blue,
-                    white = point.channelOutput.white
-                )
-            }
-        )
-    }
-
-    private fun createDefaultSavedProgram(): SavedLightProgram {
-        val balance =
-        SavedLightProgramBalance(
-            red =
-            sliderValueOrDefault(
-                value = binding.sliderProgramRed.value.roundToInt(),
-                defaultValue = DEFAULT_RED
-            ),
-            green =
-            sliderValueOrDefault(
-                value = binding.sliderProgramGreen.value.roundToInt(),
-                defaultValue = DEFAULT_GREEN
-            ),
-            blue =
-            sliderValueOrDefault(
-                value = binding.sliderProgramBlue.value.roundToInt(),
-                defaultValue = DEFAULT_BLUE
-            ),
-            white =
-            sliderValueOrDefault(
-                value = binding.sliderProgramWhite.value.roundToInt(),
-                defaultValue = DEFAULT_WHITE
-            )
         )
 
-        return SavedLightProgram(
-            id = programId ?: createProgramId(),
-            deviceId = deviceId,
-            title = programName,
-            isEnabled = true,
-            isActive = true,
-            mode = SavedLightProgramMode.SIMPLE,
-            repeatDays = selectedRepeatDays.toSavedRepeatDays(),
-            rampMinutes = DEFAULT_RAMP_MINUTES,
-            peakIntensityPercent = MAX_PERCENT,
+    editorDraft =
+        currentDraft.copy(
             balance = balance,
             curvePoints =
-            listOf(
-                createSavedCurvePoint(
-                    kind = SavedLightProgramCurvePointKind.START,
-                    minuteOfDay = DEFAULT_START_MINUTES,
-                    masterPercent = MIN_PERCENT,
-                    balance = balance
-                ),
-                createSavedCurvePoint(
-                    kind = SavedLightProgramCurvePointKind.PEAK_START,
-                    minuteOfDay = DEFAULT_PEAK_START_MINUTES,
-                    masterPercent = MAX_PERCENT,
-                    balance = balance
-                ),
-                createSavedCurvePoint(
-                    kind = SavedLightProgramCurvePointKind.PEAK_END,
-                    minuteOfDay = DEFAULT_PEAK_END_MINUTES,
-                    masterPercent = MAX_PERCENT,
-                    balance = balance
-                ),
-                createSavedCurvePoint(
-                    kind = SavedLightProgramCurvePointKind.END,
-                    minuteOfDay = DEFAULT_END_MINUTES,
-                    masterPercent = MIN_PERCENT,
-                    balance = balance
-                )
-            )
-        )
-    }
+                currentDraft.curvePoints.map { point ->
+                    val safeMasterPercent =
+                        point.masterPercent.coerceIn(
+                            MIN_PERCENT,
+                            MAX_PERCENT
+                        )
 
-    private fun createSavedCurvePoint(
-        kind: SavedLightProgramCurvePointKind,
-        minuteOfDay: Int,
-        masterPercent: Int,
-        balance: SavedLightProgramBalance
-    ): SavedLightProgramCurvePoint {
-        val safeMasterPercent =
-        masterPercent.coerceIn(
-            MIN_PERCENT,
-            MAX_PERCENT
+                    point.copy(
+                        red =
+                            scaledChannelOutput(
+                                channelPercent = balance.red,
+                                masterPercent = safeMasterPercent
+                            ),
+                        green =
+                            scaledChannelOutput(
+                                channelPercent = balance.green,
+                                masterPercent = safeMasterPercent
+                            ),
+                        blue =
+                            scaledChannelOutput(
+                                channelPercent = balance.blue,
+                                masterPercent = safeMasterPercent
+                            ),
+                        white =
+                            scaledChannelOutput(
+                                channelPercent = balance.white,
+                                masterPercent = safeMasterPercent
+                            )
+                    )
+                }
         )
+}
 
-        return SavedLightProgramCurvePoint(
-            kind = kind,
-            minuteOfDay =
-            minuteOfDay.coerceIn(
-                MINUTES_IN_DAY_MIN,
-                MINUTES_IN_DAY_MAX
-            ),
-            masterPercent = safeMasterPercent,
+    private fun currentEditorBalance(): SavedLightProgramBalance {
+        return SavedLightProgramBalance(
             red =
-            scaledChannelOutput(
-                channelPercent = balance.red,
-                masterPercent = safeMasterPercent
-            ),
+                binding.sliderProgramRed.value
+                    .roundToInt()
+                    .coerceIn(
+                        MIN_PERCENT,
+                        MAX_PERCENT
+                    ),
             green =
-            scaledChannelOutput(
-                channelPercent = balance.green,
-                masterPercent = safeMasterPercent
-            ),
+                binding.sliderProgramGreen.value
+                    .roundToInt()
+                    .coerceIn(
+                        MIN_PERCENT,
+                        MAX_PERCENT
+                    ),
             blue =
-            scaledChannelOutput(
-                channelPercent = balance.blue,
-                masterPercent = safeMasterPercent
-            ),
+                binding.sliderProgramBlue.value
+                    .roundToInt()
+                    .coerceIn(
+                        MIN_PERCENT,
+                        MAX_PERCENT
+                    ),
             white =
-            scaledChannelOutput(
-                channelPercent = balance.white,
-                masterPercent = safeMasterPercent
-            )
+                binding.sliderProgramWhite.value
+                    .roundToInt()
+                    .coerceIn(
+                        MIN_PERCENT,
+                        MAX_PERCENT
+                    )
         )
     }
 
-    private fun GeneratedQuickSetupCurvePointKind.toSavedCurvePointKind(): SavedLightProgramCurvePointKind {
+    private fun ProgramEditorCurvePointKind.toSavedCurvePointKind(): SavedLightProgramCurvePointKind {
         return when (this) {
-            GeneratedQuickSetupCurvePointKind.START -> {
+            ProgramEditorCurvePointKind.START -> {
                 SavedLightProgramCurvePointKind.START
             }
 
-            GeneratedQuickSetupCurvePointKind.PEAK_START -> {
+            ProgramEditorCurvePointKind.PEAK_START -> {
                 SavedLightProgramCurvePointKind.PEAK_START
             }
 
-            GeneratedQuickSetupCurvePointKind.PEAK_END -> {
+            ProgramEditorCurvePointKind.PEAK_END -> {
                 SavedLightProgramCurvePointKind.PEAK_END
             }
 
-            GeneratedQuickSetupCurvePointKind.END -> {
+            ProgramEditorCurvePointKind.END -> {
                 SavedLightProgramCurvePointKind.END
+            }
+
+            ProgramEditorCurvePointKind.CUSTOM -> {
+                SavedLightProgramCurvePointKind.CUSTOM
             }
         }
     }
 
     private fun Set<LightRepeatDay>.toSavedRepeatDays(): Set<Int> {
-        return map {
-            day ->
+        return map { day ->
             when (day) {
                 LightRepeatDay.MONDAY -> DAY_MON
                 LightRepeatDay.TUESDAY -> DAY_TUE
@@ -1767,18 +1123,18 @@ private fun ProgramEditorCurvePointKind.toSavedCurvePointKind(): SavedLightProgr
                 LightRepeatDay.SUNDAY -> DAY_SUN
             }
         }
-        .toSet()
-        .ifEmpty {
-            setOf(
-                DAY_MON,
-                DAY_TUE,
-                DAY_WED,
-                DAY_THU,
-                DAY_FRI,
-                DAY_SAT,
-                DAY_SUN
-            )
-        }
+            .toSet()
+            .ifEmpty {
+                setOf(
+                    DAY_MON,
+                    DAY_TUE,
+                    DAY_WED,
+                    DAY_THU,
+                    DAY_FRI,
+                    DAY_SAT,
+                    DAY_SUN
+                )
+            }
     }
 
     private fun scaledChannelOutput(
@@ -1786,37 +1142,23 @@ private fun ProgramEditorCurvePointKind.toSavedCurvePointKind(): SavedLightProgr
         masterPercent: Int
     ): Int {
         val safeChannel =
-        channelPercent.coerceIn(
-            MIN_PERCENT,
-            MAX_PERCENT
-        )
-
-        val safeMaster =
-        masterPercent.coerceIn(
-            MIN_PERCENT,
-            MAX_PERCENT
-        )
-
-        return ((safeChannel * safeMaster) / 100f)
-        .roundToInt()
-        .coerceIn(
-            MIN_PERCENT,
-            MAX_PERCENT
-        )
-    }
-
-    private fun sliderValueOrDefault(
-        value: Int,
-        defaultValue: Int
-    ): Int {
-        return if (value <= MIN_PERCENT) {
-            defaultValue
-        } else {
-            value.coerceIn(
+            channelPercent.coerceIn(
                 MIN_PERCENT,
                 MAX_PERCENT
             )
-        }
+
+        val safeMaster =
+            masterPercent.coerceIn(
+                MIN_PERCENT,
+                MAX_PERCENT
+            )
+
+        return ((safeChannel * safeMaster) / 100f)
+            .roundToInt()
+            .coerceIn(
+                MIN_PERCENT,
+                MAX_PERCENT
+            )
     }
 
     private fun createProgramId(): String {
@@ -1827,7 +1169,7 @@ private fun ProgramEditorCurvePointKind.toSavedCurvePointKind(): SavedLightProgr
         minutes: Int
     ): String {
         val safeMinutes =
-        ((minutes % MINUTES_IN_DAY) + MINUTES_IN_DAY) % MINUTES_IN_DAY
+            ((minutes % MINUTES_IN_DAY) + MINUTES_IN_DAY) % MINUTES_IN_DAY
 
         val hour = safeMinutes / MINUTES_IN_HOUR
         val minute = safeMinutes % MINUTES_IN_HOUR
@@ -1877,13 +1219,13 @@ private fun ProgramEditorCurvePointKind.toSavedCurvePointKind(): SavedLightProgr
         )
 
         strokeColor =
-        color(
-            if (selected) {
-                channel.colorRes
-            } else {
-                R.color.light_stroke
-            }
-        )
+            color(
+                if (selected) {
+                    channel.colorRes
+                } else {
+                    R.color.light_stroke
+                }
+            )
 
         val textView = getChildAt(0) as? TextView
 
@@ -1955,18 +1297,6 @@ private fun ProgramEditorCurvePointKind.toSavedCurvePointKind(): SavedLightProgr
 
         private const val MINUTES_IN_DAY_MIN = 0
         private const val MINUTES_IN_DAY_MAX = MINUTES_IN_DAY - 1
-
-        private const val DEFAULT_RAMP_MINUTES = 60
-
-        private const val DEFAULT_START_MINUTES = 9 * MINUTES_IN_HOUR
-        private const val DEFAULT_PEAK_START_MINUTES = 10 * MINUTES_IN_HOUR
-        private const val DEFAULT_PEAK_END_MINUTES = (18 * MINUTES_IN_HOUR) + 15
-        private const val DEFAULT_END_MINUTES = (19 * MINUTES_IN_HOUR) + 15
-
-        private const val DEFAULT_RED = 80
-        private const val DEFAULT_GREEN = 84
-        private const val DEFAULT_BLUE = 79
-        private const val DEFAULT_WHITE = 65
 
         private const val PROGRAM_ID_PREFIX = "light_program_"
     }
