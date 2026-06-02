@@ -1,746 +1,392 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nav_app"
-    app:startDestination="@id/aquariumFragment">
-
-    <!-- 🐠 Aquarium Tab -->
-    <fragment
-        android:id="@+id/aquariumFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment"
-        android:label="Aquarium"
-        tools:layout="@layout/fragment_aquarium">
-
-        <action
-            android:id="@+id/action_aquariumFragment_to_createTankFragment"
-            app:destination="@id/createTankFragment" />
-
-        <action
-            android:id="@+id/action_aquariumFragment_to_tankDetailFragment"
-            app:destination="@id/tankDetailFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/createTankFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment"
-        android:label="Create Tank"
-        tools:layout="@layout/fragment_create_tank" />
-
-    <fragment
-        android:id="@+id/tankDetailFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment"
-        android:label="Tank Detail"
-        tools:layout="@layout/fragment_tank_detail">
-
-        <argument
-            android:name="tankId"
-            app:argType="long" />
-
-        <action
-            android:id="@+id/action_tankDetailFragment_to_tankSettingsFragment"
-            app:destination="@id/tankSettingsFragment" />
-
-        <action
-            android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
-            app:destination="@id/tankDetailLivestockFormFragment" />
-
-        <action
-            android:id="@+id/action_tankDetailFragment_to_tankDetailPlantTagFragment"
-            app:destination="@id/tankDetailPlantTagFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/materialPickerFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment"
-        android:label="Material Picker"
-        tools:layout="@layout/fragment_material_picker">
-
-        <argument
-            android:name="arg_mode"
-            app:argType="string"
-            android:defaultValue="mode_create" />
-
-        <argument
-            android:name="arg_tank_id"
-            app:argType="long"
-            android:defaultValue="0L" />
-
-        <argument
-            android:name="arg_category_key"
-            app:argType="string" />
-
-        <argument
-            android:name="arg_category_title"
-            app:argType="string" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/tankSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.settings.TankSettingsFragment"
-        android:label="Tank Settings"
-        tools:layout="@layout/fragment_tank_settings">
-
-        <argument
-            android:name="tankId"
-            app:argType="long" />
-
-        <action
-            android:id="@+id/action_tankSettingsFragment_to_materialPickerFragment"
-            app:destination="@id/materialPickerFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/tankDetailLivestockFormFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailLivestockFormFragment"
-        android:label="Livestock Form"
-        tools:layout="@layout/fragment_tank_livestock_form">
-
-        <argument
-            android:name="tankId"
-            app:argType="long" />
-
-        <argument
-            android:name="livestockId"
-            app:argType="long"
-            android:defaultValue="0L" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/tankDetailPlantTagFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailPlantTagFragment"
-        android:label="Plant Tags"
-        tools:layout="@layout/fragment_plant_tag">
-
-        <argument
-            android:name="tankId"
-            app:argType="long" />
-
-        <action
-            android:id="@+id/action_tankDetailPlantTagFragment_to_plantPickerFragment"
-            app:destination="@id/plantPickerFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/plantPickerFragment"
-        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment"
-        android:label="Plant Picker"
-        tools:layout="@layout/fragment_plant_picker">
-
-        <argument
-            android:name="useNavResult"
-            app:argType="boolean"
-            android:defaultValue="false" />
-
-    </fragment>
-
-    <!-- 🧰 Maintenance Tab -->
-    <fragment
-        android:id="@+id/aquariumMaintenanceFragment"
-        android:name="com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment"
-        android:label="Maintenance"
-        tools:layout="@layout/fragment_aquarium_maintenance">
-
-        <action
-            android:id="@+id/action_aquariumMaintenanceFragment_to_addCareTaskFragment"
-            app:destination="@id/addCareTaskFragment" />
-
-        <action
-            android:id="@+id/action_aquariumMaintenanceFragment_to_taskDetailFragment"
-            app:destination="@id/taskDetailFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/taskDetailFragment"
-        android:name="com.aqua.aqualight.ui.tabs.maintenance.TaskDetailFragment"
-        android:label="Task Detail"
-        tools:layout="@layout/fragment_task_detail">
-
-        <argument
-            android:name="taskId"
-            app:argType="long" />
-
-        <action
-            android:id="@+id/action_taskDetailFragment_to_addCareTaskFragment"
-            app:destination="@id/addCareTaskFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/addCareTaskFragment"
-        android:name="com.aqua.aqualight.ui.tabs.maintenance.AddCareTaskFragment"
-        android:label="Add Care Task"
-        tools:layout="@layout/fragment_add_care_task">
-
-        <argument
-            android:name="taskId"
-            app:argType="long"
-            android:defaultValue="-1L" />
-
-    </fragment>
-
-    <!-- 📟 Devices Tab -->
-    <fragment
-        android:id="@+id/devicesFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
-        android:label="Devices"
-        tools:layout="@layout/fragment_devices">
-
-        <action
-            android:id="@+id/action_devicesFragment_to_deviceAddFragment"
-            app:destination="@id/deviceAddFragment" />
-
-        <action
-            android:id="@+id/action_devicesFragment_to_deviceRouterFragment"
-            app:destination="@id/deviceRouterFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceAddFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceAddFragment"
-        android:label="Add Device"
-        tools:layout="@layout/fragment_device_add">
-
-        <action
-            android:id="@+id/action_deviceAddFragment_to_deviceSetupFragment"
-            app:destination="@id/deviceSetupFragment" />
-
-        <action
-            android:id="@+id/action_deviceAddFragment_to_deviceRouterFragment"
-            app:destination="@id/deviceRouterFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceSetupFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.setup.DeviceSetupFragment"
-        android:label="Device Setup"
-        tools:layout="@layout/fragment_device_setup" />
-
-    <fragment
-        android:id="@+id/deviceRouterFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment"
-        android:label="Device"
-        tools:layout="@layout/fragment_device_router">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceIp"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/unsupportedDeviceFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.UnsupportedDeviceFragment"
-        android:label="Unsupported Device"
-        tools:layout="@layout/fragment_unsupported_device">
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="Device" />
-
-        <argument
-            android:name="message"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <!-- 🌈 WRGB Device -->
-    <fragment
-        android:id="@+id/deviceWrgbFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.wrgb.WrgbDeviceFragment"
-        android:label="WRGB Light"
-        tools:layout="@layout/fragment_wrgb_device">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceIp"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <!-- 💧 Dosing Device -->
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:id="@+id/nav_app"
+  app:startDestination="@id/aquariumFragment">
+
+  <!-- 🐠 Aquarium Tab -->
   <fragment
-    android:id="@+id/deviceDosingFragment"
-    android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingFragment"
-    android:label="Dosing"
-    tools:layout="@layout/fragment_device_dosing">
-
-    <argument
-        android:name="deviceId"
-        app:argType="long" />
-
-    <argument
-        android:name="deviceIp"
-        app:argType="string"
-        android:defaultValue="" />
-
-    <argument
-        android:name="deviceTitle"
-        app:argType="string"
-        android:defaultValue="" />
-
-    <argument
-        android:name="canEditDeviceName"
-        app:argType="boolean"
-        android:defaultValue="false" />
-
-    <argument
-        android:name="userDeviceName"
-        app:argType="string"
-        android:defaultValue="" />
-
-    <argument
-        android:name="defaultDeviceTitle"
-        app:argType="string"
-        android:defaultValue="" />
+    android:id="@+id/aquariumFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment"
+    android:label="Aquarium"
+    tools:layout="@layout/fragment_aquarium">
 
     <action
-        android:id="@+id/action_deviceDosingFragment_to_deviceDosingChannelSettingsFragment"
-        app:destination="@id/deviceDosingChannelSettingsFragment" />
-
-</fragment>
-
-    <fragment
-        android:id="@+id/deviceDosingChannelSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingChannelSettingsFragment"
-        android:label="Channel Settings"
-        tools:layout="@layout/fragment_device_dosing_channel_settings">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceIp"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="channelIndex"
-            app:argType="integer"
-            android:defaultValue="0" />
-
-        <action
-            android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingCalibrationFragment"
-            app:destination="@id/deviceDosingCalibrationFragment" />
-
-        <action
-            android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingSingleModeSettingsFragment"
-            app:destination="@id/deviceDosingSingleModeSettingsFragment" />
-
-        <action
-            android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingHourly24ModeSettingsFragment"
-            app:destination="@id/deviceDosingHourly24ModeSettingsFragment" />
-
-        <action
-            android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingCustomPeriodsSettingsFragment"
-            app:destination="@id/deviceDosingCustomPeriodsSettingsFragment" />
-
-        <action
-            android:id="@+id/action_deviceDosingChannelSettingsFragment_to_deviceDosingTimerModeSettingsFragment"
-            app:destination="@id/deviceDosingTimerModeSettingsFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceDosingCalibrationFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingCalibrationFragment"
-        android:label="Calibration"
-        tools:layout="@layout/fragment_device_dosing_calibration">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceIp"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="channelIndex"
-            app:argType="integer"
-            android:defaultValue="0" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceDosingSingleModeSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingSingleModeSettingsFragment"
-        android:label="Single Dose" />
-
-    <fragment
-        android:id="@+id/deviceDosingHourly24ModeSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingHourly24ModeSettingsFragment"
-        android:label="24 Hourly Dose" />
-
-    <fragment
-        android:id="@+id/deviceDosingCustomPeriodsSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingCustomPeriodsSettingsFragment"
-        android:label="Custom Periods" />
-
-    <fragment
-        android:id="@+id/deviceDosingTimerModeSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingTimerModeSettingsFragment"
-        android:label="Timer" />
-
-    <!-- ⏱ Timer Device -->
-    <fragment
-        android:id="@+id/deviceTimerFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerFragment"
-        android:label="Timer"
-        tools:layout="@layout/fragment_device_timer">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceIp"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="canEditDeviceName"
-            app:argType="boolean"
-            android:defaultValue="false" />
-
-        <argument
-            android:name="userDeviceName"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="defaultDeviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <!-- ❄️ Cooling Device -->
-    <fragment
-        android:id="@+id/deviceCoolingFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingFragment"
-        android:label="Cooling"
-        tools:layout="@layout/fragment_device_cooling">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceIp"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <!-- 💡 Light Device -->
-    <fragment
-        android:id="@+id/deviceLightFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment"
-        android:label="Lighting"
-        tools:layout="@layout/fragment_device_light">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceLightManualFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightManualFragment"
-        android:label="Manual Control"
-        tools:layout="@layout/fragment_device_light_manual">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceLightProgramListFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightProgramListFragment"
-        android:label="Programs"
-        tools:layout="@layout/fragment_device_light_program_list">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <action
-            android:id="@+id/action_deviceLightProgramListFragment_to_deviceLightProgramEditorFragment"
-            app:destination="@id/deviceLightProgramEditorFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceLightProgramEditorFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightProgramEditorFragment"
-        android:label="Program Editor"
-        tools:layout="@layout/fragment_device_light_program_editor">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="programId"
-            app:argType="string"
-            app:nullable="true"
-            android:defaultValue="@null" />
-
-        <argument
-            android:name="programName"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceLightQuickSetupFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightQuickSetupFragment"
-        android:label="Quick Setup"
-        tools:layout="@layout/fragment_device_light_quick_setup">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <action
-            android:id="@+id/action_deviceLightQuickSetupFragment_to_deviceLightProgramEditorFragment"
-            app:destination="@id/deviceLightProgramEditorFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceLightPresetsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightPresetsFragment"
-        android:label="Presets"
-        tools:layout="@layout/fragment_device_light_presets">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/deviceLightDeviceSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightDeviceSettingsFragment"
-        android:label="Device Settings"
-        tools:layout="@layout/fragment_device_light_device_settings">
-
-        <argument
-            android:name="deviceId"
-            app:argType="long" />
-
-        <argument
-            android:name="deviceTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-    </fragment>
-
-    <!-- ⚙️ Settings Tab -->
-    <fragment
-        android:id="@+id/settingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.SettingsFragment"
-        android:label="Settings"
-        tools:layout="@layout/fragment_settings" />
-
-    <fragment
-        android:id="@+id/editProfileFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.profile.EditProfileFragment"
-        android:label="Edit profile"
-        tools:layout="@layout/fragment_edit_profile" />
-
-    <fragment
-        android:id="@+id/userInfoFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.userinfo.UserInfoFragment"
-        android:label="User info"
-        tools:layout="@layout/fragment_user_info" />
-
-    <fragment
-        android:id="@+id/userAddressFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.userinfo.UserAddressFragment"
-        android:label="User address"
-        tools:layout="@layout/fragment_user_address" />
-
-    <fragment
-        android:id="@+id/deviceStatusFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusFragment"
-        android:label="Device status"
-        tools:layout="@layout/fragment_device_status" />
-
-    <fragment
-        android:id="@+id/networkFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.network.NetworkFragment"
-        android:label="Network"
-        tools:layout="@layout/fragment_network" />
-
-    <fragment
-        android:id="@+id/appSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.app.AppSettingsFragment"
-        android:label="App settings"
-        tools:layout="@layout/fragment_app_settings" />
-
-    <fragment
-        android:id="@+id/usageFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.usage.UsageFragment"
-        android:label="Usage"
-        tools:layout="@layout/fragment_usage" />
-
-    <fragment
-        android:id="@+id/privacyFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.privacy.PrivacyFragment"
-        android:label="Privacy"
-        tools:layout="@layout/fragment_privacy" />
-
-    <fragment
-        android:id="@+id/feedbackFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.feedback.FeedbackFragment"
-        android:label="Feedback"
-        tools:layout="@layout/fragment_feedback" />
-
-    <!-- 🚪 Logout / Account Security -->
-    <fragment
-        android:id="@+id/logoutFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.logout.LogoutFragment"
-        android:label="Logout"
-        tools:layout="@layout/fragment_logout">
-
-        <action
-            android:id="@+id/action_logoutFragment_to_changePasswordFragment"
-            app:destination="@id/changePasswordFragment" />
-
-        <action
-            android:id="@+id/action_logoutFragment_to_changeEmailFragment"
-            app:destination="@id/changeEmailFragment" />
-
-        <action
-            android:id="@+id/action_logoutFragment_to_securitySettingsFragment"
-            app:destination="@id/securitySettingsFragment" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/changePasswordFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.logout.ChangePasswordFragment"
-        android:label="Change password"
-        tools:layout="@layout/fragment_change_password" />
-
-    <fragment
-        android:id="@+id/changeEmailFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.logout.ChangeEmailFragment"
-        android:label="Change email"
-        tools:layout="@layout/fragment_change_email" />
-
-    <fragment
-        android:id="@+id/securitySettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.logout.SecuritySettingsFragment"
-        android:label="Security settings"
-        tools:layout="@layout/fragment_security_settings" />
-
-    <fragment
-        android:id="@+id/reAuthenticateFragment"
-        android:name="com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment"
-        android:label="ReAuthenticate"
-        tools:layout="@layout/fragment_re_authenticate" />
-
-    <!-- 🌐 Language / About / Legal -->
-    <fragment
-        android:id="@+id/languageSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.app.LanguageSettingsFragment"
-        android:label="Language"
-        tools:layout="@layout/fragment_language_settings" />
-
-    <fragment
-        android:id="@+id/aboutAppFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.app.AboutAppFragment"
-        android:label="About"
-        tools:layout="@layout/fragment_about_app" />
-
-    <fragment
-        android:id="@+id/termsOfUseFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.app.TermsOfUseFragment"
-        android:label="@string/terms_title" />
-
-    <fragment
-        android:id="@+id/openSourceLicensesFragment"
-        android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment"
-        android:label="@string/open_source_title" />
+      android:id="@+id/action_aquariumFragment_to_createTankFragment"
+      app:destination="@id/createTankFragment" />
+
+    <action
+      android:id="@+id/action_aquariumFragment_to_tankDetailFragment"
+      app:destination="@id/tankDetailFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/createTankFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment"
+    android:label="Create Tank"
+    tools:layout="@layout/fragment_create_tank" />
+
+  <fragment
+    android:id="@+id/tankDetailFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment"
+    android:label="Tank Detail"
+    tools:layout="@layout/fragment_tank_detail">
+
+    <argument
+      android:name="tankId"
+      app:argType="long" />
+
+    <action
+      android:id="@+id/action_tankDetailFragment_to_tankSettingsFragment"
+      app:destination="@id/tankSettingsFragment" />
+
+    <action
+      android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
+      app:destination="@id/tankDetailLivestockFormFragment" />
+
+    <action
+      android:id="@+id/action_tankDetailFragment_to_tankDetailPlantTagFragment"
+      app:destination="@id/tankDetailPlantTagFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/materialPickerFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment"
+    android:label="Material Picker"
+    tools:layout="@layout/fragment_material_picker">
+
+    <argument
+      android:name="arg_mode"
+      app:argType="string"
+      android:defaultValue="mode_create" />
+
+    <argument
+      android:name="arg_tank_id"
+      app:argType="long"
+      android:defaultValue="0L" />
+
+    <argument
+      android:name="arg_category_key"
+      app:argType="string" />
+
+    <argument
+      android:name="arg_category_title"
+      app:argType="string" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/tankSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.settings.TankSettingsFragment"
+    android:label="Tank Settings"
+    tools:layout="@layout/fragment_tank_settings">
+
+    <argument
+      android:name="tankId"
+      app:argType="long" />
+
+    <action
+      android:id="@+id/action_tankSettingsFragment_to_materialPickerFragment"
+      app:destination="@id/materialPickerFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/tankDetailLivestockFormFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailLivestockFormFragment"
+    android:label="Livestock Form"
+    tools:layout="@layout/fragment_tank_livestock_form">
+
+    <argument
+      android:name="tankId"
+      app:argType="long" />
+
+    <argument
+      android:name="livestockId"
+      app:argType="long"
+      android:defaultValue="0L" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/tankDetailPlantTagFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailPlantTagFragment"
+    android:label="Plant Tags"
+    tools:layout="@layout/fragment_plant_tag">
+
+    <argument
+      android:name="tankId"
+      app:argType="long" />
+
+    <action
+      android:id="@+id/action_tankDetailPlantTagFragment_to_plantPickerFragment"
+      app:destination="@id/plantPickerFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/plantPickerFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment"
+    android:label="Plant Picker"
+    tools:layout="@layout/fragment_plant_picker">
+
+    <argument
+      android:name="useNavResult"
+      app:argType="boolean"
+      android:defaultValue="false" />
+
+  </fragment>
+
+  <!-- 🧰 Maintenance Tab -->
+  <fragment
+    android:id="@+id/aquariumMaintenanceFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment"
+    android:label="Maintenance"
+    tools:layout="@layout/fragment_aquarium_maintenance">
+
+    <action
+      android:id="@+id/action_aquariumMaintenanceFragment_to_addCareTaskFragment"
+      app:destination="@id/addCareTaskFragment" />
+
+    <action
+      android:id="@+id/action_aquariumMaintenanceFragment_to_taskDetailFragment"
+      app:destination="@id/taskDetailFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/taskDetailFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.TaskDetailFragment"
+    android:label="Task Detail"
+    tools:layout="@layout/fragment_task_detail">
+
+    <argument
+      android:name="taskId"
+      app:argType="long" />
+
+    <action
+      android:id="@+id/action_taskDetailFragment_to_addCareTaskFragment"
+      app:destination="@id/addCareTaskFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/addCareTaskFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.AddCareTaskFragment"
+    android:label="Add Care Task"
+    tools:layout="@layout/fragment_add_care_task">
+
+    <argument
+      android:name="taskId"
+      app:argType="long"
+      android:defaultValue="-1L" />
+
+  </fragment>
+
+  <!-- 📟 Devices Tab -->
+  <fragment
+    android:id="@+id/devicesFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment"
+    android:label="Devices"
+    tools:layout="@layout/fragment_devices">
+
+    <action
+      android:id="@+id/action_devicesFragment_to_deviceAddFragment"
+      app:destination="@id/deviceAddFragment" />
+
+    <action
+      android:id="@+id/action_devicesFragment_to_deviceRouterFragment"
+      app:destination="@id/deviceRouterFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/deviceAddFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceAddFragment"
+    android:label="Add Device"
+    tools:layout="@layout/fragment_device_add">
+
+    <action
+      android:id="@+id/action_deviceAddFragment_to_deviceSetupFragment"
+      app:destination="@id/deviceSetupFragment" />
+
+    <action
+      android:id="@+id/action_deviceAddFragment_to_deviceRouterFragment"
+      app:destination="@id/deviceRouterFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/deviceSetupFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.setup.DeviceSetupFragment"
+    android:label="Device Setup"
+    tools:layout="@layout/fragment_device_setup" />
+
+  <fragment
+    android:id="@+id/deviceRouterFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment"
+    android:label="Device"
+    tools:layout="@layout/fragment_device_router">
+
+    <argument
+      android:name="deviceId"
+      app:argType="long" />
+
+    <argument
+      android:name="deviceIp"
+      app:argType="string"
+      android:defaultValue="" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/unsupportedDeviceFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.UnsupportedDeviceFragment"
+    android:label="Unsupported Device"
+    tools:layout="@layout/fragment_unsupported_device">
+
+    <argument
+      android:name="deviceTitle"
+      app:argType="string"
+      android:defaultValue="Device" />
+
+    <argument
+      android:name="message"
+      app:argType="string"
+      android:defaultValue="" />
+
+  </fragment>
+
+  <!-- ⚙️ Settings Tab -->
+  <fragment
+    android:id="@+id/settingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.SettingsFragment"
+    android:label="Settings"
+    tools:layout="@layout/fragment_settings" />
+
+  <fragment
+    android:id="@+id/editProfileFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.profile.EditProfileFragment"
+    android:label="Edit profile"
+    tools:layout="@layout/fragment_edit_profile" />
+
+  <fragment
+    android:id="@+id/userInfoFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.userinfo.UserInfoFragment"
+    android:label="User info"
+    tools:layout="@layout/fragment_user_info" />
+
+  <fragment
+    android:id="@+id/userAddressFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.userinfo.UserAddressFragment"
+    android:label="User address"
+    tools:layout="@layout/fragment_user_address" />
+
+  <fragment
+    android:id="@+id/deviceStatusFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.device.DeviceStatusFragment"
+    android:label="Device status"
+    tools:layout="@layout/fragment_device_status" />
+
+  <fragment
+    android:id="@+id/networkFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.network.NetworkFragment"
+    android:label="Network"
+    tools:layout="@layout/fragment_network" />
+
+  <fragment
+    android:id="@+id/appSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.app.AppSettingsFragment"
+    android:label="App settings"
+    tools:layout="@layout/fragment_app_settings" />
+
+  <fragment
+    android:id="@+id/usageFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.usage.UsageFragment"
+    android:label="Usage"
+    tools:layout="@layout/fragment_usage" />
+
+  <fragment
+    android:id="@+id/privacyFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.privacy.PrivacyFragment"
+    android:label="Privacy"
+    tools:layout="@layout/fragment_privacy" />
+
+  <fragment
+    android:id="@+id/feedbackFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.feedback.FeedbackFragment"
+    android:label="Feedback"
+    tools:layout="@layout/fragment_feedback" />
+
+  <!-- 🚪 Logout / Account Security -->
+  <fragment
+    android:id="@+id/logoutFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.logout.LogoutFragment"
+    android:label="Logout"
+    tools:layout="@layout/fragment_logout">
+
+    <action
+      android:id="@+id/action_logoutFragment_to_changePasswordFragment"
+      app:destination="@id/changePasswordFragment" />
+
+    <action
+      android:id="@+id/action_logoutFragment_to_changeEmailFragment"
+      app:destination="@id/changeEmailFragment" />
+
+    <action
+      android:id="@+id/action_logoutFragment_to_securitySettingsFragment"
+      app:destination="@id/securitySettingsFragment" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/changePasswordFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.logout.ChangePasswordFragment"
+    android:label="Change password"
+    tools:layout="@layout/fragment_change_password" />
+
+  <fragment
+    android:id="@+id/changeEmailFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.logout.ChangeEmailFragment"
+    android:label="Change email"
+    tools:layout="@layout/fragment_change_email" />
+
+  <fragment
+    android:id="@+id/securitySettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.logout.SecuritySettingsFragment"
+    android:label="Security settings"
+    tools:layout="@layout/fragment_security_settings" />
+
+  <fragment
+    android:id="@+id/reAuthenticateFragment"
+    android:name="com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment"
+    android:label="ReAuthenticate"
+    tools:layout="@layout/fragment_re_authenticate" />
+
+  <!-- 🌐 Language / About / Legal -->
+  <fragment
+    android:id="@+id/languageSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.app.LanguageSettingsFragment"
+    android:label="Language"
+    tools:layout="@layout/fragment_language_settings" />
+
+  <fragment
+    android:id="@+id/aboutAppFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.app.AboutAppFragment"
+    android:label="About"
+    tools:layout="@layout/fragment_about_app" />
+
+  <fragment
+    android:id="@+id/termsOfUseFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.app.TermsOfUseFragment"
+    android:label="@string/terms_title" />
+
+  <fragment
+    android:id="@+id/openSourceLicensesFragment"
+    android:name="com.aqua.aqualight.ui.tabs.settings.app.OpenSourceLicensesFragment"
+    android:label="@string/open_source_title" />
 
 </navigation>
