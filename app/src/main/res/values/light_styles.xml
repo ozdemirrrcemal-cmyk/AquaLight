@@ -10,14 +10,6 @@
         <item name="fontFamily">@font/inter_semibold</item>
     </style>
 
-    <!-- Section Title -->
-
-    <style name="TextAppearance.Aqua.Light.SectionTitle">
-        <item name="android:textSize">18sp</item>
-        <item name="android:textColor">@color/light_text_primary</item>
-        <item name="fontFamily">@font/inter_semibold</item>
-    </style>
-
     <!-- Subtitle -->
 
     <style name="TextAppearance.Aqua.Light.Subtitle">
