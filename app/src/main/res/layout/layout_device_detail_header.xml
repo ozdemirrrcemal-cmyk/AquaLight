@@ -9,86 +9,106 @@
     android:background="@color/background_color"
     android:elevation="8dp"
     android:paddingHorizontal="16dp"
-    android:paddingTop="20dp"
-    android:paddingBottom="12dp">
+    android:paddingTop="12dp"
+    android:paddingBottom="8dp">
 
     <ImageView
         android:id="@+id/btnBack"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:clickable="true"
         android:contentDescription="@string/change_email_back_button_desc"
         android:focusable="true"
         android:scaleType="center"
         android:src="@drawable/ic_back"
-        app:tint="?attr/colorOnSurface"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:tint="?attr/colorOnSurface" />
 
     <LinearLayout
-    android:id="@+id/headerActionsContainer"
-    android:layout_width="wrap_content"
-    android:layout_height="40dp"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:visibility="gone"
-    tools:visibility="visible"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintTop_toTopOf="@id/btnBack"
-    app:layout_constraintBottom_toBottomOf="@id/btnBack">
-
-    <ImageButton
-        android:id="@+id/btnActionOne"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="9dp"
-        android:scaleType="center"
+        android:id="@+id/headerActionsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:visibility="gone"
-        tools:visibility="visible"
-        app:tint="?attr/colorOnSurface" />
+        app:layout_constraintBottom_toBottomOf="@id/btnBack"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/btnBack"
+        tools:visibility="visible">
 
-    <ImageButton
-        android:id="@+id/btnActionTwo"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="9dp"
-        android:scaleType="center"
-        android:visibility="gone"
-        tools:visibility="visible"
-        app:tint="?attr/colorOnSurface" />
+        <ImageButton
+            android:id="@+id/btnActionOne"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:scaleType="center"
+            android:visibility="gone"
+            app:tint="?attr/colorOnSurface"
+            tools:visibility="visible" />
 
-    <ImageButton
-        android:id="@+id/btnActionThree"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="9dp"
-        android:scaleType="center"
-        android:visibility="gone"
-        tools:visibility="visible"
-        app:tint="?attr/colorOnSurface" />
+        <ImageButton
+            android:id="@+id/btnActionTwo"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:scaleType="center"
+            android:visibility="gone"
+            app:tint="?attr/colorOnSurface"
+            tools:visibility="visible" />
 
-</LinearLayout>
+        <ImageButton
+            android:id="@+id/btnActionThree"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:scaleType="center"
+            android:visibility="gone"
+            app:tint="?attr/colorOnSurface"
+            tools:visibility="visible" />
 
-    <TextView
-        android:id="@+id/tvTitle"
-        style="@style/TextAppearance.Aqua.EditProfileTitle"
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/titleStatusContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="14dp"
+        android:layout_marginStart="12dp"
         android:layout_marginEnd="8dp"
-        android:ellipsize="end"
-        android:gravity="start|center_vertical"
-        android:maxLines="1"
-        android:text="Device"
-        android:textColor="?attr/colorOnSurface"
-        app:layout_constraintStart_toEndOf="@id/btnBack"
-        app:layout_constraintEnd_toStartOf="@id/headerActionsContainer"
-        app:layout_constraintTop_toTopOf="@id/btnBack"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="@id/btnBack"
-        tools:text="WRGB Pro2" />
+        app:layout_constraintEnd_toStartOf="@id/headerActionsContainer"
+        app:layout_constraintStart_toEndOf="@id/btnBack"
+        app:layout_constraintTop_toTopOf="@id/btnBack">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            style="@style/TextAppearance.Aqua.EditProfileTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="start|center_vertical"
+            android:maxLines="1"
+            android:text="Device"
+            android:textColor="?attr/colorOnSurface"
+            tools:text="WRGB Pro2" />
+
+        <ImageView
+            android:id="@+id/imgStatusIcon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="7dp"
+            android:scaleType="center"
+            android:visibility="gone"
+            app:tint="?attr/colorPrimary"
+            tools:src="@drawable/ic_device_status_24"
+            tools:visibility="visible" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

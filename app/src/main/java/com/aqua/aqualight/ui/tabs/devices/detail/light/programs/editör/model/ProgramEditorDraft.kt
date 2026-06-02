@@ -27,7 +27,8 @@ data class ProgramEditorCurvePoint(
     val red: Int,
     val green: Int,
     val blue: Int,
-    val white: Int
+    val white: Int,
+    val name: String = ""
 )
 
 enum class ProgramEditorCurvePointKind {

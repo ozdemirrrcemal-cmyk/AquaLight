@@ -317,5 +317,18 @@
 <string name="light_program_channel_short_white_format">W%1$d</string>
 
 <string name="light_point_editor_custom_point">Custom Point</string>
+<string name="light_editor_custom_points_title">Custom Points</string>
+
+<string name="light_editor_error_repeat_day_required">Select at least one repeat day.</string>
+<string name="light_editor_error_curve_points_required">Add at least one curve point.</string>
+<string name="light_editor_error_default_points_required">Start, peak start, peak end and end points are required.</string>
+<string name="light_editor_error_point_order_invalid">Point order must be Start → Peak start → Peak end → End.</string>
+<string name="light_editor_error_start_must_be_zero">Start intensity must be 0%.</string>
+<string name="light_editor_error_end_must_be_zero">End intensity must be 0%.</string>
+<string name="light_editor_error_peak_must_be_above_zero">Peak intensity must be above 0%.</string>
+<string name="light_editor_error_duplicate_point_time">Two curve points cannot use the same time.</string>
+<string name="light_editor_error_photoperiod_too_short">Light period is too short. Use at least 1 hour.</string>
+<string name="light_editor_error_photoperiod_too_long">Light period is too long. Use 18 hours or less.</string>
+<string name="light_editor_error_custom_point_out_of_range">Custom points must stay between Start and End.</string>
 
 </resources>

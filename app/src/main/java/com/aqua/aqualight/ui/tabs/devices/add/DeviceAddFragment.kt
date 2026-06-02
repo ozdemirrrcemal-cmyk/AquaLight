@@ -368,25 +368,24 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun openDeviceMenu(
-        deviceId: Long
-    ) {
-        val args = Bundle().apply {
-            putLong("deviceId", deviceId)
-        }
-
-        findNavController().navigate(
-            R.id.deviceMenuFragment,
-            args,
-            navOptions {
-                popUpTo(R.id.devicesFragment) {
-                    inclusive = false
-                }
-
-                launchSingleTop = true
-            }
-        )
+    deviceId: Long
+) {
+    val args = Bundle().apply {
+        putLong("deviceId", deviceId)
     }
 
+    findNavController().navigate(
+        R.id.deviceRouterFragment,
+        args,
+        navOptions {
+            popUpTo(R.id.devicesFragment) {
+                inclusive = false
+            }
+
+            launchSingleTop = true
+        }
+    )
+}
     override fun onDestroyView() {
         binding.scanAnimation.cancelAnimation()
         binding.rvCandidates.adapter = null

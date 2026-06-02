@@ -74,12 +74,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             onSelectionModeStart = {
                 enterSelectionMode()
             },
-            onSelectionChanged = { count ->
+            onSelectionChanged = {
+                count ->
                 if (count == 0) {
                     exitSelectionMode()
                 }
             },
-            onDeviceClick = { device ->
+            onDeviceClick = {
+                device ->
                 openDeviceMenu(
                     device = device
                 )
@@ -104,7 +106,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun observeTanks() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+            tanks ->
             latestTanks = tanks
             renderDevices()
         }
@@ -118,9 +121,11 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 combine(
                     devicesStore.devicesFlow,
                     DevicePresenceMonitor.statuses
-                ) { devices, statuses ->
+                ) {
+                    devices, statuses ->
                     devices to statuses
-                }.collect { pair ->
+                }.collect {
+                    pair ->
                     latestDevices = pair.first
                     latestStatuses = pair.second
 
@@ -153,31 +158,32 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         val now = System.currentTimeMillis()
 
-        val uiList = latestDevices.map { device ->
+        val uiList = latestDevices.map {
+            device ->
             val presenceState = latestStatuses[device.id]
 
             val online = presenceState?.isOnline ?: (
                 device.lastSeenMillis > 0L &&
-                    now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
-                )
+                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+            )
 
             val definition = AquaDeviceCatalog.findByType(
                 type = device.deviceType
             )
 
             val displayName = definition?.displayName
-                ?: device.name.ifBlank {
-                    device.productModel.ifBlank {
-                        "Device"
-                    }
+            ?: device.name.ifBlank {
+                device.productModel.ifBlank {
+                    "Device"
                 }
+            }
 
             val familyName = definition?.family?.displayName
-                ?: device.productFamily.ifBlank {
-                    device.aquaName.ifBlank {
-                        "Unknown"
-                    }
+            ?: device.productFamily.ifBlank {
+                device.aquaName.ifBlank {
+                    "Unknown"
                 }
+            }
 
             DeviceCardUi(
                 id = device.id,
@@ -205,7 +211,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     ): String {
         val connectedTankId = device.tankId ?: return ""
 
-        return latestTanks.firstOrNull { tank ->
+        return latestTanks.firstOrNull {
+            tank ->
             tank.id == connectedTankId
         }?.name ?: "Unknown aquarium"
     }
@@ -257,7 +264,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             }
 
             findNavController().navigate(
-                R.id.action_devicesFragment_to_deviceMenuFragment,
+                R.id.action_devicesFragment_to_deviceRouterFragment,
                 args
             )
         }

@@ -720,7 +720,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         }
 
         findNavController().navigate(
-            R.id.deviceMenuFragment,
+            R.id.deviceRouterFragment,
             args,
             navOptions {
                 popUpTo(R.id.devicesFragment) {

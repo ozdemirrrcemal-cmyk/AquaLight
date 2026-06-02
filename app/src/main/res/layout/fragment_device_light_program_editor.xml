@@ -521,216 +521,55 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardCurvePoints"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/light_surface"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/light_stroke"
-                app:strokeWidth="1dp">
+<com.google.android.material.card.MaterialCardView
+    android:id="@+id/cardCurvePoints"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    app:cardBackgroundColor="@color/light_surface"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/light_stroke"
+    app:strokeWidth="1dp">
 
-                <LinearLayout
-                    android:id="@+id/curvePointsContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="15dp">
+    <LinearLayout
+        android:id="@+id/curvePointsContentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="15dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="@font/inter_semibold"
-                        android:includeFontPadding="false"
-                        android:text="@string/light_editor_curve_points_title"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textSize="16sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="@string/light_editor_curve_points_title"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="16sp" />
 
-                    <TextView
-                        android:id="@+id/tvCurvePointsSubtitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:text=""
-                        android:textColor="@color/settings_text_secondary"
-                        android:textSize="12sp"
-                        tools:text="Program points used by the daily curve" />
+        <TextView
+            android:id="@+id/tvCurvePointsSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text=""
+            android:textColor="@color/settings_text_secondary"
+            android:textSize="12sp"
+            tools:text="Program points used by the daily curve" />
 
-                    <LinearLayout
-                        android:id="@+id/rowPointStart"
-                        android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:layout_marginTop="10dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+        <LinearLayout
+            android:id="@+id/curvePointRowsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
-                        <TextView
-                            android:id="@+id/tvPointStartTime"
-                            android:layout_width="54dp"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter_semibold"
-                            android:includeFontPadding="false"
-                            android:text=""
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp"
-                            tools:text="08:00" />
+    </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/tvPointStartLabel"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text=""
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp"
-                            tools:text="Start" />
-
-                        <TextView
-                            android:id="@+id/tvPointStartPercent"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter_semibold"
-                            android:includeFontPadding="false"
-                            android:text=""
-                            android:textColor="@color/light_accent"
-                            android:textSize="13sp"
-                            tools:text="0%" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/rowPointPeakStart"
-                        android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvPointPeakStartTime"
-                            android:layout_width="54dp"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter_semibold"
-                            android:includeFontPadding="false"
-                            android:text=""
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp"
-                            tools:text="12:00" />
-
-                        <TextView
-                            android:id="@+id/tvPointPeakStartLabel"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text=""
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp"
-                            tools:text="Peak start" />
-
-                        <TextView
-                            android:id="@+id/tvPointPeakStartPercent"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter_semibold"
-                            android:includeFontPadding="false"
-                            android:text=""
-                            android:textColor="@color/light_accent"
-                            android:textSize="13sp"
-                            tools:text="100%" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/rowPointPeakEnd"
-                        android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvPointPeakEndTime"
-                            android:layout_width="54dp"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter_semibold"
-                            android:includeFontPadding="false"
-                            android:text=""
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp"
-                            tools:text="16:00" />
-
-                        <TextView
-                            android:id="@+id/tvPointPeakEndLabel"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text=""
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp"
-                            tools:text="Peak end" />
-
-                        <TextView
-                            android:id="@+id/tvPointPeakEndPercent"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter_semibold"
-                            android:includeFontPadding="false"
-                            android:text=""
-                            android:textColor="@color/light_accent"
-                            android:textSize="13sp"
-                            tools:text="100%" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/rowPointEnd"
-                        android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvPointEndTime"
-                            android:layout_width="54dp"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter_semibold"
-                            android:includeFontPadding="false"
-                            android:text=""
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="13sp"
-                            tools:text="20:00" />
-
-                        <TextView
-                            android:id="@+id/tvPointEndLabel"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text=""
-                            android:textColor="@color/settings_text_secondary"
-                            android:textSize="12sp"
-                            tools:text="End" />
-
-                        <TextView
-                            android:id="@+id/tvPointEndPercent"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:fontFamily="@font/inter_semibold"
-                            android:includeFontPadding="false"
-                            android:text=""
-                            android:textColor="@color/light_accent"
-                            android:textSize="13sp"
-                            tools:text="0%" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
+</com.google.android.material.card.MaterialCardView>
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardProgramChannelBalance"
                 android:layout_width="match_parent"

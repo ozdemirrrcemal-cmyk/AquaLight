@@ -43,7 +43,6 @@ jobs:
           echo "Installed packages (first 120 lines):"
           sdkmanager --list | sed -n '1,120p' || true
 
-      # Cache: quick-clean'de KAPANMAZ, sadece 'clean' (tek kelime) veya 'clean-cache' kapatır
       - name: ⚡ Cache Gradle build-cache
         if: ${{ !contains(github.event.head_commit.message, 'clean-cache') && !startsWith(github.event.head_commit.message, 'clean ') && !endsWith(github.event.head_commit.message, ' clean') && !contains(github.event.head_commit.message, ' clean ') && github.event.head_commit.message != 'clean' }}
         uses: actions/cache@v4
@@ -57,23 +56,20 @@ jobs:
       - name: ⚙️ Grant permission for Gradle
         run: chmod +x ./gradlew
 
-      # refresh-deps: modül cache’lerini boşalt
-      - name: 🔄 Force refresh dependencies (optional)
+      - name: 🔄 Force refresh dependencies optional
         if: contains(github.event.head_commit.message, 'refresh-deps')
         run: |
           rm -rf ~/.gradle/caches/modules-2 ~/.gradle/caches/transforms-* ~/.gradle/caches/jars-* || true
           echo "Gradle module caches cleared."
 
-      # Hard clean: SADECE 'clean' (tek kelime) veya 'clean-cache'
-      - name: 🧹 Hard clean caches & outputs (on demand)
+      - name: 🧹 Hard clean caches & outputs on demand
         if: ${{ contains(github.event.head_commit.message, 'clean-cache') || startsWith(github.event.head_commit.message, 'clean ') || endsWith(github.event.head_commit.message, ' clean') || contains(github.event.head_commit.message, ' clean ') || github.event.head_commit.message == 'clean' }}
         run: |
           echo "💥 Hard clean requested. Purging Gradle caches and build outputs..."
           rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.gradle/native ~/.gradle/wrapper || true
           rm -rf **/build build app/build || true
 
-      # Quick-clean: sadece gradlew clean
-      - name: ⚡ Quick project clean (optional)
+      - name: ⚡ Quick project clean optional
         if: contains(github.event.head_commit.message, 'quick-clean')
         run: ./gradlew clean --no-daemon
 
@@ -83,7 +79,7 @@ jobs:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
         run: |
           echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > release-key.jks
-          echo "✅ release-key.jks oluşturuldu (repo kökü)"
+          echo "✅ release-key.jks oluşturuldu repo kökü"
           ls -la
 
       - name: 🚀 Build Signed Release APK
@@ -93,7 +89,7 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --stacktrace --no-daemon
 
-      - name: 📋 Dump releaseRuntimeClasspath (on failure)
+      - name: 📋 Dump releaseRuntimeClasspath on failure
         if: failure()
         run: ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --no-daemon
 
@@ -122,6 +118,40 @@ jobs:
       - name: 🧪 Run Lint & Unit Tests
         run: ./gradlew lintRelease testReleaseUnitTest --no-daemon --stacktrace
 
+      - name: 🧹 Extract unused resources list
+        if: always()
+        run: |
+          python3 - <<'PY' > unused-resources.txt
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          reports = list(Path(".").glob("**/build/reports/lint-results-*.xml"))
+          unused = []
+
+          for report in reports:
+              try:
+                  root = ET.parse(report).getroot()
+              except Exception as e:
+                  print(f"Could not parse {report}: {e}")
+                  continue
+
+              for issue in root.findall("issue"):
+                  if issue.attrib.get("id") == "UnusedResources":
+                      msg = issue.attrib.get("message", "")
+                      loc = issue.find("location")
+                      file = loc.attrib.get("file", "") if loc is not None else ""
+                      unused.append((file, msg))
+
+          for file, msg in sorted(set(unused)):
+              print(file)
+              print(f"  {msg}")
+              print()
+
+          print(f"TOTAL UNUSED RESOURCES: {len(set(unused))}")
+          PY
+
+          cat unused-resources.txt
+
       - name: 📊 Upload Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -129,6 +159,8 @@ jobs:
           name: QA-Reports-${{ github.run_number }}
           path: |
             **/build/reports/lint-results-*.html
+            **/build/reports/lint-results-*.xml
+            unused-resources.txt
             **/build/reports/tests/testReleaseUnitTest/*
           if-no-files-found: ignore
 

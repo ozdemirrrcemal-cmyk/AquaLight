@@ -53,6 +53,13 @@ android {
             ]
         }
     }
+	
+	lint {
+        checkOnly.add("UnusedResources")
+        htmlReport true
+        xmlReport true
+        abortOnError false
+    }
 
     buildFeatures { buildConfig true; viewBinding true }
 }
