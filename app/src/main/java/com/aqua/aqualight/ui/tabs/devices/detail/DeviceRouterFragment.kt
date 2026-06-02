@@ -115,86 +115,20 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
     }
 
     private fun routeToController(
-        deviceId: Long,
-        deviceIp: String,
-        routerTitle: String,
-        controllerTitle: String,
-        canEditDeviceName: Boolean,
-        userDeviceName: String,
-        defaultDeviceTitle: String,
-        definition: AquaDeviceDefinition
-    ) {
-        val popRouterOptions = navOptions {
-            popUpTo(R.id.deviceRouterFragment) {
-                inclusive = true
-            }
-        }
-
-        when (definition.uiController) {
-            AquaDeviceUiController.GENERIC_LIGHT -> {
-                findNavController().navigate(
-                    R.id.deviceLightFragment,
-                    bundleOf(
-                        ARG_DEVICE_ID to deviceId,
-                        ARG_DEVICE_TITLE to controllerTitle
-                    ),
-                    popRouterOptions
-                )
-            }
-
-            AquaDeviceUiController.GENERIC_DOSING,
-            AquaDeviceUiController.CUSTOM_DOSING_4CH -> {
-                findNavController().navigate(
-                    R.id.deviceDosingFragment,
-                    bundleOf(
-                        ARG_DEVICE_ID to deviceId,
-                        ARG_DEVICE_IP to deviceIp,
-                        ARG_DEVICE_TITLE to controllerTitle,
-                        ARG_CAN_EDIT_DEVICE_NAME to canEditDeviceName,
-                        ARG_USER_DEVICE_NAME to userDeviceName,
-                        ARG_DEFAULT_DEVICE_TITLE to defaultDeviceTitle
-                    ),
-                    popRouterOptions
-                )
-            }
-
-            AquaDeviceUiController.GENERIC_TIMER,
-            AquaDeviceUiController.CUSTOM_TIMER_MULTI_CONTROL,
-            AquaDeviceUiController.CUSTOM_TIMER_SCENE_PRO -> {
-                findNavController().navigate(
-                    R.id.deviceTimerFragment,
-                    bundleOf(
-                        ARG_DEVICE_ID to deviceId,
-                        ARG_DEVICE_IP to deviceIp,
-                        ARG_DEVICE_TITLE to controllerTitle,
-                        ARG_CAN_EDIT_DEVICE_NAME to canEditDeviceName,
-                        ARG_USER_DEVICE_NAME to userDeviceName,
-                        ARG_DEFAULT_DEVICE_TITLE to defaultDeviceTitle
-                    ),
-                    popRouterOptions
-                )
-            }
-
-            AquaDeviceUiController.GENERIC_COOLING,
-            AquaDeviceUiController.CUSTOM_COOLING_ADVANCED -> {
-                findNavController().navigate(
-                    R.id.deviceCoolingFragment,
-                    bundleOf(
-                        ARG_DEVICE_ID to deviceId,
-                        ARG_DEVICE_IP to deviceIp
-                    ),
-                    popRouterOptions
-                )
-            }
-
-            else -> {
-                openUnsupportedDevice(
-                    title = routerTitle,
-                    message = "This device controller is not available in this app version."
-                )
-            }
-        }
-    }
+    deviceId: Long,
+    deviceIp: String,
+    routerTitle: String,
+    controllerTitle: String,
+    canEditDeviceName: Boolean,
+    userDeviceName: String,
+    defaultDeviceTitle: String,
+    definition: AquaDeviceDefinition
+) {
+    openUnsupportedDevice(
+        title = routerTitle,
+        message = "This device controller will be added in the new professional navigation structure."
+    )
+}
 
     private fun openUnsupportedDevice(title: String, message: String) {
         findNavController().navigate(
