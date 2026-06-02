@@ -53,8 +53,10 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 showGlobalLoading(true)
 
                 val device = devicesStore.devicesFlow
-                    .first()
-                    .firstOrNull { it.id == deviceId }
+                .first()
+                .firstOrNull {
+                    it.id == deviceId
+                }
 
                 if (!isAdded) return@launch
 
@@ -70,7 +72,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
                 if (definition == null) {
                     openUnsupportedDevice(
-                        title = device.productModel.ifBlank { "Unsupported Device" },
+                        title = device.productModel.ifBlank {
+                            "Unsupported Device"
+                        },
                         message = "This device is not supported by this app version."
                     )
                     return@launch
@@ -78,14 +82,19 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
                 val tanks = tankStore.tanksFlow.first()
 
-                val assignedTankName = device.tankId?.let { tankId ->
-                    tanks.firstOrNull { it.id == tankId }?.name
+                val assignedTankName = device.tankId?.let {
+                    tankId ->
+                    tanks.firstOrNull {
+                        it.id == tankId
+                    }?.name
                 }.orEmpty()
 
                 val deviceIp = requireArguments()
-                    .getString(ARG_DEVICE_IP)
-                    .orEmpty()
-                    .ifBlank { device.ip }
+                .getString(ARG_DEVICE_IP)
+                .orEmpty()
+                .ifBlank {
+                    device.ip
+                }
 
                 val routerTitle = resolveRouterTitle(
                     productModel = device.productModel,
@@ -115,20 +124,78 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
     }
 
     private fun routeToController(
-    deviceId: Long,
-    deviceIp: String,
-    routerTitle: String,
-    controllerTitle: String,
-    canEditDeviceName: Boolean,
-    userDeviceName: String,
-    defaultDeviceTitle: String,
-    definition: AquaDeviceDefinition
-) {
-    openUnsupportedDevice(
-        title = routerTitle,
-        message = "This device controller will be added in the new professional navigation structure."
-    )
-}
+        deviceId: Long,
+        deviceIp: String,
+        routerTitle: String,
+        controllerTitle: String,
+        canEditDeviceName: Boolean,
+        userDeviceName: String,
+        defaultDeviceTitle: String,
+        definition: AquaDeviceDefinition
+    ) {
+        val popRouterOptions = navOptions {
+            popUpTo(R.id.deviceRouterFragment) {
+                inclusive = true
+            }
+        }
+
+        when (definition.uiController) {
+            AquaDeviceUiController.GENERIC_LIGHT -> {
+                findNavController().navigate(
+                    R.id.deviceLightFragment,
+                    bundleOf(
+                        ARG_DEVICE_ID to deviceId,
+                        ARG_DEVICE_TITLE to controllerTitle
+                    ),
+                    popRouterOptions
+                )
+            }
+            AquaDeviceUiController.GENERIC_DOSING,
+            AquaDeviceUiController.CUSTOM_DOSING_4CH -> {
+                findNavController().navigate(
+                    R.id.deviceDosingFragment,
+                    bundleOf(
+                        ARG_DEVICE_ID to deviceId,
+                        ARG_DEVICE_IP to deviceIp,
+                        ARG_DEVICE_TITLE to controllerTitle
+                    ),
+                    popRouterOptions
+                )
+            }
+
+            AquaDeviceUiController.GENERIC_TIMER,
+            AquaDeviceUiController.CUSTOM_TIMER_MULTI_CONTROL,
+            AquaDeviceUiController.CUSTOM_TIMER_SCENE_PRO -> {
+                findNavController().navigate(
+                    R.id.deviceTimerFragment,
+                    bundleOf(
+                        ARG_DEVICE_ID to deviceId,
+                        ARG_DEVICE_IP to deviceIp,
+                        ARG_DEVICE_TITLE to controllerTitle
+                    ),
+                    popRouterOptions
+                )
+            }
+
+            AquaDeviceUiController.GENERIC_COOLING,
+            AquaDeviceUiController.CUSTOM_COOLING_ADVANCED -> {
+                findNavController().navigate(
+                    R.id.deviceCoolingFragment,
+                    bundleOf(
+                        ARG_DEVICE_ID to deviceId,
+                        ARG_DEVICE_IP to deviceIp,
+                        ARG_DEVICE_TITLE to controllerTitle
+                    ),
+                    popRouterOptions
+                )
+            } else -> {
+                openUnsupportedDevice(
+                    title = routerTitle,
+                    message = "This device controller will be added in the new professional navigation structure."
+                )
+            }
+        }
+    }
 
     private fun openUnsupportedDevice(title: String, message: String) {
         findNavController().navigate(
@@ -150,7 +217,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         definition: AquaDeviceDefinition
     ): String {
         return productModel.ifBlank {
-            definition.displayName.ifBlank { DEFAULT_DEVICE_TITLE }
+            definition.displayName.ifBlank {
+                DEFAULT_DEVICE_TITLE
+            }
         }
     }
 
@@ -160,7 +229,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         fallbackDeviceTitle: String
     ): String {
         return assignedTankName.ifBlank {
-            userDeviceName.ifBlank { fallbackDeviceTitle }
+            userDeviceName.ifBlank {
+                fallbackDeviceTitle
+            }
         }
     }
 
