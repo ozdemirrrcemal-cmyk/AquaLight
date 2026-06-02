@@ -22,7 +22,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             .getString(ARG_DEVICE_TITLE)
             .orEmpty()
             .ifBlank {
-                getString(R.string.light_default_device_title)
+              "Lighting"
             }
 
     override fun onViewCreated(
