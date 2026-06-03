@@ -10,6 +10,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
 
 class DeviceLightProgramEditorFragment :
     Fragment(R.layout.fragment_device_light_program_editor) {
@@ -18,18 +19,19 @@ class DeviceLightProgramEditorFragment :
     private val binding get() = _binding!!
 
     override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?
-    ) {
-        super.onViewCreated(view, savedInstanceState)
+    view: View,
+    savedInstanceState: Bundle?
+) {
+    super.onViewCreated(view, savedInstanceState)
 
-        _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
+    _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
-        setupHeader()
-        setupProgramSettingsRows()
-        setupClicks()
-        setupSliders()
-    }
+    setupHeader()
+    setupGraph()
+    setupProgramSettingsRows()
+    setupClicks()
+    setupSliders()
+}
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
@@ -72,6 +74,12 @@ class DeviceLightProgramEditorFragment :
             subtitle = "Subtle randomized daily output"
         )
     }
+	
+	private fun setupGraph() {
+    binding.lightCurveGraphView.setState(
+        LightCurveGraphState.preview()
+    )
+}
 
     private fun bindActionRow(
         row: View,
@@ -148,22 +156,22 @@ class DeviceLightProgramEditorFragment :
     }
 
     private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener { _, value, _ ->
-            binding.tvRedValue.text = "Red ${value.toInt()}%"
-        }
-
-        binding.sliderGreen.addOnChangeListener { _, value, _ ->
-            binding.tvGreenValue.text = "Green ${value.toInt()}%"
-        }
-
-        binding.sliderBlue.addOnChangeListener { _, value, _ ->
-            binding.tvBlueValue.text = "Blue ${value.toInt()}%"
-        }
-
-        binding.sliderWhite.addOnChangeListener { _, value, _ ->
-            binding.tvWhiteValue.text = "White ${value.toInt()}%"
-        }
+    binding.sliderRed.addOnChangeListener { _, value, _ ->
+        binding.tvRedValue.text = "${value.toInt()}%"
     }
+
+    binding.sliderGreen.addOnChangeListener { _, value, _ ->
+        binding.tvGreenValue.text = "${value.toInt()}%"
+    }
+
+    binding.sliderBlue.addOnChangeListener { _, value, _ ->
+        binding.tvBlueValue.text = "${value.toInt()}%"
+    }
+
+    binding.sliderWhite.addOnChangeListener { _, value, _ ->
+        binding.tvWhiteValue.text = "${value.toInt()}%"
+    }
+}
 
     override fun onDestroyView() {
         _binding = null

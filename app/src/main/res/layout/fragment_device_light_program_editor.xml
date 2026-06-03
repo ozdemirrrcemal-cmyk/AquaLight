@@ -26,7 +26,7 @@
         android:paddingStart="10dp"
         android:paddingTop="16dp"
         android:paddingEnd="10dp"
-        android:paddingBottom="116dp"
+        android:paddingBottom="32dp"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toTopOf="@id/saveBarContainer"
         app:layout_constraintStart_toStartOf="parent"
@@ -80,93 +80,10 @@
 
                     </LinearLayout>
 
-                    <FrameLayout
-                        android:id="@+id/lightCurveGraphContainer"
-                        android:layout_width="match_parent"
-                        android:layout_height="260dp"
-                        android:background="@drawable/bg_light_timeline_panel">
-
-                        <TextView
-                            style="@style/TextAppearance.Aqua.Light.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="top|start"
-                            android:layout_marginStart="14dp"
-                            android:layout_marginTop="16dp"
-                            android:text="100%" />
-
-                        <TextView
-                            style="@style/TextAppearance.Aqua.Light.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical|start"
-                            android:layout_marginStart="14dp"
-                            android:text="50%" />
-
-                        <TextView
-                            style="@style/TextAppearance.Aqua.Light.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|start"
-                            android:layout_marginStart="14dp"
-                            android:layout_marginBottom="38dp"
-                            android:text="0%" />
-
-                        <View
-                            android:id="@+id/graphBaseline"
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_gravity="bottom"
-                            android:layout_marginStart="52dp"
-                            android:layout_marginEnd="14dp"
-                            android:layout_marginBottom="58dp"
-                            android:background="@color/light_stroke" />
-
-                        <TextView
-                            android:id="@+id/tvGraphPlaceholder"
-                            style="@style/TextAppearance.Aqua.Light.Body"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="Graph preview"
-                            android:textColor="@color/light_text_tertiary" />
-
-                        <TextView
-                            style="@style/TextAppearance.Aqua.Light.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|start"
-                            android:layout_marginStart="52dp"
-                            android:layout_marginBottom="20dp"
-                            android:text="0" />
-
-                        <TextView
-                            style="@style/TextAppearance.Aqua.Light.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|start"
-                            android:layout_marginStart="132dp"
-                            android:layout_marginBottom="20dp"
-                            android:text="4" />
-
-                        <TextView
-                            style="@style/TextAppearance.Aqua.Light.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|center_horizontal"
-                            android:layout_marginBottom="20dp"
-                            android:text="8" />
-
-                        <TextView
-                            style="@style/TextAppearance.Aqua.Light.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|end"
-                            android:layout_marginEnd="92dp"
-                            android:layout_marginBottom="20dp"
-                            android:text="12" />
-
-                    </FrameLayout>
+                   <com.aqua.aqualight.ui.tabs.devices.detail.light.curve.view.LightCurveGraphView
+    android:id="@+id/lightCurveGraphView"
+    android:layout_width="match_parent"
+    android:layout_height="300dp" />
 
                 </LinearLayout>
 
@@ -481,9 +398,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="18dp"
+                    android:paddingStart="14dp"
                     android:paddingTop="18dp"
-                    android:paddingEnd="18dp"
+                    android:paddingEnd="14dp"
                     android:paddingBottom="18dp">
 
                     <TextView
@@ -492,60 +409,58 @@
                         android:layout_height="wrap_content"
                         android:text="Repeat" />
 
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="14dp"
-                        android:fillViewport="false"
-                        android:overScrollMode="never"
-                        android:scrollbars="none">
+                   <LinearLayout
+    android:id="@+id/repeatOptionsContainer"
+    android:layout_width="match_parent"
+    android:layout_height="44dp"
+    android:layout_marginTop="14dp"
+    android:background="@drawable/bg_light_filter_bar"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:padding="3dp">
 
-                        <LinearLayout
-                            android:id="@+id/repeatOptionsContainer"
-                            android:layout_width="wrap_content"
-                            android:layout_height="48dp"
-                            android:background="@drawable/bg_light_filter_bar"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:padding="4dp">
+    <TextView
+        android:id="@+id/repeatEvery"
+        style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/bg_light_filter_selected"
+        android:gravity="center"
+        android:text="Every"
+        android:textSize="12sp" />
 
-                            <TextView
-                                android:id="@+id/repeatEvery"
-                                style="@style/TextAppearance.Aqua.Light.Filter.Selected"
-                                android:layout_width="104dp"
-                                android:layout_height="match_parent"
-                                android:background="@drawable/bg_light_filter_selected"
-                                android:gravity="center"
-                                android:text="Every" />
+    <TextView
+        android:id="@+id/repeatWeekdays"
+        style="@style/TextAppearance.Aqua.Light.Filter"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Week"
+        android:textSize="12sp" />
 
-                            <TextView
-                                android:id="@+id/repeatWeekdays"
-                                style="@style/TextAppearance.Aqua.Light.Filter"
-                                android:layout_width="120dp"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:text="Weekdays" />
+    <TextView
+        android:id="@+id/repeatWeekend"
+        style="@style/TextAppearance.Aqua.Light.Filter"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Weekend"
+        android:textSize="12sp" />
 
-                            <TextView
-                                android:id="@+id/repeatWeekend"
-                                style="@style/TextAppearance.Aqua.Light.Filter"
-                                android:layout_width="116dp"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:text="Weekend" />
+    <TextView
+        android:id="@+id/repeatCustom"
+        style="@style/TextAppearance.Aqua.Light.Filter"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Custom"
+        android:textSize="12sp" />
 
-                            <TextView
-                                android:id="@+id/repeatCustom"
-                                style="@style/TextAppearance.Aqua.Light.Filter"
-                                android:layout_width="104dp"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:text="Custom" />
-
-                        </LinearLayout>
-
-                    </HorizontalScrollView>
-
+</LinearLayout>
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
