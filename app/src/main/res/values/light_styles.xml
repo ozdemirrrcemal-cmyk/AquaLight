@@ -364,15 +364,14 @@
     <item name="android:textSize">16sp</item>
     <item name="android:includeFontPadding">false</item>
 </style>
-
 <style name="Widget.Aqua.Light.Slider.Red"
     parent="Widget.Material3.Slider">
     <item name="trackHeight">3dp</item>
-    <item name="thumbWidth">18dp</item>
-    <item name="thumbHeight">18dp</item>
+    <item name="thumbWidth">15dp</item>
+    <item name="thumbHeight">15dp</item>
     <item name="haloRadius">0dp</item>
-    <item name="activeTrackColor">@color/light_channel_red</item>
-    <item name="inactiveTrackColor">@color/light_slider_inactive</item>
+    <item name="trackColorActive">@color/light_channel_red</item>
+    <item name="trackColorInactive">@color/light_slider_inactive</item>
     <item name="thumbColor">@color/light_channel_red</item>
     <item name="tickColorActive">@android:color/transparent</item>
     <item name="tickColorInactive">@android:color/transparent</item>
@@ -381,11 +380,11 @@
 <style name="Widget.Aqua.Light.Slider.Green"
     parent="Widget.Material3.Slider">
     <item name="trackHeight">3dp</item>
-    <item name="thumbWidth">18dp</item>
-    <item name="thumbHeight">18dp</item>
+    <item name="thumbWidth">15dp</item>
+    <item name="thumbHeight">15dp</item>
     <item name="haloRadius">0dp</item>
-    <item name="activeTrackColor">@color/light_channel_green</item>
-    <item name="inactiveTrackColor">@color/light_slider_inactive</item>
+    <item name="trackColorActive">@color/light_channel_green</item>
+    <item name="trackColorInactive">@color/light_slider_inactive</item>
     <item name="thumbColor">@color/light_channel_green</item>
     <item name="tickColorActive">@android:color/transparent</item>
     <item name="tickColorInactive">@android:color/transparent</item>
@@ -394,11 +393,11 @@
 <style name="Widget.Aqua.Light.Slider.Blue"
     parent="Widget.Material3.Slider">
     <item name="trackHeight">3dp</item>
-    <item name="thumbWidth">18dp</item>
-    <item name="thumbHeight">18dp</item>
+    <item name="thumbWidth">15dp</item>
+    <item name="thumbHeight">15dp</item>
     <item name="haloRadius">0dp</item>
-    <item name="activeTrackColor">@color/light_channel_blue</item>
-    <item name="inactiveTrackColor">@color/light_slider_inactive</item>
+    <item name="trackColorActive">@color/light_channel_blue</item>
+    <item name="trackColorInactive">@color/light_slider_inactive</item>
     <item name="thumbColor">@color/light_channel_blue</item>
     <item name="tickColorActive">@android:color/transparent</item>
     <item name="tickColorInactive">@android:color/transparent</item>
@@ -407,11 +406,11 @@
 <style name="Widget.Aqua.Light.Slider.White"
     parent="Widget.Material3.Slider">
     <item name="trackHeight">3dp</item>
-    <item name="thumbWidth">18dp</item>
-    <item name="thumbHeight">18dp</item>
+    <item name="thumbWidth">15dp</item>
+    <item name="thumbHeight">15dp</item>
     <item name="haloRadius">0dp</item>
-    <item name="activeTrackColor">@color/light_text_primary</item>
-    <item name="inactiveTrackColor">@color/light_slider_inactive</item>
+    <item name="trackColorActive">@color/light_text_primary</item>
+    <item name="trackColorInactive">@color/light_slider_inactive</item>
     <item name="thumbColor">@color/light_text_primary</item>
     <item name="tickColorActive">@android:color/transparent</item>
     <item name="tickColorInactive">@android:color/transparent</item>
