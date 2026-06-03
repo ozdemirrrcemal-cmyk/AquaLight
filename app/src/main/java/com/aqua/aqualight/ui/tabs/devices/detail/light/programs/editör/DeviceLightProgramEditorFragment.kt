@@ -269,12 +269,13 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     }
 
     binding.btnSaveAs.setOnClickListener {
-        showProgramNameSheet(
-            title = "Save As",
-            subtitle = "Save this program without activating it.",
-            primaryButtonText = "Save",
-            isActive = false
-        )
+            showProgramNameSheet(
+                title = "Save As",
+                subtitle = "Save this program without activating it.",
+                primaryButtonText = "Save",
+                isActive = false
+            )
+        }
     }
 
     private fun showTimePickerSheet(
