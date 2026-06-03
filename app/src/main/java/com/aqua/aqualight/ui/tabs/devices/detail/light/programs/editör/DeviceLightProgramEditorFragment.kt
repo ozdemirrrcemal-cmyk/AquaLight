@@ -16,9 +16,13 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGra
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCurveTimePickerSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCustomDaysSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightSettings
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightMoonlightSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
 
 class DeviceLightProgramEditorFragment :
-    Fragment(R.layout.fragment_device_light_program_editor) {
+Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
@@ -27,7 +31,9 @@ class DeviceLightProgramEditorFragment :
     private var peakStartPoint = LightCurvePoint.of(9, 0)
     private var peakEndPoint = LightCurvePoint.of(17, 0)
     private var endPoint = LightCurvePoint.of(20, 0)
-	private var selectedRepeatMode = RepeatMode.EVERY
+    private var selectedRepeatMode = RepeatMode.EVERY
+    private var selectedCustomDays: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7)
+	private var moonlightSettings = MoonlightSettings()
 
     override fun onViewCreated(
         view: View,
@@ -41,9 +47,10 @@ class DeviceLightProgramEditorFragment :
         renderTimeRows()
         setupGraph()
         setupProgramSettingsRows()
+		renderMoonlightSummary()
         setupClicks()
         setupSliders()
-		renderRepeatMode()
+        renderRepeatMode()
     }
 
     private fun setupHeader() {
@@ -112,7 +119,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "Start Time",
                 point = startPoint
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 startPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -123,7 +131,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "Peak Start Time",
                 point = peakStartPoint
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 peakStartPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -134,7 +143,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "Peak End Time",
                 point = peakEndPoint
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 peakEndPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -145,7 +155,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "End Time",
                 point = endPoint
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 endPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -153,29 +164,43 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.repeatEvery.setOnClickListener {
-    selectedRepeatMode = RepeatMode.EVERY
-    renderRepeatMode()
-}
+            selectedRepeatMode = RepeatMode.EVERY
+            renderRepeatMode()
+        }
 
-binding.repeatWeekdays.setOnClickListener {
-    selectedRepeatMode = RepeatMode.WEEK
-    renderRepeatMode()
-}
+        binding.repeatWeekdays.setOnClickListener {
+            selectedRepeatMode = RepeatMode.WEEK
+            renderRepeatMode()
+        }
 
-binding.repeatWeekend.setOnClickListener {
-    selectedRepeatMode = RepeatMode.WEEKEND
-    renderRepeatMode()
-}
+        binding.repeatWeekend.setOnClickListener {
+            selectedRepeatMode = RepeatMode.WEEKEND
+            renderRepeatMode()
+        }
 
-binding.repeatCustom.setOnClickListener {
-    selectedRepeatMode = RepeatMode.CUSTOM
-    renderRepeatMode()
-    Toast.makeText(requireContext(), "Custom days", Toast.LENGTH_SHORT).show()
-}
+        binding.repeatCustom.setOnClickListener {
+            LightCustomDaysSheet
+            .create(requireContext())
+            .show(
+                selectedDays = selectedCustomDays
+            ) {
+                days ->
+                selectedCustomDays = days
+                selectedRepeatMode = RepeatMode.CUSTOM
+                renderRepeatMode()
+            }
+        }
 
         binding.actionMoonlight.root.setOnClickListener {
-            Toast.makeText(requireContext(), "Moonlight", Toast.LENGTH_SHORT).show()
-        }
+             LightMoonlightSheet
+            .create(requireContext())
+            .show(
+               initialSettings = moonlightSettings
+            ) { settings ->
+            moonlightSettings = settings
+            renderMoonlightSummary()
+            }
+         }
 
         binding.actionCloudSimulation.root.setOnClickListener {
             Toast.makeText(requireContext(), "Cloud Simulation", Toast.LENGTH_SHORT).show()
@@ -205,22 +230,23 @@ binding.repeatCustom.setOnClickListener {
         onSelected: (LightCurvePoint) -> Unit
     ) {
         LightCurveTimePickerSheet
-            .create(requireContext())
-            .show(
-                title = title,
-                initialHour = point.hour,
-                initialMinute = point.minute
-            ) { hour, minute ->
-                onSelected(LightCurvePoint.of(hour, minute))
-            }
+        .create(requireContext())
+        .show(
+            title = title,
+            initialHour = point.hour,
+            initialMinute = point.minute
+        ) {
+            hour, minute ->
+            onSelected(LightCurvePoint.of(hour, minute))
+        }
     }
 
     private fun renderTimeRows() {
-    binding.tvTimeStartValue.text = startPoint.label
-    binding.tvTimePeakStartValue.text = peakStartPoint.label
-    binding.tvTimePeakEndValue.text = peakEndPoint.label
-    binding.tvTimeEndValue.text = endPoint.label
-}
+        binding.tvTimeStartValue.text = startPoint.label
+        binding.tvTimePeakStartValue.text = peakStartPoint.label
+        binding.tvTimePeakEndValue.text = peakEndPoint.label
+        binding.tvTimeEndValue.text = endPoint.label
+    }
 
     private fun buildCurrentGraphState(): LightCurveGraphState {
         return LightCurveGraphState(
@@ -237,40 +263,40 @@ binding.repeatCustom.setOnClickListener {
             currentTime = LightCurvePoint.of(13, 28)
         )
     }
-	
-	private fun renderRepeatMode() {
-    val selectedBg = R.drawable.bg_light_filter_selected
-    val transparentBg = android.R.color.transparent
 
-    val selectedText = requireContext().getColor(R.color.light_button_on_primary)
-    val normalText = requireContext().getColor(R.color.light_text_secondary)
+    private fun renderRepeatMode() {
+        val selectedBg = R.drawable.bg_light_filter_selected
+        val transparentBg = android.R.color.transparent
 
-    binding.repeatEvery.setBackgroundResource(
-        if (selectedRepeatMode == RepeatMode.EVERY) selectedBg else transparentBg
-    )
-    binding.repeatWeekdays.setBackgroundResource(
-        if (selectedRepeatMode == RepeatMode.WEEK) selectedBg else transparentBg
-    )
-    binding.repeatWeekend.setBackgroundResource(
-        if (selectedRepeatMode == RepeatMode.WEEKEND) selectedBg else transparentBg
-    )
-    binding.repeatCustom.setBackgroundResource(
-        if (selectedRepeatMode == RepeatMode.CUSTOM) selectedBg else transparentBg
-    )
+        val selectedText = requireContext().getColor(R.color.light_button_on_primary)
+        val normalText = requireContext().getColor(R.color.light_text_secondary)
 
-    binding.repeatEvery.setTextColor(
-        if (selectedRepeatMode == RepeatMode.EVERY) selectedText else normalText
-    )
-    binding.repeatWeekdays.setTextColor(
-        if (selectedRepeatMode == RepeatMode.WEEK) selectedText else normalText
-    )
-    binding.repeatWeekend.setTextColor(
-        if (selectedRepeatMode == RepeatMode.WEEKEND) selectedText else normalText
-    )
-    binding.repeatCustom.setTextColor(
-        if (selectedRepeatMode == RepeatMode.CUSTOM) selectedText else normalText
-    )
-}
+        binding.repeatEvery.setBackgroundResource(
+            if (selectedRepeatMode == RepeatMode.EVERY) selectedBg else transparentBg
+        )
+        binding.repeatWeekdays.setBackgroundResource(
+            if (selectedRepeatMode == RepeatMode.WEEK) selectedBg else transparentBg
+        )
+        binding.repeatWeekend.setBackgroundResource(
+            if (selectedRepeatMode == RepeatMode.WEEKEND) selectedBg else transparentBg
+        )
+        binding.repeatCustom.setBackgroundResource(
+            if (selectedRepeatMode == RepeatMode.CUSTOM) selectedBg else transparentBg
+        )
+
+        binding.repeatEvery.setTextColor(
+            if (selectedRepeatMode == RepeatMode.EVERY) selectedText else normalText
+        )
+        binding.repeatWeekdays.setTextColor(
+            if (selectedRepeatMode == RepeatMode.WEEK) selectedText else normalText
+        )
+        binding.repeatWeekend.setTextColor(
+            if (selectedRepeatMode == RepeatMode.WEEKEND) selectedText else normalText
+        )
+        binding.repeatCustom.setTextColor(
+            if (selectedRepeatMode == RepeatMode.CUSTOM) selectedText else normalText
+        )
+    }
 
     private fun updateGraph() {
         val state = buildCurrentGraphState()
@@ -296,24 +322,46 @@ binding.repeatCustom.setOnClickListener {
             "${wholeHours}h ${minutes}m"
         }
     }
+	
+	private fun renderMoonlightSummary() {
+    val subtitle = if (moonlightSettings.enabled) {
+        val channelText = when (moonlightSettings.channel) {
+            MoonlightChannel.BLUE -> "Blue"
+            MoonlightChannel.WHITE -> "White"
+            MoonlightChannel.BLUE_WHITE -> "Blue + White"
+        }
+
+        "$channelText • ${moonlightSettings.intensityPercent}% • Until ${moonlightSettings.endTime.label}"
+    } else {
+        "Soft output after sunset"
+    }
+
+    binding.actionMoonlight.root
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
+    }
 
     private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener { _, value, _ ->
+        binding.sliderRed.addOnChangeListener {
+            _, value, _ ->
             binding.tvRedValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderGreen.addOnChangeListener { _, value, _ ->
+        binding.sliderGreen.addOnChangeListener {
+            _, value, _ ->
             binding.tvGreenValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderBlue.addOnChangeListener { _, value, _ ->
+        binding.sliderBlue.addOnChangeListener {
+            _, value, _ ->
             binding.tvBlueValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderWhite.addOnChangeListener { _, value, _ ->
+        binding.sliderWhite.addOnChangeListener {
+            _, value, _ ->
             binding.tvWhiteValue.text = "${value.toInt()}%"
             updateGraph()
         }
