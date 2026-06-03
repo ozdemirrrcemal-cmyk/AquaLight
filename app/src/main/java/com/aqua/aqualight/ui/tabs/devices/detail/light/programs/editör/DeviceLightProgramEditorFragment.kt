@@ -11,27 +11,31 @@ import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.calculator.LightCurveStatsCalculator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 
 class DeviceLightProgramEditorFragment :
-    Fragment(R.layout.fragment_device_light_program_editor) {
+Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
 
     override fun onViewCreated(
-    view: View,
-    savedInstanceState: Bundle?
-) {
-    super.onViewCreated(view, savedInstanceState)
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
-    _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
+        _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
-    setupHeader()
-    setupGraph()
-    setupProgramSettingsRows()
-    setupClicks()
-    setupSliders()
-}
+        setupHeader()
+        setupGraph()
+        setupProgramSettingsRows()
+        setupClicks()
+        setupSliders()
+    }
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
@@ -74,12 +78,10 @@ class DeviceLightProgramEditorFragment :
             subtitle = "Subtle randomized daily output"
         )
     }
-	
-	private fun setupGraph() {
-    binding.lightCurveGraphView.setState(
-        LightCurveGraphState.preview()
-    )
-}
+
+    private fun setupGraph() {
+        updateGraph()
+    }
 
     private fun bindActionRow(
         row: View,
@@ -155,23 +157,72 @@ class DeviceLightProgramEditorFragment :
         }
     }
 
+    private fun buildCurrentGraphState(): LightCurveGraphState {
+        return LightCurveGraphState(
+            start = LightCurvePoint.of(7, 0),
+            peakStart = LightCurvePoint.of(9, 0),
+            peakEnd = LightCurvePoint.of(17, 0),
+            end = LightCurvePoint.of(20, 0),
+            channelValues = LightCurveChannelValues(
+                red = binding.sliderRed.value.toInt(),
+                green = binding.sliderGreen.value.toInt(),
+                blue = binding.sliderBlue.value.toInt(),
+                white = binding.sliderWhite.value.toInt()
+            ),
+            currentTime = LightCurvePoint.of(13, 28)
+        )
+    }
+
+    private fun updateGraph() {
+        val state = buildCurrentGraphState()
+        binding.lightCurveGraphView.setState(state)
+        renderGraphStats(state)
+    }
+
+    private fun renderGraphStats(state: LightCurveGraphState) {
+        val stats = LightCurveStatsCalculator.calculate(state)
+
+        binding.tvCurveOutput.text = "${stats.outputPercent}%"
+        binding.tvCurvePower.text = "%.1fW".format(stats.estimatedPowerWatts)
+        binding.tvCurveDuration.text = formatDuration(stats.durationHours)
+    }
+
+    private fun formatDuration(hours: Double): String {
+        val wholeHours = hours.toInt()
+        val minutes = ((hours - wholeHours) * 60).toInt()
+
+        return if (minutes == 0) {
+            "${wholeHours}h"
+        } else {
+            "${wholeHours}h ${minutes}m"
+        }
+    }
+
     private fun setupSliders() {
-    binding.sliderRed.addOnChangeListener { _, value, _ ->
-        binding.tvRedValue.text = "${value.toInt()}%"
-    }
+        binding.sliderRed.addOnChangeListener {
+            _, value, _ ->
+            binding.tvRedValue.text = "${value.toInt()}%"
+            updateGraph()
+        }
 
-    binding.sliderGreen.addOnChangeListener { _, value, _ ->
-        binding.tvGreenValue.text = "${value.toInt()}%"
-    }
+        binding.sliderGreen.addOnChangeListener {
+            _, value, _ ->
+            binding.tvGreenValue.text = "${value.toInt()}%"
+            updateGraph()
+        }
 
-    binding.sliderBlue.addOnChangeListener { _, value, _ ->
-        binding.tvBlueValue.text = "${value.toInt()}%"
-    }
+        binding.sliderBlue.addOnChangeListener {
+            _, value, _ ->
+            binding.tvBlueValue.text = "${value.toInt()}%"
+            updateGraph()
+        }
 
-    binding.sliderWhite.addOnChangeListener { _, value, _ ->
-        binding.tvWhiteValue.text = "${value.toInt()}%"
+        binding.sliderWhite.addOnChangeListener {
+            _, value, _ ->
+            binding.tvWhiteValue.text = "${value.toInt()}%"
+            updateGraph()
+        }
     }
-}
 
     override fun onDestroyView() {
         _binding = null

@@ -101,7 +101,7 @@ class LightCurveGraphView @JvmOverloads constructor(
     private fun calculateGraphRect() {
         graphRect.set(
             dp(42f),
-            dp(36f),
+            dp(28f),
             width - dp(18f),
             height - dp(34f)
         )
@@ -210,7 +210,7 @@ class LightCurveGraphView @JvmOverloads constructor(
 
         val left = (currentX - badgeWidth / 2f)
         .coerceIn(graphRect.left, graphRect.right - badgeWidth)
-        val top = graphRect.top - dp(28f)
+        val top = graphRect.top - dp(24f)
 
         timeLabelRect.set(
             left,
