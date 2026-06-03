@@ -25,6 +25,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.Clo
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCloudSimulationSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.PreviewSpeed
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPreviewDaySheet
 
 class DeviceLightProgramEditorFragment :
 Fragment(R.layout.fragment_device_light_program_editor) {
@@ -41,6 +43,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 	private var moonlightSettings = MoonlightSettings()
 	private var cloudSimulationSettings = CloudSimulationSettings()
 	private var selectedTransitionMode = LightCurveTransitionMode.LINEAR
+	private var selectedPreviewSpeed = PreviewSpeed.ONE_MINUTE
 
     override fun onViewCreated(
         view: View,
@@ -115,8 +118,22 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
     private fun setupClicks() {
         binding.btnPreviewProgram.setOnClickListener {
-            Toast.makeText(requireContext(), "Preview program", Toast.LENGTH_SHORT).show()
+    LightPreviewDaySheet
+        .create(requireContext())
+        .show(
+            initialSpeed = selectedPreviewSpeed
+        ) { speed ->
+            selectedPreviewSpeed = speed
+            Toast.makeText(
+                requireContext(),
+                "Preview started: ${speed.label}",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            // TODO: Send temporary preview payload to ESP32.
+            // TODO: Update preview progress from device/state.
         }
+}
 
         binding.tvTimeStart.setOnClickListener {
             showTimePickerSheet(
