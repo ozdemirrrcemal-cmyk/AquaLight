@@ -20,6 +20,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.Lig
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightSettings
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightMoonlightSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudFrequency
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudSimulationSettings
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCloudSimulationSheet
 
 class DeviceLightProgramEditorFragment :
 Fragment(R.layout.fragment_device_light_program_editor) {
@@ -34,6 +37,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     private var selectedRepeatMode = RepeatMode.EVERY
     private var selectedCustomDays: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7)
 	private var moonlightSettings = MoonlightSettings()
+	private var cloudSimulationSettings = CloudSimulationSettings()
 
     override fun onViewCreated(
         view: View,
@@ -47,6 +51,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         renderTimeRows()
         setupGraph()
         setupProgramSettingsRows()
+		renderCloudSimulationSummary()
 		renderMoonlightSummary()
         setupClicks()
         setupSliders()
@@ -203,8 +208,15 @@ Fragment(R.layout.fragment_device_light_program_editor) {
          }
 
         binding.actionCloudSimulation.root.setOnClickListener {
-            Toast.makeText(requireContext(), "Cloud Simulation", Toast.LENGTH_SHORT).show()
+    LightCloudSimulationSheet
+        .create(requireContext())
+        .show(
+            initialSettings = cloudSimulationSettings
+        ) { settings ->
+            cloudSimulationSettings = settings
+            renderCloudSimulationSummary()
         }
+}
 
         binding.actionTransitionSmoothing.root.setOnClickListener {
             Toast.makeText(requireContext(), "Transition Smoothing", Toast.LENGTH_SHORT).show()
@@ -240,6 +252,24 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             onSelected(LightCurvePoint.of(hour, minute))
         }
     }
+	
+	private fun renderCloudSimulationSummary() {
+    val subtitle = if (cloudSimulationSettings.enabled) {
+        val frequencyText = when (cloudSimulationSettings.frequency) {
+            CloudFrequency.RARE -> "Rare"
+            CloudFrequency.NORMAL -> "Normal"
+            CloudFrequency.FREQUENT -> "Frequent"
+        }
+
+        "Coverage ${cloudSimulationSettings.coveragePercent}% • $frequencyText"
+    } else {
+        "Natural light variation"
+    }
+
+    binding.actionCloudSimulation.root
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
+}
 
     private fun renderTimeRows() {
         binding.tvTimeStartValue.text = startPoint.label
