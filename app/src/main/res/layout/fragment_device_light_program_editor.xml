@@ -84,93 +84,7 @@
                         android:id="@+id/lightCurveGraphView"
                         android:layout_width="match_parent"
                         android:layout_height="270dp" />
-						
-						<View
-    android:layout_width="match_parent"
-    android:layout_height="1dp"
-    android:layout_marginStart="20dp"
-    android:layout_marginEnd="20dp"
-    android:background="@color/light_stroke" />
 
-<LinearLayout
-    android:id="@+id/curveStatsRow"
-    android:layout_width="match_parent"
-    android:layout_height="64dp"
-    android:gravity="center"
-    android:orientation="horizontal"
-    android:paddingStart="20dp"
-    android:paddingEnd="20dp">
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <TextView
-            style="@style/TextAppearance.Aqua.Light.Caption"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OUTPUT" />
-
-        <TextView
-            android:id="@+id/tvCurveOutput"
-            style="@style/TextAppearance.Aqua.Light.BodyStrong"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:text="85%" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <TextView
-            style="@style/TextAppearance.Aqua.Light.Caption"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="POWER" />
-
-        <TextView
-            android:id="@+id/tvCurvePower"
-            style="@style/TextAppearance.Aqua.Light.BodyStrong"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:text="34.6W" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <TextView
-            style="@style/TextAppearance.Aqua.Light.Caption"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="DURATION" />
-
-        <TextView
-            android:id="@+id/tvCurveDuration"
-            style="@style/TextAppearance.Aqua.Light.BodyStrong"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:text="13h" />
-
-    </LinearLayout>
-
-</LinearLayout>
 
                 </LinearLayout>
 
@@ -220,7 +134,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:value="80"
+                            android:value="0"
                             android:valueFrom="0"
                             android:valueTo="100"
                             android:stepSize="1" />
@@ -231,7 +145,7 @@
                             android:layout_width="54dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="80%" />
+                            android:text="0%" />
 
                     </LinearLayout>
 
@@ -248,7 +162,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:value="85"
+                            android:value="0"
                             android:valueFrom="0"
                             android:valueTo="100"
                             android:stepSize="1" />
@@ -259,7 +173,7 @@
                             android:layout_width="54dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="85%" />
+                            android:text="0%" />
 
                     </LinearLayout>
 
@@ -276,7 +190,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:value="100"
+                            android:value="0"
                             android:valueFrom="0"
                             android:valueTo="100"
                             android:stepSize="1" />
@@ -287,7 +201,7 @@
                             android:layout_width="54dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="100%" />
+                            android:text="%" />
 
                     </LinearLayout>
 
@@ -304,7 +218,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:value="60"
+                            android:value=""
                             android:valueFrom="0"
                             android:valueTo="100"
                             android:stepSize="1" />
@@ -315,7 +229,7 @@
                             android:layout_width="54dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="60%" />
+                            android:text="%" />
 
                     </LinearLayout>
 
@@ -373,11 +287,11 @@
                                 android:text="Start" />
 
                             <TextView
-    android:id="@+id/tvTimeStartValue"
-    style="@style/TextAppearance.Aqua.Light.TimeValue"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="07:00" />
+                                android:id="@+id/tvTimeStartValue"
+                                style="@style/TextAppearance.Aqua.Light.TimeValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="07:00" />
 
                         </LinearLayout>
 
@@ -403,11 +317,11 @@
                                 android:text="Peak Start" />
 
                             <TextView
-    android:id="@+id/tvTimePeakStartValue"
-    style="@style/TextAppearance.Aqua.Light.TimeValue"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="09:00" />
+                                android:id="@+id/tvTimePeakStartValue"
+                                style="@style/TextAppearance.Aqua.Light.TimeValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="09:00" />
 
                         </LinearLayout>
 
@@ -432,12 +346,12 @@
                                 android:layout_weight="1"
                                 android:text="Peak End" />
 
-                           <TextView
-    android:id="@+id/tvTimePeakEndValue"
-    style="@style/TextAppearance.Aqua.Light.TimeValue"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="17:00" />
+                            <TextView
+                                android:id="@+id/tvTimePeakEndValue"
+                                style="@style/TextAppearance.Aqua.Light.TimeValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="17:00" />
 
                         </LinearLayout>
 
@@ -463,11 +377,11 @@
                                 android:text="End" />
 
                             <TextView
-    android:id="@+id/tvTimeEndValue"
-    style="@style/TextAppearance.Aqua.Light.TimeValue"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="20:00" />
+                                android:id="@+id/tvTimeEndValue"
+                                style="@style/TextAppearance.Aqua.Light.TimeValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="20:00" />
 
                         </LinearLayout>
 
