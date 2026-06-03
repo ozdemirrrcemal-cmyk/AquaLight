@@ -15,6 +15,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveCha
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCurveTimePickerSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
 
 class DeviceLightProgramEditorFragment :
     Fragment(R.layout.fragment_device_light_program_editor) {
@@ -26,6 +27,7 @@ class DeviceLightProgramEditorFragment :
     private var peakStartPoint = LightCurvePoint.of(9, 0)
     private var peakEndPoint = LightCurvePoint.of(17, 0)
     private var endPoint = LightCurvePoint.of(20, 0)
+	private var selectedRepeatMode = RepeatMode.EVERY
 
     override fun onViewCreated(
         view: View,
@@ -41,6 +43,7 @@ class DeviceLightProgramEditorFragment :
         setupProgramSettingsRows()
         setupClicks()
         setupSliders()
+		renderRepeatMode()
     }
 
     private fun setupHeader() {
@@ -150,20 +153,25 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.repeatEvery.setOnClickListener {
-            Toast.makeText(requireContext(), "Repeat: Every", Toast.LENGTH_SHORT).show()
-        }
+    selectedRepeatMode = RepeatMode.EVERY
+    renderRepeatMode()
+}
 
-        binding.repeatWeekdays.setOnClickListener {
-            Toast.makeText(requireContext(), "Repeat: Weekdays", Toast.LENGTH_SHORT).show()
-        }
+binding.repeatWeekdays.setOnClickListener {
+    selectedRepeatMode = RepeatMode.WEEK
+    renderRepeatMode()
+}
 
-        binding.repeatWeekend.setOnClickListener {
-            Toast.makeText(requireContext(), "Repeat: Weekend", Toast.LENGTH_SHORT).show()
-        }
+binding.repeatWeekend.setOnClickListener {
+    selectedRepeatMode = RepeatMode.WEEKEND
+    renderRepeatMode()
+}
 
-        binding.repeatCustom.setOnClickListener {
-            Toast.makeText(requireContext(), "Custom days", Toast.LENGTH_SHORT).show()
-        }
+binding.repeatCustom.setOnClickListener {
+    selectedRepeatMode = RepeatMode.CUSTOM
+    renderRepeatMode()
+    Toast.makeText(requireContext(), "Custom days", Toast.LENGTH_SHORT).show()
+}
 
         binding.actionMoonlight.root.setOnClickListener {
             Toast.makeText(requireContext(), "Moonlight", Toast.LENGTH_SHORT).show()
@@ -236,6 +244,40 @@ class DeviceLightProgramEditorFragment :
             currentTime = LightCurvePoint.of(13, 28)
         )
     }
+	
+	private fun renderRepeatMode() {
+    val selectedBg = R.drawable.bg_light_filter_selected
+    val transparentBg = android.R.color.transparent
+
+    val selectedText = requireContext().getColor(R.color.light_button_on_primary)
+    val normalText = requireContext().getColor(R.color.light_text_secondary)
+
+    binding.repeatEvery.setBackgroundResource(
+        if (selectedRepeatMode == RepeatMode.EVERY) selectedBg else transparentBg
+    )
+    binding.repeatWeekdays.setBackgroundResource(
+        if (selectedRepeatMode == RepeatMode.WEEK) selectedBg else transparentBg
+    )
+    binding.repeatWeekend.setBackgroundResource(
+        if (selectedRepeatMode == RepeatMode.WEEKEND) selectedBg else transparentBg
+    )
+    binding.repeatCustom.setBackgroundResource(
+        if (selectedRepeatMode == RepeatMode.CUSTOM) selectedBg else transparentBg
+    )
+
+    binding.repeatEvery.setTextColor(
+        if (selectedRepeatMode == RepeatMode.EVERY) selectedText else normalText
+    )
+    binding.repeatWeekdays.setTextColor(
+        if (selectedRepeatMode == RepeatMode.WEEK) selectedText else normalText
+    )
+    binding.repeatWeekend.setTextColor(
+        if (selectedRepeatMode == RepeatMode.WEEKEND) selectedText else normalText
+    )
+    binding.repeatCustom.setTextColor(
+        if (selectedRepeatMode == RepeatMode.CUSTOM) selectedText else normalText
+    )
+}
 
     private fun updateGraph() {
         val state = buildCurrentGraphState()

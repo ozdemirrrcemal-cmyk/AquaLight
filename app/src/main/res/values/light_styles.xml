@@ -416,4 +416,13 @@
     <item name="tickColorInactive">@android:color/transparent</item>
 </style>
 
+<style name="TextAppearance.Aqua.Light.SheetSubtitle"
+    parent="TextAppearance.Material3.BodyMedium">
+    <item name="fontFamily">@font/inter_medium</item>
+    <item name="android:fontFamily">@font/inter_medium</item>
+    <item name="android:textColor">@color/light_text_secondary</item>
+    <item name="android:textSize">14sp</item>
+    <item name="android:includeFontPadding">false</item>
+</style>
+
 </resources>
