@@ -101,7 +101,7 @@ class LightCurveGraphView @JvmOverloads constructor(
     private fun calculateGraphRect() {
         graphRect.set(
             dp(42f),
-            dp(18f),
+            dp(36f),
             width - dp(18f),
             height - dp(34f)
         )
@@ -109,7 +109,8 @@ class LightCurveGraphView @JvmOverloads constructor(
 
     private fun drawGrid(canvas: Canvas) {
         // horizontal percentage grid: 0 / 25 / 50 / 75 / 100
-        listOf(0, 25, 50, 75, 100).forEach { percent ->
+        listOf(0, 25, 50, 75, 100).forEach {
+            percent ->
             val y = yForPercent(percent)
             val paint = if (percent == 0 || percent == 50 || percent == 100) {
                 majorGridPaint
@@ -128,7 +129,8 @@ class LightCurveGraphView @JvmOverloads constructor(
     }
 
     private fun drawAxisLabels(canvas: Canvas) {
-        listOf(0, 25, 50, 75, 100).forEach { percent ->
+        listOf(0, 25, 50, 75, 100).forEach {
+            percent ->
             canvas.drawText(
                 "$percent%",
                 graphRect.left - dp(8f),
@@ -207,8 +209,8 @@ class LightCurveGraphView @JvmOverloads constructor(
         val badgeHeight = dp(24f)
 
         val left = (currentX - badgeWidth / 2f)
-            .coerceIn(graphRect.left, graphRect.right - badgeWidth)
-        val top = graphRect.top - dp(4f)
+        .coerceIn(graphRect.left, graphRect.right - badgeWidth)
+        val top = graphRect.top - dp(28f)
 
         timeLabelRect.set(
             left,
