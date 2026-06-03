@@ -196,10 +196,10 @@
             style="@style/Widget.Aqua.Light.Slider.Blue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:value="5"
-            app:valueFrom="1"
-            app:valueTo="15"
-            app:stepSize="1" />
+            android:value="5"
+            android:valueFrom="1"
+            android:valueTo="15"
+            android:stepSize="1" />
 
     </LinearLayout>
 
