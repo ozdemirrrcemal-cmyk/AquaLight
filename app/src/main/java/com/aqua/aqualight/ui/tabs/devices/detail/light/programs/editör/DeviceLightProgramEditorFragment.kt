@@ -10,16 +10,22 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.calculator.LightCurveStatsCalculator
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCurveTimePickerSheet
 
 class DeviceLightProgramEditorFragment :
-Fragment(R.layout.fragment_device_light_program_editor) {
+    Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
+
+    private var startPoint = LightCurvePoint.of(7, 0)
+    private var peakStartPoint = LightCurvePoint.of(9, 0)
+    private var peakEndPoint = LightCurvePoint.of(17, 0)
+    private var endPoint = LightCurvePoint.of(20, 0)
 
     override fun onViewCreated(
         view: View,
@@ -30,6 +36,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
         setupHeader()
+        renderTimeRows()
         setupGraph()
         setupProgramSettingsRows()
         setupClicks()
@@ -46,6 +53,10 @@ Fragment(R.layout.fragment_device_light_program_editor) {
                 }
             )
         )
+    }
+
+    private fun setupGraph() {
+        updateGraph()
     }
 
     private fun setupProgramSettingsRows() {
@@ -78,10 +89,6 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         )
     }
 
-    private fun setupGraph() {
-        updateGraph()
-    }
-
     private fun bindActionRow(
         row: View,
         icon: String,
@@ -99,19 +106,47 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         }
 
         binding.tvTimeStart.setOnClickListener {
-            Toast.makeText(requireContext(), "Edit Start time", Toast.LENGTH_SHORT).show()
+            showTimePickerSheet(
+                title = "Start Time",
+                point = startPoint
+            ) { selectedPoint ->
+                startPoint = selectedPoint
+                renderTimeRows()
+                updateGraph()
+            }
         }
 
         binding.tvTimePeakStart.setOnClickListener {
-            Toast.makeText(requireContext(), "Edit Peak Start time", Toast.LENGTH_SHORT).show()
+            showTimePickerSheet(
+                title = "Peak Start Time",
+                point = peakStartPoint
+            ) { selectedPoint ->
+                peakStartPoint = selectedPoint
+                renderTimeRows()
+                updateGraph()
+            }
         }
 
         binding.tvTimePeakEnd.setOnClickListener {
-            Toast.makeText(requireContext(), "Edit Peak End time", Toast.LENGTH_SHORT).show()
+            showTimePickerSheet(
+                title = "Peak End Time",
+                point = peakEndPoint
+            ) { selectedPoint ->
+                peakEndPoint = selectedPoint
+                renderTimeRows()
+                updateGraph()
+            }
         }
 
         binding.tvTimeEnd.setOnClickListener {
-            Toast.makeText(requireContext(), "Edit End time", Toast.LENGTH_SHORT).show()
+            showTimePickerSheet(
+                title = "End Time",
+                point = endPoint
+            ) { selectedPoint ->
+                endPoint = selectedPoint
+                renderTimeRows()
+                updateGraph()
+            }
         }
 
         binding.repeatEvery.setOnClickListener {
@@ -156,12 +191,42 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         }
     }
 
+    private fun showTimePickerSheet(
+        title: String,
+        point: LightCurvePoint,
+        onSelected: (LightCurvePoint) -> Unit
+    ) {
+        LightCurveTimePickerSheet
+            .create(requireContext())
+            .show(
+                title = title,
+                initialHour = point.hour,
+                initialMinute = point.minute
+            ) { hour, minute ->
+                onSelected(LightCurvePoint.of(hour, minute))
+            }
+    }
+
+    private fun renderTimeRows() {
+        binding.tvTimeStart.findViewById<TextView>(R.id.tvTimeValue)?.text =
+            startPoint.label
+
+        binding.tvTimePeakStart.findViewById<TextView>(R.id.tvTimeValue)?.text =
+            peakStartPoint.label
+
+        binding.tvTimePeakEnd.findViewById<TextView>(R.id.tvTimeValue)?.text =
+            peakEndPoint.label
+
+        binding.tvTimeEnd.findViewById<TextView>(R.id.tvTimeValue)?.text =
+            endPoint.label
+    }
+
     private fun buildCurrentGraphState(): LightCurveGraphState {
         return LightCurveGraphState(
-            start = LightCurvePoint.of(7, 0),
-            peakStart = LightCurvePoint.of(9, 0),
-            peakEnd = LightCurvePoint.of(17, 0),
-            end = LightCurvePoint.of(20, 0),
+            start = startPoint,
+            peakStart = peakStartPoint,
+            peakEnd = peakEndPoint,
+            end = endPoint,
             channelValues = LightCurveChannelValues(
                 red = binding.sliderRed.value.toInt(),
                 green = binding.sliderGreen.value.toInt(),
@@ -198,26 +263,22 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     }
 
     private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderRed.addOnChangeListener { _, value, _ ->
             binding.tvRedValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderGreen.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderGreen.addOnChangeListener { _, value, _ ->
             binding.tvGreenValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderBlue.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderBlue.addOnChangeListener { _, value, _ ->
             binding.tvBlueValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderWhite.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderWhite.addOnChangeListener { _, value, _ ->
             binding.tvWhiteValue.text = "${value.toInt()}%"
             updateGraph()
         }
