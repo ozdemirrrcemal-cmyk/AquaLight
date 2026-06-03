@@ -311,4 +311,110 @@
     <item name="android:textColor">@color/light_button_on_primary</item>
 </style>
 
+<style name="TextAppearance.Aqua.Light.TimeLabel"
+    parent="TextAppearance.Material3.BodyLarge">
+    <item name="fontFamily">@font/inter_medium</item>
+    <item name="android:fontFamily">@font/inter_medium</item>
+    <item name="android:textColor">@color/light_text_primary</item>
+    <item name="android:textSize">17sp</item>
+    <item name="android:includeFontPadding">false</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.TimeValue"
+    parent="TextAppearance.Material3.BodyLarge">
+    <item name="fontFamily">@font/inter_semibold</item>
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:textColor">@color/light_text_primary</item>
+    <item name="android:textSize">18sp</item>
+    <item name="android:includeFontPadding">false</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.ChannelValue.Red"
+    parent="TextAppearance.Material3.BodyMedium">
+    <item name="fontFamily">@font/inter_semibold</item>
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:textColor">@color/light_channel_red</item>
+    <item name="android:textSize">16sp</item>
+    <item name="android:includeFontPadding">false</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.ChannelValue.Green"
+    parent="TextAppearance.Material3.BodyMedium">
+    <item name="fontFamily">@font/inter_semibold</item>
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:textColor">@color/light_channel_green</item>
+    <item name="android:textSize">16sp</item>
+    <item name="android:includeFontPadding">false</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.ChannelValue.Blue"
+    parent="TextAppearance.Material3.BodyMedium">
+    <item name="fontFamily">@font/inter_semibold</item>
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:textColor">@color/light_channel_blue</item>
+    <item name="android:textSize">16sp</item>
+    <item name="android:includeFontPadding">false</item>
+</style>
+
+<style name="TextAppearance.Aqua.Light.ChannelValue.White"
+    parent="TextAppearance.Material3.BodyMedium">
+    <item name="fontFamily">@font/inter_semibold</item>
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="android:textColor">@color/light_text_primary</item>
+    <item name="android:textSize">16sp</item>
+    <item name="android:includeFontPadding">false</item>
+</style>
+
+<style name="Widget.Aqua.Light.Slider.Red"
+    parent="Widget.Material3.Slider">
+    <item name="trackHeight">3dp</item>
+    <item name="thumbWidth">18dp</item>
+    <item name="thumbHeight">18dp</item>
+    <item name="haloRadius">0dp</item>
+    <item name="activeTrackColor">@color/light_channel_red</item>
+    <item name="inactiveTrackColor">@color/light_slider_inactive</item>
+    <item name="thumbColor">@color/light_channel_red</item>
+    <item name="tickColorActive">@android:color/transparent</item>
+    <item name="tickColorInactive">@android:color/transparent</item>
+</style>
+
+<style name="Widget.Aqua.Light.Slider.Green"
+    parent="Widget.Material3.Slider">
+    <item name="trackHeight">3dp</item>
+    <item name="thumbWidth">18dp</item>
+    <item name="thumbHeight">18dp</item>
+    <item name="haloRadius">0dp</item>
+    <item name="activeTrackColor">@color/light_channel_green</item>
+    <item name="inactiveTrackColor">@color/light_slider_inactive</item>
+    <item name="thumbColor">@color/light_channel_green</item>
+    <item name="tickColorActive">@android:color/transparent</item>
+    <item name="tickColorInactive">@android:color/transparent</item>
+</style>
+
+<style name="Widget.Aqua.Light.Slider.Blue"
+    parent="Widget.Material3.Slider">
+    <item name="trackHeight">3dp</item>
+    <item name="thumbWidth">18dp</item>
+    <item name="thumbHeight">18dp</item>
+    <item name="haloRadius">0dp</item>
+    <item name="activeTrackColor">@color/light_channel_blue</item>
+    <item name="inactiveTrackColor">@color/light_slider_inactive</item>
+    <item name="thumbColor">@color/light_channel_blue</item>
+    <item name="tickColorActive">@android:color/transparent</item>
+    <item name="tickColorInactive">@android:color/transparent</item>
+</style>
+
+<style name="Widget.Aqua.Light.Slider.White"
+    parent="Widget.Material3.Slider">
+    <item name="trackHeight">3dp</item>
+    <item name="thumbWidth">18dp</item>
+    <item name="thumbHeight">18dp</item>
+    <item name="haloRadius">0dp</item>
+    <item name="activeTrackColor">@color/light_text_primary</item>
+    <item name="inactiveTrackColor">@color/light_slider_inactive</item>
+    <item name="thumbColor">@color/light_text_primary</item>
+    <item name="tickColorActive">@android:color/transparent</item>
+    <item name="tickColorInactive">@android:color/transparent</item>
+</style>
+
 </resources>

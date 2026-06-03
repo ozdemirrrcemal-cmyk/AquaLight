@@ -52,5 +52,7 @@
 	
     <!-- Dividers -->
     <color name="light_divider">#1E2A38</color>
+	
+	<color name="light_slider_inactive">#263545</color>
 
 </resources>
