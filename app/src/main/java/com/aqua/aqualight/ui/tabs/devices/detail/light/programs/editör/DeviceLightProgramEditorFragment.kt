@@ -31,7 +31,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper.LightProg
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 
 class DeviceLightProgramEditorFragment :
-    Fragment(R.layout.fragment_device_light_program_editor) {
+Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
@@ -124,28 +124,30 @@ class DeviceLightProgramEditorFragment :
     private fun setupClicks() {
         binding.btnPreviewProgram.setOnClickListener {
             LightPreviewDaySheet
-                .create(requireContext())
-                .show(
-                    initialSpeed = selectedPreviewSpeed
-                ) { speed ->
-                    selectedPreviewSpeed = speed
-                    val draft = buildCurrentProgramDraft()
+            .create(requireContext())
+            .show(
+                initialSpeed = selectedPreviewSpeed
+            ) {
+                speed ->
+                selectedPreviewSpeed = speed
+                val draft = buildCurrentProgramDraft()
 
-                    Toast.makeText(
-                        requireContext(),
-                        "Preview started: ${speed.label}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Preview started: ${speed.label}",
+                    Toast.LENGTH_SHORT
+                ).show()
 
-                    // TODO: Send draft as temporary preview payload to ESP32.
-                }
+                // TODO: Send draft as temporary preview payload to ESP32.
+            }
         }
 
         binding.tvTimeStart.setOnClickListener {
             showTimePickerSheet(
                 title = "Start Time",
                 point = startPoint
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 startPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -156,7 +158,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "Peak Start Time",
                 point = peakStartPoint
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 peakStartPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -167,7 +170,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "Peak End Time",
                 point = peakEndPoint
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 peakEndPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -178,7 +182,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "End Time",
                 point = endPoint
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 endPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -205,67 +210,72 @@ class DeviceLightProgramEditorFragment :
 
         binding.repeatCustom.setOnClickListener {
             LightCustomDaysSheet
-                .create(requireContext())
-                .show(
-                    selectedDays = selectedCustomDays
-                ) { days ->
-                    selectedCustomDays = days
-                    selectedRepeatMode = RepeatMode.CUSTOM
-                    renderRepeatMode()
-                }
+            .create(requireContext())
+            .show(
+                selectedDays = selectedCustomDays
+            ) {
+                days ->
+                selectedCustomDays = days
+                selectedRepeatMode = RepeatMode.CUSTOM
+                renderRepeatMode()
+            }
         }
 
         binding.actionMoonlight.root.setOnClickListener {
             LightMoonlightSheet
-                .create(requireContext())
-                .show(
-                    initialSettings = moonlightSettings
-                ) { settings ->
-                    moonlightSettings = settings
-                    renderMoonlightSummary()
-                }
+            .create(requireContext())
+            .show(
+                initialSettings = moonlightSettings
+            ) {
+                settings ->
+                moonlightSettings = settings
+                renderMoonlightSummary()
+            }
         }
 
         binding.actionCloudSimulation.root.setOnClickListener {
             LightCloudSimulationSheet
-                .create(requireContext())
-                .show(
-                    initialSettings = cloudSimulationSettings
-                ) { settings ->
-                    cloudSimulationSettings = settings
-                    renderCloudSimulationSummary()
-                }
+            .create(requireContext())
+            .show(
+                initialSettings = cloudSimulationSettings
+            ) {
+                settings ->
+                cloudSimulationSettings = settings
+                renderCloudSimulationSummary()
+            }
         }
 
         binding.actionTransitionSmoothing.root.setOnClickListener {
             LightTransitionVariantSheet
-                .create(requireContext())
-                .show(
-                    initialMode = selectedTransitionMode
-                ) { mode ->
-                    selectedTransitionMode = mode
-                    renderTransitionSummary()
-                    updateGraph()
-                }
+            .create(requireContext())
+            .show(
+                initialMode = selectedTransitionMode
+            ) {
+                mode ->
+                selectedTransitionMode = mode
+                renderTransitionSummary()
+                updateGraph()
+            }
         }
 
         binding.btnLoadToDevice.setOnClickListener {
-    showProgramNameSheet(
-        title = "Load to Device",
-        subtitle = "Name this program before loading it to the device.",
-        primaryButtonText = "Load",
-        isActive = true
-    )
-}
+            showProgramNameSheet(
+                title = "Load to Device",
+                subtitle = "Name this program before loading it to the device.",
+                primaryButtonText = "Load",
+                isActive = true
+            )
+        }
+    }
 
-        binding.btnSaveAs.setOnClickListener {
-    showProgramNameSheet(
-        title = "Save As",
-        subtitle = "Save this program without activating it.",
-        primaryButtonText = "Save",
-        isActive = false
-    )
-}
+    binding.btnSaveAs.setOnClickListener {
+        showProgramNameSheet(
+            title = "Save As",
+            subtitle = "Save this program without activating it.",
+            primaryButtonText = "Save",
+            isActive = false
+        )
+    }
 
     private fun showTimePickerSheet(
         title: String,
@@ -273,14 +283,15 @@ class DeviceLightProgramEditorFragment :
         onSelected: (LightCurvePoint) -> Unit
     ) {
         LightCurveTimePickerSheet
-            .create(requireContext())
-            .show(
-                title = title,
-                initialHour = point.hour,
-                initialMinute = point.minute
-            ) { hour, minute ->
-                onSelected(LightCurvePoint.of(hour, minute))
-            }
+        .create(requireContext())
+        .show(
+            title = title,
+            initialHour = point.hour,
+            initialMinute = point.minute
+        ) {
+            hour, minute ->
+            onSelected(LightCurvePoint.of(hour, minute))
+        }
     }
 
     private fun renderTimeRows() {
@@ -291,22 +302,26 @@ class DeviceLightProgramEditorFragment :
     }
 
     private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener { _, value, _ ->
+        binding.sliderRed.addOnChangeListener {
+            _, value, _ ->
             binding.tvRedValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderGreen.addOnChangeListener { _, value, _ ->
+        binding.sliderGreen.addOnChangeListener {
+            _, value, _ ->
             binding.tvGreenValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderBlue.addOnChangeListener { _, value, _ ->
+        binding.sliderBlue.addOnChangeListener {
+            _, value, _ ->
             binding.tvBlueValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderWhite.addOnChangeListener { _, value, _ ->
+        binding.sliderWhite.addOnChangeListener {
+            _, value, _ ->
             binding.tvWhiteValue.text = "${value.toInt()}%"
             updateGraph()
         }
@@ -350,21 +365,22 @@ class DeviceLightProgramEditorFragment :
             end = endPoint
         )
     }
-	
-	private fun showProgramNameSheet(
-    title: String,
-    subtitle: String,
-    primaryButtonText: String,
-    isActive: Boolean
-) {
-    LightProgramNameSheet
+
+    private fun showProgramNameSheet(
+        title: String,
+        subtitle: String,
+        primaryButtonText: String,
+        isActive: Boolean
+    ) {
+        LightProgramNameSheet
         .create(requireContext())
         .show(
             title = title,
             subtitle = subtitle,
             primaryButtonText = primaryButtonText,
             initialName = ""
-        ) { name ->
+        ) {
+            name ->
             val draft = buildCurrentProgramDraft()
 
             val savedProgram = LightProgramDraftMapper.toSavedProgram(
@@ -387,7 +403,7 @@ class DeviceLightProgramEditorFragment :
 
             findNavController().popBackStack()
         }
-}
+    }
 
     private fun currentChannelValues(): LightCurveChannelValues {
         return LightCurveChannelValues(
@@ -460,8 +476,8 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.actionMoonlight.root
-            .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = subtitle
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
     }
 
     private fun renderCloudSimulationSummary() {
@@ -478,8 +494,8 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.actionCloudSimulation.root
-            .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = subtitle
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
     }
 
     private fun renderTransitionSummary() {
@@ -490,8 +506,8 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.actionTransitionSmoothing.root
-            .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = subtitle
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
     }
 
     override fun onDestroyView() {
