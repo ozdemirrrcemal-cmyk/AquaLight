@@ -27,6 +27,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.Lig
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightMoonlightSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPreviewDaySheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper.LightProgramDraftMapper
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 
 class DeviceLightProgramEditorFragment :
     Fragment(R.layout.fragment_device_light_program_editor) {
@@ -248,22 +250,22 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.btnLoadToDevice.setOnClickListener {
-            val draft = buildCurrentProgramDraft()
-
-            Toast.makeText(requireContext(), "Load to device", Toast.LENGTH_SHORT).show()
-
-            // TODO: Send draft to ESP32 as active device program.
-            findNavController().popBackStack()
-        }
+    showProgramNameSheet(
+        title = "Load to Device",
+        subtitle = "Name this program before loading it to the device.",
+        primaryButtonText = "Load",
+        isActive = true
+    )
+}
 
         binding.btnSaveAs.setOnClickListener {
-            val draft = buildCurrentProgramDraft()
-
-            Toast.makeText(requireContext(), "Save as", Toast.LENGTH_SHORT).show()
-
-            // TODO: Open Save As bottom sheet and save draft with user-provided name.
-        }
-    }
+    showProgramNameSheet(
+        title = "Save As",
+        subtitle = "Save this program without activating it.",
+        primaryButtonText = "Save",
+        isActive = false
+    )
+}
 
     private fun showTimePickerSheet(
         title: String,
@@ -348,6 +350,44 @@ class DeviceLightProgramEditorFragment :
             end = endPoint
         )
     }
+	
+	private fun showProgramNameSheet(
+    title: String,
+    subtitle: String,
+    primaryButtonText: String,
+    isActive: Boolean
+) {
+    LightProgramNameSheet
+        .create(requireContext())
+        .show(
+            title = title,
+            subtitle = subtitle,
+            primaryButtonText = primaryButtonText,
+            initialName = ""
+        ) { name ->
+            val draft = buildCurrentProgramDraft()
+
+            val savedProgram = LightProgramDraftMapper.toSavedProgram(
+                draft = draft,
+                name = name,
+                isActive = isActive
+            )
+
+            if (isActive) {
+                // TODO: Save program and load savedProgram to ESP32 as active.
+            } else {
+                // TODO: Save program only as inactive.
+            }
+
+            Toast.makeText(
+                requireContext(),
+                if (isActive) "Program loaded to device" else "Program saved",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            findNavController().popBackStack()
+        }
+}
 
     private fun currentChannelValues(): LightCurveChannelValues {
         return LightCurveChannelValues(
