@@ -17,8 +17,6 @@ class DeviceLightProgramEditorFragment :
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
 
-    private var isSimpleCurveMode: Boolean = true
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -28,10 +26,9 @@ class DeviceLightProgramEditorFragment :
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
         setupHeader()
-        setupCurvePointRows()
-        setupActionRows()
+        setupProgramSettingsRows()
         setupClicks()
-        updateEditorModeUi()
+        setupSliders()
     }
 
     private fun setupHeader() {
@@ -46,40 +43,7 @@ class DeviceLightProgramEditorFragment :
         )
     }
 
-    private fun setupCurvePointRows() {
-    data class CurvePointPreview(
-        val title: String,
-        val subtitle: String,
-        val time: String,
-        val brightness: String
-    )
-
-    val rows = listOf(
-        CurvePointPreview("Start", "Sunrise begins", "07:00", "0%"),
-        CurvePointPreview("Peak Start", "Ramp reaches target output", "09:00", "80%"),
-        CurvePointPreview("Peak End", "Stable peak lighting ends", "17:00", "80%"),
-        CurvePointPreview("End", "Lights fade out", "20:00", "0%")
-    )
-
-    for (index in 0 until binding.curvePointsContainer.childCount) {
-        val row = binding.curvePointsContainer.getChildAt(index)
-        val data = rows.getOrNull(index) ?: continue
-
-        row.findViewById<TextView>(R.id.tvPointTitle)?.text = data.title
-        row.findViewById<TextView>(R.id.tvPointSubtitle)?.text = data.subtitle
-        row.findViewById<TextView>(R.id.tvPointTime)?.text = data.time
-        row.findViewById<TextView>(R.id.tvPointBrightness)?.text = data.brightness
-    }
-}
-
-    private fun setupActionRows() {
-        bindActionRow(
-            row = binding.actionCloudSimulation.root,
-            icon = "☁",
-            title = "Cloud Simulation",
-            subtitle = "Natural light variation"
-        )
-
+    private fun setupProgramSettingsRows() {
         bindActionRow(
             row = binding.actionMoonlight.root,
             icon = "◐",
@@ -88,10 +52,24 @@ class DeviceLightProgramEditorFragment :
         )
 
         bindActionRow(
-            row = binding.actionProgramAdvanced.root,
-            icon = "⚙",
-            title = "Advanced Options",
-            subtitle = "Fine-tune program behavior"
+            row = binding.actionCloudSimulation.root,
+            icon = "☁",
+            title = "Cloud Simulation",
+            subtitle = "Natural light variation"
+        )
+
+        bindActionRow(
+            row = binding.actionTransitionSmoothing.root,
+            icon = "≈",
+            title = "Transition Smoothing",
+            subtitle = "Make ramps feel more natural"
+        )
+
+        bindActionRow(
+            row = binding.actionNaturalVariation.root,
+            icon = "✦",
+            title = "Natural Variation",
+            subtitle = "Subtle randomized daily output"
         )
     }
 
@@ -107,74 +85,84 @@ class DeviceLightProgramEditorFragment :
     }
 
     private fun setupClicks() {
-        binding.btnSimpleCurve.setOnClickListener {
-            isSimpleCurveMode = true
-            updateEditorModeUi()
+        binding.btnPreviewProgram.setOnClickListener {
+            Toast.makeText(requireContext(), "Preview program", Toast.LENGTH_SHORT).show()
         }
 
-        binding.btnProChannels.setOnClickListener {
-            isSimpleCurveMode = false
-            updateEditorModeUi()
+        binding.tvTimeStart.setOnClickListener {
+            Toast.makeText(requireContext(), "Edit Start time", Toast.LENGTH_SHORT).show()
         }
 
-        binding.btnRenameProgram.setOnClickListener {
-            Toast.makeText(requireContext(), "Rename program", Toast.LENGTH_SHORT).show()
+        binding.tvTimePeakStart.setOnClickListener {
+            Toast.makeText(requireContext(), "Edit Peak Start time", Toast.LENGTH_SHORT).show()
         }
 
-        binding.cardPresetSelector.setOnClickListener {
-            Toast.makeText(requireContext(), "Select preset", Toast.LENGTH_SHORT).show()
+        binding.tvTimePeakEnd.setOnClickListener {
+            Toast.makeText(requireContext(), "Edit Peak End time", Toast.LENGTH_SHORT).show()
         }
 
-        binding.btnPreviewDay.setOnClickListener {
-            Toast.makeText(requireContext(), "Preview Day", Toast.LENGTH_SHORT).show()
+        binding.tvTimeEnd.setOnClickListener {
+            Toast.makeText(requireContext(), "Edit End time", Toast.LENGTH_SHORT).show()
         }
 
-        binding.btnAddCurvePoint.setOnClickListener {
-            Toast.makeText(requireContext(), "Add point", Toast.LENGTH_SHORT).show()
+        binding.repeatEvery.setOnClickListener {
+            Toast.makeText(requireContext(), "Repeat: Every", Toast.LENGTH_SHORT).show()
         }
 
-        binding.actionCloudSimulation.root.setOnClickListener {
-            Toast.makeText(requireContext(), "Cloud Simulation", Toast.LENGTH_SHORT).show()
+        binding.repeatWeekdays.setOnClickListener {
+            Toast.makeText(requireContext(), "Repeat: Weekdays", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.repeatWeekend.setOnClickListener {
+            Toast.makeText(requireContext(), "Repeat: Weekend", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.repeatCustom.setOnClickListener {
+            Toast.makeText(requireContext(), "Custom days", Toast.LENGTH_SHORT).show()
         }
 
         binding.actionMoonlight.root.setOnClickListener {
             Toast.makeText(requireContext(), "Moonlight", Toast.LENGTH_SHORT).show()
         }
 
-        binding.actionProgramAdvanced.root.setOnClickListener {
-            Toast.makeText(requireContext(), "Advanced Options", Toast.LENGTH_SHORT).show()
+        binding.actionCloudSimulation.root.setOnClickListener {
+            Toast.makeText(requireContext(), "Cloud Simulation", Toast.LENGTH_SHORT).show()
         }
 
-        binding.btnDiscardProgram.setOnClickListener {
+        binding.actionTransitionSmoothing.root.setOnClickListener {
+            Toast.makeText(requireContext(), "Transition Smoothing", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.actionNaturalVariation.root.setOnClickListener {
+            Toast.makeText(requireContext(), "Natural Variation", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnLoadToDevice.setOnClickListener {
+            Toast.makeText(requireContext(), "Load to device", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
         }
 
-        binding.btnSaveProgram.setOnClickListener {
-            Toast.makeText(requireContext(), "Program saved", Toast.LENGTH_SHORT).show()
-            findNavController().popBackStack()
+        binding.btnSaveAs.setOnClickListener {
+            Toast.makeText(requireContext(), "Save as", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun updateEditorModeUi() {
-        val selectedBg = R.drawable.bg_light_filter_selected
-        val transparentBg = android.R.color.transparent
+    private fun setupSliders() {
+        binding.sliderRed.addOnChangeListener { _, value, _ ->
+            binding.tvRedValue.text = "Red ${value.toInt()}%"
+        }
 
-        val selectedText = requireContext().getColor(R.color.light_button_on_primary)
-        val normalText = requireContext().getColor(R.color.light_text_secondary)
+        binding.sliderGreen.addOnChangeListener { _, value, _ ->
+            binding.tvGreenValue.text = "Green ${value.toInt()}%"
+        }
 
-        binding.btnSimpleCurve.setBackgroundResource(
-            if (isSimpleCurveMode) selectedBg else transparentBg
-        )
-        binding.btnSimpleCurve.setTextColor(
-            if (isSimpleCurveMode) selectedText else normalText
-        )
+        binding.sliderBlue.addOnChangeListener { _, value, _ ->
+            binding.tvBlueValue.text = "Blue ${value.toInt()}%"
+        }
 
-        binding.btnProChannels.setBackgroundResource(
-            if (!isSimpleCurveMode) selectedBg else transparentBg
-        )
-        binding.btnProChannels.setTextColor(
-            if (!isSimpleCurveMode) selectedText else normalText
-        )
+        binding.sliderWhite.addOnChangeListener { _, value, _ ->
+            binding.tvWhiteValue.text = "White ${value.toInt()}%"
+        }
     }
 
     override fun onDestroyView() {
