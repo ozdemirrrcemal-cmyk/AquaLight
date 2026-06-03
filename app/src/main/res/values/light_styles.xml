@@ -40,5 +40,13 @@
         <item name="android:fontFamily">@font/inter_semibold</item>
         <item name="fontFamily">@font/inter_semibold</item>
     </style>
+	
+	<style name="TextAppearance.Aqua.Light.SectionTitle"
+    parent="TextAppearance.Aqua.Light">
+    <item name="android:textSize">18sp</item>
+    <item name="android:textColor">@color/light_text_primary</item>
+    <item name="android:fontFamily">@font/inter_semibold</item>
+    <item name="fontFamily">@font/inter_semibold</item>
+</style>
 
 </resources>
