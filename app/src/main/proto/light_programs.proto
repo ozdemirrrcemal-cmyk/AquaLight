@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.devices.light.programs";
+option java_multiple_files = true;
+
+message LightProgramsPreferences {
+  repeated LightProgram programs = 1;
+}
+
+message LightProgram {
+  string id = 1;
+  string name = 2;
+  bool is_active = 3;
+
+  LightCurveTiming timing = 4;
+  LightChannelValues channels = 5;
+
+  RepeatMode repeat_mode = 6;
+  repeated int32 selected_days = 7;
+
+  MoonlightSettings moonlight = 8;
+  CloudSimulationSettings cloud_simulation = 9;
+  TransitionMode transition_mode = 10;
+
+  int64 created_at = 11;
+  int64 updated_at = 12;
+}
+
+message LightCurveTiming {
+  TimePoint start = 1;
+  TimePoint peak_start = 2;
+  TimePoint peak_end = 3;
+  TimePoint end = 4;
+}
+
+message TimePoint {
+  int32 hour = 1;
+  int32 minute = 2;
+}
+
+message LightChannelValues {
+  int32 red = 1;
+  int32 green = 2;
+  int32 blue = 3;
+  int32 white = 4;
+}
+
+message MoonlightSettings {
+  bool enabled = 1;
+  bool follow_program_end = 2;
+  TimePoint start_time = 3;
+  TimePoint end_time = 4;
+  MoonlightChannel channel = 5;
+  int32 intensity_percent = 6;
+}
+
+message CloudSimulationSettings {
+  bool enabled = 1;
+  int32 coverage_percent = 2;
+  CloudFrequency frequency = 3;
+}
+
+enum RepeatMode {
+  REPEAT_MODE_EVERY = 0;
+  REPEAT_MODE_WEEK = 1;
+  REPEAT_MODE_WEEKEND = 2;
+  REPEAT_MODE_CUSTOM = 3;
+}
+
+enum MoonlightChannel {
+  MOONLIGHT_CHANNEL_BLUE = 0;
+  MOONLIGHT_CHANNEL_WHITE = 1;
+  MOONLIGHT_CHANNEL_BLUE_WHITE = 2;
+}
+
+enum CloudFrequency {
+  CLOUD_FREQUENCY_RARE = 0;
+  CLOUD_FREQUENCY_NORMAL = 1;
+  CLOUD_FREQUENCY_FREQUENT = 2;
+}
+
+enum TransitionMode {
+  TRANSITION_MODE_LINEAR = 0;
+  TRANSITION_MODE_SMOOTH = 1;
+  TRANSITION_MODE_NATURAL = 2;
+}
