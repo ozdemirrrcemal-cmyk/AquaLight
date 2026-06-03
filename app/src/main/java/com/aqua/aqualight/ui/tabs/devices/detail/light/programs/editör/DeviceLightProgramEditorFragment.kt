@@ -216,18 +216,11 @@ binding.repeatCustom.setOnClickListener {
     }
 
     private fun renderTimeRows() {
-        binding.tvTimeStart.findViewById<TextView>(R.id.tvTimeValue)?.text =
-            startPoint.label
-
-        binding.tvTimePeakStart.findViewById<TextView>(R.id.tvTimeValue)?.text =
-            peakStartPoint.label
-
-        binding.tvTimePeakEnd.findViewById<TextView>(R.id.tvTimeValue)?.text =
-            peakEndPoint.label
-
-        binding.tvTimeEnd.findViewById<TextView>(R.id.tvTimeValue)?.text =
-            endPoint.label
-    }
+    binding.tvTimeStartValue.text = startPoint.label
+    binding.tvTimePeakStartValue.text = peakStartPoint.label
+    binding.tvTimePeakEndValue.text = peakEndPoint.label
+    binding.tvTimeEndValue.text = endPoint.label
+}
 
     private fun buildCurrentGraphState(): LightCurveGraphState {
         return LightCurveGraphState(

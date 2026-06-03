@@ -373,10 +373,11 @@
                                 android:text="Start" />
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.TimeValue"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="07:00" />
+    android:id="@+id/tvTimeStartValue"
+    style="@style/TextAppearance.Aqua.Light.TimeValue"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="07:00" />
 
                         </LinearLayout>
 
@@ -402,10 +403,11 @@
                                 android:text="Peak Start" />
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.TimeValue"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="09:00" />
+    android:id="@+id/tvTimePeakStartValue"
+    style="@style/TextAppearance.Aqua.Light.TimeValue"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="09:00" />
 
                         </LinearLayout>
 
@@ -430,11 +432,12 @@
                                 android:layout_weight="1"
                                 android:text="Peak End" />
 
-                            <TextView
-                                style="@style/TextAppearance.Aqua.Light.TimeValue"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="17:00" />
+                           <TextView
+    android:id="@+id/tvTimePeakEndValue"
+    style="@style/TextAppearance.Aqua.Light.TimeValue"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="17:00" />
 
                         </LinearLayout>
 
@@ -460,10 +463,11 @@
                                 android:text="End" />
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.TimeValue"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="20:00" />
+    android:id="@+id/tvTimeEndValue"
+    style="@style/TextAppearance.Aqua.Light.TimeValue"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="20:00" />
 
                         </LinearLayout>
 
