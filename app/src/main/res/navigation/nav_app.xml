@@ -260,7 +260,7 @@
 
   </fragment>
   
-  <fragment
+<fragment
     android:id="@+id/deviceLightFragment"
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment"
     android:label="Lighting"
@@ -275,7 +275,29 @@
         app:argType="string"
         android:defaultValue="" />
 
-  </fragment>
+    <action
+        android:id="@+id/action_deviceLightFragment_to_deviceLightProgramsFragment"
+        app:destination="@id/deviceLightProgramsFragment" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightProgramsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.programs.DeviceLightProgramsFragment"
+    android:label="Programs"
+    tools:layout="@layout/fragment_device_light_programs">
+
+    <action
+        android:id="@+id/action_deviceLightProgramsFragment_to_deviceLightProgramEditorFragment"
+        app:destination="@id/deviceLightProgramEditorFragment" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightProgramEditorFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.DeviceLightProgramEditorFragment"
+    android:label="Program Editor"
+    tools:layout="@layout/fragment_device_light_program_editor" />
   
   <fragment
     android:id="@+id/deviceDosingFragment"

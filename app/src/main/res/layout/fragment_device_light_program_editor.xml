@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_bg"
+    tools:context=".ui.tabs.devices.detail.light.programs.editor.DeviceLightProgramEditorFragment">
+
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/editorScrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="116dp"
+        app:layout_constraintTop_toBottomOf="@id/appHeader"
+        app:layout_constraintBottom_toTopOf="@id/saveBarContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/editorContentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- PROGRAM HEADER -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardProgramHeader"
+                style="@style/Widget.Aqua.Light.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvProgramName"
+                            style="@style/TextAppearance.Aqua.Light.CardTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="Nature Day"
+                            tools:text="Nature Day" />
+
+                        <TextView
+                            android:id="@+id/tvProgramSummary"
+                            style="@style/TextAppearance.Aqua.Light.Body"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="7dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="Every day lighting schedule"
+                            tools:text="Every day lighting schedule" />
+
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/btnRenameProgram"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
+                        android:layout_marginStart="12dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Rename program"
+                        android:padding="9dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_light_settings"
+                        app:tint="@color/light_text_secondary" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- DAYS -->
+            <LinearLayout
+                android:id="@+id/daysSelectorContainer"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_light_filter_bar"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/dayMon"
+                    style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_light_filter_selected"
+                    android:gravity="center"
+                    android:text="Mon" />
+
+                <TextView
+                    android:id="@+id/dayTue"
+                    style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_light_filter_selected"
+                    android:gravity="center"
+                    android:text="Tue" />
+
+                <TextView
+                    android:id="@+id/dayWed"
+                    style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_light_filter_selected"
+                    android:gravity="center"
+                    android:text="Wed" />
+
+                <TextView
+                    android:id="@+id/dayThu"
+                    style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_light_filter_selected"
+                    android:gravity="center"
+                    android:text="Thu" />
+
+                <TextView
+                    android:id="@+id/dayFri"
+                    style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_light_filter_selected"
+                    android:gravity="center"
+                    android:text="Fri" />
+
+                <TextView
+                    android:id="@+id/daySat"
+                    style="@style/TextAppearance.Aqua.Light.Filter"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Sat" />
+
+                <TextView
+                    android:id="@+id/daySun"
+                    style="@style/TextAppearance.Aqua.Light.Filter"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Sun" />
+
+            </LinearLayout>
+
+            <!-- PRESET SELECTOR -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPresetSelector"
+                style="@style/Widget.Aqua.Light.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="68dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="18dp">
+
+                    <TextView
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_light_sheet_icon"
+                        android:gravity="center"
+                        android:text="✦"
+                        android:textColor="@color/light_gold"
+                        android:textSize="16sp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LIGHTING PRESET" />
+
+                        <TextView
+                            android:id="@+id/tvSelectedPreset"
+                            style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="Nature"
+                            tools:text="Nature" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="@color/light_text_tertiary"
+                        android:textSize="28sp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- LARGE GRAPH -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardDayPreview"
+                style="@style/Widget.Aqua.Light.Card.Hero"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="22dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Day Preview" />
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Body"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="7dp"
+                                android:text="Master brightness curve" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/btnPreviewDay"
+                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_light_filter_selected"
+                            android:gravity="center"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:text="Preview" />
+
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/dayPreviewGraphContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="230dp"
+                        android:layout_marginTop="18dp"
+                        android:background="@drawable/bg_light_timeline_panel">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_gravity="bottom"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginEnd="16dp"
+                            android:layout_marginBottom="38dp"
+                            android:background="@color/light_stroke" />
+
+                        <View
+                            android:layout_width="2dp"
+                            android:layout_height="160dp"
+                            android:layout_gravity="center_horizontal|bottom"
+                            android:layout_marginBottom="38dp"
+                            android:background="@color/light_accent" />
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="Live curve graph"
+                            android:textColor="@color/light_text_tertiary" />
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom|start"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginBottom="12dp"
+                            android:text="07:00" />
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom|center_horizontal"
+                            android:layout_marginBottom="12dp"
+                            android:text="12:00" />
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginEnd="16dp"
+                            android:layout_marginBottom="12dp"
+                            android:text="20:00" />
+
+                    </FrameLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- MODE SELECTOR -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardEditorMode"
+                style="@style/Widget.Aqua.Light.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="22dp">
+
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Editor Mode" />
+
+                    <LinearLayout
+                        android:id="@+id/editorModeSelector"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="18dp"
+                        android:background="@drawable/bg_light_filter_bar"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:padding="4dp">
+
+                        <TextView
+                            android:id="@+id/btnSimpleCurve"
+                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_light_filter_selected"
+                            android:gravity="center"
+                            android:text="Simple Curve" />
+
+                        <TextView
+                            android:id="@+id/btnProChannels"
+                            style="@style/TextAppearance.Aqua.Light.Filter"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="Pro Channels" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- SIMPLE CURVE EDITOR -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardCurvePoints"
+                style="@style/Widget.Aqua.Light.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="22dp">
+
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Simple Curve" />
+
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.Body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Adjust time and master brightness points." />
+
+                    <LinearLayout
+                        android:id="@+id/curvePointsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:orientation="vertical">
+
+                        <include layout="@layout/item_light_curve_point_row" />
+                        <include layout="@layout/item_light_curve_point_row" />
+                        <include layout="@layout/item_light_curve_point_row" />
+                        <include layout="@layout/item_light_curve_point_row" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddCurvePoint"
+                        style="@style/Widget.Aqua.Light.Button.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="18dp"
+                        android:text="+ Add Point" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- PROGRAM SETTINGS -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardEditorActions"
+                style="@style/Widget.Aqua.Light.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="22dp">
+
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Program Settings" />
+
+                    <TextView
+                        style="@style/TextAppearance.Aqua.Light.Body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Optional behavior for this program." />
+
+                    <include
+                        android:id="@+id/actionCloudSimulation"
+                        layout="@layout/item_light_editor_action_row" />
+
+                    <include
+                        android:id="@+id/actionMoonlight"
+                        layout="@layout/item_light_editor_action_row" />
+
+                    <include
+                        android:id="@+id/actionProgramAdvanced"
+                        layout="@layout/item_light_editor_action_row" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- SAVE BAR -->
+    <LinearLayout
+        android:id="@+id/saveBarContainer"
+        android:layout_width="0dp"
+        android:layout_height="92dp"
+        android:background="@color/light_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDiscardProgram"
+            style="@style/Widget.Aqua.Light.Button.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="54dp"
+            android:layout_marginEnd="10dp"
+            android:layout_weight="1"
+            android:text="Discard" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveProgram"
+            style="@style/Widget.Aqua.Light.Button.Primary"
+            android:layout_width="0dp"
+            android:layout_height="54dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1.4"
+            android:text="Save Program" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

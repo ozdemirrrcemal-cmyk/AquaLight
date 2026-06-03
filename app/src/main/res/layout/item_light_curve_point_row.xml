@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/curvePointRowRoot"
+    android:layout_width="match_parent"
+    android:layout_height="74dp"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_light_program_time_panel"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="14dp">
+
+    <View
+        android:id="@+id/viewPointAccent"
+        android:layout_width="4dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="14dp"
+        android:background="@drawable/bg_light_program_active_bar" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvPointTitle"
+            style="@style/TextAppearance.Aqua.Light.BodyStrong"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start"
+            tools:text="Start" />
+
+        <TextView
+            android:id="@+id/tvPointSubtitle"
+            style="@style/TextAppearance.Aqua.Light.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Sunrise begins"
+            tools:text="Sunrise begins" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvPointTime"
+            style="@style/TextAppearance.Aqua.Light.MetricSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="07:00"
+            tools:text="07:00" />
+
+        <TextView
+            android:id="@+id/tvPointBrightness"
+            style="@style/TextAppearance.Aqua.Light.ProgramMetaChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="0%"
+            android:textColor="@color/light_accent"
+            tools:text="0%" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -19,6 +19,8 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserInfoBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class UserInfoFragment :
     Fragment(R.layout.fragment_user_info) {
@@ -194,11 +196,15 @@ class UserInfoFragment :
 
             // BACK
 
-            btnBack.setOnClickListener {
-
-                findNavController()
-                    .popBackStack()
-            }
+            binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
+            findNavController().popBackStack()
+        }
+    )
+)
 
             // ADDRESS
 

@@ -7,6 +7,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTermsOfUseBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class TermsOfUseFragment : Fragment(R.layout.fragment_terms_of_use) {
 
@@ -21,9 +23,15 @@ class TermsOfUseFragment : Fragment(R.layout.fragment_terms_of_use) {
 
         _binding = FragmentTermsOfUseBinding.bind(view)
 
-        binding.btnBack.setOnClickListener {
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
 
         binding.webViewTerms.apply {
 

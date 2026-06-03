@@ -1,34 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Backgrounds -->
-    <color name="light_background">#0F1318</color>
-    <color name="light_surface">#171C22</color>
-    <color name="light_surface_elevated">#1D242D</color>
+    <!-- Light module background -->
+    <color name="light_bg">#0B1118</color>
+    <color name="light_bg_deep">#070B10</color>
 
-    <!-- Borders -->
-    <color name="light_stroke">#293240</color>
-	<color name="light_surface_deep">#0F1318</color>
-<color name="light_chip_auto">#1A3A63</color>
+    <!-- Surfaces -->
+    <color name="light_surface">#141C26</color>
+    <color name="light_surface_elevated">#1A2431</color>
+    <color name="light_surface_soft">#202C3A</color>
+    <color name="light_surface_glass">#CC141C26</color>
+
+    <!-- Borders / strokes -->
+    <color name="light_stroke">#263444</color>
+    <color name="light_stroke_soft">#1C2836</color>
+    <color name="light_stroke_active">#8EB8FF</color>
+
+    <!-- Accent system -->
+    <color name="light_accent">#8EB8FF</color>
+    <color name="light_accent_soft">#263B5C</color>
+    <color name="light_accent_muted">#6F8FBF</color>
+
+    <!-- Premium secondary accent -->
+    <color name="light_gold">#C8A86B</color>
+    <color name="light_gold_soft">#332B1A</color>
 
     <!-- Text -->
-    <color name="light_text_primary">#F2F5F8</color>
-    <color name="light_text_secondary">#A8B3C2</color>
-    <color name="light_text_tertiary">#7A8593</color>
-
-    <!-- Accent -->
-    <color name="light_accent">#6EA8FE</color>
-    <color name="light_accent_soft">#203A5A</color>
+    <color name="light_text_primary">#F2F6FA</color>
+    <color name="light_text_secondary">#90A1B5</color>
+    <color name="light_text_tertiary">#5F7084</color>
+    <color name="light_text_disabled">#465463</color>
 
     <!-- Status -->
-    <color name="light_success">#63C38F</color>
-    <color name="light_warning">#D7B267</color>
-    <color name="light_error">#E06C75</color>
+    <color name="light_status_online">#5FD18B</color>
+    <color name="light_status_warning">#F5B041</color>
+    <color name="light_status_error">#E66A6A</color>
+    <color name="light_status_manual">#C8A86B</color>
+    <color name="light_status_auto">#8EB8FF</color>
 
-    <!-- WRGB -->
-    <color name="light_red">#FF6B6B</color>
-    <color name="light_green">#59D38A</color>
-    <color name="light_blue">#63A8FF</color>
-    <color name="light_white">#D8DEE9</color>
+    <!-- WRGB channel colors - premium muted -->
+    <color name="light_channel_red">#D16D6D</color>
+    <color name="light_channel_green">#72B77D</color>
+    <color name="light_channel_blue">#6D97D1</color>
+    <color name="light_channel_white">#D8DDE4</color>
+
+    <!-- Buttons -->
+    <color name="light_button_primary">#5E7FBD</color>
+   <color name="light_button_on_primary">#F2F6FA</color>
+    <color name="light_button_secondary">#202C3A</color>
+    <color name="light_button_on_secondary">#F2F6FA</color>
+	
+    <!-- Dividers -->
+    <color name="light_divider">#1E2A38</color>
 
 </resources>

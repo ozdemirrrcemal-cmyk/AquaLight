@@ -21,6 +21,8 @@ import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class UserAddressFragment :
     Fragment(R.layout.fragment_user_address) {
@@ -567,11 +569,15 @@ class UserAddressFragment :
     private fun setupListeners() =
         with(binding) {
 
-            btnBack.setOnClickListener {
-
-                findNavController()
-                    .popBackStack()
-            }
+            binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
+            findNavController().popBackStack()
+        }
+    )
+)
 
             btnSave.setOnClickListener {
 

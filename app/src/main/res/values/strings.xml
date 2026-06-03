@@ -140,7 +140,7 @@
     <string name="auth_reset_password_title">Reset Password</string>
 
     <!-- ⚙️ Settings Main Screen: Profile Card -->
-    <string name="settings_profile_photo_desc">Profile photo</string>
+    <string name="settings_profile_photo_desc">Profile Photo</string>
     <string name="settings_default_username">AquaLight User</string>
     <string name="settings_default_email">Email address</string>
     <string name="active_devices">Active devices</string>

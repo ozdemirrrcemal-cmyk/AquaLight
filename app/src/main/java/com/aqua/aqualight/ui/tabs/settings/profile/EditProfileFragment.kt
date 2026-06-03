@@ -26,6 +26,8 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
@@ -150,9 +152,15 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     private fun setupClickListeners() = with(binding) {
 
-        btnBack.setOnClickListener {
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_profile_photo_desc),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
 
         val openChooser: (View) -> Unit = {
             PhotoSourceBottomSheet

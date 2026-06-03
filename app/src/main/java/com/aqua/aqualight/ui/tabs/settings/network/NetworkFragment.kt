@@ -27,6 +27,8 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.SocketTimeoutException
 import java.util.Locale
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class NetworkFragment : Fragment(R.layout.fragment_network) {
 
@@ -43,9 +45,15 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         _binding = FragmentNetworkBinding.bind(view)
 
         // 🔙 Geri
-        binding.btnBack.setOnClickListener {
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
 
         // 📡 Bağlantı bilgisi
         bindConnectionStatus()

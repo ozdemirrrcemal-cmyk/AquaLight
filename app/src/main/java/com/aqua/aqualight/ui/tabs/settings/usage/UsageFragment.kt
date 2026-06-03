@@ -13,6 +13,8 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class UsageFragment : Fragment(R.layout.fragment_usage) {
 
@@ -27,9 +29,15 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         _binding = FragmentUsageBinding.bind(view)
 
         // 🔙 Geri
-        binding.btnBack.setOnClickListener {
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
 
         // 🔄 DataStore'dan usage verisini dinle ve UI'ye bağla
         viewLifecycleOwner.lifecycleScope.launch {

@@ -12,6 +12,8 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class ChangePasswordFragment :
     Fragment(R.layout.fragment_change_password) {
@@ -43,10 +45,15 @@ class ChangePasswordFragment :
         _binding =
             FragmentChangePasswordBinding.bind(view)
 
-        binding.btnBack.setOnClickListener {
-
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
 
         // Google kullanıcı kontrolü
         if (!hasPasswordProvider()) {

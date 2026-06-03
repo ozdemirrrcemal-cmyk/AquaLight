@@ -22,6 +22,8 @@ import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
@@ -70,9 +72,15 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     }
 
     private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
+            findNavController().popBackStack()
         }
+    )
+)
     }
 
     private fun observeTanks() {

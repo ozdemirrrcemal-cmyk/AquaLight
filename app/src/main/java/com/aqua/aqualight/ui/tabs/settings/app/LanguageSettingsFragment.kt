@@ -12,6 +12,8 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLanguageSettingsBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
 
@@ -24,9 +26,15 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLanguageSettingsBinding.bind(view)
 
-        binding.btnBack.setOnClickListener {
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
 
         observeSelectedLanguage()
         setupLanguageClicks()

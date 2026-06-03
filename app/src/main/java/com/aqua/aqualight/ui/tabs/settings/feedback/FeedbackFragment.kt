@@ -28,6 +28,8 @@ import com.google.firebase.storage.storage
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class FeedbackFragment :
     Fragment(R.layout.fragment_feedback) {
@@ -174,11 +176,15 @@ class FeedbackFragment :
     private fun setupHeader() =
         with(binding) {
 
-            btnBack.setOnClickListener {
-
-                findNavController()
-                    .popBackStack()
-            }
+            binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
+            findNavController().popBackStack()
+        }
+    )
+)
 
             tvSubInfo.text =
                 getString(

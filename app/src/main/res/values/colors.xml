@@ -91,6 +91,9 @@
 <color name="aqua_input_hint_focused">#8ABEF5</color>
 <color name="aqua_input_hint_unfocused">#7F91AA</color>
 <color name="white">#FFFFFF</color>
+	<color name="light_surface_deep">#0F1318</color>
+<color name="light_chip_auto">#1A3A63</color>
+
 
 
 </resources>

@@ -7,6 +7,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentOpenSourceLicensesBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class OpenSourceLicensesFragment : Fragment(R.layout.fragment_open_source_licenses) {
 
@@ -18,9 +20,15 @@ class OpenSourceLicensesFragment : Fragment(R.layout.fragment_open_source_licens
 
         _binding = FragmentOpenSourceLicensesBinding.bind(view)
 
-        binding.btnBack.setOnClickListener {
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
 
         setupLicensesWebView()
     }

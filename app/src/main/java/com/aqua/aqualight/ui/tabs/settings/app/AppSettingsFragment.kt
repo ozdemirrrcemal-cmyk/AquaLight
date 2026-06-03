@@ -18,6 +18,8 @@ import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
@@ -113,9 +115,15 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
   }
 
   private fun setupClicks() = with(binding) {
-    btnBack.setOnClickListener {
-      findNavController().popBackStack()
-    }
+    binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
+            findNavController().popBackStack()
+        }
+    )
+)
 
     switchNotifications.setOnCheckedChangeListener {
       _, isChecked ->

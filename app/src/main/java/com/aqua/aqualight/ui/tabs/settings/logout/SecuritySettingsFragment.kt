@@ -12,6 +12,8 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class SecuritySettingsFragment :
     Fragment(R.layout.fragment_security_settings) {
@@ -50,10 +52,15 @@ class SecuritySettingsFragment :
 
     private fun setupNavigation() {
 
-        binding.btnBack.setOnClickListener {
-
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
     }
 
     // ---------------------------------------------------

@@ -19,6 +19,8 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class LogoutFragment :
     Fragment(R.layout.fragment_logout) {
@@ -85,10 +87,15 @@ class LogoutFragment :
 
     private fun setupNavigation() {
 
-        binding.btnBack.setOnClickListener {
-
+        binding.appHeader.setupAquaHeader(
+    AquaHeaderConfig(
+        title = getString(R.string.settings_about_title),
+        showBackButton = true,
+        onBackClick = {
             findNavController().popBackStack()
         }
+    )
+)
 
         binding.rowChangePassword.setOnClickListener {
 
