@@ -23,6 +23,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.Moo
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudFrequency
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudSimulationSettings
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCloudSimulationSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
 
 class DeviceLightProgramEditorFragment :
 Fragment(R.layout.fragment_device_light_program_editor) {
@@ -38,6 +40,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     private var selectedCustomDays: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7)
 	private var moonlightSettings = MoonlightSettings()
 	private var cloudSimulationSettings = CloudSimulationSettings()
+	private var selectedTransitionMode = LightCurveTransitionMode.LINEAR
 
     override fun onViewCreated(
         view: View,
@@ -54,6 +57,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 		renderCloudSimulationSummary()
 		renderMoonlightSummary()
         setupClicks()
+		renderTransitionSummary()
         setupSliders()
         renderRepeatMode()
     }
@@ -92,16 +96,10 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         bindActionRow(
             row = binding.actionTransitionSmoothing.root,
             icon = "≈",
-            title = "Transition Smoothing",
+            title = "Transition Variant",
             subtitle = "Make ramps feel more natural"
         )
 
-        bindActionRow(
-            row = binding.actionNaturalVariation.root,
-            icon = "✦",
-            title = "Natural Variation",
-            subtitle = "Subtle randomized daily output"
-        )
     }
 
     private fun bindActionRow(
@@ -219,12 +217,16 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 }
 
         binding.actionTransitionSmoothing.root.setOnClickListener {
-            Toast.makeText(requireContext(), "Transition Smoothing", Toast.LENGTH_SHORT).show()
+    LightTransitionVariantSheet
+        .create(requireContext())
+        .show(
+            initialMode = selectedTransitionMode
+        ) { mode ->
+            selectedTransitionMode = mode
+            renderTransitionSummary()
+            updateGraph()
         }
-
-        binding.actionNaturalVariation.root.setOnClickListener {
-            Toast.makeText(requireContext(), "Natural Variation", Toast.LENGTH_SHORT).show()
-        }
+}
 
         binding.btnLoadToDevice.setOnClickListener {
             Toast.makeText(requireContext(), "Load to device", Toast.LENGTH_SHORT).show()
@@ -279,20 +281,21 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     }
 
     private fun buildCurrentGraphState(): LightCurveGraphState {
-        return LightCurveGraphState(
-            start = startPoint,
-            peakStart = peakStartPoint,
-            peakEnd = peakEndPoint,
-            end = endPoint,
-            channelValues = LightCurveChannelValues(
-                red = binding.sliderRed.value.toInt(),
-                green = binding.sliderGreen.value.toInt(),
-                blue = binding.sliderBlue.value.toInt(),
-                white = binding.sliderWhite.value.toInt()
-            ),
-            currentTime = LightCurvePoint.of(13, 28)
-        )
-    }
+    return LightCurveGraphState(
+        start = startPoint,
+        peakStart = peakStartPoint,
+        peakEnd = peakEndPoint,
+        end = endPoint,
+        channelValues = LightCurveChannelValues(
+            red = binding.sliderRed.value.toInt(),
+            green = binding.sliderGreen.value.toInt(),
+            blue = binding.sliderBlue.value.toInt(),
+            white = binding.sliderWhite.value.toInt()
+        ),
+        currentTime = LightCurvePoint.of(13, 28),
+        transitionMode = selectedTransitionMode
+    )
+}
 
     private fun renderRepeatMode() {
         val selectedBg = R.drawable.bg_light_filter_selected
@@ -370,6 +373,18 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         .findViewById<TextView>(R.id.tvActionSubtitle)
         ?.text = subtitle
     }
+	
+	private fun renderTransitionSummary() {
+    val subtitle = when (selectedTransitionMode) {
+        LightCurveTransitionMode.LINEAR -> "Linear ramp curve"
+        LightCurveTransitionMode.SMOOTH -> "Smooth start and finish"
+        LightCurveTransitionMode.NATURAL -> "Sunrise-like natural ramp"
+    }
+
+    binding.actionTransitionSmoothing.root
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
+}
 
     private fun setupSliders() {
         binding.sliderRed.addOnChangeListener {

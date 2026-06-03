@@ -6,7 +6,8 @@ data class LightCurveGraphState(
     val peakEnd: LightCurvePoint,
     val end: LightCurvePoint,
     val channelValues: LightCurveChannelValues,
-    val currentTime: LightCurvePoint
+    val currentTime: LightCurvePoint,
+    val transitionMode: LightCurveTransitionMode = LightCurveTransitionMode.LINEAR
 ) {
     companion object {
         fun preview(): LightCurveGraphState {
@@ -21,7 +22,8 @@ data class LightCurveGraphState(
                     blue = 100,
                     white = 60
                 ),
-                currentTime = LightCurvePoint.of(13, 28)
+                currentTime = LightCurvePoint.of(13, 28),
+                transitionMode = LightCurveTransitionMode.LINEAR
             )
         }
     }

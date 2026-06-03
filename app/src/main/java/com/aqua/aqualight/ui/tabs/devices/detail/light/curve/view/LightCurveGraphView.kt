@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
 import kotlin.math.roundToInt
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
 
 class LightCurveGraphView @JvmOverloads constructor(
     context: Context,
@@ -161,37 +162,52 @@ class LightCurveGraphView @JvmOverloads constructor(
     }
 
     private fun drawCurve(
-        canvas: Canvas,
-        peakPercent: Int,
-        paint: Paint
-    ) {
-        val path = Path()
+    canvas: Canvas,
+    peakPercent: Int,
+    paint: Paint
+) {
+    val points = LightCurveInterpolator.buildCurvePoints(
+        startMinute = state.start.totalMinutes,
+        peakStartMinute = state.peakStart.totalMinutes,
+        peakEndMinute = state.peakEnd.totalMinutes,
+        endMinute = state.end.totalMinutes,
+        peakPercent = peakPercent,
+        transitionMode = state.transitionMode
+    )
 
-        val startX = xForMinute(state.start.totalMinutes)
-        val peakStartX = xForMinute(state.peakStart.totalMinutes)
-        val peakEndX = xForMinute(state.peakEnd.totalMinutes)
-        val endX = xForMinute(state.end.totalMinutes)
+    if (points.isEmpty()) return
 
-        val zeroY = yForPercent(0)
-        val peakY = yForPercent(peakPercent)
+    val path = Path()
 
-        path.moveTo(graphRect.left, zeroY)
-        path.lineTo(startX, zeroY)
-        path.lineTo(peakStartX, peakY)
-        path.lineTo(peakEndX, peakY)
-        path.lineTo(endX, zeroY)
-        path.lineTo(graphRect.right, zeroY)
+    points.forEachIndexed { index, point ->
+        val x = xForMinute(point.x.toInt())
+        val y = yForPercent(point.y.toInt())
 
-        canvas.drawPath(path, paint)
-
-        pointPaint.color = paint.color
-        pointPaint.alpha = 220
-
-        canvas.drawCircle(startX, zeroY, dp(2.6f), pointPaint)
-        canvas.drawCircle(peakStartX, peakY, dp(2.6f), pointPaint)
-        canvas.drawCircle(peakEndX, peakY, dp(2.6f), pointPaint)
-        canvas.drawCircle(endX, zeroY, dp(2.6f), pointPaint)
+        if (index == 0) {
+            path.moveTo(x, y)
+        } else {
+            path.lineTo(x, y)
+        }
     }
+
+    canvas.drawPath(path, paint)
+
+    pointPaint.color = paint.color
+    pointPaint.alpha = 220
+
+    val startX = xForMinute(state.start.totalMinutes)
+    val peakStartX = xForMinute(state.peakStart.totalMinutes)
+    val peakEndX = xForMinute(state.peakEnd.totalMinutes)
+    val endX = xForMinute(state.end.totalMinutes)
+
+    val zeroY = yForPercent(0)
+    val peakY = yForPercent(peakPercent)
+
+    canvas.drawCircle(startX, zeroY, dp(2.6f), pointPaint)
+    canvas.drawCircle(peakStartX, peakY, dp(2.6f), pointPaint)
+    canvas.drawCircle(peakEndX, peakY, dp(2.6f), pointPaint)
+    canvas.drawCircle(endX, zeroY, dp(2.6f), pointPaint)
+}
 
     private fun drawCurrentTime(canvas: Canvas) {
         val currentX = xForMinute(state.currentTime.totalMinutes)
