@@ -1,11 +1,13 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.manual
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
-import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.SavedLightPreset
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,25 +18,29 @@ import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-class DeviceLightManualViewModel : ViewModel() {
+class DeviceLightManualViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+
+    private val lightPresetDataStoreManager =
+        LightPresetDataStoreManager(application.applicationContext)
 
     private val _uiState = MutableStateFlow(
         ManualLightUiState()
     )
 
     val uiState: StateFlow<ManualLightUiState> =
-    _uiState.asStateFlow()
+        _uiState.asStateFlow()
 
     private val eventsChannel =
-    Channel<ManualLightEvent>(Channel.BUFFERED)
+        Channel<ManualLightEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
 
     fun setPowerOn(
         enabled: Boolean
     ) {
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             val newState = if (enabled) {
                 state.copy(
                     isPowerOn = true,
@@ -61,8 +67,7 @@ class DeviceLightManualViewModel : ViewModel() {
     ) {
         val safePercent = percent.coerceIn(0, 100)
 
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             recalculateOutput(
                 state.copy(
                     isPowerOn = safePercent > 0,
@@ -89,7 +94,9 @@ class DeviceLightManualViewModel : ViewModel() {
         updateChannel(white = value)
     }
 
-    fun applyScene(scene: ManualLightScene) {
+    fun applyScene(
+        scene: ManualLightScene
+    ) {
         val master = listOf(
             scene.red,
             scene.green,
@@ -97,8 +104,7 @@ class DeviceLightManualViewModel : ViewModel() {
             scene.white
         ).maxOrNull() ?: 0
 
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             recalculateOutput(
                 state.copy(
                     isManualMode = true,
@@ -171,30 +177,45 @@ class DeviceLightManualViewModel : ViewModel() {
             }
 
             val state = _uiState.value
+
+            val hasAnyOutput = listOf(
+                state.red,
+                state.green,
+                state.blue,
+                state.white
+            ).any { it > 0 }
+
+            if (!hasAnyOutput) {
+                eventsChannel.send(
+                    ManualLightEvent.ShowError("Set at least one channel before saving")
+                )
+                return@launch
+            }
+
             val now = System.currentTimeMillis()
 
-            val preset = ManualLightPreset(
+            val preset = SavedLightPreset(
                 id = "manual_$now",
                 name = cleanName,
                 red = state.red,
                 green = state.green,
                 blue = state.blue,
                 white = state.white,
-                createdAtMillis = now
+                createdAt = now,
+                updatedAt = now
             )
 
-            _uiState.update {
-                it.copy(
-                    savedPresets = it.savedPresets + preset
+            runCatching {
+                lightPresetDataStoreManager.savePreset(preset)
+            }.onSuccess {
+                eventsChannel.send(
+                    ManualLightEvent.ShowMessage("Preset saved")
+                )
+            }.onFailure {
+                eventsChannel.send(
+                    ManualLightEvent.ShowError("Preset could not be saved")
                 )
             }
-
-            // TODO: Persist preset into Light Presets data store later.
-            // TODO: Make this preset visible in Presets & Scenes > My Presets.
-
-            eventsChannel.send(
-                ManualLightEvent.ShowMessage("Preset saved")
-            )
         }
     }
 
@@ -204,8 +225,7 @@ class DeviceLightManualViewModel : ViewModel() {
         blue: Int? = null,
         white: Int? = null
     ) {
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             val newRed = red?.coerceIn(0, 100) ?: state.red
             val newGreen = green?.coerceIn(0, 100) ?: state.green
             val newBlue = blue?.coerceIn(0, 100) ?: state.blue
@@ -237,18 +257,18 @@ class DeviceLightManualViewModel : ViewModel() {
     ): ManualLightUiState {
         val estimatedPower = if (state.isPowerOn) {
             state.redMaxWatts * (state.red / 100.0) +
-            state.greenMaxWatts * (state.green / 100.0) +
-            state.blueMaxWatts * (state.blue / 100.0) +
-            state.whiteMaxWatts * (state.white / 100.0)
+                state.greenMaxWatts * (state.green / 100.0) +
+                state.blueMaxWatts * (state.blue / 100.0) +
+                state.whiteMaxWatts * (state.white / 100.0)
         } else {
             0.0
         }
 
         val maxPower =
-        state.redMaxWatts +
-            state.greenMaxWatts +
-            state.blueMaxWatts +
-            state.whiteMaxWatts
+            state.redMaxWatts +
+                state.greenMaxWatts +
+                state.blueMaxWatts +
+                state.whiteMaxWatts
 
         val hasPowerCalibration = maxPower > 0.0
 
@@ -331,6 +351,7 @@ class DeviceLightManualViewModel : ViewModel() {
 
         fun gammaCorrect(value: Double): Int {
             val normalized = (value / max).coerceIn(0.0, 1.0)
+
             return (255.0 * normalized.pow(1.0 / 2.2))
                 .roundToInt()
                 .coerceIn(0, 255)

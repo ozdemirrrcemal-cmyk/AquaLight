@@ -19,9 +19,14 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.sheet.LightPresetOptionsSheet
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
+import kotlinx.coroutines.launch
 
 class DeviceLightPresetsFragment :
-    Fragment(R.layout.fragment_device_light_presets) {
+Fragment(R.layout.fragment_device_light_presets) {
 
     private var _binding: FragmentDeviceLightPresetsBinding? = null
     private val binding get() = _binding!!
@@ -31,6 +36,10 @@ class DeviceLightPresetsFragment :
     private var selectedFilter = PresetFilter.ALL
     private var allPresets: List<LightPresetItem> = emptyList()
     private var activePreset: LightPresetItem? = null
+
+    private val lightPresetDataStoreManager by lazy {
+        LightPresetDataStoreManager(requireContext().applicationContext)
+    }
 
     override fun onViewCreated(
         view: View,
@@ -43,7 +52,8 @@ class DeviceLightPresetsFragment :
         setupHeader()
         setupRecyclerView()
         setupClicks()
-        loadPresets()
+        observePresets()
+        renderActivePreset(activePreset)
     }
 
     private fun setupHeader() {
@@ -60,10 +70,12 @@ class DeviceLightPresetsFragment :
 
     private fun setupRecyclerView() {
         presetsAdapter = LightPresetsAdapter(
-            onPresetClick = { preset ->
+            onPresetClick = {
+                preset ->
                 showPresetOptionsSheet(preset)
             },
-            onPresetOptionsClick = { preset ->
+            onPresetOptionsClick = {
+                preset ->
                 showPresetOptionsSheet(preset)
             }
         )
@@ -88,14 +100,22 @@ class DeviceLightPresetsFragment :
         }
     }
 
-    private fun loadPresets() {
-        // TODO: Add user-created presets from DataStore later.
-        val customPresets = emptyList<LightPresetItem>()
+    private fun observePresets() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                lightPresetDataStoreManager.presetsFlow.collect {
+                    savedPresets ->
+                    val customPresets = savedPresets.map {
+                        preset ->
+                        preset.toListItem()
+                    }
 
-        allPresets = BuiltInLightPresets.presets + customPresets
+                    allPresets = BuiltInLightPresets.presets + customPresets
 
-        applyFilter(selectedFilter)
-        renderActivePreset(activePreset)
+                    applyFilter(selectedFilter)
+                }
+            }
+        }
     }
 
     private fun applyFilter(
@@ -159,18 +179,18 @@ class DeviceLightPresetsFragment :
         preset: LightPresetItem
     ) {
         LightPresetOptionsSheet
-            .create(requireContext())
-            .show(
-                presetName = preset.title,
-                subtitle = "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}",
-                isCustom = preset.isCustom,
-                onApply = {
-                    applyPresetToDevice(preset)
-                },
-                onDelete = {
-                    deletePreset(preset)
-                }
-            )
+        .create(requireContext())
+        .show(
+            presetName = preset.title,
+            subtitle = "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}",
+            isCustom = preset.isCustom,
+            onApply = {
+                applyPresetToDevice(preset)
+            },
+            onDelete = {
+                deletePreset(preset)
+            }
+        )
     }
 
     private fun applyPresetToDevice(
@@ -192,12 +212,20 @@ class DeviceLightPresetsFragment :
     ) {
         if (!preset.isCustom) return
 
-        // TODO: Delete custom preset from DataStore later.
-        Toast.makeText(
-            requireContext(),
-            "${preset.title} deleted",
-            Toast.LENGTH_SHORT
-        ).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            lightPresetDataStoreManager.deletePreset(preset.id)
+
+            if (activePreset?.id == preset.id) {
+                activePreset = null
+                renderActivePreset(null)
+            }
+
+            Toast.makeText(
+                requireContext(),
+                "${preset.title} deleted",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     private fun renderActivePreset(
@@ -214,7 +242,7 @@ class DeviceLightPresetsFragment :
 
         binding.tvActivePresetTitle.text = preset.title
         binding.tvActivePresetChannels.text =
-            "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}"
+        "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}"
 
         binding.viewActivePresetColor.background = createColorDrawable(
             calculatePreviewColor(
@@ -252,30 +280,30 @@ class DeviceLightPresetsFragment :
         val whiteColor = Triple(0.92, 0.96, 1.00)
 
         val linearRed =
-            redColor.first * r +
-                greenColor.first * g +
-                blueColor.first * b +
-                whiteColor.first * w
+        redColor.first * r +
+        greenColor.first * g +
+        blueColor.first * b +
+        whiteColor.first * w
 
         val linearGreen =
-            redColor.second * r +
-                greenColor.second * g +
-                blueColor.second * b +
-                whiteColor.second * w
+        redColor.second * r +
+        greenColor.second * g +
+        blueColor.second * b +
+        whiteColor.second * w
 
         val linearBlue =
-            redColor.third * r +
-                greenColor.third * g +
-                blueColor.third * b +
-                whiteColor.third * w
+        redColor.third * r +
+        greenColor.third * g +
+        blueColor.third * b +
+        whiteColor.third * w
 
         val max = maxOf(linearRed, linearGreen, linearBlue, 1.0)
 
         fun gammaCorrect(value: Double): Int {
             val normalized = (value / max).coerceIn(0.0, 1.0)
             return (255.0 * normalized.pow(1.0 / 2.2))
-                .roundToInt()
-                .coerceIn(0, 255)
+            .roundToInt()
+            .coerceIn(0, 255)
         }
 
         return Color.rgb(
