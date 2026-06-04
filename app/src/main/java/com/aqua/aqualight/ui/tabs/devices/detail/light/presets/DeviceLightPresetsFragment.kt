@@ -7,7 +7,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -69,7 +69,7 @@ class DeviceLightPresetsFragment :
         )
 
         binding.presetsRecyclerView.apply {
-            layoutManager = GridLayoutManager(requireContext(), 2)
+            layoutManager = LinearLayoutManager(requireContext())
             adapter = presetsAdapter
         }
     }
