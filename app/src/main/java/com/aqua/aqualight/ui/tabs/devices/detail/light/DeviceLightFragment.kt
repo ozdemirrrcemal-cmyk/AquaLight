@@ -4,28 +4,36 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
+import kotlinx.coroutines.launch
 
 class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private var _binding: FragmentDeviceLightBinding? = null
     private val binding get() = _binding!!
 
+    private val viewModel: DeviceLightViewModel by viewModels()
+
     private val deviceId: Long
-    get() = requireArguments().getLong(ARG_DEVICE_ID)
+        get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceTitle: String
-    get() = requireArguments()
-    .getString(ARG_DEVICE_TITLE)
-    .orEmpty()
-    .ifBlank {
-        "Lighting"
-    }
+        get() = requireArguments()
+            .getString(ARG_DEVICE_TITLE)
+            .orEmpty()
+            .ifBlank {
+                "WRGB Pro"
+            }
 
     override fun onViewCreated(
         view: View,
@@ -37,12 +45,15 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
         setupHeader()
         setupClicks()
+        observeUiState()
+
+        viewModel.initialize(deviceId)
     }
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
             AquaHeaderConfig(
-                title = "WRGB Pro",
+                title = deviceTitle,
                 showBackButton = true,
                 onBackClick = {
                     findNavController().popBackStack()
@@ -84,7 +95,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
         binding.cardQuickSetup.setOnClickListener {
             val bundle = Bundle().apply {
-                putLong("deviceId", deviceId)
+                putLong(ARG_DEVICE_ID, deviceId)
             }
 
             findNavController().navigate(
@@ -100,7 +111,37 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
     }
 
+    private fun observeUiState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    renderUiState(state)
+                }
+            }
+        }
+    }
+
+    private fun renderUiState(
+        state: DeviceLightDashboardUiState
+    ) {
+        binding.tvActiveProgramName.text = state.activeProgramName
+        binding.tvLightRunStatus.text = state.runStatus
+        binding.tvOnlineChip.text = state.onlineStatusText
+
+        binding.tvCurrentWatt.text = state.currentWattText
+        binding.tvCurrentOutputPercent.text = state.outputPercentText
+
+        binding.tvDeviceTime.text = state.deviceTimeText
+        binding.tvNextEvent.text = state.nextEventText
+
+        binding.tvTimelineStatus.text = state.timelineStatusText
+
+        binding.lightCurveGraphView.setState(state.graphState)
+    }
+
     private fun refreshDeviceStatus() {
+        viewModel.refreshNow()
+
         Toast.makeText(
             requireContext(),
             "Refreshing device status",
@@ -109,7 +150,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
         // TODO: ESP32 bağlantısı yapılınca:
         // - cihaz online/offline durumu yeniden okunacak
-        // - aktif program okunacak
+        // - aktif program cihazdan doğrulanacak
         // - current power / output / next event yenilenecek
         // - timeline yeniden hesaplanacak
     }
