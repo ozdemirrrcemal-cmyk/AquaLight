@@ -40,38 +40,38 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     }
 
     private fun setupHeader() {
-    binding.appHeader.setupAquaHeader(
-        AquaHeaderConfig(
-            title = "WRGB Pro",
-            showBackButton = true,
-            onBackClick = {
-                findNavController().popBackStack()
-            },
-            actions = listOf(
-                AquaHeaderAction(
-                    iconRes = R.drawable.ic_settings,
-                    contentDescription = "Light settings",
-                    onClick = {
-                        findNavController().navigate(
-                            R.id.action_deviceLightFragment_to_deviceLightSettingsFragment
-                        )
-                    }
-                ),
-                AquaHeaderAction(
-                    iconRes = R.drawable.ic_more_vert,
-                    contentDescription = "More options",
-                    onClick = {
-                        Toast.makeText(
-                            requireContext(),
-                            "More options",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+        binding.appHeader.setupAquaHeader(
+            AquaHeaderConfig(
+                title = "WRGB Pro",
+                showBackButton = true,
+                onBackClick = {
+                    findNavController().popBackStack()
+                },
+                actions = listOf(
+                    AquaHeaderAction(
+                        iconRes = R.drawable.ic_settings,
+                        contentDescription = "Light settings",
+                        onClick = {
+                            findNavController().navigate(
+                                R.id.action_deviceLightFragment_to_deviceLightSettingsFragment
+                            )
+                        }
+                    ),
+                    AquaHeaderAction(
+                        iconRes = R.drawable.ic_more_vert,
+                        contentDescription = "More options",
+                        onClick = {
+                            Toast.makeText(
+                                requireContext(),
+                                "More options",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
                 )
             )
         )
-    )
-}
+    }
 
     private fun setupClicks() {
         binding.cardManual.setOnClickListener {
@@ -87,7 +87,14 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardQuickSetup.setOnClickListener {
-            Toast.makeText(requireContext(), "Quick Setup", Toast.LENGTH_SHORT).show()
+            val bundle = Bundle().apply {
+                putLong("deviceId", deviceId)
+            }
+
+            findNavController().navigate(
+                R.id.action_deviceLightFragment_to_deviceLightQuickSetupFragment,
+                bundle
+            )
         }
 
         binding.cardPresets.setOnClickListener {

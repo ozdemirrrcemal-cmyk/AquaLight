@@ -290,6 +290,10 @@
 	<action
     android:id="@+id/action_deviceLightFragment_to_deviceLightSettingsFragment"
     app:destination="@id/deviceLightSettingsFragment" />
+	
+	<action
+    android:id="@+id/action_deviceLightFragment_to_deviceLightQuickSetupFragment"
+    app:destination="@id/deviceLightQuickSetupFragment" />
 
 </fragment>
 
@@ -327,6 +331,18 @@
     android:id="@+id/deviceLightSettingsFragment"
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.settings.DeviceLightSettingsFragment"
     android:label="Light Settings" />
+	
+<fragment
+    android:id="@+id/deviceLightQuickSetupFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.DeviceLightQuickSetupFragment"
+    android:label="Smart Quick Setup">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+</fragment>
   
   <fragment
     android:id="@+id/deviceDosingFragment"

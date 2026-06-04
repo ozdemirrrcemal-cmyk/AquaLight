@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class DeviceLightSettingsViewModel : ViewModel() {
 
@@ -25,6 +28,18 @@ class DeviceLightSettingsViewModel : ViewModel() {
         Channel<DeviceLightSettingsEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
+
+    init {
+        refreshPhoneTime()
+    }
+
+    fun refreshPhoneTime() {
+        _uiState.update {
+            it.copy(
+                phoneTime = currentPhoneTimeText()
+            )
+        }
+    }
 
     fun setTemperatureProtectionEnabled(
         enabled: Boolean
@@ -116,15 +131,20 @@ class DeviceLightSettingsViewModel : ViewModel() {
 
     fun syncTimeWithPhone() {
         viewModelScope.launch {
+            val phoneTime = currentPhoneTimeText()
+
             // TODO: Send phone time to ESP32.
+            // ESP32 success response geldiğinde deviceTime da phoneTime ile güncellenecek.
+
             _uiState.update {
                 it.copy(
-                    lastSyncTime = "Just now"
+                    phoneTime = phoneTime,
+                    lastSyncTime = currentLastSyncText()
                 )
             }
 
             eventsChannel.send(
-                DeviceLightSettingsEvent.ShowMessage("Device time synced")
+                DeviceLightSettingsEvent.ShowMessage("Phone time refreshed")
             )
         }
     }
@@ -136,5 +156,19 @@ class DeviceLightSettingsViewModel : ViewModel() {
                 DeviceLightSettingsEvent.ShowMessage("Firmware update coming soon")
             )
         }
+    }
+
+    private fun currentPhoneTimeText(): String {
+        return SimpleDateFormat(
+            "HH:mm",
+            Locale.getDefault()
+        ).format(Date())
+    }
+
+    private fun currentLastSyncText(): String {
+        return SimpleDateFormat(
+            "'Today' HH:mm",
+            Locale.getDefault()
+        ).format(Date())
     }
 }

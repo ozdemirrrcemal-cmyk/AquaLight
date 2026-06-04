@@ -1,21 +1,23 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model
 
 data class DeviceLightSettingsUiState(
-    val deviceName: String = "WRGB Pro",
-    val deviceType: String = "WRGB Light Controller",
-    val deviceModel: String = "AquaLight WRGB Pro",
-    val firmwareVersion: String = "v1.0.0",
-    val connectionState: String = "Online",
+    val deviceName: String = "—",
+    val deviceType: String = "—",
+    val deviceModel: String = "—",
+    val firmwareVersion: String = "—",
+    val connectionState: String = "Offline",
 
-    val deviceTime: String = "15:42",
-    val phoneTime: String = "15:42",
-    val lastSyncTime: String = "Today 15:40",
+    val deviceTime: String = "--:--",
+    val phoneTime: String = "--:--",
+    val lastSyncTime: String = "Never",
 
+    // Safe firmware defaults. Later these will be loaded from ESP32.
     val temperatureProtectionEnabled: Boolean = true,
     val limitTemperatureCelsius: Int = 50,
     val lightReductionPercent: Int = 70,
     val recoveryIntervalSeconds: Int = 60,
 
+    // Cooling is device-managed. Later these will be loaded from ESP32.
     val coolingMode: String = "Auto default",
     val fanStartTemperatureCelsius: Int = 30,
     val fanFullSpeedTemperatureCelsius: Int = 50

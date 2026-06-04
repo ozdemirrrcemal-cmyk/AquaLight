@@ -199,6 +199,11 @@ class DeviceLightSettingsFragment :
 
         isRendering = false
     }
+	
+	override fun onResume() {
+    super.onResume()
+    viewModel.refreshPhoneTime()
+}
 
     override fun onDestroyView() {
         _binding = null
