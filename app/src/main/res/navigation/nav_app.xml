@@ -286,6 +286,10 @@
 	<action
     android:id="@+id/action_deviceLightFragment_to_deviceLightPresetsFragment"
     app:destination="@id/deviceLightPresetsFragment" />
+	
+	<action
+    android:id="@+id/action_deviceLightFragment_to_deviceLightSettingsFragment"
+    app:destination="@id/deviceLightSettingsFragment" />
 
 </fragment>
 
@@ -319,7 +323,10 @@
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presets.DeviceLightPresetsFragment"
     android:label="Presets &amp; Scenes" />
 	
-	
+<fragment
+    android:id="@+id/deviceLightSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.settings.DeviceLightSettingsFragment"
+    android:label="Light Settings" />
   
   <fragment
     android:id="@+id/deviceDosingFragment"
