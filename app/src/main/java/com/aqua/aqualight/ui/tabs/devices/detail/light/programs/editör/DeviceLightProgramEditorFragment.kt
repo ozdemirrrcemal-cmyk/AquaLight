@@ -5,8 +5,10 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -15,10 +17,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGra
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudFrequency
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudSimulationSettings
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightSettings
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.PreviewSpeed
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCloudSimulationSheet
@@ -29,9 +29,10 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.Lig
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper.LightProgramDraftMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
+import kotlinx.coroutines.launch
 
 class DeviceLightProgramEditorFragment :
-Fragment(R.layout.fragment_device_light_program_editor) {
+    Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
@@ -52,7 +53,12 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var selectedPreviewSpeed = PreviewSpeed.ONE_MINUTE
 
+    // TODO: Replace with ESP32 device time.
     private var currentDeviceTimePoint = LightCurvePoint.of(13, 28)
+
+    private val lightProgramsDataStoreManager by lazy {
+        LightProgramsDataStoreManager(requireContext().applicationContext)
+    }
 
     override fun onViewCreated(
         view: View,
@@ -124,30 +130,28 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     private fun setupClicks() {
         binding.btnPreviewProgram.setOnClickListener {
             LightPreviewDaySheet
-            .create(requireContext())
-            .show(
-                initialSpeed = selectedPreviewSpeed
-            ) {
-                speed ->
-                selectedPreviewSpeed = speed
-                val draft = buildCurrentProgramDraft()
+                .create(requireContext())
+                .show(
+                    initialSpeed = selectedPreviewSpeed
+                ) { speed ->
+                    selectedPreviewSpeed = speed
+                    val draft = buildCurrentProgramDraft()
 
-                Toast.makeText(
-                    requireContext(),
-                    "Preview started: ${speed.label}",
-                    Toast.LENGTH_SHORT
-                ).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Preview started: ${speed.label}",
+                        Toast.LENGTH_SHORT
+                    ).show()
 
-                // TODO: Send draft as temporary preview payload to ESP32.
-            }
+                    // TODO: Send draft as temporary preview payload to ESP32.
+                }
         }
 
         binding.tvTimeStart.setOnClickListener {
             showTimePickerSheet(
                 title = "Start Time",
                 point = startPoint
-            ) {
-                selectedPoint ->
+            ) { selectedPoint ->
                 startPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -158,8 +162,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             showTimePickerSheet(
                 title = "Peak Start Time",
                 point = peakStartPoint
-            ) {
-                selectedPoint ->
+            ) { selectedPoint ->
                 peakStartPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -170,8 +173,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             showTimePickerSheet(
                 title = "Peak End Time",
                 point = peakEndPoint
-            ) {
-                selectedPoint ->
+            ) { selectedPoint ->
                 peakEndPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -182,8 +184,7 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             showTimePickerSheet(
                 title = "End Time",
                 point = endPoint
-            ) {
-                selectedPoint ->
+            ) { selectedPoint ->
                 endPoint = selectedPoint
                 renderTimeRows()
                 updateGraph()
@@ -210,52 +211,48 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
         binding.repeatCustom.setOnClickListener {
             LightCustomDaysSheet
-            .create(requireContext())
-            .show(
-                selectedDays = selectedCustomDays
-            ) {
-                days ->
-                selectedCustomDays = days
-                selectedRepeatMode = RepeatMode.CUSTOM
-                renderRepeatMode()
-            }
+                .create(requireContext())
+                .show(
+                    selectedDays = selectedCustomDays
+                ) { days ->
+                    selectedCustomDays = days
+                    selectedRepeatMode = RepeatMode.CUSTOM
+                    renderRepeatMode()
+                }
         }
 
         binding.actionMoonlight.root.setOnClickListener {
             LightMoonlightSheet
-            .create(requireContext())
-            .show(
-                initialSettings = moonlightSettings
-            ) {
-                settings ->
-                moonlightSettings = settings
-                renderMoonlightSummary()
-            }
+                .create(requireContext())
+                .show(
+                    initialSettings = moonlightSettings
+                ) { settings ->
+                    moonlightSettings = settings
+                    renderMoonlightSummary()
+                }
         }
 
         binding.actionCloudSimulation.root.setOnClickListener {
             LightCloudSimulationSheet
-            .create(requireContext())
-            .show(
-                initialSettings = cloudSimulationSettings
-            ) {
-                settings ->
-                cloudSimulationSettings = settings
-                renderCloudSimulationSummary()
-            }
+                .create(requireContext())
+                .show(
+                    initialSettings = cloudSimulationSettings
+                ) { settings ->
+                    cloudSimulationSettings = settings
+                    renderCloudSimulationSummary()
+                }
         }
 
         binding.actionTransitionSmoothing.root.setOnClickListener {
             LightTransitionVariantSheet
-            .create(requireContext())
-            .show(
-                initialMode = selectedTransitionMode
-            ) {
-                mode ->
-                selectedTransitionMode = mode
-                renderTransitionSummary()
-                updateGraph()
-            }
+                .create(requireContext())
+                .show(
+                    initialMode = selectedTransitionMode
+                ) { mode ->
+                    selectedTransitionMode = mode
+                    renderTransitionSummary()
+                    updateGraph()
+                }
         }
 
         binding.btnLoadToDevice.setOnClickListener {
@@ -266,9 +263,8 @@ Fragment(R.layout.fragment_device_light_program_editor) {
                 isActive = true
             )
         }
-    }
 
-    binding.btnSaveAs.setOnClickListener {
+        binding.btnSaveAs.setOnClickListener {
             showProgramNameSheet(
                 title = "Save As",
                 subtitle = "Save this program without activating it.",
@@ -284,15 +280,14 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         onSelected: (LightCurvePoint) -> Unit
     ) {
         LightCurveTimePickerSheet
-        .create(requireContext())
-        .show(
-            title = title,
-            initialHour = point.hour,
-            initialMinute = point.minute
-        ) {
-            hour, minute ->
-            onSelected(LightCurvePoint.of(hour, minute))
-        }
+            .create(requireContext())
+            .show(
+                title = title,
+                initialHour = point.hour,
+                initialMinute = point.minute
+            ) { hour, minute ->
+                onSelected(LightCurvePoint.of(hour, minute))
+            }
     }
 
     private fun renderTimeRows() {
@@ -303,26 +298,22 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     }
 
     private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderRed.addOnChangeListener { _, value, _ ->
             binding.tvRedValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderGreen.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderGreen.addOnChangeListener { _, value, _ ->
             binding.tvGreenValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderBlue.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderBlue.addOnChangeListener { _, value, _ ->
             binding.tvBlueValue.text = "${value.toInt()}%"
             updateGraph()
         }
 
-        binding.sliderWhite.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderWhite.addOnChangeListener { _, value, _ ->
             binding.tvWhiteValue.text = "${value.toInt()}%"
             updateGraph()
         }
@@ -357,13 +348,13 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             start = startPoint,
             peakStart = peakStartPoint,
             peakEnd = peakEndPoint,
+            end = endPoint,
             channelValues = currentChannelValues(),
             repeatMode = selectedRepeatMode,
             selectedDays = selectedCustomDays,
             moonlightSettings = moonlightSettings,
             cloudSimulationSettings = cloudSimulationSettings,
-            transitionMode = selectedTransitionMode,
-            end = endPoint
+            transitionMode = selectedTransitionMode
         )
     }
 
@@ -374,36 +365,37 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         isActive: Boolean
     ) {
         LightProgramNameSheet
-        .create(requireContext())
-        .show(
-            title = title,
-            subtitle = subtitle,
-            primaryButtonText = primaryButtonText,
-            initialName = ""
-        ) {
-            name ->
-            val draft = buildCurrentProgramDraft()
+            .create(requireContext())
+            .show(
+                title = title,
+                subtitle = subtitle,
+                primaryButtonText = primaryButtonText,
+                initialName = ""
+            ) { name ->
+                val draft = buildCurrentProgramDraft()
 
-            val savedProgram = LightProgramDraftMapper.toSavedProgram(
-                draft = draft,
-                name = name,
-                isActive = isActive
-            )
+                val savedProgram = LightProgramDraftMapper.toSavedProgram(
+                    draft = draft,
+                    name = name,
+                    isActive = isActive
+                )
 
-            if (isActive) {
-                // TODO: Save program and load savedProgram to ESP32 as active.
-            } else {
-                // TODO: Save program only as inactive.
+                viewLifecycleOwner.lifecycleScope.launch {
+                    lightProgramsDataStoreManager.saveProgram(savedProgram)
+
+                    if (isActive) {
+                        // TODO: Send savedProgram.draft to ESP32 as active program.
+                    }
+
+                    Toast.makeText(
+                        requireContext(),
+                        if (isActive) "Program loaded to device" else "Program saved",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    findNavController().popBackStack()
+                }
             }
-
-            Toast.makeText(
-                requireContext(),
-                if (isActive) "Program loaded to device" else "Program saved",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            findNavController().popBackStack()
-        }
     }
 
     private fun currentChannelValues(): LightCurveChannelValues {
@@ -477,8 +469,8 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         }
 
         binding.actionMoonlight.root
-        .findViewById<TextView>(R.id.tvActionSubtitle)
-        ?.text = subtitle
+            .findViewById<TextView>(R.id.tvActionSubtitle)
+            ?.text = subtitle
     }
 
     private fun renderCloudSimulationSummary() {
@@ -495,8 +487,8 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         }
 
         binding.actionCloudSimulation.root
-        .findViewById<TextView>(R.id.tvActionSubtitle)
-        ?.text = subtitle
+            .findViewById<TextView>(R.id.tvActionSubtitle)
+            ?.text = subtitle
     }
 
     private fun renderTransitionSummary() {
@@ -507,8 +499,8 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         }
 
         binding.actionTransitionSmoothing.root
-        .findViewById<TextView>(R.id.tvActionSubtitle)
-        ?.text = subtitle
+            .findViewById<TextView>(R.id.tvActionSubtitle)
+            ?.text = subtitle
     }
 
     override fun onDestroyView() {
