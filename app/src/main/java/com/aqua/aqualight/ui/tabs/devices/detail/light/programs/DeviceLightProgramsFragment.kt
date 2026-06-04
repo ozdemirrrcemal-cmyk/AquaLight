@@ -15,6 +15,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter.LightPro
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.sheet.LightProgramOptionsSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.Lifecycle
@@ -138,7 +139,7 @@ private fun SavedLightProgram.toListItem(): LightProgramListItem {
     return LightProgramListItem(
         id = id.hashCode().toLong(),
         name = name,
-        subtitle = repeatMode.toSubtitle(),
+        subtitle = draft.repeatMode.toSubtitle(),
         isActive = isActive,
         startTime = draft.start.label,
         endTime = draft.end.label,
