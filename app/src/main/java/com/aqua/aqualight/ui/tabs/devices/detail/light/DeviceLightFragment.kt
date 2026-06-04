@@ -58,14 +58,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                         }
                     ),
                     AquaHeaderAction(
-                        iconRes = R.drawable.ic_more_vert,
-                        contentDescription = "More options",
+                        iconRes = R.drawable.ic_refresh,
+                        contentDescription = "Refresh device status",
                         onClick = {
-                            Toast.makeText(
-                                requireContext(),
-                                "More options",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            refreshDeviceStatus()
                         }
                     )
                 )
@@ -102,6 +98,20 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 R.id.action_deviceLightFragment_to_deviceLightPresetsFragment
             )
         }
+    }
+
+    private fun refreshDeviceStatus() {
+        Toast.makeText(
+            requireContext(),
+            "Refreshing device status",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        // TODO: ESP32 bağlantısı yapılınca:
+        // - cihaz online/offline durumu yeniden okunacak
+        // - aktif program okunacak
+        // - current power / output / next event yenilenecek
+        // - timeline yeniden hesaplanacak
     }
 
     override fun onDestroyView() {

@@ -22,7 +22,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSet
 import kotlinx.coroutines.launch
 
 class DeviceLightQuickSetupFragment :
-    Fragment(R.layout.fragment_device_light_quick_setup) {
+Fragment(R.layout.fragment_device_light_quick_setup) {
 
     private var _binding: FragmentDeviceLightQuickSetupBinding? = null
     private val binding get() = _binding!!
@@ -30,7 +30,7 @@ class DeviceLightQuickSetupFragment :
     private val viewModel: DeviceLightQuickSetupViewModel by viewModels()
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID, 0L)
+    get() = requireArguments().getLong(ARG_DEVICE_ID, 0L)
 
     override fun onViewCreated(
         view: View,
@@ -73,7 +73,8 @@ class DeviceLightQuickSetupFragment :
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
+                viewModel.uiState.collect {
+                    state ->
                     renderUiState(state)
                 }
             }
@@ -83,7 +84,8 @@ class DeviceLightQuickSetupFragment :
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { event ->
+                viewModel.events.collect {
+                    event ->
                     when (event) {
                         is DeviceLightQuickSetupEvent.ShowMessage -> {
                             Toast.makeText(
@@ -118,7 +120,7 @@ class DeviceLightQuickSetupFragment :
         if (recommendation == null) {
             renderNoLinkedTank(
                 message = state.errorMessage
-                    ?: "Link this light device to a tank to generate a smart lighting setup."
+                ?: "Link this light device to a tank to generate a smart lighting setup."
             )
             return
         }
@@ -146,7 +148,7 @@ class DeviceLightQuickSetupFragment :
     ) {
         binding.tvRecommendationTitle.text = recommendation.title
         binding.tvRecommendationSubtitle.text =
-            "${recommendation.profileLabel} · ${recommendation.goalLabel}"
+        "${recommendation.profileLabel} · ${recommendation.goalLabel}"
 
         binding.tvDurationValue.text = recommendation.durationLabel
         binding.tvIntensityValue.text = recommendation.intensityLabel
@@ -157,7 +159,7 @@ class DeviceLightQuickSetupFragment :
         )
 
         binding.tvProgramGoal.text =
-            "${recommendation.goalLabel} · ${recommendation.confidenceLabel}"
+        "${recommendation.goalLabel} · ${recommendation.confidenceLabel}"
 
         binding.tvStartTime.text = recommendation.start.label
         binding.tvPeakStartTime.text = recommendation.peakStart.label
@@ -190,10 +192,10 @@ class DeviceLightQuickSetupFragment :
         state: QuickSetupUiState
     ) {
         binding.btnSaveProgram.isEnabled =
-            !state.isSaving && state.recommendation != null
+        !state.isSaving && state.recommendation != null
 
         binding.btnLoadToDevice.isEnabled =
-            !state.isSaving && state.recommendation != null
+        !state.isSaving && state.recommendation != null
 
         binding.btnSaveProgram.text = if (state.isProgramSaved) {
             "Update Program"
@@ -214,7 +216,8 @@ class DeviceLightQuickSetupFragment :
     ) {
         container.removeAllViews()
 
-        items.chunked(2).forEach { rowItems ->
+        items.chunked(2).forEach {
+            rowItems ->
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
 
@@ -222,11 +225,12 @@ class DeviceLightQuickSetupFragment :
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    bottomMargin = 8.dp()
+                    setMargins(0, 0, 0, 8.dp())
                 }
             }
 
-            rowItems.forEachIndexed { index, text ->
+            rowItems.forEachIndexed {
+                index, text ->
                 val chip = createSummaryChip(text)
 
                 chip.layoutParams = LinearLayout.LayoutParams(
@@ -234,8 +238,11 @@ class DeviceLightQuickSetupFragment :
                     36.dp(),
                     1f
                 ).apply {
-                    marginEnd = if (index == 0) 5.dp() else 0
-                    marginStart = if (index == 1) 5.dp() else 0
+                    if (index == 0) {
+                        setMargins(0, 0, 5.dp(), 0)
+                    } else {
+                        setMargins(5.dp(), 0, 0, 0)
+                    }
                 }
 
                 row.addView(chip)
@@ -248,7 +255,7 @@ class DeviceLightQuickSetupFragment :
                         36.dp(),
                         1f
                     ).apply {
-                        marginStart = 5.dp()
+                        setMargins(5.dp(), 0, 0, 0)
                     }
                 }
 
@@ -267,9 +274,9 @@ class DeviceLightQuickSetupFragment :
             setBackgroundResource(R.drawable.bg_light_program_time_panel)
 
             this.text = text
-                .replace("Setup phase:", "Phase:")
-                .replace("Tech level:", "Tech:")
-                .replace("Livestock:", "Stock:")
+            .replace("Setup phase:", "Phase:")
+            .replace("Tech level:", "Tech:")
+            .replace("Livestock:", "Stock:")
 
             gravity = Gravity.CENTER
             maxLines = 1
@@ -285,7 +292,8 @@ class DeviceLightQuickSetupFragment :
     ) {
         container.removeAllViews()
 
-        items.forEach { text ->
+        items.forEach {
+            text ->
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -296,12 +304,12 @@ class DeviceLightQuickSetupFragment :
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    bottomMargin = 8.dp()
+                    setMargins(0, 0, 0, 8.dp())
                 }
             }
 
             val dot = TextView(requireContext()).apply {
-                text = "•"
+                this.text = "•"
                 setTextAppearance(R.style.TextAppearance_Aqua_Light_Caption)
                 gravity = Gravity.TOP
 
@@ -315,7 +323,7 @@ class DeviceLightQuickSetupFragment :
                 setTextAppearance(R.style.TextAppearance_Aqua_Light_ActionSubtitle)
                 this.text = text
                 includeFontPadding = false
-                lineSpacing = 0f
+                setLineSpacing(0f, 1.0f)
                 maxLines = 3
                 ellipsize = android.text.TextUtils.TruncateAt.END
 
