@@ -9,21 +9,22 @@ message LightProgramsPreferences {
 
 message LightProgram {
   string id = 1;
-  string name = 2;
-  bool is_active = 3;
+  int64 device_id = 2;
+  string name = 3;
+  bool is_active = 4;
 
-  LightCurveTiming timing = 4;
-  LightChannelValues channels = 5;
+  LightCurveTiming timing = 5;
+  LightChannelValues channels = 6;
 
-  RepeatMode repeat_mode = 6;
-  repeated int32 selected_days = 7;
+  RepeatMode repeat_mode = 7;
+  repeated int32 selected_days = 8;
 
-  MoonlightSettings moonlight = 8;
-  CloudSimulationSettings cloud_simulation = 9;
-  TransitionMode transition_mode = 10;
+  MoonlightSettings moonlight = 9;
+  CloudSimulationSettings cloud_simulation = 10;
+  TransitionMode transition_mode = 11;
 
-  int64 created_at = 11;
-  int64 updated_at = 12;
+  int64 created_at = 12;
+  int64 updated_at = 13;
 }
 
 message LightCurveTiming {

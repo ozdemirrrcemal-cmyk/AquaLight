@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model
 
 data class LightProgramListItem(
-    val id: Long,
+    val id: String,
     val name: String,
     val subtitle: String,
     val isActive: Boolean,

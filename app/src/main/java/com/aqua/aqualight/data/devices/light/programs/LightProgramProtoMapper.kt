@@ -16,6 +16,7 @@ object LightProgramProtoMapper {
     fun toProto(program: SavedLightProgram): LightProgram {
         return LightProgram.newBuilder()
             .setId(program.id)
+			.setDeviceId(program.deviceId)
             .setName(program.name)
             .setIsActive(program.isActive)
             .setTiming(toProtoTiming(program.draft))
@@ -33,6 +34,7 @@ object LightProgramProtoMapper {
     fun fromProto(proto: LightProgram): SavedLightProgram {
         return SavedLightProgram(
             id = proto.id,
+			deviceId = proto.deviceId,
             name = proto.name,
             isActive = proto.isActive,
             draft = LightProgramDraft(

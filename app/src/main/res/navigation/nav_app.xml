@@ -278,6 +278,14 @@
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightProgramsFragment"
         app:destination="@id/deviceLightProgramsFragment" />
+		
+		<action
+    android:id="@+id/action_deviceLightFragment_to_deviceLightManualFragment"
+    app:destination="@id/deviceLightManualFragment" />
+	
+	<action
+    android:id="@+id/action_deviceLightFragment_to_deviceLightPresetsFragment"
+    app:destination="@id/deviceLightPresetsFragment" />
 
 </fragment>
 
@@ -298,6 +306,20 @@
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.DeviceLightProgramEditorFragment"
     android:label="Program Editor"
     tools:layout="@layout/fragment_device_light_program_editor" />
+	
+
+<fragment
+    android:id="@+id/deviceLightManualFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.manual.DeviceLightManualFragment"
+    android:label="Manual Control" />
+	
+	
+<fragment
+    android:id="@+id/deviceLightPresetsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presets.DeviceLightPresetsFragment"
+    android:label="Presets &amp; Scenes" />
+	
+	
   
   <fragment
     android:id="@+id/deviceDosingFragment"
@@ -308,8 +330,14 @@
     <argument android:name="deviceId" app:argType="long" />
     <argument android:name="deviceIp" app:argType="string" android:defaultValue="" />
     <argument android:name="deviceTitle" app:argType="string" android:defaultValue="" />
+	<argument
+    android:name="programId"
+    app:argType="string"
+    app:nullable="true"
+    android:defaultValue="@null" />
 
 </fragment>
+
 
 <fragment
     android:id="@+id/deviceTimerFragment"

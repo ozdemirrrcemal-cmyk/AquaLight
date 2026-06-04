@@ -9,13 +9,14 @@ object LightProgramDraftMapper {
     fun toSavedProgram(
         draft: LightProgramDraft,
         name: String,
+        deviceId: Long,
         isActive: Boolean
     ): SavedLightProgram {
-
         val now = System.currentTimeMillis()
 
         return SavedLightProgram(
             id = UUID.randomUUID().toString(),
+            deviceId = deviceId,
             name = name,
             draft = draft,
             isActive = isActive,

@@ -4,6 +4,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.Lig
 
 data class SavedLightProgram(
     val id: String,
+    val deviceId: Long,
     val name: String,
     val draft: LightProgramDraft,
     val isActive: Boolean,

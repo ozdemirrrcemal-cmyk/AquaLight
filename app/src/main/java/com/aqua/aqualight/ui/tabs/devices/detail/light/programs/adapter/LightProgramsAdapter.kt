@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.databinding.ItemLightProgramCardBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
@@ -45,6 +47,12 @@ class LightProgramsAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: LightProgramListItem) {
+            bindTexts(item)
+            bindVisualState(item)
+            bindClicks(item)
+        }
+
+        private fun bindTexts(item: LightProgramListItem) {
             binding.tvProgramName.text = item.name
             binding.tvProgramSubtitle.text = item.subtitle
             binding.tvProgramStart.text = item.startTime
@@ -56,22 +64,45 @@ class LightProgramsAdapter(
             binding.tvProgramState.text = if (item.isActive) {
                 "ACTIVE"
             } else {
-                "PAUSED"
+                "DISABLED"
             }
 
             binding.channelSummaryContainer.getChildAt(0).let {
-                (it as android.widget.TextView).text = "R${item.red}"
+                (it as TextView).text = "R${item.red}"
             }
             binding.channelSummaryContainer.getChildAt(1).let {
-                (it as android.widget.TextView).text = "G${item.green}"
+                (it as TextView).text = "G${item.green}"
             }
             binding.channelSummaryContainer.getChildAt(2).let {
-                (it as android.widget.TextView).text = "B${item.blue}"
+                (it as TextView).text = "B${item.blue}"
             }
             binding.channelSummaryContainer.getChildAt(3).let {
-                (it as android.widget.TextView).text = "W${item.white}"
+                (it as TextView).text = "W${item.white}"
             }
+        }
 
+        private fun bindVisualState(item: LightProgramListItem) {
+            val cardAlpha = if (item.isActive) 1f else 0.58f
+            val contentAlpha = if (item.isActive) 1f else 0.72f
+            val chipAlpha = if (item.isActive) 1f else 0.55f
+
+            binding.programCardRoot.alpha = cardAlpha
+
+            binding.tvProgramName.alpha = contentAlpha
+            binding.tvProgramSubtitle.alpha = contentAlpha
+            binding.tvProgramStart.alpha = contentAlpha
+            binding.tvProgramEnd.alpha = contentAlpha
+            binding.tvProgramRamp.alpha = contentAlpha
+            binding.tvProgramPoints.alpha = contentAlpha
+            binding.tvProgramPeak.alpha = contentAlpha
+            binding.tvProgramState.alpha = if (item.isActive) 1f else 0.7f
+
+            binding.channelSummaryContainer.children.forEach { child ->
+                child.alpha = chipAlpha
+            }
+        }
+
+        private fun bindClicks(item: LightProgramListItem) {
             binding.programCardRoot.setOnClickListener {
                 onProgramClick(item)
             }

@@ -17,13 +17,15 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private val binding get() = _binding!!
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+    get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceTitle: String
-        get() = requireArguments()
-            .getString(ARG_DEVICE_TITLE)
-            .orEmpty()
-            .ifBlank { "Lighting" }
+    get() = requireArguments()
+    .getString(ARG_DEVICE_TITLE)
+    .orEmpty()
+    .ifBlank {
+        "Lighting"
+    }
 
     override fun onViewCreated(
         view: View,
@@ -67,7 +69,9 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun setupClicks() {
         binding.cardManual.setOnClickListener {
-            Toast.makeText(requireContext(), "Manual", Toast.LENGTH_SHORT).show()
+            findNavController().navigate(
+                R.id.action_deviceLightFragment_to_deviceLightManualFragment
+            )
         }
 
         binding.cardPrograms.setOnClickListener {
@@ -81,7 +85,9 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardPresets.setOnClickListener {
-            Toast.makeText(requireContext(), "Presets", Toast.LENGTH_SHORT).show()
+            findNavController().navigate(
+                R.id.action_deviceLightFragment_to_deviceLightPresetsFragment
+            )
         }
     }
 

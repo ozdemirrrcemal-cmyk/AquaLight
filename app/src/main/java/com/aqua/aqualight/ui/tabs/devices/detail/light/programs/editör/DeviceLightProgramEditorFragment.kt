@@ -49,6 +49,9 @@ class DeviceLightProgramEditorFragment :
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
+		
+		val programId = arguments?.getString("programId")
+viewModel.loadProgram(programId)
 
         setupHeader()
         setupProgramSettingsRows()
@@ -357,25 +360,25 @@ class DeviceLightProgramEditorFragment :
     }
 
     private fun showProgramNameSheet(
-        title: String,
-        subtitle: String,
-        primaryButtonText: String,
-        isActive: Boolean
-    ) {
-        LightProgramNameSheet
-            .create(requireContext())
-            .show(
-                title = title,
-                subtitle = subtitle,
-                primaryButtonText = primaryButtonText,
-                initialName = ""
-            ) { name ->
-                viewModel.saveProgram(
-                    name = name,
-                    isActive = isActive
-                )
-            }
-    }
+    title: String,
+    subtitle: String,
+    primaryButtonText: String,
+    isActive: Boolean
+) {
+    LightProgramNameSheet
+        .create(requireContext())
+        .show(
+            title = title,
+            subtitle = subtitle,
+            primaryButtonText = primaryButtonText,
+            initialName = viewModel.currentProgramName()
+        ) { name ->
+            viewModel.saveProgram(
+                name = name,
+                isActive = isActive
+            )
+        }
+}
 
     private fun renderRepeatMode(
         state: DeviceLightProgramEditorUiState

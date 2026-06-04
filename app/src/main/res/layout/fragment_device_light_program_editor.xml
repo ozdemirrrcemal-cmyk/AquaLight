@@ -83,7 +83,7 @@
                     <com.aqua.aqualight.ui.tabs.devices.detail.light.curve.view.LightCurveGraphView
                         android:id="@+id/lightCurveGraphView"
                         android:layout_width="match_parent"
-                        android:layout_height="270dp" />
+                        android:layout_height="240dp" />
 
 
                 </LinearLayout>
