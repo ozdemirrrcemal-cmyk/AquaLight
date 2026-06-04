@@ -5,19 +5,21 @@ import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudFrequency
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.PreviewSpeed
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
@@ -27,7 +29,6 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.Lig
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightMoonlightSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPreviewDaySheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper.LightProgramDraftMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 import kotlinx.coroutines.launch
 
@@ -37,28 +38,9 @@ class DeviceLightProgramEditorFragment :
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
 
-    private val initialDraft = LightProgramDraft.default()
+    private val viewModel: DeviceLightProgramEditorViewModel by viewModels()
 
-    private var startPoint = initialDraft.start
-    private var peakStartPoint = initialDraft.peakStart
-    private var peakEndPoint = initialDraft.peakEnd
-    private var endPoint = initialDraft.end
-
-    private var selectedRepeatMode = initialDraft.repeatMode
-    private var selectedCustomDays: Set<Int> = initialDraft.selectedDays
-
-    private var moonlightSettings = initialDraft.moonlightSettings
-    private var cloudSimulationSettings = initialDraft.cloudSimulationSettings
-    private var selectedTransitionMode = initialDraft.transitionMode
-
-    private var selectedPreviewSpeed = PreviewSpeed.ONE_MINUTE
-
-    // TODO: Replace with ESP32 device time.
-    private var currentDeviceTimePoint = LightCurvePoint.of(13, 28)
-
-    private val lightProgramsDataStoreManager by lazy {
-        LightProgramsDataStoreManager(requireContext().applicationContext)
-    }
+    private var isRendering = false
 
     override fun onViewCreated(
         view: View,
@@ -69,16 +51,11 @@ class DeviceLightProgramEditorFragment :
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
 
         setupHeader()
-        renderTimeRows()
         setupProgramSettingsRows()
-        renderMoonlightSummary()
-        renderCloudSimulationSummary()
-        renderTransitionSummary()
         setupClicks()
         setupSliders()
-        renderSliderValues()
-        renderRepeatMode()
-        updateGraph()
+        observeUiState()
+        observeEvents()
     }
 
     private fun setupHeader() {
@@ -127,131 +104,182 @@ class DeviceLightProgramEditorFragment :
         row.findViewById<TextView>(R.id.tvActionSubtitle)?.text = subtitle
     }
 
+    private fun observeUiState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    renderUiState(state)
+                }
+            }
+        }
+    }
+
+    private fun observeEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is DeviceLightProgramEditorEvent.ShowMessage -> {
+                            Toast.makeText(requireContext(), event.message, Toast.LENGTH_SHORT).show()
+                        }
+
+                        is DeviceLightProgramEditorEvent.ShowError -> {
+                            Toast.makeText(requireContext(), event.message, Toast.LENGTH_SHORT).show()
+                        }
+
+                        DeviceLightProgramEditorEvent.NavigateBack -> {
+                            findNavController().popBackStack()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun renderUiState(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        isRendering = true
+
+        binding.tvTimeStartValue.text = state.start.label
+        binding.tvTimePeakStartValue.text = state.peakStart.label
+        binding.tvTimePeakEndValue.text = state.peakEnd.label
+        binding.tvTimeEndValue.text = state.end.label
+
+        binding.sliderRed.value = state.channelValues.red.toFloat()
+        binding.sliderGreen.value = state.channelValues.green.toFloat()
+        binding.sliderBlue.value = state.channelValues.blue.toFloat()
+        binding.sliderWhite.value = state.channelValues.white.toFloat()
+
+        binding.tvRedValue.text = "${state.channelValues.red}%"
+        binding.tvGreenValue.text = "${state.channelValues.green}%"
+        binding.tvBlueValue.text = "${state.channelValues.blue}%"
+        binding.tvWhiteValue.text = "${state.channelValues.white}%"
+
+        binding.lightCurveGraphView.setState(state.graphState)
+
+        renderRepeatMode(state)
+        renderMoonlightSummary(state)
+        renderCloudSimulationSummary(state)
+        renderTransitionSummary(state)
+
+        isRendering = false
+    }
+
     private fun setupClicks() {
         binding.btnPreviewProgram.setOnClickListener {
+            val state = viewModel.uiState.value
+
             LightPreviewDaySheet
                 .create(requireContext())
                 .show(
-                    initialSpeed = selectedPreviewSpeed
+                    initialSpeed = state.previewSpeed
                 ) { speed ->
-                    selectedPreviewSpeed = speed
-                    val draft = buildCurrentProgramDraft()
-
-                    Toast.makeText(
-                        requireContext(),
-                        "Preview started: ${speed.label}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    // TODO: Send draft as temporary preview payload to ESP32.
+                    viewModel.startPreview(speed)
                 }
         }
 
         binding.tvTimeStart.setOnClickListener {
+            val state = viewModel.uiState.value
+
             showTimePickerSheet(
                 title = "Start Time",
-                point = startPoint
+                point = state.start
             ) { selectedPoint ->
-                startPoint = selectedPoint
-                renderTimeRows()
-                updateGraph()
+                viewModel.updateStartTime(selectedPoint)
             }
         }
 
         binding.tvTimePeakStart.setOnClickListener {
+            val state = viewModel.uiState.value
+
             showTimePickerSheet(
                 title = "Peak Start Time",
-                point = peakStartPoint
+                point = state.peakStart
             ) { selectedPoint ->
-                peakStartPoint = selectedPoint
-                renderTimeRows()
-                updateGraph()
+                viewModel.updatePeakStartTime(selectedPoint)
             }
         }
 
         binding.tvTimePeakEnd.setOnClickListener {
+            val state = viewModel.uiState.value
+
             showTimePickerSheet(
                 title = "Peak End Time",
-                point = peakEndPoint
+                point = state.peakEnd
             ) { selectedPoint ->
-                peakEndPoint = selectedPoint
-                renderTimeRows()
-                updateGraph()
+                viewModel.updatePeakEndTime(selectedPoint)
             }
         }
 
         binding.tvTimeEnd.setOnClickListener {
+            val state = viewModel.uiState.value
+
             showTimePickerSheet(
                 title = "End Time",
-                point = endPoint
+                point = state.end
             ) { selectedPoint ->
-                endPoint = selectedPoint
-                renderTimeRows()
-                updateGraph()
+                viewModel.updateEndTime(selectedPoint)
             }
         }
 
         binding.repeatEvery.setOnClickListener {
-            selectedRepeatMode = RepeatMode.EVERY
-            selectedCustomDays = setOf(1, 2, 3, 4, 5, 6, 7)
-            renderRepeatMode()
+            viewModel.updateRepeatEvery()
         }
 
         binding.repeatWeekdays.setOnClickListener {
-            selectedRepeatMode = RepeatMode.WEEK
-            selectedCustomDays = setOf(1, 2, 3, 4, 5)
-            renderRepeatMode()
+            viewModel.updateRepeatWeekdays()
         }
 
         binding.repeatWeekend.setOnClickListener {
-            selectedRepeatMode = RepeatMode.WEEKEND
-            selectedCustomDays = setOf(6, 7)
-            renderRepeatMode()
+            viewModel.updateRepeatWeekend()
         }
 
         binding.repeatCustom.setOnClickListener {
+            val state = viewModel.uiState.value
+
             LightCustomDaysSheet
                 .create(requireContext())
                 .show(
-                    selectedDays = selectedCustomDays
+                    selectedDays = state.selectedDays
                 ) { days ->
-                    selectedCustomDays = days
-                    selectedRepeatMode = RepeatMode.CUSTOM
-                    renderRepeatMode()
+                    viewModel.updateCustomDays(days)
                 }
         }
 
         binding.actionMoonlight.root.setOnClickListener {
+            val state = viewModel.uiState.value
+
             LightMoonlightSheet
                 .create(requireContext())
                 .show(
-                    initialSettings = moonlightSettings
+                    initialSettings = state.moonlightSettings
                 ) { settings ->
-                    moonlightSettings = settings
-                    renderMoonlightSummary()
+                    viewModel.updateMoonlight(settings)
                 }
         }
 
         binding.actionCloudSimulation.root.setOnClickListener {
+            val state = viewModel.uiState.value
+
             LightCloudSimulationSheet
                 .create(requireContext())
                 .show(
-                    initialSettings = cloudSimulationSettings
+                    initialSettings = state.cloudSimulationSettings
                 ) { settings ->
-                    cloudSimulationSettings = settings
-                    renderCloudSimulationSummary()
+                    viewModel.updateCloudSimulation(settings)
                 }
         }
 
         binding.actionTransitionSmoothing.root.setOnClickListener {
+            val state = viewModel.uiState.value
+
             LightTransitionVariantSheet
                 .create(requireContext())
                 .show(
-                    initialMode = selectedTransitionMode
+                    initialMode = state.transitionMode
                 ) { mode ->
-                    selectedTransitionMode = mode
-                    renderTransitionSummary()
-                    updateGraph()
+                    viewModel.updateTransitionMode(mode)
                 }
         }
 
@@ -274,6 +302,44 @@ class DeviceLightProgramEditorFragment :
         }
     }
 
+    private fun setupSliders() {
+        binding.sliderRed.addOnChangeListener { _, value, _ ->
+            if (isRendering) return@addOnChangeListener
+
+            val current = viewModel.uiState.value.channelValues
+            viewModel.updateChannelValues(
+                current.copy(red = value.toInt())
+            )
+        }
+
+        binding.sliderGreen.addOnChangeListener { _, value, _ ->
+            if (isRendering) return@addOnChangeListener
+
+            val current = viewModel.uiState.value.channelValues
+            viewModel.updateChannelValues(
+                current.copy(green = value.toInt())
+            )
+        }
+
+        binding.sliderBlue.addOnChangeListener { _, value, _ ->
+            if (isRendering) return@addOnChangeListener
+
+            val current = viewModel.uiState.value.channelValues
+            viewModel.updateChannelValues(
+                current.copy(blue = value.toInt())
+            )
+        }
+
+        binding.sliderWhite.addOnChangeListener { _, value, _ ->
+            if (isRendering) return@addOnChangeListener
+
+            val current = viewModel.uiState.value.channelValues
+            viewModel.updateChannelValues(
+                current.copy(white = value.toInt())
+            )
+        }
+    }
+
     private fun showTimePickerSheet(
         title: String,
         point: LightCurvePoint,
@@ -290,74 +356,6 @@ class DeviceLightProgramEditorFragment :
             }
     }
 
-    private fun renderTimeRows() {
-        binding.tvTimeStartValue.text = startPoint.label
-        binding.tvTimePeakStartValue.text = peakStartPoint.label
-        binding.tvTimePeakEndValue.text = peakEndPoint.label
-        binding.tvTimeEndValue.text = endPoint.label
-    }
-
-    private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener { _, value, _ ->
-            binding.tvRedValue.text = "${value.toInt()}%"
-            updateGraph()
-        }
-
-        binding.sliderGreen.addOnChangeListener { _, value, _ ->
-            binding.tvGreenValue.text = "${value.toInt()}%"
-            updateGraph()
-        }
-
-        binding.sliderBlue.addOnChangeListener { _, value, _ ->
-            binding.tvBlueValue.text = "${value.toInt()}%"
-            updateGraph()
-        }
-
-        binding.sliderWhite.addOnChangeListener { _, value, _ ->
-            binding.tvWhiteValue.text = "${value.toInt()}%"
-            updateGraph()
-        }
-    }
-
-    private fun renderSliderValues() {
-        binding.sliderRed.value = initialDraft.channelValues.red.toFloat()
-        binding.sliderGreen.value = initialDraft.channelValues.green.toFloat()
-        binding.sliderBlue.value = initialDraft.channelValues.blue.toFloat()
-        binding.sliderWhite.value = initialDraft.channelValues.white.toFloat()
-
-        binding.tvRedValue.text = "${initialDraft.channelValues.red}%"
-        binding.tvGreenValue.text = "${initialDraft.channelValues.green}%"
-        binding.tvBlueValue.text = "${initialDraft.channelValues.blue}%"
-        binding.tvWhiteValue.text = "${initialDraft.channelValues.white}%"
-    }
-
-    private fun buildCurrentGraphState(): LightCurveGraphState {
-        return LightCurveGraphState(
-            start = startPoint,
-            peakStart = peakStartPoint,
-            peakEnd = peakEndPoint,
-            end = endPoint,
-            channelValues = currentChannelValues(),
-            currentTime = currentDeviceTimePoint,
-            transitionMode = selectedTransitionMode
-        )
-    }
-
-    private fun buildCurrentProgramDraft(): LightProgramDraft {
-        return LightProgramDraft(
-            start = startPoint,
-            peakStart = peakStartPoint,
-            peakEnd = peakEndPoint,
-            end = endPoint,
-            channelValues = currentChannelValues(),
-            repeatMode = selectedRepeatMode,
-            selectedDays = selectedCustomDays,
-            moonlightSettings = moonlightSettings,
-            cloudSimulationSettings = cloudSimulationSettings,
-            transitionMode = selectedTransitionMode
-        )
-    }
-
     private fun showProgramNameSheet(
         title: String,
         subtitle: String,
@@ -372,56 +370,16 @@ class DeviceLightProgramEditorFragment :
                 primaryButtonText = primaryButtonText,
                 initialName = ""
             ) { name ->
-                val draft = buildCurrentProgramDraft()
-
-                val savedProgram = LightProgramDraftMapper.toSavedProgram(
-                    draft = draft,
+                viewModel.saveProgram(
                     name = name,
                     isActive = isActive
                 )
-
-                viewLifecycleOwner.lifecycleScope.launch {
-                    lightProgramsDataStoreManager.saveProgram(savedProgram)
-
-                    if (isActive) {
-                        // TODO: Send savedProgram.draft to ESP32 as active program.
-                    }
-
-                    Toast.makeText(
-                        requireContext(),
-                        if (isActive) "Program loaded to device" else "Program saved",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    findNavController().popBackStack()
-                }
             }
     }
 
-    private fun currentChannelValues(): LightCurveChannelValues {
-        return LightCurveChannelValues(
-            red = binding.sliderRed.value.toInt(),
-            green = binding.sliderGreen.value.toInt(),
-            blue = binding.sliderBlue.value.toInt(),
-            white = binding.sliderWhite.value.toInt()
-        )
-    }
-
-    private fun updateGraph() {
-        binding.lightCurveGraphView.setState(
-            buildCurrentGraphState()
-        )
-    }
-
-    private fun updateDeviceTime(
-        hour: Int,
-        minute: Int
+    private fun renderRepeatMode(
+        state: DeviceLightProgramEditorUiState
     ) {
-        currentDeviceTimePoint = LightCurvePoint.of(hour, minute)
-        updateGraph()
-    }
-
-    private fun renderRepeatMode() {
         val selectedBg = R.drawable.bg_light_filter_selected
         val transparentBg = android.R.color.transparent
 
@@ -429,41 +387,45 @@ class DeviceLightProgramEditorFragment :
         val normalText = requireContext().getColor(R.color.light_text_secondary)
 
         binding.repeatEvery.setBackgroundResource(
-            if (selectedRepeatMode == RepeatMode.EVERY) selectedBg else transparentBg
+            if (state.repeatMode == RepeatMode.EVERY) selectedBg else transparentBg
         )
         binding.repeatWeekdays.setBackgroundResource(
-            if (selectedRepeatMode == RepeatMode.WEEK) selectedBg else transparentBg
+            if (state.repeatMode == RepeatMode.WEEK) selectedBg else transparentBg
         )
         binding.repeatWeekend.setBackgroundResource(
-            if (selectedRepeatMode == RepeatMode.WEEKEND) selectedBg else transparentBg
+            if (state.repeatMode == RepeatMode.WEEKEND) selectedBg else transparentBg
         )
         binding.repeatCustom.setBackgroundResource(
-            if (selectedRepeatMode == RepeatMode.CUSTOM) selectedBg else transparentBg
+            if (state.repeatMode == RepeatMode.CUSTOM) selectedBg else transparentBg
         )
 
         binding.repeatEvery.setTextColor(
-            if (selectedRepeatMode == RepeatMode.EVERY) selectedText else normalText
+            if (state.repeatMode == RepeatMode.EVERY) selectedText else normalText
         )
         binding.repeatWeekdays.setTextColor(
-            if (selectedRepeatMode == RepeatMode.WEEK) selectedText else normalText
+            if (state.repeatMode == RepeatMode.WEEK) selectedText else normalText
         )
         binding.repeatWeekend.setTextColor(
-            if (selectedRepeatMode == RepeatMode.WEEKEND) selectedText else normalText
+            if (state.repeatMode == RepeatMode.WEEKEND) selectedText else normalText
         )
         binding.repeatCustom.setTextColor(
-            if (selectedRepeatMode == RepeatMode.CUSTOM) selectedText else normalText
+            if (state.repeatMode == RepeatMode.CUSTOM) selectedText else normalText
         )
     }
 
-    private fun renderMoonlightSummary() {
-        val subtitle = if (moonlightSettings.enabled) {
-            val channelText = when (moonlightSettings.channel) {
+    private fun renderMoonlightSummary(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        val settings = state.moonlightSettings
+
+        val subtitle = if (settings.enabled) {
+            val channelText = when (settings.channel) {
                 MoonlightChannel.BLUE -> "Blue"
                 MoonlightChannel.WHITE -> "White"
                 MoonlightChannel.BLUE_WHITE -> "Blue + White"
             }
 
-            "$channelText • ${moonlightSettings.intensityPercent}% • Until ${moonlightSettings.endTime.label}"
+            "$channelText • ${settings.intensityPercent}% • Until ${settings.endTime.label}"
         } else {
             "Soft output after sunset"
         }
@@ -473,15 +435,19 @@ class DeviceLightProgramEditorFragment :
             ?.text = subtitle
     }
 
-    private fun renderCloudSimulationSummary() {
-        val subtitle = if (cloudSimulationSettings.enabled) {
-            val frequencyText = when (cloudSimulationSettings.frequency) {
+    private fun renderCloudSimulationSummary(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        val settings = state.cloudSimulationSettings
+
+        val subtitle = if (settings.enabled) {
+            val frequencyText = when (settings.frequency) {
                 CloudFrequency.RARE -> "Rare"
                 CloudFrequency.NORMAL -> "Normal"
                 CloudFrequency.FREQUENT -> "Frequent"
             }
 
-            "Coverage ${cloudSimulationSettings.coveragePercent}% • $frequencyText"
+            "Coverage ${settings.coveragePercent}% • $frequencyText"
         } else {
             "Natural light variation"
         }
@@ -491,8 +457,10 @@ class DeviceLightProgramEditorFragment :
             ?.text = subtitle
     }
 
-    private fun renderTransitionSummary() {
-        val subtitle = when (selectedTransitionMode) {
+    private fun renderTransitionSummary(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        val subtitle = when (state.transitionMode) {
             LightCurveTransitionMode.LINEAR -> "Linear ramp curve"
             LightCurveTransitionMode.SMOOTH -> "Smooth start and finish"
             LightCurveTransitionMode.NATURAL -> "Sunrise-like natural ramp"

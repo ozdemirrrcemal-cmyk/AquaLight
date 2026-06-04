@@ -201,7 +201,7 @@
                             android:layout_width="54dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="%" />
+                            android:text="0%" />
 
                     </LinearLayout>
 
@@ -218,10 +218,10 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:value=""
+                            android:value="0"
                             android:valueFrom="0"
                             android:valueTo="100"
-                            android:stepSize="1" />
+                            android:stepSize="1"/>
 
                         <TextView
                             android:id="@+id/tvWhiteValue"
@@ -229,7 +229,7 @@
                             android:layout_width="54dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="%" />
+                            android:text="0%" />
 
                     </LinearLayout>
 
