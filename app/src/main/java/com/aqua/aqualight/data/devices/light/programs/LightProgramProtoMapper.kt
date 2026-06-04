@@ -13,28 +13,24 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLight
 
 object LightProgramProtoMapper {
 
-    fun toProto(
-        program: SavedLightProgram
-    ): LightProgram {
-        return lightProgram {
-            id = program.id
-            name = program.name
-            isActive = program.isActive
-            timing = toProtoTiming(program.draft)
-            channels = toProtoChannels(program.draft.channelValues)
-            repeatMode = toProtoRepeatMode(program.draft.repeatMode)
-            selectedDays.addAll(program.draft.selectedDays.sorted())
-            moonlight = toProtoMoonlight(program.draft.moonlightSettings)
-            cloudSimulation = toProtoCloudSimulation(program.draft.cloudSimulationSettings)
-            transitionMode = toProtoTransitionMode(program.draft.transitionMode)
-            createdAt = program.createdAt
-            updatedAt = program.updatedAt
-        }
+    fun toProto(program: SavedLightProgram): LightProgram {
+        return LightProgram.newBuilder()
+            .setId(program.id)
+            .setName(program.name)
+            .setIsActive(program.isActive)
+            .setTiming(toProtoTiming(program.draft))
+            .setChannels(toProtoChannels(program.draft.channelValues))
+            .setRepeatMode(toProtoRepeatMode(program.draft.repeatMode))
+            .addAllSelectedDays(program.draft.selectedDays.sorted())
+            .setMoonlight(toProtoMoonlight(program.draft.moonlightSettings))
+            .setCloudSimulation(toProtoCloudSimulation(program.draft.cloudSimulationSettings))
+            .setTransitionMode(toProtoTransitionMode(program.draft.transitionMode))
+            .setCreatedAt(program.createdAt)
+            .setUpdatedAt(program.updatedAt)
+            .build()
     }
 
-    fun fromProto(
-        proto: LightProgram
-    ): SavedLightProgram {
+    fun fromProto(proto: LightProgram): SavedLightProgram {
         return SavedLightProgram(
             id = proto.id,
             name = proto.name,
@@ -56,49 +52,36 @@ object LightProgramProtoMapper {
         )
     }
 
-    private fun toProtoTiming(
-        draft: LightProgramDraft
-    ): LightCurveTiming {
-        return lightCurveTiming {
-            start = toProtoTimePoint(draft.start)
-            peakStart = toProtoTimePoint(draft.peakStart)
-            peakEnd = toProtoTimePoint(draft.peakEnd)
-            end = toProtoTimePoint(draft.end)
-        }
+    private fun toProtoTiming(draft: LightProgramDraft): LightCurveTiming {
+        return LightCurveTiming.newBuilder()
+            .setStart(toProtoTimePoint(draft.start))
+            .setPeakStart(toProtoTimePoint(draft.peakStart))
+            .setPeakEnd(toProtoTimePoint(draft.peakEnd))
+            .setEnd(toProtoTimePoint(draft.end))
+            .build()
     }
 
-    private fun toProtoTimePoint(
-        point: LightCurvePoint
-    ): TimePoint {
-        return timePoint {
-            hour = point.hour
-            minute = point.minute
-        }
+    private fun toProtoTimePoint(point: LightCurvePoint): TimePoint {
+        return TimePoint.newBuilder()
+            .setHour(point.hour)
+            .setMinute(point.minute)
+            .build()
     }
 
-    private fun fromProtoTimePoint(
-        point: TimePoint
-    ): LightCurvePoint {
-        return LightCurvePoint.of(
-            hour = point.hour,
-            minute = point.minute
-        )
+    private fun fromProtoTimePoint(point: TimePoint): LightCurvePoint {
+        return LightCurvePoint.of(point.hour, point.minute)
     }
 
-    private fun toProtoChannels(
-        channels: UiChannelValues
-    ): LightChannelValues {
-        return lightChannelValues {
-            red = channels.red
-            green = channels.green
-            blue = channels.blue
-            white = channels.white
-        }
+    private fun toProtoChannels(channels: UiChannelValues): LightChannelValues {
+        return LightChannelValues.newBuilder()
+            .setRed(channels.red)
+            .setGreen(channels.green)
+            .setBlue(channels.blue)
+            .setWhite(channels.white)
+            .build()
     }
 
-    private fun fromProtoChannels(
-        channels: LightChannelValues
-    ): UiChannelValues {
+    private fun fromProtoChannels(channels: LightChannelValues): UiChannelValues {
         return UiChannelValues(
             red = channels.red,
             green = channels.green,
@@ -107,22 +90,18 @@ object LightProgramProtoMapper {
         )
     }
 
-    private fun toProtoMoonlight(
-        settings: UiMoonlightSettings
-    ): MoonlightSettings {
-        return moonlightSettings {
-            enabled = settings.enabled
-            followProgramEnd = settings.followProgramEnd
-            startTime = toProtoTimePoint(settings.startTime)
-            endTime = toProtoTimePoint(settings.endTime)
-            channel = toProtoMoonlightChannel(settings.channel)
-            intensityPercent = settings.intensityPercent
-        }
+    private fun toProtoMoonlight(settings: UiMoonlightSettings): MoonlightSettings {
+        return MoonlightSettings.newBuilder()
+            .setEnabled(settings.enabled)
+            .setFollowProgramEnd(settings.followProgramEnd)
+            .setStartTime(toProtoTimePoint(settings.startTime))
+            .setEndTime(toProtoTimePoint(settings.endTime))
+            .setChannel(toProtoMoonlightChannel(settings.channel))
+            .setIntensityPercent(settings.intensityPercent)
+            .build()
     }
 
-    private fun fromProtoMoonlight(
-        settings: MoonlightSettings
-    ): UiMoonlightSettings {
+    private fun fromProtoMoonlight(settings: MoonlightSettings): UiMoonlightSettings {
         return UiMoonlightSettings(
             enabled = settings.enabled,
             followProgramEnd = settings.followProgramEnd,
@@ -136,11 +115,11 @@ object LightProgramProtoMapper {
     private fun toProtoCloudSimulation(
         settings: UiCloudSimulationSettings
     ): CloudSimulationSettings {
-        return cloudSimulationSettings {
-            enabled = settings.enabled
-            coveragePercent = settings.coveragePercent
-            frequency = toProtoCloudFrequency(settings.frequency)
-        }
+        return CloudSimulationSettings.newBuilder()
+            .setEnabled(settings.enabled)
+            .setCoveragePercent(settings.coveragePercent)
+            .setFrequency(toProtoCloudFrequency(settings.frequency))
+            .build()
     }
 
     private fun fromProtoCloudSimulation(
@@ -153,9 +132,7 @@ object LightProgramProtoMapper {
         )
     }
 
-    private fun toProtoRepeatMode(
-        mode: UiRepeatMode
-    ): RepeatMode {
+    private fun toProtoRepeatMode(mode: UiRepeatMode): RepeatMode {
         return when (mode) {
             UiRepeatMode.EVERY -> RepeatMode.REPEAT_MODE_EVERY
             UiRepeatMode.WEEK -> RepeatMode.REPEAT_MODE_WEEK
@@ -164,9 +141,7 @@ object LightProgramProtoMapper {
         }
     }
 
-    private fun fromProtoRepeatMode(
-        mode: RepeatMode
-    ): UiRepeatMode {
+    private fun fromProtoRepeatMode(mode: RepeatMode): UiRepeatMode {
         return when (mode) {
             RepeatMode.REPEAT_MODE_EVERY,
             RepeatMode.UNRECOGNIZED -> UiRepeatMode.EVERY
@@ -176,9 +151,7 @@ object LightProgramProtoMapper {
         }
     }
 
-    private fun toProtoMoonlightChannel(
-        channel: UiMoonlightChannel
-    ): MoonlightChannel {
+    private fun toProtoMoonlightChannel(channel: UiMoonlightChannel): MoonlightChannel {
         return when (channel) {
             UiMoonlightChannel.BLUE -> MoonlightChannel.MOONLIGHT_CHANNEL_BLUE
             UiMoonlightChannel.WHITE -> MoonlightChannel.MOONLIGHT_CHANNEL_WHITE
@@ -186,9 +159,7 @@ object LightProgramProtoMapper {
         }
     }
 
-    private fun fromProtoMoonlightChannel(
-        channel: MoonlightChannel
-    ): UiMoonlightChannel {
+    private fun fromProtoMoonlightChannel(channel: MoonlightChannel): UiMoonlightChannel {
         return when (channel) {
             MoonlightChannel.MOONLIGHT_CHANNEL_BLUE,
             MoonlightChannel.UNRECOGNIZED -> UiMoonlightChannel.BLUE
@@ -197,9 +168,7 @@ object LightProgramProtoMapper {
         }
     }
 
-    private fun toProtoCloudFrequency(
-        frequency: UiCloudFrequency
-    ): CloudFrequency {
+    private fun toProtoCloudFrequency(frequency: UiCloudFrequency): CloudFrequency {
         return when (frequency) {
             UiCloudFrequency.RARE -> CloudFrequency.CLOUD_FREQUENCY_RARE
             UiCloudFrequency.NORMAL -> CloudFrequency.CLOUD_FREQUENCY_NORMAL
@@ -207,9 +176,7 @@ object LightProgramProtoMapper {
         }
     }
 
-    private fun fromProtoCloudFrequency(
-        frequency: CloudFrequency
-    ): UiCloudFrequency {
+    private fun fromProtoCloudFrequency(frequency: CloudFrequency): UiCloudFrequency {
         return when (frequency) {
             CloudFrequency.CLOUD_FREQUENCY_RARE -> UiCloudFrequency.RARE
             CloudFrequency.CLOUD_FREQUENCY_NORMAL,
@@ -218,9 +185,7 @@ object LightProgramProtoMapper {
         }
     }
 
-    private fun toProtoTransitionMode(
-        mode: LightCurveTransitionMode
-    ): TransitionMode {
+    private fun toProtoTransitionMode(mode: LightCurveTransitionMode): TransitionMode {
         return when (mode) {
             LightCurveTransitionMode.LINEAR -> TransitionMode.TRANSITION_MODE_LINEAR
             LightCurveTransitionMode.SMOOTH -> TransitionMode.TRANSITION_MODE_SMOOTH
@@ -228,9 +193,7 @@ object LightProgramProtoMapper {
         }
     }
 
-    private fun fromProtoTransitionMode(
-        mode: TransitionMode
-    ): LightCurveTransitionMode {
+    private fun fromProtoTransitionMode(mode: TransitionMode): LightCurveTransitionMode {
         return when (mode) {
             TransitionMode.TRANSITION_MODE_LINEAR,
             TransitionMode.UNRECOGNIZED -> LightCurveTransitionMode.LINEAR

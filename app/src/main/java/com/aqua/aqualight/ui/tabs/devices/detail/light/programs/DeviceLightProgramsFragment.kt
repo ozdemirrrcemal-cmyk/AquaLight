@@ -15,6 +15,12 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter.LightPro
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.sheet.LightProgramOptionsSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.Lifecycle
+import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import kotlinx.coroutines.launch
 
 class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_programs) {
 
@@ -25,6 +31,10 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
 
     private var selectedFilter = ProgramFilter.ALL
     private var allPrograms: List<LightProgramListItem> = emptyList()
+	
+	private val lightProgramsDataStoreManager by lazy {
+    LightProgramsDataStoreManager(requireContext().applicationContext)
+}
 
     override fun onViewCreated(
         view: View,
@@ -37,7 +47,7 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
         setupHeader()
         setupRecyclerView()
         setupClicks()
-        renderPreviewPrograms()
+        observePrograms()
     }
 
     private fun setupHeader() {
@@ -96,71 +106,83 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
         }
     }
 
-    private fun renderPreviewPrograms() {
-        val programs = listOf(
-            LightProgramListItem(
-                id = 1L,
-                name = "Nature Day",
-                subtitle = "Every day schedule",
-                isActive = true,
-                startTime = "08:00",
-                endTime = "20:00",
-                rampText = "Ramp 60m",
-                pointText = "4 Points",
-                peakText = "Peak 42W",
-                red = 80,
-                green = 85,
-                blue = 100,
-                white = 60
-            ),
-            LightProgramListItem(
-                id = 2L,
-                name = "Evening Soft",
-                subtitle = "Weekend schedule",
-                isActive = false,
-                startTime = "17:30",
-                endTime = "22:00",
-                rampText = "Ramp 30m",
-                pointText = "4 Points",
-                peakText = "Peak 24W",
-                red = 70,
-                green = 45,
-                blue = 30,
-                white = 35
-            )
-        )
+    private fun observePrograms() {
+    viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            lightProgramsDataStoreManager.programsFlow.collect { savedPrograms ->
+                val listItems = savedPrograms.map { program ->
+                    program.toListItem()
+                }
 
-        if (programs.isEmpty()) {
-            renderEmptyState()
-        } else {
-            allPrograms = programs
-            applyFilter(selectedFilter)
+                renderPrograms(listItems)
+            }
         }
     }
+}
+
+private fun renderPrograms(
+    programs: List<LightProgramListItem>
+) {
+    if (programs.isEmpty()) {
+        allPrograms = emptyList()
+        renderEmptyState()
+    } else {
+        allPrograms = programs
+        applyFilter(selectedFilter)
+    }
+}
+
+private fun SavedLightProgram.toListItem(): LightProgramListItem {
+    val draft = draft
+
+    return LightProgramListItem(
+        id = id.hashCode().toLong(),
+        name = name,
+        subtitle = repeatMode.toSubtitle(),
+        isActive = isActive,
+        startTime = draft.start.label,
+        endTime = draft.end.label,
+        rampText = "${draft.start.label} → ${draft.peakStart.label}",
+        pointText = "4 Points",
+        peakText = "Peak ${draft.channelValues.blue.coerceAtLeast(draft.channelValues.white)}%",
+        red = draft.channelValues.red,
+        green = draft.channelValues.green,
+        blue = draft.channelValues.blue,
+        white = draft.channelValues.white
+    )
+}
+
+private fun RepeatMode.toSubtitle(): String {
+    return when (this) {
+        RepeatMode.EVERY -> "Every day schedule"
+        RepeatMode.WEEK -> "Weekday schedule"
+        RepeatMode.WEEKEND -> "Weekend schedule"
+        RepeatMode.CUSTOM -> "Custom schedule"
+    }
+}
 
     private fun applyFilter(filter: ProgramFilter) {
-        selectedFilter = filter
-        updateFilterUi(filter)
+    selectedFilter = filter
+    updateFilterUi(filter)
 
-        val filteredPrograms = when (filter) {
-            ProgramFilter.ALL -> allPrograms
-            ProgramFilter.ACTIVE -> allPrograms.filter {
-                it.isActive
-            }
-            ProgramFilter.DISABLED -> allPrograms.filter {
-                !it.isActive
-            }
-        }
-
-        if (filteredPrograms.isEmpty()) {
-            binding.programsRecyclerView.visibility = View.GONE
-        } else {
-            binding.emptyProgramsContainer.visibility = View.GONE
-            binding.programFilterBar.visibility = View.VISIBLE
-            binding.programsRecyclerView.visibility = View.VISIBLE
-            programsAdapter.submitList(filteredPrograms)
-        }
+    val filteredPrograms = when (filter) {
+        ProgramFilter.ALL -> allPrograms
+        ProgramFilter.ACTIVE -> allPrograms.filter { it.isActive }
+        ProgramFilter.DISABLED -> allPrograms.filter { !it.isActive }
     }
+
+    binding.emptyProgramsContainer.visibility = View.GONE
+    binding.programFilterBar.visibility =
+        if (allPrograms.isEmpty()) View.GONE else View.VISIBLE
+
+    if (filteredPrograms.isEmpty()) {
+        binding.programsRecyclerView.visibility = View.GONE
+        programsAdapter.submitList(emptyList())
+    } else {
+        binding.programsRecyclerView.visibility = View.VISIBLE
+        programsAdapter.submitList(filteredPrograms)
+    }
+}
 
     private fun updateFilterUi(filter: ProgramFilter) {
         val selectedBg = R.drawable.bg_light_filter_selected
