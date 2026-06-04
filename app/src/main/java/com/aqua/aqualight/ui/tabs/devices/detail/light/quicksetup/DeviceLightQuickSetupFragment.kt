@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -127,6 +128,7 @@ class DeviceLightQuickSetupFragment :
         binding.bottomActionsBar.visibility = View.VISIBLE
 
         renderRecommendation(recommendation)
+        renderActionButtons(state)
     }
 
     private fun renderNoLinkedTank(
@@ -149,7 +151,7 @@ class DeviceLightQuickSetupFragment :
         binding.tvDurationValue.text = recommendation.durationLabel
         binding.tvIntensityValue.text = recommendation.intensityLabel
 
-        renderTextList(
+        renderTankSummaryChips(
             container = binding.tankSummaryContainer,
             items = recommendation.tankSummary
         )
@@ -167,7 +169,7 @@ class DeviceLightQuickSetupFragment :
         binding.tvBlueValue.text = "B${recommendation.channelValues.blue}"
         binding.tvWhiteValue.text = "W${recommendation.channelValues.white}"
 
-        renderTextList(
+        renderCompactInfoRows(
             container = binding.reasoningContainer,
             items = recommendation.reasoningNotes
         )
@@ -177,23 +179,44 @@ class DeviceLightQuickSetupFragment :
         } else {
             binding.cardWarnings.visibility = View.VISIBLE
 
-            renderTextList(
+            renderCompactInfoRows(
                 container = binding.warningsContainer,
                 items = recommendation.warnings
             )
         }
     }
 
-    private fun renderTextList(
+    private fun renderActionButtons(
+        state: QuickSetupUiState
+    ) {
+        binding.btnSaveProgram.isEnabled =
+            !state.isSaving && state.recommendation != null
+
+        binding.btnLoadToDevice.isEnabled =
+            !state.isSaving && state.recommendation != null
+
+        binding.btnSaveProgram.text = if (state.isProgramSaved) {
+            "Update Program"
+        } else {
+            "Save Program"
+        }
+
+        binding.btnLoadToDevice.text = if (state.isProgramLoaded) {
+            "Reload to Device"
+        } else {
+            "Load to Device"
+        }
+    }
+
+    private fun renderTankSummaryChips(
         container: LinearLayout,
         items: List<String>
     ) {
         container.removeAllViews()
 
-        items.forEach { text ->
-            val textView = TextView(requireContext()).apply {
-                setTextAppearance(R.style.TextAppearance_Aqua_Light_Body)
-                this.text = "• $text"
+        items.chunked(2).forEach { rowItems ->
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
 
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -203,7 +226,109 @@ class DeviceLightQuickSetupFragment :
                 }
             }
 
-            container.addView(textView)
+            rowItems.forEachIndexed { index, text ->
+                val chip = createSummaryChip(text)
+
+                chip.layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    36.dp(),
+                    1f
+                ).apply {
+                    marginEnd = if (index == 0) 5.dp() else 0
+                    marginStart = if (index == 1) 5.dp() else 0
+                }
+
+                row.addView(chip)
+            }
+
+            if (rowItems.size == 1) {
+                val spacer = View(requireContext()).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        0,
+                        36.dp(),
+                        1f
+                    ).apply {
+                        marginStart = 5.dp()
+                    }
+                }
+
+                row.addView(spacer)
+            }
+
+            container.addView(row)
+        }
+    }
+
+    private fun createSummaryChip(
+        text: String
+    ): TextView {
+        return TextView(requireContext()).apply {
+            setTextAppearance(R.style.TextAppearance_Aqua_Light_ProgramMetaChip)
+            setBackgroundResource(R.drawable.bg_light_program_time_panel)
+
+            this.text = text
+                .replace("Setup phase:", "Phase:")
+                .replace("Tech level:", "Tech:")
+                .replace("Livestock:", "Stock:")
+
+            gravity = Gravity.CENTER
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            includeFontPadding = false
+            setPadding(10.dp(), 0, 10.dp(), 0)
+        }
+    }
+
+    private fun renderCompactInfoRows(
+        container: LinearLayout,
+        items: List<String>
+    ) {
+        container.removeAllViews()
+
+        items.forEach { text ->
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setBackgroundResource(R.drawable.bg_light_program_time_panel)
+                setPadding(12.dp(), 9.dp(), 12.dp(), 9.dp())
+
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = 8.dp()
+                }
+            }
+
+            val dot = TextView(requireContext()).apply {
+                text = "•"
+                setTextAppearance(R.style.TextAppearance_Aqua_Light_Caption)
+                gravity = Gravity.TOP
+
+                layoutParams = LinearLayout.LayoutParams(
+                    16.dp(),
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+
+            val label = TextView(requireContext()).apply {
+                setTextAppearance(R.style.TextAppearance_Aqua_Light_ActionSubtitle)
+                this.text = text
+                includeFontPadding = false
+                lineSpacing = 0f
+                maxLines = 3
+                ellipsize = android.text.TextUtils.TruncateAt.END
+
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
+            }
+
+            row.addView(dot)
+            row.addView(label)
+            container.addView(row)
         }
     }
 
