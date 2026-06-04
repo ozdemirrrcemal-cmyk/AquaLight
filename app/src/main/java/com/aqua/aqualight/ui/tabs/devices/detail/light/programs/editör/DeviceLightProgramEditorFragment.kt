@@ -42,6 +42,12 @@ class DeviceLightProgramEditorFragment :
 
     private var isRendering = false
 
+    private val deviceId: Long
+        get() = requireArguments().getLong(ARG_DEVICE_ID, 0L)
+
+    private val programId: String?
+        get() = arguments?.getString(ARG_PROGRAM_ID)
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -49,9 +55,11 @@ class DeviceLightProgramEditorFragment :
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentDeviceLightProgramEditorBinding.bind(view)
-		
-		val programId = arguments?.getString("programId")
-viewModel.loadProgram(programId)
+
+        viewModel.initialize(
+            deviceId = deviceId,
+            programId = programId
+        )
 
         setupHeader()
         setupProgramSettingsRows()
@@ -123,11 +131,19 @@ viewModel.loadProgram(programId)
                 viewModel.events.collect { event ->
                     when (event) {
                         is DeviceLightProgramEditorEvent.ShowMessage -> {
-                            Toast.makeText(requireContext(), event.message, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                requireContext(),
+                                event.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
 
                         is DeviceLightProgramEditorEvent.ShowError -> {
-                            Toast.makeText(requireContext(), event.message, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                requireContext(),
+                                event.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
 
                         DeviceLightProgramEditorEvent.NavigateBack -> {
@@ -310,6 +326,7 @@ viewModel.loadProgram(programId)
             if (isRendering) return@addOnChangeListener
 
             val current = viewModel.uiState.value.channelValues
+
             viewModel.updateChannelValues(
                 current.copy(red = value.toInt())
             )
@@ -319,6 +336,7 @@ viewModel.loadProgram(programId)
             if (isRendering) return@addOnChangeListener
 
             val current = viewModel.uiState.value.channelValues
+
             viewModel.updateChannelValues(
                 current.copy(green = value.toInt())
             )
@@ -328,6 +346,7 @@ viewModel.loadProgram(programId)
             if (isRendering) return@addOnChangeListener
 
             val current = viewModel.uiState.value.channelValues
+
             viewModel.updateChannelValues(
                 current.copy(blue = value.toInt())
             )
@@ -337,6 +356,7 @@ viewModel.loadProgram(programId)
             if (isRendering) return@addOnChangeListener
 
             val current = viewModel.uiState.value.channelValues
+
             viewModel.updateChannelValues(
                 current.copy(white = value.toInt())
             )
@@ -355,30 +375,35 @@ viewModel.loadProgram(programId)
                 initialHour = point.hour,
                 initialMinute = point.minute
             ) { hour, minute ->
-                onSelected(LightCurvePoint.of(hour, minute))
+                onSelected(
+                    LightCurvePoint.of(
+                        hour = hour,
+                        minute = minute
+                    )
+                )
             }
     }
 
     private fun showProgramNameSheet(
-    title: String,
-    subtitle: String,
-    primaryButtonText: String,
-    isActive: Boolean
-) {
-    LightProgramNameSheet
-        .create(requireContext())
-        .show(
-            title = title,
-            subtitle = subtitle,
-            primaryButtonText = primaryButtonText,
-            initialName = viewModel.currentProgramName()
-        ) { name ->
-            viewModel.saveProgram(
-                name = name,
-                isActive = isActive
-            )
-        }
-}
+        title: String,
+        subtitle: String,
+        primaryButtonText: String,
+        isActive: Boolean
+    ) {
+        LightProgramNameSheet
+            .create(requireContext())
+            .show(
+                title = title,
+                subtitle = subtitle,
+                primaryButtonText = primaryButtonText,
+                initialName = viewModel.currentProgramName()
+            ) { name ->
+                viewModel.saveProgram(
+                    name = name,
+                    isActive = isActive
+                )
+            }
+    }
 
     private fun renderRepeatMode(
         state: DeviceLightProgramEditorUiState
@@ -477,5 +502,10 @@ viewModel.loadProgram(programId)
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    companion object {
+        const val ARG_DEVICE_ID = "deviceId"
+        const val ARG_PROGRAM_ID = "programId"
     }
 }

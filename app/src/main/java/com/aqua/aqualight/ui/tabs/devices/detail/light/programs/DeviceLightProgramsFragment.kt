@@ -4,29 +4,30 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter.LightProgramsAdapter
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
-import com.aqua.aqualight.ui.tabs.devices.detail.light.sheet.LightProgramOptionsSheet
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.Lifecycle
-import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
-import kotlinx.coroutines.launch
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.sheet.LightProgramOptionsSheet
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
-class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_programs) {
+class DeviceLightProgramsFragment :
+    Fragment(R.layout.fragment_device_light_programs) {
 
     private var _binding: FragmentDeviceLightProgramsBinding? = null
     private val binding get() = _binding!!
@@ -35,6 +36,9 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
 
     private var selectedFilter = ProgramFilter.ALL
     private var allPrograms: List<LightProgramListItem> = emptyList()
+
+    private val deviceId: Long
+        get() = requireArguments().getLong(ARG_DEVICE_ID, 0L)
 
     private val lightProgramsDataStoreManager by lazy {
         LightProgramsDataStoreManager(requireContext().applicationContext)
@@ -77,12 +81,10 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
 
     private fun setupRecyclerView() {
         programsAdapter = LightProgramsAdapter(
-            onProgramClick = {
-                program ->
+            onProgramClick = { program ->
                 openProgramEditor(program.id)
             },
-            onProgramOptionsClick = {
-                program ->
+            onProgramOptionsClick = { program ->
                 showProgramOptionsSheet(program)
             }
         )
@@ -114,12 +116,28 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
     private fun observePrograms() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                lightProgramsDataStoreManager.programsFlow.collect {
-                    savedPrograms ->
-                    val listItems = savedPrograms.map {
-                        program ->
-                        program.toListItem()
+                lightProgramsDataStoreManager.programsFlow.collect { savedPrograms ->
+                    val devicePrograms = if (deviceId > 0L) {
+                        savedPrograms.filter { program ->
+                            program.deviceId == deviceId
+                        }
+                    } else {
+                        savedPrograms
                     }
+
+                    val listItems = devicePrograms
+                        .sortedWith(
+                            compareByDescending<SavedLightProgram> { program ->
+                                program.isActive
+                            }.thenBy { program ->
+                                program.draft.start.totalMinutes
+                            }.thenBy { program ->
+                                program.name.lowercase()
+                            }
+                        )
+                        .map { program ->
+                            program.toListItem()
+                        }
 
                     renderPrograms(listItems)
                 }
@@ -168,23 +186,27 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
         }
     }
 
-    private fun applyFilter(filter: ProgramFilter) {
+    private fun applyFilter(
+        filter: ProgramFilter
+    ) {
         selectedFilter = filter
         updateFilterUi(filter)
 
         val filteredPrograms = when (filter) {
             ProgramFilter.ALL -> allPrograms
-            ProgramFilter.ACTIVE -> allPrograms.filter {
-                it.isActive
+
+            ProgramFilter.ACTIVE -> allPrograms.filter { program ->
+                program.isActive
             }
-            ProgramFilter.DISABLED -> allPrograms.filter {
-                !it.isActive
+
+            ProgramFilter.DISABLED -> allPrograms.filter { program ->
+                !program.isActive
             }
         }
 
         binding.emptyProgramsContainer.visibility = View.GONE
         binding.programFilterBar.visibility =
-        if (allPrograms.isEmpty()) View.GONE else View.VISIBLE
+            if (allPrograms.isEmpty()) View.GONE else View.VISIBLE
 
         if (filteredPrograms.isEmpty()) {
             binding.programsRecyclerView.visibility = View.GONE
@@ -195,7 +217,9 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
         }
     }
 
-    private fun updateFilterUi(filter: ProgramFilter) {
+    private fun updateFilterUi(
+        filter: ProgramFilter
+    ) {
         val selectedBg = R.drawable.bg_light_filter_selected
         val transparentBg = android.R.color.transparent
 
@@ -212,9 +236,15 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
         val selectedText = requireContext().getColor(R.color.light_button_on_primary)
         val normalText = requireContext().getColor(R.color.light_text_secondary)
 
-        binding.filterAll.setTextColor(if (filter == ProgramFilter.ALL) selectedText else normalText)
-        binding.filterActive.setTextColor(if (filter == ProgramFilter.ACTIVE) selectedText else normalText)
-        binding.filterDisabled.setTextColor(if (filter == ProgramFilter.DISABLED) selectedText else normalText)
+        binding.filterAll.setTextColor(
+            if (filter == ProgramFilter.ALL) selectedText else normalText
+        )
+        binding.filterActive.setTextColor(
+            if (filter == ProgramFilter.ACTIVE) selectedText else normalText
+        )
+        binding.filterDisabled.setTextColor(
+            if (filter == ProgramFilter.DISABLED) selectedText else normalText
+        )
     }
 
     private fun renderEmptyState() {
@@ -223,99 +253,16 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
         binding.programsRecyclerView.visibility = View.GONE
     }
 
-    private fun showProgramOptionsSheet(program: LightProgramListItem) {
+    private fun showProgramOptionsSheet(
+        program: LightProgramListItem
+    ) {
         LightProgramOptionsSheet
-        .create(requireContext())
-        .show(
-            programName = program.name,
-            subtitle = "${program.subtitle} · ${program.startTime} → ${program.endTime}",
-            isActive = program.isActive,
-            onActiveChanged = {
-                isActive ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val savedProgram = lightProgramsDataStoreManager.getProgram(program.id)
-
-                    if (savedProgram == null) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Program could not be found",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@launch
-                    }
-
-                    if (isActive) {
-                        val allPrograms = lightProgramsDataStoreManager.programsFlow.first()
-
-                        val conflict = LightProgramScheduleConflictValidator.findConflict(
-                            candidate = savedProgram.copy(isActive = true),
-                            existingPrograms = allPrograms
-                        )
-
-                        if (conflict != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "This program overlaps with ${conflict.name}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@launch
-                        }
-                    }
-
-                    lightProgramsDataStoreManager.saveProgram(
-                        savedProgram.copy(
-                            isActive = isActive,
-                            updatedAt = System.currentTimeMillis()
-                        )
-                    )
-
-                    Toast.makeText(
-                        requireContext(),
-                        if (isActive) "Program activated" else "Program disabled",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            },
-            onDuplicate = {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val savedProgram = lightProgramsDataStoreManager.getProgram(program.id)
-
-                    if (savedProgram == null) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Program could not be found",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@launch
-                    }
-
-                    val duplicatedProgram = savedProgram.copy(
-                        id = java.util.UUID.randomUUID().toString(),
-                        name = "${savedProgram.name} Copy",
-                        isActive = false,
-                        createdAt = System.currentTimeMillis(),
-                        updatedAt = System.currentTimeMillis()
-                    )
-
-                    lightProgramsDataStoreManager.saveProgram(duplicatedProgram)
-
-                    Toast.makeText(
-                        requireContext(),
-                        "Program duplicated",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            },
-            onRename = {
-                LightProgramNameSheet
-                .create(requireContext())
-                .show(
-                    title = "Rename Program",
-                    subtitle = "Update this program name.",
-                    primaryButtonText = "Rename",
-                    initialName = program.name
-                ) {
-                    newName ->
+            .create(requireContext())
+            .show(
+                programName = program.name,
+                subtitle = "${program.subtitle} · ${program.startTime} → ${program.endTime}",
+                isActive = program.isActive,
+                onActiveChanged = { isActive ->
                     viewLifecycleOwner.lifecycleScope.launch {
                         val savedProgram = lightProgramsDataStoreManager.getProgram(program.id)
 
@@ -328,40 +275,137 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
                             return@launch
                         }
 
-                        lightProgramsDataStoreManager.saveProgram(
-                            savedProgram.copy(
-                                name = newName,
-                                updatedAt = System.currentTimeMillis()
-                            )
+                        val updatedProgram = savedProgram.copy(
+                            isActive = isActive,
+                            updatedAt = System.currentTimeMillis()
                         )
+
+                        if (isActive) {
+                            val activeProgramsForSameDevice =
+                                lightProgramsDataStoreManager.programsFlow
+                                    .first()
+                                    .filter { existingProgram ->
+                                        existingProgram.deviceId == savedProgram.deviceId &&
+                                            existingProgram.isActive &&
+                                            existingProgram.id != savedProgram.id
+                                    }
+
+                            val conflict = LightProgramScheduleConflictValidator.findConflict(
+                                candidate = updatedProgram,
+                                existingPrograms = activeProgramsForSameDevice
+                            )
+
+                            if (conflict != null) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "This program overlaps with ${conflict.name}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@launch
+                            }
+                        }
+
+                        lightProgramsDataStoreManager.saveProgram(updatedProgram)
 
                         Toast.makeText(
                             requireContext(),
-                            "Program renamed",
+                            if (isActive) "Program activated" else "Program disabled",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                onDuplicate = {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        val savedProgram = lightProgramsDataStoreManager.getProgram(program.id)
+
+                        if (savedProgram == null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Program could not be found",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@launch
+                        }
+
+                        val duplicatedProgram = savedProgram.copy(
+                            id = java.util.UUID.randomUUID().toString(),
+                            name = "${savedProgram.name} Copy",
+                            isActive = false,
+                            createdAt = System.currentTimeMillis(),
+                            updatedAt = System.currentTimeMillis()
+                        )
+
+                        lightProgramsDataStoreManager.saveProgram(duplicatedProgram)
+
+                        Toast.makeText(
+                            requireContext(),
+                            "Program duplicated",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                onRename = {
+                    LightProgramNameSheet
+                        .create(requireContext())
+                        .show(
+                            title = "Rename Program",
+                            subtitle = "Update this program name.",
+                            primaryButtonText = "Rename",
+                            initialName = program.name
+                        ) { newName ->
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                val savedProgram =
+                                    lightProgramsDataStoreManager.getProgram(program.id)
+
+                                if (savedProgram == null) {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Program could not be found",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    return@launch
+                                }
+
+                                lightProgramsDataStoreManager.saveProgram(
+                                    savedProgram.copy(
+                                        name = newName.ifBlank {
+                                            savedProgram.name
+                                        },
+                                        updatedAt = System.currentTimeMillis()
+                                    )
+                                )
+
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Program renamed",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                },
+                onDelete = {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        lightProgramsDataStoreManager.deleteProgram(program.id)
+
+                        Toast.makeText(
+                            requireContext(),
+                            "Program deleted",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                 }
-            },
-            onDelete = {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    lightProgramsDataStoreManager.deleteProgram(program.id)
-
-                    Toast.makeText(
-                        requireContext(),
-                        "Program deleted",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        )
+            )
     }
 
     private fun openProgramEditor(
         programId: String? = null
     ) {
         val bundle = Bundle().apply {
-            putString("programId", programId)
+            putLong(ARG_DEVICE_ID, deviceId)
+
+            if (!programId.isNullOrBlank()) {
+                putString(ARG_PROGRAM_ID, programId)
+            }
         }
 
         findNavController().navigate(
@@ -374,5 +418,10 @@ class DeviceLightProgramsFragment : Fragment(R.layout.fragment_device_light_prog
         binding.programsRecyclerView.adapter = null
         _binding = null
         super.onDestroyView()
+    }
+
+    companion object {
+        const val ARG_DEVICE_ID = "deviceId"
+        const val ARG_PROGRAM_ID = "programId"
     }
 }
