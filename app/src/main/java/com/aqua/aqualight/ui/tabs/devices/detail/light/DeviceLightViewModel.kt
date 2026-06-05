@@ -4,14 +4,18 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceTimeReader
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeState
+import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphSegment
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
-import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,37 +26,33 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
-import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceTimeReader
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeState
 
 class DeviceLightViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
     private val lightProgramsDataStoreManager =
-    LightProgramsDataStoreManager(application.applicationContext)
+        LightProgramsDataStoreManager(application.applicationContext)
+
+    private val lightRuntimeRepository =
+        LightRuntimeRepository()
 
     private val lightDeviceTimeRepository =
-    LightDeviceTimeRepository(
-        context = application.applicationContext
-    )
+        LightDeviceTimeRepository(
+            context = application.applicationContext
+        )
 
     private val deviceTimeFlow =
-    MutableStateFlow(
-        Esp32LightDeviceTimeReader.phoneFallback()
-    )
+        MutableStateFlow(
+            Esp32LightDeviceTimeReader.phoneFallback()
+        )
 
     private val _uiState = MutableStateFlow(
         createEmptyState(System.currentTimeMillis())
     )
 
     val uiState: StateFlow<DeviceLightDashboardUiState> =
-    _uiState.asStateFlow()
-
-    private val lightRuntimeRepository =
-    LightRuntimeRepository()
+        _uiState.asStateFlow()
 
     private var deviceId: Long = 0L
     private var observeJob: Job? = null
@@ -73,19 +73,19 @@ class DeviceLightViewModel(
                 lightProgramsDataStoreManager.programsFlow,
                 lightRuntimeRepository.observeManualRuntime(deviceId),
                 deviceTimeFlow
-            ) {
-                programs, manualRuntime, deviceTime ->
-                Triple(programs, manualRuntime, deviceTime)
-            }.collect {
-                (programs, manualRuntime, deviceTime) ->
-                val activeProgramsForDevice = programs
-                .filter {
-                    program ->
+            ) { programs, manualRuntime, deviceTime ->
+                Triple(
+                    programs,
+                    manualRuntime,
+                    deviceTime
+                )
+            }.collect { (programs, manualRuntime, deviceTime) ->
+                val activeProgramsForDevice = programs.filter { program ->
                     program.deviceId == this@DeviceLightViewModel.deviceId &&
-                    program.isActive
+                        program.isActive
                 }
 
-                vaval baseState = createStateFromPrograms(
+                val baseState = createStateFromPrograms(
                     programs = activeProgramsForDevice,
                     deviceTime = deviceTime
                 )
@@ -134,17 +134,17 @@ class DeviceLightViewModel(
 
     private fun createManualRuntimeState(
         baseState: DeviceLightDashboardUiState,
-        manualRuntime: com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+        manualRuntime: LightManualRuntimeState
     ): DeviceLightDashboardUiState {
         val sceneName = manualRuntime.activeSceneName
-        .orEmpty()
-        .ifBlank {
-            if (manualRuntime.isManualScene) {
-                "Manual Scene"
-            } else {
-                "Manual Control"
+            .orEmpty()
+            .ifBlank {
+                if (manualRuntime.isManualScene) {
+                    "Manual Scene"
+                } else {
+                    "Manual Control"
+                }
             }
-        }
 
         val outputPercent = if (manualRuntime.isPowerOn) {
             manualRuntime.masterOutputPercent
@@ -185,18 +185,21 @@ class DeviceLightViewModel(
         val currentMinute = currentTime.totalMinutes
 
         if (programs.isEmpty()) {
-            return createEmptyState(nowMillis)
+            return createEmptyState(
+                currentTime = currentTime
+            )
         }
 
         val todayPrograms = programs
-        .filter {
-            program ->
-            isScheduledToday(program)
-        }
-        .sortedBy {
-            program ->
-            program.draft.start.totalMinutes
-        }
+            .filter { program ->
+                isScheduledToday(
+                    program = program,
+                    deviceTime = deviceTime
+                )
+            }
+            .sortedBy { program ->
+                program.draft.start.totalMinutes
+            }
 
         if (todayPrograms.isEmpty()) {
             return DeviceLightDashboardUiState(
@@ -214,36 +217,32 @@ class DeviceLightViewModel(
             )
         }
 
-        val runningProgram = todayPrograms.firstOrNull {
-            program ->
+        val runningProgram = todayPrograms.firstOrNull { program ->
             isProgramRunningAt(
                 program = program,
                 minute = currentMinute
             )
         }
 
-        val nextProgramToday = todayPrograms.firstOrNull {
-            program ->
+        val nextProgramToday = todayPrograms.firstOrNull { program ->
             program.draft.start.totalMinutes > currentMinute
         }
 
         val displayProgram = runningProgram
-        ?: nextProgramToday
-        ?: todayPrograms.firstOrNull()
+            ?: nextProgramToday
+            ?: todayPrograms.firstOrNull()
 
-        val currentOutput = runningProgram?.let {
-            program ->
+        val currentOutput = runningProgram?.let { program ->
             calculateCurrentOutputPercent(
                 program = program,
                 currentMinute = currentMinute
             )
         } ?: 0
 
-        val graphSegments = todayPrograms.map {
-            program ->
+        val graphSegments = todayPrograms.map { program ->
             val isCurrent = runningProgram?.id == program.id
             val isNext = runningProgram == null &&
-            nextProgramToday?.id == program.id
+                nextProgramToday?.id == program.id
 
             TodayLightPlanGraphSegment(
                 id = program.id,
@@ -292,6 +291,14 @@ class DeviceLightViewModel(
     ): DeviceLightDashboardUiState {
         val currentTime = currentLightPoint(nowMillis)
 
+        return createEmptyState(
+            currentTime = currentTime
+        )
+    }
+
+    private fun createEmptyState(
+        currentTime: LightCurvePoint
+    ): DeviceLightDashboardUiState {
         return DeviceLightDashboardUiState(
             activeProgramName = "No active program",
             runStatus = "Create or load a light program",
@@ -318,7 +325,9 @@ class DeviceLightViewModel(
 
             nextProgramToday != null -> {
                 "Waiting for ${nextProgramToday.draft.start.label}"
-            } else -> {
+            }
+
+            else -> {
                 "Programs completed for today"
             }
         }
@@ -347,13 +356,14 @@ class DeviceLightViewModel(
 
                 currentMinute < endMinutes -> {
                     "$endLabel End"
-                } else -> {
+                }
+
+                else -> {
                     null
                 }
             }
 
-            val nextProgram = todayPrograms.firstOrNull {
-                program ->
+            val nextProgram = todayPrograms.firstOrNull { program ->
                 program.draft.start.totalMinutes > endMinutes
             }
 
@@ -368,7 +378,9 @@ class DeviceLightViewModel(
 
                 nextProgram != null -> {
                     "${nextProgram.draft.start.label} ${nextProgram.name}"
-                } else -> {
+                }
+
+                else -> {
                     "No upcoming event"
                 }
             }
@@ -416,8 +428,7 @@ class DeviceLightViewModel(
             endMinute = LightProgramTimeMath.endMinutes(draft.end),
             peakPercent = peakPercent,
             transitionMode = draft.transitionMode
-        ).sortedBy {
-            point ->
+        ).sortedBy { point ->
             point.x
         }
 
@@ -427,13 +438,11 @@ class DeviceLightViewModel(
 
         val current = currentMinute.toDouble()
 
-        val previous = points.lastOrNull {
-            point ->
+        val previous = points.lastOrNull { point ->
             point.x <= current
         }
 
-        val next = points.firstOrNull {
-            point ->
+        val next = points.firstOrNull { point ->
             point.x >= current
         }
 
@@ -446,15 +455,15 @@ class DeviceLightViewModel(
 
             else -> {
                 val progress =
-                (current - previous.x) / (next.x - previous.x)
+                    (current - previous.x) / (next.x - previous.x)
 
                 previous.y + ((next.y - previous.y) * progress)
             }
         }
 
         return output
-        .toInt()
-        .coerceIn(0, 100)
+            .toInt()
+            .coerceIn(0, 100)
     }
 
     private fun SavedLightProgram.maxOutputPercent(): Int {
@@ -467,7 +476,8 @@ class DeviceLightViewModel(
     }
 
     private fun isScheduledToday(
-        program: SavedLightProgram
+        program: SavedLightProgram,
+        deviceTime: LightDeviceTimeState
     ): Boolean {
         val selectedDays = program.draft.selectedDays
 
@@ -475,12 +485,23 @@ class DeviceLightViewModel(
             return true
         }
 
-        return selectedDays.contains(todayAppDay())
+        return selectedDays.contains(
+            appDayFromDeviceWeekDay(deviceTime.weekDay)
+        )
+    }
+
+    private fun appDayFromDeviceWeekDay(
+        weekDay: Int
+    ): Int {
+        return when (weekDay) {
+            in 1..7 -> weekDay
+            else -> todayAppDay()
+        }
     }
 
     private fun todayAppDay(): Int {
         val dayOfWeek = Calendar.getInstance()
-        .get(Calendar.DAY_OF_WEEK)
+            .get(Calendar.DAY_OF_WEEK)
 
         return if (dayOfWeek == Calendar.SUNDAY) {
             7
