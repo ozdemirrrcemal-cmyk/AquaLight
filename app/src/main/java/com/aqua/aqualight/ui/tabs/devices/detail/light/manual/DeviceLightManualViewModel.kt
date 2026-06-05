@@ -4,12 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
+import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.SavedLightPreset
-import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
-import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,25 +25,25 @@ class DeviceLightManualViewModel(
 ) : AndroidViewModel(application) {
 
     private val lightPresetDataStoreManager =
-    LightPresetDataStoreManager(application.applicationContext)
+        LightPresetDataStoreManager(application.applicationContext)
+
+    private val lightRuntimeRepository =
+        LightRuntimeRepository()
 
     private val _uiState = MutableStateFlow(
         ManualLightUiState()
     )
 
     val uiState: StateFlow<ManualLightUiState> =
-    _uiState.asStateFlow()
+        _uiState.asStateFlow()
 
     private val eventsChannel =
-    Channel<ManualLightEvent>(Channel.BUFFERED)
+        Channel<ManualLightEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
 
     private var deviceId: Long = 0L
     private var observeRuntimeJob: Job? = null
-
-    private val lightRuntimeRepository =
-    LightRuntimeRepository()
 
     fun initialize(
         deviceId: Long
@@ -54,10 +53,8 @@ class DeviceLightManualViewModel(
         observeRuntimeJob?.cancel()
 
         observeRuntimeJob = viewModelScope.launch {
-            lightRuntimeRepository.observeManualRuntime(deviceId).collect {
-                runtime ->
-                _uiState.update {
-                    current ->
+            lightRuntimeRepository.observeManualRuntime(deviceId).collect { runtime ->
+                _uiState.update { current ->
                     recalculateOutput(
                         current.copy(
                             isManualMode = runtime.isManualMode,
@@ -84,15 +81,21 @@ class DeviceLightManualViewModel(
         enabled: Boolean
     ) {
         viewModelScope.launch {
-            lightRuntimeRepository.setManualPower(
+            if (!hasValidDeviceId()) return@launch
+
+            val result = lightRuntimeRepository.setManualPower(
                 deviceId = deviceId,
                 isPowerOn = enabled
             )
-        }
 
-        // TODO: ESP32 power command:
-        // mode = MANUAL or MANUAL_SCENE
-        // power = enabled
+            if (!result.isSuccess) {
+                eventsChannel.send(
+                    ManualLightEvent.ShowError(
+                        result.message ?: "Power state could not be changed"
+                    )
+                )
+            }
+        }
     }
 
     fun updateRed(
@@ -100,15 +103,12 @@ class DeviceLightManualViewModel(
     ) {
         val current = _uiState.value
 
-        LightManualRuntimeStore.updateManualOutput(
-            deviceId = deviceId,
+        updateManualOutput(
             red = value,
             green = current.green,
             blue = current.blue,
             white = current.white
         )
-
-        // TODO: ESP32 manual RGBW update.
     }
 
     fun updateGreen(
@@ -116,15 +116,12 @@ class DeviceLightManualViewModel(
     ) {
         val current = _uiState.value
 
-        LightManualRuntimeStore.updateManualOutput(
-            deviceId = deviceId,
+        updateManualOutput(
             red = current.red,
             green = value,
             blue = current.blue,
             white = current.white
         )
-
-        // TODO: ESP32 manual RGBW update.
     }
 
     fun updateBlue(
@@ -132,15 +129,12 @@ class DeviceLightManualViewModel(
     ) {
         val current = _uiState.value
 
-        LightManualRuntimeStore.updateManualOutput(
-            deviceId = deviceId,
+        updateManualOutput(
             red = current.red,
             green = current.green,
             blue = value,
             white = current.white
         )
-
-        // TODO: ESP32 manual RGBW update.
     }
 
     fun updateWhite(
@@ -148,15 +142,39 @@ class DeviceLightManualViewModel(
     ) {
         val current = _uiState.value
 
-        LightManualRuntimeStore.updateManualOutput(
-            deviceId = deviceId,
+        updateManualOutput(
             red = current.red,
             green = current.green,
             blue = current.blue,
             white = value
         )
+    }
 
-        // TODO: ESP32 manual RGBW update.
+    private fun updateManualOutput(
+        red: Int,
+        green: Int,
+        blue: Int,
+        white: Int
+    ) {
+        viewModelScope.launch {
+            if (!hasValidDeviceId()) return@launch
+
+            val result = lightRuntimeRepository.updateManualOutput(
+                deviceId = deviceId,
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            )
+
+            if (!result.isSuccess) {
+                eventsChannel.send(
+                    ManualLightEvent.ShowError(
+                        result.message ?: "Manual output could not be updated"
+                    )
+                )
+            }
+        }
     }
 
     fun applyScene(
@@ -165,6 +183,8 @@ class DeviceLightManualViewModel(
         val sceneName = scene.toDisplayName()
 
         viewModelScope.launch {
+            if (!hasValidDeviceId()) return@launch
+
             val result = lightRuntimeRepository.applyManualScene(
                 deviceId = deviceId,
                 sceneName = sceneName,
@@ -175,6 +195,12 @@ class DeviceLightManualViewModel(
             )
 
             if (result.isSuccess) {
+                _uiState.update { state ->
+                    state.copy(
+                        activeSceneSource = "Manual Scenes"
+                    )
+                }
+
                 eventsChannel.send(
                     ManualLightEvent.ShowMessage("$sceneName applied")
                 )
@@ -186,24 +212,6 @@ class DeviceLightManualViewModel(
                 )
             }
         }
-
-        _uiState.update {
-            it.copy(
-                activeSceneSource = "Manual Scenes"
-            )
-        }
-
-        viewModelScope.launch {
-            eventsChannel.send(
-                ManualLightEvent.ShowMessage("$sceneName applied")
-            )
-        }
-
-        // TODO: ESP32 MANUAL_SCENE payload:
-        // mode = MANUAL_SCENE
-        // sceneName = sceneName
-        // R/G/B/W = scene values
-        // power = ON
     }
 
     fun applyOffScene() {
@@ -212,7 +220,11 @@ class DeviceLightManualViewModel(
 
     fun resumeAuto() {
         viewModelScope.launch {
-            val result = lightRuntimeRepository.resumeAuto(deviceId)
+            if (!hasValidDeviceId()) return@launch
+
+            val result = lightRuntimeRepository.resumeAuto(
+                deviceId = deviceId
+            )
 
             if (result.isSuccess) {
                 eventsChannel.send(
@@ -226,16 +238,6 @@ class DeviceLightManualViewModel(
                 )
             }
         }
-
-        viewModelScope.launch {
-            eventsChannel.send(
-                ManualLightEvent.ShowMessage("Auto schedule resumed")
-            )
-        }
-
-        // TODO: ESP32 AUTO mode command:
-        // mode = AUTO
-        // resume schedule = true
     }
 
     fun saveAs() {
@@ -247,8 +249,7 @@ class DeviceLightManualViewModel(
                 state.green,
                 state.blue,
                 state.white
-            ).any {
-                value ->
+            ).any { value ->
                 value > 0
             }
 
@@ -285,8 +286,7 @@ class DeviceLightManualViewModel(
                 state.green,
                 state.blue,
                 state.white
-            ).any {
-                value ->
+            ).any { value ->
                 value > 0
             }
 
@@ -324,23 +324,35 @@ class DeviceLightManualViewModel(
         }
     }
 
+    private suspend fun hasValidDeviceId(): Boolean {
+        if (deviceId > 0L) {
+            return true
+        }
+
+        eventsChannel.send(
+            ManualLightEvent.ShowError("Device information is missing")
+        )
+
+        return false
+    }
+
     private fun recalculateOutput(
         state: ManualLightUiState
     ): ManualLightUiState {
         val estimatedPower = if (state.isPowerOn) {
             state.redMaxWatts * (state.red / 100.0) +
-            state.greenMaxWatts * (state.green / 100.0) +
-            state.blueMaxWatts * (state.blue / 100.0) +
-            state.whiteMaxWatts * (state.white / 100.0)
+                state.greenMaxWatts * (state.green / 100.0) +
+                state.blueMaxWatts * (state.blue / 100.0) +
+                state.whiteMaxWatts * (state.white / 100.0)
         } else {
             0.0
         }
 
         val maxPower =
-        state.redMaxWatts +
-        state.greenMaxWatts +
-        state.blueMaxWatts +
-        state.whiteMaxWatts
+            state.redMaxWatts +
+                state.greenMaxWatts +
+                state.blueMaxWatts +
+                state.whiteMaxWatts
 
         val hasPowerCalibration = maxPower > 0.0
 
@@ -356,9 +368,11 @@ class DeviceLightManualViewModel(
 
             hasPowerCalibration -> {
                 ((estimatedPower / maxPower) * 100.0)
-                .roundToInt()
-                .coerceIn(0, 100)
-            } else -> fallbackOutputPercent
+                    .roundToInt()
+                    .coerceIn(0, 100)
+            }
+
+            else -> fallbackOutputPercent
         }
 
         val previewColor = calculatePreviewColor(
@@ -395,22 +409,22 @@ class DeviceLightManualViewModel(
         val whiteColor = Triple(0.92, 0.96, 1.00)
 
         val linearRed =
-        redColor.first * r +
-        greenColor.first * g +
-        blueColor.first * b +
-        whiteColor.first * w
+            redColor.first * r +
+                greenColor.first * g +
+                blueColor.first * b +
+                whiteColor.first * w
 
         val linearGreen =
-        redColor.second * r +
-        greenColor.second * g +
-        blueColor.second * b +
-        whiteColor.second * w
+            redColor.second * r +
+                greenColor.second * g +
+                blueColor.second * b +
+                whiteColor.second * w
 
         val linearBlue =
-        redColor.third * r +
-        greenColor.third * g +
-        blueColor.third * b +
-        whiteColor.third * w
+            redColor.third * r +
+                greenColor.third * g +
+                blueColor.third * b +
+                whiteColor.third * w
 
         val max = maxOf(
             linearRed,
@@ -423,11 +437,11 @@ class DeviceLightManualViewModel(
             value: Double
         ): Int {
             val normalized = (value / max)
-            .coerceIn(0.0, 1.0)
+                .coerceIn(0.0, 1.0)
 
             return (255.0 * normalized.pow(1.0 / 2.2))
-            .roundToInt()
-            .coerceIn(0, 255)
+                .roundToInt()
+                .coerceIn(0, 255)
         }
 
         return Triple(
