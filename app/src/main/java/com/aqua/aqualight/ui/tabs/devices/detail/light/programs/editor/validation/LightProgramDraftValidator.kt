@@ -1,16 +1,17 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.validation
 
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
 
 object LightProgramDraftValidator {
 
     fun validate(
         draft: LightProgramDraft
     ): LightProgramValidationResult {
-        val start = draft.start.totalMinutes
-        val peakStart = draft.peakStart.totalMinutes
-        val peakEnd = draft.peakEnd.totalMinutes
-        val end = draft.end.totalMinutes
+        val start = LightProgramTimeMath.startMinutes(draft.start)
+        val peakStart = LightProgramTimeMath.normalMinutes(draft.peakStart)
+        val peakEnd = LightProgramTimeMath.normalMinutes(draft.peakEnd)
+        val end = LightProgramTimeMath.endMinutes(draft.end)
 
         if (!(start < peakStart && peakStart < peakEnd && peakEnd < end)) {
             return LightProgramValidationResult.Invalid(
