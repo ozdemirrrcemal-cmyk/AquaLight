@@ -23,6 +23,9 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceTimeReader
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeState
 
 class DeviceLightViewModel(
     application: Application
@@ -31,8 +34,15 @@ class DeviceLightViewModel(
     private val lightProgramsDataStoreManager =
     LightProgramsDataStoreManager(application.applicationContext)
 
-    private val clockMillisFlow =
-    MutableStateFlow(System.currentTimeMillis())
+    private val lightDeviceTimeRepository =
+    LightDeviceTimeRepository(
+        context = application.applicationContext
+    )
+
+    private val deviceTimeFlow =
+    MutableStateFlow(
+        Esp32LightDeviceTimeReader.phoneFallback()
+    )
 
     private val _uiState = MutableStateFlow(
         createEmptyState(System.currentTimeMillis())
@@ -62,12 +72,12 @@ class DeviceLightViewModel(
             combine(
                 lightProgramsDataStoreManager.programsFlow,
                 lightRuntimeRepository.observeManualRuntime(deviceId),
-                clockMillisFlow
+                deviceTimeFlow
             ) {
-                programs, manualRuntime, nowMillis ->
-                Triple(programs, manualRuntime, nowMillis)
+                programs, manualRuntime, deviceTime ->
+                Triple(programs, manualRuntime, deviceTime)
             }.collect {
-                (programs, manualRuntime, nowMillis) ->
+                (programs, manualRuntime, deviceTime) ->
                 val activeProgramsForDevice = programs
                 .filter {
                     program ->
@@ -75,9 +85,9 @@ class DeviceLightViewModel(
                     program.isActive
                 }
 
-                val baseState = createStateFromPrograms(
+                vaval baseState = createStateFromPrograms(
                     programs = activeProgramsForDevice,
-                    nowMillis = nowMillis
+                    deviceTime = deviceTime
                 )
 
                 val finalState = if (manualRuntime.isManualMode) {
@@ -97,17 +107,28 @@ class DeviceLightViewModel(
     }
 
     fun refreshNow() {
-        clockMillisFlow.value = System.currentTimeMillis()
+        refreshDeviceTime()
     }
 
     private fun startClock() {
-        clockMillisFlow.value = System.currentTimeMillis()
+        refreshDeviceTime()
 
         clockJob = viewModelScope.launch {
             while (isActive) {
                 delay(60_000L)
-                clockMillisFlow.value = System.currentTimeMillis()
+                refreshDeviceTime()
             }
+        }
+    }
+
+    private fun refreshDeviceTime() {
+        viewModelScope.launch {
+            val timeState = lightDeviceTimeRepository.readDeviceTime(
+                deviceId = deviceId,
+                fallbackToPhone = true
+            )
+
+            deviceTimeFlow.value = timeState
         }
     }
 
@@ -158,9 +179,9 @@ class DeviceLightViewModel(
 
     private fun createStateFromPrograms(
         programs: List<SavedLightProgram>,
-        nowMillis: Long
+        deviceTime: LightDeviceTimeState
     ): DeviceLightDashboardUiState {
-        val currentTime = currentLightPoint(nowMillis)
+        val currentTime = deviceTime.curvePoint
         val currentMinute = currentTime.totalMinutes
 
         if (programs.isEmpty()) {

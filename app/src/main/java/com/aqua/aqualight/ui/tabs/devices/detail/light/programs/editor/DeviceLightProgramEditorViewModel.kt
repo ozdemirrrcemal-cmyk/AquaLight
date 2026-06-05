@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
 
 class DeviceLightProgramEditorViewModel(
     application: Application
@@ -34,6 +35,11 @@ class DeviceLightProgramEditorViewModel(
 
     private val lightProgramsDataStoreManager =
     LightProgramsDataStoreManager(application.applicationContext)
+
+    private val lightDeviceTimeRepository =
+    LightDeviceTimeRepository(
+        context = application.applicationContext
+    )
 
     private val lightProgramCommandManager =
     Esp32LightProgramCommandManager(
@@ -64,6 +70,8 @@ class DeviceLightProgramEditorViewModel(
         programId: String?
     ) {
         this.deviceId = deviceId
+
+        refreshDeviceTime()
 
         if (!programId.isNullOrBlank()) {
             loadProgram(programId)
@@ -346,6 +354,20 @@ class DeviceLightProgramEditorViewModel(
                     )
                 )
             }
+        }
+    }
+
+    private fun refreshDeviceTime() {
+        viewModelScope.launch {
+            val timeState = lightDeviceTimeRepository.readDeviceTime(
+                deviceId = deviceId,
+                fallbackToPhone = true
+            )
+
+            updateDeviceTime(
+                hour = timeState.hour,
+                minute = timeState.minute
+            )
         }
     }
 
