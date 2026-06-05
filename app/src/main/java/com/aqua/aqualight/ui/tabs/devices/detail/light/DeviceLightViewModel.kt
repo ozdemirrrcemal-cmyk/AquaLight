@@ -336,11 +336,6 @@ class DeviceLightViewModel(
                 program.draft.start.totalMinutes > endMinutes
             }
 
-            val nextProgram = todayPrograms.firstOrNull {
-                program ->
-                program.draft.start.totalMinutes > draft.end.totalMinutes
-            }
-
             return when {
                 programEvent != null && nextProgram != null -> {
                     "$programEvent · ${nextProgram.draft.start.label} ${nextProgram.name}"
@@ -491,4 +486,4 @@ class DeviceLightViewModel(
         clockJob?.cancel()
         super.onCleared()
     }
-}
+}kh
