@@ -6,9 +6,13 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -17,16 +21,14 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.catalog.BuiltInLi
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetCategory
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.sheet.LightPresetOptionsSheet
+import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
+import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
-import kotlinx.coroutines.launch
 
 class DeviceLightPresetsFragment :
-Fragment(R.layout.fragment_device_light_presets) {
+    Fragment(R.layout.fragment_device_light_presets) {
 
     private var _binding: FragmentDeviceLightPresetsBinding? = null
     private val binding get() = _binding!!
@@ -36,6 +38,9 @@ Fragment(R.layout.fragment_device_light_presets) {
     private var selectedFilter = PresetFilter.ALL
     private var allPresets: List<LightPresetItem> = emptyList()
     private var activePreset: LightPresetItem? = null
+
+    private val deviceId: Long
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val lightPresetDataStoreManager by lazy {
         LightPresetDataStoreManager(requireContext().applicationContext)
@@ -53,7 +58,7 @@ Fragment(R.layout.fragment_device_light_presets) {
         setupRecyclerView()
         setupClicks()
         observePresets()
-        renderActivePreset(activePreset)
+        syncActivePresetFromRuntime()
     }
 
     private fun setupHeader() {
@@ -70,12 +75,10 @@ Fragment(R.layout.fragment_device_light_presets) {
 
     private fun setupRecyclerView() {
         presetsAdapter = LightPresetsAdapter(
-            onPresetClick = {
-                preset ->
+            onPresetClick = { preset ->
                 showPresetOptionsSheet(preset)
             },
-            onPresetOptionsClick = {
-                preset ->
+            onPresetOptionsClick = { preset ->
                 showPresetOptionsSheet(preset)
             }
         )
@@ -103,19 +106,55 @@ Fragment(R.layout.fragment_device_light_presets) {
     private fun observePresets() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                lightPresetDataStoreManager.presetsFlow.collect {
-                    savedPresets ->
-                    val customPresets = savedPresets.map {
-                        preset ->
+                lightPresetDataStoreManager.presetsFlow.collect { savedPresets ->
+                    val customPresets = savedPresets.map { preset ->
                         preset.toListItem()
                     }
 
                     allPresets = BuiltInLightPresets.presets + customPresets
 
+                    syncActivePresetFromRuntime()
                     applyFilter(selectedFilter)
                 }
             }
         }
+    }
+
+    private fun syncActivePresetFromRuntime() {
+        if (deviceId <= 0L) {
+            renderActivePreset(activePreset)
+            return
+        }
+
+        val runtime = LightManualRuntimeStore.current(deviceId)
+
+        if (!runtime.isManualScene) {
+            renderActivePreset(activePreset)
+            return
+        }
+
+        val matchedPreset = allPresets.firstOrNull { preset ->
+            preset.title == runtime.activeSceneName &&
+                preset.red == runtime.red &&
+                preset.green == runtime.green &&
+                preset.blue == runtime.blue &&
+                preset.white == runtime.white
+        }
+
+        activePreset = matchedPreset ?: LightPresetItem(
+            id = "runtime_manual_scene_${runtime.deviceId}",
+            title = runtime.activeSceneName.orEmpty().ifBlank {
+                "Manual Scene"
+            },
+            subtitle = "Applied manual scene",
+            category = LightPresetCategory.CUSTOM,
+            red = runtime.red,
+            green = runtime.green,
+            blue = runtime.blue,
+            white = runtime.white
+        )
+
+        renderActivePreset(activePreset)
     }
 
     private fun applyFilter(
@@ -126,11 +165,13 @@ Fragment(R.layout.fragment_device_light_presets) {
 
         val filtered = when (filter) {
             PresetFilter.ALL -> allPresets
-            PresetFilter.BUILT_IN -> allPresets.filter {
-                it.category == LightPresetCategory.BUILT_IN
+
+            PresetFilter.BUILT_IN -> allPresets.filter { preset ->
+                preset.category == LightPresetCategory.BUILT_IN
             }
-            PresetFilter.CUSTOM -> allPresets.filter {
-                it.category == LightPresetCategory.CUSTOM
+
+            PresetFilter.CUSTOM -> allPresets.filter { preset ->
+                preset.category == LightPresetCategory.CUSTOM
             }
         }
 
@@ -179,33 +220,75 @@ Fragment(R.layout.fragment_device_light_presets) {
         preset: LightPresetItem
     ) {
         LightPresetOptionsSheet
-        .create(requireContext())
-        .show(
-            presetName = preset.title,
-            subtitle = "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}",
-            isCustom = preset.isCustom,
-            onApply = {
-                applyPresetToDevice(preset)
-            },
-            onDelete = {
-                deletePreset(preset)
-            }
-        )
+            .create(requireContext())
+            .show(
+                presetName = preset.title,
+                subtitle = "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}",
+                isCustom = preset.isCustom,
+                onApply = {
+                    applyPresetToDevice(preset)
+                },
+                onDelete = {
+                    deletePreset(preset)
+                }
+            )
     }
 
     private fun applyPresetToDevice(
         preset: LightPresetItem
     ) {
+        if (deviceId <= 0L) {
+            Toast.makeText(
+                requireContext(),
+                "Device information is missing",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
         activePreset = preset
         renderActivePreset(preset)
 
-        // TODO: Send preset RGBW values to ESP32 manual output.
+        LightManualRuntimeStore.applyManualScene(
+            deviceId = deviceId,
+            sceneName = preset.title,
+            red = preset.red,
+            green = preset.green,
+            blue = preset.blue,
+            white = preset.white
+        )
+
+        // TODO: ESP32 MANUAL_SCENE payload gönder:
+        // mode = MANUAL_SCENE
+        // sceneName = preset.title
+        // R/G/B/W = preset.red/green/blue/white
+        // power = ON
+
         Toast.makeText(
             requireContext(),
             "${preset.title} applied",
             Toast.LENGTH_SHORT
         ).show()
+
+        navigateToManualControl()
     }
+
+    private fun navigateToManualControl() {
+    val bundle = Bundle().apply {
+        putLong(ARG_DEVICE_ID, deviceId)
+    }
+
+    findNavController().navigate(
+        R.id.action_deviceLightPresetsFragment_to_deviceLightManualFragment,
+        bundle,
+        androidx.navigation.NavOptions.Builder()
+            .setPopUpTo(
+                R.id.deviceLightFragment,
+                false
+            )
+            .build()
+    )
+}
 
     private fun deletePreset(
         preset: LightPresetItem
@@ -242,7 +325,7 @@ Fragment(R.layout.fragment_device_light_presets) {
 
         binding.tvActivePresetTitle.text = preset.title
         binding.tvActivePresetChannels.text =
-        "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}"
+            "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}"
 
         binding.viewActivePresetColor.background = createColorDrawable(
             calculatePreviewColor(
@@ -280,30 +363,33 @@ Fragment(R.layout.fragment_device_light_presets) {
         val whiteColor = Triple(0.92, 0.96, 1.00)
 
         val linearRed =
-        redColor.first * r +
-        greenColor.first * g +
-        blueColor.first * b +
-        whiteColor.first * w
+            redColor.first * r +
+                greenColor.first * g +
+                blueColor.first * b +
+                whiteColor.first * w
 
         val linearGreen =
-        redColor.second * r +
-        greenColor.second * g +
-        blueColor.second * b +
-        whiteColor.second * w
+            redColor.second * r +
+                greenColor.second * g +
+                blueColor.second * b +
+                whiteColor.second * w
 
         val linearBlue =
-        redColor.third * r +
-        greenColor.third * g +
-        blueColor.third * b +
-        whiteColor.third * w
+            redColor.third * r +
+                greenColor.third * g +
+                blueColor.third * b +
+                whiteColor.third * w
 
         val max = maxOf(linearRed, linearGreen, linearBlue, 1.0)
 
-        fun gammaCorrect(value: Double): Int {
+        fun gammaCorrect(
+            value: Double
+        ): Int {
             val normalized = (value / max).coerceIn(0.0, 1.0)
+
             return (255.0 * normalized.pow(1.0 / 2.2))
-            .roundToInt()
-            .coerceIn(0, 255)
+                .roundToInt()
+                .coerceIn(0, 255)
         }
 
         return Color.rgb(
@@ -323,5 +409,9 @@ Fragment(R.layout.fragment_device_light_presets) {
         ALL,
         BUILT_IN,
         CUSTOM
+    }
+
+    companion object {
+        const val ARG_DEVICE_ID = "deviceId"
     }
 }

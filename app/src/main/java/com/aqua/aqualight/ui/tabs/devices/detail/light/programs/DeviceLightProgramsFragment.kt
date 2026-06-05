@@ -38,7 +38,7 @@ class DeviceLightProgramsFragment :
     private var allPrograms: List<LightProgramListItem> = emptyList()
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID, 0L)
+    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val lightProgramsDataStoreManager by lazy {
         LightProgramsDataStoreManager(requireContext().applicationContext)

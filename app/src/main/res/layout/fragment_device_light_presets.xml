@@ -38,62 +38,67 @@
             android:orientation="vertical">
 
             <!-- ACTIVE PREVIEW -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardActivePreset"
-                style="@style/Widget.Aqua.Light.Card.Hero"
+          <com.google.android.material.card.MaterialCardView
+    android:id="@+id/cardActivePreset"
+    style="@style/Widget.Aqua.Light.Card.Hero"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="14dp">
+
+        <View
+            android:id="@+id/viewActivePresetColor"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/bg_light_filter_selected" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="13dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/TextAppearance.Aqua.Light.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Current Scene" />
+
+            <TextView
+                android:id="@+id/tvActivePresetTitle"
+                style="@style/TextAppearance.Aqua.Light.ActionTitle"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="No preset applied"
+                tools:text="Plant Growth" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="20dp">
+            <TextView
+                android:id="@+id/tvActivePresetChannels"
+                style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="Select a preset to apply"/>
 
-                    <View
-                        android:id="@+id/viewActivePresetColor"
-                        android:layout_width="52dp"
-                        android:layout_height="52dp"
-                        android:background="@drawable/bg_light_filter_selected" />
+        </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+    </LinearLayout>
 
-                        <TextView
-                            style="@style/TextAppearance.Aqua.Light.Caption"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Current Scene" />
-
-                        <TextView
-                            android:id="@+id/tvActivePresetTitle"
-                            style="@style/TextAppearance.Aqua.Light.SectionTitle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="No preset applied"
-                            tools:text="Plant Growth" />
-
-                        <TextView
-                            android:id="@+id/tvActivePresetChannels"
-                            style="@style/TextAppearance.Aqua.Light.Body"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:text="Select a preset to apply"
-                            tools:text="R90 · G75 · B45 · W90" />
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
+</com.google.android.material.card.MaterialCardView>
             <!-- FILTER -->
             <LinearLayout
                 android:id="@+id/presetFilterBar"

@@ -2,7 +2,11 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model
 
 data class ManualLightUiState(
     val isManualMode: Boolean = false,
+    val isManualScene: Boolean = false,
     val isPowerOn: Boolean = false,
+
+    val activeSceneName: String? = null,
+    val activeSceneSource: String? = null,
 
     val masterOutputPercent: Int = 0,
 

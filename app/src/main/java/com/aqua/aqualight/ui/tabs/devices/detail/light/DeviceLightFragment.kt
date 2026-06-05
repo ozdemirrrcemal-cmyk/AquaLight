@@ -25,11 +25,11 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private val viewModel: DeviceLightViewModel by viewModels()
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val deviceTitle: String
-        get() = requireArguments()
-            .getString(ARG_DEVICE_TITLE)
+        get() = arguments
+            ?.getString(ARG_DEVICE_TITLE)
             .orEmpty()
             .ifBlank {
                 "WRGB Pro"
@@ -63,9 +63,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                         iconRes = R.drawable.ic_settings,
                         contentDescription = "Light settings",
                         onClick = {
-                            findNavController().navigate(
-                                R.id.action_deviceLightFragment_to_deviceLightSettingsFragment
-                            )
+                            openSettings()
                         }
                     ),
                     AquaHeaderAction(
@@ -82,14 +80,24 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun setupClicks() {
         binding.cardManual.setOnClickListener {
+            val bundle = Bundle().apply {
+                putLong(ARG_DEVICE_ID, deviceId)
+            }
+
             findNavController().navigate(
-                R.id.action_deviceLightFragment_to_deviceLightManualFragment
+                R.id.action_deviceLightFragment_to_deviceLightManualFragment,
+                bundle
             )
         }
 
         binding.cardPrograms.setOnClickListener {
+            val bundle = Bundle().apply {
+                putLong(ARG_DEVICE_ID, deviceId)
+            }
+
             findNavController().navigate(
-                R.id.action_deviceLightFragment_to_deviceLightProgramsFragment
+                R.id.action_deviceLightFragment_to_deviceLightProgramsFragment,
+                bundle
             )
         }
 
@@ -105,10 +113,26 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardPresets.setOnClickListener {
+            val bundle = Bundle().apply {
+                putLong(ARG_DEVICE_ID, deviceId)
+            }
+
             findNavController().navigate(
-                R.id.action_deviceLightFragment_to_deviceLightPresetsFragment
+                R.id.action_deviceLightFragment_to_deviceLightPresetsFragment,
+                bundle
             )
         }
+    }
+
+    private fun openSettings() {
+        val bundle = Bundle().apply {
+            putLong(ARG_DEVICE_ID, deviceId)
+        }
+
+        findNavController().navigate(
+            R.id.action_deviceLightFragment_to_deviceLightSettingsFragment,
+            bundle
+        )
     }
 
     private fun observeUiState() {
@@ -136,7 +160,9 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
         binding.tvTimelineStatus.text = state.timelineStatusText
 
-        binding.lightCurveGraphView.setState(state.graphState)
+        binding.todayLightPlanGraphView.setState(
+            state.todayPlanGraphState
+        )
     }
 
     private fun refreshDeviceStatus() {

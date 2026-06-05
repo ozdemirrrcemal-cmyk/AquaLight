@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.manual
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -18,10 +19,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightS
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.sheet.SaveLightPresetBottomSheet
 import kotlinx.coroutines.launch
-import android.graphics.Color
 
 class DeviceLightManualFragment :
-Fragment(R.layout.fragment_device_light_manual) {
+    Fragment(R.layout.fragment_device_light_manual) {
 
     private var _binding: FragmentDeviceLightManualBinding? = null
     private val binding get() = _binding!!
@@ -29,6 +29,19 @@ Fragment(R.layout.fragment_device_light_manual) {
     private val viewModel: DeviceLightManualViewModel by viewModels()
 
     private var isRendering = false
+
+    private val deviceId: Long
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+
+    private val sceneButtons: List<View>
+        get() = listOf(
+            binding.scenePlantGrowth,
+            binding.sceneFishDisplay,
+            binding.sceneShrimpSafe,
+            binding.sceneBlueAccent,
+            binding.sceneRed,
+            binding.sceneFullSpectrum
+        )
 
     override fun onViewCreated(
         view: View,
@@ -43,6 +56,8 @@ Fragment(R.layout.fragment_device_light_manual) {
         setupSliders()
         observeUiState()
         observeEvents()
+
+        viewModel.initialize(deviceId)
     }
 
     private fun setupHeader() {
@@ -60,8 +75,7 @@ Fragment(R.layout.fragment_device_light_manual) {
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect {
-                    state ->
+                viewModel.uiState.collect { state ->
                     renderUiState(state)
                 }
             }
@@ -69,38 +83,37 @@ Fragment(R.layout.fragment_device_light_manual) {
     }
 
     private fun observeEvents() {
-    viewLifecycleOwner.lifecycleScope.launch {
-        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.collect {
-                event ->
-                when (event) {
-                    is ManualLightEvent.ShowMessage -> {
-                        Toast.makeText(
-                            requireContext(),
-                            event.message,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is ManualLightEvent.ShowMessage -> {
+                            Toast.makeText(
+                                requireContext(),
+                                event.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
 
-                    is ManualLightEvent.ShowError -> {
-                        Toast.makeText(
-                            requireContext(),
-                            event.message,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                        is ManualLightEvent.ShowError -> {
+                            Toast.makeText(
+                                requireContext(),
+                                event.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
 
-                    ManualLightEvent.ShowSavePresetSheet -> {
-                        SaveLightPresetBottomSheet.show(
-                            fragment = this@DeviceLightManualFragment,
-                            onSaveClick = viewModel::savePreset
-                        )
+                        ManualLightEvent.ShowSavePresetSheet -> {
+                            SaveLightPresetBottomSheet.show(
+                                fragment = this@DeviceLightManualFragment,
+                                onSaveClick = viewModel::savePreset
+                            )
+                        }
                     }
                 }
             }
         }
     }
-}
 
     private fun renderUiState(
         state: ManualLightUiState
@@ -109,10 +122,30 @@ Fragment(R.layout.fragment_device_light_manual) {
 
         binding.switchManualPower.isChecked = state.isPowerOn
 
-        binding.tvManualModeSubtitle.text = if (state.isManualMode) {
-            "Live RGBW control. Automatic schedule paused."
+        binding.tvManualModeTitle.text = if (state.isManualScene) {
+            "Manual Scene Active"
         } else {
-            "Automatic schedule is running."
+            "Manual Mode"
+        }
+
+        binding.tvManualModeSubtitle.text = when {
+            state.isManualScene -> {
+                val sceneName = state.activeSceneName
+                    .orEmpty()
+                    .ifBlank {
+                        "Preset Scene"
+                    }
+
+                "$sceneName · Auto schedule paused."
+            }
+
+            state.isManualMode -> {
+                "Live RGBW control. Automatic schedule paused."
+            }
+
+            else -> {
+                "Automatic schedule is running."
+            }
         }
 
         binding.masterOutputProgress.progress = state.masterOutputPercent
@@ -129,6 +162,7 @@ Fragment(R.layout.fragment_device_light_manual) {
         } else {
             "-- W"
         }
+
         binding.sliderRed.value = state.red.toFloat()
         binding.sliderGreen.value = state.green.toFloat()
         binding.sliderBlue.value = state.blue.toFloat()
@@ -138,6 +172,8 @@ Fragment(R.layout.fragment_device_light_manual) {
         binding.tvGreenValue.text = "${state.green}%"
         binding.tvBlueValue.text = "${state.blue}%"
         binding.tvWhiteValue.text = "${state.white}%"
+
+        renderSceneSelection(state)
 
         binding.manualContentContainer.alpha = if (state.isPowerOn) {
             1f
@@ -149,9 +185,9 @@ Fragment(R.layout.fragment_device_light_manual) {
     }
 
     private fun setupClicks() {
-        binding.switchManualPower.setOnCheckedChangeListener {
-            _, isChecked ->
+        binding.switchManualPower.setOnCheckedChangeListener { _, isChecked ->
             if (isRendering) return@setOnCheckedChangeListener
+
             viewModel.setPowerOn(isChecked)
         }
 
@@ -189,33 +225,67 @@ Fragment(R.layout.fragment_device_light_manual) {
     }
 
     private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderRed.addOnChangeListener { _, value, _ ->
             if (isRendering) return@addOnChangeListener
+
             viewModel.updateRed(value.toInt())
         }
 
-        binding.sliderGreen.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderGreen.addOnChangeListener { _, value, _ ->
             if (isRendering) return@addOnChangeListener
+
             viewModel.updateGreen(value.toInt())
         }
 
-        binding.sliderBlue.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderBlue.addOnChangeListener { _, value, _ ->
             if (isRendering) return@addOnChangeListener
+
             viewModel.updateBlue(value.toInt())
         }
 
-        binding.sliderWhite.addOnChangeListener {
-            _, value, _ ->
+        binding.sliderWhite.addOnChangeListener { _, value, _ ->
             if (isRendering) return@addOnChangeListener
+
             viewModel.updateWhite(value.toInt())
+        }
+    }
+
+    private fun renderSceneSelection(
+        state: ManualLightUiState
+    ) {
+        clearSelectedSceneButton()
+
+        if (!state.isManualScene) return
+
+        val sceneName = state.activeSceneName
+            .orEmpty()
+            .lowercase()
+
+        val selectedButton = when {
+            sceneName.contains("plant") -> binding.scenePlantGrowth
+            sceneName.contains("fish") -> binding.sceneFishDisplay
+            sceneName.contains("shrimp") -> binding.sceneShrimpSafe
+            sceneName.contains("blue") -> binding.sceneBlueAccent
+            sceneName.contains("red") -> binding.sceneRed
+            sceneName.contains("full") -> binding.sceneFullSpectrum
+            else -> null
+        }
+
+        selectedButton?.isSelected = true
+    }
+
+    private fun clearSelectedSceneButton() {
+        sceneButtons.forEach { button ->
+            button.isSelected = false
         }
     }
 
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    companion object {
+        const val ARG_DEVICE_ID = "deviceId"
     }
 }

@@ -29,13 +29,38 @@ class DeviceLightSettingsViewModel : ViewModel() {
 
     val events = eventsChannel.receiveAsFlow()
 
+    private var deviceId: Long = 0L
+    private var initialized = false
+
     init {
         refreshPhoneTime()
     }
 
+    fun initialize(
+        deviceId: Long
+    ) {
+        this.deviceId = deviceId
+
+        if (initialized) {
+            refreshPhoneTime()
+            return
+        }
+
+        initialized = true
+
+        refreshPhoneTime()
+
+        // TODO: ESP32 / DataStore bağlantısı yapılınca:
+        // - Bu deviceId ile cihaz bilgileri okunacak.
+        // - Firmware, model, connection state alınacak.
+        // - Temperature protection ayarları okunacak.
+        // - Fan / cooling / time bilgileri okunacak.
+        // - UI state bu cihaza göre doldurulacak.
+    }
+
     fun refreshPhoneTime() {
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 phoneTime = currentPhoneTimeText()
             )
         }
@@ -44,14 +69,18 @@ class DeviceLightSettingsViewModel : ViewModel() {
     fun setTemperatureProtectionEnabled(
         enabled: Boolean
     ) {
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 temperatureProtectionEnabled = enabled
             )
         }
 
         viewModelScope.launch {
-            // TODO: Send temperature protection enabled state to ESP32.
+            // TODO: ESP32 cihaz bazlı gönderim:
+            // deviceId = this@DeviceLightSettingsViewModel.deviceId
+            // command = temperatureProtectionEnabled
+            // value = enabled
+
             eventsChannel.send(
                 DeviceLightSettingsEvent.ShowMessage(
                     if (enabled) {
@@ -69,14 +98,18 @@ class DeviceLightSettingsViewModel : ViewModel() {
     ) {
         val safeValue = temperatureCelsius.coerceIn(40, 75)
 
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 limitTemperatureCelsius = safeValue
             )
         }
 
         viewModelScope.launch {
-            // TODO: Send TempLightErr to ESP32.
+            // TODO: ESP32 cihaz bazlı gönderim:
+            // deviceId = this@DeviceLightSettingsViewModel.deviceId
+            // ESP32 variable = TempLightErr
+            // value = safeValue
+
             eventsChannel.send(
                 DeviceLightSettingsEvent.ShowMessage(
                     "Limit temperature set to ${safeValue}°C"
@@ -90,15 +123,18 @@ class DeviceLightSettingsViewModel : ViewModel() {
     ) {
         val safeValue = percent.coerceIn(40, 90)
 
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 lightReductionPercent = safeValue
             )
         }
 
         viewModelScope.launch {
-            // TODO: Send LightDownErr to ESP32 as ratio.
+            // TODO: ESP32 cihaz bazlı gönderim:
+            // deviceId = this@DeviceLightSettingsViewModel.deviceId
+            // ESP32 variable = LightDownErr
             // Example: 70% -> 0.7f
+
             eventsChannel.send(
                 DeviceLightSettingsEvent.ShowMessage(
                     "Light reduction set to $safeValue%"
@@ -112,15 +148,18 @@ class DeviceLightSettingsViewModel : ViewModel() {
     ) {
         val safeValue = seconds.coerceIn(15, 300)
 
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 recoveryIntervalSeconds = safeValue
             )
         }
 
         viewModelScope.launch {
-            // TODO: Send TimeDownErr to ESP32 as milliseconds.
-            // Example: 60s -> 60000
+            // TODO: ESP32 cihaz bazlı gönderim:
+            // deviceId = this@DeviceLightSettingsViewModel.deviceId
+            // ESP32 variable = TimeDownErr
+            // Example: 60s -> 60000ms
+
             eventsChannel.send(
                 DeviceLightSettingsEvent.ShowMessage(
                     "Recovery interval set to ${safeValue}s"
@@ -133,11 +172,13 @@ class DeviceLightSettingsViewModel : ViewModel() {
         viewModelScope.launch {
             val phoneTime = currentPhoneTimeText()
 
-            // TODO: Send phone time to ESP32.
+            // TODO: ESP32 cihaz bazlı gönderim:
+            // deviceId = this@DeviceLightSettingsViewModel.deviceId
+            // phone time -> ESP32 RTC/NTP time update
             // ESP32 success response geldiğinde deviceTime da phoneTime ile güncellenecek.
 
-            _uiState.update {
-                it.copy(
+            _uiState.update { state ->
+                state.copy(
                     phoneTime = phoneTime,
                     lastSyncTime = currentLastSyncText()
                 )
@@ -151,7 +192,10 @@ class DeviceLightSettingsViewModel : ViewModel() {
 
     fun updateFirmware() {
         viewModelScope.launch {
-            // TODO: Open firmware update flow.
+            // TODO: ESP32 cihaz bazlı firmware flow:
+            // deviceId = this@DeviceLightSettingsViewModel.deviceId
+            // Firmware update screen / OTA flow açılacak.
+
             eventsChannel.send(
                 DeviceLightSettingsEvent.ShowMessage("Firmware update coming soon")
             )

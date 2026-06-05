@@ -61,6 +61,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvManualModeTitle"
                             style="@style/TextAppearance.Aqua.Light.SectionTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -72,7 +73,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
-                            android:maxLines="1"
+                            android:maxLines="2"
                             android:text="Live RGBW control. Automatic schedule paused." />
 
                     </LinearLayout>
@@ -359,71 +360,95 @@
 
                         <TextView
                             android:id="@+id/scenePlantGrowth"
-                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                            style="@style/TextAppearance.Aqua.Light.Filter"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
                             android:layout_columnWeight="1"
                             android:layout_margin="5dp"
-                            android:background="@drawable/bg_light_program_time_panel"
+                            android:background="@drawable/bg_light_manual_scene_button"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
-                            android:text="Plant" />
+                            android:text="Plant"
+                            android:textColor="@color/color_light_manual_scene_button_text" />
 
                         <TextView
                             android:id="@+id/sceneFishDisplay"
-                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                            style="@style/TextAppearance.Aqua.Light.Filter"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
                             android:layout_columnWeight="1"
                             android:layout_margin="5dp"
-                            android:background="@drawable/bg_light_program_time_panel"
+                            android:background="@drawable/bg_light_manual_scene_button"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
-                            android:text="Fish" />
+                            android:text="Fish"
+                            android:textColor="@color/color_light_manual_scene_button_text" />
 
                         <TextView
                             android:id="@+id/sceneShrimpSafe"
-                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                            style="@style/TextAppearance.Aqua.Light.Filter"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
                             android:layout_columnWeight="1"
                             android:layout_margin="5dp"
-                            android:background="@drawable/bg_light_program_time_panel"
+                            android:background="@drawable/bg_light_manual_scene_button"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
-                            android:text="Shrimp" />
+                            android:text="Shrimp"
+                            android:textColor="@color/color_light_manual_scene_button_text" />
 
                         <TextView
                             android:id="@+id/sceneBlueAccent"
-                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                            style="@style/TextAppearance.Aqua.Light.Filter"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
                             android:layout_columnWeight="1"
                             android:layout_margin="5dp"
-                            android:background="@drawable/bg_light_program_time_panel"
+                            android:background="@drawable/bg_light_manual_scene_button"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
-                            android:text="Blue" />
-							
-						 <TextView
+                            android:text="Blue"
+                            android:textColor="@color/color_light_manual_scene_button_text" />
+
+                        <TextView
                             android:id="@+id/sceneRed"
-                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                            style="@style/TextAppearance.Aqua.Light.Filter"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
                             android:layout_columnWeight="1"
                             android:layout_margin="5dp"
-                            android:background="@drawable/bg_light_program_time_panel"
+                            android:background="@drawable/bg_light_manual_scene_button"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
-                            android:text="Red" />
-							
+                            android:text="Red"
+                            android:textColor="@color/color_light_manual_scene_button_text" />
+
                         <TextView
                             android:id="@+id/sceneFullSpectrum"
-                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                            style="@style/TextAppearance.Aqua.Light.Filter"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
                             android:layout_columnWeight="1"
                             android:layout_margin="5dp"
-                            android:background="@drawable/bg_light_program_time_panel"
+                            android:background="@drawable/bg_light_manual_scene_button"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
                             android:gravity="center"
-                            android:text="Full" />
+                            android:text="Full"
+                            android:textColor="@color/color_light_manual_scene_button_text" />
 
-                       
+
 
                     </GridLayout>
 

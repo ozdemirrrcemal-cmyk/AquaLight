@@ -28,6 +28,9 @@ class DeviceLightSettingsFragment :
 
     private var isRendering = false
 
+    private val deviceId: Long
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -40,6 +43,8 @@ class DeviceLightSettingsFragment :
         setupClicks()
         observeUiState()
         observeEvents()
+
+        viewModel.initialize(deviceId)
     }
 
     private fun setupHeader() {
@@ -65,6 +70,7 @@ class DeviceLightSettingsFragment :
 
         binding.switchTemperatureProtection.setOnCheckedChangeListener { _, isChecked ->
             if (isRendering) return@setOnCheckedChangeListener
+
             viewModel.setTemperatureProtectionEnabled(isChecked)
         }
 
@@ -184,14 +190,15 @@ class DeviceLightSettingsFragment :
         binding.tvFanStartValue.text = "${state.fanStartTemperatureCelsius}°C"
         binding.tvFanFullSpeedValue.text = "${state.fanFullSpeedTemperatureCelsius}°C"
 
-        binding.rowLimitTemperature.alpha =
-            if (state.temperatureProtectionEnabled) 1f else 0.45f
+        val protectionAlpha = if (state.temperatureProtectionEnabled) {
+            1f
+        } else {
+            0.45f
+        }
 
-        binding.rowLightReduction.alpha =
-            if (state.temperatureProtectionEnabled) 1f else 0.45f
-
-        binding.rowRecoveryInterval.alpha =
-            if (state.temperatureProtectionEnabled) 1f else 0.45f
+        binding.rowLimitTemperature.alpha = protectionAlpha
+        binding.rowLightReduction.alpha = protectionAlpha
+        binding.rowRecoveryInterval.alpha = protectionAlpha
 
         binding.rowLimitTemperature.isEnabled = state.temperatureProtectionEnabled
         binding.rowLightReduction.isEnabled = state.temperatureProtectionEnabled
@@ -199,14 +206,18 @@ class DeviceLightSettingsFragment :
 
         isRendering = false
     }
-	
-	override fun onResume() {
-    super.onResume()
-    viewModel.refreshPhoneTime()
-}
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.refreshPhoneTime()
+    }
 
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    companion object {
+        const val ARG_DEVICE_ID = "deviceId"
     }
 }
