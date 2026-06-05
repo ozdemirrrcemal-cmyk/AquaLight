@@ -7,11 +7,11 @@ import kotlin.math.roundToInt
 class Esp32LightDeviceCommandManager(
     context: Context,
     private val addressResolver: LightDeviceAddressResolver =
-        LightDeviceAddressResolver(context),
+    LightDeviceAddressResolver(context),
     private val httpClient: Esp32HttpJsonClient =
-        Esp32HttpJsonClient(),
+    Esp32HttpJsonClient(),
     private val mappingReader: Esp32LightChannelMappingReader =
-        Esp32LightChannelMappingReader(httpClient)
+    Esp32LightChannelMappingReader(httpClient)
 ) : LightDeviceCommandManager {
 
     override suspend fun applyManualScene(
@@ -74,15 +74,15 @@ class Esp32LightDeviceCommandManager(
         deviceId: Long
     ): LightCommandResult {
         val address = resolveAddress(deviceId)
-            ?: return LightCommandResult.failure("Device address could not be resolved")
+        ?: return LightCommandResult.failure("Device address could not be resolved")
 
         val json = JSONObject()
-            .put(
-                "LLight",
-                JSONObject()
-                    .put("LightEdit", 0)
-            )
-            .toString()
+        .put(
+            "LLight",
+            JSONObject()
+            .put("LightEdit", 0)
+        )
+        .toString()
 
         return httpClient.postSet(
             ip = address.ip,
@@ -97,11 +97,12 @@ class Esp32LightDeviceCommandManager(
         requestTag: String
     ): LightCommandResult {
         val address = resolveAddress(deviceId)
-            ?: return LightCommandResult.failure("Device address could not be resolved")
+        ?: return LightCommandResult.failure("Device address could not be resolved")
 
         val mapping = mappingReader.readMapping(
             ip = address.ip
-        ).getOrElse { error ->
+        ).getOrElse {
+            error ->
             return LightCommandResult.failure(
                 error.message ?: "Light channel mapping could not be read"
             )
@@ -111,7 +112,8 @@ class Esp32LightDeviceCommandManager(
             output = output,
             mapping = mapping,
             keepManualUntilMs = DEFAULT_MANUAL_TIMEOUT_MS
-        ).getOrElse { error ->
+        ).getOrElse {
+            error ->
             return LightCommandResult.failure(
                 error.message ?: "Light channel mapping is incomplete"
             )
@@ -186,13 +188,13 @@ class Esp32LightDeviceCommandManager(
         }
 
         val json = JSONObject()
-            .put(
-                "LLight",
-                JSONObject()
-                    .put("LightEdit", 1)
-                    .put("Data", data)
-            )
-            .toString()
+        .put(
+            "LPWMChanelLED",
+            JSONObject()
+            .put("Data", data)
+            .put("Group", 1)
+        )
+        .toString()
 
         return Result.success(json)
     }
@@ -204,24 +206,24 @@ class Esp32LightDeviceCommandManager(
         valuePercent: Int,
         keepManualUntilMs: Long
     ) {
-        val lightIndex = mapping.indexFor(semantic)
-            ?: return
+        val pwmIndex = mapping.indexFor(semantic)
+        ?: return
 
         data.put(
-            lightIndex,
+            pwmIndex,
             JSONObject()
+            .put(
+                "VManual",
+                JSONObject()
                 .put(
-                    "VManual",
-                    JSONObject()
-                        .put(
-                            "V",
-                            percentToEsp32Value(valuePercent)
-                        )
-                        .put(
-                            "TOffMs",
-                            keepManualUntilMs
-                        )
+                    "V",
+                    percentToEsp32Value(valuePercent)
                 )
+                .put(
+                    "TOffMs",
+                    keepManualUntilMs
+                )
+            )
         )
     }
 
@@ -229,14 +231,14 @@ class Esp32LightDeviceCommandManager(
         valuePercent: Int
     ): Double {
         val normalized = valuePercent
-            .coerceIn(0, 100) / 100.0
+        .coerceIn(0, 100) / 100.0
 
         return (normalized * 1000.0)
-            .roundToInt() / 1000.0
+        .roundToInt() / 1000.0
     }
 
     companion object {
         private const val DEFAULT_MANUAL_TIMEOUT_MS =
-            24L * 60L * 60L * 1000L
+        24L * 60L * 60L * 1000L
     }
 }

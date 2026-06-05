@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
 import org.json.JSONObject
+import java.net.URLDecoder
 
 class Esp32LightChannelMappingReader(
     private val httpClient: Esp32HttpJsonClient = Esp32HttpJsonClient()
@@ -27,23 +28,38 @@ class Esp32LightChannelMappingReader(
         val queryJson = JSONObject()
             .put(
                 "LPWMChanelLED",
-                JSONObject().put("All", 0)
-            )
-            .put(
-                "LLight",
-                JSONObject().put("All", 0)
+                JSONObject()
+                    .put("Count", 0)
+                    .put(
+                        "Data",
+                        JSONObject()
+                            .put(
+                                "All",
+                                JSONObject()
+                                    .put("Regime", 0)
+                                    .put("Name", 0)
+                                    .put("Color", 0)
+                                    .put("GPIO_PWM", 0)
+                                    .put("Gr", 0)
+                                    .put("W", 0)
+                            )
+                    )
             )
             .toString()
 
         val response = httpClient.getJson(
             ip = ip,
             json = queryJson,
-            requestTag = "light_channel_mapping"
+            requestTag = "light_pwm_mapping"
         ).getOrElse { error ->
             return Result.failure(error)
         }
 
-        val mapping = parseMapping(response)
+        val mapping = runCatching {
+            parseMapping(response)
+        }.getOrElse { error ->
+            return Result.failure(error)
+        }
 
         if (!mapping.hasAnyMappedChannel()) {
             return Result.failure(
@@ -62,54 +78,39 @@ class Esp32LightChannelMappingReader(
     private fun parseMapping(
         response: String
     ): LightDeviceChannelMapping {
-        val root = JSONObject(response)
+        val root = JSONObject(
+            normalizeResponseJson(response)
+        )
 
         val pwmData = root
             .optJSONObject("LPWMChanelLED")
             ?.optJSONObject("Data")
             ?: JSONObject()
 
-        val lightData = root
-            .optJSONObject("LLight")
-            ?.optJSONObject("Data")
-            ?: JSONObject()
-
-        val pwmByGpio = mutableMapOf<String, PwmChannelInfo>()
-
-        pwmData.keys().forEach { key ->
-            val item = pwmData.optJSONObject(key) ?: return@forEach
-            val gpioPwm = item.optString("GPIO_PWM", "")
-
-            if (gpioPwm.isNotBlank() && gpioPwm != "-") {
-                pwmByGpio[gpioPwm] = PwmChannelInfo(
-                    gpioPwm = gpioPwm,
-                    name = item.optString("Name", ""),
-                    color = item.optLong("Color", 0L)
-                )
-            }
-        }
-
         val entries = mutableListOf<LightDeviceChannelMapping.Entry>()
 
-        lightData.keys().forEach { lightIndex ->
-            val lightItem = lightData.optJSONObject(lightIndex) ?: return@forEach
-            val gpioPwm = lightItem.optString("GPIO_PWM", "")
+        pwmData.keys().forEach { pwmIndex ->
+            val item = pwmData.optJSONObject(pwmIndex) ?: return@forEach
 
-            if (gpioPwm.isBlank() || gpioPwm == "-") {
+            val name = item.optString("Name", "")
+            val color = item.optLong("Color", 0L)
+            val gpioPwm = item.optString("GPIO_PWM", "")
+
+            val semantic = detectSemantic(
+                name = name,
+                color = color
+            )
+
+            if (semantic == LightChannelSemantic.UNKNOWN) {
                 return@forEach
             }
 
-            val pwmInfo = pwmByGpio[gpioPwm] ?: return@forEach
-
             entries += LightDeviceChannelMapping.Entry(
-                lightIndex = lightIndex,
+                lightIndex = pwmIndex,
                 gpioPwm = gpioPwm,
-                pwmName = pwmInfo.name,
-                pwmColor = pwmInfo.color,
-                semantic = detectSemantic(
-                    name = pwmInfo.name,
-                    color = pwmInfo.color
-                )
+                pwmName = name,
+                pwmColor = color,
+                semantic = semantic
             )
         }
 
@@ -118,11 +119,39 @@ class Esp32LightChannelMappingReader(
         )
     }
 
+    private fun normalizeResponseJson(
+        response: String
+    ): String {
+        val trimmed = response.trim()
+
+        if (trimmed.startsWith("{")) {
+            return trimmed
+        }
+
+        if (trimmed.startsWith("Json=")) {
+            val jsonStart = "Json=".length
+            val jsonEnd = trimmed.indexOf("&sRet=")
+
+            val rawJson = if (jsonEnd >= 0) {
+                trimmed.substring(jsonStart, jsonEnd)
+            } else {
+                trimmed.substring(jsonStart)
+            }
+
+            return URLDecoder.decode(
+                rawJson,
+                Charsets.UTF_8.name()
+            )
+        }
+
+        return trimmed
+    }
+
     private fun detectSemantic(
         name: String,
         color: Long
     ): LightChannelSemantic {
-        val normalizedName = name.lowercase()
+        val normalizedName = name.lowercase().trim()
 
         return when {
             normalizedName.contains("red") ||
@@ -197,12 +226,6 @@ class Esp32LightChannelMappingReader(
 
         return r > 180 && g > 180 && b > 180
     }
-
-    private data class PwmChannelInfo(
-        val gpioPwm: String,
-        val name: String,
-        val color: Long
-    )
 
     private data class CachedMapping(
         val mapping: LightDeviceChannelMapping,
