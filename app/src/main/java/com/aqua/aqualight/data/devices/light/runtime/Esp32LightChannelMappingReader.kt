@@ -45,12 +45,29 @@ class Esp32LightChannelMappingReader(
                             )
                     )
             )
+            .put(
+                "LLight",
+                JSONObject()
+                    .put("LightEdit", 0)
+                    .put("ChanelEdit", "AllCh")
+                    .put("Count", 0)
+                    .put(
+                        "Data",
+                        JSONObject()
+                            .put(
+                                "All",
+                                JSONObject()
+                                    .put("GPIO_PWM", 0)
+                                    .put("LP", 0)
+                            )
+                    )
+            )
             .toString()
 
         val response = httpClient.getJson(
             ip = ip,
             json = queryJson,
-            requestTag = "light_pwm_mapping"
+            requestTag = "light_channel_mapping"
         ).getOrElse { error ->
             return Result.failure(error)
         }
@@ -87,6 +104,22 @@ class Esp32LightChannelMappingReader(
             ?.optJSONObject("Data")
             ?: JSONObject()
 
+        val lightData = root
+            .optJSONObject("LLight")
+            ?.optJSONObject("Data")
+            ?: JSONObject()
+
+        val lightIndexByGpio = mutableMapOf<String, String>()
+
+        lightData.keys().forEach { lightIndex ->
+            val item = lightData.optJSONObject(lightIndex) ?: return@forEach
+            val gpioPwm = item.optString("GPIO_PWM", "")
+
+            if (gpioPwm.isNotBlank() && gpioPwm != "-") {
+                lightIndexByGpio[gpioPwm] = lightIndex
+            }
+        }
+
         val entries = mutableListOf<LightDeviceChannelMapping.Entry>()
 
         pwmData.keys().forEach { pwmIndex ->
@@ -106,7 +139,8 @@ class Esp32LightChannelMappingReader(
             }
 
             entries += LightDeviceChannelMapping.Entry(
-                lightIndex = pwmIndex,
+                pwmIndex = pwmIndex,
+                lightIndex = lightIndexByGpio[gpioPwm] ?: pwmIndex,
                 gpioPwm = gpioPwm,
                 pwmName = name,
                 pwmColor = color,

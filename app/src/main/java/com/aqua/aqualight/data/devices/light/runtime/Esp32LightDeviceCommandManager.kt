@@ -7,11 +7,11 @@ import kotlin.math.roundToInt
 class Esp32LightDeviceCommandManager(
     context: Context,
     private val addressResolver: LightDeviceAddressResolver =
-    LightDeviceAddressResolver(context),
+        LightDeviceAddressResolver(context),
     private val httpClient: Esp32HttpJsonClient =
-    Esp32HttpJsonClient(),
+        Esp32HttpJsonClient(),
     private val mappingReader: Esp32LightChannelMappingReader =
-    Esp32LightChannelMappingReader(httpClient)
+        Esp32LightChannelMappingReader(httpClient)
 ) : LightDeviceCommandManager {
 
     override suspend fun applyManualScene(
@@ -34,6 +34,40 @@ class Esp32LightDeviceCommandManager(
             deviceId = deviceId,
             output = output,
             requestTag = "manual_output"
+        )
+    }
+
+    override suspend fun updateManualChannel(
+        deviceId: Long,
+        semantic: LightChannelSemantic,
+        valuePercent: Int
+    ): LightCommandResult {
+        val address = resolveAddress(deviceId)
+            ?: return LightCommandResult.failure("Device address could not be resolved")
+
+        val mapping = mappingReader.readMapping(
+            ip = address.ip
+        ).getOrElse { error ->
+            return LightCommandResult.failure(
+                error.message ?: "Light channel mapping could not be read"
+            )
+        }
+
+        val json = buildSingleManualChannelJson(
+            mapping = mapping,
+            semantic = semantic,
+            valuePercent = valuePercent,
+            keepManualUntilMs = DEFAULT_MANUAL_TIMEOUT_MS
+        ).getOrElse { error ->
+            return LightCommandResult.failure(
+                error.message ?: "Light channel mapping is incomplete"
+            )
+        }
+
+        return httpClient.postSet(
+            ip = address.ip,
+            json = json,
+            requestTag = "manual_channel_${semantic.name.lowercase()}"
         )
     }
 
@@ -74,15 +108,20 @@ class Esp32LightDeviceCommandManager(
         deviceId: Long
     ): LightCommandResult {
         val address = resolveAddress(deviceId)
-        ?: return LightCommandResult.failure("Device address could not be resolved")
+            ?: return LightCommandResult.failure("Device address could not be resolved")
 
-        val json = JSONObject()
-        .put(
-            "LLight",
-            JSONObject()
-            .put("LightEdit", 0)
+        val mapping = mappingReader.readMapping(
+            ip = address.ip,
+            forceRefresh = true
+        ).getOrElse { error ->
+            return LightCommandResult.failure(
+                error.message ?: "Light channel mapping could not be read"
+            )
+        }
+
+        val json = buildResumeAutoJson(
+            mapping = mapping
         )
-        .toString()
 
         return httpClient.postSet(
             ip = address.ip,
@@ -97,12 +136,11 @@ class Esp32LightDeviceCommandManager(
         requestTag: String
     ): LightCommandResult {
         val address = resolveAddress(deviceId)
-        ?: return LightCommandResult.failure("Device address could not be resolved")
+            ?: return LightCommandResult.failure("Device address could not be resolved")
 
         val mapping = mappingReader.readMapping(
             ip = address.ip
-        ).getOrElse {
-            error ->
+        ).getOrElse { error ->
             return LightCommandResult.failure(
                 error.message ?: "Light channel mapping could not be read"
             )
@@ -112,8 +150,7 @@ class Esp32LightDeviceCommandManager(
             output = output,
             mapping = mapping,
             keepManualUntilMs = DEFAULT_MANUAL_TIMEOUT_MS
-        ).getOrElse {
-            error ->
+        ).getOrElse { error ->
             return LightCommandResult.failure(
                 error.message ?: "Light channel mapping is incomplete"
             )
@@ -188,13 +225,13 @@ class Esp32LightDeviceCommandManager(
         }
 
         val json = JSONObject()
-        .put(
-            "LPWMChanelLED",
-            JSONObject()
-            .put("Data", data)
-            .put("Group", 1)
-        )
-        .toString()
+            .put(
+                "LPWMChanelLED",
+                JSONObject()
+                    .put("Data", data)
+                    .put("Group", 1)
+            )
+            .toString()
 
         return Result.success(json)
     }
@@ -206,60 +243,24 @@ class Esp32LightDeviceCommandManager(
         valuePercent: Int,
         keepManualUntilMs: Long
     ) {
-        val pwmIndex = mapping.indexFor(semantic)
-        ?: return
+        val pwmIndex = mapping.pwmIndexFor(semantic)
+            ?: return
 
         data.put(
             pwmIndex,
             JSONObject()
-            .put(
-                "VManual",
-                JSONObject()
                 .put(
-                    "V",
-                    percentToEsp32Value(valuePercent)
+                    "VManual",
+                    JSONObject()
+                        .put(
+                            "V",
+                            percentToEsp32Value(valuePercent)
+                        )
+                        .put(
+                            "TOffMs",
+                            keepManualUntilMs
+                        )
                 )
-                .put(
-                    "TOffMs",
-                    keepManualUntilMs
-                )
-            )
-        )
-    }
-
-    override suspend fun updateManualChannel(
-        deviceId: Long,
-        semantic: LightChannelSemantic,
-        valuePercent: Int
-    ): LightCommandResult {
-        val address = resolveAddress(deviceId)
-        ?: return LightCommandResult.failure("Device address could not be resolved")
-
-        val mapping = mappingReader.readMapping(
-            ip = address.ip
-        ).getOrElse {
-            error ->
-            return LightCommandResult.failure(
-                error.message ?: "Light channel mapping could not be read"
-            )
-        }
-
-        val json = buildSingleManualChannelJson(
-            mapping = mapping,
-            semantic = semantic,
-            valuePercent = valuePercent,
-            keepManualUntilMs = DEFAULT_MANUAL_TIMEOUT_MS
-        ).getOrElse {
-            error ->
-            return LightCommandResult.failure(
-                error.message ?: "Light channel mapping is incomplete"
-            )
-        }
-
-        return httpClient.postSet(
-            ip = address.ip,
-            json = json,
-            requestTag = "manual_channel_${semantic.name.lowercase()}"
         )
     }
 
@@ -269,53 +270,99 @@ class Esp32LightDeviceCommandManager(
         valuePercent: Int,
         keepManualUntilMs: Long
     ): Result<String> {
-        val pwmIndex = mapping.indexFor(semantic)
-        ?: return Result.failure(
-            IllegalStateException("${semantic.name} channel mapping missing")
-        )
+        val pwmIndex = mapping.pwmIndexFor(semantic)
+            ?: return Result.failure(
+                IllegalStateException("${semantic.name} channel mapping missing")
+            )
 
         val data = JSONObject()
-        .put(
-            pwmIndex,
-            JSONObject()
             .put(
-                "VManual",
+                pwmIndex,
                 JSONObject()
-                .put(
-                    "V",
-                    percentToEsp32Value(valuePercent)
-                )
-                .put(
-                    "TOffMs",
-                    keepManualUntilMs
-                )
+                    .put(
+                        "VManual",
+                        JSONObject()
+                            .put(
+                                "V",
+                                percentToEsp32Value(valuePercent)
+                            )
+                            .put(
+                                "TOffMs",
+                                keepManualUntilMs
+                            )
+                    )
             )
-        )
 
         val json = JSONObject()
-        .put(
-            "LPWMChanelLED",
-            JSONObject()
-            .put("Data", data)
-            .put("Group", 1)
-        )
-        .toString()
+            .put(
+                "LPWMChanelLED",
+                JSONObject()
+                    .put("Data", data)
+                    .put("Group", 1)
+            )
+            .toString()
 
         return Result.success(json)
+    }
+
+    private fun buildResumeAutoJson(
+        mapping: LightDeviceChannelMapping
+    ): String {
+        return JSONObject()
+            .put(
+                "LPWMChanelLED",
+                JSONObject()
+                    .put(
+                        "Data",
+                        buildManualClearData(
+                            entries = mapping.rgbwEntries()
+                        )
+                    )
+                    .put("Group", 1)
+            )
+            .put(
+                "LLight",
+                JSONObject()
+                    .put("LightEdit", 0)
+            )
+            .toString()
+    }
+
+    private fun buildManualClearData(
+        entries: List<LightDeviceChannelMapping.Entry>
+    ): JSONObject {
+        val data = JSONObject()
+
+        entries.forEach { entry ->
+            data.put(
+                entry.pwmIndex,
+                JSONObject()
+                    .put(
+                        "VManual",
+                        JSONObject()
+                            .put("V", MANUAL_CLEAR_VALUE)
+                            .put("TOffMs", 0)
+                    )
+            )
+        }
+
+        return data
     }
 
     private fun percentToEsp32Value(
         valuePercent: Int
     ): Double {
         val normalized = valuePercent
-        .coerceIn(0, 100) / 100.0
+            .coerceIn(0, 100) / 100.0
 
         return (normalized * 1000.0)
-        .roundToInt() / 1000.0
+            .roundToInt() / 1000.0
     }
 
     companion object {
         private const val DEFAULT_MANUAL_TIMEOUT_MS =
-        24L * 60L * 60L * 1000L
+            24L * 60L * 60L * 1000L
+
+        private const val MANUAL_CLEAR_VALUE = -1
     }
 }

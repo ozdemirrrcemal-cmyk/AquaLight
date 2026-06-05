@@ -41,7 +41,8 @@ class Esp32LightProgramCommandManager(
             ?: return LightCommandResult.failure("Device address could not be resolved")
 
         val mapping = mappingReader.readMapping(
-            ip = address.ip
+            ip = address.ip,
+            forceRefresh = true
         ).getOrElse { error ->
             return LightCommandResult.failure(
                 error.message ?: "Light channel mapping could not be read"
@@ -82,21 +83,9 @@ class Esp32LightProgramCommandManager(
         programs: List<SavedLightProgram>,
         mapping: LightDeviceChannelMapping
     ): Result<String> {
-        val mappedEntries = mapping.entries
+        val mappedEntries = mapping.rgbwEntries()
             .filter { entry ->
-                entry.semantic == LightChannelSemantic.RED ||
-                    entry.semantic == LightChannelSemantic.GREEN ||
-                    entry.semantic == LightChannelSemantic.BLUE ||
-                    entry.semantic == LightChannelSemantic.WHITE
-            }
-            .sortedBy { entry ->
-                when (entry.semantic) {
-                    LightChannelSemantic.RED -> 0
-                    LightChannelSemantic.GREEN -> 1
-                    LightChannelSemantic.BLUE -> 2
-                    LightChannelSemantic.WHITE -> 3
-                    LightChannelSemantic.UNKNOWN -> 99
-                }
+                entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
             }
 
         if (mappedEntries.isEmpty()) {
@@ -105,11 +94,11 @@ class Esp32LightProgramCommandManager(
             )
         }
 
-        val data = JSONObject()
+        val lightData = JSONObject()
 
-        mappedEntries.forEachIndexed { index, entry ->
-            data.put(
-                index.toString(),
+        mappedEntries.forEach { entry ->
+            lightData.put(
+                entry.lightIndex,
                 JSONObject()
                     .put("GPIO_PWM", entry.gpioPwm)
                     .put(
@@ -124,12 +113,23 @@ class Esp32LightProgramCommandManager(
 
         val json = JSONObject()
             .put(
+                "LPWMChanelLED",
+                JSONObject()
+                    .put(
+                        "Data",
+                        buildManualClearData(
+                            entries = mappedEntries
+                        )
+                    )
+                    .put("Group", 1)
+            )
+            .put(
                 "LLight",
                 JSONObject()
                     .put("LightEdit", 0)
                     .put("ChanelEdit", "AllCh")
                     .put("Count", mappedEntries.size)
-                    .put("Data", data)
+                    .put("Data", lightData)
             )
             .toString()
 
@@ -228,6 +228,27 @@ class Esp32LightProgramCommandManager(
         }
     }
 
+    private fun buildManualClearData(
+        entries: List<LightDeviceChannelMapping.Entry>
+    ): JSONObject {
+        val data = JSONObject()
+
+        entries.forEach { entry ->
+            data.put(
+                entry.pwmIndex,
+                JSONObject()
+                    .put(
+                        "VManual",
+                        JSONObject()
+                            .put("V", MANUAL_CLEAR_VALUE)
+                            .put("TOffMs", 0)
+                    )
+            )
+        }
+
+        return data
+    }
+
     private data class SchedulePoint(
         val minute: Int,
         val label: String,
@@ -242,5 +263,9 @@ class Esp32LightProgramCommandManager(
 
         return (normalized * 1000.0)
             .roundToInt() / 1000.0
+    }
+
+    companion object {
+        private const val MANUAL_CLEAR_VALUE = -1
     }
 }

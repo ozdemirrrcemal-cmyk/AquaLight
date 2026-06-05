@@ -7,9 +7,46 @@ data class LightDeviceChannelMapping(
     fun indexFor(
         semantic: LightChannelSemantic
     ): String? {
+        return pwmIndexFor(semantic)
+    }
+
+    fun pwmIndexFor(
+        semantic: LightChannelSemantic
+    ): String? {
+        return entryFor(semantic)?.pwmIndex
+    }
+
+    fun lightIndexFor(
+        semantic: LightChannelSemantic
+    ): String? {
+        return entryFor(semantic)?.lightIndex
+    }
+
+    fun entryFor(
+        semantic: LightChannelSemantic
+    ): Entry? {
         return entries.firstOrNull { entry ->
             entry.semantic == semantic
-        }?.lightIndex
+        }
+    }
+
+    fun rgbwEntries(): List<Entry> {
+        return entries
+            .filter { entry ->
+                entry.semantic == LightChannelSemantic.RED ||
+                    entry.semantic == LightChannelSemantic.GREEN ||
+                    entry.semantic == LightChannelSemantic.BLUE ||
+                    entry.semantic == LightChannelSemantic.WHITE
+            }
+            .sortedBy { entry ->
+                when (entry.semantic) {
+                    LightChannelSemantic.RED -> 0
+                    LightChannelSemantic.GREEN -> 1
+                    LightChannelSemantic.BLUE -> 2
+                    LightChannelSemantic.WHITE -> 3
+                    LightChannelSemantic.UNKNOWN -> 99
+                }
+            }
     }
 
     fun hasAnyMappedChannel(): Boolean {
@@ -19,6 +56,7 @@ data class LightDeviceChannelMapping(
     }
 
     data class Entry(
+        val pwmIndex: String,
         val lightIndex: String,
         val gpioPwm: String,
         val pwmName: String,
