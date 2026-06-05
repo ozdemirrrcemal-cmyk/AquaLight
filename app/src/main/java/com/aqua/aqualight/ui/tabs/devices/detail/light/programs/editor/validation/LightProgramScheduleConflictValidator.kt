@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation
 
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
 
 object LightProgramScheduleConflictValidator {
@@ -30,11 +31,11 @@ object LightProgramScheduleConflictValidator {
         first: SavedLightProgram,
         second: SavedLightProgram
     ): Boolean {
-        val firstStart = first.draft.start.totalMinutes
-        val firstEnd = first.draft.end.totalMinutes
+        val firstStart = LightProgramTimeMath.startMinutes(first.draft.start)
+        val firstEnd = LightProgramTimeMath.endMinutes(first.draft.end)
 
-        val secondStart = second.draft.start.totalMinutes
-        val secondEnd = second.draft.end.totalMinutes
+        val secondStart = LightProgramTimeMath.startMinutes(second.draft.start)
+        val secondEnd = LightProgramTimeMath.endMinutes(second.draft.end)
 
         return firstStart < secondEnd && secondStart < firstEnd
     }

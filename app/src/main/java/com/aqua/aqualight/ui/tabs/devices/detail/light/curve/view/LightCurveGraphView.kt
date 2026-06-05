@@ -155,7 +155,8 @@ class LightCurveGraphView @JvmOverloads constructor(
     private fun drawGrid(
         canvas: Canvas
     ) {
-        listOf(0, 25, 50, 75, 100).forEach { percent ->
+        listOf(0, 25, 50, 75, 100).forEach {
+            percent ->
             val y = yForPercent(percent)
 
             val paint = when (percent) {
@@ -194,7 +195,8 @@ class LightCurveGraphView @JvmOverloads constructor(
     private fun drawAxisLabels(
         canvas: Canvas
     ) {
-        listOf(0, 25, 50, 75, 100).forEach { percent ->
+        listOf(0, 25, 50, 75, 100).forEach {
+            percent ->
             canvas.drawText(
                 "$percent%",
                 graphRect.left - dp(8f),
@@ -284,7 +286,7 @@ class LightCurveGraphView @JvmOverloads constructor(
             startMinute = start.totalMinutes,
             peakStartMinute = peakStart.totalMinutes,
             peakEndMinute = peakEnd.totalMinutes,
-            endMinute = end.totalMinutes,
+            endMinute = endMinutesForGraph(end),
             peakPercent = safePeak,
             transitionMode = transitionMode
         )
@@ -295,7 +297,8 @@ class LightCurveGraphView @JvmOverloads constructor(
 
         val path = Path()
 
-        points.forEachIndexed { index, point ->
+        points.forEachIndexed {
+            index, point ->
             val x = xForMinute(point.x.toInt())
             val y = yForPercent(point.y.toInt())
 
@@ -334,7 +337,7 @@ class LightCurveGraphView @JvmOverloads constructor(
         val startX = xForMinute(start.totalMinutes)
         val peakStartX = xForMinute(peakStart.totalMinutes)
         val peakEndX = xForMinute(peakEnd.totalMinutes)
-        val endX = xForMinute(end.totalMinutes)
+        val endX = xForMinute(endMinutesForGraph(end))
 
         val zeroY = yForPercent(0)
         val peakY = yForPercent(peakPercent)
@@ -385,10 +388,10 @@ class LightCurveGraphView @JvmOverloads constructor(
         val badgeHeight = dp(24f)
 
         val left = (currentX - badgeWidth / 2f)
-            .coerceIn(
-                graphRect.left,
-                graphRect.right - badgeWidth
-            )
+        .coerceIn(
+            graphRect.left,
+            graphRect.right - badgeWidth
+        )
 
         val top = graphRect.top - dp(26f)
 
@@ -419,6 +422,16 @@ class LightCurveGraphView @JvmOverloads constructor(
             timeBadgeRect.centerY() + dp(3.5f),
             timeBadgeTextPaint
         )
+    }
+
+    private fun endMinutesForGraph(
+        point: LightCurvePoint
+    ): Int {
+        return if (point.hour == 0 && point.minute == 0) {
+            24 * 60
+        } else {
+            point.totalMinutes
+        }
     }
 
     private fun xForMinute(
