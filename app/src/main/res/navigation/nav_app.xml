@@ -259,7 +259,8 @@
       android:defaultValue="" />
 
   </fragment>
-  <fragment
+  
+ <fragment
     android:id="@+id/deviceLightFragment"
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment"
     android:label="Lighting"
