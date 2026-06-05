@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
@@ -38,6 +39,11 @@ class DeviceLightQuickSetupViewModel(
     private val lightProgramsDataStoreManager =
         LightProgramsDataStoreManager(application.applicationContext)
 
+    private val lightProgramCommandManager =
+        Esp32LightProgramCommandManager(
+            context = application.applicationContext
+        )
+
     private val _uiState = MutableStateFlow(
         QuickSetupUiState()
     )
@@ -60,8 +66,8 @@ class DeviceLightQuickSetupViewModel(
 
         observeJob?.cancel()
 
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 isLoading = true,
                 isSaving = false,
                 hasLinkedTank = false,
@@ -80,9 +86,12 @@ class DeviceLightQuickSetupViewModel(
                 aquariumTankDataStoreManager.tanksFlow,
                 lightProgramsDataStoreManager.programsFlow
             ) { devices, tanks, programs ->
-                Triple(devices, tanks, programs)
+                Triple(
+                    devices,
+                    tanks,
+                    programs
+                )
             }.collect { (devices, tanks, programs) ->
-
                 val device = devices.firstOrNull { device ->
                     device.id == this@DeviceLightQuickSetupViewModel.deviceId
                 }
@@ -119,8 +128,8 @@ class DeviceLightQuickSetupViewModel(
     private fun renderUnavailableState(
         message: String
     ) {
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 isLoading = false,
                 isSaving = false,
                 hasLinkedTank = false,
@@ -148,8 +157,8 @@ class DeviceLightQuickSetupViewModel(
                 program.id == smartProgramId
             }
 
-            _uiState.update {
-                it.copy(
+            _uiState.update { state ->
+                state.copy(
                     isLoading = false,
                     isSaving = false,
                     hasLinkedTank = true,
@@ -162,8 +171,8 @@ class DeviceLightQuickSetupViewModel(
                 )
             }
         }.onFailure {
-            _uiState.update {
-                it.copy(
+            _uiState.update { state ->
+                state.copy(
                     isLoading = false,
                     isSaving = false,
                     hasLinkedTank = false,
@@ -215,8 +224,6 @@ class DeviceLightQuickSetupViewModel(
                 recommendation = recommendation,
                 activateProgram = true
             )
-
-            // TODO: Send recommendation.draft to ESP32 as active light program.
         }
     }
 
@@ -230,8 +237,8 @@ class DeviceLightQuickSetupViewModel(
         val smartProgramId = buildSmartProgramId(tankProfile?.tankId)
         val now = System.currentTimeMillis()
 
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 isSaving = true
             )
         }
@@ -268,8 +275,8 @@ class DeviceLightQuickSetupViewModel(
             )
 
             if (conflict != null) {
-                _uiState.update {
-                    it.copy(
+                _uiState.update { state ->
+                    state.copy(
                         isSaving = false
                     )
                 }
@@ -284,10 +291,30 @@ class DeviceLightQuickSetupViewModel(
         }
 
         runCatching {
+            if (activateProgram) {
+                val programsToLoad = existingPrograms
+                    .filter { program ->
+                        program.deviceId == savedProgram.deviceId &&
+                            program.isActive &&
+                            program.id != savedProgram.id
+                    } + savedProgram
+
+                val loadResult = lightProgramCommandManager.loadPrograms(
+                    deviceId = savedProgram.deviceId,
+                    programs = programsToLoad
+                )
+
+                if (!loadResult.isSuccess) {
+                    throw IllegalStateException(
+                        loadResult.message ?: "Smart program could not be loaded to device"
+                    )
+                }
+            }
+
             lightProgramsDataStoreManager.saveProgram(savedProgram)
         }.onSuccess {
-            _uiState.update {
-                it.copy(
+            _uiState.update { state ->
+                state.copy(
                     isSaving = false,
                     savedProgramId = smartProgramId,
                     isProgramSaved = true,
@@ -304,16 +331,16 @@ class DeviceLightQuickSetupViewModel(
                     }
                 )
             )
-        }.onFailure {
-            _uiState.update {
-                it.copy(
+        }.onFailure { error ->
+            _uiState.update { state ->
+                state.copy(
                     isSaving = false
                 )
             }
 
             eventsChannel.send(
                 DeviceLightQuickSetupEvent.ShowError(
-                    "Smart program could not be saved"
+                    error.message ?: "Smart program could not be saved"
                 )
             )
         }
@@ -333,7 +360,9 @@ class DeviceLightQuickSetupViewModel(
     ): String {
         val resolvedTankName = tankName
             .orEmpty()
-            .ifBlank { "Tank" }
+            .ifBlank {
+                "Tank"
+            }
 
         return "$recommendationTitle · $resolvedTankName"
     }
