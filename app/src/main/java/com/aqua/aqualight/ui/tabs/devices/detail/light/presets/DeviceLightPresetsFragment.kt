@@ -6,23 +6,23 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.adapter.LightPresetsAdapter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.catalog.BuiltInLightPresets
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetCategory
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.sheet.LightPresetOptionsSheet
-import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
-import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -33,6 +33,8 @@ class DeviceLightPresetsFragment :
     private var _binding: FragmentDeviceLightPresetsBinding? = null
     private val binding get() = _binding!!
 
+    private val viewModel: DeviceLightPresetsViewModel by viewModels()
+
     private lateinit var presetsAdapter: LightPresetsAdapter
 
     private var selectedFilter = PresetFilter.ALL
@@ -42,10 +44,6 @@ class DeviceLightPresetsFragment :
     private val deviceId: Long
         get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
-    private val lightPresetDataStoreManager by lazy {
-        LightPresetDataStoreManager(requireContext().applicationContext)
-    }
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -54,10 +52,13 @@ class DeviceLightPresetsFragment :
 
         _binding = FragmentDeviceLightPresetsBinding.bind(view)
 
+        viewModel.initialize(deviceId)
+
         setupHeader()
         setupRecyclerView()
         setupClicks()
         observePresets()
+        observeEvents()
         syncActivePresetFromRuntime()
     }
 
@@ -106,7 +107,7 @@ class DeviceLightPresetsFragment :
     private fun observePresets() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                lightPresetDataStoreManager.presetsFlow.collect { savedPresets ->
+                viewModel.presetsFlow.collect { savedPresets ->
                     val customPresets = savedPresets.map { preset ->
                         preset.toListItem()
                     }
@@ -120,16 +121,47 @@ class DeviceLightPresetsFragment :
         }
     }
 
+    private fun observeEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is DeviceLightPresetsEvent.ShowMessage -> {
+                            Toast.makeText(
+                                requireContext(),
+                                event.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+
+                        is DeviceLightPresetsEvent.ShowError -> {
+                            Toast.makeText(
+                                requireContext(),
+                                event.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+
+                        DeviceLightPresetsEvent.NavigateToManualControl -> {
+                            navigateToManualControl()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private fun syncActivePresetFromRuntime() {
         if (deviceId <= 0L) {
             renderActivePreset(activePreset)
             return
         }
 
-        val runtime = LightManualRuntimeStore.current(deviceId)
+        val runtime = viewModel.currentManualRuntime()
 
         if (!runtime.isManualScene) {
-            renderActivePreset(activePreset)
+            activePreset = null
+            renderActivePreset(null)
             return
         }
 
@@ -237,78 +269,37 @@ class DeviceLightPresetsFragment :
     private fun applyPresetToDevice(
         preset: LightPresetItem
     ) {
-        if (deviceId <= 0L) {
-            Toast.makeText(
-                requireContext(),
-                "Device information is missing",
-                Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
-
-        activePreset = preset
-        renderActivePreset(preset)
-
-        LightManualRuntimeStore.applyManualScene(
-            deviceId = deviceId,
-            sceneName = preset.title,
-            red = preset.red,
-            green = preset.green,
-            blue = preset.blue,
-            white = preset.white
-        )
-
-        // TODO: ESP32 MANUAL_SCENE payload gönder:
-        // mode = MANUAL_SCENE
-        // sceneName = preset.title
-        // R/G/B/W = preset.red/green/blue/white
-        // power = ON
-
-        Toast.makeText(
-            requireContext(),
-            "${preset.title} applied",
-            Toast.LENGTH_SHORT
-        ).show()
-
-        navigateToManualControl()
+        viewModel.applyPresetToDevice(preset)
     }
 
     private fun navigateToManualControl() {
-    val bundle = Bundle().apply {
-        putLong(ARG_DEVICE_ID, deviceId)
-    }
+        val bundle = Bundle().apply {
+            putLong(ARG_DEVICE_ID, deviceId)
+        }
 
-    findNavController().navigate(
-        R.id.action_deviceLightPresetsFragment_to_deviceLightManualFragment,
-        bundle,
-        androidx.navigation.NavOptions.Builder()
-            .setPopUpTo(
-                R.id.deviceLightFragment,
-                false
-            )
-            .build()
-    )
-}
+        findNavController().navigate(
+            R.id.action_deviceLightPresetsFragment_to_deviceLightManualFragment,
+            bundle,
+            NavOptions.Builder()
+                .setPopUpTo(
+                    R.id.deviceLightFragment,
+                    false
+                )
+                .build()
+        )
+    }
 
     private fun deletePreset(
         preset: LightPresetItem
     ) {
         if (!preset.isCustom) return
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            lightPresetDataStoreManager.deletePreset(preset.id)
-
-            if (activePreset?.id == preset.id) {
-                activePreset = null
-                renderActivePreset(null)
-            }
-
-            Toast.makeText(
-                requireContext(),
-                "${preset.title} deleted",
-                Toast.LENGTH_SHORT
-            ).show()
+        if (activePreset?.id == preset.id) {
+            activePreset = null
+            renderActivePreset(null)
         }
+
+        viewModel.deletePreset(preset)
     }
 
     private fun renderActivePreset(
@@ -380,7 +371,12 @@ class DeviceLightPresetsFragment :
                 blueColor.third * b +
                 whiteColor.third * w
 
-        val max = maxOf(linearRed, linearGreen, linearBlue, 1.0)
+        val max = maxOf(
+            linearRed,
+            linearGreen,
+            linearBlue,
+            1.0
+        )
 
         fun gammaCorrect(
             value: Double

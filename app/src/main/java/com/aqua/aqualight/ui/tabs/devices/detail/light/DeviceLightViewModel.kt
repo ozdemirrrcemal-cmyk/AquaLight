@@ -10,7 +10,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPla
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
+import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -39,6 +39,9 @@ class DeviceLightViewModel(
 
     val uiState: StateFlow<DeviceLightDashboardUiState> =
         _uiState.asStateFlow()
+		
+		private val lightRuntimeRepository =
+    LightRuntimeRepository()
 
     private var deviceId: Long = 0L
     private var observeJob: Job? = null
@@ -57,7 +60,7 @@ class DeviceLightViewModel(
         observeJob = viewModelScope.launch {
             combine(
                 lightProgramsDataStoreManager.programsFlow,
-                LightManualRuntimeStore.observe(deviceId),
+                lightRuntimeRepository.observeManualRuntime(deviceId),
                 clockMillisFlow
             ) { programs, manualRuntime, nowMillis ->
                 Triple(programs, manualRuntime, nowMillis)
