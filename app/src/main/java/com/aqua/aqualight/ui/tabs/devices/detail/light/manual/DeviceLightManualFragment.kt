@@ -225,30 +225,34 @@ class DeviceLightManualFragment :
     }
 
     private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener { _, value, _ ->
-            if (isRendering) return@addOnChangeListener
+    binding.sliderRed.addOnChangeListener { _, value, fromUser ->
+        if (isRendering || !fromUser) return@addOnChangeListener
 
-            viewModel.updateRed(value.toInt())
-        }
-
-        binding.sliderGreen.addOnChangeListener { _, value, _ ->
-            if (isRendering) return@addOnChangeListener
-
-            viewModel.updateGreen(value.toInt())
-        }
-
-        binding.sliderBlue.addOnChangeListener { _, value, _ ->
-            if (isRendering) return@addOnChangeListener
-
-            viewModel.updateBlue(value.toInt())
-        }
-
-        binding.sliderWhite.addOnChangeListener { _, value, _ ->
-            if (isRendering) return@addOnChangeListener
-
-            viewModel.updateWhite(value.toInt())
-        }
+        clearSelectedSceneButton()
+        viewModel.previewRed(value.toInt())
     }
+
+    binding.sliderGreen.addOnChangeListener { _, value, fromUser ->
+        if (isRendering || !fromUser) return@addOnChangeListener
+
+        clearSelectedSceneButton()
+        viewModel.previewGreen(value.toInt())
+    }
+
+    binding.sliderBlue.addOnChangeListener { _, value, fromUser ->
+        if (isRendering || !fromUser) return@addOnChangeListener
+
+        clearSelectedSceneButton()
+        viewModel.previewBlue(value.toInt())
+    }
+
+    binding.sliderWhite.addOnChangeListener { _, value, fromUser ->
+        if (isRendering || !fromUser) return@addOnChangeListener
+
+        clearSelectedSceneButton()
+        viewModel.previewWhite(value.toInt())
+    }
+}
 
     private fun renderSceneSelection(
         state: ManualLightUiState

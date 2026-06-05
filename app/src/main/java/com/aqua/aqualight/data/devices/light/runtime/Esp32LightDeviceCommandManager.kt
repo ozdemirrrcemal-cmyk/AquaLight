@@ -227,6 +227,83 @@ class Esp32LightDeviceCommandManager(
         )
     }
 
+    override suspend fun updateManualChannel(
+        deviceId: Long,
+        semantic: LightChannelSemantic,
+        valuePercent: Int
+    ): LightCommandResult {
+        val address = resolveAddress(deviceId)
+        ?: return LightCommandResult.failure("Device address could not be resolved")
+
+        val mapping = mappingReader.readMapping(
+            ip = address.ip
+        ).getOrElse {
+            error ->
+            return LightCommandResult.failure(
+                error.message ?: "Light channel mapping could not be read"
+            )
+        }
+
+        val json = buildSingleManualChannelJson(
+            mapping = mapping,
+            semantic = semantic,
+            valuePercent = valuePercent,
+            keepManualUntilMs = DEFAULT_MANUAL_TIMEOUT_MS
+        ).getOrElse {
+            error ->
+            return LightCommandResult.failure(
+                error.message ?: "Light channel mapping is incomplete"
+            )
+        }
+
+        return httpClient.postSet(
+            ip = address.ip,
+            json = json,
+            requestTag = "manual_channel_${semantic.name.lowercase()}"
+        )
+    }
+
+    private fun buildSingleManualChannelJson(
+        mapping: LightDeviceChannelMapping,
+        semantic: LightChannelSemantic,
+        valuePercent: Int,
+        keepManualUntilMs: Long
+    ): Result<String> {
+        val pwmIndex = mapping.indexFor(semantic)
+        ?: return Result.failure(
+            IllegalStateException("${semantic.name} channel mapping missing")
+        )
+
+        val data = JSONObject()
+        .put(
+            pwmIndex,
+            JSONObject()
+            .put(
+                "VManual",
+                JSONObject()
+                .put(
+                    "V",
+                    percentToEsp32Value(valuePercent)
+                )
+                .put(
+                    "TOffMs",
+                    keepManualUntilMs
+                )
+            )
+        )
+
+        val json = JSONObject()
+        .put(
+            "LPWMChanelLED",
+            JSONObject()
+            .put("Data", data)
+            .put("Group", 1)
+        )
+        .toString()
+
+        return Result.success(json)
+    }
+
     private fun percentToEsp32Value(
         valuePercent: Int
     ): Double {

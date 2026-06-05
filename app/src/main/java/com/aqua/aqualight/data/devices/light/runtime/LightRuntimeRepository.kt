@@ -106,11 +106,63 @@ class LightRuntimeRepository(
         return result
     }
 	
-	fun observeManualRuntime(
-    deviceId: Long
-) = LightManualRuntimeStore.observe(deviceId)
+	suspend fun updateManualChannel(
+    deviceId: Long,
+    semantic: LightChannelSemantic,
+    valuePercent: Int
+): LightCommandResult {
+    val safeValue = valuePercent.coerceIn(0, 100)
 
-fun currentManualRuntime(
-    deviceId: Long
-) = LightManualRuntimeStore.current(deviceId)
+    val result = commandManager.updateManualChannel(
+        deviceId = deviceId,
+        semantic = semantic,
+        valuePercent = safeValue
+    )
+
+    if (result.isSuccess) {
+        val current = LightManualRuntimeStore.current(deviceId)
+
+        val updatedRed = if (semantic == LightChannelSemantic.RED) {
+            safeValue
+        } else {
+            current.red
+        }
+
+        val updatedGreen = if (semantic == LightChannelSemantic.GREEN) {
+            safeValue
+        } else {
+            current.green
+        }
+
+        val updatedBlue = if (semantic == LightChannelSemantic.BLUE) {
+            safeValue
+        } else {
+            current.blue
+        }
+
+        val updatedWhite = if (semantic == LightChannelSemantic.WHITE) {
+            safeValue
+        } else {
+            current.white
+        }
+
+        LightManualRuntimeStore.updateManualOutput(
+            deviceId = deviceId,
+            red = updatedRed,
+            green = updatedGreen,
+            blue = updatedBlue,
+            white = updatedWhite
+        )
+    }
+
+    return result
+}
+
+    fun observeManualRuntime(
+        deviceId: Long
+    ) = LightManualRuntimeStore.observe(deviceId)
+
+    fun currentManualRuntime(
+        deviceId: Long
+    ) = LightManualRuntimeStore.current(deviceId)
 }

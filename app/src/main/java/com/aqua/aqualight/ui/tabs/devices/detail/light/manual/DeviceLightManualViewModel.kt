@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
+import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
@@ -11,6 +13,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightU
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.SavedLightPreset
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +22,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 
 class DeviceLightManualViewModel(
     application: Application
@@ -29,11 +31,11 @@ class DeviceLightManualViewModel(
         LightPresetDataStoreManager(application.applicationContext)
 
     private val lightRuntimeRepository =
-    LightRuntimeRepository(
-        commandManager = Esp32LightDeviceCommandManager(
-            context = application.applicationContext
+        LightRuntimeRepository(
+            commandManager = Esp32LightDeviceCommandManager(
+                context = application.applicationContext
+            )
         )
-    )
 
     private val _uiState = MutableStateFlow(
         ManualLightUiState()
@@ -49,6 +51,9 @@ class DeviceLightManualViewModel(
 
     private var deviceId: Long = 0L
     private var observeRuntimeJob: Job? = null
+
+    private val manualChannelSendJobs =
+        mutableMapOf<LightChannelSemantic, Job>()
 
     fun initialize(
         deviceId: Long
@@ -85,6 +90,8 @@ class DeviceLightManualViewModel(
     fun setPowerOn(
         enabled: Boolean
     ) {
+        cancelPendingManualChannelSends()
+
         viewModelScope.launch {
             if (!hasValidDeviceId()) return@launch
 
@@ -106,85 +113,154 @@ class DeviceLightManualViewModel(
     fun updateRed(
         value: Int
     ) {
-        val current = _uiState.value
-
-        updateManualOutput(
-            red = value,
-            green = current.green,
-            blue = current.blue,
-            white = current.white
-        )
+        previewRed(value)
     }
 
     fun updateGreen(
         value: Int
     ) {
-        val current = _uiState.value
-
-        updateManualOutput(
-            red = current.red,
-            green = value,
-            blue = current.blue,
-            white = current.white
-        )
+        previewGreen(value)
     }
 
     fun updateBlue(
         value: Int
     ) {
-        val current = _uiState.value
-
-        updateManualOutput(
-            red = current.red,
-            green = current.green,
-            blue = value,
-            white = current.white
-        )
+        previewBlue(value)
     }
 
     fun updateWhite(
         value: Int
     ) {
-        val current = _uiState.value
+        previewWhite(value)
+    }
 
-        updateManualOutput(
-            red = current.red,
-            green = current.green,
-            blue = current.blue,
+    fun previewRed(
+        value: Int
+    ) {
+        updatePreviewChannel(
+            semantic = LightChannelSemantic.RED,
+            red = value
+        )
+    }
+
+    fun previewGreen(
+        value: Int
+    ) {
+        updatePreviewChannel(
+            semantic = LightChannelSemantic.GREEN,
+            green = value
+        )
+    }
+
+    fun previewBlue(
+        value: Int
+    ) {
+        updatePreviewChannel(
+            semantic = LightChannelSemantic.BLUE,
+            blue = value
+        )
+    }
+
+    fun previewWhite(
+        value: Int
+    ) {
+        updatePreviewChannel(
+            semantic = LightChannelSemantic.WHITE,
             white = value
         )
     }
 
-    private fun updateManualOutput(
-        red: Int,
-        green: Int,
-        blue: Int,
-        white: Int
+    private fun updatePreviewChannel(
+        semantic: LightChannelSemantic,
+        red: Int? = null,
+        green: Int? = null,
+        blue: Int? = null,
+        white: Int? = null
     ) {
-        viewModelScope.launch {
-            if (!hasValidDeviceId()) return@launch
+        _uiState.update { state ->
+            val newRed = red?.coerceIn(0, 100) ?: state.red
+            val newGreen = green?.coerceIn(0, 100) ?: state.green
+            val newBlue = blue?.coerceIn(0, 100) ?: state.blue
+            val newWhite = white?.coerceIn(0, 100) ?: state.white
 
-            val result = lightRuntimeRepository.updateManualOutput(
-                deviceId = deviceId,
-                red = red,
-                green = green,
-                blue = blue,
-                white = white
+            recalculateOutput(
+                state.copy(
+                    isManualMode = true,
+                    isManualScene = false,
+                    activeSceneName = null,
+                    activeSceneSource = null,
+                    isPowerOn = listOf(
+                        newRed,
+                        newGreen,
+                        newBlue,
+                        newWhite
+                    ).any { value ->
+                        value > 0
+                    },
+                    red = newRed,
+                    green = newGreen,
+                    blue = newBlue,
+                    white = newWhite
+                )
+            )
+        }
+
+        scheduleManualChannelSend(
+            semantic = semantic
+        )
+    }
+
+    private fun scheduleManualChannelSend(
+        semantic: LightChannelSemantic
+    ) {
+        manualChannelSendJobs[semantic]?.cancel()
+
+        manualChannelSendJobs[semantic] = viewModelScope.launch {
+            delay(MANUAL_CHANNEL_SEND_DEBOUNCE_MS)
+
+            sendManualChannel(
+                semantic = semantic
             )
 
-            if (!result.isSuccess) {
-                eventsChannel.send(
-                    ManualLightEvent.ShowError(
-                        result.message ?: "Manual output could not be updated"
-                    )
+            manualChannelSendJobs.remove(semantic)
+        }
+    }
+
+    private suspend fun sendManualChannel(
+        semantic: LightChannelSemantic
+    ) {
+        if (!hasValidDeviceId()) return
+
+        val state = _uiState.value
+
+        val value = when (semantic) {
+            LightChannelSemantic.RED -> state.red
+            LightChannelSemantic.GREEN -> state.green
+            LightChannelSemantic.BLUE -> state.blue
+            LightChannelSemantic.WHITE -> state.white
+            LightChannelSemantic.UNKNOWN -> return
+        }
+
+        val result = lightRuntimeRepository.updateManualChannel(
+            deviceId = deviceId,
+            semantic = semantic,
+            valuePercent = value
+        )
+
+        if (!result.isSuccess) {
+            eventsChannel.send(
+                ManualLightEvent.ShowError(
+                    result.message ?: "Manual channel could not be sent"
                 )
-            }
+            )
         }
     }
 
     fun applyScene(
         scene: ManualLightScene
     ) {
+        cancelPendingManualChannelSends()
+
         val sceneName = scene.toDisplayName()
 
         viewModelScope.launch {
@@ -224,6 +300,8 @@ class DeviceLightManualViewModel(
     }
 
     fun resumeAuto() {
+        cancelPendingManualChannelSends()
+
         viewModelScope.launch {
             if (!hasValidDeviceId()) return@launch
 
@@ -339,6 +417,14 @@ class DeviceLightManualViewModel(
         )
 
         return false
+    }
+
+    private fun cancelPendingManualChannelSends() {
+        manualChannelSendJobs.values.forEach { job ->
+            job.cancel()
+        }
+
+        manualChannelSendJobs.clear()
     }
 
     private fun recalculateOutput(
@@ -473,6 +559,11 @@ class DeviceLightManualViewModel(
 
     override fun onCleared() {
         observeRuntimeJob?.cancel()
+        cancelPendingManualChannelSends()
         super.onCleared()
+    }
+
+    companion object {
+        private const val MANUAL_CHANNEL_SEND_DEBOUNCE_MS = 220L
     }
 }

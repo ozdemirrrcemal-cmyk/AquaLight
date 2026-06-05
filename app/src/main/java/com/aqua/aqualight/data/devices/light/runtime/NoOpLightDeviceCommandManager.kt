@@ -29,4 +29,12 @@ class NoOpLightDeviceCommandManager : LightDeviceCommandManager {
     ): LightCommandResult {
         return LightCommandResult.success()
     }
+	
+	override suspend fun updateManualChannel(
+    deviceId: Long,
+    semantic: LightChannelSemantic,
+    valuePercent: Int
+    ): LightCommandResult {
+    return LightCommandResult.success("OK")
+}
 }

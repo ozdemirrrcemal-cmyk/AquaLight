@@ -13,6 +13,12 @@ interface LightDeviceCommandManager {
         output: LightRgbwOutput
     ): LightCommandResult
 
+    suspend fun updateManualChannel(
+        deviceId: Long,
+        semantic: LightChannelSemantic,
+        valuePercent: Int
+    ): LightCommandResult
+
     suspend fun setManualPower(
         deviceId: Long,
         isPowerOn: Boolean
