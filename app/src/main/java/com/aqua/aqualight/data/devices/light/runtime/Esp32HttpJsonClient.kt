@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.light.runtime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
-import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
@@ -23,7 +22,7 @@ class Esp32HttpJsonClient {
                 )
 
                 val encodedTag = URLEncoder.encode(
-                    "\"$requestTag\"",
+                    "{\"tag\":\"$requestTag\"}",
                     Charsets.UTF_8.name()
                 )
 
@@ -37,6 +36,8 @@ class Esp32HttpJsonClient {
                     connection.requestMethod = "GET"
                     connection.connectTimeout = CONNECT_TIMEOUT_MS
                     connection.readTimeout = READ_TIMEOUT_MS
+                    connection.useCaches = false
+                    connection.setRequestProperty("Connection", "close")
 
                     val responseCode = connection.responseCode
                     val responseText = readResponseText(connection)
@@ -63,28 +64,33 @@ class Esp32HttpJsonClient {
 
             runCatching {
                 val url = URL("http://$ip/set?")
-                val body = buildFormBody(
+                val body = buildRawBody(
                     json = json,
                     requestTag = requestTag
                 )
+
+                val bodyBytes = body.toByteArray(Charsets.UTF_8)
 
                 connection = (url.openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
                     connectTimeout = CONNECT_TIMEOUT_MS
                     readTimeout = READ_TIMEOUT_MS
                     doOutput = true
+                    useCaches = false
+
+                    // ESP32 tarafı server.arg(0) ile ham body bekliyor.
+                    // Bu yüzden application/x-www-form-urlencoded kullanmıyoruz.
                     setRequestProperty(
                         "Content-Type",
-                        "application/x-www-form-urlencoded; charset=UTF-8"
+                        "text/plain; charset=UTF-8"
                     )
+                    setRequestProperty("Connection", "close")
+                    setFixedLengthStreamingMode(bodyBytes.size)
                 }
 
-                OutputStreamWriter(
-                    connection.outputStream,
-                    Charsets.UTF_8
-                ).use { writer ->
-                    writer.write(body)
-                    writer.flush()
+                connection.outputStream.use { output ->
+                    output.write(bodyBytes)
+                    output.flush()
                 }
 
                 val responseCode = connection.responseCode
@@ -93,7 +99,9 @@ class Esp32HttpJsonClient {
                 if (responseCode in 200..299) {
                     LightCommandResult.success(responseText)
                 } else {
-                    LightCommandResult.failure("ESP32 command failed: HTTP $responseCode")
+                    LightCommandResult.failure(
+                        "ESP32 command failed: HTTP $responseCode"
+                    )
                 }
             }.getOrElse { error ->
                 LightCommandResult.failure(
@@ -105,7 +113,7 @@ class Esp32HttpJsonClient {
         }
     }
 
-    private fun buildFormBody(
+    private fun buildRawBody(
         json: String,
         requestTag: String
     ): String {
@@ -114,12 +122,12 @@ class Esp32HttpJsonClient {
             Charsets.UTF_8.name()
         )
 
-        val encodedTag = URLEncoder.encode(
-            "\"$requestTag\"",
+        val encodedRet = URLEncoder.encode(
+            "{\"tag\":\"$requestTag\"}",
             Charsets.UTF_8.name()
         )
 
-        return "Json=$encodedJson&sRet=$encodedTag"
+        return "Json=$encodedJson&sRet=$encodedRet"
     }
 
     private fun readResponseText(
