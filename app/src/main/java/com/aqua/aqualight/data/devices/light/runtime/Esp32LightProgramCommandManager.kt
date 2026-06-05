@@ -1,7 +1,7 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
 import android.content.Context
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
 import org.json.JSONArray
 import org.json.JSONObject
@@ -140,7 +140,7 @@ class Esp32LightProgramCommandManager(
         programs: List<SavedLightProgram>,
         semantic: LightChannelSemantic
     ): JSONArray {
-        val points = mutableListOf<Pair<LightCurvePoint, Double>>()
+        val points = mutableListOf<SchedulePoint>()
 
         programs
             .sortedBy { program ->
@@ -161,25 +161,29 @@ class Esp32LightProgramCommandManager(
 
                 addOrReplacePoint(
                     points = points,
-                    point = draft.start,
+                    minute = draft.start.totalMinutes,
+                    label = draft.start.label,
                     value = 0.0
                 )
 
                 addOrReplacePoint(
                     points = points,
-                    point = draft.peakStart,
+                    minute = draft.peakStart.totalMinutes,
+                    label = draft.peakStart.label,
                     value = peakValue
                 )
 
                 addOrReplacePoint(
                     points = points,
-                    point = draft.peakEnd,
+                    minute = draft.peakEnd.totalMinutes,
+                    label = draft.peakEnd.label,
                     value = peakValue
                 )
 
                 addOrReplacePoint(
                     points = points,
-                    point = draft.end,
+                    minute = LightProgramTimeMath.endMinutes(draft.end),
+                    label = LightProgramTimeMath.endLabel(draft.end),
                     value = 0.0
                 )
             }
@@ -188,13 +192,13 @@ class Esp32LightProgramCommandManager(
 
         points
             .sortedBy { item ->
-                item.first.totalMinutes
+                item.minute
             }
             .forEach { item ->
                 array.put(
                     JSONArray()
-                        .put(item.first.label)
-                        .put(item.second)
+                        .put(item.label)
+                        .put(item.value)
                 )
             }
 
@@ -202,20 +206,33 @@ class Esp32LightProgramCommandManager(
     }
 
     private fun addOrReplacePoint(
-        points: MutableList<Pair<LightCurvePoint, Double>>,
-        point: LightCurvePoint,
+        points: MutableList<SchedulePoint>,
+        minute: Int,
+        label: String,
         value: Double
     ) {
         val existingIndex = points.indexOfFirst { item ->
-            item.first.totalMinutes == point.totalMinutes
+            item.minute == minute
         }
 
+        val point = SchedulePoint(
+            minute = minute,
+            label = label,
+            value = value
+        )
+
         if (existingIndex >= 0) {
-            points[existingIndex] = point to value
+            points[existingIndex] = point
         } else {
-            points += point to value
+            points += point
         }
     }
+
+    private data class SchedulePoint(
+        val minute: Int,
+        val label: String,
+        val value: Double
+    )
 
     private fun percentToEsp32Value(
         valuePercent: Int
