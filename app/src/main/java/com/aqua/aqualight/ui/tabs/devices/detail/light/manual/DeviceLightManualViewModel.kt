@@ -564,6 +564,6 @@ class DeviceLightManualViewModel(
     }
 
     companion object {
-        private const val MANUAL_CHANNEL_SEND_DEBOUNCE_MS = 220L
+        private const val MANUAL_CHANNEL_SEND_DEBOUNCE_MS = 120L
     }
 }
