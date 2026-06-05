@@ -26,22 +26,28 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
 
 class DeviceLightProgramEditorViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
     private val lightProgramsDataStoreManager =
-        LightProgramsDataStoreManager(application.applicationContext)
+    LightProgramsDataStoreManager(application.applicationContext)
+
+    private val lightProgramCommandManager =
+    Esp32LightProgramCommandManager(
+        context = application.applicationContext
+    )
 
     private val _uiState =
-        MutableStateFlow(DeviceLightProgramEditorUiState.default())
+    MutableStateFlow(DeviceLightProgramEditorUiState.default())
 
     val uiState: StateFlow<DeviceLightProgramEditorUiState> =
-        _uiState.asStateFlow()
+    _uiState.asStateFlow()
 
     private val eventsChannel =
-        Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
+    Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
 
@@ -286,11 +292,34 @@ class DeviceLightProgramEditorViewModel(
             }
 
             runCatching {
-                lightProgramsDataStoreManager.saveProgram(savedProgram)
+                val existingPrograms = lightProgramsDataStoreManager.programsFlow.first()
+
+                val programsToLoad = if (savedProgram.isActive) {
+                    existingPrograms
+                    .filter {
+                        program ->
+                        program.deviceId == savedProgram.deviceId &&
+                        program.isActive &&
+                        program.id != savedProgram.id
+                    } + savedProgram
+                } else {
+                    emptyList()
+                }
 
                 if (savedProgram.isActive) {
-                    // TODO: Send savedProgram.draft to ESP32 as active/scheduled program.
+                    val loadResult = lightProgramCommandManager.loadPrograms(
+                        deviceId = savedProgram.deviceId,
+                        programs = programsToLoad
+                    )
+
+                    if (!loadResult.isSuccess) {
+                        throw IllegalStateException(
+                            loadResult.message ?: "Program could not be loaded to device"
+                        )
+                    }
                 }
+
+                lightProgramsDataStoreManager.saveProgram(savedProgram)
             }.onSuccess {
                 editingProgramId = savedProgram.id
                 editingProgramName = savedProgram.name
@@ -310,9 +339,10 @@ class DeviceLightProgramEditorViewModel(
 
                 eventsChannel.send(DeviceLightProgramEditorEvent.NavigateBack)
             }.onFailure {
+                error ->
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowError(
-                        "Program could not be saved"
+                        error.message ?: "Program could not be saved"
                     )
                 )
             }
@@ -364,10 +394,11 @@ class DeviceLightProgramEditorViewModel(
     ): SavedLightProgram? {
         val existingPrograms = lightProgramsDataStoreManager.programsFlow.first()
 
-        val comparablePrograms = existingPrograms.filter { program ->
+        val comparablePrograms = existingPrograms.filter {
+            program ->
             program.deviceId == savedProgram.deviceId &&
-                program.isActive &&
-                program.id != savedProgram.id
+            program.isActive &&
+            program.id != savedProgram.id
         }
 
         return LightProgramScheduleConflictValidator.findConflict(
