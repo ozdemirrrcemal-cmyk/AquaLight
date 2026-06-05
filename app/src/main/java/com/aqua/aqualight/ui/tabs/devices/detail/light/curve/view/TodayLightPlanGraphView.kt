@@ -464,7 +464,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         )
 
         canvas.drawText(
-            segment.end.labelendLabelForSegment(segment),
+            endLabelForSegment(segment),
             endLabelX,
             labelY,
             textPaint
