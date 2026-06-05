@@ -10,6 +10,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPreset
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 
 class DeviceLightPresetsViewModel(
     application: Application
@@ -19,7 +20,11 @@ class DeviceLightPresetsViewModel(
         LightPresetDataStoreManager(application.applicationContext)
 
     private val lightRuntimeRepository =
-        LightRuntimeRepository()
+    LightRuntimeRepository(
+        commandManager = Esp32LightDeviceCommandManager(
+            context = application.applicationContext
+        )
+    )
 
     val presetsFlow =
         lightPresetDataStoreManager.presetsFlow

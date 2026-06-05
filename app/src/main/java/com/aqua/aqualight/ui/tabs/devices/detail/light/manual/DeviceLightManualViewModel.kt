@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 
 class DeviceLightManualViewModel(
     application: Application
@@ -28,7 +29,11 @@ class DeviceLightManualViewModel(
         LightPresetDataStoreManager(application.applicationContext)
 
     private val lightRuntimeRepository =
-        LightRuntimeRepository()
+    LightRuntimeRepository(
+        commandManager = Esp32LightDeviceCommandManager(
+            context = application.applicationContext
+        )
+    )
 
     private val _uiState = MutableStateFlow(
         ManualLightUiState()
