@@ -297,7 +297,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         segment: TodayLightPlanGraphSegment
     ) {
         val left = xForMinute(segment.start.totalMinutes)
-        val right = xForMinute(segment.end.totalMinutes)
+        val right = xForMinute(endMinutesForSegment(segment))
 
         if (right <= left) return
 
@@ -332,7 +332,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             startMinute = segment.start.totalMinutes,
             peakStartMinute = segment.peakStart.totalMinutes,
             peakEndMinute = segment.peakEnd.totalMinutes,
-            endMinute = segment.end.totalMinutes,
+            endMinute = endMinutesForSegment(segment),
             peakPercent = safeOutput,
             transitionMode = segment.transitionMode
         )
@@ -357,7 +357,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             }
         }
 
-        val endX = xForMinute(segment.end.totalMinutes)
+        val endX = xForMinute(endMinutesForSegment(segment))
 
         fillPath.lineTo(endX, yForPercent(0))
         fillPath.close()
@@ -381,7 +381,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         segment: TodayLightPlanGraphSegment
     ) {
         val startX = xForMinute(segment.start.totalMinutes)
-        val endX = xForMinute(segment.end.totalMinutes)
+        val endX = xForMinute(endMinutesForSegment(segment))
 
         if (endX <= startX) return
 
@@ -464,7 +464,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         )
 
         canvas.drawText(
-            segment.end.label,
+            segment.end.labelendLabelForSegment(segment),
             endLabelX,
             labelY,
             textPaint
@@ -478,7 +478,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
 
         if (state.showPausedOverlay) return
         val left = xForMinute(segment.start.totalMinutes)
-        val right = xForMinute(segment.end.totalMinutes)
+        val right = xForMinute(endMinutesForSegment(segment))
         val availableWidth = right - left
 
         if (availableWidth < dp(54f)) return
@@ -703,6 +703,26 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             pausedOverlayRect.centerY() + dp(15f),
             pausedOverlaySubtitlePaint
         )
+    }
+
+    private fun endMinutesForSegment(
+        segment: TodayLightPlanGraphSegment
+    ): Int {
+        return if (segment.end.hour == 0 && segment.end.minute == 0) {
+            24 * 60
+        } else {
+            segment.end.totalMinutes
+        }
+    }
+
+    private fun endLabelForSegment(
+        segment: TodayLightPlanGraphSegment
+    ): String {
+        return if (segment.end.hour == 0 && segment.end.minute == 0) {
+            "24:00"
+        } else {
+            segment.end.label
+        }
     }
 
     private fun xForMinute(

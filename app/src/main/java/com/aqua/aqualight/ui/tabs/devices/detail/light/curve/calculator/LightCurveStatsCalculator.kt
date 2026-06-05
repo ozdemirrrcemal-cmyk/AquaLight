@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.curve.calculator
 
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveStats
 import kotlin.math.roundToInt
 
@@ -13,7 +14,6 @@ object LightCurveStatsCalculator {
     fun calculate(
         state: LightCurveGraphState
     ): LightCurveStats {
-
         val channels = state.channelValues
 
         val peakOutput = listOf(
@@ -23,20 +23,20 @@ object LightCurveStatsCalculator {
             channels.white
         ).maxOrNull() ?: 0
 
-        val durationMinutes =
-            state.end.totalMinutes - state.start.totalMinutes
+        val durationMinutes = (
+            endMinutesForStats(state.end) - state.start.totalMinutes
+        ).coerceAtLeast(0)
 
         val durationHours =
             durationMinutes / 60.0
 
-        // Temporary preview watt estimate
         val averagePercent =
             (
                 channels.red +
-                channels.green +
-                channels.blue +
-                channels.white
-            ) / 4.0
+                    channels.green +
+                    channels.blue +
+                    channels.white
+                ) / 4.0
 
         val estimatedWatts =
             (averagePercent / 100.0) * 40.0
@@ -46,5 +46,15 @@ object LightCurveStatsCalculator {
             estimatedPowerWatts = estimatedWatts,
             durationHours = durationHours
         )
+    }
+
+    private fun endMinutesForStats(
+        point: LightCurvePoint
+    ): Int {
+        return if (point.hour == 0 && point.minute == 0) {
+            24 * 60
+        } else {
+            point.totalMinutes
+        }
     }
 }

@@ -22,25 +22,26 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
 
 class DeviceLightViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
     private val lightProgramsDataStoreManager =
-        LightProgramsDataStoreManager(application.applicationContext)
+    LightProgramsDataStoreManager(application.applicationContext)
 
     private val clockMillisFlow =
-        MutableStateFlow(System.currentTimeMillis())
+    MutableStateFlow(System.currentTimeMillis())
 
     private val _uiState = MutableStateFlow(
         createEmptyState(System.currentTimeMillis())
     )
 
     val uiState: StateFlow<DeviceLightDashboardUiState> =
-        _uiState.asStateFlow()
-		
-		private val lightRuntimeRepository =
+    _uiState.asStateFlow()
+
+    private val lightRuntimeRepository =
     LightRuntimeRepository()
 
     private var deviceId: Long = 0L
@@ -62,14 +63,17 @@ class DeviceLightViewModel(
                 lightProgramsDataStoreManager.programsFlow,
                 lightRuntimeRepository.observeManualRuntime(deviceId),
                 clockMillisFlow
-            ) { programs, manualRuntime, nowMillis ->
+            ) {
+                programs, manualRuntime, nowMillis ->
                 Triple(programs, manualRuntime, nowMillis)
-            }.collect { (programs, manualRuntime, nowMillis) ->
+            }.collect {
+                (programs, manualRuntime, nowMillis) ->
                 val activeProgramsForDevice = programs
-                    .filter { program ->
-                        program.deviceId == this@DeviceLightViewModel.deviceId &&
-                            program.isActive
-                    }
+                .filter {
+                    program ->
+                    program.deviceId == this@DeviceLightViewModel.deviceId &&
+                    program.isActive
+                }
 
                 val baseState = createStateFromPrograms(
                     programs = activeProgramsForDevice,
@@ -108,10 +112,10 @@ class DeviceLightViewModel(
     }
 
     private fun createManualRuntimeState(
-    baseState: DeviceLightDashboardUiState,
-    manualRuntime: com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
-): DeviceLightDashboardUiState {
-    val sceneName = manualRuntime.activeSceneName
+        baseState: DeviceLightDashboardUiState,
+        manualRuntime: com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+    ): DeviceLightDashboardUiState {
+        val sceneName = manualRuntime.activeSceneName
         .orEmpty()
         .ifBlank {
             if (manualRuntime.isManualScene) {
@@ -121,36 +125,36 @@ class DeviceLightViewModel(
             }
         }
 
-    val outputPercent = if (manualRuntime.isPowerOn) {
-        manualRuntime.masterOutputPercent
-    } else {
-        0
-    }
-
-    val pausedGraphState = baseState.todayPlanGraphState.copy(
-        showPausedOverlay = true,
-        pausedOverlayTitle = "Auto paused",
-        pausedOverlaySubtitle = if (manualRuntime.isManualScene) {
-            "$sceneName is active"
+        val outputPercent = if (manualRuntime.isPowerOn) {
+            manualRuntime.masterOutputPercent
         } else {
-            "Manual control is active"
+            0
         }
-    )
 
-    return baseState.copy(
-        activeProgramName = sceneName,
-        runStatus = if (manualRuntime.isManualScene) {
-            "Manual Scene Active"
-        } else {
-            "Manual Mode Active"
-        },
-        currentWattText = "-- W",
-        outputPercentText = "$outputPercent%",
-        nextEventText = "Auto paused",
-        timelineStatusText = "Paused · Today plan below",
-        todayPlanGraphState = pausedGraphState
-    )
-}
+        val pausedGraphState = baseState.todayPlanGraphState.copy(
+            showPausedOverlay = true,
+            pausedOverlayTitle = "Auto paused",
+            pausedOverlaySubtitle = if (manualRuntime.isManualScene) {
+                "$sceneName is active"
+            } else {
+                "Manual control is active"
+            }
+        )
+
+        return baseState.copy(
+            activeProgramName = sceneName,
+            runStatus = if (manualRuntime.isManualScene) {
+                "Manual Scene Active"
+            } else {
+                "Manual Mode Active"
+            },
+            currentWattText = "-- W",
+            outputPercentText = "$outputPercent%",
+            nextEventText = "Auto paused",
+            timelineStatusText = "Paused · Today plan below",
+            todayPlanGraphState = pausedGraphState
+        )
+    }
 
     private fun createStateFromPrograms(
         programs: List<SavedLightProgram>,
@@ -164,12 +168,14 @@ class DeviceLightViewModel(
         }
 
         val todayPrograms = programs
-            .filter { program ->
-                isScheduledToday(program)
-            }
-            .sortedBy { program ->
-                program.draft.start.totalMinutes
-            }
+        .filter {
+            program ->
+            isScheduledToday(program)
+        }
+        .sortedBy {
+            program ->
+            program.draft.start.totalMinutes
+        }
 
         if (todayPrograms.isEmpty()) {
             return DeviceLightDashboardUiState(
@@ -187,32 +193,36 @@ class DeviceLightViewModel(
             )
         }
 
-        val runningProgram = todayPrograms.firstOrNull { program ->
+        val runningProgram = todayPrograms.firstOrNull {
+            program ->
             isProgramRunningAt(
                 program = program,
                 minute = currentMinute
             )
         }
 
-        val nextProgramToday = todayPrograms.firstOrNull { program ->
+        val nextProgramToday = todayPrograms.firstOrNull {
+            program ->
             program.draft.start.totalMinutes > currentMinute
         }
 
         val displayProgram = runningProgram
-            ?: nextProgramToday
-            ?: todayPrograms.firstOrNull()
+        ?: nextProgramToday
+        ?: todayPrograms.firstOrNull()
 
-        val currentOutput = runningProgram?.let { program ->
+        val currentOutput = runningProgram?.let {
+            program ->
             calculateCurrentOutputPercent(
                 program = program,
                 currentMinute = currentMinute
             )
         } ?: 0
 
-        val graphSegments = todayPrograms.map { program ->
+        val graphSegments = todayPrograms.map {
+            program ->
             val isCurrent = runningProgram?.id == program.id
             val isNext = runningProgram == null &&
-                nextProgramToday?.id == program.id
+            nextProgramToday?.id == program.id
 
             TodayLightPlanGraphSegment(
                 id = program.id,
@@ -287,9 +297,7 @@ class DeviceLightViewModel(
 
             nextProgramToday != null -> {
                 "Waiting for ${nextProgramToday.draft.start.label}"
-            }
-
-            else -> {
+            } else -> {
                 "Programs completed for today"
             }
         }
@@ -304,6 +312,9 @@ class DeviceLightViewModel(
         if (runningProgram != null) {
             val draft = runningProgram.draft
 
+            val endMinutes = LightProgramTimeMath.endMinutes(draft.end)
+            val endLabel = LightProgramTimeMath.endLabel(draft.end)
+
             val programEvent = when {
                 currentMinute < draft.peakStart.totalMinutes -> {
                     "${draft.peakStart.label} Peak"
@@ -313,16 +324,20 @@ class DeviceLightViewModel(
                     "${draft.peakEnd.label} Peak End"
                 }
 
-                currentMinute < draft.end.totalMinutes -> {
-                    "${draft.end.label} End"
-                }
-
-                else -> {
+                currentMinute < endMinutes -> {
+                    "$endLabel End"
+                } else -> {
                     null
                 }
             }
 
-            val nextProgram = todayPrograms.firstOrNull { program ->
+            val nextProgram = todayPrograms.firstOrNull {
+                program ->
+                program.draft.start.totalMinutes > endMinutes
+            }
+
+            val nextProgram = todayPrograms.firstOrNull {
+                program ->
                 program.draft.start.totalMinutes > draft.end.totalMinutes
             }
 
@@ -337,9 +352,7 @@ class DeviceLightViewModel(
 
                 nextProgram != null -> {
                     "${nextProgram.draft.start.label} ${nextProgram.name}"
-                }
-
-                else -> {
+                } else -> {
                     "No upcoming event"
                 }
             }
@@ -358,7 +371,10 @@ class DeviceLightViewModel(
     ): Boolean {
         val draft = program.draft
 
-        return minute in draft.start.totalMinutes..draft.end.totalMinutes
+        val startMinutes = draft.start.totalMinutes
+        val endMinutes = LightProgramTimeMath.endMinutes(draft.end)
+
+        return minute >= startMinutes && minute < endMinutes
     }
 
     private fun calculateCurrentOutputPercent(
@@ -381,10 +397,11 @@ class DeviceLightViewModel(
             startMinute = draft.start.totalMinutes,
             peakStartMinute = draft.peakStart.totalMinutes,
             peakEndMinute = draft.peakEnd.totalMinutes,
-            endMinute = draft.end.totalMinutes,
+            endMinute = LightProgramTimeMath.endMinutes(draft.end),
             peakPercent = peakPercent,
             transitionMode = draft.transitionMode
-        ).sortedBy { point ->
+        ).sortedBy {
+            point ->
             point.x
         }
 
@@ -394,11 +411,13 @@ class DeviceLightViewModel(
 
         val current = currentMinute.toDouble()
 
-        val previous = points.lastOrNull { point ->
+        val previous = points.lastOrNull {
+            point ->
             point.x <= current
         }
 
-        val next = points.firstOrNull { point ->
+        val next = points.firstOrNull {
+            point ->
             point.x >= current
         }
 
@@ -411,15 +430,15 @@ class DeviceLightViewModel(
 
             else -> {
                 val progress =
-                    (current - previous.x) / (next.x - previous.x)
+                (current - previous.x) / (next.x - previous.x)
 
                 previous.y + ((next.y - previous.y) * progress)
             }
         }
 
         return output
-            .toInt()
-            .coerceIn(0, 100)
+        .toInt()
+        .coerceIn(0, 100)
     }
 
     private fun SavedLightProgram.maxOutputPercent(): Int {
@@ -445,7 +464,7 @@ class DeviceLightViewModel(
 
     private fun todayAppDay(): Int {
         val dayOfWeek = Calendar.getInstance()
-            .get(Calendar.DAY_OF_WEEK)
+        .get(Calendar.DAY_OF_WEEK)
 
         return if (dayOfWeek == Calendar.SUNDAY) {
             7
