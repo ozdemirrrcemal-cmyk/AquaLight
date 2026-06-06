@@ -16,22 +16,21 @@ data class LightDeviceLiveChannelState(
 
     val valuePercent: Int?
         get() = vNow
-            ?.coerceIn(0.0, 1.0)
-            ?.let { value ->
-                (value * 100.0)
-                    .roundToInt()
-                    .coerceIn(0, 100)
-            }
+            ?.coerceIn(0.0, 100.0)
+            ?.roundToInt()
+            ?.coerceIn(0, 100)
 
     val actualWatts: Double?
         get() {
-            val safeVNow = vNow?.coerceIn(0.0, 1.0)
+            val safePercent = valuePercent
                 ?: return null
 
             val safeMaxWatts = maxWatts
-                ?.takeIf { value -> value > 0.0 }
+                ?.takeIf { value ->
+                    value > 0.0
+                }
                 ?: return null
 
-            return safeMaxWatts * safeVNow
+            return safeMaxWatts * (safePercent / 100.0)
         }
 }
