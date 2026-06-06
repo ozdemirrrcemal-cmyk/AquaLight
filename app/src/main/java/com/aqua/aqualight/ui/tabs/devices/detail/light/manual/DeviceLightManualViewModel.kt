@@ -68,6 +68,8 @@ class DeviceLightManualViewModel(
 
     private var lastManualChannelErrorToastAtMillis: Long = 0L
 
+    private var isSliderInteractionActive = false
+
     private val liveRefreshOwnerKey =
     "DeviceLightManualViewModel_${System.identityHashCode(this)}"
 
@@ -210,6 +212,14 @@ class DeviceLightManualViewModel(
         )
     }
 
+    fun beginSliderInteraction() {
+        isSliderInteractionActive = true
+    }
+
+    fun endSliderInteraction() {
+        isSliderInteractionActive = false
+    }
+
     private fun updatePreviewChannel(
         semantic: LightChannelSemantic,
         red: Int? = null,
@@ -348,7 +358,8 @@ class DeviceLightManualViewModel(
     }
 
     private fun isManualLiveEditing(): Boolean {
-        return manualChannelSendLoopJob?.isActive == true ||
+        return isSliderInteractionActive ||
+        manualChannelSendLoopJob?.isActive == true ||
         pendingManualChannelValues.isNotEmpty()
     }
 
@@ -533,6 +544,7 @@ class DeviceLightManualViewModel(
         manualChannelSendLoopJob = null
 
         pendingManualChannelValues.clear()
+        isSliderInteractionActive = false
     }
 
     private fun applyRuntimeState(
@@ -571,16 +583,25 @@ class DeviceLightManualViewModel(
             !preservePreviewValues
         ) {
             state.copy(
-                isPowerOn = liveState.actualOutputPercent > 0,
+                isPowerOn = liveState.actualPowerWatts
+                ?.let {
+                    watts ->
+                    watts > 0.0
+                }
+                ?: (liveState.actualOutputPercent > 0),
+
                 red = liveState.channelValuePercent(
                     LightChannelSemantic.RED
                 ) ?: state.red,
+
                 green = liveState.channelValuePercent(
                     LightChannelSemantic.GREEN
                 ) ?: state.green,
+
                 blue = liveState.channelValuePercent(
                     LightChannelSemantic.BLUE
                 ) ?: state.blue,
+
                 white = liveState.channelValuePercent(
                     LightChannelSemantic.WHITE
                 ) ?: state.white
@@ -616,7 +637,7 @@ class DeviceLightManualViewModel(
             !preservePreviewValues
         ) {
             calculatedState.copy(
-                masterOutputPercent = liveState.actualOutputPercent,
+                masterOutputPercent = calculatedState.masterOutputPercent,
                 powerText = liveState.actualPowerText,
                 powerLabelText = "Live Power",
                 hasLivePower = true

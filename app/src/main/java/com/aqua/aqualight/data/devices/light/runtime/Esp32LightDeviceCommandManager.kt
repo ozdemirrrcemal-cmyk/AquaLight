@@ -14,6 +14,9 @@ class Esp32LightDeviceCommandManager(
         Esp32LightChannelMappingReader(httpClient)
 ) : LightDeviceCommandManager {
 
+    private val mappingCacheLock = Any()
+    private val mappingCache = mutableMapOf<String, LightDeviceChannelMapping>()
+
     override suspend fun applyManualScene(
         deviceId: Long,
         sceneName: String,
@@ -45,7 +48,7 @@ class Esp32LightDeviceCommandManager(
         val address = resolveAddress(deviceId)
             ?: return LightCommandResult.failure("Device address could not be resolved")
 
-        val mapping = mappingReader.readMapping(
+        val mapping = getCachedMapping(
             ip = address.ip
         ).getOrElse { error ->
             return LightCommandResult.failure(
@@ -110,7 +113,7 @@ class Esp32LightDeviceCommandManager(
         val address = resolveAddress(deviceId)
             ?: return LightCommandResult.failure("Device address could not be resolved")
 
-        val mapping = mappingReader.readMapping(
+        val mapping = getCachedMapping(
             ip = address.ip,
             forceRefresh = true
         ).getOrElse { error ->
@@ -138,7 +141,7 @@ class Esp32LightDeviceCommandManager(
         val address = resolveAddress(deviceId)
             ?: return LightCommandResult.failure("Device address could not be resolved")
 
-        val mapping = mappingReader.readMapping(
+        val mapping = getCachedMapping(
             ip = address.ip
         ).getOrElse { error ->
             return LightCommandResult.failure(
@@ -161,6 +164,36 @@ class Esp32LightDeviceCommandManager(
             json = json,
             requestTag = requestTag
         )
+    }
+
+    private suspend fun getCachedMapping(
+        ip: String,
+        forceRefresh: Boolean = false
+    ): Result<LightDeviceChannelMapping> {
+        if (!forceRefresh) {
+            val cached = synchronized(mappingCacheLock) {
+                mappingCache[ip]
+            }
+
+            if (cached != null) {
+                return Result.success(cached)
+            }
+        }
+
+        val result = mappingReader.readMapping(
+            ip = ip,
+            forceRefresh = forceRefresh
+        )
+
+        val mapping = result.getOrNull()
+
+        if (mapping != null) {
+            synchronized(mappingCacheLock) {
+                mappingCache[ip] = mapping
+            }
+        }
+
+        return result
     }
 
     private suspend fun resolveAddress(
@@ -236,34 +269,6 @@ class Esp32LightDeviceCommandManager(
         return Result.success(json)
     }
 
-    private fun addMappedChannel(
-        data: JSONObject,
-        mapping: LightDeviceChannelMapping,
-        semantic: LightChannelSemantic,
-        valuePercent: Int,
-        keepManualUntilMs: Long
-    ) {
-        val pwmIndex = mapping.pwmIndexFor(semantic)
-            ?: return
-
-        data.put(
-            pwmIndex,
-            JSONObject()
-                .put(
-                    "VManual",
-                    JSONObject()
-                        .put(
-                            "V",
-                            percentToEsp32Value(valuePercent)
-                        )
-                        .put(
-                            "TOffMs",
-                            keepManualUntilMs
-                        )
-                )
-        )
-    }
-
     private fun buildSingleManualChannelJson(
         mapping: LightDeviceChannelMapping,
         semantic: LightChannelSemantic,
@@ -303,6 +308,34 @@ class Esp32LightDeviceCommandManager(
             .toString()
 
         return Result.success(json)
+    }
+
+    private fun addMappedChannel(
+        data: JSONObject,
+        mapping: LightDeviceChannelMapping,
+        semantic: LightChannelSemantic,
+        valuePercent: Int,
+        keepManualUntilMs: Long
+    ) {
+        val pwmIndex = mapping.pwmIndexFor(semantic)
+            ?: return
+
+        data.put(
+            pwmIndex,
+            JSONObject()
+                .put(
+                    "VManual",
+                    JSONObject()
+                        .put(
+                            "V",
+                            percentToEsp32Value(valuePercent)
+                        )
+                        .put(
+                            "TOffMs",
+                            keepManualUntilMs
+                        )
+                )
+        )
     }
 
     private fun buildResumeAutoJson(

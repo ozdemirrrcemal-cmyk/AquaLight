@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.net.HttpURLConnection
@@ -15,40 +17,42 @@ class Esp32HttpJsonClient {
         requestTag: String
     ): Result<String> {
         return withContext(Dispatchers.IO) {
-            runCatching {
-                val encodedJson = URLEncoder.encode(
-                    json,
-                    Charsets.UTF_8.name()
-                )
+            runForDevice(ip) {
+                runCatching {
+                    val encodedJson = URLEncoder.encode(
+                        json,
+                        Charsets.UTF_8.name()
+                    )
 
-                val encodedTag = URLEncoder.encode(
-                    "{\"tag\":\"$requestTag\"}",
-                    Charsets.UTF_8.name()
-                )
+                    val encodedTag = URLEncoder.encode(
+                        "{\"tag\":\"$requestTag\"}",
+                        Charsets.UTF_8.name()
+                    )
 
-                val url = URL(
-                    "http://$ip/get?Json=$encodedJson&sRet=$encodedTag"
-                )
+                    val url = URL(
+                        "http://$ip/get?Json=$encodedJson&sRet=$encodedTag"
+                    )
 
-                val connection = url.openConnection() as HttpURLConnection
+                    val connection = url.openConnection() as HttpURLConnection
 
-                try {
-                    connection.requestMethod = "GET"
-                    connection.connectTimeout = CONNECT_TIMEOUT_MS
-                    connection.readTimeout = READ_TIMEOUT_MS
-                    connection.useCaches = false
-                    connection.setRequestProperty("Connection", "close")
+                    try {
+                        connection.requestMethod = "GET"
+                        connection.connectTimeout = CONNECT_TIMEOUT_MS
+                        connection.readTimeout = READ_TIMEOUT_MS
+                        connection.useCaches = false
+                        connection.setRequestProperty("Connection", "close")
 
-                    val responseCode = connection.responseCode
-                    val responseText = readResponseText(connection)
+                        val responseCode = connection.responseCode
+                        val responseText = readResponseText(connection)
 
-                    if (responseCode in 200..299) {
-                        responseText
-                    } else {
-                        throw IllegalStateException("HTTP $responseCode")
+                        if (responseCode in 200..299) {
+                            responseText
+                        } else {
+                            throw IllegalStateException("HTTP $responseCode")
+                        }
+                    } finally {
+                        connection.disconnect()
                     }
-                } finally {
-                    connection.disconnect()
                 }
             }
         }
@@ -60,56 +64,72 @@ class Esp32HttpJsonClient {
         requestTag: String
     ): LightCommandResult {
         return withContext(Dispatchers.IO) {
-            var connection: HttpURLConnection? = null
+            runForDevice(ip) {
+                var connection: HttpURLConnection? = null
 
-            runCatching {
-                val url = URL("http://$ip/set?")
-                val body = buildRawBody(
-                    json = json,
-                    requestTag = requestTag
-                )
+                try {
+                    runCatching {
+                        val url = URL("http://$ip/set?")
+                        val body = buildRawBody(
+                            json = json,
+                            requestTag = requestTag
+                        )
 
-                val bodyBytes = body.toByteArray(Charsets.UTF_8)
+                        val bodyBytes = body.toByteArray(Charsets.UTF_8)
 
-                connection = (url.openConnection() as HttpURLConnection).apply {
-                    requestMethod = "POST"
-                    connectTimeout = CONNECT_TIMEOUT_MS
-                    readTimeout = READ_TIMEOUT_MS
-                    doOutput = true
-                    useCaches = false
+                        connection = (url.openConnection() as HttpURLConnection).apply {
+                            requestMethod = "POST"
+                            connectTimeout = CONNECT_TIMEOUT_MS
+                            readTimeout = READ_TIMEOUT_MS
+                            doOutput = true
+                            useCaches = false
 
-                    // ESP32 tarafı server.arg(0) ile ham body bekliyor.
-                    // Bu yüzden application/x-www-form-urlencoded kullanmıyoruz.
-                    setRequestProperty(
-                        "Content-Type",
-                        "text/plain; charset=UTF-8"
-                    )
-                    setRequestProperty("Connection", "close")
-                    setFixedLengthStreamingMode(bodyBytes.size)
+                            // ESP32 tarafı server.arg(0) ile ham body bekliyor.
+                            // Bu yüzden application/x-www-form-urlencoded kullanmıyoruz.
+                            setRequestProperty(
+                                "Content-Type",
+                                "text/plain; charset=UTF-8"
+                            )
+                            setRequestProperty("Connection", "close")
+                            setFixedLengthStreamingMode(bodyBytes.size)
+                        }
+
+                        connection?.outputStream?.use { output ->
+                            output.write(bodyBytes)
+                            output.flush()
+                        }
+
+                        val activeConnection = connection
+                            ?: throw IllegalStateException("ESP32 connection could not be opened")
+
+                        val responseCode = activeConnection.responseCode
+                        val responseText = readResponseText(activeConnection)
+
+                        if (responseCode in 200..299) {
+                            LightCommandResult.success(responseText)
+                        } else {
+                            LightCommandResult.failure(
+                                "ESP32 command failed: HTTP $responseCode"
+                            )
+                        }
+                    }.getOrElse { error ->
+                        LightCommandResult.failure(
+                            error.message ?: "ESP32 command could not be sent"
+                        )
+                    }
+                } finally {
+                    connection?.disconnect()
                 }
-
-                connection.outputStream.use { output ->
-                    output.write(bodyBytes)
-                    output.flush()
-                }
-
-                val responseCode = connection.responseCode
-                val responseText = readResponseText(connection)
-
-                if (responseCode in 200..299) {
-                    LightCommandResult.success(responseText)
-                } else {
-                    LightCommandResult.failure(
-                        "ESP32 command failed: HTTP $responseCode"
-                    )
-                }
-            }.getOrElse { error ->
-                LightCommandResult.failure(
-                    error.message ?: "ESP32 command could not be sent"
-                )
-            }.also {
-                connection?.disconnect()
             }
+        }
+    }
+
+    private suspend fun <T> runForDevice(
+        ip: String,
+        block: suspend () -> T
+    ): T {
+        return mutexFor(ip).withLock {
+            block()
         }
     }
 
@@ -149,5 +169,18 @@ class Esp32HttpJsonClient {
     companion object {
         private const val CONNECT_TIMEOUT_MS = 2_000
         private const val READ_TIMEOUT_MS = 3_000
+
+        private val lock = Any()
+        private val deviceMutexes = mutableMapOf<String, Mutex>()
+
+        private fun mutexFor(
+            ip: String
+        ): Mutex {
+            return synchronized(lock) {
+                deviceMutexes.getOrPut(ip) {
+                    Mutex()
+                }
+            }
+        }
     }
 }
