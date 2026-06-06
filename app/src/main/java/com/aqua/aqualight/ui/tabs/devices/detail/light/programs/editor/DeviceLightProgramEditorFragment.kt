@@ -33,7 +33,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgr
 import kotlinx.coroutines.launch
 
 class DeviceLightProgramEditorFragment :
-    Fragment(R.layout.fragment_device_light_program_editor) {
+Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
@@ -43,10 +43,10 @@ class DeviceLightProgramEditorFragment :
     private var isRendering = false
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID, 0L)
+    get() = requireArguments().getLong(ARG_DEVICE_ID, 0L)
 
     private val programId: String?
-        get() = arguments?.getString(ARG_PROGRAM_ID)
+    get() = arguments?.getString(ARG_PROGRAM_ID)
 
     override fun onViewCreated(
         view: View,
@@ -118,7 +118,8 @@ class DeviceLightProgramEditorFragment :
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
+                viewModel.uiState.collect {
+                    state ->
                     renderUiState(state)
                 }
             }
@@ -128,7 +129,8 @@ class DeviceLightProgramEditorFragment :
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { event ->
+                viewModel.events.collect {
+                    event ->
                     when (event) {
                         is DeviceLightProgramEditorEvent.ShowMessage -> {
                             Toast.makeText(
@@ -177,6 +179,12 @@ class DeviceLightProgramEditorFragment :
 
         binding.lightCurveGraphView.setState(state.graphState)
 
+        binding.btnPreviewProgram.text = if (state.isPreviewRunning) {
+            "■"
+        } else {
+            "▶"
+        }
+
         renderRepeatMode(state)
         renderMoonlightSummary(state)
         renderCloudSimulationSummary(state)
@@ -190,12 +198,13 @@ class DeviceLightProgramEditorFragment :
             val state = viewModel.uiState.value
 
             LightPreviewDaySheet
-                .create(requireContext())
-                .show(
-                    initialSpeed = state.previewSpeed
-                ) { speed ->
-                    viewModel.startPreview(speed)
-                }
+            .create(requireContext())
+            .show(
+                initialSpeed = state.previewSpeed
+            ) {
+                speed ->
+                viewModel.startPreview(speed)
+            }
         }
 
         binding.tvTimeStart.setOnClickListener {
@@ -204,7 +213,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "Start Time",
                 point = state.start
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 viewModel.updateStartTime(selectedPoint)
             }
         }
@@ -215,7 +225,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "Peak Start Time",
                 point = state.peakStart
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 viewModel.updatePeakStartTime(selectedPoint)
             }
         }
@@ -226,7 +237,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "Peak End Time",
                 point = state.peakEnd
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 viewModel.updatePeakEndTime(selectedPoint)
             }
         }
@@ -237,7 +249,8 @@ class DeviceLightProgramEditorFragment :
             showTimePickerSheet(
                 title = "End Time",
                 point = state.end
-            ) { selectedPoint ->
+            ) {
+                selectedPoint ->
                 viewModel.updateEndTime(selectedPoint)
             }
         }
@@ -258,48 +271,52 @@ class DeviceLightProgramEditorFragment :
             val state = viewModel.uiState.value
 
             LightCustomDaysSheet
-                .create(requireContext())
-                .show(
-                    selectedDays = state.selectedDays
-                ) { days ->
-                    viewModel.updateCustomDays(days)
-                }
+            .create(requireContext())
+            .show(
+                selectedDays = state.selectedDays
+            ) {
+                days ->
+                viewModel.updateCustomDays(days)
+            }
         }
 
         binding.actionMoonlight.root.setOnClickListener {
             val state = viewModel.uiState.value
 
             LightMoonlightSheet
-                .create(requireContext())
-                .show(
-                    initialSettings = state.moonlightSettings
-                ) { settings ->
-                    viewModel.updateMoonlight(settings)
-                }
+            .create(requireContext())
+            .show(
+                initialSettings = state.moonlightSettings
+            ) {
+                settings ->
+                viewModel.updateMoonlight(settings)
+            }
         }
 
         binding.actionCloudSimulation.root.setOnClickListener {
             val state = viewModel.uiState.value
 
             LightCloudSimulationSheet
-                .create(requireContext())
-                .show(
-                    initialSettings = state.cloudSimulationSettings
-                ) { settings ->
-                    viewModel.updateCloudSimulation(settings)
-                }
+            .create(requireContext())
+            .show(
+                initialSettings = state.cloudSimulationSettings
+            ) {
+                settings ->
+                viewModel.updateCloudSimulation(settings)
+            }
         }
 
         binding.actionTransitionSmoothing.root.setOnClickListener {
             val state = viewModel.uiState.value
 
             LightTransitionVariantSheet
-                .create(requireContext())
-                .show(
-                    initialMode = state.transitionMode
-                ) { mode ->
-                    viewModel.updateTransitionMode(mode)
-                }
+            .create(requireContext())
+            .show(
+                initialMode = state.transitionMode
+            ) {
+                mode ->
+                viewModel.updateTransitionMode(mode)
+            }
         }
 
         binding.btnLoadToDevice.setOnClickListener {
@@ -322,7 +339,8 @@ class DeviceLightProgramEditorFragment :
     }
 
     private fun setupSliders() {
-        binding.sliderRed.addOnChangeListener { _, value, _ ->
+        binding.sliderRed.addOnChangeListener {
+            _, value, _ ->
             if (isRendering) return@addOnChangeListener
 
             val current = viewModel.uiState.value.channelValues
@@ -332,7 +350,8 @@ class DeviceLightProgramEditorFragment :
             )
         }
 
-        binding.sliderGreen.addOnChangeListener { _, value, _ ->
+        binding.sliderGreen.addOnChangeListener {
+            _, value, _ ->
             if (isRendering) return@addOnChangeListener
 
             val current = viewModel.uiState.value.channelValues
@@ -342,7 +361,8 @@ class DeviceLightProgramEditorFragment :
             )
         }
 
-        binding.sliderBlue.addOnChangeListener { _, value, _ ->
+        binding.sliderBlue.addOnChangeListener {
+            _, value, _ ->
             if (isRendering) return@addOnChangeListener
 
             val current = viewModel.uiState.value.channelValues
@@ -352,7 +372,8 @@ class DeviceLightProgramEditorFragment :
             )
         }
 
-        binding.sliderWhite.addOnChangeListener { _, value, _ ->
+        binding.sliderWhite.addOnChangeListener {
+            _, value, _ ->
             if (isRendering) return@addOnChangeListener
 
             val current = viewModel.uiState.value.channelValues
@@ -369,19 +390,20 @@ class DeviceLightProgramEditorFragment :
         onSelected: (LightCurvePoint) -> Unit
     ) {
         LightCurveTimePickerSheet
-            .create(requireContext())
-            .show(
-                title = title,
-                initialHour = point.hour,
-                initialMinute = point.minute
-            ) { hour, minute ->
-                onSelected(
-                    LightCurvePoint.of(
-                        hour = hour,
-                        minute = minute
-                    )
+        .create(requireContext())
+        .show(
+            title = title,
+            initialHour = point.hour,
+            initialMinute = point.minute
+        ) {
+            hour, minute ->
+            onSelected(
+                LightCurvePoint.of(
+                    hour = hour,
+                    minute = minute
                 )
-            }
+            )
+        }
     }
 
     private fun showProgramNameSheet(
@@ -391,18 +413,19 @@ class DeviceLightProgramEditorFragment :
         isActive: Boolean
     ) {
         LightProgramNameSheet
-            .create(requireContext())
-            .show(
-                title = title,
-                subtitle = subtitle,
-                primaryButtonText = primaryButtonText,
-                initialName = viewModel.currentProgramName()
-            ) { name ->
-                viewModel.saveProgram(
-                    name = name,
-                    isActive = isActive
-                )
-            }
+        .create(requireContext())
+        .show(
+            title = title,
+            subtitle = subtitle,
+            primaryButtonText = primaryButtonText,
+            initialName = viewModel.currentProgramName()
+        ) {
+            name ->
+            viewModel.saveProgram(
+                name = name,
+                isActive = isActive
+            )
+        }
     }
 
     private fun renderRepeatMode(
@@ -459,8 +482,8 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.actionMoonlight.root
-            .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = subtitle
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
     }
 
     private fun renderCloudSimulationSummary(
@@ -481,8 +504,8 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.actionCloudSimulation.root
-            .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = subtitle
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
     }
 
     private fun renderTransitionSummary(
@@ -495,8 +518,8 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.actionTransitionSmoothing.root
-            .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = subtitle
+        .findViewById<TextView>(R.id.tvActionSubtitle)
+        ?.text = subtitle
     }
 
     override fun onDestroyView() {

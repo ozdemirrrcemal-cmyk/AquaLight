@@ -30,30 +30,48 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
+import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlin.math.roundToInt
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 class DeviceLightProgramEditorViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
     private val appContext =
-        application.applicationContext
+    application.applicationContext
 
     private val lightProgramsDataStoreManager =
-        LightProgramsDataStoreManager(appContext)
+    LightProgramsDataStoreManager(appContext)
 
     private val lightProgramCommandManager =
-        Esp32LightProgramCommandManager(
+    Esp32LightProgramCommandManager(
+        context = appContext
+    )
+
+    private val lightRuntimeRepository =
+    LightRuntimeRepository(
+        commandManager = Esp32LightDeviceCommandManager(
             context = appContext
         )
+    )
+
+    private var previewJob: Job? = null
 
     private val _uiState =
-        MutableStateFlow(DeviceLightProgramEditorUiState.default())
+    MutableStateFlow(DeviceLightProgramEditorUiState.default())
 
     val uiState: StateFlow<DeviceLightProgramEditorUiState> =
-        _uiState.asStateFlow()
+    _uiState.asStateFlow()
 
     private val eventsChannel =
-        Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
+    Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
 
@@ -61,7 +79,7 @@ class DeviceLightProgramEditorViewModel(
     private var liveStateJob: Job? = null
 
     private val liveRefreshOwnerKey =
-        "DeviceLightProgramEditorViewModel_${System.identityHashCode(this)}"
+    "DeviceLightProgramEditorViewModel_${System.identityHashCode(this)}"
 
     private var editingProgramId: String? = null
     private var editingProgramName: String? = null
@@ -131,11 +149,13 @@ class DeviceLightProgramEditorViewModel(
         liveStateJob = viewModelScope.launch {
             LightDeviceLiveRefreshManager.observe(
                 deviceId = deviceId
-            ).collect { liveState ->
+            ).collect {
+                liveState ->
                 val deviceTime = liveState.deviceTime
-                    ?: return@collect
+                ?: return@collect
 
-                _uiState.update { state ->
+                _uiState.update {
+                    state ->
                     state.copy(
                         currentDeviceTime = deviceTime.curvePoint
                     )
@@ -354,15 +374,16 @@ class DeviceLightProgramEditorViewModel(
 
             runCatching {
                 val existingPrograms =
-                    lightProgramsDataStoreManager.programsFlow.first()
+                lightProgramsDataStoreManager.programsFlow.first()
 
                 val programsToLoad = if (savedProgram.isActive) {
                     existingPrograms
-                        .filter { program ->
-                            program.deviceId == savedProgram.deviceId &&
-                                program.isActive &&
-                                program.id != savedProgram.id
-                        } + savedProgram
+                    .filter {
+                        program ->
+                        program.deviceId == savedProgram.deviceId &&
+                        program.isActive &&
+                        program.id != savedProgram.id
+                    } + savedProgram
                 } else {
                     emptyList()
                 }
@@ -406,7 +427,8 @@ class DeviceLightProgramEditorViewModel(
                 )
 
                 eventsChannel.send(DeviceLightProgramEditorEvent.NavigateBack)
-            }.onFailure { error ->
+            }.onFailure {
+                error ->
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowError(
                         error.message ?: "Program could not be saved"
@@ -461,10 +483,11 @@ class DeviceLightProgramEditorViewModel(
     ): SavedLightProgram? {
         val existingPrograms = lightProgramsDataStoreManager.programsFlow.first()
 
-        val comparablePrograms = existingPrograms.filter { program ->
+        val comparablePrograms = existingPrograms.filter {
+            program ->
             program.deviceId == savedProgram.deviceId &&
-                program.isActive &&
-                program.id != savedProgram.id
+            program.isActive &&
+            program.id != savedProgram.id
         }
 
         return LightProgramScheduleConflictValidator.findConflict(
@@ -486,18 +509,264 @@ class DeviceLightProgramEditorViewModel(
     ) {
         updatePreviewSpeed(speed)
 
-        viewModelScope.launch {
-            eventsChannel.send(
-                DeviceLightProgramEditorEvent.ShowMessage(
-                    "Preview started: ${speed.label}"
-                )
-            )
+        previewJob?.cancel()
 
-            // TODO: Send uiState.value.draft as temporary preview payload to ESP32.
+        _uiState.update {
+            state ->
+            state.copy(
+                previewSimulationTime = null,
+                isPreviewRunning = false
+            )
+        }
+
+        previewJob = viewModelScope.launch {
+            if (deviceId <= 0L) {
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.ShowError(
+                        "Device information is missing"
+                    )
+                )
+                return@launch
+            }
+
+            val draft = _uiState.value.draft
+
+            when (val validation = LightProgramDraftValidator.validate(draft)) {
+                LightProgramValidationResult.Valid -> Unit
+
+                is LightProgramValidationResult.Invalid -> {
+                    eventsChannel.send(
+                        DeviceLightProgramEditorEvent.ShowError(
+                            validation.message
+                        )
+                    )
+                    return@launch
+                }
+            }
+
+            var previewStarted = false
+            var previewFinishedNormally = false
+
+            try {
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.ShowMessage(
+                        "Preview started: ${speed.label}"
+                    )
+                )
+
+                previewStarted = true
+
+                val frameCount = PREVIEW_FRAME_COUNT
+                val delayMs = speed.previewFrameDelayMillis()
+
+                for (frame in 0 until frameCount) {
+                    if (!isActive) return@launch
+
+                    val minute = ((24 * 60) * frame) / (frameCount - 1)
+
+                    _uiState.update {
+                        state ->
+                        state.copy(
+                            previewSimulationTime = pointFromMinute(minute),
+                            isPreviewRunning = true
+                        )
+                    }
+
+                    val red = calculatePreviewValueAtMinute(
+                        draft = draft,
+                        minute = minute,
+                        peakPercent = draft.channelValues.red
+                    )
+
+                    val green = calculatePreviewValueAtMinute(
+                        draft = draft,
+                        minute = minute,
+                        peakPercent = draft.channelValues.green
+                    )
+
+                    val blue = calculatePreviewValueAtMinute(
+                        draft = draft,
+                        minute = minute,
+                        peakPercent = draft.channelValues.blue
+                    )
+
+                    val white = calculatePreviewValueAtMinute(
+                        draft = draft,
+                        minute = minute,
+                        peakPercent = draft.channelValues.white
+                    )
+
+                    val result = lightRuntimeRepository.applyManualScene(
+                        deviceId = deviceId,
+                        sceneName = "Preview Day",
+                        red = red,
+                        green = green,
+                        blue = blue,
+                        white = white
+                    )
+
+                    if (!result.isSuccess) {
+                        eventsChannel.send(
+                            DeviceLightProgramEditorEvent.ShowError(
+                                result.message ?: "Preview could not be sent to device"
+                            )
+                        )
+                        return@launch
+                    }
+
+                    delay(delayMs)
+                }
+
+                previewFinishedNormally = true
+
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.ShowMessage(
+                        "Preview finished"
+                    )
+                )
+            } finally {
+                if (previewStarted) {
+                    withContext(NonCancellable) {
+                        resumeAutoAfterPreview()
+                    }
+                } else {
+                    _uiState.update {
+                        state ->
+                        state.copy(
+                            previewSimulationTime = null,
+                            isPreviewRunning = false
+                        )
+                    }
+                }
+
+                if (previewFinishedNormally) {
+                    previewJob = null
+                }
+            }
         }
     }
 
+    private fun calculatePreviewValueAtMinute(
+        draft: LightProgramDraft,
+        minute: Int,
+        peakPercent: Int
+    ): Int {
+        val safePeak = peakPercent.coerceIn(0, 100)
+
+        if (safePeak <= 0) {
+            return 0
+        }
+
+        val points = LightCurveInterpolator.buildCurvePoints(
+            startMinute = draft.start.totalMinutes,
+            peakStartMinute = draft.peakStart.totalMinutes,
+            peakEndMinute = draft.peakEnd.totalMinutes,
+            endMinute = LightProgramTimeMath.endMinutes(draft.end),
+            peakPercent = safePeak,
+            transitionMode = draft.transitionMode
+        ).sortedBy {
+            point ->
+            point.x
+        }
+
+        if (points.isEmpty()) {
+            return 0
+        }
+
+        val currentMinute = minute.toDouble()
+
+        val previous = points.lastOrNull {
+            point ->
+            point.x <= currentMinute
+        }
+
+        val next = points.firstOrNull {
+            point ->
+            point.x >= currentMinute
+        }
+
+        val value = when {
+            previous == null -> points.first().y
+            next == null -> points.last().y
+            previous.x == next.x -> previous.y
+
+            else -> {
+                val progress =
+                (currentMinute - previous.x) / (next.x - previous.x)
+
+                previous.y + ((next.y - previous.y) * progress)
+            }
+        }
+
+        return value
+        .roundToInt()
+        .coerceIn(0, 100)
+    }
+
+    private suspend fun resumeAutoAfterPreview() {
+        lightRuntimeRepository.resumeAuto(
+            deviceId = deviceId
+        )
+
+        LightDeviceLiveRefreshManager.refreshNow(
+            context = appContext,
+            deviceId = deviceId
+        )
+
+        _uiState.update {
+            state ->
+            state.copy(
+                previewSimulationTime = null,
+                isPreviewRunning = false
+            )
+        }
+    }
+
+    private fun PreviewSpeed.previewFrameDelayMillis(): Long {
+        return when (name) {
+            "ONE_MINUTE" -> 625L
+            "TWO_MINUTES" -> 1_250L
+            "FIVE_MINUTES" -> 3_125L
+            "FAST" -> 300L
+            "NORMAL" -> 625L
+            "SLOW" -> 1_250L
+            else -> 625L
+        }
+    }
+
+    private fun pointFromMinute(
+        minute: Int
+    ): LightCurvePoint {
+        val safeMinute = minute.coerceIn(
+            0,
+            24 * 60
+        )
+
+        if (safeMinute >= 24 * 60) {
+            return LightCurvePoint.of(
+                hour = 0,
+                minute = 0
+            )
+        }
+
+        return LightCurvePoint.of(
+            hour = safeMinute / 60,
+            minute = safeMinute % 60
+        )
+    }
+
     override fun onCleared() {
+        previewJob?.cancel()
+        previewJob = null
+
+        _uiState.update {
+            state ->
+            state.copy(
+                previewSimulationTime = null,
+                isPreviewRunning = false
+            )
+        }
+
         liveStateJob?.cancel()
 
         if (deviceId > 0L) {
@@ -507,5 +776,9 @@ class DeviceLightProgramEditorViewModel(
         }
 
         super.onCleared()
+    }
+
+    companion object {
+        private const val PREVIEW_FRAME_COUNT = 96
     }
 }

@@ -17,32 +17,34 @@ data class DeviceLightProgramEditorUiState(
     val cloudSimulationSettings: CloudSimulationSettings,
     val transitionMode: LightCurveTransitionMode,
     val previewSpeed: PreviewSpeed,
-    val currentDeviceTime: LightCurvePoint
+    val currentDeviceTime: LightCurvePoint,
+    val previewSimulationTime: LightCurvePoint? = null,
+    val isPreviewRunning: Boolean = false
 ) {
     val graphState: LightCurveGraphState
-    get() = LightCurveGraphState(
-        start = start,
-        peakStart = peakStart,
-        peakEnd = peakEnd,
-        end = end,
-        channelValues = channelValues,
-        currentTime = currentDeviceTime,
-        transitionMode = transitionMode
-    )
+        get() = LightCurveGraphState(
+            start = start,
+            peakStart = peakStart,
+            peakEnd = peakEnd,
+            end = end,
+            channelValues = channelValues,
+            currentTime = previewSimulationTime ?: currentDeviceTime,
+            transitionMode = transitionMode
+        )
 
     val draft: LightProgramDraft
-    get() = LightProgramDraft(
-        start = start,
-        peakStart = peakStart,
-        peakEnd = peakEnd,
-        end = end,
-        channelValues = channelValues,
-        repeatMode = repeatMode,
-        selectedDays = selectedDays,
-        moonlightSettings = moonlightSettings,
-        cloudSimulationSettings = cloudSimulationSettings,
-        transitionMode = transitionMode
-    )
+        get() = LightProgramDraft(
+            start = start,
+            peakStart = peakStart,
+            peakEnd = peakEnd,
+            end = end,
+            channelValues = channelValues,
+            repeatMode = repeatMode,
+            selectedDays = selectedDays,
+            moonlightSettings = moonlightSettings,
+            cloudSimulationSettings = cloudSimulationSettings,
+            transitionMode = transitionMode
+        )
 
     companion object {
         fun default(): DeviceLightProgramEditorUiState {
@@ -52,6 +54,7 @@ data class DeviceLightProgramEditorUiState(
                 start = draft.start,
                 peakStart = draft.peakStart,
                 peakEnd = draft.peakEnd,
+                end = draft.end,
                 channelValues = draft.channelValues,
                 repeatMode = draft.repeatMode,
                 selectedDays = draft.selectedDays,
@@ -59,8 +62,7 @@ data class DeviceLightProgramEditorUiState(
                 cloudSimulationSettings = draft.cloudSimulationSettings,
                 transitionMode = draft.transitionMode,
                 previewSpeed = PreviewSpeed.ONE_MINUTE,
-                currentDeviceTime = LightCurvePoint.of(0, 0),
-                end = draft.end
+                currentDeviceTime = LightCurvePoint.of(0, 0)
             )
         }
     }
