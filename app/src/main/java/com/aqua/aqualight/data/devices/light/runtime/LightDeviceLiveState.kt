@@ -7,6 +7,10 @@ data class LightDeviceLiveState(
     val isRefreshing: Boolean = false,
     val deviceTime: LightDeviceTimeState? = null,
     val channels: List<LightDeviceLiveChannelState> = emptyList(),
+    val thermalProtection: LightThermalProtectionState =
+        LightThermalProtectionState(),
+    val cooling: LightCoolingState =
+        LightCoolingState(),
     val lastUpdatedMillis: Long = 0L,
     val errorMessage: String? = null
 ) {
@@ -69,6 +73,8 @@ data class LightDeviceLiveState(
                 isRefreshing = false,
                 deviceTime = null,
                 channels = emptyList(),
+                thermalProtection = LightThermalProtectionState(),
+                cooling = LightCoolingState(),
                 lastUpdatedMillis = 0L,
                 errorMessage = null
             )

@@ -455,23 +455,55 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="7dp"
-                                android:text="Automatically reduces output when the controller gets too hot." />
+                                android:text="Thermal safety is always active. Adjust how the controller reacts when temperature rises." />
 
                         </LinearLayout>
 
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/switchTemperatureProtection"
+                        <TextView
+                            android:id="@+id/tvThermalProtectionStatus"
+                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:checked="true" />
+                            android:layout_height="30dp"
+                            android:background="@drawable/bg_light_filter_selected"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="ACTIVE"
+                            tools:text="ACTIVE" />
 
                     </LinearLayout>
+                    <LinearLayout
+                        android:id="@+id/rowCurrentTemperature"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="20dp"
+                        android:background="@drawable/bg_light_program_time_panel"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp">
 
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Body"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Current Temperature" />
+
+                        <TextView
+                            android:id="@+id/tvCurrentTemperatureValue"
+                            style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-- °C"
+                            tools:text="38.4°C" />
+
+                    </LinearLayout>
                     <LinearLayout
                         android:id="@+id/rowLimitTemperature"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="10dp"
                         android:background="@drawable/bg_light_program_time_panel"
                         android:clickable="true"
                         android:focusable="true"
@@ -586,7 +618,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="7dp"
-                        android:text="Fan cooling uses safe factory defaults and is managed by the device." />
+                        android:text="Automatic fan cooling protects the controller from overheating." />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -605,14 +637,15 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Fan Mode" />
+                                android:text="Status" />
 
                             <TextView
-                                android:id="@+id/tvCoolingMode"
+                                android:id="@+id/tvCoolingStatus"
                                 style="@style/TextAppearance.Aqua.Light.Body"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Auto default" />
+                                android:text="Syncing"
+                                tools:text="Auto · 42%" />
 
                         </LinearLayout>
 
@@ -627,14 +660,15 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Fan Start" />
+                                android:text="Controller Temp" />
 
                             <TextView
-                                android:id="@+id/tvFanStartValue"
+                                android:id="@+id/tvCoolingControllerTemp"
                                 style="@style/TextAppearance.Aqua.Light.Body"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="30°C" />
+                                android:text="-- °C"
+                                tools:text="38.4°C" />
 
                         </LinearLayout>
 
@@ -649,23 +683,114 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Full Speed" />
+                                android:text="Fans" />
 
                             <TextView
-                                android:id="@+id/tvFanFullSpeedValue"
+                                android:id="@+id/tvCoolingFans"
                                 style="@style/TextAppearance.Aqua.Light.Body"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="50°C" />
+                                android:text="Syncing"
+                                tools:text="2 active" />
 
                         </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowCoolingMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_light_program_time_panel"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Body"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Cooling Mode" />
+
+                        <TextView
+                            android:id="@+id/tvCoolingMode"
+                            style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Auto"
+                            tools:text="Auto" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowFanStart"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_light_program_time_panel"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Body"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Fan Start" />
+
+                        <TextView
+                            android:id="@+id/tvFanStartValue"
+                            style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="30°C" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowFanFullSpeed"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_light_program_time_panel"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.Body"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Full Speed" />
+
+                        <TextView
+                            android:id="@+id/tvFanFullSpeedValue"
+                            style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="50°C" />
 
                     </LinearLayout>
 
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
-
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

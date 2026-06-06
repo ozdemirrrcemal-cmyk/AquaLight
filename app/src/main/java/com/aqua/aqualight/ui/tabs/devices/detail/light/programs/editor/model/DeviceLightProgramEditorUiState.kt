@@ -20,29 +20,29 @@ data class DeviceLightProgramEditorUiState(
     val currentDeviceTime: LightCurvePoint
 ) {
     val graphState: LightCurveGraphState
-        get() = LightCurveGraphState(
-            start = start,
-            peakStart = peakStart,
-            peakEnd = peakEnd,
-            end = end,
-            channelValues = channelValues,
-            currentTime = currentDeviceTime,
-            transitionMode = transitionMode
-        )
+    get() = LightCurveGraphState(
+        start = start,
+        peakStart = peakStart,
+        peakEnd = peakEnd,
+        end = end,
+        channelValues = channelValues,
+        currentTime = currentDeviceTime,
+        transitionMode = transitionMode
+    )
 
     val draft: LightProgramDraft
-        get() = LightProgramDraft(
-            start = start,
-            peakStart = peakStart,
-            peakEnd = peakEnd,
-            end = end,
-            channelValues = channelValues,
-            repeatMode = repeatMode,
-            selectedDays = selectedDays,
-            moonlightSettings = moonlightSettings,
-            cloudSimulationSettings = cloudSimulationSettings,
-            transitionMode = transitionMode
-        )
+    get() = LightProgramDraft(
+        start = start,
+        peakStart = peakStart,
+        peakEnd = peakEnd,
+        end = end,
+        channelValues = channelValues,
+        repeatMode = repeatMode,
+        selectedDays = selectedDays,
+        moonlightSettings = moonlightSettings,
+        cloudSimulationSettings = cloudSimulationSettings,
+        transitionMode = transitionMode
+    )
 
     companion object {
         fun default(): DeviceLightProgramEditorUiState {
@@ -59,7 +59,7 @@ data class DeviceLightProgramEditorUiState(
                 cloudSimulationSettings = draft.cloudSimulationSettings,
                 transitionMode = draft.transitionMode,
                 previewSpeed = PreviewSpeed.ONE_MINUTE,
-                currentDeviceTime = LightCurvePoint.of(13, 28),
+                currentDeviceTime = LightCurvePoint.of(0, 0),
                 end = draft.end
             )
         }

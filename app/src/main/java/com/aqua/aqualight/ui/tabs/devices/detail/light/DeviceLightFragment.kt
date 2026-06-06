@@ -25,15 +25,15 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private val viewModel: DeviceLightViewModel by viewModels()
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val deviceTitle: String
-        get() = arguments
-            ?.getString(ARG_DEVICE_TITLE)
-            .orEmpty()
-            .ifBlank {
-                "WRGB Pro"
-            }
+    get() = arguments
+    ?.getString(ARG_DEVICE_TITLE)
+    .orEmpty()
+    .ifBlank {
+        "WRGB Pro"
+    }
 
     override fun onViewCreated(
         view: View,
@@ -138,7 +138,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
+                viewModel.uiState.collect {
+                    state ->
                     renderUiState(state)
                 }
             }
@@ -152,6 +153,16 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         binding.tvLightRunStatus.text = state.runStatus
         binding.tvOnlineChip.text = state.onlineStatusText
 
+        binding.tvLiveModeChip.text = state.liveModeText
+
+        binding.tvLiveRedChannel.text = state.redChannelText
+        binding.tvLiveGreenChannel.text = state.greenChannelText
+        binding.tvLiveBlueChannel.text = state.blueChannelText
+        binding.tvLiveWhiteChannel.text = state.whiteChannelText
+        binding.tvHealthTempValue.text = state.healthTemperatureText
+        binding.tvHealthTempStatus.text = state.healthTemperatureStatusText
+        binding.tvHealthFanValue.text = state.healthFanText
+        binding.tvHealthFanStatus.text = state.healthFanStatusText
         binding.tvCurrentWatt.text = state.currentWattText
         binding.tvCurrentOutputPercent.text = state.outputPercentText
 
@@ -173,12 +184,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             "Refreshing device status",
             Toast.LENGTH_SHORT
         ).show()
-
-        // TODO: ESP32 bağlantısı yapılınca:
-        // - cihaz online/offline durumu yeniden okunacak
-        // - aktif program cihazdan doğrulanacak
-        // - current power / output / next event yenilenecek
-        // - timeline yeniden hesaplanacak
     }
 
     override fun onDestroyView() {

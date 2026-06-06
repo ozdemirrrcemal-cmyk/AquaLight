@@ -30,6 +30,9 @@ object LightDeviceLiveRefreshManager {
     private val refreshJobs =
         mutableMapOf<Long, Job>()
 
+    private val activeConsumers =
+        mutableMapOf<Long, MutableSet<String>>()
+
     fun observe(
         deviceId: Long
     ): StateFlow<LightDeviceLiveState> {
@@ -41,25 +44,40 @@ object LightDeviceLiveRefreshManager {
     fun start(
         context: Context,
         deviceId: Long,
+        ownerKey: String,
         refreshIntervalMs: Long = DEFAULT_REFRESH_INTERVAL_MS
     ) {
-        if (deviceId <= 0L) {
+        if (deviceId <= 0L || ownerKey.isBlank()) {
             return
         }
 
         val appContext = context.applicationContext
 
+        LightAppVisibilityMonitor.register(appContext)
         DevicePresenceMonitor.start(appContext)
 
         synchronized(lock) {
+            val consumers = activeConsumers.getOrPut(deviceId) {
+                mutableSetOf()
+            }
+
+            consumers.add(ownerKey)
+
             val existingJob = refreshJobs[deviceId]
 
             if (existingJob?.isActive == true) {
+                scope.launch {
+                    refreshIfForeground(
+                        context = appContext,
+                        deviceId = deviceId,
+                        showRefreshing = true
+                    )
+                }
                 return
             }
 
             refreshJobs[deviceId] = scope.launch {
-                refreshInternal(
+                refreshIfForeground(
                     context = appContext,
                     deviceId = deviceId,
                     showRefreshing = true
@@ -68,7 +86,7 @@ object LightDeviceLiveRefreshManager {
                 while (isActive) {
                     delay(refreshIntervalMs)
 
-                    refreshInternal(
+                    refreshIfForeground(
                         context = appContext,
                         deviceId = deviceId,
                         showRefreshing = false
@@ -79,10 +97,30 @@ object LightDeviceLiveRefreshManager {
     }
 
     fun stop(
-        deviceId: Long
+        deviceId: Long,
+        ownerKey: String
     ) {
+        if (deviceId <= 0L || ownerKey.isBlank()) {
+            return
+        }
+
         synchronized(lock) {
+            val consumers = activeConsumers[deviceId]
+
+            consumers?.remove(ownerKey)
+
+            if (!consumers.isNullOrEmpty()) {
+                return
+            }
+
+            activeConsumers.remove(deviceId)
             refreshJobs.remove(deviceId)?.cancel()
+
+            stateFor(deviceId).update { state ->
+                state.copy(
+                    isRefreshing = false
+                )
+            }
         }
     }
 
@@ -96,13 +134,36 @@ object LightDeviceLiveRefreshManager {
 
         val appContext = context.applicationContext
 
+        LightAppVisibilityMonitor.register(appContext)
+
         scope.launch {
-            refreshInternal(
+            refreshIfForeground(
                 context = appContext,
                 deviceId = deviceId,
                 showRefreshing = true
             )
         }
+    }
+
+    private suspend fun refreshIfForeground(
+        context: Context,
+        deviceId: Long,
+        showRefreshing: Boolean
+    ) {
+        if (!LightAppVisibilityMonitor.isForeground.value) {
+            stateFor(deviceId).update { state ->
+                state.copy(
+                    isRefreshing = false
+                )
+            }
+            return
+        }
+
+        refreshInternal(
+            context = context,
+            deviceId = deviceId,
+            showRefreshing = showRefreshing
+        )
     }
 
     private suspend fun refreshInternal(
@@ -162,6 +223,10 @@ object LightDeviceLiveRefreshManager {
                     } else {
                         state.channels
                     },
+                    thermalProtection = snapshot.thermalProtection
+                        ?: state.thermalProtection,
+                    cooling = snapshot.cooling
+                        ?: state.cooling,
                     lastUpdatedMillis = System.currentTimeMillis(),
                     errorMessage = snapshot.partialErrorMessage
                 )
@@ -170,7 +235,8 @@ object LightDeviceLiveRefreshManager {
             stateFlow.update { state ->
                 state.copy(
                     isRefreshing = false,
-                    errorMessage = error.message ?: "Live device data could not be read"
+                    errorMessage = error.message
+                        ?: "Live device data could not be read"
                 )
             }
         }

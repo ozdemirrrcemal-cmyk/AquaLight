@@ -8,11 +8,23 @@ data class DeviceLightDashboardUiState(
     val runStatus: String = "Create or load a program",
     val onlineStatusText: String = "ONLINE",
 
+    val liveModeText: String = "IDLE",
+
     val currentWattText: String = "-- W",
     val outputPercentText: String = "0%",
 
+    val redChannelText: String = "R --",
+    val greenChannelText: String = "G --",
+    val blueChannelText: String = "B --",
+    val whiteChannelText: String = "W --",
+
     val deviceTimeText: String = "--:--",
     val nextEventText: String = "No upcoming event",
+
+    val healthTemperatureText: String = "-- °C",
+    val healthTemperatureStatusText: String = "Syncing",
+    val healthFanText: String = "Syncing",
+    val healthFanStatusText: String = "Syncing",
 
     val timelineStatusText: String = "No active plan",
     val todayPlanGraphState: TodayLightPlanGraphState =

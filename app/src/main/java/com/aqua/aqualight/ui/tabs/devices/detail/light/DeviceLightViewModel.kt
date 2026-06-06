@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
+import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeState
@@ -23,19 +24,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.Locale
 
 class DeviceLightViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
     private val appContext =
-        application.applicationContext
+    application.applicationContext
 
     private val lightProgramsDataStoreManager =
-        LightProgramsDataStoreManager(appContext)
+    LightProgramsDataStoreManager(appContext)
 
     private val lightRuntimeRepository =
-        LightRuntimeRepository()
+    LightRuntimeRepository()
 
     private val _uiState = MutableStateFlow(
         createDeviceTimeUnavailableState(
@@ -45,10 +47,13 @@ class DeviceLightViewModel(
     )
 
     val uiState: StateFlow<DeviceLightDashboardUiState> =
-        _uiState.asStateFlow()
+    _uiState.asStateFlow()
 
     private var deviceId: Long = 0L
     private var observeJob: Job? = null
+
+    private val liveRefreshOwnerKey =
+    "DeviceLightViewModel_${System.identityHashCode(this)}"
 
     fun initialize(
         deviceId: Long
@@ -59,7 +64,10 @@ class DeviceLightViewModel(
             previousDeviceId > 0L &&
             previousDeviceId != deviceId
         ) {
-            LightDeviceLiveRefreshManager.stop(previousDeviceId)
+            LightDeviceLiveRefreshManager.stop(
+                deviceId = previousDeviceId,
+                ownerKey = liveRefreshOwnerKey
+            )
         }
 
         this.deviceId = deviceId
@@ -68,7 +76,8 @@ class DeviceLightViewModel(
 
         LightDeviceLiveRefreshManager.start(
             context = appContext,
-            deviceId = deviceId
+            deviceId = deviceId,
+            ownerKey = liveRefreshOwnerKey
         )
 
         observeJob = viewModelScope.launch {
@@ -76,16 +85,19 @@ class DeviceLightViewModel(
                 lightProgramsDataStoreManager.programsFlow,
                 lightRuntimeRepository.observeManualRuntime(deviceId),
                 LightDeviceLiveRefreshManager.observe(deviceId)
-            ) { programs, manualRuntime, liveState ->
+            ) {
+                programs, manualRuntime, liveState ->
                 Triple(
                     programs,
                     manualRuntime,
                     liveState
                 )
-            }.collect { (programs, manualRuntime, liveState) ->
-                val activeProgramsForDevice = programs.filter { program ->
+            }.collect {
+                (programs, manualRuntime, liveState) ->
+                val activeProgramsForDevice = programs.filter {
+                    program ->
                     program.deviceId == this@DeviceLightViewModel.deviceId &&
-                        program.isActive
+                    program.isActive
                 }
 
                 val baseState = createStateFromPrograms(
@@ -121,14 +133,14 @@ class DeviceLightViewModel(
         liveState: LightDeviceLiveState
     ): DeviceLightDashboardUiState {
         val sceneName = manualRuntime.activeSceneName
-            .orEmpty()
-            .ifBlank {
-                if (manualRuntime.isManualScene) {
-                    "Manual Scene"
-                } else {
-                    "Manual Control"
-                }
+        .orEmpty()
+        .ifBlank {
+            if (manualRuntime.isManualScene) {
+                "Manual Scene"
+            } else {
+                "Manual Control"
             }
+        }
 
         val outputPercent = if (liveState.hasLiveChannels) {
             liveState.actualOutputPercent
@@ -160,6 +172,13 @@ class DeviceLightViewModel(
             nextEventText = "Auto paused",
             timelineStatusText = "Paused · Today plan below",
             todayPlanGraphState = pausedGraphState
+        ).withLiveIndicators(
+            liveState = liveState,
+            modeText = if (manualRuntime.isManualScene) {
+                "SCENE"
+            } else {
+                "MANUAL"
+            }
         )
     }
 
@@ -187,15 +206,17 @@ class DeviceLightViewModel(
         }
 
         val todayPrograms = programs
-            .filter { program ->
-                isScheduledToday(
-                    program = program,
-                    deviceTime = deviceTime
-                )
-            }
-            .sortedBy { program ->
-                program.draft.start.totalMinutes
-            }
+        .filter {
+            program ->
+            isScheduledToday(
+                program = program,
+                deviceTime = deviceTime
+            )
+        }
+        .sortedBy {
+            program ->
+            program.draft.start.totalMinutes
+        }
 
         if (todayPrograms.isEmpty()) {
             return DeviceLightDashboardUiState(
@@ -210,25 +231,35 @@ class DeviceLightViewModel(
                 todayPlanGraphState = TodayLightPlanGraphState.empty(
                     currentTime = currentTime
                 )
+            ).withLiveIndicators(
+                liveState = liveState,
+                modeText = if (liveState.actualOutputPercent > 0) {
+                    "AUTO"
+                } else {
+                    "IDLE"
+                }
             )
         }
 
-        val runningProgram = todayPrograms.firstOrNull { program ->
+        val runningProgram = todayPrograms.firstOrNull {
+            program ->
             isProgramRunningAt(
                 program = program,
                 minute = currentMinute
             )
         }
 
-        val nextProgramToday = todayPrograms.firstOrNull { program ->
+        val nextProgramToday = todayPrograms.firstOrNull {
+            program ->
             program.draft.start.totalMinutes > currentMinute
         }
 
         val displayProgram = runningProgram
-            ?: nextProgramToday
-            ?: todayPrograms.firstOrNull()
+        ?: nextProgramToday
+        ?: todayPrograms.firstOrNull()
 
-        val expectedOutput = runningProgram?.let { program ->
+        val expectedOutput = runningProgram?.let {
+            program ->
             calculateCurrentOutputPercent(
                 program = program,
                 currentMinute = currentMinute
@@ -241,10 +272,11 @@ class DeviceLightViewModel(
             expectedOutput
         }
 
-        val graphSegments = todayPrograms.map { program ->
+        val graphSegments = todayPrograms.map {
+            program ->
             val isCurrent = runningProgram?.id == program.id
             val isNext = runningProgram == null &&
-                nextProgramToday?.id == program.id
+            nextProgramToday?.id == program.id
 
             TodayLightPlanGraphSegment(
                 id = program.id,
@@ -285,6 +317,13 @@ class DeviceLightViewModel(
                 currentTime = currentTime,
                 segments = graphSegments
             )
+        ).withLiveIndicators(
+            liveState = liveState,
+            modeText = buildAutoModeText(
+                liveState = liveState,
+                runningProgram = runningProgram,
+                nextProgramToday = nextProgramToday
+            )
         )
     }
 
@@ -322,6 +361,9 @@ class DeviceLightViewModel(
             todayPlanGraphState = TodayLightPlanGraphState.empty(
                 currentTime = LightCurvePoint.of(0, 0)
             )
+        ).withLiveIndicators(
+            liveState = liveState,
+            modeText = "SYNC"
         )
     }
 
@@ -341,6 +383,13 @@ class DeviceLightViewModel(
             todayPlanGraphState = TodayLightPlanGraphState.empty(
                 currentTime = currentTime
             )
+        ).withLiveIndicators(
+            liveState = liveState,
+            modeText = if (liveState.actualOutputPercent > 0) {
+                "AUTO"
+            } else {
+                "IDLE"
+            }
         )
     }
 
@@ -355,9 +404,7 @@ class DeviceLightViewModel(
 
             nextProgramToday != null -> {
                 "Waiting for ${nextProgramToday.draft.start.label}"
-            }
-
-            else -> {
+            } else -> {
                 "Programs completed for today"
             }
         }
@@ -386,14 +433,13 @@ class DeviceLightViewModel(
 
                 currentMinute < endMinutes -> {
                     "$endLabel End"
-                }
-
-                else -> {
+                } else -> {
                     null
                 }
             }
 
-            val nextProgram = todayPrograms.firstOrNull { program ->
+            val nextProgram = todayPrograms.firstOrNull {
+                program ->
                 program.draft.start.totalMinutes > endMinutes
             }
 
@@ -408,9 +454,7 @@ class DeviceLightViewModel(
 
                 nextProgram != null -> {
                     "${nextProgram.draft.start.label} ${nextProgram.name}"
-                }
-
-                else -> {
+                } else -> {
                     "No upcoming event"
                 }
             }
@@ -458,7 +502,8 @@ class DeviceLightViewModel(
             endMinute = LightProgramTimeMath.endMinutes(draft.end),
             peakPercent = peakPercent,
             transitionMode = draft.transitionMode
-        ).sortedBy { point ->
+        ).sortedBy {
+            point ->
             point.x
         }
 
@@ -468,32 +513,32 @@ class DeviceLightViewModel(
 
         val current = currentMinute.toDouble()
 
-        val previous = points.lastOrNull { point ->
+        val previous = points.lastOrNull {
+            point ->
             point.x <= current
         }
 
-        val next = points.firstOrNull { point ->
+        val next = points.firstOrNull {
+            point ->
             point.x >= current
         }
 
         val output = when {
             previous == null -> points.first().y
-
             next == null -> points.last().y
-
             previous.x == next.x -> previous.y
 
             else -> {
                 val progress =
-                    (current - previous.x) / (next.x - previous.x)
+                (current - previous.x) / (next.x - previous.x)
 
                 previous.y + ((next.y - previous.y) * progress)
             }
         }
 
         return output
-            .toInt()
-            .coerceIn(0, 100)
+        .toInt()
+        .coerceIn(0, 100)
     }
 
     private fun SavedLightProgram.maxOutputPercent(): Int {
@@ -529,9 +574,125 @@ class DeviceLightViewModel(
         }
     }
 
+    private fun DeviceLightDashboardUiState.withLiveIndicators(
+        liveState: LightDeviceLiveState,
+        modeText: String
+    ): DeviceLightDashboardUiState {
+        return copy(
+            liveModeText = modeText,
+
+            redChannelText = buildChannelText(
+                prefix = "R",
+                liveState = liveState,
+                semantic = LightChannelSemantic.RED
+            ),
+            greenChannelText = buildChannelText(
+                prefix = "G",
+                liveState = liveState,
+                semantic = LightChannelSemantic.GREEN
+            ),
+            blueChannelText = buildChannelText(
+                prefix = "B",
+                liveState = liveState,
+                semantic = LightChannelSemantic.BLUE
+            ),
+            whiteChannelText = buildChannelText(
+                prefix = "W",
+                liveState = liveState,
+                semantic = LightChannelSemantic.WHITE
+            ),
+
+            healthTemperatureText =
+            liveState.thermalProtection.currentTemperatureText,
+
+            healthTemperatureStatusText =
+            normalizeHealthStatus(
+                liveState.thermalProtection.statusText
+            ),
+
+            healthFanText =
+            liveState.cooling.statusText,
+
+            healthFanStatusText =
+            liveState.cooling.fansText
+        )
+    }
+
+    private fun buildChannelText(
+        prefix: String,
+        liveState: LightDeviceLiveState,
+        semantic: LightChannelSemantic
+    ): String {
+        val value = liveState.channelFor(
+            semantic = semantic
+        )?.valuePercent
+
+        return if (value == null) {
+            "$prefix --"
+        } else {
+            "$prefix $value%"
+        }
+    }
+
+    private fun normalizeHealthStatus(
+        value: String
+    ): String {
+        val cleanValue = value.trim()
+
+        return when {
+            cleanValue.equals(
+                "ACTIVE",
+                ignoreCase = true
+            ) -> {
+                "Active"
+            }
+
+            cleanValue.equals(
+                "REDUCING",
+                ignoreCase = true
+            ) -> {
+                "Reducing"
+            }
+
+            cleanValue.equals(
+                "SYNC",
+                ignoreCase = true
+            ) || cleanValue.equals(
+                "SYNCING",
+                ignoreCase = true
+            ) -> {
+                "Syncing"
+            }
+
+            cleanValue.isBlank() -> {
+                "Syncing"
+            } else -> {
+                cleanValue
+                .lowercase(Locale.getDefault())
+                .replaceFirstChar {
+                    char ->
+                    char.uppercase(Locale.getDefault())
+                }
+            }
+        }
+    }
+
+    private fun buildAutoModeText(
+        liveState: LightDeviceLiveState,
+        runningProgram: SavedLightProgram?,
+        nextProgramToday: SavedLightProgram?
+    ): String {
+        return when {
+            runningProgram != null -> "AUTO"
+            liveState.actualOutputPercent > 0 -> "AUTO"
+            nextProgramToday != null -> "WAIT"
+            else -> "IDLE"
+        }
+    }
+
     private fun todayAppDay(): Int {
         val dayOfWeek = Calendar.getInstance()
-            .get(Calendar.DAY_OF_WEEK)
+        .get(Calendar.DAY_OF_WEEK)
 
         return if (dayOfWeek == Calendar.SUNDAY) {
             7
@@ -544,7 +705,10 @@ class DeviceLightViewModel(
         observeJob?.cancel()
 
         if (deviceId > 0L) {
-            LightDeviceLiveRefreshManager.stop(deviceId)
+            LightDeviceLiveRefreshManager.stop(
+                deviceId = deviceId,
+                ownerKey = liveRefreshOwnerKey
+            )
         }
 
         super.onCleared()

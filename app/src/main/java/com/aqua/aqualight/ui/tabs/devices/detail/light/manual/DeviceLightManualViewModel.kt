@@ -22,30 +22,36 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
+import kotlinx.coroutines.flow.combine
+import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
 
 class DeviceLightManualViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val appContext =
+    application.applicationContext
     private val lightPresetDataStoreManager =
-        LightPresetDataStoreManager(application.applicationContext)
+    LightPresetDataStoreManager(application.applicationContext)
 
     private val lightRuntimeRepository =
-        LightRuntimeRepository(
-            commandManager = Esp32LightDeviceCommandManager(
-                context = application.applicationContext
-            )
+    LightRuntimeRepository(
+        commandManager = Esp32LightDeviceCommandManager(
+            context = application.applicationContext
         )
+    )
 
     private val _uiState = MutableStateFlow(
         ManualLightUiState()
     )
 
     val uiState: StateFlow<ManualLightUiState> =
-        _uiState.asStateFlow()
+    _uiState.asStateFlow()
 
     private val eventsChannel =
-        Channel<ManualLightEvent>(Channel.BUFFERED)
+    Channel<ManualLightEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
 
@@ -53,48 +59,74 @@ class DeviceLightManualViewModel(
     private var observeRuntimeJob: Job? = null
 
     private val pendingManualChannelValues =
-        mutableMapOf<LightChannelSemantic, Int>()
+    mutableMapOf<LightChannelSemantic, Int>()
 
     private var manualChannelSendLoopJob: Job? = null
+
     private var lastManualChannelSendStartedAtMillis: Long = 0L
+
     private var lastManualChannelErrorToastAtMillis: Long = 0L
+
+    private val liveRefreshOwnerKey =
+    "DeviceLightManualViewModel_${System.identityHashCode(this)}"
 
     fun initialize(
         deviceId: Long
     ) {
+        val previousDeviceId = this.deviceId
+
+        if (
+            previousDeviceId > 0L &&
+            previousDeviceId != deviceId
+        ) {
+            LightDeviceLiveRefreshManager.stop(
+                deviceId = previousDeviceId,
+                ownerKey = liveRefreshOwnerKey
+            )
+        }
+
         this.deviceId = deviceId
 
         observeRuntimeJob?.cancel()
 
+        LightDeviceLiveRefreshManager.start(
+            context = appContext,
+            deviceId = deviceId,
+            ownerKey = liveRefreshOwnerKey
+        )
+
         observeRuntimeJob = viewModelScope.launch {
-            lightRuntimeRepository.observeManualRuntime(deviceId).collect { runtime ->
-                _uiState.update { current ->
+            combine(
+                lightRuntimeRepository.observeManualRuntime(deviceId),
+                LightDeviceLiveRefreshManager.observe(deviceId)
+            ) {
+                runtime, liveState ->
+                runtime to liveState
+            }.collect {
+                (runtime, liveState) ->
+                _uiState.update {
+                    current ->
                     val preservePreviewValues = isManualLiveEditing()
 
-                    recalculateOutput(
-                        current.copy(
-                            isManualMode = runtime.isManualMode,
-                            isManualScene = runtime.isManualScene,
-                            activeSceneName = runtime.activeSceneName,
-                            activeSceneSource = if (runtime.isManualScene) {
-                                current.activeSceneSource ?: "Manual Scene"
-                            } else {
-                                null
-                            },
-                            isPowerOn = if (preservePreviewValues) {
-                                current.isPowerOn
-                            } else {
-                                runtime.isPowerOn
-                            },
-                            red = if (preservePreviewValues) current.red else runtime.red,
-                            green = if (preservePreviewValues) current.green else runtime.green,
-                            blue = if (preservePreviewValues) current.blue else runtime.blue,
-                            white = if (preservePreviewValues) current.white else runtime.white
-                        )
+                    val runtimeState = applyRuntimeState(
+                        current = current,
+                        runtime = runtime,
+                        preservePreviewValues = preservePreviewValues
+                    )
+
+                    applyLiveDeviceState(
+                        state = runtimeState,
+                        liveState = liveState,
+                        preservePreviewValues = preservePreviewValues
                     )
                 }
             }
         }
+
+        LightDeviceLiveRefreshManager.refreshNow(
+            context = appContext,
+            deviceId = deviceId
+        )
     }
 
     fun setPowerOn(
@@ -115,6 +147,11 @@ class DeviceLightManualViewModel(
                     ManualLightEvent.ShowError(
                         result.message ?: "Power state could not be changed"
                     )
+                )
+            } else {
+                LightDeviceLiveRefreshManager.refreshNow(
+                    context = appContext,
+                    deviceId = deviceId
                 )
             }
         }
@@ -179,7 +216,8 @@ class DeviceLightManualViewModel(
         blue: Int? = null,
         white: Int? = null
     ) {
-        _uiState.update { state ->
+        _uiState.update {
+            state ->
             val newRed = red?.coerceIn(0, 100) ?: state.red
             val newGreen = green?.coerceIn(0, 100) ?: state.green
             val newBlue = blue?.coerceIn(0, 100) ?: state.blue
@@ -196,7 +234,8 @@ class DeviceLightManualViewModel(
                         newGreen,
                         newBlue,
                         newWhite
-                    ).any { value ->
+                    ).any {
+                        value ->
                         value > 0
                     },
                     red = newRed,
@@ -204,7 +243,7 @@ class DeviceLightManualViewModel(
                     blue = newBlue,
                     white = newWhite
                 )
-            )
+            ).withCalculatedPowerText()
         }
 
         enqueueManualChannelSend(
@@ -261,6 +300,13 @@ class DeviceLightManualViewModel(
 
             manualChannelSendLoopJob = null
 
+            if (deviceId > 0L) {
+                LightDeviceLiveRefreshManager.refreshNow(
+                    context = appContext,
+                    deviceId = deviceId
+                )
+            }
+
             if (pendingManualChannelValues.isNotEmpty()) {
                 startManualChannelSendLoop()
             }
@@ -307,7 +353,7 @@ class DeviceLightManualViewModel(
 
     private fun isManualLiveEditing(): Boolean {
         return manualChannelSendLoopJob?.isActive == true ||
-            pendingManualChannelValues.isNotEmpty()
+        pendingManualChannelValues.isNotEmpty()
     }
 
     fun applyScene(
@@ -330,11 +376,17 @@ class DeviceLightManualViewModel(
             )
 
             if (result.isSuccess) {
-                _uiState.update { state ->
+                _uiState.update {
+                    state ->
                     state.copy(
                         activeSceneSource = "Manual Scenes"
                     )
                 }
+
+                LightDeviceLiveRefreshManager.refreshNow(
+                    context = appContext,
+                    deviceId = deviceId
+                )
 
                 eventsChannel.send(
                     ManualLightEvent.ShowMessage("$sceneName applied")
@@ -364,6 +416,11 @@ class DeviceLightManualViewModel(
             )
 
             if (result.isSuccess) {
+                LightDeviceLiveRefreshManager.refreshNow(
+                    context = appContext,
+                    deviceId = deviceId
+                )
+
                 eventsChannel.send(
                     ManualLightEvent.ShowMessage("Auto schedule resumed")
                 )
@@ -386,7 +443,8 @@ class DeviceLightManualViewModel(
                 state.green,
                 state.blue,
                 state.white
-            ).any { value ->
+            ).any {
+                value ->
                 value > 0
             }
 
@@ -423,7 +481,8 @@ class DeviceLightManualViewModel(
                 state.green,
                 state.blue,
                 state.white
-            ).any { value ->
+            ).any {
+                value ->
                 value > 0
             }
 
@@ -480,23 +539,138 @@ class DeviceLightManualViewModel(
         pendingManualChannelValues.clear()
     }
 
+    private fun applyRuntimeState(
+        current: ManualLightUiState,
+        runtime: LightManualRuntimeState,
+        preservePreviewValues: Boolean
+    ): ManualLightUiState {
+        return current.copy(
+            isManualMode = runtime.isManualMode,
+            isManualScene = runtime.isManualScene,
+            activeSceneName = runtime.activeSceneName,
+            activeSceneSource = if (runtime.isManualScene) {
+                current.activeSceneSource ?: "Manual Scene"
+            } else {
+                null
+            },
+            isPowerOn = if (preservePreviewValues) {
+                current.isPowerOn
+            } else {
+                runtime.isPowerOn
+            },
+            red = if (preservePreviewValues) current.red else runtime.red,
+            green = if (preservePreviewValues) current.green else runtime.green,
+            blue = if (preservePreviewValues) current.blue else runtime.blue,
+            white = if (preservePreviewValues) current.white else runtime.white
+        )
+    }
+
+    private fun applyLiveDeviceState(
+        state: ManualLightUiState,
+        liveState: LightDeviceLiveState,
+        preservePreviewValues: Boolean
+    ): ManualLightUiState {
+        val liveChannelState = if (
+            liveState.hasLiveChannels &&
+            !preservePreviewValues
+        ) {
+            state.copy(
+                isPowerOn = liveState.actualOutputPercent > 0,
+                red = liveState.channelValuePercent(
+                    LightChannelSemantic.RED
+                ) ?: state.red,
+                green = liveState.channelValuePercent(
+                    LightChannelSemantic.GREEN
+                ) ?: state.green,
+                blue = liveState.channelValuePercent(
+                    LightChannelSemantic.BLUE
+                ) ?: state.blue,
+                white = liveState.channelValuePercent(
+                    LightChannelSemantic.WHITE
+                ) ?: state.white
+            )
+        } else {
+            state
+        }
+
+        val calibratedState = liveChannelState.copy(
+            redMaxWatts = liveState.channelFor(
+                LightChannelSemantic.RED
+            )?.maxWatts ?: 0.0,
+
+            greenMaxWatts = liveState.channelFor(
+                LightChannelSemantic.GREEN
+            )?.maxWatts ?: 0.0,
+
+            blueMaxWatts = liveState.channelFor(
+                LightChannelSemantic.BLUE
+            )?.maxWatts ?: 0.0,
+
+            whiteMaxWatts = liveState.channelFor(
+                LightChannelSemantic.WHITE
+            )?.maxWatts ?: 0.0
+        )
+
+        val calculatedState = recalculateOutput(
+            state = calibratedState
+        )
+
+        return if (
+            liveState.hasLiveChannels &&
+            !preservePreviewValues
+        ) {
+            calculatedState.copy(
+                masterOutputPercent = liveState.actualOutputPercent,
+                powerText = liveState.actualPowerText,
+                powerLabelText = "Live Power",
+                hasLivePower = true
+            )
+        } else {
+            calculatedState.withCalculatedPowerText()
+        }
+    }
+
+    private fun LightDeviceLiveState.channelValuePercent(
+        semantic: LightChannelSemantic
+    ): Int? {
+        return channelFor(
+            semantic = semantic
+        )?.valuePercent?.coerceIn(0, 100)
+    }
+
+    private fun ManualLightUiState.withCalculatedPowerText(): ManualLightUiState {
+        return if (hasPowerCalibration) {
+            copy(
+                powerText = "%.1fW".format(estimatedPowerWatts),
+                powerLabelText = "Estimated Power",
+                hasLivePower = false
+            )
+        } else {
+            copy(
+                powerText = "-- W",
+                powerLabelText = "Power",
+                hasLivePower = false
+            )
+        }
+    }
+
     private fun recalculateOutput(
         state: ManualLightUiState
     ): ManualLightUiState {
         val estimatedPower = if (state.isPowerOn) {
             state.redMaxWatts * (state.red / 100.0) +
-                state.greenMaxWatts * (state.green / 100.0) +
-                state.blueMaxWatts * (state.blue / 100.0) +
-                state.whiteMaxWatts * (state.white / 100.0)
+            state.greenMaxWatts * (state.green / 100.0) +
+            state.blueMaxWatts * (state.blue / 100.0) +
+            state.whiteMaxWatts * (state.white / 100.0)
         } else {
             0.0
         }
 
         val maxPower =
-            state.redMaxWatts +
-                state.greenMaxWatts +
-                state.blueMaxWatts +
-                state.whiteMaxWatts
+        state.redMaxWatts +
+        state.greenMaxWatts +
+        state.blueMaxWatts +
+        state.whiteMaxWatts
 
         val hasPowerCalibration = maxPower > 0.0
 
@@ -512,11 +686,9 @@ class DeviceLightManualViewModel(
 
             hasPowerCalibration -> {
                 ((estimatedPower / maxPower) * 100.0)
-                    .roundToInt()
-                    .coerceIn(0, 100)
-            }
-
-            else -> fallbackOutputPercent
+                .roundToInt()
+                .coerceIn(0, 100)
+            } else -> fallbackOutputPercent
         }
 
         val previewColor = calculatePreviewColor(
@@ -553,22 +725,22 @@ class DeviceLightManualViewModel(
         val whiteColor = Triple(0.92, 0.96, 1.00)
 
         val linearRed =
-            redColor.first * r +
-                greenColor.first * g +
-                blueColor.first * b +
-                whiteColor.first * w
+        redColor.first * r +
+        greenColor.first * g +
+        blueColor.first * b +
+        whiteColor.first * w
 
         val linearGreen =
-            redColor.second * r +
-                greenColor.second * g +
-                blueColor.second * b +
-                whiteColor.second * w
+        redColor.second * r +
+        greenColor.second * g +
+        blueColor.second * b +
+        whiteColor.second * w
 
         val linearBlue =
-            redColor.third * r +
-                greenColor.third * g +
-                blueColor.third * b +
-                whiteColor.third * w
+        redColor.third * r +
+        greenColor.third * g +
+        blueColor.third * b +
+        whiteColor.third * w
 
         val max = maxOf(
             linearRed,
@@ -581,11 +753,11 @@ class DeviceLightManualViewModel(
             value: Double
         ): Int {
             val normalized = (value / max)
-                .coerceIn(0.0, 1.0)
+            .coerceIn(0.0, 1.0)
 
             return (255.0 * normalized.pow(1.0 / 2.2))
-                .roundToInt()
-                .coerceIn(0, 255)
+            .roundToInt()
+            .coerceIn(0, 255)
         }
 
         return Triple(
@@ -613,6 +785,14 @@ class DeviceLightManualViewModel(
     override fun onCleared() {
         observeRuntimeJob?.cancel()
         cancelPendingManualChannelSends()
+
+        if (deviceId > 0L) {
+            LightDeviceLiveRefreshManager.stop(
+                deviceId = deviceId,
+                ownerKey = liveRefreshOwnerKey
+            )
+        }
+
         super.onCleared()
     }
 

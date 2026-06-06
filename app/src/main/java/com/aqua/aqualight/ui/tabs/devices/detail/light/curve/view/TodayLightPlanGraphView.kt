@@ -577,8 +577,8 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             }
         )
 
-        val label = "NOW ${state.currentTime.label}"
-        val badgeWidth = dp(72f)
+        val label = state.currentTime.label
+        val badgeWidth = dp(52f)
         val badgeHeight = dp(24f)
 
         val left = (currentX - badgeWidth / 2f)

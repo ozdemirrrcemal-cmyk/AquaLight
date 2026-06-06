@@ -21,7 +21,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.sheet.SaveLightPre
 import kotlinx.coroutines.launch
 
 class DeviceLightManualFragment :
-    Fragment(R.layout.fragment_device_light_manual) {
+Fragment(R.layout.fragment_device_light_manual) {
 
     private var _binding: FragmentDeviceLightManualBinding? = null
     private val binding get() = _binding!!
@@ -31,17 +31,17 @@ class DeviceLightManualFragment :
     private var isRendering = false
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val sceneButtons: List<View>
-        get() = listOf(
-            binding.scenePlantGrowth,
-            binding.sceneFishDisplay,
-            binding.sceneShrimpSafe,
-            binding.sceneBlueAccent,
-            binding.sceneRed,
-            binding.sceneFullSpectrum
-        )
+    get() = listOf(
+        binding.scenePlantGrowth,
+        binding.sceneFishDisplay,
+        binding.sceneShrimpSafe,
+        binding.sceneBlueAccent,
+        binding.sceneRed,
+        binding.sceneFullSpectrum
+    )
 
     override fun onViewCreated(
         view: View,
@@ -75,7 +75,8 @@ class DeviceLightManualFragment :
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
+                viewModel.uiState.collect {
+                    state ->
                     renderUiState(state)
                 }
             }
@@ -85,7 +86,8 @@ class DeviceLightManualFragment :
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { event ->
+                viewModel.events.collect {
+                    event ->
                     when (event) {
                         is ManualLightEvent.ShowMessage -> {
                             Toast.makeText(
@@ -131,19 +133,17 @@ class DeviceLightManualFragment :
         binding.tvManualModeSubtitle.text = when {
             state.isManualScene -> {
                 val sceneName = state.activeSceneName
-                    .orEmpty()
-                    .ifBlank {
-                        "Preset Scene"
-                    }
+                .orEmpty()
+                .ifBlank {
+                    "Preset Scene"
+                }
 
                 "$sceneName · Auto schedule paused."
             }
 
             state.isManualMode -> {
                 "Live RGBW control. Automatic schedule paused."
-            }
-
-            else -> {
+            } else -> {
                 "Automatic schedule is running."
             }
         }
@@ -157,11 +157,8 @@ class DeviceLightManualFragment :
             )
         )
 
-        binding.tvEstimatedPower.text = if (state.hasPowerCalibration) {
-            "%.1fW".format(state.estimatedPowerWatts)
-        } else {
-            "-- W"
-        }
+        binding.tvEstimatedPower.text = state.powerText
+        binding.tvPowerLabel.text = state.powerLabelText
 
         binding.sliderRed.value = state.red.toFloat()
         binding.sliderGreen.value = state.green.toFloat()
@@ -185,7 +182,8 @@ class DeviceLightManualFragment :
     }
 
     private fun setupClicks() {
-        binding.switchManualPower.setOnCheckedChangeListener { _, isChecked ->
+        binding.switchManualPower.setOnCheckedChangeListener {
+            _, isChecked ->
             if (isRendering) return@setOnCheckedChangeListener
 
             viewModel.setPowerOn(isChecked)
@@ -225,34 +223,38 @@ class DeviceLightManualFragment :
     }
 
     private fun setupSliders() {
-    binding.sliderRed.addOnChangeListener { _, value, fromUser ->
-        if (isRendering || !fromUser) return@addOnChangeListener
+        binding.sliderRed.addOnChangeListener {
+            _, value, fromUser ->
+            if (isRendering || !fromUser) return@addOnChangeListener
 
-        clearSelectedSceneButton()
-        viewModel.previewRed(value.toInt())
+            clearSelectedSceneButton()
+            viewModel.previewRed(value.toInt())
+        }
+
+        binding.sliderGreen.addOnChangeListener {
+            _, value, fromUser ->
+            if (isRendering || !fromUser) return@addOnChangeListener
+
+            clearSelectedSceneButton()
+            viewModel.previewGreen(value.toInt())
+        }
+
+        binding.sliderBlue.addOnChangeListener {
+            _, value, fromUser ->
+            if (isRendering || !fromUser) return@addOnChangeListener
+
+            clearSelectedSceneButton()
+            viewModel.previewBlue(value.toInt())
+        }
+
+        binding.sliderWhite.addOnChangeListener {
+            _, value, fromUser ->
+            if (isRendering || !fromUser) return@addOnChangeListener
+
+            clearSelectedSceneButton()
+            viewModel.previewWhite(value.toInt())
+        }
     }
-
-    binding.sliderGreen.addOnChangeListener { _, value, fromUser ->
-        if (isRendering || !fromUser) return@addOnChangeListener
-
-        clearSelectedSceneButton()
-        viewModel.previewGreen(value.toInt())
-    }
-
-    binding.sliderBlue.addOnChangeListener { _, value, fromUser ->
-        if (isRendering || !fromUser) return@addOnChangeListener
-
-        clearSelectedSceneButton()
-        viewModel.previewBlue(value.toInt())
-    }
-
-    binding.sliderWhite.addOnChangeListener { _, value, fromUser ->
-        if (isRendering || !fromUser) return@addOnChangeListener
-
-        clearSelectedSceneButton()
-        viewModel.previewWhite(value.toInt())
-    }
-}
 
     private fun renderSceneSelection(
         state: ManualLightUiState
@@ -262,8 +264,8 @@ class DeviceLightManualFragment :
         if (!state.isManualScene) return
 
         val sceneName = state.activeSceneName
-            .orEmpty()
-            .lowercase()
+        .orEmpty()
+        .lowercase()
 
         val selectedButton = when {
             sceneName.contains("plant") -> binding.scenePlantGrowth
@@ -279,7 +281,8 @@ class DeviceLightManualFragment :
     }
 
     private fun clearSelectedSceneButton() {
-        sceneButtons.forEach { button ->
+        sceneButtons.forEach {
+            button ->
             button.isSelected = false
         }
     }

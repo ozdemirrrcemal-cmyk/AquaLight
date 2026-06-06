@@ -4,12 +4,15 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudSimulationSettings
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightSettings
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.PreviewSpeed
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
@@ -18,6 +21,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.validatio
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper.LightProgramDraftMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,38 +30,38 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
 
 class DeviceLightProgramEditorViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val lightProgramsDataStoreManager =
-    LightProgramsDataStoreManager(application.applicationContext)
+    private val appContext =
+        application.applicationContext
 
-    private val lightDeviceTimeRepository =
-    LightDeviceTimeRepository(
-        context = application.applicationContext
-    )
+    private val lightProgramsDataStoreManager =
+        LightProgramsDataStoreManager(appContext)
 
     private val lightProgramCommandManager =
-    Esp32LightProgramCommandManager(
-        context = application.applicationContext
-    )
+        Esp32LightProgramCommandManager(
+            context = appContext
+        )
 
     private val _uiState =
-    MutableStateFlow(DeviceLightProgramEditorUiState.default())
+        MutableStateFlow(DeviceLightProgramEditorUiState.default())
 
     val uiState: StateFlow<DeviceLightProgramEditorUiState> =
-    _uiState.asStateFlow()
+        _uiState.asStateFlow()
 
     private val eventsChannel =
-    Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
+        Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
 
     private var deviceId: Long = 0L
+    private var liveStateJob: Job? = null
+
+    private val liveRefreshOwnerKey =
+        "DeviceLightProgramEditorViewModel_${System.identityHashCode(this)}"
 
     private var editingProgramId: String? = null
     private var editingProgramName: String? = null
@@ -69,12 +73,74 @@ class DeviceLightProgramEditorViewModel(
         deviceId: Long,
         programId: String?
     ) {
+        val previousDeviceId = this.deviceId
+
+        if (
+            previousDeviceId > 0L &&
+            previousDeviceId != deviceId
+        ) {
+            stopLiveRefresh(
+                targetDeviceId = previousDeviceId
+            )
+        }
+
         this.deviceId = deviceId
 
-        refreshDeviceTime()
+        startLiveRefreshIfPossible()
 
         if (!programId.isNullOrBlank()) {
             loadProgram(programId)
+        }
+    }
+
+    private fun startLiveRefreshIfPossible() {
+        if (deviceId <= 0L) {
+            return
+        }
+
+        LightDeviceLiveRefreshManager.start(
+            context = appContext,
+            deviceId = deviceId,
+            ownerKey = liveRefreshOwnerKey
+        )
+
+        observeLiveDeviceTime()
+
+        LightDeviceLiveRefreshManager.refreshNow(
+            context = appContext,
+            deviceId = deviceId
+        )
+    }
+
+    private fun stopLiveRefresh(
+        targetDeviceId: Long
+    ) {
+        if (targetDeviceId <= 0L) {
+            return
+        }
+
+        LightDeviceLiveRefreshManager.stop(
+            deviceId = targetDeviceId,
+            ownerKey = liveRefreshOwnerKey
+        )
+    }
+
+    private fun observeLiveDeviceTime() {
+        liveStateJob?.cancel()
+
+        liveStateJob = viewModelScope.launch {
+            LightDeviceLiveRefreshManager.observe(
+                deviceId = deviceId
+            ).collect { liveState ->
+                val deviceTime = liveState.deviceTime
+                    ?: return@collect
+
+                _uiState.update { state ->
+                    state.copy(
+                        currentDeviceTime = deviceTime.curvePoint
+                    )
+                }
+            }
         }
     }
 
@@ -188,20 +254,6 @@ class DeviceLightProgramEditorViewModel(
         }
     }
 
-    fun updateDeviceTime(
-        hour: Int,
-        minute: Int
-    ) {
-        _uiState.update {
-            it.copy(
-                currentDeviceTime = LightCurvePoint.of(
-                    hour = hour,
-                    minute = minute
-                )
-            )
-        }
-    }
-
     private fun loadProgram(
         programId: String
     ) {
@@ -223,8 +275,9 @@ class DeviceLightProgramEditorViewModel(
             editingProgramCreatedAt = program.createdAt
             editingProgramWasActive = program.isActive
 
-            if (deviceId <= 0L) {
+            if (deviceId <= 0L && program.deviceId > 0L) {
                 deviceId = program.deviceId
+                startLiveRefreshIfPossible()
             }
 
             _uiState.update {
@@ -300,16 +353,16 @@ class DeviceLightProgramEditorViewModel(
             }
 
             runCatching {
-                val existingPrograms = lightProgramsDataStoreManager.programsFlow.first()
+                val existingPrograms =
+                    lightProgramsDataStoreManager.programsFlow.first()
 
                 val programsToLoad = if (savedProgram.isActive) {
                     existingPrograms
-                    .filter {
-                        program ->
-                        program.deviceId == savedProgram.deviceId &&
-                        program.isActive &&
-                        program.id != savedProgram.id
-                    } + savedProgram
+                        .filter { program ->
+                            program.deviceId == savedProgram.deviceId &&
+                                program.isActive &&
+                                program.id != savedProgram.id
+                        } + savedProgram
                 } else {
                     emptyList()
                 }
@@ -335,6 +388,13 @@ class DeviceLightProgramEditorViewModel(
                 editingProgramCreatedAt = savedProgram.createdAt
                 editingProgramWasActive = savedProgram.isActive
 
+                if (savedProgram.isActive) {
+                    LightDeviceLiveRefreshManager.refreshNow(
+                        context = appContext,
+                        deviceId = savedProgram.deviceId
+                    )
+                }
+
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowMessage(
                         if (isActive) {
@@ -346,8 +406,7 @@ class DeviceLightProgramEditorViewModel(
                 )
 
                 eventsChannel.send(DeviceLightProgramEditorEvent.NavigateBack)
-            }.onFailure {
-                error ->
+            }.onFailure { error ->
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowError(
                         error.message ?: "Program could not be saved"
@@ -357,25 +416,11 @@ class DeviceLightProgramEditorViewModel(
         }
     }
 
-    private fun refreshDeviceTime() {
-        viewModelScope.launch {
-            val timeState = lightDeviceTimeRepository.readDeviceTime(
-                deviceId = deviceId,
-                fallbackToPhone = true
-            )
-
-            updateDeviceTime(
-                hour = timeState.hour,
-                minute = timeState.minute
-            )
-        }
-    }
-
     private fun buildSavedProgram(
         name: String,
         isActive: Boolean,
         deviceId: Long,
-        draft: com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramDraft
+        draft: LightProgramDraft
     ): SavedLightProgram {
         val cleanName = name.ifBlank {
             editingProgramName.orEmpty().ifBlank {
@@ -416,11 +461,10 @@ class DeviceLightProgramEditorViewModel(
     ): SavedLightProgram? {
         val existingPrograms = lightProgramsDataStoreManager.programsFlow.first()
 
-        val comparablePrograms = existingPrograms.filter {
-            program ->
+        val comparablePrograms = existingPrograms.filter { program ->
             program.deviceId == savedProgram.deviceId &&
-            program.isActive &&
-            program.id != savedProgram.id
+                program.isActive &&
+                program.id != savedProgram.id
         }
 
         return LightProgramScheduleConflictValidator.findConflict(
@@ -451,5 +495,17 @@ class DeviceLightProgramEditorViewModel(
 
             // TODO: Send uiState.value.draft as temporary preview payload to ESP32.
         }
+    }
+
+    override fun onCleared() {
+        liveStateJob?.cancel()
+
+        if (deviceId > 0L) {
+            stopLiveRefresh(
+                targetDeviceId = deviceId
+            )
+        }
+
+        super.onCleared()
     }
 }
