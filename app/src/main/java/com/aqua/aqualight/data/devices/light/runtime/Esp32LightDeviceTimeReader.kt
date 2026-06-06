@@ -104,12 +104,14 @@ class Esp32LightDeviceTimeReader(
     private fun parseTimeCurrentString(
         value: String
     ): LightDeviceTimeState {
+        val cleanValue = value.trim()
+
         val pattern = Regex(
-            """(\d{1,2}):(\d{2})(?::(\d{2}))?\s+(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+W(\d+))?"""
+            """(\d{1,2}):(\d{2})(?::(\d{2}))?\s+(\d{1,4})\.(\d{1,2})\.(\d{1,4})(?:\s+W(\d+))?"""
         )
 
-        val match = pattern.find(value.trim())
-            ?: throw IllegalStateException("Device time format is invalid: $value")
+        val match = pattern.find(cleanValue)
+            ?: throw IllegalStateException("Device time format is invalid: $cleanValue")
 
         val hour = match.groupValues[1].toInt()
         val minute = match.groupValues[2].toInt()
@@ -117,12 +119,27 @@ class Esp32LightDeviceTimeReader(
             .ifBlank { "0" }
             .toInt()
 
-        val day = match.groupValues[4].toInt()
-        val month = match.groupValues[5].toInt()
-        val year = match.groupValues[6].toInt()
+        val firstDatePart = match.groupValues[4].toInt()
+        val secondDatePart = match.groupValues[5].toInt()
+        val thirdDatePart = match.groupValues[6].toInt()
+
         val weekDay = match.groupValues[7]
             .ifBlank { "0" }
             .toInt()
+
+        val year: Int
+        val month: Int
+        val day: Int
+
+        if (firstDatePart > 31) {
+            year = firstDatePart
+            month = secondDatePart
+            day = thirdDatePart
+        } else {
+            day = firstDatePart
+            month = secondDatePart
+            year = thirdDatePart
+        }
 
         validateTime(
             year = year,

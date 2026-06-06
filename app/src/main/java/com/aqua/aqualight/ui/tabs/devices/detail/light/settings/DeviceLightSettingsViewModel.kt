@@ -365,7 +365,7 @@ class DeviceLightSettingsViewModel(
             _uiState.update {
                 state ->
                 state.copy(
-                    deviceTime = syncedTime?.timeText ?: phoneTime,
+                    deviceTime = syncedTime?.timeText ?: state.deviceTime,
                     phoneTime = phoneTime,
                     lastSyncTime = currentLastSyncText()
                 )
