@@ -135,6 +135,16 @@ class DeviceLightManualViewModel(
     fun setPowerOn(
         enabled: Boolean
     ) {
+        val currentState = _uiState.value
+
+        if (
+            !enabled &&
+            !currentState.isManualMode &&
+            !currentState.isManualScene
+        ) {
+            return
+        }
+
         cancelPendingManualChannelSends()
 
         viewModelScope.launch {
@@ -552,6 +562,9 @@ class DeviceLightManualViewModel(
         runtime: LightManualRuntimeState,
         preservePreviewValues: Boolean
     ): ManualLightUiState {
+        val isManualOverrideActive =
+        runtime.isManualMode || runtime.isManualScene
+
         return current.copy(
             isManualMode = runtime.isManualMode,
             isManualScene = runtime.isManualScene,
@@ -563,13 +576,39 @@ class DeviceLightManualViewModel(
             },
             isPowerOn = if (preservePreviewValues) {
                 current.isPowerOn
-            } else {
+            } else if (isManualOverrideActive) {
                 runtime.isPowerOn
+            } else {
+                false
             },
-            red = if (preservePreviewValues) current.red else runtime.red,
-            green = if (preservePreviewValues) current.green else runtime.green,
-            blue = if (preservePreviewValues) current.blue else runtime.blue,
-            white = if (preservePreviewValues) current.white else runtime.white
+            red = if (preservePreviewValues) {
+                current.red
+            } else if (isManualOverrideActive) {
+                runtime.red
+            } else {
+                current.red
+            },
+            green = if (preservePreviewValues) {
+                current.green
+            } else if (isManualOverrideActive) {
+                runtime.green
+            } else {
+                current.green
+            },
+            blue = if (preservePreviewValues) {
+                current.blue
+            } else if (isManualOverrideActive) {
+                runtime.blue
+            } else {
+                current.blue
+            },
+            white = if (preservePreviewValues) {
+                current.white
+            } else if (isManualOverrideActive) {
+                runtime.white
+            } else {
+                current.white
+            }
         )
     }
 
@@ -578,10 +617,15 @@ class DeviceLightManualViewModel(
         liveState: LightDeviceLiveState,
         preservePreviewValues: Boolean
     ): ManualLightUiState {
-        val liveChannelState = if (
-            liveState.hasLiveChannels &&
-            !preservePreviewValues
-        ) {
+        val isManualOverrideActive =
+        state.isManualMode || state.isManualScene
+
+        val shouldApplyLiveToManualControls =
+        liveState.hasLiveChannels &&
+        !preservePreviewValues &&
+        isManualOverrideActive
+
+        val liveChannelState = if (shouldApplyLiveToManualControls) {
             state.copy(
                 isPowerOn = liveState.actualPowerWatts
                 ?.let {
@@ -613,29 +657,26 @@ class DeviceLightManualViewModel(
         val calibratedState = liveChannelState.copy(
             redMaxWatts = liveState.channelFor(
                 LightChannelSemantic.RED
-            )?.maxWatts ?: 0.0,
+            )?.maxWatts ?: liveChannelState.redMaxWatts,
 
             greenMaxWatts = liveState.channelFor(
                 LightChannelSemantic.GREEN
-            )?.maxWatts ?: 0.0,
+            )?.maxWatts ?: liveChannelState.greenMaxWatts,
 
             blueMaxWatts = liveState.channelFor(
                 LightChannelSemantic.BLUE
-            )?.maxWatts ?: 0.0,
+            )?.maxWatts ?: liveChannelState.blueMaxWatts,
 
             whiteMaxWatts = liveState.channelFor(
                 LightChannelSemantic.WHITE
-            )?.maxWatts ?: 0.0
+            )?.maxWatts ?: liveChannelState.whiteMaxWatts
         )
 
         val calculatedState = recalculateOutput(
             state = calibratedState
         )
 
-        return if (
-            liveState.hasLiveChannels &&
-            !preservePreviewValues
-        ) {
+        return if (shouldApplyLiveToManualControls) {
             calculatedState.copy(
                 masterOutputPercent = calculatedState.masterOutputPercent,
                 powerText = liveState.actualPowerText,
