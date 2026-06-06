@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 object LightDeviceLiveRefreshManager {
 
     private const val DEFAULT_REFRESH_INTERVAL_MS = 5_000L
+    private const val DEVICE_TIME_KEEP_MS = 30_000L
 
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO
@@ -214,10 +215,31 @@ object LightDeviceLiveRefreshManager {
         reader.read(
             ip = address.ip
         ).onSuccess { snapshot ->
+            val now = System.currentTimeMillis()
+
             stateFlow.update { state ->
+                val resolvedDeviceTime = snapshot.deviceTime
+                    ?: state.deviceTime.takeIf {
+                        state.deviceTimeUpdatedMillis > 0L &&
+                            now - state.deviceTimeUpdatedMillis <= DEVICE_TIME_KEEP_MS
+                    }
+
                 state.copy(
                     isRefreshing = false,
-                    deviceTime = snapshot.deviceTime ?: state.deviceTime,
+                    deviceTime = resolvedDeviceTime,
+                    deviceTimeUpdatedMillis = when {
+                        snapshot.deviceTime != null -> {
+                            now
+                        }
+
+                        resolvedDeviceTime != null -> {
+                            state.deviceTimeUpdatedMillis
+                        }
+
+                        else -> {
+                            0L
+                        }
+                    },
                     channels = if (snapshot.channels.isNotEmpty()) {
                         snapshot.channels
                     } else {
@@ -227,7 +249,7 @@ object LightDeviceLiveRefreshManager {
                         ?: state.thermalProtection,
                     cooling = snapshot.cooling
                         ?: state.cooling,
-                    lastUpdatedMillis = System.currentTimeMillis(),
+                    lastUpdatedMillis = now,
                     errorMessage = snapshot.partialErrorMessage
                 )
             }

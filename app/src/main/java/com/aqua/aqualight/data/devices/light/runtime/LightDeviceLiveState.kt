@@ -6,6 +6,7 @@ data class LightDeviceLiveState(
     val deviceId: Long,
     val isRefreshing: Boolean = false,
     val deviceTime: LightDeviceTimeState? = null,
+    val deviceTimeUpdatedMillis: Long = 0L,
     val channels: List<LightDeviceLiveChannelState> = emptyList(),
     val thermalProtection: LightThermalProtectionState =
         LightThermalProtectionState(),
@@ -16,10 +17,29 @@ data class LightDeviceLiveState(
 ) {
 
     val deviceTimeText: String
-        get() = deviceTime?.timeText ?: "--:--"
+        get() {
+            return if (hasDeviceTime) {
+                deviceTime?.timeText ?: "--:--"
+            } else {
+                "--:--"
+            }
+        }
 
     val hasDeviceTime: Boolean
-        get() = deviceTime != null
+        get() {
+            if (deviceTime == null) {
+                return false
+            }
+
+            if (deviceTimeUpdatedMillis <= 0L) {
+                return false
+            }
+
+            val ageMillis =
+                System.currentTimeMillis() - deviceTimeUpdatedMillis
+
+            return ageMillis <= DEVICE_TIME_FRESHNESS_MS
+        }
 
     val actualOutputPercent: Int
         get() = channels
@@ -65,6 +85,8 @@ data class LightDeviceLiveState(
 
     companion object {
 
+        private const val DEVICE_TIME_FRESHNESS_MS = 30_000L
+
         fun initial(
             deviceId: Long
         ): LightDeviceLiveState {
@@ -72,6 +94,7 @@ data class LightDeviceLiveState(
                 deviceId = deviceId,
                 isRefreshing = false,
                 deviceTime = null,
+                deviceTimeUpdatedMillis = 0L,
                 channels = emptyList(),
                 thermalProtection = LightThermalProtectionState(),
                 cooling = LightCoolingState(),
