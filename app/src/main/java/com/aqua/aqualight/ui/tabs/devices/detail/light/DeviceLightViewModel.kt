@@ -42,11 +42,11 @@ class DeviceLightViewModel(
             context = application.applicationContext
         )
 
-    private val deviceTimeFlow =
-        MutableStateFlow(
-            Esp32LightDeviceTimeReader.phoneFallback()
-        )
-
+    private val deviceTimeFlow: MutableStateFlow<LightDeviceTimeState> =
+    MutableStateFlow(
+        Esp32LightDeviceTimeReader.phoneFallback()
+    )
+    
     private val _uiState = MutableStateFlow(
         createEmptyState(System.currentTimeMillis())
     )

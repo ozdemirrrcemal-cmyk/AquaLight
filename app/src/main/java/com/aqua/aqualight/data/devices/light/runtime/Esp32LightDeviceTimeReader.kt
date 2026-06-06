@@ -20,6 +20,10 @@ class Esp32LightDeviceTimeReader(
                     .put("EnabledAutoSyncGadget", 0)
                     .put("TimeZone", 0)
             )
+            .put(
+                "TimeL",
+                JSONObject().put("All", 0)
+            )
             .toString()
 
         val response = httpClient.getJson(
@@ -190,3 +194,35 @@ class Esp32LightDeviceTimeReader(
             in 1..7 -> weekDay
             else -> phoneFallback().weekDay
         }
+    }
+
+    companion object {
+
+        fun phoneFallback(): LightDeviceTimeState {
+            val calendar = Calendar.getInstance()
+
+            return LightDeviceTimeState(
+                year = calendar.get(Calendar.YEAR),
+                month = calendar.get(Calendar.MONTH) + 1,
+                day = calendar.get(Calendar.DAY_OF_MONTH),
+                weekDay = appWeekDay(calendar),
+                hour = calendar.get(Calendar.HOUR_OF_DAY),
+                minute = calendar.get(Calendar.MINUTE),
+                second = calendar.get(Calendar.SECOND),
+                source = LightDeviceTimeState.Source.PHONE_FALLBACK
+            )
+        }
+
+        private fun appWeekDay(
+            calendar: Calendar
+        ): Int {
+            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+
+            return if (dayOfWeek == Calendar.SUNDAY) {
+                7
+            } else {
+                dayOfWeek - 1
+            }
+        }
+    }
+}
