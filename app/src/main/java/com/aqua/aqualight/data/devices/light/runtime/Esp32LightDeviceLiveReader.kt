@@ -6,9 +6,9 @@ import java.net.URLDecoder
 class Esp32LightDeviceLiveReader(
     private val httpClient: Esp32HttpJsonClient = Esp32HttpJsonClient(),
     private val timeReader: Esp32LightDeviceTimeReader =
-    Esp32LightDeviceTimeReader(httpClient),
+        Esp32LightDeviceTimeReader(httpClient),
     private val mappingReader: Esp32LightChannelMappingReader =
-    Esp32LightChannelMappingReader(httpClient)
+        Esp32LightChannelMappingReader(httpClient)
 ) {
 
     suspend fun read(
@@ -28,8 +28,8 @@ class Esp32LightDeviceLiveReader(
         ) {
             return Result.failure(
                 channelsResult.exceptionOrNull()
-                ?: timeResult.exceptionOrNull()
-                ?: IllegalStateException("Live device data could not be read")
+                    ?: timeResult.exceptionOrNull()
+                    ?: IllegalStateException("Live device data could not be read")
             )
         }
 
@@ -40,7 +40,9 @@ class Esp32LightDeviceLiveReader(
 
             channelsResult.isFailure -> {
                 channelsResult.exceptionOrNull()?.message
-            } else -> {
+            }
+
+            else -> {
                 null
             }
         }
@@ -61,40 +63,38 @@ class Esp32LightDeviceLiveReader(
     ): Result<List<LightDeviceLiveChannelState>> {
         val mapping = mappingReader.readMapping(
             ip = ip
-        ).getOrElse {
-            error ->
+        ).getOrElse { error ->
             return Result.failure(error)
         }
 
         val queryJson = JSONObject()
-        .put(
-            "LPWMChanelLED",
-            JSONObject()
-            .put("Count", 0)
             .put(
-                "Data",
+                "LPWMChanelLED",
                 JSONObject()
-                .put(
-                    "All",
-                    JSONObject()
-                    .put("VNow", 0)
-                    .put("Regime", 0)
-                    .put("Name", 0)
-                    .put("Color", 0)
-                    .put("GPIO_PWM", 0)
-                    .put("Gr", 0)
-                    .put("W", 0)
-                )
+                    .put("Count", 0)
+                    .put(
+                        "Data",
+                        JSONObject()
+                            .put(
+                                "All",
+                                JSONObject()
+                                    .put("VNow", 0)
+                                    .put("Regime", 0)
+                                    .put("Name", 0)
+                                    .put("Color", 0)
+                                    .put("GPIO_PWM", 0)
+                                    .put("Gr", 0)
+                                    .put("W", 0)
+                            )
+                    )
             )
-        )
-        .toString()
+            .toString()
 
         val response = httpClient.getJson(
             ip = ip,
             json = queryJson,
             requestTag = "light_live_channels"
-        ).getOrElse {
-            error ->
+        ).getOrElse { error ->
             return Result.failure(error)
         }
 
@@ -115,19 +115,17 @@ class Esp32LightDeviceLiveReader(
         )
 
         val pwmData = root
-        .optJSONObject("LPWMChanelLED")
-        ?.optJSONObject("Data")
-        ?: JSONObject()
+            .optJSONObject("LPWMChanelLED")
+            ?.optJSONObject("Data")
+            ?: JSONObject()
 
-        val entriesByPwmIndex = mapping.entries.associateBy {
-            entry ->
+        val entriesByPwmIndex = mapping.entries.associateBy { entry ->
             entry.pwmIndex
         }
 
         val channels = mutableListOf<LightDeviceLiveChannelState>()
 
-        pwmData.keys().forEach {
-            pwmIndex ->
+        pwmData.keys().forEach { pwmIndex ->
             val item = pwmData.optJSONObject(pwmIndex) ?: return@forEach
             val entry = entriesByPwmIndex[pwmIndex] ?: return@forEach
 
@@ -151,13 +149,12 @@ class Esp32LightDeviceLiveReader(
                     "Regime",
                     ""
                 ),
-                vNow = item.optNullableDouble("VNow")
+                vNow = item.optNullableDouble("VNow"),
                 maxWatts = item.optNullableDouble("W")
             )
         }
 
-        return channels.sortedBy {
-            channel ->
+        return channels.sortedBy { channel ->
             when (channel.semantic) {
                 LightChannelSemantic.RED -> 0
                 LightChannelSemantic.GREEN -> 1
