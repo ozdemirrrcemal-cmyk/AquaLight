@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
 import org.json.JSONObject
+import java.net.URLDecoder
 import java.util.Calendar
 
 class Esp32LightDeviceTimeReader(
@@ -33,7 +34,9 @@ class Esp32LightDeviceTimeReader(
     private fun parseTime(
         response: String
     ): LightDeviceTimeState {
-        val root = JSONObject(response)
+        val root = JSONObject(
+            normalizeResponseJson(response)
+        )
 
         val time = root.optJSONObject("TimeL")
             ?: throw IllegalStateException("Device time is missing")
@@ -60,12 +63,49 @@ class Esp32LightDeviceTimeReader(
             year = year,
             month = month,
             day = day,
-            weekDay = weekDay,
+            weekDay = normalizeWeekDay(weekDay),
             hour = hour,
             minute = minute,
             second = second.coerceIn(0, 59),
             source = LightDeviceTimeState.Source.DEVICE
         )
+    }
+
+    private fun normalizeResponseJson(
+        response: String
+    ): String {
+        val trimmed = response.trim()
+
+        if (trimmed.startsWith("{")) {
+            return trimmed
+        }
+
+        if (trimmed.startsWith("Json=")) {
+            val jsonStart = "Json=".length
+            val jsonEnd = trimmed.indexOf("&sRet=")
+
+            val rawJson = if (jsonEnd >= 0) {
+                trimmed.substring(jsonStart, jsonEnd)
+            } else {
+                trimmed.substring(jsonStart)
+            }
+
+            return URLDecoder.decode(
+                rawJson,
+                Charsets.UTF_8.name()
+            )
+        }
+
+        return trimmed
+    }
+
+    private fun normalizeWeekDay(
+        weekDay: Int
+    ): Int {
+        return when (weekDay) {
+            in 1..7 -> weekDay
+            else -> appWeekDay(Calendar.getInstance())
+        }
     }
 
     companion object {

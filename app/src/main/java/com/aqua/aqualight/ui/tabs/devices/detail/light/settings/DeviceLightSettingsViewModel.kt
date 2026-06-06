@@ -356,7 +356,7 @@ class DeviceLightSettingsViewModel(
             val syncedTime = runCatching {
                 lightDeviceTimeRepository.readDeviceTime(
                     deviceId = deviceId,
-                    fallbackToPhone = true
+                    fallbackToPhone = false
                 )
             }.getOrElse {
                 null
