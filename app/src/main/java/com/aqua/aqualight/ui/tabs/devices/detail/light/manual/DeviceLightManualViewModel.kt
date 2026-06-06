@@ -275,13 +275,7 @@ class DeviceLightManualViewModel(
 
     private fun startManualChannelSendLoop() {
         manualChannelSendLoopJob = viewModelScope.launch {
-            while (pendingManualChannelValues.isNotEmpty()) {
-                val nextEntry = pendingManualChannelValues.entries.first()
-                val semantic = nextEntry.key
-                val value = nextEntry.value
-
-                pendingManualChannelValues.remove(semantic)
-
+            while (isActive) {
                 val now = System.currentTimeMillis()
                 val elapsed = now - lastManualChannelSendStartedAtMillis
                 val waitMs = MIN_MANUAL_CHANNEL_SEND_INTERVAL_MS - elapsed
@@ -289,6 +283,14 @@ class DeviceLightManualViewModel(
                 if (waitMs > 0L) {
                     delay(waitMs)
                 }
+
+                val nextEntry = pendingManualChannelValues.entries.firstOrNull()
+                ?: break
+
+                val semantic = nextEntry.key
+                val value = nextEntry.value
+
+                pendingManualChannelValues.remove(semantic)
 
                 lastManualChannelSendStartedAtMillis = System.currentTimeMillis()
 
@@ -299,13 +301,6 @@ class DeviceLightManualViewModel(
             }
 
             manualChannelSendLoopJob = null
-
-            if (deviceId > 0L) {
-                LightDeviceLiveRefreshManager.refreshNow(
-                    context = appContext,
-                    deviceId = deviceId
-                )
-            }
 
             if (pendingManualChannelValues.isNotEmpty()) {
                 startManualChannelSendLoop()
@@ -797,7 +792,7 @@ class DeviceLightManualViewModel(
     }
 
     companion object {
-        private const val MIN_MANUAL_CHANNEL_SEND_INTERVAL_MS = 90L
+        private const val MIN_MANUAL_CHANNEL_SEND_INTERVAL_MS = 120L
         private const val MANUAL_CHANNEL_ERROR_TOAST_COOLDOWN_MS = 3_000L
     }
 }
