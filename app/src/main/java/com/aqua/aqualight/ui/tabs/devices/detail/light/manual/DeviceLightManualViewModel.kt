@@ -26,6 +26,7 @@ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManag
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import kotlinx.coroutines.flow.combine
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+import kotlinx.coroutines.isActive
 
 class DeviceLightManualViewModel(
     application: Application
