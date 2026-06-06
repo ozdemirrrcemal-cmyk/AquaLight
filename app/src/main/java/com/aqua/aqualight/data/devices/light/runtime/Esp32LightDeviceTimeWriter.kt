@@ -10,17 +10,18 @@ class Esp32LightDeviceTimeWriter(
         ip: String,
         timeState: LightDeviceTimeState
     ): LightCommandResult {
+        val setTimeJson = buildTimeObject(timeState)
+        val timeLJson = buildTimeObject(timeState)
+
         val json = JSONObject()
             .put(
-                "TimeL",
+                "Time",
                 JSONObject()
-                    .put("Y", timeState.year)
-                    .put("Mn", timeState.month)
-                    .put("D", timeState.day)
-                    .put("WD", timeState.weekDay)
-                    .put("H", timeState.hour)
-                    .put("M", timeState.minute)
-                    .put("S", timeState.second)
+                    .put("SetTime", setTimeJson)
+            )
+            .put(
+                "TimeL",
+                timeLJson
             )
             .toString()
 
@@ -29,5 +30,18 @@ class Esp32LightDeviceTimeWriter(
             json = json,
             requestTag = "light_time_sync"
         )
+    }
+
+    private fun buildTimeObject(
+        timeState: LightDeviceTimeState
+    ): JSONObject {
+        return JSONObject()
+            .put("Y", timeState.year)
+            .put("Mn", timeState.month)
+            .put("D", timeState.day)
+            .put("WD", timeState.weekDay)
+            .put("H", timeState.hour)
+            .put("M", timeState.minute)
+            .put("S", timeState.second)
     }
 }

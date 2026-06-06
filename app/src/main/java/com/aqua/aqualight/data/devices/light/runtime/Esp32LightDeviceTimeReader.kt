@@ -13,8 +13,12 @@ class Esp32LightDeviceTimeReader(
     ): Result<LightDeviceTimeState> {
         val queryJson = JSONObject()
             .put(
-                "TimeL",
-                JSONObject().put("All", 0)
+                "Time",
+                JSONObject()
+                    .put("TimeCurrent", 0)
+                    .put("EnabledAutoSyncNTP", 0)
+                    .put("EnabledAutoSyncGadget", 0)
+                    .put("TimeZone", 0)
             )
             .toString()
 
@@ -38,9 +42,30 @@ class Esp32LightDeviceTimeReader(
             normalizeResponseJson(response)
         )
 
-        val time = root.optJSONObject("TimeL")
+        val timeL = root.optJSONObject("TimeL")
+
+        if (timeL != null) {
+            return parseTimeLObject(timeL)
+        }
+
+        val time = root.optJSONObject("Time")
             ?: throw IllegalStateException("Device time is missing")
 
+        val timeCurrent = time.optString(
+            "TimeCurrent",
+            ""
+        )
+
+        if (timeCurrent.isBlank()) {
+            throw IllegalStateException("Device time is missing")
+        }
+
+        return parseTimeCurrentString(timeCurrent)
+    }
+
+    private fun parseTimeLObject(
+        time: JSONObject
+    ): LightDeviceTimeState {
         val year = time.optInt("Y", 0)
         val month = time.optInt("Mn", 0)
         val day = time.optInt("D", 0)
@@ -49,15 +74,13 @@ class Esp32LightDeviceTimeReader(
         val minute = time.optInt("M", -1)
         val second = time.optInt("S", 0)
 
-        if (
-            year <= 0 ||
-            month !in 1..12 ||
-            day !in 1..31 ||
-            hour !in 0..23 ||
-            minute !in 0..59
-        ) {
-            throw IllegalStateException("Device time is invalid")
-        }
+        validateTime(
+            year = year,
+            month = month,
+            day = day,
+            hour = hour,
+            minute = minute
+        )
 
         return LightDeviceTimeState(
             year = year,
@@ -69,6 +92,67 @@ class Esp32LightDeviceTimeReader(
             second = second.coerceIn(0, 59),
             source = LightDeviceTimeState.Source.DEVICE
         )
+    }
+
+    private fun parseTimeCurrentString(
+        value: String
+    ): LightDeviceTimeState {
+        val pattern = Regex(
+            """(\d{1,2}):(\d{2})(?::(\d{2}))?\s+(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+W(\d+))?"""
+        )
+
+        val match = pattern.find(value.trim())
+            ?: throw IllegalStateException("Device time format is invalid")
+
+        val hour = match.groupValues[1].toInt()
+        val minute = match.groupValues[2].toInt()
+        val second = match.groupValues[3]
+            .ifBlank { "0" }
+            .toInt()
+
+        val day = match.groupValues[4].toInt()
+        val month = match.groupValues[5].toInt()
+        val year = match.groupValues[6].toInt()
+        val weekDay = match.groupValues[7]
+            .ifBlank { "0" }
+            .toInt()
+
+        validateTime(
+            year = year,
+            month = month,
+            day = day,
+            hour = hour,
+            minute = minute
+        )
+
+        return LightDeviceTimeState(
+            year = year,
+            month = month,
+            day = day,
+            weekDay = normalizeWeekDay(weekDay),
+            hour = hour,
+            minute = minute,
+            second = second.coerceIn(0, 59),
+            source = LightDeviceTimeState.Source.DEVICE
+        )
+    }
+
+    private fun validateTime(
+        year: Int,
+        month: Int,
+        day: Int,
+        hour: Int,
+        minute: Int
+    ) {
+        if (
+            year <= 0 ||
+            month !in 1..12 ||
+            day !in 1..31 ||
+            hour !in 0..23 ||
+            minute !in 0..59
+        ) {
+            throw IllegalStateException("Device time is invalid")
+        }
     }
 
     private fun normalizeResponseJson(
@@ -104,37 +188,5 @@ class Esp32LightDeviceTimeReader(
     ): Int {
         return when (weekDay) {
             in 1..7 -> weekDay
-            else -> appWeekDay(Calendar.getInstance())
+            else -> phoneFallback().weekDay
         }
-    }
-
-    companion object {
-
-        fun phoneFallback(): LightDeviceTimeState {
-            val calendar = Calendar.getInstance()
-
-            return LightDeviceTimeState(
-                year = calendar.get(Calendar.YEAR),
-                month = calendar.get(Calendar.MONTH) + 1,
-                day = calendar.get(Calendar.DAY_OF_MONTH),
-                weekDay = appWeekDay(calendar),
-                hour = calendar.get(Calendar.HOUR_OF_DAY),
-                minute = calendar.get(Calendar.MINUTE),
-                second = calendar.get(Calendar.SECOND),
-                source = LightDeviceTimeState.Source.PHONE_FALLBACK
-            )
-        }
-
-        private fun appWeekDay(
-            calendar: Calendar
-        ): Int {
-            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-
-            return if (dayOfWeek == Calendar.SUNDAY) {
-                7
-            } else {
-                dayOfWeek - 1
-            }
-        }
-    }
-}
