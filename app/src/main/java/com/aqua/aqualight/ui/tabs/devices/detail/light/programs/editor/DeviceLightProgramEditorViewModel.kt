@@ -677,24 +677,35 @@ class DeviceLightProgramEditorViewModel(
 
         val previous = points.lastOrNull {
             point ->
-            point.x <= currentMinute
+            point.x.toDouble() <= currentMinute
         }
 
         val next = points.firstOrNull {
             point ->
-            point.x >= currentMinute
+            point.x.toDouble() >= currentMinute
         }
 
-        val value = when {
-            previous == null -> points.first().y
-            next == null -> points.last().y
-            previous.x == next.x -> previous.y
+        val value: Double = when {
+            previous == null -> {
+                points.first().y.toDouble()
+            }
 
-            else -> {
+            next == null -> {
+                points.last().y.toDouble()
+            }
+
+            previous.x == next.x -> {
+                previous.y.toDouble()
+            } else -> {
+                val previousX = previous.x.toDouble()
+                val nextX = next.x.toDouble()
+                val previousY = previous.y.toDouble()
+                val nextY = next.y.toDouble()
+
                 val progress =
-                (currentMinute - previous.x) / (next.x - previous.x)
+                (currentMinute - previousX) / (nextX - previousX)
 
-                previous.y + ((next.y - previous.y) * progress)
+                previousY + ((nextY - previousY) * progress)
             }
         }
 
