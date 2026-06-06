@@ -62,6 +62,8 @@ class DeviceLightManualViewModel(
     private val pendingManualChannelValues =
     mutableMapOf<LightChannelSemantic, Int>()
 
+    private var pendingFullManualOutput = false
+
     private var manualChannelSendLoopJob: Job? = null
 
     private var lastManualChannelSendStartedAtMillis: Long = 0L
@@ -237,6 +239,9 @@ class DeviceLightManualViewModel(
         blue: Int? = null,
         white: Int? = null
     ) {
+        val wasManualOverrideActive =
+        _uiState.value.isManualMode || _uiState.value.isManualScene
+
         _uiState.update {
             state ->
             val newRed = red?.coerceIn(0, 100) ?: state.red
@@ -267,9 +272,24 @@ class DeviceLightManualViewModel(
             ).withCalculatedPowerText()
         }
 
-        enqueueManualChannelSend(
-            semantic = semantic
-        )
+        if (wasManualOverrideActive) {
+            enqueueManualChannelSend(
+                semantic = semantic
+            )
+        } else {
+            enqueueFullManualOutputSend()
+        }
+    }
+
+    private fun enqueueFullManualOutputSend() {
+        pendingFullManualOutput = true
+        pendingManualChannelValues.clear()
+
+        if (manualChannelSendLoopJob?.isActive == true) {
+            return
+        }
+
+        startManualChannelSendLoop()
     }
 
     private fun enqueueManualChannelSend(
@@ -305,6 +325,25 @@ class DeviceLightManualViewModel(
                     delay(waitMs)
                 }
 
+                if (pendingFullManualOutput) {
+                    pendingFullManualOutput = false
+                    pendingManualChannelValues.clear()
+
+                    val state = _uiState.value
+
+                    lastManualChannelSendStartedAtMillis =
+                    System.currentTimeMillis()
+
+                    sendFullManualOutput(
+                        red = state.red,
+                        green = state.green,
+                        blue = state.blue,
+                        white = state.white
+                    )
+
+                    continue
+                }
+
                 val nextEntry = pendingManualChannelValues.entries.firstOrNull()
                 ?: break
 
@@ -313,7 +352,8 @@ class DeviceLightManualViewModel(
 
                 pendingManualChannelValues.remove(semantic)
 
-                lastManualChannelSendStartedAtMillis = System.currentTimeMillis()
+                lastManualChannelSendStartedAtMillis =
+                System.currentTimeMillis()
 
                 sendManualChannelValue(
                     semantic = semantic,
@@ -323,7 +363,10 @@ class DeviceLightManualViewModel(
 
             manualChannelSendLoopJob = null
 
-            if (pendingManualChannelValues.isNotEmpty()) {
+            if (
+                pendingFullManualOutput ||
+                pendingManualChannelValues.isNotEmpty()
+            ) {
                 startManualChannelSendLoop()
             }
         }
@@ -344,6 +387,29 @@ class DeviceLightManualViewModel(
         if (!result.isSuccess) {
             maybeShowManualChannelError(
                 message = result.message ?: "Manual channel could not be sent"
+            )
+        }
+    }
+
+    private suspend fun sendFullManualOutput(
+        red: Int,
+        green: Int,
+        blue: Int,
+        white: Int
+    ) {
+        if (!hasValidDeviceId()) return
+
+        val result = lightRuntimeRepository.updateManualOutput(
+            deviceId = deviceId,
+            red = red,
+            green = green,
+            blue = blue,
+            white = white
+        )
+
+        if (!result.isSuccess) {
+            maybeShowManualChannelError(
+                message = result.message ?: "Manual output could not be sent"
             )
         }
     }
@@ -369,6 +435,7 @@ class DeviceLightManualViewModel(
 
     private fun isManualLiveEditing(): Boolean {
         return isSliderInteractionActive ||
+        pendingFullManualOutput ||
         manualChannelSendLoopJob?.isActive == true ||
         pendingManualChannelValues.isNotEmpty()
     }
@@ -553,6 +620,7 @@ class DeviceLightManualViewModel(
         manualChannelSendLoopJob?.cancel()
         manualChannelSendLoopJob = null
 
+        pendingFullManualOutput = false
         pendingManualChannelValues.clear()
         isSliderInteractionActive = false
     }
