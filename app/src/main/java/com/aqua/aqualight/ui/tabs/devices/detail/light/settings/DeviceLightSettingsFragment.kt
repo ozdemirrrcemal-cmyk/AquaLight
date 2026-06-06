@@ -169,6 +169,12 @@ class DeviceLightSettingsFragment :
         binding.tvDeviceModel.text = state.deviceModel
         binding.tvFirmwareVersion.text = state.firmwareVersion
         binding.tvConnectionState.text = state.connectionState
+		
+		binding.tvDeviceIp.text = state.deviceIp
+binding.tvSerialNumber.text = state.serialNumber
+binding.tvHardwareRevision.text = state.hardwareRevision
+binding.tvApiVersion.text = state.apiVersion
+binding.tvChannelCount.text = state.channelCount
 
         binding.tvDeviceTime.text = state.deviceTime
         binding.tvPhoneTime.text = state.phoneTime

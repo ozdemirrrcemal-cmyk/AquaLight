@@ -8,6 +8,9 @@ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,30 +28,32 @@ class DeviceLightSettingsViewModel(
 ) : AndroidViewModel(application) {
 
     private val appContext =
-        application.applicationContext
+    application.applicationContext
 
     private val devicesDataStoreManager =
-        DevicesDataStoreManager.create(appContext)
+    DevicesDataStoreManager.create(appContext)
 
     private val lightDeviceTimeRepository =
-        LightDeviceTimeRepository(
-            context = appContext
-        )
+    LightDeviceTimeRepository(
+        context = appContext
+    )
 
     private val _uiState = MutableStateFlow(
         DeviceLightSettingsUiState()
     )
 
     val uiState: StateFlow<DeviceLightSettingsUiState> =
-        _uiState.asStateFlow()
+    _uiState.asStateFlow()
 
     private val eventsChannel =
-        Channel<DeviceLightSettingsEvent>(Channel.BUFFERED)
+    Channel<DeviceLightSettingsEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
 
     private var deviceId: Long = 0L
     private var initialized = false
+
+    private var profileJob: Job? = null
 
     init {
         refreshPhoneTime()
@@ -62,7 +67,7 @@ class DeviceLightSettingsViewModel(
         DevicePresenceMonitor.start(appContext)
 
         refreshPhoneTime()
-        refreshDeviceProfile()
+        observeDeviceProfile()
         refreshDeviceTime(
             showError = false
         )
@@ -75,57 +80,128 @@ class DeviceLightSettingsViewModel(
     }
 
     fun refreshPhoneTime() {
-        _uiState.update { state ->
+        _uiState.update {
+            state ->
             state.copy(
                 phoneTime = currentPhoneTimeText()
             )
         }
     }
 
-    private fun refreshDeviceProfile() {
-        viewModelScope.launch {
-            val device = devicesDataStoreManager.devicesFlow
-                .first()
-                .firstOrNull { savedDevice ->
+    private fun observeDeviceProfile() {
+        profileJob?.cancel()
+
+        profileJob = viewModelScope.launch {
+            combine(
+                devicesDataStoreManager.devicesFlow,
+                DevicePresenceMonitor.statuses
+            ) {
+                devices, statuses ->
+                devices to statuses
+            }.collect {
+                (devices, statuses) ->
+                val device = devices.firstOrNull {
+                    savedDevice ->
                     savedDevice.id == deviceId
                 }
 
-            if (device == null) {
-                _uiState.update { state ->
+                if (device == null) {
+                    _uiState.update {
+                        state ->
+                        state.copy(
+                            deviceName = "—",
+                            deviceType = "—",
+                            deviceModel = "—",
+                            firmwareVersion = "—",
+                            deviceIp = "—",
+                            serialNumber = "—",
+                            hardwareRevision = "—",
+                            apiVersion = "—",
+                            channelCount = "—",
+                            connectionState = "Not found"
+                        )
+                    }
+                    return@collect
+                }
+
+                val status = statuses[deviceId]
+                val definition = AquaDeviceCatalog.findByType(device.deviceType)
+
+                val resolvedIp = status?.ip
+                ?.ifBlank {
+                    device.ip
+                }
+                ?: device.ip
+
+                _uiState.update {
+                    state ->
                     state.copy(
-                        deviceName = "—",
-                        deviceType = "—",
-                        deviceModel = "—",
-                        firmwareVersion = "—",
-                        connectionState = "Not found"
+                        deviceName = device.name
+                        .ifBlank {
+                            device.aquaName
+                        }
+                        .ifBlank {
+                            device.productModel
+                        }
+                        .ifBlank {
+                            "Light Device"
+                        },
+
+                        deviceType = definition?.displayName
+                        ?.ifBlank {
+                            formatEnumName(device.deviceType.name)
+                        }
+                        ?: formatEnumName(device.deviceType.name),
+
+                        deviceModel = device.productModel
+                        .ifBlank {
+                            device.productId
+                        }
+                        .ifBlank {
+                            "—"
+                        },
+
+                        firmwareVersion = device.firmwareVersion
+                        .ifBlank {
+                            device.firmwareBuild
+                        }
+                        .ifBlank {
+                            "—"
+                        },
+
+                        deviceIp = resolvedIp.ifBlank {
+                            "—"
+                        },
+
+                        serialNumber = device.serial
+                        .ifBlank {
+                            "—"
+                        },
+
+                        hardwareRevision = device.hardwareRevision
+                        .ifBlank {
+                            "—"
+                        },
+
+                        apiVersion = device.apiVersion
+                        ?.let {
+                            value -> "v$value"
+                        }
+                        ?: "—",
+
+                        channelCount = device.channelCount
+                        ?.let {
+                            value -> "$value channels"
+                        }
+                        ?: "—",
+
+                        connectionState = when {
+                            status?.isOnline == true -> "Online"
+                            status != null -> formatEnumName(status.status.name)
+                            else -> "Unknown"
+                        }
                     )
                 }
-                return@launch
-            }
-
-            val status = DevicePresenceMonitor.statuses.value[deviceId]
-
-            _uiState.update { state ->
-                state.copy(
-                    deviceName = device.name
-                        .ifBlank { device.aquaName }
-                        .ifBlank { device.productModel }
-                        .ifBlank { "Light Device" },
-                    deviceType = formatEnumName(
-                        device.deviceType.name
-                    ),
-                    deviceModel = device.productModel
-                        .ifBlank { device.productId }
-                        .ifBlank { "—" },
-                    firmwareVersion = device.firmwareVersion
-                        .ifBlank { device.firmwareBuild }
-                        .ifBlank { "—" },
-                    connectionState = when {
-                        status?.isOnline == true -> "Online"
-                        status != null -> formatEnumName(status.status.name)
-                        else -> "Unknown"
-                    }
-                )
             }
         }
     }
@@ -139,14 +215,18 @@ class DeviceLightSettingsViewModel(
                     deviceId = deviceId,
                     fallbackToPhone = false
                 )
-            }.onSuccess { timeState ->
-                _uiState.update { state ->
+            }.onSuccess {
+                timeState ->
+                _uiState.update {
+                    state ->
                     state.copy(
                         deviceTime = timeState.timeText
                     )
                 }
-            }.onFailure { error ->
-                _uiState.update { state ->
+            }.onFailure {
+                error ->
+                _uiState.update {
+                    state ->
                     state.copy(
                         deviceTime = "--:--"
                     )
@@ -166,7 +246,8 @@ class DeviceLightSettingsViewModel(
     fun setTemperatureProtectionEnabled(
         enabled: Boolean
     ) {
-        _uiState.update { state ->
+        _uiState.update {
+            state ->
             state.copy(
                 temperatureProtectionEnabled = enabled
             )
@@ -190,7 +271,8 @@ class DeviceLightSettingsViewModel(
     ) {
         val safeValue = temperatureCelsius.coerceIn(40, 75)
 
-        _uiState.update { state ->
+        _uiState.update {
+            state ->
             state.copy(
                 limitTemperatureCelsius = safeValue
             )
@@ -210,7 +292,8 @@ class DeviceLightSettingsViewModel(
     ) {
         val safeValue = percent.coerceIn(40, 90)
 
-        _uiState.update { state ->
+        _uiState.update {
+            state ->
             state.copy(
                 lightReductionPercent = safeValue
             )
@@ -230,7 +313,8 @@ class DeviceLightSettingsViewModel(
     ) {
         val safeValue = seconds.coerceIn(15, 300)
 
-        _uiState.update { state ->
+        _uiState.update {
+            state ->
             state.copy(
                 recoveryIntervalSeconds = safeValue
             )
@@ -249,7 +333,8 @@ class DeviceLightSettingsViewModel(
         viewModelScope.launch {
             val phoneTime = currentPhoneTimeText()
 
-            _uiState.update { state ->
+            _uiState.update {
+                state ->
                 state.copy(
                     phoneTime = phoneTime
                 )
@@ -277,7 +362,8 @@ class DeviceLightSettingsViewModel(
                 null
             }
 
-            _uiState.update { state ->
+            _uiState.update {
+                state ->
                 state.copy(
                     deviceTime = syncedTime?.timeText ?: phoneTime,
                     phoneTime = phoneTime,
@@ -309,11 +395,11 @@ class DeviceLightSettingsViewModel(
             Locale.getDefault()
         ).format(Date())
     }
-	
-	fun refreshTimes() {
-          refreshPhoneTime()
-          refreshDeviceTime(
-        showError = false
+
+    fun refreshTimes() {
+        refreshPhoneTime()
+        refreshDeviceTime(
+            showError = false
         )
     }
 
@@ -324,16 +410,23 @@ class DeviceLightSettingsViewModel(
         ).format(Date())
     }
 
+    override fun onCleared() {
+        profileJob?.cancel()
+        super.onCleared()
+    }
+
     private fun formatEnumName(
         value: String
     ): String {
         return value
-            .lowercase(Locale.getDefault())
-            .split("_")
-            .joinToString(" ") { word ->
-                word.replaceFirstChar { char ->
-                    char.uppercase(Locale.getDefault())
-                }
+        .lowercase(Locale.getDefault())
+        .split("_")
+        .joinToString(" ") {
+            word ->
+            word.replaceFirstChar {
+                char ->
+                char.uppercase(Locale.getDefault())
             }
+        }
     }
 }
