@@ -10,18 +10,17 @@ class Esp32LightDeviceTimeWriter(
         ip: String,
         timeState: LightDeviceTimeState
     ): LightCommandResult {
-        val setTimeJson = buildTimeObject(timeState)
-        val timeLJson = buildTimeObject(timeState)
+        val timeJson = buildTimeObject(timeState)
 
         val json = JSONObject()
             .put(
                 "Time",
                 JSONObject()
-                    .put("SetTime", setTimeJson)
+                    .put("SetTime", timeJson)
             )
             .put(
                 "TimeL",
-                timeLJson
+                buildTimeObject(timeState)
             )
             .toString()
 

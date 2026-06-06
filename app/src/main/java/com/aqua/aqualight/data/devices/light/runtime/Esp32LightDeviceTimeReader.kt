@@ -20,10 +20,6 @@ class Esp32LightDeviceTimeReader(
                     .put("EnabledAutoSyncGadget", 0)
                     .put("TimeZone", 0)
             )
-            .put(
-                "TimeL",
-                JSONObject().put("All", 0)
-            )
             .toString()
 
         val response = httpClient.getJson(
@@ -46,28 +42,35 @@ class Esp32LightDeviceTimeReader(
             normalizeResponseJson(response)
         )
 
+        val time = root.optJSONObject("Time")
+
+        val timeCurrent = time
+            ?.optString("TimeCurrent", "")
+            .orEmpty()
+            .ifBlank {
+                root.optString("TimeCurrent", "")
+            }
+
+        if (timeCurrent.isNotBlank()) {
+            return parseTimeCurrentString(timeCurrent)
+        }
+
         val timeL = root.optJSONObject("TimeL")
 
         if (timeL != null) {
-            return parseTimeLObject(timeL)
+            return parseTimeObject(timeL)
         }
 
-        val time = root.optJSONObject("Time")
-            ?: throw IllegalStateException("Device time is missing")
+        val setTime = time?.optJSONObject("SetTime")
 
-        val timeCurrent = time.optString(
-            "TimeCurrent",
-            ""
-        )
-
-        if (timeCurrent.isBlank()) {
-            throw IllegalStateException("Device time is missing")
+        if (setTime != null) {
+            return parseTimeObject(setTime)
         }
 
-        return parseTimeCurrentString(timeCurrent)
+        throw IllegalStateException("Device time is missing")
     }
 
-    private fun parseTimeLObject(
+    private fun parseTimeObject(
         time: JSONObject
     ): LightDeviceTimeState {
         val year = time.optInt("Y", 0)
@@ -106,7 +109,7 @@ class Esp32LightDeviceTimeReader(
         )
 
         val match = pattern.find(value.trim())
-            ?: throw IllegalStateException("Device time format is invalid")
+            ?: throw IllegalStateException("Device time format is invalid: $value")
 
         val hour = match.groupValues[1].toInt()
         val minute = match.groupValues[2].toInt()
