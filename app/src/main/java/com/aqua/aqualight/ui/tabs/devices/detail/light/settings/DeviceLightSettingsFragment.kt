@@ -208,8 +208,8 @@ class DeviceLightSettingsFragment :
     }
 
     override fun onResume() {
-        super.onResume()
-        viewModel.refreshPhoneTime()
+    super.onResume()
+    viewModel.refreshTimes()
     }
 
     override fun onDestroyView() {
