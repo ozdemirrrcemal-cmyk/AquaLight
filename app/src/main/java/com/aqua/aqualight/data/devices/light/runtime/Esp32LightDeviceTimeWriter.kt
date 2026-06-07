@@ -8,14 +8,19 @@ class Esp32LightDeviceTimeWriter(
 
     suspend fun writeTime(
         ip: String,
-        timeState: LightDeviceTimeState
+        timeState: LightDeviceTimeState,
+        timeZoneOffsetHours: Int
     ): LightCommandResult {
+        val safeTimeZoneOffsetHours =
+            timeZoneOffsetHours.coerceIn(-12, 14)
+
         val timeJson = buildTimeObject(timeState)
 
         val json = JSONObject()
             .put(
                 "Time",
                 JSONObject()
+                    .put("TimeZone", safeTimeZoneOffsetHours)
                     .put("SetTime", timeJson)
             )
             .put(

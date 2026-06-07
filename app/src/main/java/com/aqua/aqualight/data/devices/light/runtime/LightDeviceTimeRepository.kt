@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.devices.light.runtime
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.TimeZone
 
 class LightDeviceTimeRepository(
     context: Context,
@@ -79,12 +80,24 @@ class LightDeviceTimeRepository(
             }
 
             val phoneTime = Esp32LightDeviceTimeReader.phoneFallback()
+            val timeZoneOffsetHours = currentPhoneTimeZoneOffsetHours()
 
             timeWriter.writeTime(
                 ip = address.ip,
-                timeState = phoneTime
+                timeState = phoneTime,
+                timeZoneOffsetHours = timeZoneOffsetHours
             )
         }
+    }
+
+    private fun currentPhoneTimeZoneOffsetHours(): Int {
+        val timeZone = TimeZone.getDefault()
+        val now = System.currentTimeMillis()
+
+        val offsetMillis = timeZone.getOffset(now)
+
+        return (offsetMillis / ONE_HOUR_MILLIS)
+            .coerceIn(-12, 14)
     }
 
     private fun fallbackOrThrow(
@@ -96,5 +109,10 @@ class LightDeviceTimeRepository(
         }
 
         throw IllegalStateException(message)
+    }
+
+    companion object {
+        private const val ONE_HOUR_MILLIS =
+            60 * 60 * 1000
     }
 }

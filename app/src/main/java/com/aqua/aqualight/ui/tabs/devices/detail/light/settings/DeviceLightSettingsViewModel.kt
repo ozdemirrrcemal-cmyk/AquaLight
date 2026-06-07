@@ -5,6 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightCoolingManager
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightThermalProtectionManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceAddressResolver
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
@@ -22,52 +25,49 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.aqua.aqualight.data.devices.light.runtime.Esp32LightThermalProtectionManager
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceAddressResolver
-import com.aqua.aqualight.data.devices.light.runtime.Esp32LightCoolingManager
 
 class DeviceLightSettingsViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
     private val appContext =
-    application.applicationContext
+        application.applicationContext
 
     private val devicesDataStoreManager =
-    DevicesDataStoreManager.create(appContext)
+        DevicesDataStoreManager.create(appContext)
 
     private val lightDeviceTimeRepository =
-    LightDeviceTimeRepository(
-        context = appContext
-    )
+        LightDeviceTimeRepository(
+            context = appContext
+        )
 
     private val _uiState = MutableStateFlow(
         DeviceLightSettingsUiState()
     )
 
     val uiState: StateFlow<DeviceLightSettingsUiState> =
-    _uiState.asStateFlow()
+        _uiState.asStateFlow()
 
     private val eventsChannel =
-    Channel<DeviceLightSettingsEvent>(Channel.BUFFERED)
-
-    private val addressResolver =
-    LightDeviceAddressResolver(appContext)
-
-    private val thermalProtectionManager =
-    Esp32LightThermalProtectionManager()
-
-    private val coolingManager =
-    Esp32LightCoolingManager()
+        Channel<DeviceLightSettingsEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
+
+    private val addressResolver =
+        LightDeviceAddressResolver(appContext)
+
+    private val thermalProtectionManager =
+        Esp32LightThermalProtectionManager()
+
+    private val coolingManager =
+        Esp32LightCoolingManager()
 
     private var deviceId: Long = 0L
     private var profileJob: Job? = null
     private var liveStateJob: Job? = null
 
     private val liveRefreshOwnerKey =
-    "DeviceLightSettingsViewModel_${System.identityHashCode(this)}"
+        "DeviceLightSettingsViewModel_${System.identityHashCode(this)}"
 
     init {
         refreshPhoneTime()
@@ -109,8 +109,7 @@ class DeviceLightSettingsViewModel(
     }
 
     fun refreshPhoneTime() {
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             state.copy(
                 phoneTime = currentPhoneTimeText()
             )
@@ -155,13 +154,11 @@ class DeviceLightSettingsViewModel(
         liveStateJob = viewModelScope.launch {
             LightDeviceLiveRefreshManager.observe(
                 deviceId = deviceId
-            ).collect {
-                liveState ->
+            ).collect { liveState ->
                 val thermal = liveState.thermalProtection
                 val cooling = liveState.cooling
 
-                _uiState.update {
-                    state ->
+                _uiState.update { state ->
                     state.copy(
                         deviceTime = if (liveState.hasDeviceTime) {
                             liveState.deviceTimeText
@@ -196,30 +193,21 @@ class DeviceLightSettingsViewModel(
             combine(
                 devicesDataStoreManager.devicesFlow,
                 DevicePresenceMonitor.statuses
-            ) {
-                devices, statuses ->
+            ) { devices, statuses ->
                 devices to statuses
-            }.collect {
-                (devices, statuses) ->
-                val device = devices.firstOrNull {
-                    savedDevice ->
+            }.collect { (devices, statuses) ->
+                val device = devices.firstOrNull { savedDevice ->
                     savedDevice.id == deviceId
                 }
 
                 if (device == null) {
-                    _uiState.update {
-                        state ->
+                    _uiState.update { state ->
                         state.copy(
                             deviceName = "—",
                             deviceType = "—",
-                            deviceModel = "—",
                             firmwareVersion = "—",
                             deviceIp = "—",
-                            serialNumber = "—",
-                            hardwareRevision = "—",
-                            apiVersion = "—",
-                            channelCount = "—",
-                            connectionState = "Not found"
+                            serialNumber = "—"
                         )
                     }
                     return@collect
@@ -229,80 +217,46 @@ class DeviceLightSettingsViewModel(
                 val definition = AquaDeviceCatalog.findByType(device.deviceType)
 
                 val resolvedIp = status?.ip
-                ?.ifBlank {
-                    device.ip
-                }
-                ?: device.ip
+                    ?.ifBlank {
+                        device.ip
+                    }
+                    ?: device.ip
 
-                _uiState.update {
-                    state ->
+                _uiState.update { state ->
                     state.copy(
                         deviceName = device.name
-                        .ifBlank {
-                            device.aquaName
-                        }
-                        .ifBlank {
-                            device.productModel
-                        }
-                        .ifBlank {
-                            "Light Device"
-                        },
+                            .ifBlank {
+                                device.aquaName
+                            }
+                            .ifBlank {
+                                device.productModel
+                            }
+                            .ifBlank {
+                                "Light Device"
+                            },
 
                         deviceType = definition?.displayName
-                        ?.ifBlank {
-                            formatEnumName(device.deviceType.name)
-                        }
-                        ?: formatEnumName(device.deviceType.name),
-
-                        deviceModel = device.productModel
-                        .ifBlank {
-                            device.productId
-                        }
-                        .ifBlank {
-                            "—"
-                        },
+                            ?.ifBlank {
+                                formatEnumName(device.deviceType.name)
+                            }
+                            ?: formatEnumName(device.deviceType.name),
 
                         firmwareVersion = device.firmwareVersion
-                        .ifBlank {
-                            device.firmwareBuild
-                        }
-                        .ifBlank {
-                            "—"
-                        },
+                            .ifBlank {
+                                device.firmwareBuild
+                            }
+                            .ifBlank {
+                                "—"
+                            },
 
                         deviceIp = resolvedIp.ifBlank {
                             "—"
                         },
 
                         serialNumber = device.serial
-                        .ifBlank {
-                            "—"
-                        },
-
-                        hardwareRevision = device.hardwareRevision
-                        .ifBlank {
-                            "—"
-                        },
-
-                        apiVersion = device.apiVersion
-                        ?.let {
-                            value ->
-                            "v$value"
-                        }
-                        ?: "—",
-
-                        channelCount = device.channelCount
-                        ?.let {
-                            value ->
-                            "$value channels"
-                        }
-                        ?: "—",
-
-                        connectionState = when {
-                            status?.isOnline == true -> "Online"
-                            status != null -> formatEnumName(status.status.name)
-                            else -> "Unknown"
-                        }
+                            .ifBlank {
+                                "—"
+                            }
                     )
                 }
             }
@@ -313,8 +267,7 @@ class DeviceLightSettingsViewModel(
         viewModelScope.launch {
             val phoneTime = currentPhoneTimeText()
 
-            _uiState.update {
-                state ->
+            _uiState.update { state ->
                 state.copy(
                     phoneTime = phoneTime
                 )
@@ -342,8 +295,7 @@ class DeviceLightSettingsViewModel(
                 null
             }
 
-            _uiState.update {
-                state ->
+            _uiState.update { state ->
                 state.copy(
                     deviceTime = syncedTime?.timeText ?: state.deviceTime,
                     phoneTime = phoneTime,
@@ -406,6 +358,60 @@ class DeviceLightSettingsViewModel(
         )
     }
 
+    fun updateCoolingMode(
+        enabled: Boolean
+    ) {
+        val currentState = _uiState.value
+
+        applyCoolingSettings(
+            enabled = enabled,
+            fanStartTemperatureCelsius = currentState.fanStartTemperatureCelsius,
+            fanFullSpeedTemperatureCelsius = currentState.fanFullSpeedTemperatureCelsius,
+            successMessage = if (enabled) {
+                "Cooling mode set to Auto"
+            } else {
+                "Cooling disabled"
+            }
+        )
+    }
+
+    fun updateFanStartTemperature(
+        temperatureCelsius: Int
+    ) {
+        val currentState = _uiState.value
+
+        val safeStart = temperatureCelsius.coerceIn(25, 45)
+        val safeFull = currentState.fanFullSpeedTemperatureCelsius
+            .coerceAtLeast(safeStart + 5)
+            .coerceAtMost(70)
+
+        applyCoolingSettings(
+            enabled = currentState.coolingModeEnabled,
+            fanStartTemperatureCelsius = safeStart,
+            fanFullSpeedTemperatureCelsius = safeFull,
+            successMessage = "Fan start set to ${safeStart}°C"
+        )
+    }
+
+    fun updateFanFullSpeedTemperature(
+        temperatureCelsius: Int
+    ) {
+        val currentState = _uiState.value
+
+        val safeFull = temperatureCelsius
+            .coerceIn(
+                currentState.fanStartTemperatureCelsius + 5,
+                70
+            )
+
+        applyCoolingSettings(
+            enabled = currentState.coolingModeEnabled,
+            fanStartTemperatureCelsius = currentState.fanStartTemperatureCelsius,
+            fanFullSpeedTemperatureCelsius = safeFull,
+            successMessage = "Full speed set to ${safeFull}°C"
+        )
+    }
+
     fun updateFirmware() {
         viewModelScope.launch {
             eventsChannel.send(
@@ -414,13 +420,6 @@ class DeviceLightSettingsViewModel(
                 )
             )
         }
-    }
-
-    private fun currentPhoneTimeText(): String {
-        return SimpleDateFormat(
-            "HH:mm",
-            Locale.getDefault()
-        ).format(Date())
     }
 
     private fun applyThermalSettings(
@@ -432,8 +431,7 @@ class DeviceLightSettingsViewModel(
         viewModelScope.launch {
             val currentState = _uiState.value
 
-            _uiState.update {
-                state ->
+            _uiState.update { state ->
                 state.copy(
                     limitTemperatureCelsius = limitTemperatureCelsius,
                     lightReductionPercent = lightReductionPercent,
@@ -444,14 +442,14 @@ class DeviceLightSettingsViewModel(
             val address = resolveAddress()
 
             if (address == null) {
+                restoreThermalSettings(
+                    previousState = currentState
+                )
+
                 eventsChannel.send(
                     DeviceLightSettingsEvent.ShowError(
                         "Device address could not be resolved"
                     )
-                )
-
-                restoreThermalSettings(
-                    previousState = currentState
                 )
                 return@launch
             }
@@ -490,60 +488,6 @@ class DeviceLightSettingsViewModel(
         }
     }
 
-    fun updateCoolingMode(
-        enabled: Boolean
-    ) {
-        val currentState = _uiState.value
-
-        applyCoolingSettings(
-            enabled = enabled,
-            fanStartTemperatureCelsius = currentState.fanStartTemperatureCelsius,
-            fanFullSpeedTemperatureCelsius = currentState.fanFullSpeedTemperatureCelsius,
-            successMessage = if (enabled) {
-                "Cooling mode set to Auto"
-            } else {
-                "Cooling disabled"
-            }
-        )
-    }
-
-    fun updateFanStartTemperature(
-        temperatureCelsius: Int
-    ) {
-        val currentState = _uiState.value
-
-        val safeStart = temperatureCelsius.coerceIn(25, 45)
-        val safeFull = currentState.fanFullSpeedTemperatureCelsius
-        .coerceAtLeast(safeStart + 5)
-        .coerceAtMost(70)
-
-        applyCoolingSettings(
-            enabled = currentState.coolingModeEnabled,
-            fanStartTemperatureCelsius = safeStart,
-            fanFullSpeedTemperatureCelsius = safeFull,
-            successMessage = "Fan start set to ${safeStart}°C"
-        )
-    }
-
-    fun updateFanFullSpeedTemperature(
-        temperatureCelsius: Int
-    ) {
-        val currentState = _uiState.value
-
-        val safeFull = temperatureCelsius
-        .coerceIn(
-            currentState.fanStartTemperatureCelsius + 5,
-            70
-        )
-
-        applyCoolingSettings(
-            enabled = currentState.coolingModeEnabled,
-            fanStartTemperatureCelsius = currentState.fanStartTemperatureCelsius,
-            fanFullSpeedTemperatureCelsius = safeFull,
-            successMessage = "Full speed set to ${safeFull}°C"
-        )
-    }
-
     private fun applyCoolingSettings(
         enabled: Boolean,
         fanStartTemperatureCelsius: Int,
@@ -562,8 +506,7 @@ class DeviceLightSettingsViewModel(
                 return@launch
             }
 
-            _uiState.update {
-                state ->
+            _uiState.update { state ->
                 state.copy(
                     coolingMode = if (enabled) {
                         "Auto"
@@ -624,8 +567,7 @@ class DeviceLightSettingsViewModel(
     private fun restoreCoolingSettings(
         previousState: DeviceLightSettingsUiState
     ) {
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             state.copy(
                 coolingMode = previousState.coolingMode,
                 coolingModeEnabled = previousState.coolingModeEnabled,
@@ -635,13 +577,10 @@ class DeviceLightSettingsViewModel(
         }
     }
 
-
-
     private fun restoreThermalSettings(
         previousState: DeviceLightSettingsUiState
     ) {
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             state.copy(
                 limitTemperatureCelsius = previousState.limitTemperatureCelsius,
                 lightReductionPercent = previousState.lightReductionPercent,
@@ -662,6 +601,13 @@ class DeviceLightSettingsViewModel(
         }
     }
 
+    private fun currentPhoneTimeText(): String {
+        return SimpleDateFormat(
+            "HH:mm",
+            Locale.getDefault()
+        ).format(Date())
+    }
+
     private fun currentLastSyncText(): String {
         return SimpleDateFormat(
             "'Today' HH:mm",
@@ -673,15 +619,13 @@ class DeviceLightSettingsViewModel(
         value: String
     ): String {
         return value
-        .lowercase(Locale.getDefault())
-        .split("_")
-        .joinToString(" ") {
-            word ->
-            word.replaceFirstChar {
-                char ->
-                char.uppercase(Locale.getDefault())
+            .lowercase(Locale.getDefault())
+            .split("_")
+            .joinToString(" ") { word ->
+                word.replaceFirstChar { char ->
+                    char.uppercase(Locale.getDefault())
+                }
             }
-        }
     }
 
     override fun onCleared() {

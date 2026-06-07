@@ -27,8 +27,6 @@ Fragment(R.layout.fragment_device_light_settings) {
 
     private val viewModel: DeviceLightSettingsViewModel by viewModels()
 
-    private var isRendering = false
-
     private val deviceId: Long
     get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
@@ -239,61 +237,51 @@ Fragment(R.layout.fragment_device_light_settings) {
     }
 
     private fun renderUiState(
-        state: DeviceLightSettingsUiState
-    ) {
-        isRendering = true
+    state: DeviceLightSettingsUiState
+) {
+    binding.tvDeviceName.text = state.deviceName
+    binding.tvDeviceType.text = state.deviceType
+    binding.tvFirmwareVersion.text = state.firmwareVersion
+    binding.tvDeviceIp.text = state.deviceIp
+    binding.tvSerialNumber.text = state.serialNumber
 
-        binding.tvDeviceName.text = state.deviceName
-        binding.tvDeviceType.text = state.deviceType
-        binding.tvDeviceModel.text = state.deviceModel
-        binding.tvFirmwareVersion.text = state.firmwareVersion
-        binding.tvConnectionState.text = state.connectionState
+    binding.tvDeviceTime.text = state.deviceTime
+    binding.tvPhoneTime.text = state.phoneTime
+    binding.tvLastSyncTime.text = state.lastSyncTime
 
-        binding.tvDeviceIp.text = state.deviceIp
-        binding.tvSerialNumber.text = state.serialNumber
-        binding.tvHardwareRevision.text = state.hardwareRevision
-        binding.tvApiVersion.text = state.apiVersion
-        binding.tvChannelCount.text = state.channelCount
-
-        binding.tvDeviceTime.text = state.deviceTime
-        binding.tvPhoneTime.text = state.phoneTime
-        binding.tvLastSyncTime.text = state.lastSyncTime
-
-        binding.tvThermalProtectionStatus.text =
+    binding.tvThermalProtectionStatus.text =
         state.thermalProtectionStatusText
 
-        binding.tvCurrentTemperatureValue.text =
+    binding.tvCurrentTemperatureValue.text =
         state.currentTemperatureText
 
-        binding.tvLimitTemperatureValue.text =
+    binding.tvLimitTemperatureValue.text =
         "${state.limitTemperatureCelsius}°C"
 
-        binding.tvLightReductionValue.text =
+    binding.tvLightReductionValue.text =
         "${state.lightReductionPercent}%"
 
-        binding.tvRecoveryIntervalValue.text =
+    binding.tvRecoveryIntervalValue.text =
         "${state.recoveryIntervalSeconds}s"
 
-        binding.tvCoolingStatus.text =
+    binding.tvCoolingStatus.text =
         state.coolingStatusText
 
-        binding.tvCoolingControllerTemp.text =
+    binding.tvCoolingControllerTemp.text =
         state.currentTemperatureText
 
-        binding.tvCoolingFans.text =
+    binding.tvCoolingFans.text =
         state.coolingFansText
 
-        binding.tvCoolingMode.text =
+    binding.tvCoolingMode.text =
         state.coolingMode
 
-        binding.tvFanStartValue.text =
+    binding.tvFanStartValue.text =
         "${state.fanStartTemperatureCelsius}°C"
 
-        binding.tvFanFullSpeedValue.text =
+    binding.tvFanFullSpeedValue.text =
         "${state.fanFullSpeedTemperatureCelsius}°C"
-
-        isRendering = false
-    }
+}
 
     override fun onResume() {
         super.onResume()

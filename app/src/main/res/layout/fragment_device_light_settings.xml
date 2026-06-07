@@ -113,27 +113,6 @@
 
                         </LinearLayout>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Model" />
-
-                            <TextView
-                                android:id="@+id/tvDeviceModel"
-                                style="@style/TextAppearance.Aqua.Light.Body"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="AquaLight WRGB Pro" />
-
-                        </LinearLayout>
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -197,97 +176,6 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="—" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Hardware" />
-
-                            <TextView
-                                android:id="@+id/tvHardwareRevision"
-                                style="@style/TextAppearance.Aqua.Light.Body"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="—" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="API Version" />
-
-                            <TextView
-                                android:id="@+id/tvApiVersion"
-                                style="@style/TextAppearance.Aqua.Light.Body"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="—" />
-
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Channels" />
-
-                            <TextView
-                                android:id="@+id/tvChannelCount"
-                                style="@style/TextAppearance.Aqua.Light.Body"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="—" />
-
-                        </LinearLayout>
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Connection" />
-
-                            <TextView
-                                android:id="@+id/tvConnectionState"
-                                style="@style/TextAppearance.Aqua.Light.Filter.Selected"
-                                android:layout_width="wrap_content"
-                                android:layout_height="30dp"
-                                android:background="@drawable/bg_light_filter_selected"
-                                android:gravity="center"
-                                android:paddingStart="14dp"
-                                android:paddingEnd="14dp"
-                                android:text="Online" />
 
                         </LinearLayout>
 
