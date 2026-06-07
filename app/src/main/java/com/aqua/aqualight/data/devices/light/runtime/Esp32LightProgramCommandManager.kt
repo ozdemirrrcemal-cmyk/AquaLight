@@ -9,6 +9,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightPr
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 class Esp32LightProgramCommandManager(
     context: Context,
@@ -94,7 +95,7 @@ class Esp32LightProgramCommandManager(
             )
         }
 
-        val json = buildClearScheduleJson(
+        val clearScheduleJson = buildClearScheduleJson(
             mapping = mapping
         ).getOrElse {
             error ->
@@ -103,10 +104,31 @@ class Esp32LightProgramCommandManager(
             )
         }
 
+        val clearResult = httpClient.postSet(
+            ip = address.ip,
+            json = clearScheduleJson,
+            requestTag = "light_program_clear_schedule"
+        )
+
+        if (!clearResult.isSuccess) {
+            return clearResult
+        }
+
+        delay(CLEAR_TO_OFF_DELAY_MS)
+
+        val offJson = buildManualOffJson(
+            mapping = mapping
+        ).getOrElse {
+            error ->
+            return LightCommandResult.failure(
+                error.message ?: "Light output could not be turned off"
+            )
+        }
+
         return httpClient.postSet(
             ip = address.ip,
-            json = json,
-            requestTag = "light_program_clear"
+            json = offJson,
+            requestTag = "light_program_force_off"
         )
     }
 
@@ -211,17 +233,6 @@ class Esp32LightProgramCommandManager(
         }
 
         val json = JSONObject()
-        .put(
-            "LPWMChanelLED",
-            JSONObject()
-            .put(
-                "Data",
-                buildManualOffData(
-                    entries = mappedEntries
-                )
-            )
-            .put("Group", 1)
-        )
         .put(
             "LLight",
             JSONObject()
@@ -641,6 +652,38 @@ class Esp32LightProgramCommandManager(
         return data
     }
 
+    private fun buildManualOffJson(
+        mapping: LightDeviceChannelMapping
+    ): Result<String> {
+        val mappedEntries = mapping.rgbwEntries()
+        .filter {
+            entry ->
+            entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
+        }
+
+        if (mappedEntries.isEmpty()) {
+            return Result.failure(
+                IllegalStateException("No RGBW channel mapping found")
+            )
+        }
+
+        val json = JSONObject()
+        .put(
+            "LPWMChanelLED",
+            JSONObject()
+            .put(
+                "Data",
+                buildManualOffData(
+                    entries = mappedEntries
+                )
+            )
+            .put("Group", 1)
+        )
+        .toString()
+
+        return Result.success(json)
+    }
+
     private fun labelForMinute(
         minute: Int
     ): String {
@@ -682,6 +725,7 @@ class Esp32LightProgramCommandManager(
         private const val MANUAL_CLEAR_VALUE = -1
         private const val MANUAL_OFF_VALUE = 0
         private const val MANUAL_OFF_TIMEOUT_MS = 604_800_000
+        private const val CLEAR_TO_OFF_DELAY_MS = 150L
         private const val MINUTES_PER_DAY = 24 * 60
     }
 }
