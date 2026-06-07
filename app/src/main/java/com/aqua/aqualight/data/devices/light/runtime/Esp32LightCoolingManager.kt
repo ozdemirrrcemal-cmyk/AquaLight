@@ -138,7 +138,7 @@ class Esp32LightCoolingManager(
             ?.optJSONArray("LbT")
             ?.takeIf {
                 array ->
-                array.length() > 0
+                array.countEnabledItems() > 0
             }
             ?: fallbackLinkedSensors
 
@@ -267,7 +267,10 @@ class Esp32LightCoolingManager(
             .optJSONObject(key)
             ?.optJSONArray("LbT")
 
-            if (array != null && array.length() > 0) {
+            if (
+                array != null &&
+                array.countEnabledItems() > 0
+            ) {
                 return array
             }
         }
