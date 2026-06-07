@@ -31,6 +31,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.Lig
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 import kotlinx.coroutines.launch
+import android.widget.ImageView
 
 class DeviceLightProgramEditorFragment :
 Fragment(R.layout.fragment_device_light_program_editor) {
@@ -86,21 +87,21 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     private fun setupProgramSettingsRows() {
         bindActionRow(
             row = binding.actionMoonlight.root,
-            icon = "◐",
+            iconRes = R.drawable.ic_light_moon_24,
             title = "Moonlight",
             subtitle = "Soft output after sunset"
         )
 
         bindActionRow(
             row = binding.actionCloudSimulation.root,
-            icon = "☁",
+            iconRes = R.drawable.ic_light_cloud_24,
             title = "Cloud Simulation",
             subtitle = "Natural light variation"
         )
 
         bindActionRow(
             row = binding.actionTransitionSmoothing.root,
-            icon = "≈",
+            iconRes = R.drawable.ic_light_waves_24,
             title = "Transition Variant",
             subtitle = "Make ramps feel more natural"
         )
@@ -108,11 +109,11 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
     private fun bindActionRow(
         row: View,
-        icon: String,
+        iconRes: Int,
         title: String,
         subtitle: String
     ) {
-        row.findViewById<TextView>(R.id.tvActionIcon)?.text = icon
+        row.findViewById<ImageView>(R.id.ivActionIcon)?.setImageResource(iconRes)
         row.findViewById<TextView>(R.id.tvActionTitle)?.text = title
         row.findViewById<TextView>(R.id.tvActionSubtitle)?.text = subtitle
     }
@@ -181,10 +182,18 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
         binding.lightCurveGraphView.setState(state.graphState)
 
-        binding.btnPreviewProgram.text = if (state.isPreviewRunning) {
-            "■"
+        binding.btnPreviewProgram.setImageResource(
+            if (state.isPreviewRunning) {
+                R.drawable.ic_light_stop_24
+            } else {
+                R.drawable.ic_light_play_24
+            }
+        )
+
+        binding.btnPreviewProgram.contentDescription = if (state.isPreviewRunning) {
+            "Stop preview"
         } else {
-            "▶"
+            "Preview program"
         }
 
         previewDaySheet?.renderPreviewState(

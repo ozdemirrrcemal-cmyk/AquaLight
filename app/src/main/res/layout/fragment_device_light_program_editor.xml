@@ -38,7 +38,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- GRAPH -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardProgramGraph"
                 style="@style/Widget.Aqua.Light.Card.Hero"
@@ -79,25 +78,24 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="5dp"
-                                android:maxLines="1"
                                 android:ellipsize="end"
+                                android:maxLines="1"
                                 android:text="Preview and adjust the daily output curve." />
 
                         </LinearLayout>
 
-                        <TextView
+                        <ImageButton
                             android:id="@+id/btnPreviewProgram"
-                            style="@style/TextAppearance.Aqua.Light.Filter.Selected"
-                            android:layout_width="42dp"
-                            android:layout_height="42dp"
-                            android:background="@drawable/bg_light_filter_selected"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/bg_light_preview_button"
                             android:clickable="true"
                             android:contentDescription="Preview program"
                             android:focusable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            android:gravity="center"
-                            android:text="▶"
-                            android:textSize="17sp" />
+                            android:padding="11dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_light_play_24"
+                            android:tint="@color/light_button_on_primary" />
 
                     </LinearLayout>
 
@@ -121,7 +119,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- CHANNEL OUTPUT -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardChannelOutput"
                 style="@style/Widget.Aqua.Light.Card"
@@ -144,14 +141,6 @@
                         android:layout_height="wrap_content"
                         android:text="Channel Output" />
 
-                    <TextView
-                        style="@style/TextAppearance.Aqua.Light.Body"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:maxLines="1"
-                        android:text="Peak output level for each color channel." />
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -159,33 +148,47 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.ChannelValue.Red"
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:text="R" />
+
                         <com.google.android.material.slider.Slider
                             android:id="@+id/sliderRed"
                             style="@style/Widget.Aqua.Light.Slider.Red"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:stepSize="1"
                             android:value="0"
                             android:valueFrom="0"
-                            android:valueTo="100"
-                            android:stepSize="1" />
+                            android:valueTo="100" />
 
                         <TextView
                             android:id="@+id/tvRedValue"
                             style="@style/TextAppearance.Aqua.Light.ChannelValue.Red"
-                            android:layout_width="54dp"
+                            android:layout_width="48dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="0%" />
+                            android:singleLine="true"
+                            android:text=""
+                            tools:text="0%" />
 
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="6dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.ChannelValue.Green"
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:text="G" />
 
                         <com.google.android.material.slider.Slider
                             android:id="@+id/sliderGreen"
@@ -193,27 +196,35 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:stepSize="1"
                             android:value="0"
                             android:valueFrom="0"
-                            android:valueTo="100"
-                            android:stepSize="1" />
+                            android:valueTo="100" />
 
                         <TextView
                             android:id="@+id/tvGreenValue"
                             style="@style/TextAppearance.Aqua.Light.ChannelValue.Green"
-                            android:layout_width="54dp"
+                            android:layout_width="48dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="0%" />
+                            android:singleLine="true"
+                            android:text=""
+                            tools:text="0%" />
 
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="6dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.ChannelValue.Blue"
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:text="B" />
 
                         <com.google.android.material.slider.Slider
                             android:id="@+id/sliderBlue"
@@ -221,27 +232,35 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:stepSize="1"
                             android:value="0"
                             android:valueFrom="0"
-                            android:valueTo="100"
-                            android:stepSize="1" />
+                            android:valueTo="100" />
 
                         <TextView
                             android:id="@+id/tvBlueValue"
                             style="@style/TextAppearance.Aqua.Light.ChannelValue.Blue"
-                            android:layout_width="54dp"
+                            android:layout_width="48dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="0%" />
+                            android:singleLine="true"
+                            android:text=""
+                            tools:text="0%" />
 
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="6dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.ChannelValue.White"
+                            android:layout_width="34dp"
+                            android:layout_height="wrap_content"
+                            android:text="W" />
 
                         <com.google.android.material.slider.Slider
                             android:id="@+id/sliderWhite"
@@ -249,18 +268,20 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:stepSize="1"
                             android:value="0"
                             android:valueFrom="0"
-                            android:valueTo="100"
-                            android:stepSize="1" />
+                            android:valueTo="100" />
 
                         <TextView
                             android:id="@+id/tvWhiteValue"
                             style="@style/TextAppearance.Aqua.Light.ChannelValue.White"
-                            android:layout_width="54dp"
+                            android:layout_width="48dp"
                             android:layout_height="wrap_content"
                             android:gravity="end|center_vertical"
-                            android:text="0%" />
+                            android:singleLine="true"
+                            android:text=""
+                            tools:text="0%" />
 
                     </LinearLayout>
 
@@ -268,7 +289,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- TIMING -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardScheduleTiming"
                 style="@style/Widget.Aqua.Light.Card"
@@ -283,20 +303,13 @@
                     android:paddingStart="18dp"
                     android:paddingTop="18dp"
                     android:paddingEnd="18dp"
-                    android:paddingBottom="16dp">
+                    android:paddingBottom="18dp">
 
                     <TextView
-                        style="@style/TextAppearance.Aqua.Light.ActionTitle"
+                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Schedule Timing" />
-
-                    <TextView
-                        style="@style/TextAppearance.Aqua.Light.Caption"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Define start, peak and end times for this program." />
+                        android:text="Daily Schedule" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -307,15 +320,15 @@
                         <LinearLayout
                             android:id="@+id/tvTimeStart"
                             android:layout_width="match_parent"
-                            android:layout_height="42dp"
+                            android:layout_height="46dp"
                             android:background="@drawable/bg_light_program_time_panel"
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp">
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp">
 
                             <TextView
                                 style="@style/TextAppearance.Aqua.Light.Caption"
@@ -329,24 +342,25 @@
                                 style="@style/TextAppearance.Aqua.Light.BodyStrong"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="07:00"
-                                android:textSize="14sp" />
+                                android:text=""
+                                android:textSize="15sp"
+                                tools:text="08:00" />
 
                         </LinearLayout>
 
                         <LinearLayout
                             android:id="@+id/tvTimePeakStart"
                             android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:layout_marginTop="7dp"
+                            android:layout_height="46dp"
+                            android:layout_marginTop="8dp"
                             android:background="@drawable/bg_light_program_time_panel"
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp">
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp">
 
                             <TextView
                                 style="@style/TextAppearance.Aqua.Light.Caption"
@@ -360,24 +374,25 @@
                                 style="@style/TextAppearance.Aqua.Light.BodyStrong"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="09:00"
-                                android:textSize="14sp" />
+                                android:text=""
+                                android:textSize="15sp"
+                                tools:text="10:00" />
 
                         </LinearLayout>
 
                         <LinearLayout
                             android:id="@+id/tvTimePeakEnd"
                             android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:layout_marginTop="7dp"
+                            android:layout_height="46dp"
+                            android:layout_marginTop="8dp"
                             android:background="@drawable/bg_light_program_time_panel"
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp">
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp">
 
                             <TextView
                                 style="@style/TextAppearance.Aqua.Light.Caption"
@@ -391,24 +406,25 @@
                                 style="@style/TextAppearance.Aqua.Light.BodyStrong"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="17:00"
-                                android:textSize="14sp" />
+                                android:text=""
+                                android:textSize="15sp"
+                                tools:text="16:00" />
 
                         </LinearLayout>
 
                         <LinearLayout
                             android:id="@+id/tvTimeEnd"
                             android:layout_width="match_parent"
-                            android:layout_height="42dp"
-                            android:layout_marginTop="7dp"
+                            android:layout_height="46dp"
+                            android:layout_marginTop="8dp"
                             android:background="@drawable/bg_light_program_time_panel"
                             android:clickable="true"
                             android:focusable="true"
                             android:foreground="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp">
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp">
 
                             <TextView
                                 style="@style/TextAppearance.Aqua.Light.Caption"
@@ -422,8 +438,9 @@
                                 style="@style/TextAppearance.Aqua.Light.BodyStrong"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="20:00"
-                                android:textSize="14sp" />
+                                android:text=""
+                                android:textSize="15sp"
+                                tools:text="18:00" />
 
                         </LinearLayout>
 
@@ -432,7 +449,7 @@
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
-            <!-- REPEAT -->
+
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardRepeat"
                 style="@style/Widget.Aqua.Light.Card"
@@ -507,11 +524,11 @@
                             android:textSize="12sp" />
 
                     </LinearLayout>
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- PROGRAM SETTINGS -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardProgramSettings"
                 style="@style/Widget.Aqua.Light.Card"
