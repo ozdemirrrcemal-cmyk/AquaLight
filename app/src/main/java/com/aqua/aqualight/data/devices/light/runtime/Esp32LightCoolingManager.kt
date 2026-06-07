@@ -83,12 +83,87 @@ class Esp32LightCoolingManager(
         fanFullSpeedTemperatureCelsius
         .coerceIn(safeStart + 5, 70)
 
+        val root = readCoolingRoot(
+            ip = ip
+        ).getOrElse {
+            error ->
+            return LightCommandResult.failure(
+                error.message ?: "Cooling configuration could not be read"
+            )
+        }
+
+        val coolData = root
+        .optJSONObject("LCool")
+        ?.optJSONObject("Data")
+        ?: JSONObject()
+
+        val fanPwmData = root
+        .optJSONObject("LPWMChanelFan")
+        ?.optJSONObject("Data")
+        ?: JSONObject()
+
+        val fanPwmSnapshots = parseFanPwmData(
+            data = fanPwmData
+        ).filter {
+            item ->
+            isValidGpioPwm(item.gpioPwm)
+        }.sortedBy {
+            item ->
+            item.index
+        }
+
+        val fanPwmByIndex = fanPwmSnapshots.associateBy {
+            item ->
+            item.index
+        }
+
+        val targetFanCount = maxOf(
+            fanCount,
+            fanPwmSnapshots.size
+        )
+
+        val fallbackLinkedSensors =
+        firstLinkedSensorArray(coolData)
+        ?: defaultLinkedSensorArray()
+
         val data = JSONObject()
 
-        repeat(fanCount) {
+        repeat(targetFanCount) {
             index ->
+            val key = index.toString()
+
+            val currentCoolItem = coolData.optJSONObject(key)
+
+            val currentLinkedSensors = currentCoolItem
+            ?.optJSONArray("LbT")
+            ?.takeIf {
+                array ->
+                array.length() > 0
+            }
+            ?: fallbackLinkedSensors
+
+            val currentCoolGpio = currentCoolItem
+            ?.optString("GPIO_PWM", "")
+            .orEmpty()
+
+            val fanPwmGpio = fanPwmByIndex[index]
+            ?.gpioPwm
+            .orEmpty()
+
+            val resolvedGpioPwm = when {
+                isValidGpioPwm(fanPwmGpio) -> {
+                    fanPwmGpio
+                }
+
+                isValidGpioPwm(currentCoolGpio) -> {
+                    currentCoolGpio
+                } else -> {
+                    "-"
+                }
+            }
+
             data.put(
-                index.toString(),
+                key,
                 JSONObject()
                 .put(
                     "Enabled",
@@ -100,6 +175,8 @@ class Esp32LightCoolingManager(
                 )
                 .put("TMin", safeStart)
                 .put("TMax", safeFull)
+                .put("LbT", copyJsonArray(currentLinkedSensors))
+                .put("GPIO_PWM", resolvedGpioPwm)
             )
         }
 
@@ -107,6 +184,7 @@ class Esp32LightCoolingManager(
         .put(
             "LCool",
             JSONObject()
+            .put("Count", targetFanCount)
             .put("Data", data)
         )
         .toString()
@@ -116,6 +194,114 @@ class Esp32LightCoolingManager(
             json = json,
             requestTag = "cooling_set"
         )
+    }
+
+    private suspend fun readCoolingRoot(
+        ip: String
+    ): Result<JSONObject> {
+        val response = httpClient.getJson(
+            ip = ip,
+            json = buildCoolingReadJson(),
+            requestTag = "cooling_read_before_set"
+        ).getOrElse {
+            error ->
+            return Result.failure(error)
+        }
+
+        return runCatching {
+            JSONObject(
+                normalizeResponseJson(response)
+            )
+        }
+    }
+
+    private fun buildCoolingReadJson(): String {
+        return JSONObject()
+        .put(
+            "LCool",
+            JSONObject()
+            .put("Count", 0)
+            .put(
+                "Data",
+                JSONObject()
+                .put(
+                    "All",
+                    JSONObject()
+                    .put("Enabled", 0)
+                    .put("TMin", 0)
+                    .put("TMax", 0)
+                    .put("LbT", JSONArray())
+                    .put("GPIO_PWM", 0)
+                )
+            )
+        )
+        .put(
+            "LPWMChanelFan",
+            JSONObject()
+            .put("Count", 0)
+            .put(
+                "Data",
+                JSONObject()
+                .put(
+                    "All",
+                    JSONObject()
+                    .put("VNow", 0)
+                    .put("Regime", 0)
+                    .put("GPIO_PWM", 0)
+                )
+            )
+        )
+        .toString()
+    }
+
+    private fun firstLinkedSensorArray(
+        coolData: JSONObject
+    ): JSONArray? {
+        coolData.keys().forEach {
+            key ->
+            if (key == "All") {
+                return@forEach
+            }
+
+            val array = coolData
+            .optJSONObject(key)
+            ?.optJSONArray("LbT")
+
+            if (array != null && array.length() > 0) {
+                return array
+            }
+        }
+
+        return null
+    }
+
+    private fun defaultLinkedSensorArray(): JSONArray {
+        return JSONArray()
+        .put(1)
+    }
+
+    private fun copyJsonArray(
+        source: JSONArray
+    ): JSONArray {
+        val copy = JSONArray()
+
+        for (index in 0 until source.length()) {
+            copy.put(
+                source.opt(index)
+            )
+        }
+
+        return copy
+    }
+
+    private fun isValidGpioPwm(
+        value: String?
+    ): Boolean {
+        val cleanValue = value
+        .orEmpty()
+        .trim()
+
+        return cleanValue.isNotBlank() && cleanValue != "-"
     }
 
     private fun parseState(
