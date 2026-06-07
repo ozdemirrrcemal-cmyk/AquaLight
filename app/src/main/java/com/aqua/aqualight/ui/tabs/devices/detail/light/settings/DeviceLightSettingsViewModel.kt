@@ -202,14 +202,14 @@ class DeviceLightSettingsViewModel(
 
                 if (device == null) {
                     _uiState.update { state ->
-                        state.copy(
-                            deviceName = "—",
-                            deviceType = "—",
-                            firmwareVersion = "—",
-                            deviceIp = "—",
-                            serialNumber = "—"
-                        )
-                    }
+    state.copy(
+        deviceName = "name: ${device.name}",
+        deviceType = "aqua: ${device.aquaName}",
+        firmwareVersion = "model: ${device.productModel}",
+        deviceIp = "productId: ${device.productId}",
+        serialNumber = "type: ${device.deviceType.name} / catalog: ${definition?.displayName ?: "null"}"
+    )
+}
                     return@collect
                 }
 
