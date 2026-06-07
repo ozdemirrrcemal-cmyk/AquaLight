@@ -10,6 +10,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
 
 class Esp32LightProgramCommandManager(
     context: Context,
@@ -270,7 +272,8 @@ class Esp32LightProgramCommandManager(
                         addMainCurvePointsForChannel(
                             points = points,
                             phase = phase,
-                            semantic = semantic
+                            semantic = semantic,
+                            transitionMode = program.draft.transitionMode
                         )
                     }
 
@@ -309,13 +312,16 @@ class Esp32LightProgramCommandManager(
     private fun addMainCurvePointsForChannel(
         points: MutableList<SchedulePoint>,
         phase: LightProgramTimelinePhase,
-        semantic: LightChannelSemantic
+        semantic: LightChannelSemantic,
+        transitionMode: LightCurveTransitionMode
     ) {
+        val peakPercent = valueForSemantic(
+            values = phase.channelValues,
+            semantic = semantic
+        ).coerceIn(0, 100)
+
         val peakValue = percentToEsp32Value(
-            valuePercent = valueForSemantic(
-                values = phase.channelValues,
-                semantic = semantic
-            )
+            valuePercent = peakPercent
         )
 
         val startMinute = phase.startMinute.coerceIn(
@@ -340,6 +346,86 @@ class Esp32LightProgramCommandManager(
             MINUTES_PER_DAY
         )
 
+        if (transitionMode == LightCurveTransitionMode.LINEAR) {
+            addLinearMainCurvePoints(
+                points = points,
+                startMinute = startMinute,
+                peakStartMinute = peakStartMinute,
+                peakEndMinute = peakEndMinute,
+                endMinute = endMinute,
+                peakValue = peakValue
+            )
+            return
+        }
+
+        val curvePoints = LightCurveInterpolator.buildCurvePoints(
+            startMinute = startMinute,
+            peakStartMinute = peakStartMinute,
+            peakEndMinute = peakEndMinute,
+            endMinute = endMinute,
+            peakPercent = peakPercent,
+            transitionMode = transitionMode
+        ).sortedBy {
+            point ->
+            point.x
+        }
+
+        if (curvePoints.isEmpty()) {
+            addLinearMainCurvePoints(
+                points = points,
+                startMinute = startMinute,
+                peakStartMinute = peakStartMinute,
+                peakEndMinute = peakEndMinute,
+                endMinute = endMinute,
+                peakValue = peakValue
+            )
+            return
+        }
+
+        val sampledMinutes = (
+            sampleRampMinutes(
+                startMinute = startMinute,
+                endMinute = peakStartMinute
+            ) +
+            listOf(peakEndMinute) +
+            sampleRampMinutes(
+                startMinute = peakEndMinute,
+                endMinute = endMinute
+            )
+        )
+        .map {
+            minute ->
+            minute.coerceIn(0, MINUTES_PER_DAY)
+        }
+        .distinct()
+        .sorted()
+
+        sampledMinutes.forEach {
+            minute ->
+            val percent = calculatePercentAtMinute(
+                curvePoints = curvePoints,
+                minute = minute
+            )
+
+            addOrReplacePoint(
+                points = points,
+                minute = minute,
+                label = labelForMinute(minute),
+                value = percentToEsp32Value(
+                    valuePercent = percent
+                )
+            )
+        }
+    }
+
+    private fun addLinearMainCurvePoints(
+        points: MutableList<SchedulePoint>,
+        startMinute: Int,
+        peakStartMinute: Int,
+        peakEndMinute: Int,
+        endMinute: Int,
+        peakValue: Double
+    ) {
         addOrReplacePoint(
             points = points,
             minute = startMinute,
@@ -367,6 +453,74 @@ class Esp32LightProgramCommandManager(
             label = labelForMinute(endMinute),
             value = 0.0
         )
+    }
+
+    private fun sampleRampMinutes(
+        startMinute: Int,
+        endMinute: Int
+    ): List<Int> {
+        if (endMinute <= startMinute) {
+            return listOf(startMinute)
+        }
+
+        val distance = endMinute - startMinute
+        val result = mutableListOf<Int>()
+
+        for (index in 0..SCHEDULE_RAMP_SAMPLE_COUNT) {
+            val ratio =
+            index.toDouble() / SCHEDULE_RAMP_SAMPLE_COUNT.toDouble()
+
+            result += (startMinute + (distance * ratio))
+            .roundToInt()
+            .coerceIn(0, MINUTES_PER_DAY)
+        }
+
+        return result.distinct()
+    }
+
+    private fun calculatePercentAtMinute(
+        curvePoints: List<android.graphics.PointF>,
+        minute: Int
+    ): Int {
+        val current = minute.toDouble()
+
+        val previous = curvePoints.lastOrNull {
+            point ->
+            point.x <= current
+        }
+
+        val next = curvePoints.firstOrNull {
+            point ->
+            point.x >= current
+        }
+
+        val value = when {
+            previous == null -> {
+                curvePoints.first().y
+            }
+
+            next == null -> {
+                curvePoints.last().y
+            }
+
+            previous.x == next.x -> {
+                previous.y
+            } else -> {
+                val previousX = previous.x.toDouble()
+                val nextX = next.x.toDouble()
+                val previousY = previous.y.toDouble()
+                val nextY = next.y.toDouble()
+
+                val progress =
+                (current - previousX) / (nextX - previousX)
+
+                previousY + ((nextY - previousY) * progress)
+            }
+        }
+
+        return value
+        .roundToInt()
+        .coerceIn(0, 100)
     }
 
     private fun addMoonlightPointsForChannel(
@@ -590,9 +744,15 @@ class Esp32LightProgramCommandManager(
             MINUTES_PER_DAY
         )
 
+        val safeLabel = label
+        .trim()
+        .ifBlank {
+            labelForMinute(safeMinute)
+        }
+
         val point = SchedulePoint(
             minute = safeMinute,
-            label = labelForMinute(safeMinute),
+            label = safeLabel,
             value = value
         )
 
@@ -726,6 +886,7 @@ class Esp32LightProgramCommandManager(
         private const val MANUAL_OFF_VALUE = 0
         private const val MANUAL_OFF_TIMEOUT_MS = 604_800_000
         private const val CLEAR_TO_OFF_DELAY_MS = 150L
+        private const val SCHEDULE_RAMP_SAMPLE_COUNT = 8
         private const val MINUTES_PER_DAY = 24 * 60
     }
 }
