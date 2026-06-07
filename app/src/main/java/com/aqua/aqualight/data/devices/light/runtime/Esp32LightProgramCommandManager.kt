@@ -13,11 +13,11 @@ import kotlin.math.roundToInt
 class Esp32LightProgramCommandManager(
     context: Context,
     private val addressResolver: LightDeviceAddressResolver =
-        LightDeviceAddressResolver(context),
+    LightDeviceAddressResolver(context),
     private val httpClient: Esp32HttpJsonClient =
-        Esp32HttpJsonClient(),
+    Esp32HttpJsonClient(),
     private val mappingReader: Esp32LightChannelMappingReader =
-        Esp32LightChannelMappingReader(httpClient)
+    Esp32LightChannelMappingReader(httpClient)
 ) {
 
     suspend fun loadPrograms(
@@ -29,12 +29,14 @@ class Esp32LightProgramCommandManager(
         }
 
         val activePrograms = programs
-            .filter { program ->
-                program.deviceId == deviceId && program.isActive
-            }
-            .sortedBy { program ->
-                program.draft.start.totalMinutes
-            }
+        .filter {
+            program ->
+            program.deviceId == deviceId && program.isActive
+        }
+        .sortedBy {
+            program ->
+            program.draft.start.totalMinutes
+        }
 
         if (activePrograms.isEmpty()) {
             return clearPrograms(
@@ -43,12 +45,13 @@ class Esp32LightProgramCommandManager(
         }
 
         val address = resolveAddress(deviceId)
-            ?: return LightCommandResult.failure("Device address could not be resolved")
+        ?: return LightCommandResult.failure("Device address could not be resolved")
 
         val mapping = mappingReader.readMapping(
             ip = address.ip,
             forceRefresh = true
-        ).getOrElse { error ->
+        ).getOrElse {
+            error ->
             return LightCommandResult.failure(
                 error.message ?: "Light channel mapping could not be read"
             )
@@ -57,7 +60,8 @@ class Esp32LightProgramCommandManager(
         val json = buildScheduleJson(
             programs = activePrograms,
             mapping = mapping
-        ).getOrElse { error ->
+        ).getOrElse {
+            error ->
             return LightCommandResult.failure(
                 error.message ?: "Light program could not be prepared"
             )
@@ -78,12 +82,13 @@ class Esp32LightProgramCommandManager(
         }
 
         val address = resolveAddress(deviceId)
-            ?: return LightCommandResult.failure("Device address could not be resolved")
+        ?: return LightCommandResult.failure("Device address could not be resolved")
 
         val mapping = mappingReader.readMapping(
             ip = address.ip,
             forceRefresh = true
-        ).getOrElse { error ->
+        ).getOrElse {
+            error ->
             return LightCommandResult.failure(
                 error.message ?: "Light channel mapping could not be read"
             )
@@ -91,7 +96,8 @@ class Esp32LightProgramCommandManager(
 
         val json = buildClearScheduleJson(
             mapping = mapping
-        ).getOrElse { error ->
+        ).getOrElse {
+            error ->
             return LightCommandResult.failure(
                 error.message ?: "Light program could not be cleared"
             )
@@ -123,9 +129,10 @@ class Esp32LightProgramCommandManager(
         mapping: LightDeviceChannelMapping
     ): Result<String> {
         val mappedEntries = mapping.rgbwEntries()
-            .filter { entry ->
-                entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
-            }
+        .filter {
+            entry ->
+            entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
+        }
 
         if (mappedEntries.isEmpty()) {
             return Result.failure(
@@ -135,42 +142,43 @@ class Esp32LightProgramCommandManager(
 
         val lightData = JSONObject()
 
-        mappedEntries.forEach { entry ->
+        mappedEntries.forEach {
+            entry ->
             lightData.put(
                 entry.lightIndex,
                 JSONObject()
-                    .put("GPIO_PWM", entry.gpioPwm)
-                    .put(
-                        "LP",
-                        buildLightPointsForChannel(
-                            programs = programs,
-                            semantic = entry.semantic
-                        )
+                .put("GPIO_PWM", entry.gpioPwm)
+                .put(
+                    "LP",
+                    buildLightPointsForChannel(
+                        programs = programs,
+                        semantic = entry.semantic
                     )
+                )
             )
         }
 
         val json = JSONObject()
+        .put(
+            "LPWMChanelLED",
+            JSONObject()
             .put(
-                "LPWMChanelLED",
-                JSONObject()
-                    .put(
-                        "Data",
-                        buildManualClearData(
-                            entries = mappedEntries
-                        )
-                    )
-                    .put("Group", 1)
+                "Data",
+                buildManualClearData(
+                    entries = mappedEntries
+                )
             )
-            .put(
-                "LLight",
-                JSONObject()
-                    .put("LightEdit", 0)
-                    .put("ChanelEdit", "AllCh")
-                    .put("Count", mappedEntries.size)
-                    .put("Data", lightData)
-            )
-            .toString()
+            .put("Group", 1)
+        )
+        .put(
+            "LLight",
+            JSONObject()
+            .put("LightEdit", 0)
+            .put("ChanelEdit", "AllCh")
+            .put("Count", mappedEntries.size)
+            .put("Data", lightData)
+        )
+        .toString()
 
         return Result.success(json)
     }
@@ -179,9 +187,10 @@ class Esp32LightProgramCommandManager(
         mapping: LightDeviceChannelMapping
     ): Result<String> {
         val mappedEntries = mapping.rgbwEntries()
-            .filter { entry ->
-                entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
-            }
+        .filter {
+            entry ->
+            entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
+        }
 
         if (mappedEntries.isEmpty()) {
             return Result.failure(
@@ -191,36 +200,37 @@ class Esp32LightProgramCommandManager(
 
         val lightData = JSONObject()
 
-        mappedEntries.forEach { entry ->
+        mappedEntries.forEach {
+            entry ->
             lightData.put(
                 entry.lightIndex,
                 JSONObject()
-                    .put("GPIO_PWM", entry.gpioPwm)
-                    .put("LP", JSONArray())
+                .put("GPIO_PWM", entry.gpioPwm)
+                .put("LP", JSONArray())
             )
         }
 
         val json = JSONObject()
+        .put(
+            "LPWMChanelLED",
+            JSONObject()
             .put(
-                "LPWMChanelLED",
-                JSONObject()
-                    .put(
-                        "Data",
-                        buildManualClearData(
-                            entries = mappedEntries
-                        )
-                    )
-                    .put("Group", 1)
+                "Data",
+                buildManualOffData(
+                    entries = mappedEntries
+                )
             )
-            .put(
-                "LLight",
-                JSONObject()
-                    .put("LightEdit", 0)
-                    .put("ChanelEdit", "AllCh")
-                    .put("Count", mappedEntries.size)
-                    .put("Data", lightData)
-            )
-            .toString()
+            .put("Group", 1)
+        )
+        .put(
+            "LLight",
+            JSONObject()
+            .put("LightEdit", 0)
+            .put("ChanelEdit", "AllCh")
+            .put("Count", mappedEntries.size)
+            .put("Data", lightData)
+        )
+        .toString()
 
         return Result.success(json)
     }
@@ -232,50 +242,55 @@ class Esp32LightProgramCommandManager(
         val points = mutableListOf<SchedulePoint>()
 
         programs
-            .sortedBy { program ->
-                program.draft.start.totalMinutes
-            }
-            .forEach { program ->
-                val timeline = LightProgramTimelineBuilder.build(
-                    draft = program.draft
-                )
+        .sortedBy {
+            program ->
+            program.draft.start.totalMinutes
+        }
+        .forEach {
+            program ->
+            val timeline = LightProgramTimelineBuilder.build(
+                draft = program.draft
+            )
 
-                timeline.phases.forEach { phase ->
-                    when (phase.type) {
-                        LightProgramPhaseType.MAIN_CURVE -> {
-                            addMainCurvePointsForChannel(
-                                points = points,
-                                phase = phase,
-                                semantic = semantic
-                            )
-                        }
-
-                        LightProgramPhaseType.MOONLIGHT -> {
-                            addMoonlightPointsForChannel(
-                                points = points,
-                                phase = phase,
-                                semantic = semantic
-                            )
-                        }
-
-                        LightProgramPhaseType.CLOUD_OVERLAY -> Unit
+            timeline.phases.forEach {
+                phase ->
+                when (phase.type) {
+                    LightProgramPhaseType.MAIN_CURVE -> {
+                        addMainCurvePointsForChannel(
+                            points = points,
+                            phase = phase,
+                            semantic = semantic
+                        )
                     }
+
+                    LightProgramPhaseType.MOONLIGHT -> {
+                        addMoonlightPointsForChannel(
+                            points = points,
+                            phase = phase,
+                            semantic = semantic
+                        )
+                    }
+
+                    LightProgramPhaseType.CLOUD_OVERLAY -> Unit
                 }
             }
+        }
 
         val array = JSONArray()
 
         points
-            .sortedBy { item ->
-                item.minute
-            }
-            .forEach { item ->
-                array.put(
-                    JSONArray()
-                        .put(item.label)
-                        .put(item.value)
-                )
-            }
+        .sortedBy {
+            item ->
+            item.minute
+        }
+        .forEach {
+            item ->
+            array.put(
+                JSONArray()
+                .put(item.label)
+                .put(item.value)
+            )
+        }
 
         return array
     }
@@ -298,16 +313,16 @@ class Esp32LightProgramCommandManager(
         )
 
         val peakStartMinute = (phase.peakStartMinute ?: phase.startMinute)
-            .coerceIn(
-                0,
-                MINUTES_PER_DAY
-            )
+        .coerceIn(
+            0,
+            MINUTES_PER_DAY
+        )
 
         val peakEndMinute = (phase.peakEndMinute ?: phase.endMinute)
-            .coerceIn(
-                0,
-                MINUTES_PER_DAY
-            )
+        .coerceIn(
+            0,
+            MINUTES_PER_DAY
+        )
 
         val endMinute = phase.endMinute.coerceIn(
             0,
@@ -385,7 +400,7 @@ class Esp32LightProgramCommandManager(
                 )
 
                 val morningEnd = (end - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                .coerceIn(0, MINUTES_PER_DAY)
 
                 if (morningEnd > 0) {
                     addFlatSegmentPoints(
@@ -399,10 +414,10 @@ class Esp32LightProgramCommandManager(
 
             start >= MINUTES_PER_DAY -> {
                 val normalizedStart = (start - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                .coerceIn(0, MINUTES_PER_DAY)
 
                 val normalizedEnd = (end - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                .coerceIn(0, MINUTES_PER_DAY)
 
                 if (normalizedEnd > normalizedStart) {
                     addFlatSegmentPoints(
@@ -456,7 +471,7 @@ class Esp32LightProgramCommandManager(
                 )
 
                 val morningEnd = (end - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                .coerceIn(0, MINUTES_PER_DAY)
 
                 if (morningEnd > 0) {
                     addOrReplacePoint(
@@ -477,10 +492,10 @@ class Esp32LightProgramCommandManager(
 
             start >= MINUTES_PER_DAY -> {
                 val normalizedStart = (start - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                .coerceIn(0, MINUTES_PER_DAY)
 
                 val normalizedEnd = (end - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                .coerceIn(0, MINUTES_PER_DAY)
 
                 if (normalizedEnd > normalizedStart) {
                     addOrReplacePoint(
@@ -570,7 +585,8 @@ class Esp32LightProgramCommandManager(
             value = value
         )
 
-        val existingIndex = points.indexOfFirst { item ->
+        val existingIndex = points.indexOfFirst {
+            item ->
             item.minute == safeMinute
         }
 
@@ -586,16 +602,39 @@ class Esp32LightProgramCommandManager(
     ): JSONObject {
         val data = JSONObject()
 
-        entries.forEach { entry ->
+        entries.forEach {
+            entry ->
             data.put(
                 entry.pwmIndex,
                 JSONObject()
-                    .put(
-                        "VManual",
-                        JSONObject()
-                            .put("V", MANUAL_CLEAR_VALUE)
-                            .put("TOffMs", 0)
-                    )
+                .put(
+                    "VManual",
+                    JSONObject()
+                    .put("V", MANUAL_CLEAR_VALUE)
+                    .put("TOffMs", 0)
+                )
+            )
+        }
+
+        return data
+    }
+
+    private fun buildManualOffData(
+        entries: List<LightDeviceChannelMapping.Entry>
+    ): JSONObject {
+        val data = JSONObject()
+
+        entries.forEach {
+            entry ->
+            data.put(
+                entry.pwmIndex,
+                JSONObject()
+                .put(
+                    "VManual",
+                    JSONObject()
+                    .put("V", MANUAL_OFF_VALUE)
+                    .put("TOffMs", 0)
+                )
             )
         }
 
@@ -633,14 +672,15 @@ class Esp32LightProgramCommandManager(
         valuePercent: Int
     ): Double {
         val normalized = valuePercent
-            .coerceIn(0, 100) / 100.0
+        .coerceIn(0, 100) / 100.0
 
         return (normalized * 1000.0)
-            .roundToInt() / 1000.0
+        .roundToInt() / 1000.0
     }
 
     companion object {
         private const val MANUAL_CLEAR_VALUE = -1
+        private const val MANUAL_OFF_VALUE = 0
         private const val MINUTES_PER_DAY = 24 * 60
     }
 }
