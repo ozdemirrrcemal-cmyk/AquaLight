@@ -23,6 +23,11 @@ class LightProgramOptionsSheet(
         binding.switchProgramActive.setOnCheckedChangeListener(null)
         binding.switchProgramActive.isChecked = isActive
         binding.switchProgramActive.setOnCheckedChangeListener { _, checked ->
+            if (checked == isActive) {
+                return@setOnCheckedChangeListener
+            }
+
+            dialog.dismiss()
             onActiveChanged(checked)
         }
 
@@ -54,6 +59,7 @@ class LightProgramOptionsSheet(
             )
 
             dialog.setContentView(binding.root)
+
             return LightProgramOptionsSheet(
                 dialog = dialog,
                 binding = binding
