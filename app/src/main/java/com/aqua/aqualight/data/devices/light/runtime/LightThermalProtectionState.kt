@@ -14,16 +14,25 @@ data class LightThermalProtectionState(
 
     val currentTemperatureText: String
         get() {
-            val temperature = currentTemperatureCelsius ?: return "-- °C"
+            if (!hasData) {
+                return "Syncing"
+            }
+
+            val temperature = currentTemperatureCelsius
+                ?: return "Syncing"
+
             return "${temperature.roundToOneDecimal()}°C"
         }
 
     val statusText: String
         get() {
+            if (!hasData || currentTemperatureCelsius == null) {
+                return ""
+            }
+
             val multiplier = currentReductionMultiplier
 
             return when {
-                !hasData -> "SYNC"
                 multiplier != null && multiplier < 0.99 -> "REDUCING"
                 else -> "ACTIVE"
             }

@@ -22,6 +22,10 @@ data class LightCoolingState(
 
     val coolingModeText: String
         get() {
+            if (!hasData) {
+                return "Syncing"
+            }
+
             return if (enabledFanCount > 0) {
                 "Auto"
             } else {
@@ -54,9 +58,12 @@ data class LightCoolingState(
 
     val fansText: String
         get() {
+            if (!hasData) {
+                return ""
+            }
+
             return when {
-                !hasData -> "Syncing"
-                fanCount <= 0 -> "Not configured"
+                fanCount <= 0 -> ""
                 enabledFanCount <= 0 -> "$fanCount installed"
                 fanCount == 1 -> "1 fan"
                 else -> "$fanCount fans"

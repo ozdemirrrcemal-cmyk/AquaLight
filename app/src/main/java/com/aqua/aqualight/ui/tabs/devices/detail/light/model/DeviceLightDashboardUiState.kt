@@ -6,9 +6,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPla
 data class DeviceLightDashboardUiState(
     val activeProgramName: String = "No active program",
     val runStatus: String = "Create or load a program",
-    val onlineStatusText: String = "ONLINE",
 
-    val liveModeText: String = "IDLE",
+    val liveMode: LightDashboardMode = LightDashboardMode.IDLE,
 
     val currentWattText: String = "-- W",
     val outputPercentText: String = "0%",

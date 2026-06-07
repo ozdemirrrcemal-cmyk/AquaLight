@@ -17,19 +17,20 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPla
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphSegmentType
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightDashboardMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramPhaseType
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelinePhase
+import java.util.Calendar
+import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Locale
 
 class DeviceLightViewModel(
     application: Application
@@ -179,10 +180,10 @@ class DeviceLightViewModel(
             todayPlanGraphState = pausedGraphState
         ).withLiveIndicators(
             liveState = liveState,
-            modeText = if (manualRuntime.isManualScene) {
-                "SCENE"
+            mode = if (manualRuntime.isManualScene) {
+                LightDashboardMode.SCENE
             } else {
-                "MANUAL"
+                LightDashboardMode.MANUAL
             }
         )
     }
@@ -246,7 +247,6 @@ class DeviceLightViewModel(
                 return DeviceLightDashboardUiState(
                     activeProgramName = "Moonlight",
                     runStatus = "Moonlight active",
-                    onlineStatusText = "ONLINE",
                     currentWattText = liveState.actualPowerText,
                     outputPercentText = "$outputPercent%",
                     deviceTimeText = liveState.deviceTimeText,
@@ -258,14 +258,13 @@ class DeviceLightViewModel(
                     )
                 ).withLiveIndicators(
                     liveState = liveState,
-                    modeText = "MOON"
+                    mode = LightDashboardMode.MOON
                 )
             }
 
             return DeviceLightDashboardUiState(
                 activeProgramName = "No program today",
                 runStatus = "Active schedules are not planned for today",
-                onlineStatusText = "ONLINE",
                 currentWattText = liveState.actualPowerText,
                 outputPercentText = "${liveState.actualOutputPercent}%",
                 deviceTimeText = liveState.deviceTimeText,
@@ -276,10 +275,10 @@ class DeviceLightViewModel(
                 )
             ).withLiveIndicators(
                 liveState = liveState,
-                modeText = if (liveState.actualOutputPercent > 0) {
-                    "AUTO"
+                mode = if (liveState.actualOutputPercent > 0) {
+                    LightDashboardMode.AUTO
                 } else {
-                    "IDLE"
+                    LightDashboardMode.IDLE
                 }
             )
         }
@@ -352,7 +351,6 @@ class DeviceLightViewModel(
                     nextProgramToday = nextProgramToday
                 )
             },
-            onlineStatusText = "ONLINE",
             currentWattText = liveState.actualPowerText,
             outputPercentText = "$outputPercent%",
             deviceTimeText = liveState.deviceTimeText,
@@ -388,10 +386,10 @@ class DeviceLightViewModel(
             )
         ).withLiveIndicators(
             liveState = liveState,
-            modeText = if (isMoonlightActive) {
-                "MOON"
+            mode = if (isMoonlightActive) {
+                LightDashboardMode.MOON
             } else {
-                buildAutoModeText(
+                buildAutoMode(
                     liveState = liveState,
                     runningProgram = runningProgram,
                     nextProgramToday = nextProgramToday
@@ -670,7 +668,6 @@ class DeviceLightViewModel(
             } else {
                 "Create or load a light program"
             },
-            onlineStatusText = "UNKNOWN",
             currentWattText = liveState.actualPowerText,
             outputPercentText = "${liveState.actualOutputPercent}%",
             deviceTimeText = "--:--",
@@ -689,7 +686,7 @@ class DeviceLightViewModel(
             )
         ).withLiveIndicators(
             liveState = liveState,
-            modeText = "SYNC"
+            mode = LightDashboardMode.SYNC
         )
     }
 
@@ -700,7 +697,6 @@ class DeviceLightViewModel(
         return DeviceLightDashboardUiState(
             activeProgramName = "No active program",
             runStatus = "Create or load a light program",
-            onlineStatusText = "ONLINE",
             currentWattText = liveState.actualPowerText,
             outputPercentText = "${liveState.actualOutputPercent}%",
             deviceTimeText = liveState.deviceTimeText,
@@ -711,10 +707,10 @@ class DeviceLightViewModel(
             )
         ).withLiveIndicators(
             liveState = liveState,
-            modeText = if (liveState.actualOutputPercent > 0) {
-                "AUTO"
+            mode = if (liveState.actualOutputPercent > 0) {
+                LightDashboardMode.AUTO
             } else {
-                "IDLE"
+                LightDashboardMode.IDLE
             }
         )
     }
@@ -844,11 +840,11 @@ class DeviceLightViewModel(
         val current = currentMinute.toDouble()
 
         val previous = points.lastOrNull { point ->
-            point.x <= current
+            point.x.toDouble() <= current
         }
 
         val next = points.firstOrNull { point ->
-            point.x >= current
+            point.x.toDouble() >= current
         }
 
         val output = when {
@@ -865,10 +861,15 @@ class DeviceLightViewModel(
             }
 
             else -> {
-                val progress =
-                    (current - previous.x) / (next.x - previous.x)
+                val previousX = previous.x.toDouble()
+                val nextX = next.x.toDouble()
+                val previousY = previous.y.toDouble()
+                val nextY = next.y.toDouble()
 
-                previous.y + ((next.y - previous.y) * progress)
+                val progress =
+                    (current - previousX) / (nextX - previousX)
+
+                previousY + ((nextY - previousY) * progress)
             }
         }
 
@@ -912,10 +913,10 @@ class DeviceLightViewModel(
 
     private fun DeviceLightDashboardUiState.withLiveIndicators(
         liveState: LightDeviceLiveState,
-        modeText: String
+        mode: LightDashboardMode
     ): DeviceLightDashboardUiState {
         return copy(
-            liveModeText = modeText,
+            liveMode = mode,
 
             redChannelText = buildChannelText(
                 prefix = "R",
@@ -1017,16 +1018,27 @@ class DeviceLightViewModel(
         }
     }
 
-    private fun buildAutoModeText(
+    private fun buildAutoMode(
         liveState: LightDeviceLiveState,
         runningProgram: SavedLightProgram?,
         nextProgramToday: SavedLightProgram?
-    ): String {
+    ): LightDashboardMode {
         return when {
-            runningProgram != null -> "AUTO"
-            liveState.actualOutputPercent > 0 -> "AUTO"
-            nextProgramToday != null -> "WAIT"
-            else -> "IDLE"
+            runningProgram != null -> {
+                LightDashboardMode.AUTO
+            }
+
+            liveState.actualOutputPercent > 0 -> {
+                LightDashboardMode.AUTO
+            }
+
+            nextProgramToday != null -> {
+                LightDashboardMode.WAIT
+            }
+
+            else -> {
+                LightDashboardMode.IDLE
+            }
         }
     }
 
