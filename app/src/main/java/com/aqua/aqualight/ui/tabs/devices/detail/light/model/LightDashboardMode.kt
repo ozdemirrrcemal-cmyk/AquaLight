@@ -1,3 +1,5 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.light.model
+
 enum class LightDashboardMode(
     val label: String
 ) {

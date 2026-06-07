@@ -47,12 +47,20 @@ data class LightCoolingState(
                 return "Disabled"
             }
 
-            val output = maxOutputPercent ?: return "Auto"
+            val output = maxOutputPercent ?: return "Standby"
 
             return when {
-                output <= 0 -> "Auto · Off"
-                output >= 100 -> "Auto · Full"
-                else -> "Auto · $output%"
+                output <= 0 -> {
+                    "Standby"
+                }
+
+                output >= 100 -> {
+                    "Full speed"
+                }
+
+                else -> {
+                    "Cooling · $output%"
+                }
             }
         }
 
@@ -63,10 +71,21 @@ data class LightCoolingState(
             }
 
             return when {
-                fanCount <= 0 -> ""
-                enabledFanCount <= 0 -> "$fanCount installed"
-                fanCount == 1 -> "1 fan"
-                else -> "$fanCount fans"
+                fanCount <= 0 -> {
+                    ""
+                }
+
+                enabledFanCount <= 0 -> {
+                    "$fanCount installed"
+                }
+
+                fanCount == 1 -> {
+                    "Auto · 1 fan"
+                }
+
+                else -> {
+                    "Auto · $fanCount fans"
+                }
             }
         }
 
