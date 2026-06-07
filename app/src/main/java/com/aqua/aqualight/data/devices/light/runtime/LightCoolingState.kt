@@ -58,8 +58,8 @@ data class LightCoolingState(
                 !hasData -> "Syncing"
                 fanCount <= 0 -> "Not configured"
                 enabledFanCount <= 0 -> "$fanCount installed"
-                enabledFanCount == 1 -> "1 active"
-                else -> "$enabledFanCount active"
+                fanCount == 1 -> "1 fan"
+                else -> "$fanCount fans"
             }
         }
 
@@ -73,7 +73,7 @@ data class LightCoolingState(
 data class LightCoolingFanState(
     val index: Int,
     val enabled: Boolean,
-    val fanStartTemperatureCelsius: Int,
+    val : Int,
     val fanFullSpeedTemperatureCelsius: Int,
     val outputPercent: Int?,
     val regime: String,

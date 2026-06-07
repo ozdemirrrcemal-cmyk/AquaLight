@@ -105,7 +105,10 @@ class DeviceLightViewModel(
                     liveState = liveState
                 )
 
-                val finalState = if (manualRuntime.isManualMode) {
+                val finalState = if (
+                    manualRuntime.isManualMode ||
+                    manualRuntime.isManualScene
+                ) {
                     createManualRuntimeState(
                         baseState = baseState,
                         manualRuntime = manualRuntime,
@@ -186,9 +189,10 @@ class DeviceLightViewModel(
         programs: List<SavedLightProgram>,
         liveState: LightDeviceLiveState
     ): DeviceLightDashboardUiState {
+
         val deviceTime = liveState.deviceTime
 
-        if (deviceTime == null) {
+        if (!liveState.hasDeviceTime || deviceTime == null) {
             return createDeviceTimeUnavailableState(
                 programs = programs,
                 liveState = liveState
