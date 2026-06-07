@@ -115,24 +115,24 @@
                         android:text="Manual Light Control" />
 
                     <FrameLayout
-                        android:layout_width="170dp"
-                        android:layout_height="170dp"
+                        android:layout_width="178dp"
+                        android:layout_height="178dp"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="14dp"
                         android:layout_marginBottom="14dp">
 
                         <com.google.android.material.progressindicator.CircularProgressIndicator
                             android:id="@+id/masterOutputProgress"
-                            android:layout_width="200dp"
-                            android:layout_height="200dp"
+                            android:layout_width="178dp"
+                            android:layout_height="178dp"
                             android:indeterminate="false"
                             android:progress="0"
                             app:indicatorColor="@color/light_accent"
                             app:indicatorDirectionCircular="clockwise"
-                            app:indicatorInset="4dp"
-                            app:indicatorSize="162dp"
+                            app:indicatorInset="10dp"
+                            app:indicatorSize="158dp"
                             app:trackColor="@color/light_stroke"
-                            app:trackThickness="13dp" />
+                            app:trackThickness="12dp" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -143,15 +143,18 @@
                             <TextView
                                 android:id="@+id/tvEstimatedPower"
                                 style="@style/TextAppearance.Aqua.Light.SectionTitle"
-                                android:layout_width="wrap_content"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
                                 android:text=""
                                 android:textSize="24sp"
-                                tools:text="96.0W" />
+                                tools:text="21.9W" />
+
                         </LinearLayout>
 
                     </FrameLayout>
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

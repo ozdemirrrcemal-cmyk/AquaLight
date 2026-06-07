@@ -12,248 +12,287 @@
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="20dp">
 
-        <ImageButton
-            android:id="@+id/btnProgramMore"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:layout_gravity="top|end"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="14dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Program options"
-            android:padding="8dp"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_more_vert"
-            app:tint="@color/light_text_secondary" />
-
+        <!-- HEADER -->
         <LinearLayout
+            android:id="@+id/programHeaderContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="22dp"
-            android:paddingTop="22dp"
-            android:paddingEnd="22dp"
-            android:paddingBottom="22dp">
+            android:gravity="top"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/viewProgramAccent"
+                android:layout_width="4dp"
+                android:layout_height="52dp"
+                android:layout_marginTop="3dp"
+                android:layout_marginEnd="13dp"
+                android:background="@drawable/bg_light_program_active_bar" />
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingEnd="44dp">
-
-                <View
-                    android:id="@+id/viewProgramAccent"
-                    android:layout_width="4dp"
-                    android:layout_height="46dp"
-                    android:layout_marginEnd="14dp"
-                    android:background="@drawable/bg_light_program_active_bar" />
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:gravity="top"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/tvProgramName"
                         style="@style/TextAppearance.Aqua.Light.CardTitle"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:ellipsize="end"
-                        android:maxLines="1"
-                        android:text="Nature Day"
-                        tools:text="Nature Day" />
+                        android:includeFontPadding="false"
+                        android:maxLines="2"
+                        android:text=""
+                        android:textSize="20sp"
+                        tools:text="Device Custom Long Schedule" />
+
+                    <ImageButton
+                        android:id="@+id/btnProgramMore"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="-4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Program options"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_more_vert"
+                        app:tint="@color/light_text_secondary" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/tvProgramSubtitle"
                         style="@style/TextAppearance.Aqua.Light.Body"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="7dp"
+                        android:layout_weight="1"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="Every day schedule"
-                        tools:text="Every day schedule" />
+                        android:text=""
+                        android:textSize="13sp"
+                        tools:text="Custom schedule" />
+
+                    <TextView
+                        android:id="@+id/tvProgramState"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_light_active_chip"
+                        android:gravity="center"
+                        android:minWidth="78dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text=""
+                        android:textColor="@color/light_accent"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        tools:text="ACTIVE" />
 
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvProgramState"
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/bg_light_active_chip"
-                    android:gravity="center"
-                    android:paddingStart="13dp"
-                    android:paddingEnd="13dp"
-                    android:text="ACTIVE"
-                    android:textColor="@color/light_accent"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    tools:text="ACTIVE" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="76dp"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/bg_light_program_time_panel"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="18dp"
-                android:paddingEnd="18dp">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/TextAppearance.Aqua.Light.Caption"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SUNRISE" />
-
-                    <TextView
-                        android:id="@+id/tvProgramStart"
-                        style="@style/TextAppearance.Aqua.Light.MetricSmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:text="08:00"
-                        tools:text="08:00" />
-
-                </LinearLayout>
-
-                <View
-                    android:layout_width="42dp"
-                    android:layout_height="1dp"
-                    android:layout_marginHorizontal="12dp"
-                    android:background="@color/light_stroke" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/TextAppearance.Aqua.Light.Caption"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SUNSET" />
-
-                    <TextView
-                        android:id="@+id/tvProgramEnd"
-                        style="@style/TextAppearance.Aqua.Light.MetricSmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:text="20:00"
-                        tools:text="20:00" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tvProgramRamp"
-                    style="@style/TextAppearance.Aqua.Light.ProgramMetaChip"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_light_stat_pill"
-                    android:gravity="center"
-                    android:text="Ramp 60m"
-                    tools:text="Ramp 60m" />
-
-                <TextView
-                    android:id="@+id/tvProgramPoints"
-                    style="@style/TextAppearance.Aqua.Light.ProgramMetaChip"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_light_stat_pill"
-                    android:gravity="center"
-                    android:text="4 Points"
-                    tools:text="4 Points" />
-
-                <TextView
-                    android:id="@+id/tvProgramPeak"
-                    style="@style/TextAppearance.Aqua.Light.ProgramMetaChip"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_light_stat_pill"
-                    android:gravity="center"
-                    android:text="Peak 42W"
-                    tools:text="Peak 42W" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/channelSummaryContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/TextAppearance.Aqua.Light.ChannelChip.Red"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_marginEnd="7dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="R80" />
-
-                <TextView
-                    style="@style/TextAppearance.Aqua.Light.ChannelChip.Green"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_marginEnd="7dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="G85" />
-
-                <TextView
-                    style="@style/TextAppearance.Aqua.Light.ChannelChip.Blue"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_marginEnd="7dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="B100" />
-
-                <TextView
-                    style="@style/TextAppearance.Aqua.Light.ChannelChip.White"
-                    android:layout_width="0dp"
-                    android:layout_height="34dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="W60" />
 
             </LinearLayout>
 
         </LinearLayout>
 
-    </FrameLayout>
+        <!-- TIME PANEL -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="74dp"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_light_program_time_panel"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/TextAppearance.Aqua.Light.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="START" />
+
+                <TextView
+                    android:id="@+id/tvProgramStart"
+                    style="@style/TextAppearance.Aqua.Light.MetricSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text=""
+                    android:textSize="23sp"
+                    tools:text="08:00" />
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="42dp"
+                android:layout_height="1dp"
+                android:layout_marginHorizontal="12dp"
+                android:background="@color/light_stroke" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/TextAppearance.Aqua.Light.Caption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="END" />
+
+                <TextView
+                    android:id="@+id/tvProgramEnd"
+                    style="@style/TextAppearance.Aqua.Light.MetricSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text=""
+                    android:textSize="23sp"
+                    tools:text="18:00" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- META -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvProgramRamp"
+                style="@style/TextAppearance.Aqua.Light.ProgramMetaChip"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="7dp"
+                android:layout_weight="1.15"
+                android:background="@drawable/bg_light_stat_pill"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text=""
+                android:textSize="12sp"
+                tools:text="Rise 08–10" />
+
+            <TextView
+                android:id="@+id/tvProgramPoints"
+                style="@style/TextAppearance.Aqua.Light.ProgramMetaChip"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="7dp"
+                android:layout_weight="0.85"
+                android:background="@drawable/bg_light_stat_pill"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text=""
+                android:textSize="12sp"
+                tools:text="4 pts" />
+
+            <TextView
+                android:id="@+id/tvProgramPeak"
+                style="@style/TextAppearance.Aqua.Light.ProgramMetaChip"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_light_stat_pill"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text=""
+                android:textSize="12sp"
+                tools:text="Peak 88%" />
+
+        </LinearLayout>
+
+        <!-- CHANNEL SUMMARY -->
+        <LinearLayout
+            android:id="@+id/channelSummaryContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvProgramRed"
+                style="@style/TextAppearance.Aqua.Light.ChannelChip.Red"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="7dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text=""
+                tools:text="R88" />
+
+            <TextView
+                android:id="@+id/tvProgramGreen"
+                style="@style/TextAppearance.Aqua.Light.ChannelChip.Green"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="7dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text=""
+                tools:text="G59" />
+
+            <TextView
+                android:id="@+id/tvProgramBlue"
+                style="@style/TextAppearance.Aqua.Light.ChannelChip.Blue"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="7dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text=""
+                tools:text="B46" />
+
+            <TextView
+                android:id="@+id/tvProgramWhite"
+                style="@style/TextAppearance.Aqua.Light.ChannelChip.White"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text=""
+                tools:text="W35" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

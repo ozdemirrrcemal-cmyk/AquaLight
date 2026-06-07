@@ -19,8 +19,9 @@ class LightProgramOptionsSheet(
         onDelete: () -> Unit = {}
     ) {
         binding.tvSheetSubtitle.text = "$programName · $subtitle"
-        binding.switchProgramActive.isChecked = isActive
 
+        binding.switchProgramActive.setOnCheckedChangeListener(null)
+        binding.switchProgramActive.isChecked = isActive
         binding.switchProgramActive.setOnCheckedChangeListener { _, checked ->
             onActiveChanged(checked)
         }
@@ -53,7 +54,10 @@ class LightProgramOptionsSheet(
             )
 
             dialog.setContentView(binding.root)
-            return LightProgramOptionsSheet(dialog, binding)
+            return LightProgramOptionsSheet(
+                dialog = dialog,
+                binding = binding
+            )
         }
     }
 }
