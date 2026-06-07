@@ -73,7 +73,7 @@
                                 android:ellipsize="end"
                                 android:maxLines="1"
                                 android:text=""
-                                tools:text="Nature Day" />
+                                tools:text="No active program" />
 
                             <TextView
                                 android:id="@+id/tvLightRunStatus"
@@ -84,7 +84,7 @@
                                 android:ellipsize="end"
                                 android:maxLines="1"
                                 android:text=""
-                                tools:text="Auto program running" />
+                                tools:text="Create or load a light program" />
 
                         </LinearLayout>
 
@@ -94,13 +94,13 @@
                             android:layout_width="wrap_content"
                             android:layout_height="30dp"
                             android:layout_marginStart="12dp"
-                            android:background="@drawable/bg_light_mode_chip_auto"
+                            android:background="@drawable/bg_light_mode_chip_idle"
                             android:gravity="center"
                             android:minWidth="78dp"
                             android:paddingStart="14dp"
                             android:paddingEnd="14dp"
                             android:text=""
-                            tools:text="AUTO" />
+                            tools:text="IDLE" />
 
                     </LinearLayout>
 
@@ -113,7 +113,7 @@
                         <com.google.android.material.card.MaterialCardView
                             style="@style/Widget.Aqua.Light.Card.Stat"
                             android:layout_width="0dp"
-                            android:layout_height="64dp"
+                            android:layout_height="62dp"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="1">
 
@@ -134,7 +134,7 @@
                                 <TextView
                                     android:id="@+id/tvCurrentWatt"
                                     style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="6dp"
                                     android:ellipsize="end"
@@ -149,7 +149,7 @@
                         <com.google.android.material.card.MaterialCardView
                             style="@style/Widget.Aqua.Light.Card.Stat"
                             android:layout_width="0dp"
-                            android:layout_height="64dp"
+                            android:layout_height="62dp"
                             android:layout_marginStart="6dp"
                             android:layout_weight="1">
 
@@ -170,7 +170,7 @@
                                 <TextView
                                     android:id="@+id/tvCurrentOutputPercent"
                                     style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="6dp"
                                     android:ellipsize="end"
@@ -201,7 +201,7 @@
                             android:background="@drawable/bg_light_channel_chip_red"
                             android:gravity="center"
                             android:text=""
-                            tools:text="R 80%" />
+                            tools:text="R 0%" />
 
                         <TextView
                             android:id="@+id/tvLiveGreenChannel"
@@ -214,7 +214,7 @@
                             android:background="@drawable/bg_light_channel_chip_green"
                             android:gravity="center"
                             android:text=""
-                            tools:text="G 75%" />
+                            tools:text="G 0%" />
 
                         <TextView
                             android:id="@+id/tvLiveBlueChannel"
@@ -227,7 +227,7 @@
                             android:background="@drawable/bg_light_channel_chip_blue"
                             android:gravity="center"
                             android:text=""
-                            tools:text="B 90%" />
+                            tools:text="B 0%" />
 
                         <TextView
                             android:id="@+id/tvLiveWhiteChannel"
@@ -239,7 +239,7 @@
                             android:background="@drawable/bg_light_channel_chip_white"
                             android:gravity="center"
                             android:text=""
-                            tools:text="W 65%" />
+                            tools:text="W 0%" />
 
                     </LinearLayout>
 
@@ -254,7 +254,7 @@
                             android:layout_width="0dp"
                             android:layout_height="58dp"
                             android:layout_marginEnd="6dp"
-                            android:layout_weight="0.9">
+                            android:layout_weight="0.75">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -273,13 +273,13 @@
                                 <TextView
                                     android:id="@+id/tvDeviceTime"
                                     style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="5dp"
                                     android:ellipsize="end"
                                     android:maxLines="1"
                                     android:text=""
-                                    tools:text="14:37" />
+                                    tools:text="22:40" />
 
                             </LinearLayout>
 
@@ -290,7 +290,7 @@
                             android:layout_width="0dp"
                             android:layout_height="58dp"
                             android:layout_marginStart="6dp"
-                            android:layout_weight="1.65">
+                            android:layout_weight="1.85">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -316,7 +316,7 @@
                                     android:maxLines="1"
                                     android:text=""
                                     android:textSize="14sp"
-                                    tools:text="21:00 Peak End" />
+                                    tools:text="No event" />
 
                             </LinearLayout>
 
@@ -365,7 +365,7 @@
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:text=""
-                            tools:text="Today active plan" />
+                            tools:text="No active plan" />
 
                     </LinearLayout>
 
@@ -674,7 +674,6 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:ellipsize="end"
-                                    android:gravity="start"
                                     android:maxLines="1"
                                     android:text="Controller Temp" />
 
@@ -685,7 +684,6 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="9dp"
                                     android:ellipsize="end"
-                                    android:gravity="start"
                                     android:maxLines="1"
                                     android:text=""
                                     tools:text="38°C" />
@@ -697,7 +695,6 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="5dp"
                                     android:ellipsize="end"
-                                    android:gravity="start"
                                     android:maxLines="1"
                                     android:text=""
                                     tools:text="Active" />
@@ -727,7 +724,6 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:ellipsize="end"
-                                    android:gravity="start"
                                     android:maxLines="1"
                                     android:text="Cooling Fan" />
 
@@ -738,10 +734,9 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="9dp"
                                     android:ellipsize="end"
-                                    android:gravity="start"
                                     android:maxLines="1"
                                     android:text=""
-                                    tools:text="Auto · Off" />
+                                    tools:text="Standby" />
 
                                 <TextView
                                     android:id="@+id/tvHealthFanStatus"
@@ -750,10 +745,9 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="5dp"
                                     android:ellipsize="end"
-                                    android:gravity="start"
                                     android:maxLines="1"
                                     android:text=""
-                                    tools:text="2 fans" />
+                                    tools:text="Auto · 2 fans" />
 
                             </LinearLayout>
 
