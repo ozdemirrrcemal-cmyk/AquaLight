@@ -874,11 +874,7 @@ class Esp32LightProgramCommandManager(
     private fun percentToEsp32Value(
         valuePercent: Int
     ): Double {
-        val normalized = valuePercent
-        .coerceIn(0, 100) / 100.0
-
-        return (normalized * 1000.0)
-        .roundToInt() / 1000.0
+        return valuePercent.coerceIn(0, 100).toDouble() / 100.0
     }
 
     companion object {
