@@ -14,6 +14,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightC
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveMoonlightGraphSegment
 
 class LightCurveGraphView @JvmOverloads constructor(
     context: Context,
@@ -112,6 +113,49 @@ class LightCurveGraphView @JvmOverloads constructor(
         alpha = 220
     )
 
+    private val moonlightGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(6f)
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = color(R.color.light_channel_blue)
+        alpha = 55
+    }
+
+    private val moonlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(2.4f)
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = color(R.color.light_channel_blue)
+        alpha = 230
+    }
+
+    private val moonlightFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = color(R.color.light_channel_blue)
+        alpha = 20
+    }
+
+    private val moonlightBadgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = color(R.color.light_bg_deep)
+        alpha = 230
+    }
+
+    private val moonlightBadgeStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(0.8f)
+        color = color(R.color.light_channel_blue)
+        alpha = 180
+    }
+
+    private val moonlightTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = color(R.color.light_channel_blue)
+        textSize = sp(9.5f)
+        textAlign = Paint.Align.CENTER
+    }
+
     private val pointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
     }
@@ -139,6 +183,7 @@ class LightCurveGraphView @JvmOverloads constructor(
 
         drawGrid(canvas)
         drawChannelCurves(canvas)
+        drawMoonlightSegments(canvas)
         drawCurrentTime(canvas)
         drawAxisLabels(canvas)
     }
@@ -267,6 +312,144 @@ class LightCurveGraphView @JvmOverloads constructor(
             peakPercent = channels.white,
             transitionMode = state.transitionMode,
             paint = whitePaint
+        )
+    }
+
+    private fun drawMoonlightSegments(
+        canvas: Canvas
+    ) {
+        state.moonlightSegments.forEach {
+            segment ->
+            drawMoonlightSegment(
+                canvas = canvas,
+                segment = segment
+            )
+        }
+    }
+
+    private fun drawMoonlightSegment(
+        canvas: Canvas,
+        segment: LightCurveMoonlightGraphSegment
+    ) {
+        val startMinute = segment.startMinute
+        .coerceIn(0, LightCurveMoonlightGraphSegment.MINUTES_PER_DAY)
+
+        val endMinute = segment.endMinute
+        .coerceIn(0, LightCurveMoonlightGraphSegment.MINUTES_PER_DAY)
+
+        if (endMinute <= startMinute) {
+            return
+        }
+
+        val output = segment.outputPercent
+        .coerceIn(1, 30)
+
+        val startX = xForMinute(startMinute)
+        val endX = xForMinute(endMinute)
+        val y = yForPercent(output)
+        val zeroY = yForPercent(0)
+
+        val fillPath = Path().apply {
+            moveTo(startX, zeroY)
+            lineTo(startX, y)
+            lineTo(endX, y)
+            lineTo(endX, zeroY)
+            close()
+        }
+
+        canvas.drawPath(
+            fillPath,
+            moonlightFillPaint
+        )
+
+        canvas.drawLine(
+            startX,
+            y,
+            endX,
+            y,
+            moonlightGlowPaint
+        )
+
+        canvas.drawLine(
+            startX,
+            y,
+            endX,
+            y,
+            moonlightPaint
+        )
+
+        canvas.drawCircle(
+            startX,
+            y,
+            dp(2.8f),
+            moonlightPaint
+        )
+
+        canvas.drawCircle(
+            endX,
+            y,
+            dp(2.8f),
+            moonlightPaint
+        )
+
+        drawMoonlightLabel(
+            canvas = canvas,
+            segment = segment,
+            startX = startX,
+            endX = endX,
+            y = y
+        )
+    }
+
+    private fun drawMoonlightLabel(
+        canvas: Canvas,
+        segment: LightCurveMoonlightGraphSegment,
+        startX: Float,
+        endX: Float,
+        y: Float
+    ) {
+        val availableWidth = endX - startX
+
+        if (availableWidth < dp(70f)) {
+            return
+        }
+
+        val label = segment.label
+        val labelWidth = moonlightTextPaint.measureText(label) + dp(16f)
+        val labelHeight = dp(21f)
+
+        val left = (startX + dp(8f))
+        .coerceAtMost(endX - labelWidth - dp(4f))
+
+        val top = (y - dp(32f))
+        .coerceAtLeast(graphRect.top + dp(4f))
+
+        val rect = RectF(
+            left,
+            top,
+            left + labelWidth,
+            top + labelHeight
+        )
+
+        canvas.drawRoundRect(
+            rect,
+            dp(8f),
+            dp(8f),
+            moonlightBadgePaint
+        )
+
+        canvas.drawRoundRect(
+            rect,
+            dp(8f),
+            dp(8f),
+            moonlightBadgeStrokePaint
+        )
+
+        canvas.drawText(
+            label,
+            rect.centerX(),
+            rect.centerY() + dp(3.4f),
+            moonlightTextPaint
         )
     }
 

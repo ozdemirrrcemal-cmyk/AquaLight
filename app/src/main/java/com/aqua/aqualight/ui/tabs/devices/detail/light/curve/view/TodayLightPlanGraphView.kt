@@ -14,6 +14,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightC
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphSegment
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphSegmentType
 
 class TodayLightPlanGraphView @JvmOverloads constructor(
     context: Context,
@@ -74,6 +75,30 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         strokeJoin = Paint.Join.ROUND
         color = color(R.color.light_accent)
         alpha = 130
+    }
+
+    private val moonlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(2.2f)
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = color(R.color.light_channel_blue)
+        alpha = 230
+    }
+
+    private val moonlightSoftPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(5f)
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = color(R.color.light_channel_blue)
+        alpha = 55
+    }
+
+    private val moonlightFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = color(R.color.light_channel_blue)
+        alpha = 22
     }
 
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -279,14 +304,31 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         canvas: Canvas
     ) {
         state.segments
-        .sortedBy {
-            segment ->
-            segment.start.totalMinutes
-        }
+        .sortedWith(
+            compareBy<TodayLightPlanGraphSegment> {
+                it.startMinute
+            }.thenBy {
+                it.type.ordinal
+            }
+        )
         .forEach {
             segment ->
             drawSegmentBackground(canvas, segment)
-            drawSegmentCurve(canvas, segment)
+
+            when (segment.type) {
+                TodayLightPlanGraphSegmentType.MAIN_PROGRAM -> {
+                    drawMainProgramSegmentCurve(canvas, segment)
+                }
+
+                TodayLightPlanGraphSegmentType.MOONLIGHT -> {
+                    drawMoonlightSegmentCurve(canvas, segment)
+                }
+
+                TodayLightPlanGraphSegmentType.CLOUD_OVERLAY -> {
+                    drawMainProgramSegmentCurve(canvas, segment)
+                }
+            }
+
             drawSegmentBoundaryMarkers(canvas, segment)
             drawSegmentLabel(canvas, segment)
         }
@@ -310,7 +352,17 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
 
         val paint = when {
             state.showPausedOverlay -> segmentBackgroundPaint.copyWithAlpha(8)
+
+            segment.type == TodayLightPlanGraphSegmentType.MOONLIGHT && segment.isCurrent -> {
+                currentSegmentBackgroundPaint.copyWithAlpha(18)
+            }
+
+            segment.type == TodayLightPlanGraphSegmentType.MOONLIGHT -> {
+                segmentBackgroundPaint.copyWithAlpha(10)
+            }
+
             segment.isCurrent -> currentSegmentBackgroundPaint
+
             else -> segmentBackgroundPaint
         }
 
@@ -322,16 +374,16 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         )
     }
 
-    private fun drawSegmentCurve(
+    private fun drawMainProgramSegmentCurve(
         canvas: Canvas,
         segment: TodayLightPlanGraphSegment
     ) {
         val safeOutput = segment.outputPercent.coerceIn(0, 100)
 
         val points = LightCurveInterpolator.buildCurvePoints(
-            startMinute = segment.start.totalMinutes,
-            peakStartMinute = segment.peakStart.totalMinutes,
-            peakEndMinute = segment.peakEnd.totalMinutes,
+            startMinute = segment.startMinute,
+            peakStartMinute = segment.peakStartMinute,
+            peakEndMinute = segment.peakEndMinute,
             endMinute = endMinutesForSegment(segment),
             peakPercent = safeOutput,
             transitionMode = segment.transitionMode
@@ -374,6 +426,82 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         }
 
         canvas.drawPath(linePath, paint)
+    }
+
+    private fun drawMoonlightSegmentCurve(
+        canvas: Canvas,
+        segment: TodayLightPlanGraphSegment
+    ) {
+        val startMinute = segment.startMinute.coerceIn(0, TodayLightPlanGraphSegment.MINUTES_PER_DAY)
+        val endMinute = endMinutesForSegment(segment)
+        .coerceIn(0, TodayLightPlanGraphSegment.MINUTES_PER_DAY)
+
+        if (endMinute <= startMinute) {
+            return
+        }
+
+        val safeOutput = segment.outputPercent
+        .coerceIn(1, 30)
+
+        val startX = xForMinute(startMinute)
+        val endX = xForMinute(endMinute)
+        val y = yForPercent(safeOutput)
+        val zeroY = yForPercent(0)
+
+        val fillPath = Path().apply {
+            moveTo(startX, zeroY)
+            lineTo(startX, y)
+            lineTo(endX, y)
+            lineTo(endX, zeroY)
+            close()
+        }
+
+        canvas.drawPath(
+            fillPath,
+            if (segment.isCurrent) {
+                moonlightFillPaint.copyWithAlpha(34)
+            } else {
+                moonlightFillPaint
+            }
+        )
+
+        canvas.drawLine(
+            startX,
+            y,
+            endX,
+            y,
+            if (state.showPausedOverlay) {
+                moonlightSoftPaint.copyWithAlpha(45)
+            } else {
+                moonlightSoftPaint
+            }
+        )
+
+        canvas.drawLine(
+            startX,
+            y,
+            endX,
+            y,
+            if (segment.isCurrent) {
+                moonlightPaint
+            } else {
+                moonlightPaint.copyWithAlpha(165)
+            }
+        )
+
+        canvas.drawCircle(
+            startX,
+            y,
+            dp(2.6f),
+            moonlightPaint
+        )
+
+        canvas.drawCircle(
+            endX,
+            y,
+            dp(2.6f),
+            moonlightPaint
+        )
     }
 
     private fun drawSegmentBoundaryMarkers(
@@ -520,19 +648,31 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         val badgeStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = dp(0.8f)
-            color = if (segment.isCurrent) {
-                color(R.color.light_accent)
-            } else {
-                color(R.color.light_stroke)
+            color = when {
+                segment.type == TodayLightPlanGraphSegmentType.MOONLIGHT -> {
+                    color(R.color.light_channel_blue)
+                }
+
+                segment.isCurrent -> {
+                    color(R.color.light_accent)
+                } else -> {
+                    color(R.color.light_stroke)
+                }
             }
             alpha = 180
         }
 
         val textPaint = Paint(labelTextPaint).apply {
-            color = if (segment.isCurrent) {
-                color(R.color.light_accent)
-            } else {
-                color(R.color.light_text_secondary)
+            color = when {
+                segment.type == TodayLightPlanGraphSegmentType.MOONLIGHT -> {
+                    color(R.color.light_channel_blue)
+                }
+
+                segment.isCurrent -> {
+                    color(R.color.light_accent)
+                } else -> {
+                    color(R.color.light_text_secondary)
+                }
             }
         }
 
@@ -708,21 +848,37 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
     private fun endMinutesForSegment(
         segment: TodayLightPlanGraphSegment
     ): Int {
-        return if (segment.end.hour == 0 && segment.end.minute == 0) {
-            24 * 60
-        } else {
-            segment.end.totalMinutes
-        }
+        return segment.endMinute
+        .coerceIn(0, TodayLightPlanGraphSegment.MINUTES_PER_DAY)
     }
 
     private fun endLabelForSegment(
         segment: TodayLightPlanGraphSegment
     ): String {
-        return if (segment.end.hour == 0 && segment.end.minute == 0) {
-            "24:00"
-        } else {
-            segment.end.label
+        return labelForMinute(
+            minute = segment.endMinute
+        )
+    }
+
+    private fun labelForMinute(
+        minute: Int
+    ): String {
+        if (minute == TodayLightPlanGraphSegment.MINUTES_PER_DAY) {
+            return "24:00"
         }
+
+        val normalizedMinute =
+        ((minute % TodayLightPlanGraphSegment.MINUTES_PER_DAY) +
+            TodayLightPlanGraphSegment.MINUTES_PER_DAY) %
+        TodayLightPlanGraphSegment.MINUTES_PER_DAY
+
+        val hour = normalizedMinute / 60
+        val minutePart = normalizedMinute % 60
+
+        return "%02d:%02d".format(
+            hour,
+            minutePart
+        )
     }
 
     private fun xForMinute(

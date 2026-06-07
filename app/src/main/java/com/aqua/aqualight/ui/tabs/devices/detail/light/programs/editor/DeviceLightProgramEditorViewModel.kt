@@ -32,8 +32,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineEvaluator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.math.roundToInt
@@ -547,6 +547,8 @@ class DeviceLightProgramEditorViewModel(
                 }
             }
 
+            val timeline = LightProgramTimelineBuilder.build(draft)
+
             var previewStarted = false
             var previewFinishedNormally = false
 
@@ -592,38 +594,19 @@ class DeviceLightProgramEditorViewModel(
                         )
                     }
 
-                    val red = calculatePreviewValueAtMinute(
-                        draft = draft,
-                        minute = minute,
-                        peakPercent = draft.channelValues.red
-                    )
-
-                    val green = calculatePreviewValueAtMinute(
-                        draft = draft,
-                        minute = minute,
-                        peakPercent = draft.channelValues.green
-                    )
-
-                    val blue = calculatePreviewValueAtMinute(
-                        draft = draft,
-                        minute = minute,
-                        peakPercent = draft.channelValues.blue
-                    )
-
-                    val white = calculatePreviewValueAtMinute(
-                        draft = draft,
-                        minute = minute,
-                        peakPercent = draft.channelValues.white
+                    val output = LightProgramTimelineEvaluator.outputAtMinute(
+                        timeline = timeline,
+                        minute = minute
                     )
 
                     val result = lightRuntimeRepository.applyManualScene(
-                        deviceId = deviceId,
-                        sceneName = "Preview Day",
-                        red = red,
-                        green = green,
-                        blue = blue,
-                        white = white
-                    )
+    deviceId = deviceId,
+    sceneName = "Preview Day",
+    red = output.red,
+    green = output.green,
+    blue = output.blue,
+    white = output.white
+)
 
                     if (!result.isSuccess) {
                         eventsChannel.send(
@@ -700,74 +683,7 @@ class DeviceLightProgramEditorViewModel(
         }
     }
 
-    private fun calculatePreviewValueAtMinute(
-        draft: LightProgramDraft,
-        minute: Int,
-        peakPercent: Int
-    ): Int {
-        val safePeak = peakPercent.coerceIn(0, 100)
-
-        if (safePeak <= 0) {
-            return 0
-        }
-
-        val points = LightCurveInterpolator.buildCurvePoints(
-            startMinute = draft.start.totalMinutes,
-            peakStartMinute = draft.peakStart.totalMinutes,
-            peakEndMinute = draft.peakEnd.totalMinutes,
-            endMinute = LightProgramTimeMath.endMinutes(draft.end),
-            peakPercent = safePeak,
-            transitionMode = draft.transitionMode
-        ).sortedBy {
-            point ->
-            point.x
-        }
-
-        if (points.isEmpty()) {
-            return 0
-        }
-
-        val currentMinute = minute.toDouble()
-
-        val previous = points.lastOrNull {
-            point ->
-            point.x.toDouble() <= currentMinute
-        }
-
-        val next = points.firstOrNull {
-            point ->
-            point.x.toDouble() >= currentMinute
-        }
-
-        val value: Double = when {
-            previous == null -> {
-                points.first().y.toDouble()
-            }
-
-            next == null -> {
-                points.last().y.toDouble()
-            }
-
-            previous.x == next.x -> {
-                previous.y.toDouble()
-            } else -> {
-                val previousX = previous.x.toDouble()
-                val nextX = next.x.toDouble()
-                val previousY = previous.y.toDouble()
-                val nextY = next.y.toDouble()
-
-                val progress =
-                (currentMinute - previousX) / (nextX - previousX)
-
-                previousY + ((nextY - previousY) * progress)
-            }
-        }
-
-        return value
-        .roundToInt()
-        .coerceIn(0, 100)
-    }
-
+    
     private suspend fun resumeAutoAfterPreview(
         finalProgressPercent: Int
     ) {
