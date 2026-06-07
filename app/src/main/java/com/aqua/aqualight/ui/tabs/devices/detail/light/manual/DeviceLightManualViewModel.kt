@@ -636,40 +636,60 @@ class DeviceLightManualViewModel(
             } else {
                 null
             },
-            isPowerOn = if (preservePreviewValues) {
-                current.isPowerOn
-            } else if (isManualOverrideActive) {
-                runtime.isPowerOn
-            } else {
-                false
+            isPowerOn = when {
+                preservePreviewValues -> {
+                    current.isPowerOn
+                }
+
+                isManualOverrideActive -> {
+                    runtime.isPowerOn
+                } else -> {
+                    false
+                }
             },
-            red = if (preservePreviewValues) {
-                current.red
-            } else if (isManualOverrideActive) {
-                runtime.red
-            } else {
-                current.red
+            red = when {
+                preservePreviewValues -> {
+                    current.red
+                }
+
+                isManualOverrideActive -> {
+                    runtime.red
+                } else -> {
+                    0
+                }
             },
-            green = if (preservePreviewValues) {
-                current.green
-            } else if (isManualOverrideActive) {
-                runtime.green
-            } else {
-                current.green
+            green = when {
+                preservePreviewValues -> {
+                    current.green
+                }
+
+                isManualOverrideActive -> {
+                    runtime.green
+                } else -> {
+                    0
+                }
             },
-            blue = if (preservePreviewValues) {
-                current.blue
-            } else if (isManualOverrideActive) {
-                runtime.blue
-            } else {
-                current.blue
+            blue = when {
+                preservePreviewValues -> {
+                    current.blue
+                }
+
+                isManualOverrideActive -> {
+                    runtime.blue
+                } else -> {
+                    0
+                }
             },
-            white = if (preservePreviewValues) {
-                current.white
-            } else if (isManualOverrideActive) {
-                runtime.white
-            } else {
-                current.white
+            white = when {
+                preservePreviewValues -> {
+                    current.white
+                }
+
+                isManualOverrideActive -> {
+                    runtime.white
+                } else -> {
+                    0
+                }
             }
         )
     }
@@ -738,7 +758,7 @@ class DeviceLightManualViewModel(
             state = calibratedState
         )
 
-        return if return if (shouldApplyLiveToManualControls) {
+        return if (shouldApplyLiveToManualControls) {
             calculatedState.copy(
                 masterOutputPercent = calculatedState.masterOutputPercent,
                 powerText = liveState.actualPowerWatts
