@@ -8,8 +8,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLight
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramPhaseType
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelinePhase
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
 import kotlin.math.roundToInt
-import kotlinx.coroutines.delay
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -40,7 +40,19 @@ class Esp32LightProgramCommandManager(
             }
 
         if (activePrograms.isEmpty()) {
-            return clearPrograms(deviceId = deviceId)
+            return clearPrograms(
+                deviceId = deviceId
+            )
+        }
+
+        val conflict = findActiveProgramConflict(
+            programs = activePrograms
+        )
+
+        if (conflict != null) {
+            return LightCommandResult.failure(
+                "${conflict.first.name} overlaps with ${conflict.second.name}"
+            )
         }
 
         val address = resolveAddress(deviceId)
@@ -90,7 +102,7 @@ class Esp32LightProgramCommandManager(
             )
         }
 
-        val clearScheduleJson = buildClearScheduleJson(
+        val json = buildClearAndOffJson(
             mapping = mapping
         ).getOrElse { error ->
             return LightCommandResult.failure(
@@ -98,30 +110,10 @@ class Esp32LightProgramCommandManager(
             )
         }
 
-        val clearResult = httpClient.postSet(
-            ip = address.ip,
-            json = clearScheduleJson,
-            requestTag = "light_program_clear_schedule"
-        )
-
-        if (!clearResult.isSuccess) {
-            return clearResult
-        }
-
-        delay(CLEAR_TO_OFF_DELAY_MS)
-
-        val offJson = buildManualOffJson(
-            mapping = mapping
-        ).getOrElse { error ->
-            return LightCommandResult.failure(
-                error.message ?: "Light output could not be turned off"
-            )
-        }
-
         return httpClient.postSet(
             ip = address.ip,
-            json = offJson,
-            requestTag = "light_program_force_off"
+            json = json,
+            requestTag = "light_program_clear_and_force_off"
         )
     }
 
@@ -139,14 +131,47 @@ class Esp32LightProgramCommandManager(
         }
     }
 
+    private fun findActiveProgramConflict(
+        programs: List<SavedLightProgram>
+    ): Pair<SavedLightProgram, SavedLightProgram>? {
+        val sortedPrograms = programs.sortedBy { program ->
+            program.draft.start.totalMinutes
+        }
+
+        sortedPrograms.forEachIndexed { index, candidate ->
+            val otherPrograms = sortedPrograms.filterIndexed { otherIndex, _ ->
+                otherIndex != index
+            }
+
+            val conflict = LightProgramScheduleConflictValidator.findConflict(
+                candidate = candidate,
+                existingPrograms = otherPrograms
+            )
+
+            if (conflict != null) {
+                return candidate to conflict
+            }
+        }
+
+        return null
+    }
+
+    private fun mappedRgbwEntries(
+        mapping: LightDeviceChannelMapping
+    ): List<LightDeviceChannelMapping.Entry> {
+        return mapping.rgbwEntries()
+            .filter { entry ->
+                entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
+            }
+    }
+
     private fun buildScheduleJson(
         programs: List<SavedLightProgram>,
         mapping: LightDeviceChannelMapping
     ): Result<String> {
-        val mappedEntries = mapping.rgbwEntries()
-            .filter { entry ->
-                entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
-            }
+        val mappedEntries = mappedRgbwEntries(
+            mapping = mapping
+        )
 
         if (mappedEntries.isEmpty()) {
             return Result.failure(
@@ -177,7 +202,9 @@ class Esp32LightProgramCommandManager(
                 JSONObject()
                     .put(
                         "Data",
-                        buildManualClearData(entries = mappedEntries)
+                        buildManualClearData(
+                            entries = mappedEntries
+                        )
                     )
                     .put("Group", 1)
             )
@@ -194,13 +221,12 @@ class Esp32LightProgramCommandManager(
         return Result.success(json)
     }
 
-    private fun buildClearScheduleJson(
+    private fun buildClearAndOffJson(
         mapping: LightDeviceChannelMapping
     ): Result<String> {
-        val mappedEntries = mapping.rgbwEntries()
-            .filter { entry ->
-                entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
-            }
+        val mappedEntries = mappedRgbwEntries(
+            mapping = mapping
+        )
 
         if (mappedEntries.isEmpty()) {
             return Result.failure(
@@ -215,11 +241,22 @@ class Esp32LightProgramCommandManager(
                 entry.lightIndex,
                 JSONObject()
                     .put("GPIO_PWM", entry.gpioPwm)
-                    .put("LP", JSONArray())
+                    .put("LP", buildZeroLightPoints())
             )
         }
 
         val json = JSONObject()
+            .put(
+                "LPWMChanelLED",
+                JSONObject()
+                    .put(
+                        "Data",
+                        buildManualOffData(
+                            entries = mappedEntries
+                        )
+                    )
+                    .put("Group", 1)
+            )
             .put(
                 "LLight",
                 JSONObject()
@@ -233,11 +270,39 @@ class Esp32LightProgramCommandManager(
         return Result.success(json)
     }
 
+    private fun buildZeroLightPoints(): JSONArray {
+        return JSONArray()
+            .put(
+                JSONArray()
+                    .put(labelForMinute(0))
+                    .put(0.0)
+            )
+            .put(
+                JSONArray()
+                    .put(labelForMinute(MINUTES_PER_DAY))
+                    .put(0.0)
+            )
+    }
+
     private fun buildLightPointsForChannel(
         programs: List<SavedLightProgram>,
         semantic: LightChannelSemantic
     ): JSONArray {
         val points = mutableListOf<SchedulePoint>()
+
+        addOrReplacePoint(
+            points = points,
+            minute = 0,
+            label = labelForMinute(0),
+            value = 0.0
+        )
+
+        addOrReplacePoint(
+            points = points,
+            minute = MINUTES_PER_DAY,
+            label = labelForMinute(MINUTES_PER_DAY),
+            value = 0.0
+        )
 
         programs
             .sortedBy { program ->
@@ -304,15 +369,27 @@ class Esp32LightProgramCommandManager(
             valuePercent = peakPercent
         )
 
-        val startMinute = phase.startMinute.coerceIn(0, MINUTES_PER_DAY)
+        val startMinute = phase.startMinute.coerceIn(
+            0,
+            MINUTES_PER_DAY
+        )
 
         val peakStartMinute = (phase.peakStartMinute ?: phase.startMinute)
-            .coerceIn(0, MINUTES_PER_DAY)
+            .coerceIn(
+                0,
+                MINUTES_PER_DAY
+            )
 
         val peakEndMinute = (phase.peakEndMinute ?: phase.endMinute)
-            .coerceIn(0, MINUTES_PER_DAY)
+            .coerceIn(
+                0,
+                MINUTES_PER_DAY
+            )
 
-        val endMinute = phase.endMinute.coerceIn(0, MINUTES_PER_DAY)
+        val endMinute = phase.endMinute.coerceIn(
+            0,
+            MINUTES_PER_DAY
+        )
 
         if (transitionMode == LightCurveTransitionMode.LINEAR) {
             addLinearMainCurvePoints(
@@ -376,7 +453,9 @@ class Esp32LightProgramCommandManager(
                 points = points,
                 minute = minute,
                 label = labelForMinute(minute),
-                value = percentToEsp32Value(valuePercent = percent)
+                value = percentToEsp32Value(
+                    valuePercent = percent
+                )
             )
         }
     }
@@ -389,10 +468,33 @@ class Esp32LightProgramCommandManager(
         endMinute: Int,
         peakValue: Double
     ) {
-        addOrReplacePoint(points, startMinute, labelForMinute(startMinute), 0.0)
-        addOrReplacePoint(points, peakStartMinute, labelForMinute(peakStartMinute), peakValue)
-        addOrReplacePoint(points, peakEndMinute, labelForMinute(peakEndMinute), peakValue)
-        addOrReplacePoint(points, endMinute, labelForMinute(endMinute), 0.0)
+        addOrReplacePoint(
+            points = points,
+            minute = startMinute,
+            label = labelForMinute(startMinute),
+            value = 0.0
+        )
+
+        addOrReplacePoint(
+            points = points,
+            minute = peakStartMinute,
+            label = labelForMinute(peakStartMinute),
+            value = peakValue
+        )
+
+        addOrReplacePoint(
+            points = points,
+            minute = peakEndMinute,
+            label = labelForMinute(peakEndMinute),
+            value = peakValue
+        )
+
+        addOrReplacePoint(
+            points = points,
+            minute = endMinute,
+            label = labelForMinute(endMinute),
+            value = 0.0
+        )
     }
 
     private fun sampleRampMinutes(
@@ -407,13 +509,17 @@ class Esp32LightProgramCommandManager(
         val result = mutableListOf<Int>()
 
         for (index in 0..SCHEDULE_RAMP_SAMPLE_COUNT) {
-            val ratio = index.toDouble() / SCHEDULE_RAMP_SAMPLE_COUNT.toDouble()
+            val ratio =
+                index.toDouble() / SCHEDULE_RAMP_SAMPLE_COUNT.toDouble()
 
             val sampledMinute = (
                 startMinute.toDouble() + (distance.toDouble() * ratio)
-            ).roundToInt()
+                ).roundToInt()
 
-            result += sampledMinute.coerceIn(0, MINUTES_PER_DAY)
+            result += sampledMinute.coerceIn(
+                0,
+                MINUTES_PER_DAY
+            )
         }
 
         return result.distinct()
@@ -433,7 +539,7 @@ class Esp32LightProgramCommandManager(
             point.x.toDouble() >= current
         }
 
-        val value: Double = when {
+        val value = when {
             previous == null -> {
                 curvePoints.first().y.toDouble()
             }
@@ -452,7 +558,8 @@ class Esp32LightProgramCommandManager(
                 val previousY = previous.y.toDouble()
                 val nextY = next.y.toDouble()
 
-                val progress = (current - previousX) / (nextX - previousX)
+                val progress =
+                    (current - previousX) / (nextX - previousX)
 
                 previousY + ((nextY - previousY) * progress)
             }
@@ -488,29 +595,58 @@ class Esp32LightProgramCommandManager(
 
         when {
             start < MINUTES_PER_DAY && end <= MINUTES_PER_DAY -> {
-                addFlatSegmentPoints(points, start, end, value)
+                addFlatSegmentPoints(
+                    points = points,
+                    startMinute = start,
+                    endMinute = end,
+                    value = value
+                )
             }
 
             start < MINUTES_PER_DAY && end > MINUTES_PER_DAY -> {
-                addFlatSegmentPoints(points, start, MINUTES_PER_DAY, value)
+                addFlatSegmentPoints(
+                    points = points,
+                    startMinute = start,
+                    endMinute = MINUTES_PER_DAY,
+                    value = value
+                )
 
                 val morningEnd = (end - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                    .coerceIn(
+                        0,
+                        MINUTES_PER_DAY
+                    )
 
                 if (morningEnd > 0) {
-                    addFlatSegmentPoints(points, 0, morningEnd, value)
+                    addFlatSegmentPoints(
+                        points = points,
+                        startMinute = 0,
+                        endMinute = morningEnd,
+                        value = value
+                    )
                 }
             }
 
             start >= MINUTES_PER_DAY -> {
                 val normalizedStart = (start - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                    .coerceIn(
+                        0,
+                        MINUTES_PER_DAY
+                    )
 
                 val normalizedEnd = (end - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                    .coerceIn(
+                        0,
+                        MINUTES_PER_DAY
+                    )
 
                 if (normalizedEnd > normalizedStart) {
-                    addFlatSegmentPoints(points, normalizedStart, normalizedEnd, value)
+                    addFlatSegmentPoints(
+                        points = points,
+                        startMinute = normalizedStart,
+                        endMinute = normalizedEnd,
+                        value = value
+                    )
                 }
             }
         }
@@ -525,33 +661,86 @@ class Esp32LightProgramCommandManager(
 
         when {
             start < MINUTES_PER_DAY && end <= MINUTES_PER_DAY -> {
-                addOrReplacePoint(points, start.coerceIn(0, MINUTES_PER_DAY), labelForMinute(start), 0.0)
-                addOrReplacePoint(points, end.coerceIn(0, MINUTES_PER_DAY), labelForMinute(end), 0.0)
+                addOrReplacePoint(
+                    points = points,
+                    minute = start.coerceIn(0, MINUTES_PER_DAY),
+                    label = labelForMinute(start),
+                    value = 0.0
+                )
+
+                addOrReplacePoint(
+                    points = points,
+                    minute = end.coerceIn(0, MINUTES_PER_DAY),
+                    label = labelForMinute(end),
+                    value = 0.0
+                )
             }
 
             start < MINUTES_PER_DAY && end > MINUTES_PER_DAY -> {
-                addOrReplacePoint(points, start.coerceIn(0, MINUTES_PER_DAY), labelForMinute(start), 0.0)
-                addOrReplacePoint(points, MINUTES_PER_DAY, labelForMinute(MINUTES_PER_DAY), 0.0)
+                addOrReplacePoint(
+                    points = points,
+                    minute = start.coerceIn(0, MINUTES_PER_DAY),
+                    label = labelForMinute(start),
+                    value = 0.0
+                )
+
+                addOrReplacePoint(
+                    points = points,
+                    minute = MINUTES_PER_DAY,
+                    label = labelForMinute(MINUTES_PER_DAY),
+                    value = 0.0
+                )
 
                 val morningEnd = (end - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                    .coerceIn(
+                        0,
+                        MINUTES_PER_DAY
+                    )
 
                 if (morningEnd > 0) {
-                    addOrReplacePoint(points, 0, labelForMinute(0), 0.0)
-                    addOrReplacePoint(points, morningEnd, labelForMinute(morningEnd), 0.0)
+                    addOrReplacePoint(
+                        points = points,
+                        minute = 0,
+                        label = labelForMinute(0),
+                        value = 0.0
+                    )
+
+                    addOrReplacePoint(
+                        points = points,
+                        minute = morningEnd,
+                        label = labelForMinute(morningEnd),
+                        value = 0.0
+                    )
                 }
             }
 
             start >= MINUTES_PER_DAY -> {
                 val normalizedStart = (start - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                    .coerceIn(
+                        0,
+                        MINUTES_PER_DAY
+                    )
 
                 val normalizedEnd = (end - MINUTES_PER_DAY)
-                    .coerceIn(0, MINUTES_PER_DAY)
+                    .coerceIn(
+                        0,
+                        MINUTES_PER_DAY
+                    )
 
                 if (normalizedEnd > normalizedStart) {
-                    addOrReplacePoint(points, normalizedStart, labelForMinute(normalizedStart), 0.0)
-                    addOrReplacePoint(points, normalizedEnd, labelForMinute(normalizedEnd), 0.0)
+                    addOrReplacePoint(
+                        points = points,
+                        minute = normalizedStart,
+                        label = labelForMinute(normalizedStart),
+                        value = 0.0
+                    )
+
+                    addOrReplacePoint(
+                        points = points,
+                        minute = normalizedEnd,
+                        label = labelForMinute(normalizedEnd),
+                        value = 0.0
+                    )
                 }
             }
         }
@@ -563,8 +752,15 @@ class Esp32LightProgramCommandManager(
         endMinute: Int,
         value: Double
     ) {
-        val safeStart = startMinute.coerceIn(0, MINUTES_PER_DAY)
-        val safeEnd = endMinute.coerceIn(0, MINUTES_PER_DAY)
+        val safeStart = startMinute.coerceIn(
+            0,
+            MINUTES_PER_DAY
+        )
+
+        val safeEnd = endMinute.coerceIn(
+            0,
+            MINUTES_PER_DAY
+        )
 
         if (safeEnd <= safeStart) {
             return
@@ -581,7 +777,11 @@ class Esp32LightProgramCommandManager(
             points = points,
             minute = safeEnd,
             label = labelForMinute(safeEnd),
-            value = if (safeEnd == MINUTES_PER_DAY) value else 0.0
+            value = if (safeEnd == MINUTES_PER_DAY) {
+                value
+            } else {
+                0.0
+            }
         )
     }
 
@@ -604,7 +804,10 @@ class Esp32LightProgramCommandManager(
         label: String,
         value: Double
     ) {
-        val safeMinute = minute.coerceIn(0, MINUTES_PER_DAY)
+        val safeMinute = minute.coerceIn(
+            0,
+            MINUTES_PER_DAY
+        )
 
         val safeLabel = label
             .trim()
@@ -671,39 +874,13 @@ class Esp32LightProgramCommandManager(
         return data
     }
 
-    private fun buildManualOffJson(
-        mapping: LightDeviceChannelMapping
-    ): Result<String> {
-        val mappedEntries = mapping.rgbwEntries()
-            .filter { entry ->
-                entry.gpioPwm.isNotBlank() && entry.gpioPwm != "-"
-            }
-
-        if (mappedEntries.isEmpty()) {
-            return Result.failure(
-                IllegalStateException("No RGBW channel mapping found")
-            )
-        }
-
-        val json = JSONObject()
-            .put(
-                "LPWMChanelLED",
-                JSONObject()
-                    .put(
-                        "Data",
-                        buildManualOffData(entries = mappedEntries)
-                    )
-                    .put("Group", 1)
-            )
-            .toString()
-
-        return Result.success(json)
-    }
-
     private fun labelForMinute(
         minute: Int
     ): String {
-        val safeMinute = minute.coerceIn(0, MINUTES_PER_DAY)
+        val safeMinute = minute.coerceIn(
+            0,
+            MINUTES_PER_DAY
+        )
 
         if (safeMinute == MINUTES_PER_DAY) {
             return "24:00"
@@ -712,7 +889,10 @@ class Esp32LightProgramCommandManager(
         val hour = safeMinute / 60
         val minutePart = safeMinute % 60
 
-        return "%02d:%02d".format(hour, minutePart)
+        return "%02d:%02d".format(
+            hour,
+            minutePart
+        )
     }
 
     private data class SchedulePoint(
@@ -730,8 +910,7 @@ class Esp32LightProgramCommandManager(
     companion object {
         private const val MANUAL_CLEAR_VALUE = -1
         private const val MANUAL_OFF_VALUE = 0
-        private const val MANUAL_OFF_TIMEOUT_MS = 604_800_000
-        private const val CLEAR_TO_OFF_DELAY_MS = 150L
+        private const val MANUAL_OFF_TIMEOUT_MS = 604_800_000L
         private const val SCHEDULE_RAMP_SAMPLE_COUNT = 8
         private const val MINUTES_PER_DAY = 24 * 60
     }
