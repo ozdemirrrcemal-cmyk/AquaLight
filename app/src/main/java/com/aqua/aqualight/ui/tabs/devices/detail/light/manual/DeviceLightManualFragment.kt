@@ -22,7 +22,7 @@ import com.google.android.material.slider.Slider
 import kotlinx.coroutines.launch
 
 class DeviceLightManualFragment :
-Fragment(R.layout.fragment_device_light_manual) {
+    Fragment(R.layout.fragment_device_light_manual) {
 
     private var _binding: FragmentDeviceLightManualBinding? = null
     private val binding get() = _binding!!
@@ -32,17 +32,17 @@ Fragment(R.layout.fragment_device_light_manual) {
     private var isRendering = false
 
     private val deviceId: Long
-    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val sceneButtons: List<View>
-    get() = listOf(
-        binding.scenePlantGrowth,
-        binding.sceneFishDisplay,
-        binding.sceneShrimpSafe,
-        binding.sceneBlueAccent,
-        binding.sceneRed,
-        binding.sceneFullSpectrum
-    )
+        get() = listOf(
+            binding.scenePlantGrowth,
+            binding.sceneFishDisplay,
+            binding.sceneShrimpSafe,
+            binding.sceneBlueAccent,
+            binding.sceneRed,
+            binding.sceneFullSpectrum
+        )
 
     override fun onViewCreated(
         view: View,
@@ -76,8 +76,7 @@ Fragment(R.layout.fragment_device_light_manual) {
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect {
-                    state ->
+                viewModel.uiState.collect { state ->
                     renderUiState(state)
                 }
             }
@@ -87,8 +86,7 @@ Fragment(R.layout.fragment_device_light_manual) {
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect {
-                    event ->
+                viewModel.events.collect { event ->
                     when (event) {
                         is ManualLightEvent.ShowMessage -> {
                             Toast.makeText(
@@ -125,30 +123,26 @@ Fragment(R.layout.fragment_device_light_manual) {
 
         binding.switchManualPower.isChecked = state.isPowerOn
 
-        binding.tvManualModeTitle.text = when {
-            state.isManualScene -> {
-                "Manual Scene"
-            }
-
-            state.isManualMode -> {
-                "Manual Mode"
-            } else -> {
-                "Manual Mode"
-            }
+        binding.tvManualModeTitle.text = if (state.isManualScene) {
+            "Manual Scene"
+        } else {
+            "Manual Mode"
         }
 
         binding.tvManualModeSubtitle.text = when {
             state.isManualScene -> {
                 state.activeSceneName
-                .orEmpty()
-                .ifBlank {
-                    "Preset Scene"
-                }
+                    .orEmpty()
+                    .ifBlank {
+                        "Preset Scene"
+                    }
             }
 
             state.isManualMode -> {
                 "Live RGBW control active"
-            } else -> {
+            }
+
+            else -> {
                 "Automatic schedule is running"
             }
         }
@@ -163,7 +157,6 @@ Fragment(R.layout.fragment_device_light_manual) {
         )
 
         binding.tvEstimatedPower.text = state.powerText
-        binding.tvPowerLabel.text = state.powerLabelText
 
         setSliderValueIfNeeded(
             slider = binding.sliderRed,
@@ -200,9 +193,9 @@ Fragment(R.layout.fragment_device_light_manual) {
         state: ManualLightUiState
     ) {
         val isManualActive =
-        state.isPowerOn ||
-        state.isManualMode ||
-        state.isManualScene
+            state.isPowerOn ||
+                state.isManualMode ||
+                state.isManualScene
 
         val controlAlpha = if (isManualActive) {
             1f
@@ -214,7 +207,7 @@ Fragment(R.layout.fragment_device_light_manual) {
         binding.cardQuickScenes.alpha = controlAlpha
 
         binding.btnResumeAuto.isEnabled =
-        state.isManualMode || state.isManualScene
+            state.isManualMode || state.isManualScene
     }
 
     private fun setSliderValueIfNeeded(
@@ -222,8 +215,8 @@ Fragment(R.layout.fragment_device_light_manual) {
         value: Int
     ) {
         val safeValue = value
-        .coerceIn(0, 100)
-        .toFloat()
+            .coerceIn(0, 100)
+            .toFloat()
 
         if (slider.value != safeValue) {
             slider.value = safeValue
@@ -231,8 +224,7 @@ Fragment(R.layout.fragment_device_light_manual) {
     }
 
     private fun setupClicks() {
-        binding.switchManualPower.setOnCheckedChangeListener {
-            _, isChecked ->
+        binding.switchManualPower.setOnCheckedChangeListener { _, isChecked ->
             if (isRendering) return@setOnCheckedChangeListener
 
             viewModel.setPowerOn(isChecked)
@@ -291,32 +283,28 @@ Fragment(R.layout.fragment_device_light_manual) {
         binding.sliderBlue.addOnSliderTouchListener(touchListener)
         binding.sliderWhite.addOnSliderTouchListener(touchListener)
 
-        binding.sliderRed.addOnChangeListener {
-            _, value, fromUser ->
+        binding.sliderRed.addOnChangeListener { _, value, fromUser ->
             if (isRendering || !fromUser) return@addOnChangeListener
 
             clearSelectedSceneButton()
             viewModel.previewRed(value.toInt())
         }
 
-        binding.sliderGreen.addOnChangeListener {
-            _, value, fromUser ->
+        binding.sliderGreen.addOnChangeListener { _, value, fromUser ->
             if (isRendering || !fromUser) return@addOnChangeListener
 
             clearSelectedSceneButton()
             viewModel.previewGreen(value.toInt())
         }
 
-        binding.sliderBlue.addOnChangeListener {
-            _, value, fromUser ->
+        binding.sliderBlue.addOnChangeListener { _, value, fromUser ->
             if (isRendering || !fromUser) return@addOnChangeListener
 
             clearSelectedSceneButton()
             viewModel.previewBlue(value.toInt())
         }
 
-        binding.sliderWhite.addOnChangeListener {
-            _, value, fromUser ->
+        binding.sliderWhite.addOnChangeListener { _, value, fromUser ->
             if (isRendering || !fromUser) return@addOnChangeListener
 
             clearSelectedSceneButton()
@@ -334,8 +322,8 @@ Fragment(R.layout.fragment_device_light_manual) {
         }
 
         val sceneName = state.activeSceneName
-        .orEmpty()
-        .lowercase()
+            .orEmpty()
+            .lowercase()
 
         val selectedButton = when {
             sceneName.contains("plant") -> binding.scenePlantGrowth
@@ -351,8 +339,7 @@ Fragment(R.layout.fragment_device_light_manual) {
     }
 
     private fun clearSelectedSceneButton() {
-        sceneButtons.forEach {
-            button ->
+        sceneButtons.forEach { button ->
             button.isSelected = false
         }
     }
