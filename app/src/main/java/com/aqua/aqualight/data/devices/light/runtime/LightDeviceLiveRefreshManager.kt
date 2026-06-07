@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 object LightDeviceLiveRefreshManager {
 
-    private const val DEFAULT_REFRESH_INTERVAL_MS = 5_000L
+    private const val DEFAULT_REFRESH_INTERVAL_MS = 4_000L
     private const val DEVICE_TIME_KEEP_MS = 30_000L
 
     private val scope = CoroutineScope(

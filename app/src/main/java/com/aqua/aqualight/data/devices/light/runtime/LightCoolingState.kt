@@ -73,7 +73,7 @@ data class LightCoolingState(
 data class LightCoolingFanState(
     val index: Int,
     val enabled: Boolean,
-    val : Int,
+    val fanStartTemperatureCelsius: Int,
     val fanFullSpeedTemperatureCelsius: Int,
     val outputPercent: Int?,
     val regime: String,

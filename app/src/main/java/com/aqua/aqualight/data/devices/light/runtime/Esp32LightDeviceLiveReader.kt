@@ -8,7 +8,11 @@ class Esp32LightDeviceLiveReader(
     private val timeReader: Esp32LightDeviceTimeReader =
         Esp32LightDeviceTimeReader(httpClient),
     private val mappingReader: Esp32LightChannelMappingReader =
-        Esp32LightChannelMappingReader(httpClient)
+        Esp32LightChannelMappingReader(httpClient),
+    private val thermalProtectionManager: Esp32LightThermalProtectionManager =
+        Esp32LightThermalProtectionManager(httpClient),
+    private val coolingManager: Esp32LightCoolingManager =
+        Esp32LightCoolingManager(httpClient)
 ) {
 
     suspend fun read(
@@ -22,13 +26,25 @@ class Esp32LightDeviceLiveReader(
             ip = ip
         )
 
+        val thermalResult = thermalProtectionManager.read(
+            ip = ip
+        )
+
+        val coolingResult = coolingManager.read(
+            ip = ip
+        )
+
         if (
             timeResult.isFailure &&
-            channelsResult.isFailure
+            channelsResult.isFailure &&
+            thermalResult.isFailure &&
+            coolingResult.isFailure
         ) {
             return Result.failure(
                 channelsResult.exceptionOrNull()
                     ?: timeResult.exceptionOrNull()
+                    ?: thermalResult.exceptionOrNull()
+                    ?: coolingResult.exceptionOrNull()
                     ?: IllegalStateException("Live device data could not be read")
             )
         }
@@ -42,6 +58,14 @@ class Esp32LightDeviceLiveReader(
                 channelsResult.exceptionOrNull()?.message
             }
 
+            thermalResult.isFailure -> {
+                thermalResult.exceptionOrNull()?.message
+            }
+
+            coolingResult.isFailure -> {
+                coolingResult.exceptionOrNull()?.message
+            }
+
             else -> {
                 null
             }
@@ -53,8 +77,8 @@ class Esp32LightDeviceLiveReader(
                 channels = channelsResult.getOrElse {
                     emptyList()
                 },
-                thermalProtection = null,
-                cooling = null,
+                thermalProtection = thermalResult.getOrNull(),
+                cooling = coolingResult.getOrNull(),
                 partialErrorMessage = partialError
             )
         )
@@ -218,7 +242,7 @@ class Esp32LightDeviceLiveReader(
 data class Esp32LightDeviceLiveSnapshot(
     val deviceTime: LightDeviceTimeState?,
     val channels: List<LightDeviceLiveChannelState>,
-    val thermalProtection: LightThermalProtectionState? = null,
-    val cooling: LightCoolingState? = null,
+    val thermalProtection: LightThermalProtectionState?,
+    val cooling: LightCoolingState?,
     val partialErrorMessage: String?
 )
