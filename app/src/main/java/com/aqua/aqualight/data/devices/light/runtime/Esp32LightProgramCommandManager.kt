@@ -633,7 +633,7 @@ class Esp32LightProgramCommandManager(
                     "VManual",
                     JSONObject()
                     .put("V", MANUAL_OFF_VALUE)
-                    .put("TOffMs", 0)
+                    .put("TOffMs", MANUAL_OFF_TIMEOUT_MS)
                 )
             )
         }
@@ -681,6 +681,7 @@ class Esp32LightProgramCommandManager(
     companion object {
         private const val MANUAL_CLEAR_VALUE = -1
         private const val MANUAL_OFF_VALUE = 0
+        private const val MANUAL_OFF_TIMEOUT_MS = 604_800_000
         private const val MINUTES_PER_DAY = 24 * 60
     }
 }
