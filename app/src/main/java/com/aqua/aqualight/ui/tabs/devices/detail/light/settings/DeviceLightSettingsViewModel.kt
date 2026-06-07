@@ -216,13 +216,52 @@ class DeviceLightSettingsViewModel(
             val status = statuses[deviceId]
             val definition = AquaDeviceCatalog.findByType(device.deviceType)
 
+            val resolvedIp = status?.ip
+                ?.ifBlank {
+                    device.ip
+                }
+                ?: device.ip
+
+            val catalogName = definition?.displayName.orEmpty()
+
+            val resolvedDeviceName = device.aquaName
+                .ifBlank {
+                    device.name
+                }
+                .ifBlank {
+                    "—"
+                }
+
+            val resolvedDeviceType = catalogName
+                .ifBlank {
+                    device.productModel
+                }
+                .ifBlank {
+                    formatEnumName(device.deviceType.name)
+                }
+
             _uiState.update { state ->
                 state.copy(
-                    deviceName = "name: ${device.name}",
-                    deviceType = "aqua: ${device.aquaName}",
-                    firmwareVersion = "model: ${device.productModel}",
-                    deviceIp = "productId: ${device.productId}",
-                    serialNumber = "type: ${device.deviceType.name} / catalog: ${definition?.displayName ?: "null"}"
+                    deviceName = resolvedDeviceName,
+
+                    deviceType = resolvedDeviceType,
+
+                    firmwareVersion = device.firmwareVersion
+                        .ifBlank {
+                            device.firmwareBuild
+                        }
+                        .ifBlank {
+                            "—"
+                        },
+
+                    deviceIp = resolvedIp.ifBlank {
+                        "—"
+                    },
+
+                    serialNumber = device.serial
+                        .ifBlank {
+                            "—"
+                        }
                 )
             }
         }
