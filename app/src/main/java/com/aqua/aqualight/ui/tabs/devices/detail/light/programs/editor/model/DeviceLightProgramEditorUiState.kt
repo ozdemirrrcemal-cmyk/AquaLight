@@ -19,7 +19,8 @@ data class DeviceLightProgramEditorUiState(
     val previewSpeed: PreviewSpeed,
     val currentDeviceTime: LightCurvePoint,
     val previewSimulationTime: LightCurvePoint? = null,
-    val isPreviewRunning: Boolean = false
+val isPreviewRunning: Boolean = false,
+val previewProgressPercent: Int = 0
 ) {
     val graphState: LightCurveGraphState
         get() = LightCurveGraphState(

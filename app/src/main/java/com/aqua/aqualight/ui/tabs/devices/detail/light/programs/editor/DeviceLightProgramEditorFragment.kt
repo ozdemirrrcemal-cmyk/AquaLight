@@ -42,6 +42,8 @@ Fragment(R.layout.fragment_device_light_program_editor) {
 
     private var isRendering = false
 
+    private var previewDaySheet: LightPreviewDaySheet? = null
+
     private val deviceId: Long
     get() = requireArguments().getLong(ARG_DEVICE_ID, 0L)
 
@@ -185,6 +187,11 @@ Fragment(R.layout.fragment_device_light_program_editor) {
             "▶"
         }
 
+        previewDaySheet?.renderPreviewState(
+            isPreviewRunning = state.isPreviewRunning,
+            progressPercent = state.previewProgressPercent
+        )
+
         renderRepeatMode(state)
         renderMoonlightSummary(state)
         renderCloudSimulationSummary(state)
@@ -197,14 +204,12 @@ Fragment(R.layout.fragment_device_light_program_editor) {
         binding.btnPreviewProgram.setOnClickListener {
             val state = viewModel.uiState.value
 
-            LightPreviewDaySheet
-            .create(requireContext())
-            .show(
-                initialSpeed = state.previewSpeed
-            ) {
-                speed ->
-                viewModel.startPreview(speed)
+            if (state.isPreviewRunning) {
+                viewModel.stopPreview()
+                return@setOnClickListener
             }
+
+            showPreviewDaySheet(state)
         }
 
         binding.tvTimeStart.setOnClickListener {
@@ -336,6 +341,34 @@ Fragment(R.layout.fragment_device_light_program_editor) {
                 isActive = false
             )
         }
+    }
+
+    private fun showPreviewDaySheet(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        val sheet = LightPreviewDaySheet.create(
+            context = requireContext()
+        )
+
+        previewDaySheet = sheet
+
+        sheet.show(
+            initialSpeed = state.previewSpeed,
+            initialProgressPercent = state.previewProgressPercent,
+            isPreviewRunning = state.isPreviewRunning,
+            onStartPreview = {
+                speed ->
+                viewModel.startPreview(speed)
+            },
+            onStopPreview = {
+                viewModel.stopPreview()
+            },
+            onDismiss = {
+                if (previewDaySheet === sheet) {
+                    previewDaySheet = null
+                }
+            }
+        )
     }
 
     private fun setupSliders() {
@@ -523,6 +556,9 @@ Fragment(R.layout.fragment_device_light_program_editor) {
     }
 
     override fun onDestroyView() {
+        previewDaySheet?.dismiss()
+        previewDaySheet = null
+
         _binding = null
         super.onDestroyView()
     }

@@ -12,18 +12,34 @@ class LightPreviewDaySheet private constructor(
     private val context: Context
 ) {
 
+    private var dialog: BottomSheetDialog? = null
+    private var binding: BottomSheetLightPreviewDayBinding? = null
+
+    private var selectedSpeed: PreviewSpeed = PreviewSpeed.ONE_MINUTE
+    private var currentIsPreviewRunning: Boolean = false
+
+    private var onStopPreview: (() -> Unit)? = null
+
     fun show(
         initialSpeed: PreviewSpeed = PreviewSpeed.ONE_MINUTE,
-        onStartPreview: (PreviewSpeed) -> Unit
+        initialProgressPercent: Int = 0,
+        isPreviewRunning: Boolean = false,
+        onStartPreview: (PreviewSpeed) -> Unit,
+        onStopPreview: () -> Unit,
+        onDismiss: () -> Unit = {}
     ) {
         val dialog = BottomSheetDialog(context)
         val binding = BottomSheetLightPreviewDayBinding.inflate(
             LayoutInflater.from(context)
         )
 
-        dialog.setContentView(binding.root)
+        this.dialog = dialog
+        this.binding = binding
+        this.selectedSpeed = initialSpeed
+        this.currentIsPreviewRunning = isPreviewRunning
+        this.onStopPreview = onStopPreview
 
-        var selectedSpeed = initialSpeed
+        dialog.setContentView(binding.root)
 
         fun renderSpeed() {
             renderSpeedChip(
@@ -43,28 +59,103 @@ class LightPreviewDaySheet private constructor(
         }
 
         binding.speedOneMinute.setOnClickListener {
+            if (currentIsPreviewRunning) {
+                return@setOnClickListener
+            }
+
             selectedSpeed = PreviewSpeed.ONE_MINUTE
             renderSpeed()
         }
 
         binding.speedThreeMinutes.setOnClickListener {
+            if (currentIsPreviewRunning) {
+                return@setOnClickListener
+            }
+
             selectedSpeed = PreviewSpeed.THREE_MINUTES
             renderSpeed()
         }
 
         binding.speedFiveMinutes.setOnClickListener {
+            if (currentIsPreviewRunning) {
+                return@setOnClickListener
+            }
+
             selectedSpeed = PreviewSpeed.FIVE_MINUTES
             renderSpeed()
         }
 
         binding.btnStartPreview.setOnClickListener {
-            binding.previewProgressBar.progress = 0
-            binding.tvPreviewProgress.text = "0%"
+            if (currentIsPreviewRunning) {
+                this.onStopPreview?.invoke()
+                return@setOnClickListener
+            }
+
+            renderPreviewState(
+                isPreviewRunning = true,
+                progressPercent = 0
+            )
+
             onStartPreview(selectedSpeed)
         }
 
+        dialog.setOnDismissListener {
+            this.binding = null
+            this.dialog = null
+            this.onStopPreview = null
+            onDismiss()
+        }
+
         renderSpeed()
+
+        renderPreviewState(
+            isPreviewRunning = isPreviewRunning,
+            progressPercent = initialProgressPercent
+        )
+
         dialog.show()
+    }
+
+    fun renderPreviewState(
+        isPreviewRunning: Boolean,
+        progressPercent: Int
+    ) {
+        val binding = binding ?: return
+
+        currentIsPreviewRunning = isPreviewRunning
+
+        val safeProgress = progressPercent.coerceIn(0, 100)
+
+        binding.previewProgressBar.progress = safeProgress
+        binding.tvPreviewProgress.text = "$safeProgress%"
+
+        binding.btnStartPreview.text = when {
+            isPreviewRunning -> {
+                "Stop Preview"
+            }
+
+            safeProgress >= 100 -> {
+                "Start Again"
+            }
+
+            else -> {
+                "Start Preview"
+            }
+        }
+
+        binding.previewSpeedSelector.alpha = if (isPreviewRunning) {
+            0.55f
+        } else {
+            1f
+        }
+
+        binding.speedOneMinute.isEnabled = !isPreviewRunning
+        binding.speedThreeMinutes.isEnabled = !isPreviewRunning
+        binding.speedFiveMinutes.isEnabled = !isPreviewRunning
+    }
+
+    fun dismiss() {
+        dialog?.dismiss()
     }
 
     private fun renderSpeedChip(
@@ -72,7 +163,11 @@ class LightPreviewDaySheet private constructor(
         selected: Boolean
     ) {
         view.setBackgroundResource(
-            if (selected) R.drawable.bg_light_filter_selected else android.R.color.transparent
+            if (selected) {
+                R.drawable.bg_light_filter_selected
+            } else {
+                android.R.color.transparent
+            }
         )
 
         view.setTextColor(
@@ -85,7 +180,9 @@ class LightPreviewDaySheet private constructor(
     }
 
     companion object {
-        fun create(context: Context): LightPreviewDaySheet {
+        fun create(
+            context: Context
+        ): LightPreviewDaySheet {
             return LightPreviewDaySheet(context)
         }
     }

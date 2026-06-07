@@ -515,11 +515,14 @@ class DeviceLightProgramEditorViewModel(
             state ->
             state.copy(
                 previewSimulationTime = null,
-                isPreviewRunning = false
+                isPreviewRunning = false,
+                previewProgressPercent = 0
             )
         }
 
-        previewJob = viewModelScope.launch {
+        var runningJob: Job? = null
+
+        runningJob = viewModelScope.launch {
             if (deviceId <= 0L) {
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowError(
@@ -556,19 +559,36 @@ class DeviceLightProgramEditorViewModel(
 
                 previewStarted = true
 
+                _uiState.update {
+                    state ->
+                    state.copy(
+                        previewSimulationTime = pointFromMinute(0),
+                        isPreviewRunning = true,
+                        previewProgressPercent = 0
+                    )
+                }
+
                 val frameCount = PREVIEW_FRAME_COUNT
                 val delayMs = speed.previewFrameDelayMillis()
 
                 for (frame in 0 until frameCount) {
-                    if (!isActive) return@launch
+                    if (!isActive) {
+                        return@launch
+                    }
 
                     val minute = ((24 * 60) * frame) / (frameCount - 1)
+
+                    val progressPercent =
+                    ((frame.toDouble() / (frameCount - 1).toDouble()) * 100.0)
+                    .roundToInt()
+                    .coerceIn(0, 100)
 
                     _uiState.update {
                         state ->
                         state.copy(
                             previewSimulationTime = pointFromMinute(minute),
-                            isPreviewRunning = true
+                            isPreviewRunning = true,
+                            previewProgressPercent = progressPercent
                         )
                     }
 
@@ -619,6 +639,13 @@ class DeviceLightProgramEditorViewModel(
 
                 previewFinishedNormally = true
 
+                _uiState.update {
+                    state ->
+                    state.copy(
+                        previewProgressPercent = 100
+                    )
+                }
+
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowMessage(
                         "Preview finished"
@@ -627,22 +654,49 @@ class DeviceLightProgramEditorViewModel(
             } finally {
                 if (previewStarted) {
                     withContext(NonCancellable) {
-                        resumeAutoAfterPreview()
+                        resumeAutoAfterPreview(
+                            finalProgressPercent = if (previewFinishedNormally) {
+                                100
+                            } else {
+                                0
+                            }
+                        )
                     }
                 } else {
                     _uiState.update {
                         state ->
                         state.copy(
                             previewSimulationTime = null,
-                            isPreviewRunning = false
+                            isPreviewRunning = false,
+                            previewProgressPercent = 0
                         )
                     }
                 }
 
-                if (previewFinishedNormally) {
+                if (previewJob == runningJob) {
                     previewJob = null
                 }
             }
+        }
+
+        previewJob = runningJob
+    }
+
+    fun stopPreview() {
+        val runningJob = previewJob
+
+        if (runningJob?.isActive == true) {
+            runningJob.cancel()
+            return
+        }
+
+        _uiState.update {
+            state ->
+            state.copy(
+                previewSimulationTime = null,
+                isPreviewRunning = false,
+                previewProgressPercent = 0
+            )
         }
     }
 
@@ -714,7 +768,9 @@ class DeviceLightProgramEditorViewModel(
         .coerceIn(0, 100)
     }
 
-    private suspend fun resumeAutoAfterPreview() {
+    private suspend fun resumeAutoAfterPreview(
+        finalProgressPercent: Int
+    ) {
         lightRuntimeRepository.resumeAuto(
             deviceId = deviceId
         )
@@ -728,21 +784,18 @@ class DeviceLightProgramEditorViewModel(
             state ->
             state.copy(
                 previewSimulationTime = null,
-                isPreviewRunning = false
+                isPreviewRunning = false,
+                previewProgressPercent = finalProgressPercent.coerceIn(0, 100)
             )
         }
     }
 
     private fun PreviewSpeed.previewFrameDelayMillis(): Long {
-        return when (name) {
-            "ONE_MINUTE" -> 625L
-            "TWO_MINUTES" -> 1_250L
-            "FIVE_MINUTES" -> 3_125L
-            "FAST" -> 300L
-            "NORMAL" -> 625L
-            "SLOW" -> 1_250L
-            else -> 625L
-        }
+        val totalDurationMillis =
+        durationMinutes * 60_000L
+
+        return (totalDurationMillis / (PREVIEW_FRAME_COUNT - 1))
+        .coerceAtLeast(100L)
     }
 
     private fun pointFromMinute(
@@ -774,7 +827,8 @@ class DeviceLightProgramEditorViewModel(
             state ->
             state.copy(
                 previewSimulationTime = null,
-                isPreviewRunning = false
+                isPreviewRunning = false,
+                previewProgressPercent = 0
             )
         }
 
