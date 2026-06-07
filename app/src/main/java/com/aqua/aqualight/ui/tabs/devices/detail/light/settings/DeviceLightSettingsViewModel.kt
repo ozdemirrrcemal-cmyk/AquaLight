@@ -187,81 +187,47 @@ class DeviceLightSettingsViewModel(
     }
 
     private fun observeDeviceProfile() {
-        profileJob?.cancel()
+    profileJob?.cancel()
 
-        profileJob = viewModelScope.launch {
-            combine(
-                devicesDataStoreManager.devicesFlow,
-                DevicePresenceMonitor.statuses
-            ) { devices, statuses ->
-                devices to statuses
-            }.collect { (devices, statuses) ->
-                val device = devices.firstOrNull { savedDevice ->
-                    savedDevice.id == deviceId
-                }
+    profileJob = viewModelScope.launch {
+        combine(
+            devicesDataStoreManager.devicesFlow,
+            DevicePresenceMonitor.statuses
+        ) { devices, statuses ->
+            devices to statuses
+        }.collect { (devices, statuses) ->
+            val device = devices.firstOrNull { savedDevice ->
+                savedDevice.id == deviceId
+            }
 
-                if (device == null) {
-                    _uiState.update { state ->
-    state.copy(
-        deviceName = "name: ${device.name}",
-        deviceType = "aqua: ${device.aquaName}",
-        firmwareVersion = "model: ${device.productModel}",
-        deviceIp = "productId: ${device.productId}",
-        serialNumber = "type: ${device.deviceType.name} / catalog: ${definition?.displayName ?: "null"}"
-    )
-}
-                    return@collect
-                }
-
-                val status = statuses[deviceId]
-                val definition = AquaDeviceCatalog.findByType(device.deviceType)
-
-                val resolvedIp = status?.ip
-                    ?.ifBlank {
-                        device.ip
-                    }
-                    ?: device.ip
-
+            if (device == null) {
                 _uiState.update { state ->
                     state.copy(
-                        deviceName = device.name
-                            .ifBlank {
-                                device.aquaName
-                            }
-                            .ifBlank {
-                                device.productModel
-                            }
-                            .ifBlank {
-                                "Light Device"
-                            },
-
-                        deviceType = definition?.displayName
-                            ?.ifBlank {
-                                formatEnumName(device.deviceType.name)
-                            }
-                            ?: formatEnumName(device.deviceType.name),
-
-                        firmwareVersion = device.firmwareVersion
-                            .ifBlank {
-                                device.firmwareBuild
-                            }
-                            .ifBlank {
-                                "—"
-                            },
-
-                        deviceIp = resolvedIp.ifBlank {
-                            "—"
-                        },
-
-                        serialNumber = device.serial
-                            .ifBlank {
-                                "—"
-                            }
+                        deviceName = "—",
+                        deviceType = "—",
+                        firmwareVersion = "—",
+                        deviceIp = "—",
+                        serialNumber = "—"
                     )
                 }
+                return@collect
+            }
+
+            val status = statuses[deviceId]
+            val definition = AquaDeviceCatalog.findByType(device.deviceType)
+
+            _uiState.update { state ->
+                state.copy(
+                    deviceName = "name: ${device.name}",
+                    deviceType = "aqua: ${device.aquaName}",
+                    firmwareVersion = "model: ${device.productModel}",
+                    deviceIp = "productId: ${device.productId}",
+                    serialNumber = "type: ${device.deviceType.name} / catalog: ${definition?.displayName ?: "null"}"
+                )
             }
         }
     }
+}
 
     fun syncTimeWithPhone() {
         viewModelScope.launch {
