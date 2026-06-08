@@ -6,12 +6,12 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.BottomSheetQuickSetupInfoBinding
+import com.aqua.aqualight.databinding.BottomSheetLightQuickSetupInfoBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class QuickSetupInfoBottomSheet(
     private val dialog: BottomSheetDialog,
-    private val binding: BottomSheetQuickSetupInfoBinding
+    private val binding: BottomSheetLightQuickSetupInfoBinding
 ) {
 
     fun show(
@@ -133,9 +133,9 @@ class QuickSetupInfoBottomSheet(
         ): QuickSetupInfoBottomSheet {
             val dialog = BottomSheetDialog(context)
 
-            val binding = BottomSheetQuickSetupInfoBinding.inflate(
-                LayoutInflater.from(context)
-            )
+            val binding = BottomSheetLightQuickSetupInfoBinding.inflate(
+    LayoutInflater.from(context)
+)
 
             dialog.setContentView(binding.root)
 

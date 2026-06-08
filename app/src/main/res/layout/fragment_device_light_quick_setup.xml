@@ -61,10 +61,12 @@
                         android:paddingBottom="42dp">
 
                         <TextView
+                            android:id="@+id/tvNoLinkedTankTitle"
                             style="@style/TextAppearance.Aqua.Light.SectionTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="No tank linked" />
+                            android:text="No tank linked"
+                            tools:text="Preparing setup" />
 
                         <TextView
                             android:id="@+id/tvNoLinkedTankMessage"

@@ -23,7 +23,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.sheet.QuickSet
 import kotlinx.coroutines.launch
 
 class DeviceLightQuickSetupFragment :
-    Fragment(R.layout.fragment_device_light_quick_setup) {
+Fragment(R.layout.fragment_device_light_quick_setup) {
 
     private var _binding: FragmentDeviceLightQuickSetupBinding? = null
     private val binding get() = _binding!!
@@ -31,7 +31,7 @@ class DeviceLightQuickSetupFragment :
     private val viewModel: DeviceLightQuickSetupViewModel by viewModels()
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     override fun onViewCreated(
         view: View,
@@ -72,9 +72,9 @@ class DeviceLightQuickSetupFragment :
 
         binding.btnShowAllReasons.setOnClickListener {
             val items = viewModel.uiState.value
-                .recommendation
-                ?.reasoningNotes
-                .orEmpty()
+            .recommendation
+            ?.reasoningNotes
+            .orEmpty()
 
             showInfoSheet(
                 title = "Why this setup?",
@@ -85,9 +85,9 @@ class DeviceLightQuickSetupFragment :
 
         binding.btnShowAllWarnings.setOnClickListener {
             val items = viewModel.uiState.value
-                .recommendation
-                ?.warnings
-                .orEmpty()
+            .recommendation
+            ?.warnings
+            .orEmpty()
 
             showInfoSheet(
                 title = "Before applying",
@@ -100,7 +100,8 @@ class DeviceLightQuickSetupFragment :
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
+                viewModel.uiState.collect {
+                    state ->
                     renderUiState(state)
                 }
             }
@@ -110,7 +111,8 @@ class DeviceLightQuickSetupFragment :
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { event ->
+                viewModel.events.collect {
+                    event ->
                     when (event) {
                         is DeviceLightQuickSetupEvent.ShowMessage -> {
                             Toast.makeText(
@@ -144,6 +146,7 @@ class DeviceLightQuickSetupFragment :
 
         if (state.isLoading) {
             renderNoLinkedTank(
+                title = "Preparing setup",
                 message = "Analyzing tank profile and preparing a smart light recommendation."
             )
             return
@@ -151,8 +154,9 @@ class DeviceLightQuickSetupFragment :
 
         if (recommendation == null) {
             renderNoLinkedTank(
+                title = "No tank linked",
                 message = state.errorMessage
-                    ?: "Link this light device to a tank to generate a smart lighting setup."
+                ?: "Link this light device to a tank to generate a smart lighting setup."
             )
             return
         }
@@ -166,12 +170,14 @@ class DeviceLightQuickSetupFragment :
     }
 
     private fun renderNoLinkedTank(
+        title: String,
         message: String
     ) {
         binding.noLinkedTankContainer.visibility = View.VISIBLE
         binding.recommendationContainer.visibility = View.GONE
         binding.bottomActionsBar.visibility = View.GONE
 
+        binding.tvNoLinkedTankTitle.text = title
         binding.tvNoLinkedTankMessage.text = message
     }
 
@@ -180,7 +186,7 @@ class DeviceLightQuickSetupFragment :
     ) {
         binding.tvRecommendationTitle.text = recommendation.title
         binding.tvRecommendationSubtitle.text =
-            "${recommendation.profileLabel} · ${recommendation.goalLabel}"
+        "${recommendation.profileLabel} · ${recommendation.goalLabel}"
 
         binding.tvDurationValue.text = recommendation.durationLabel
         binding.tvIntensityValue.text = recommendation.intensityLabel
@@ -191,7 +197,7 @@ class DeviceLightQuickSetupFragment :
         )
 
         binding.tvProgramGoal.text =
-            "${recommendation.goalLabel} · ${recommendation.confidenceLabel}"
+        "${recommendation.goalLabel} · ${recommendation.confidenceLabel}"
 
         binding.tvStartTime.text = recommendation.start.label
         binding.tvPeakStartTime.text = recommendation.peakStart.label
@@ -204,7 +210,7 @@ class DeviceLightQuickSetupFragment :
         binding.tvWhiteValue.text = "W${recommendation.channelValues.white}"
 
         val visibleReasons =
-            recommendation.reasoningNotes.take(MAX_VISIBLE_REASON_ROWS)
+        recommendation.reasoningNotes.take(MAX_VISIBLE_REASON_ROWS)
 
         renderCompactInfoRows(
             container = binding.reasoningContainer,
@@ -213,14 +219,14 @@ class DeviceLightQuickSetupFragment :
         )
 
         binding.btnShowAllReasons.visibility =
-            if (recommendation.reasoningNotes.size > MAX_VISIBLE_REASON_ROWS) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (recommendation.reasoningNotes.size > MAX_VISIBLE_REASON_ROWS) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.btnShowAllReasons.text =
-            "View all ${recommendation.reasoningNotes.size} reasons"
+        "View all ${recommendation.reasoningNotes.size} reasons"
 
         if (recommendation.warnings.isEmpty()) {
             binding.cardWarnings.visibility = View.GONE
@@ -229,7 +235,7 @@ class DeviceLightQuickSetupFragment :
             binding.cardWarnings.visibility = View.VISIBLE
 
             val visibleWarnings =
-                recommendation.warnings.take(MAX_VISIBLE_WARNING_ROWS)
+            recommendation.warnings.take(MAX_VISIBLE_WARNING_ROWS)
 
             renderCompactInfoRows(
                 container = binding.warningsContainer,
@@ -238,14 +244,14 @@ class DeviceLightQuickSetupFragment :
             )
 
             binding.btnShowAllWarnings.visibility =
-                if (recommendation.warnings.size > MAX_VISIBLE_WARNING_ROWS) {
-                    View.VISIBLE
-                } else {
-                    View.GONE
-                }
+            if (recommendation.warnings.size > MAX_VISIBLE_WARNING_ROWS) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
             binding.btnShowAllWarnings.text =
-                "View all ${recommendation.warnings.size} notes"
+            "View all ${recommendation.warnings.size} notes"
         }
     }
 
@@ -253,10 +259,10 @@ class DeviceLightQuickSetupFragment :
         state: QuickSetupUiState
     ) {
         binding.btnSaveProgram.isEnabled =
-            !state.isSaving && state.recommendation != null
+        !state.isSaving && state.recommendation != null
 
         binding.btnLoadToDevice.isEnabled =
-            !state.isSaving && state.recommendation != null
+        !state.isSaving && state.recommendation != null
 
         binding.btnSaveProgram.text = when {
             state.isSaving -> "Saving..."
@@ -277,7 +283,8 @@ class DeviceLightQuickSetupFragment :
     ) {
         container.removeAllViews()
 
-        items.forEach { item ->
+        items.forEach {
+            item ->
             val parsed = parseAnalysisItem(item)
 
             val row = LinearLayout(requireContext()).apply {
@@ -343,24 +350,24 @@ class DeviceLightQuickSetupFragment :
         text: String
     ): Pair<String, String> {
         val cleanText = text
-            .replace("Setup phase:", "Phase:")
-            .replace("Tech level:", "Tech:")
-            .replace("Livestock:", "Stock:")
-            .trim()
+        .replace("Setup phase:", "Phase:")
+        .replace("Tech level:", "Tech:")
+        .replace("Livestock:", "Stock:")
+        .trim()
 
         val separatorIndex = cleanText.indexOf(":")
 
         return if (separatorIndex > 0) {
             val label = cleanText
-                .substring(0, separatorIndex)
-                .trim()
+            .substring(0, separatorIndex)
+            .trim()
 
             val value = cleanText
-                .substring(separatorIndex + 1)
-                .trim()
-                .ifBlank {
-                    "Unknown"
-                }
+            .substring(separatorIndex + 1)
+            .trim()
+            .ifBlank {
+                "Unknown"
+            }
 
             label to value
         } else {
@@ -375,7 +382,8 @@ class DeviceLightQuickSetupFragment :
     ) {
         container.removeAllViews()
 
-        items.forEachIndexed { index, text ->
+        items.forEachIndexed {
+            index, text ->
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -458,12 +466,12 @@ class DeviceLightQuickSetupFragment :
         }
 
         QuickSetupInfoBottomSheet
-            .create(requireContext())
-            .show(
-                title = title,
-                subtitle = subtitle,
-                items = items
-            )
+        .create(requireContext())
+        .show(
+            title = title,
+            subtitle = subtitle,
+            items = items
+        )
     }
 
     private fun Int.dp(): Int {
