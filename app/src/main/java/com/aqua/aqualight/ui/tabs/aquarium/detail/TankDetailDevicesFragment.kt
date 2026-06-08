@@ -5,7 +5,6 @@ import android.graphics.Typeface
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -24,18 +23,16 @@ import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectFragment
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.Locale
 
-class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices) {
+class TankDetailDevicesFragment :
+    Fragment(R.layout.fragment_tank_detail_devices) {
 
     private var _binding: FragmentTankDetailDevicesBinding? = null
     private val binding get() = _binding!!
@@ -51,7 +48,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
-        super.onCreate(savedInstanceState)
+        super.onCreate(
+            savedInstanceState
+        )
 
         tankId = requireArguments().getLong(ARG_TANK_ID)
     }
@@ -66,7 +65,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         )
 
         _binding = FragmentTankDetailDevicesBinding.bind(view)
-        devicesStore = DevicesDataStoreManager.create(requireContext())
+
+        devicesStore = DevicesDataStoreManager.create(
+            requireContext()
+        )
 
         DevicePresenceMonitor.start(
             context = requireContext()
@@ -79,7 +81,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
     private fun setupClickListeners() {
         binding.btnAddDevice.setOnClickListener {
-            showAddDeviceBottomSheet()
+            openTankDeviceSelectScreen()
         }
     }
 
@@ -93,7 +95,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
     private fun observeTankDevices() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
                 combine(
                     devicesStore.devicesForTankFlow(tankId),
                     DevicePresenceMonitor.statuses
@@ -101,7 +105,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                     devices to statuses
                 }.collect { pair ->
                     latestStatuses = pair.second
-                    renderDevices(pair.first)
+
+                    renderDevices(
+                        devices = pair.first
+                    )
                 }
             }
         }
@@ -121,9 +128,25 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         devices.forEach { device ->
             binding.tankDevicesContainer.addView(
-                createAssignedDeviceCard(device)
+                createAssignedDeviceCard(
+                    device = device
+                )
             )
         }
+    }
+
+    private fun openTankDeviceSelectScreen() {
+        val args = Bundle().apply {
+            putLong(
+                TankDeviceSelectFragment.ARG_TANK_ID,
+                tankId
+            )
+        }
+
+        findNavController().navigate(
+            R.id.action_tankDetailFragment_to_tankDeviceSelectFragment,
+            args
+        )
     }
 
     private fun createAssignedDeviceCard(
@@ -141,6 +164,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
+
             params.bottomMargin = 12.dp()
             layoutParams = params
         }
@@ -148,6 +172,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         val row = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+
             setPadding(
                 14.dp(),
                 12.dp(),
@@ -158,12 +183,19 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
 
         val iconBox = ImageView(requireContext()).apply {
             setImageResource(
-                DeviceIconMapper.iconFor(device.deviceType)
+                DeviceIconMapper.iconFor(
+                    device.deviceType
+                )
             )
 
-            setBackgroundResource(R.drawable.bg_material_icon_box)
+            setBackgroundResource(
+                R.drawable.bg_material_icon_box
+            )
+
             scaleType = ImageView.ScaleType.CENTER_INSIDE
-            contentDescription = getDeviceTitle(device)
+            contentDescription = getDeviceTitle(
+                device = device
+            )
 
             layoutParams = LinearLayout.LayoutParams(
                 46.dp(),
@@ -186,13 +218,17 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
             )
+
             params.marginStart = 12.dp()
             params.marginEnd = 8.dp()
             layoutParams = params
         }
 
         val titleText = TextView(requireContext()).apply {
-            text = getDeviceTitle(device)
+            text = getDeviceTitle(
+                device = device
+            )
+
             textSize = 14f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
@@ -202,7 +238,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         }
 
         val typeText = TextView(requireContext()).apply {
-            text = getDeviceTypeText(device)
+            text = getDeviceTypeText(
+                device = device
+            )
+
             textSize = 12f
             setTextColor(Color.parseColor("#8FA4BE"))
             includeFontPadding = false
@@ -213,11 +252,14 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
+
             params.topMargin = 6.dp()
             layoutParams = params
         }
 
-        val online = isDeviceOnline(device)
+        val online = isDeviceOnline(
+            device = device
+        )
 
         val statusText = TextView(requireContext()).apply {
             text = if (online) {
@@ -227,6 +269,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             }
 
             textSize = 12f
+
             setTextColor(
                 if (online) {
                     Color.parseColor("#5FD6B4")
@@ -234,6 +277,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                     Color.parseColor("#D85C5C")
                 }
             )
+
             setTypeface(null, Typeface.BOLD)
             includeFontPadding = false
 
@@ -241,6 +285,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
+
             params.topMargin = 7.dp()
             layoutParams = params
         }
@@ -250,9 +295,17 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         textBox.addView(statusText)
 
         val removeButton = ImageView(requireContext()).apply {
-            setImageResource(R.drawable.ic_close_20)
-            setColorFilter(Color.parseColor("#A7B4C5"))
-            setBackgroundResource(R.drawable.bg_device_remove_icon_circle)
+            setImageResource(
+                R.drawable.ic_close_20
+            )
+
+            setColorFilter(
+                Color.parseColor("#A7B4C5")
+            )
+
+            setBackgroundResource(
+                R.drawable.bg_device_remove_icon_circle
+            )
 
             scaleType = ImageView.ScaleType.CENTER
             isClickable = true
@@ -272,7 +325,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             )
 
             setOnClickListener {
-                showRemoveDeviceConfirmationDialog(device)
+                showRemoveDeviceConfirmationDialog(
+                    device = device
+                )
             }
         }
 
@@ -283,248 +338,6 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         card.addView(row)
 
         return card
-    }
-
-    private fun showAddDeviceBottomSheet() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val allDevices = devicesStore.devicesFlow.first()
-
-            val availableDevices = allDevices.filter { device ->
-                device.tankId == null
-            }
-
-            showAvailableDevicesBottomSheet(
-                devices = availableDevices,
-                hasAnySavedDevice = allDevices.isNotEmpty()
-            )
-        }
-    }
-
-    private fun showAvailableDevicesBottomSheet(
-        devices: List<DevicesDataStoreManager.DeviceInfoUi>,
-        hasAnySavedDevice: Boolean
-    ) {
-        val dialog = BottomSheetDialog(requireContext())
-
-        val contentView = LayoutInflater.from(requireContext()).inflate(
-            R.layout.bottom_sheet_add_device,
-            null,
-            false
-        )
-
-        val titleText = contentView.findViewById<TextView>(
-            R.id.tvAddDeviceBottomTitle
-        )
-
-        val messageText = contentView.findViewById<TextView>(
-            R.id.tvAddDeviceBottomMessage
-        )
-
-        val devicesContainer = contentView.findViewById<LinearLayout>(
-            R.id.availableDevicesContainer
-        )
-
-        val emptyContainer = contentView.findViewById<LinearLayout>(
-            R.id.emptyAddDeviceContainer
-        )
-
-        val emptyTitle = contentView.findViewById<TextView>(
-            R.id.tvAddDeviceEmptyTitle
-        )
-
-        val emptyMessage = contentView.findViewById<TextView>(
-            R.id.tvAddDeviceEmptyMessage
-        )
-
-        val addButton = contentView.findViewById<MaterialButton>(
-            R.id.btnOpenDeviceScan
-        )
-
-        titleText.text = if (tankName.isNotBlank()) {
-            "Add Device to $tankName"
-        } else {
-            "Add Device"
-        }
-
-        devicesContainer.removeAllViews()
-
-        if (devices.isNotEmpty()) {
-            messageText.text = "Select a saved device to connect it to this aquarium."
-
-            devicesContainer.isVisible = true
-            emptyContainer.isVisible = false
-
-            devices.forEach { device ->
-                devicesContainer.addView(
-                    createAvailableDeviceCard(
-                        device = device,
-                        dialog = dialog
-                    )
-                )
-            }
-        } else {
-            devicesContainer.isVisible = false
-            emptyContainer.isVisible = true
-
-            if (hasAnySavedDevice) {
-                messageText.text = "All saved devices are already connected to another aquarium."
-                emptyTitle.text = "No available devices"
-                emptyMessage.text = "Remove a device from another aquarium or add a new device."
-                addButton.text = "Add Device"
-            } else {
-                messageText.text = "No saved devices found."
-                emptyTitle.text = "No saved devices"
-                emptyMessage.text = "Add a device first, then connect it to this aquarium."
-                addButton.text = "Add Device"
-            }
-
-            addButton.setOnClickListener {
-                dialog.dismiss()
-                openDeviceAddScreen()
-            }
-        }
-
-        dialog.setContentView(contentView)
-
-        dialog.setOnShowListener {
-            val bottomSheet = dialog.findViewById<View>(
-                com.google.android.material.R.id.design_bottom_sheet
-            )
-
-            bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-        }
-
-        dialog.show()
-    }
-
-    private fun openDeviceAddScreen() {
-        runCatching {
-            findNavController().navigate(
-                R.id.deviceAddFragment
-            )
-        }.onFailure {
-            findNavController().navigate(
-                R.id.devicesFragment
-            )
-        }
-    }
-
-    private fun createAvailableDeviceCard(
-        device: DevicesDataStoreManager.DeviceInfoUi,
-        dialog: BottomSheetDialog
-    ): View {
-        val card = MaterialCardView(requireContext()).apply {
-            radius = 18.dp().toFloat()
-            strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#10233A"))
-            cardElevation = 0f
-            useCompatPadding = false
-            isClickable = true
-            isFocusable = true
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.bottomMargin = 10.dp()
-            layoutParams = params
-
-            setOnClickListener {
-                assignDeviceToCurrentTank(
-                    device = device,
-                    dialog = dialog
-                )
-            }
-        }
-
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(
-                14.dp(),
-                12.dp(),
-                14.dp(),
-                12.dp()
-            )
-        }
-
-        val iconBox = TextView(requireContext()).apply {
-            text = createDeviceShortCode(device)
-            gravity = Gravity.CENTER
-            textSize = 12f
-            setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.BOLD)
-            setBackgroundResource(R.drawable.bg_material_icon_box)
-            includeFontPadding = false
-
-            layoutParams = LinearLayout.LayoutParams(
-                42.dp(),
-                42.dp()
-            )
-        }
-
-        val textBox = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-
-            val params = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            )
-            params.marginStart = 14.dp()
-            layoutParams = params
-        }
-
-        val titleText = TextView(requireContext()).apply {
-            text = getDeviceTitle(device)
-            textSize = 14f
-            setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.BOLD)
-            includeFontPadding = false
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
-        }
-
-        val infoText = TextView(requireContext()).apply {
-            text = getDeviceInfoText(device)
-            textSize = 12f
-            setTextColor(Color.parseColor("#8FA4BE"))
-            includeFontPadding = false
-            maxLines = 1
-            ellipsize = TextUtils.TruncateAt.END
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.topMargin = 6.dp()
-            layoutParams = params
-        }
-
-        textBox.addView(titleText)
-        textBox.addView(infoText)
-
-        row.addView(iconBox)
-        row.addView(textBox)
-
-        card.addView(row)
-
-        return card
-    }
-
-    private fun assignDeviceToCurrentTank(
-        device: DevicesDataStoreManager.DeviceInfoUi,
-        dialog: BottomSheetDialog
-    ) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            devicesStore.assignDeviceToTank(
-                deviceId = device.id,
-                tankId = tankId
-            )
-
-            dialog.dismiss()
-        }
     }
 
     private fun showRemoveDeviceConfirmationDialog(
@@ -538,7 +351,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             confirmTextResId = R.string.confirm,
             cancelTextResId = R.string.cancel,
             onConfirm = {
-                removeDeviceFromCurrentTank(device)
+                removeDeviceFromCurrentTank(
+                    device = device
+                )
             }
         )
     }
@@ -583,47 +398,6 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
             }
     }
 
-    private fun getDeviceInfoText(
-        device: DevicesDataStoreManager.DeviceInfoUi
-    ): String {
-        val typeText = getDeviceTypeText(device)
-
-        val statusState = latestStatuses[device.id]
-        val ipText = statusState?.ip ?: device.ip
-
-        return if (ipText.isBlank()) {
-            typeText
-        } else {
-            "$typeText • $ipText"
-        }
-    }
-
-    private fun createDeviceShortCode(
-        device: DevicesDataStoreManager.DeviceInfoUi
-    ): String {
-        val source = getDeviceTitle(device).ifBlank {
-            getDeviceTypeText(device).ifBlank {
-                "DV"
-            }
-        }
-
-        val words = source
-            .trim()
-            .split(Regex("\\s+"))
-            .filter { word ->
-                word.isNotBlank()
-            }
-
-        if (words.size >= 2) {
-            return "${words[0].first()}${words[1].first()}"
-                .uppercase(Locale.getDefault())
-        }
-
-        return source
-            .take(2)
-            .uppercase(Locale.getDefault())
-    }
-
     private fun isDeviceOnline(
         device: DevicesDataStoreManager.DeviceInfoUi
     ): Boolean {
@@ -647,6 +421,7 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
     }
 
     companion object {
+
         private const val ARG_TANK_ID = "tankId"
         private const val ONLINE_TIMEOUT_MS = 90_000L
 
@@ -655,7 +430,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         ): TankDetailDevicesFragment {
             return TankDetailDevicesFragment().apply {
                 arguments = Bundle().apply {
-                    putLong(ARG_TANK_ID, tankId)
+                    putLong(
+                        ARG_TANK_ID,
+                        tankId
+                    )
                 }
             }
         }
