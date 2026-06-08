@@ -50,9 +50,6 @@
 
 <string name="light_moonlight_start_picker_title">Moonlight Start</string>
 <string name="light_moonlight_end_picker_title">Moonlight End</string>
-
-<string name="light_moonlight_start_picker_title">Moonlight Start</string>
-<string name="light_moonlight_end_picker_title">Moonlight End</string>
 <string name="light_moonlight_intensity_format">Intensity %1$d%%</string>
 
 <string name="light_transition_variant_title">Transition Variant</string>
