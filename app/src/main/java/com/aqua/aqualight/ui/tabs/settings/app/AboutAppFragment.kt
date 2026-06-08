@@ -68,15 +68,15 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
     private fun setupLegalClicks() {
         binding.rowPrivacy.setOnClickListener {
-            findNavController().navigate(R.id.privacyFragment)
+            findNavController().navigate(R.id.action_appSettingsFragment_to_privacyFragment)
         }
 
         binding.rowTerms.setOnClickListener {
-            findNavController().navigate(R.id.termsOfUseFragment)
+            findNavController().navigate(R.id.action_appSettingsFragment_to_termsOfUseFragment)
         }
 
         binding.rowLicenses.setOnClickListener {
-            findNavController().navigate(R.id.openSourceLicensesFragment)
+            findNavController().navigate(R.id.action_appSettingsFragment_to_openSourceLicensesFragment)
         }
     }
 

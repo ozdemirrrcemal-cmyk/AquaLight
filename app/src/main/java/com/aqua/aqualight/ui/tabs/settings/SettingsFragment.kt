@@ -145,60 +145,60 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupClickListeners() = with(binding) {
-        ivProfilePhoto.setOnClickListener {
-            findNavController().navigate(
-                R.id.editProfileFragment
-            )
-        }
-
-        rowUserInfo.setOnClickListener {
-            findNavController().navigate(
-                R.id.userInfoFragment
-            )
-        }
-
-        rowDeviceStatus.setOnClickListener {
-            findNavController().navigate(
-                R.id.deviceStatusFragment
-            )
-        }
-
-        rowNetwork.setOnClickListener {
-            findNavController().navigate(
-                R.id.networkFragment
-            )
-        }
-
-        rowSettings.setOnClickListener {
-            findNavController().navigate(
-                R.id.appSettingsFragment
-            )
-        }
-
-        rowUsage.setOnClickListener {
-            findNavController().navigate(
-                R.id.usageFragment
-            )
-        }
-
-        rowPrivacy.setOnClickListener {
-            findNavController().navigate(
-                R.id.privacyFragment
-            )
-        }
-
-        rowFeedback.setOnClickListener {
-            findNavController().navigate(
-                R.id.feedbackFragment
-            )
-        }
-
-        rowLogout.setOnClickListener {
-            findNavController().navigate(
-                R.id.logoutFragment
-            )
-        }
+    ivProfilePhoto.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_editProfileFragment
+        )
     }
+
+    rowUserInfo.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_userInfoFragment
+        )
+    }
+
+    rowDeviceStatus.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_deviceStatusFragment
+        )
+    }
+
+    rowNetwork.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_networkFragment
+        )
+    }
+
+    rowSettings.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_appSettingsFragment
+        )
+    }
+
+    rowUsage.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_usageFragment
+        )
+    }
+
+    rowPrivacy.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_privacyFragment
+        )
+    }
+
+    rowFeedback.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_feedbackFragment
+        )
+    }
+
+    rowLogout.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_settingsFragment_to_logoutFragment
+        )
+    }
+}
 
     private fun setupSocialLinks() = with(binding) {
         ivSocialWebsite.setOnClickListener {

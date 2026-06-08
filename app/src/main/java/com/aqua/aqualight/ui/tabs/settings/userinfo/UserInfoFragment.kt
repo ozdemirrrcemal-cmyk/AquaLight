@@ -212,7 +212,7 @@ class UserInfoFragment :
 
                 findNavController()
                     .navigate(
-                        R.id.userAddressFragment
+                        R.id.action_userInfoFragment_to_userAddressFragment
                     )
             }
 

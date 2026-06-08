@@ -309,6 +309,46 @@
       android:name="deviceIp"
       app:argType="string"
       android:defaultValue="" />
+	  
+	 <action
+    android:id="@+id/action_deviceRouterFragment_to_deviceLightFragment"
+    app:destination="@id/deviceLightFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+<action
+    android:id="@+id/action_deviceRouterFragment_to_deviceDosingFragment"
+    app:destination="@id/deviceDosingFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+<action
+    android:id="@+id/action_deviceRouterFragment_to_deviceTimerFragment"
+    app:destination="@id/deviceTimerFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+<action
+    android:id="@+id/action_deviceRouterFragment_to_deviceCoolingFragment"
+    app:destination="@id/deviceCoolingFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+<action
+    android:id="@+id/action_deviceRouterFragment_to_unsupportedDeviceFragment"
+    app:destination="@id/unsupportedDeviceFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
 
   </fragment>
 
@@ -524,23 +564,107 @@
 </fragment>
 
   <!-- ⚙️ Settings Tab -->
-  <fragment
+ <fragment
     android:id="@+id/settingsFragment"
     android:name="com.aqua.aqualight.ui.tabs.settings.SettingsFragment"
     android:label="Settings"
-    tools:layout="@layout/fragment_settings" />
+    tools:layout="@layout/fragment_settings">
+
+    <action
+        android:id="@+id/action_settingsFragment_to_editProfileFragment"
+        app:destination="@id/editProfileFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_userInfoFragment"
+        app:destination="@id/userInfoFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_deviceStatusFragment"
+        app:destination="@id/deviceStatusFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_networkFragment"
+        app:destination="@id/networkFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_appSettingsFragment"
+        app:destination="@id/appSettingsFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_usageFragment"
+        app:destination="@id/usageFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_privacyFragment"
+        app:destination="@id/privacyFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_feedbackFragment"
+        app:destination="@id/feedbackFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_settingsFragment_to_logoutFragment"
+        app:destination="@id/logoutFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+</fragment>
 
   <fragment
     android:id="@+id/editProfileFragment"
     android:name="com.aqua.aqualight.ui.tabs.settings.profile.EditProfileFragment"
     android:label="Edit profile"
     tools:layout="@layout/fragment_edit_profile" />
-
-  <fragment
+	
+<fragment
     android:id="@+id/userInfoFragment"
     android:name="com.aqua.aqualight.ui.tabs.settings.userinfo.UserInfoFragment"
     android:label="User info"
-    tools:layout="@layout/fragment_user_info" />
+    tools:layout="@layout/fragment_user_info">
+
+    <action
+        android:id="@+id/action_userInfoFragment_to_userAddressFragment"
+        app:destination="@id/userAddressFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+</fragment>
 
   <fragment
     android:id="@+id/userAddressFragment"
@@ -560,11 +684,45 @@
     android:label="Network"
     tools:layout="@layout/fragment_network" />
 
-  <fragment
+ <fragment
     android:id="@+id/appSettingsFragment"
     android:name="com.aqua.aqualight.ui.tabs.settings.app.AppSettingsFragment"
     android:label="App settings"
-    tools:layout="@layout/fragment_app_settings" />
+    tools:layout="@layout/fragment_app_settings">
+
+    <action
+        android:id="@+id/action_appSettingsFragment_to_languageSettingsFragment"
+        app:destination="@id/languageSettingsFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_appSettingsFragment_to_aboutAppFragment"
+        app:destination="@id/aboutAppFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_appSettingsFragment_to_termsOfUseFragment"
+        app:destination="@id/termsOfUseFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_appSettingsFragment_to_openSourceLicensesFragment"
+        app:destination="@id/openSourceLicensesFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+</fragment>
 
   <fragment
     android:id="@+id/usageFragment"
