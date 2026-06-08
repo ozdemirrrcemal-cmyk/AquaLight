@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.settings
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -11,24 +10,31 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightSettingsBinding
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.sheet.LightSettingValueSheet
 import kotlinx.coroutines.launch
 
 class DeviceLightSettingsFragment :
-Fragment(R.layout.fragment_device_light_settings) {
+    Fragment(R.layout.fragment_device_light_settings) {
 
     private var _binding: FragmentDeviceLightSettingsBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: DeviceLightSettingsViewModel by viewModels()
 
+    private var hasResumedOnce = false
+
     private val deviceId: Long
-    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     override fun onViewCreated(
         view: View,
@@ -60,7 +66,7 @@ Fragment(R.layout.fragment_device_light_settings) {
                         contentDescription = "Refresh device info",
                         onClick = {
                             viewModel.refreshAll(
-                                showMessage = true
+                                showMessage = false
                             )
                         }
                     )
@@ -82,127 +88,139 @@ Fragment(R.layout.fragment_device_light_settings) {
             val state = viewModel.uiState.value
 
             LightSettingValueSheet
-            .create(requireContext())
-            .show(
-                title = "Limit Temperature",
-                subtitle = "Reduce light output when temperature goes above this value.",
-                values = (40..75).toList(),
-                suffix = "°C",
-                initialValue = state.limitTemperatureCelsius
-            ) {
-                value ->
-                viewModel.updateLimitTemperature(value)
-            }
+                .create(requireContext())
+                .show(
+                    title = "Limit Temperature",
+                    subtitle = "Light output is reduced above this controller temperature.",
+                    values = (40..75).toList(),
+                    suffix = "°C",
+                    initialValue = state.limitTemperatureCelsius
+                ) { value ->
+                    viewModel.updateLimitTemperature(value)
+                }
         }
 
         binding.rowLightReduction.setOnClickListener {
             val state = viewModel.uiState.value
 
             LightSettingValueSheet
-            .create(requireContext())
-            .show(
-                title = "Light Reduction",
-                subtitle = "Output multiplier applied when protection is triggered.",
-                values = listOf(40, 50, 60, 70, 80, 90),
-                suffix = "%",
-                initialValue = state.lightReductionPercent
-            ) {
-                value ->
-                viewModel.updateLightReduction(value)
-            }
+                .create(requireContext())
+                .show(
+                    title = "Light Reduction",
+                    subtitle = "Output percentage used while thermal protection is active.",
+                    values = listOf(40, 50, 60, 70, 80, 90),
+                    suffix = "%",
+                    initialValue = state.lightReductionPercent
+                ) { value ->
+                    viewModel.updateLightReduction(value)
+                }
         }
 
         binding.rowRecoveryInterval.setOnClickListener {
             val state = viewModel.uiState.value
 
             LightSettingValueSheet
-            .create(requireContext())
-            .show(
-                title = "Recovery Interval",
-                subtitle = "How often the controller adjusts light output during protection.",
-                values = listOf(15, 30, 45, 60, 90, 120, 180, 240, 300),
-                suffix = "s",
-                initialValue = state.recoveryIntervalSeconds
-            ) {
-                value ->
-                viewModel.updateRecoveryInterval(value)
-            }
+                .create(requireContext())
+                .show(
+                    title = "Recovery Interval",
+                    subtitle = "How often the controller recalculates recovery after cooling.",
+                    values = listOf(15, 30, 45, 60, 90, 120, 180, 240, 300),
+                    suffix = "s",
+                    initialValue = state.recoveryIntervalSeconds
+                ) { value ->
+                    viewModel.updateRecoveryInterval(value)
+                }
         }
 
         binding.rowCoolingMode.setOnClickListener {
-            val state = viewModel.uiState.value
-
-            val items = arrayOf(
-                "Auto",
-                "Disabled"
-            )
-
-            val checkedIndex = if (state.coolingModeEnabled) {
-                0
-            } else {
-                1
-            }
-
-            com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Cooling Mode")
-            .setSingleChoiceItems(
-                items,
-                checkedIndex
-            ) {
-                dialog, which ->
-                dialog.dismiss()
-
-                viewModel.updateCoolingMode(
-                    enabled = which == 0
-                )
-            }
-            .show()
+            showCoolingModeConfirm()
         }
 
         binding.rowFanStart.setOnClickListener {
             val state = viewModel.uiState.value
 
             LightSettingValueSheet
-            .create(requireContext())
-            .show(
-                title = "Fan Start",
-                subtitle = "Fan starts cooling above this temperature.",
-                values = (25..45).toList(),
-                suffix = "°C",
-                initialValue = state.fanStartTemperatureCelsius
-            ) {
-                value ->
-                viewModel.updateFanStartTemperature(value)
-            }
+                .create(requireContext())
+                .show(
+                    title = "Fan Start",
+                    subtitle = "Fan cooling starts above this temperature.",
+                    values = (25..45).toList(),
+                    suffix = "°C",
+                    initialValue = state.fanStartTemperatureCelsius
+                ) { value ->
+                    viewModel.updateFanStartTemperature(value)
+                }
         }
 
         binding.rowFanFullSpeed.setOnClickListener {
             val state = viewModel.uiState.value
 
             val minFullSpeed =
-            (state.fanStartTemperatureCelsius + 5).coerceAtMost(70)
+                (state.fanStartTemperatureCelsius + 5).coerceAtMost(70)
 
             LightSettingValueSheet
+                .create(requireContext())
+                .show(
+                    title = "Full Speed",
+                    subtitle = "Fan reaches full speed at this temperature.",
+                    values = (minFullSpeed..70).toList(),
+                    suffix = "°C",
+                    initialValue = state.fanFullSpeedTemperatureCelsius
+                        .coerceAtLeast(minFullSpeed)
+                ) { value ->
+                    viewModel.updateFanFullSpeedTemperature(value)
+                }
+        }
+    }
+
+    private fun showCoolingModeConfirm() {
+        val state = viewModel.uiState.value
+        val enableCooling = !state.coolingModeEnabled
+
+        val title = if (enableCooling) {
+            "Enable cooling?"
+        } else {
+            "Disable cooling?"
+        }
+
+        val message = if (enableCooling) {
+            "Fans will run automatically when the controller temperature rises above the configured start value."
+        } else {
+            "Fans will stay off. Thermal light protection will still reduce output if the controller gets too hot."
+        }
+
+        val confirmText = if (enableCooling) {
+            "Enable"
+        } else {
+            "Disable"
+        }
+
+        val tone = if (enableCooling) {
+            DeviceConfirmTone.INFO
+        } else {
+            DeviceConfirmTone.WARNING
+        }
+
+        DeviceConfirmBottomSheet
             .create(requireContext())
             .show(
-                title = "Full Speed",
-                subtitle = "Fan reaches full speed at this temperature.",
-                values = (minFullSpeed..70).toList(),
-                suffix = "°C",
-                initialValue = state.fanFullSpeedTemperatureCelsius
-                .coerceAtLeast(minFullSpeed)
-            ) {
-                value ->
-                viewModel.updateFanFullSpeedTemperature(value)
-            }
-        }
+                title = title,
+                message = message,
+                confirmText = confirmText,
+                cancelText = "Cancel",
+                tone = tone,
+                onConfirm = {
+                    viewModel.updateCoolingMode(
+                        enabled = enableCooling
+                    )
+                }
+            )
     }
 
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect {
-                    state ->
+                viewModel.uiState.collect { state ->
                     renderUiState(state)
                 }
             }
@@ -212,23 +230,31 @@ Fragment(R.layout.fragment_device_light_settings) {
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect {
-                    event ->
+                viewModel.events.collect { event ->
                     when (event) {
                         is DeviceLightSettingsEvent.ShowMessage -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.SUCCESS
+                            )
+                        }
+
+                        is DeviceLightSettingsEvent.ShowWarning -> {
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.WARNING
+                            )
                         }
 
                         is DeviceLightSettingsEvent.ShowError -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.ERROR
+                            )
+                        }
+
+                        is DeviceLightSettingsEvent.SetLoading -> {
+                            showDeviceLoading(event.isLoading)
                         }
                     }
                 }
@@ -237,55 +263,94 @@ Fragment(R.layout.fragment_device_light_settings) {
     }
 
     private fun renderUiState(
-    state: DeviceLightSettingsUiState
-) {
-    binding.tvDeviceName.text = state.deviceName
-    binding.tvDeviceType.text = state.deviceType
-    binding.tvFirmwareVersion.text = state.firmwareVersion
-    binding.tvDeviceIp.text = state.deviceIp
-    binding.tvSerialNumber.text = state.serialNumber
+        state: DeviceLightSettingsUiState
+    ) {
+        binding.tvDeviceName.text = state.deviceName.ifBlank {
+            "AquaLight"
+        }
 
-    binding.tvDeviceTime.text = state.deviceTime
-    binding.tvPhoneTime.text = state.phoneTime
-    binding.tvLastSyncTime.text = state.lastSyncTime
+        binding.tvDeviceType.text = state.deviceType.ifBlank {
+            "Light Controller"
+        }
 
-    binding.tvThermalProtectionStatus.text =
-        state.thermalProtectionStatusText
+        binding.tvFirmwareVersion.text = state.firmwareVersion.ifBlank {
+            "—"
+        }
 
-    binding.tvCurrentTemperatureValue.text =
-        state.currentTemperatureText
+        binding.tvDeviceIp.text = state.deviceIp.ifBlank {
+            "—"
+        }
 
-    binding.tvLimitTemperatureValue.text =
-        "${state.limitTemperatureCelsius}°C"
+        binding.tvSerialNumber.text = state.serialNumber.ifBlank {
+            "—"
+        }
 
-    binding.tvLightReductionValue.text =
-        "${state.lightReductionPercent}%"
+        binding.tvDeviceTime.text = state.deviceTime.ifBlank {
+            "--:--"
+        }
 
-    binding.tvRecoveryIntervalValue.text =
-        "${state.recoveryIntervalSeconds}s"
+        binding.tvPhoneTime.text = state.phoneTime.ifBlank {
+            "--:--"
+        }
 
-    binding.tvCoolingStatus.text =
-        state.coolingStatusText
+        binding.tvLastSyncTime.text = state.lastSyncTime.ifBlank {
+            "Never"
+        }
 
-    binding.tvCoolingControllerTemp.text =
-        state.currentTemperatureText
+        binding.tvThermalProtectionStatus.text =
+            state.thermalProtectionStatusText.ifBlank {
+                "Protected"
+            }
 
-    binding.tvCoolingFans.text =
-        state.coolingFansText
+        binding.tvCurrentTemperatureValue.text =
+            state.currentTemperatureText.ifBlank {
+                "-- °C"
+            }
 
-    binding.tvCoolingMode.text =
-        state.coolingMode
+        binding.tvLimitTemperatureValue.text =
+            "${state.limitTemperatureCelsius}°C"
 
-    binding.tvFanStartValue.text =
-        "${state.fanStartTemperatureCelsius}°C"
+        binding.tvLightReductionValue.text =
+            "${state.lightReductionPercent}%"
 
-    binding.tvFanFullSpeedValue.text =
-        "${state.fanFullSpeedTemperatureCelsius}°C"
-}
+        binding.tvRecoveryIntervalValue.text =
+            "${state.recoveryIntervalSeconds}s"
+
+        binding.tvCoolingStatus.text =
+            state.coolingStatusText.ifBlank {
+                "Standby"
+            }
+
+        binding.tvCoolingControllerTemp.text =
+            state.currentTemperatureText.ifBlank {
+                "-- °C"
+            }
+
+        binding.tvCoolingFans.text =
+            state.coolingFansText.ifBlank {
+                "—"
+            }
+
+        binding.tvCoolingMode.text =
+            state.coolingMode.ifBlank {
+                "Auto"
+            }
+
+        binding.tvFanStartValue.text =
+            "${state.fanStartTemperatureCelsius}°C"
+
+        binding.tvFanFullSpeedValue.text =
+            "${state.fanFullSpeedTemperatureCelsius}°C"
+    }
 
     override fun onResume() {
         super.onResume()
-        viewModel.refreshTimes()
+
+        if (hasResumedOnce) {
+            viewModel.refreshTimes()
+        } else {
+            hasResumedOnce = true
+        }
     }
 
     override fun onDestroyView() {

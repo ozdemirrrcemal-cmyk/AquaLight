@@ -22,7 +22,11 @@ class LightCustomDaysSheet private constructor(
 
         dialog.setContentView(binding.root)
 
-        val currentSelection = selectedDays.toMutableSet()
+        val currentSelection = selectedDays
+            .filter { day ->
+                day in 1..7
+            }
+            .toMutableSet()
 
         val dayViews = listOf(
             1 to binding.dayMonday,
@@ -34,6 +38,17 @@ class LightCustomDaysSheet private constructor(
             7 to binding.daySunday
         )
 
+        fun renderApplyState() {
+            val hasSelection = currentSelection.isNotEmpty()
+
+            binding.btnApply.isEnabled = hasSelection
+            binding.btnApply.alpha = if (hasSelection) {
+                1f
+            } else {
+                0.45f
+            }
+        }
+
         fun renderDays() {
             dayViews.forEach { (day, view) ->
                 renderDayChip(
@@ -41,6 +56,8 @@ class LightCustomDaysSheet private constructor(
                     selected = currentSelection.contains(day)
                 )
             }
+
+            renderApplyState()
         }
 
         dayViews.forEach { (day, view) ->
@@ -60,6 +77,10 @@ class LightCustomDaysSheet private constructor(
         }
 
         binding.btnApply.setOnClickListener {
+            if (currentSelection.isEmpty()) {
+                return@setOnClickListener
+            }
+
             onApply(currentSelection.toSet())
             dialog.dismiss()
         }
@@ -89,7 +110,9 @@ class LightCustomDaysSheet private constructor(
     }
 
     companion object {
-        fun create(context: Context): LightCustomDaysSheet {
+        fun create(
+            context: Context
+        ): LightCustomDaysSheet {
             return LightCustomDaysSheet(context)
         }
     }

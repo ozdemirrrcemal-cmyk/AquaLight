@@ -71,13 +71,16 @@ class DeviceLightProgramEditorViewModel(
     private val eventsChannel =
         Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
 
-    val events = eventsChannel.receiveAsFlow()
+    val events =
+        eventsChannel.receiveAsFlow()
 
     private var deviceId: Long = 0L
     private var liveStateJob: Job? = null
 
     private var previewJob: Job? = null
     private var previewSessionVersion: Long = 0L
+
+    private var isSaveOperationRunning: Boolean = false
 
     private val liveRefreshOwnerKey =
         "DeviceLightProgramEditorViewModel_${System.identityHashCode(this)}"
@@ -111,6 +114,14 @@ class DeviceLightProgramEditorViewModel(
         } else {
             clearEditingMetadata()
         }
+    }
+
+    fun isEditingExistingProgram(): Boolean {
+        return !editingProgramId.isNullOrBlank()
+    }
+
+    fun currentProgramName(): String {
+        return editingProgramName.orEmpty()
     }
 
     private fun clearEditingMetadata() {
@@ -171,121 +182,12 @@ class DeviceLightProgramEditorViewModel(
         }
     }
 
-    fun updateStartTime(
-        point: LightCurvePoint
-    ) {
-        _uiState.update {
-            it.copy(start = point)
-        }
-    }
-
-    fun updatePeakStartTime(
-        point: LightCurvePoint
-    ) {
-        _uiState.update {
-            it.copy(peakStart = point)
-        }
-    }
-
-    fun updatePeakEndTime(
-        point: LightCurvePoint
-    ) {
-        _uiState.update {
-            it.copy(peakEnd = point)
-        }
-    }
-
-    fun updateEndTime(
-        point: LightCurvePoint
-    ) {
-        _uiState.update {
-            it.copy(end = point)
-        }
-    }
-
-    fun updateChannelValues(
-        values: LightCurveChannelValues
-    ) {
-        _uiState.update {
-            it.copy(channelValues = values)
-        }
-    }
-
-    fun updateRepeatEvery() {
-        _uiState.update {
-            it.copy(
-                repeatMode = RepeatMode.EVERY,
-                selectedDays = setOf(1, 2, 3, 4, 5, 6, 7)
-            )
-        }
-    }
-
-    fun updateRepeatWeekdays() {
-        _uiState.update {
-            it.copy(
-                repeatMode = RepeatMode.WEEK,
-                selectedDays = setOf(1, 2, 3, 4, 5)
-            )
-        }
-    }
-
-    fun updateRepeatWeekend() {
-        _uiState.update {
-            it.copy(
-                repeatMode = RepeatMode.WEEKEND,
-                selectedDays = setOf(6, 7)
-            )
-        }
-    }
-
-    fun updateCustomDays(
-        days: Set<Int>
-    ) {
-        _uiState.update {
-            it.copy(
-                repeatMode = RepeatMode.CUSTOM,
-                selectedDays = days
-            )
-        }
-    }
-
-    fun updateMoonlight(
-        settings: MoonlightSettings
-    ) {
-        _uiState.update {
-            it.copy(moonlightSettings = settings)
-        }
-    }
-
-    fun updateCloudSimulation(
-        settings: CloudSimulationSettings
-    ) {
-        _uiState.update {
-            it.copy(cloudSimulationSettings = settings)
-        }
-    }
-
-    fun updateTransitionMode(
-        mode: LightCurveTransitionMode
-    ) {
-        _uiState.update {
-            it.copy(transitionMode = mode)
-        }
-    }
-
-    fun updatePreviewSpeed(
-        speed: PreviewSpeed
-    ) {
-        _uiState.update {
-            it.copy(previewSpeed = speed)
-        }
-    }
-
     private fun loadProgram(
         programId: String
     ) {
         viewModelScope.launch {
-            val program = lightProgramsDataStoreManager.getProgram(programId)
+            val program =
+                lightProgramsDataStoreManager.getProgram(programId)
 
             if (program == null) {
                 eventsChannel.send(
@@ -306,13 +208,13 @@ class DeviceLightProgramEditorViewModel(
                 startLiveRefreshIfPossible()
             }
 
-            _uiState.update {
-                it.copy(
+            _uiState.update { state ->
+                state.copy(
                     start = program.draft.start,
                     peakStart = program.draft.peakStart,
                     peakEnd = program.draft.peakEnd,
                     end = program.draft.end,
-                    channelValues = program.draft.channelValues,
+                    channelValues = program.draft.channelValues.normalized(),
                     repeatMode = program.draft.repeatMode,
                     selectedDays = program.draft.selectedDays,
                     moonlightSettings = program.draft.moonlightSettings,
@@ -323,100 +225,261 @@ class DeviceLightProgramEditorViewModel(
         }
     }
 
-    fun currentProgramName(): String {
-        return editingProgramName.orEmpty()
+    fun updateStartTime(
+        point: LightCurvePoint
+    ) {
+        _uiState.update { state ->
+            state.copy(start = point)
+        }
+    }
+
+    fun updatePeakStartTime(
+        point: LightCurvePoint
+    ) {
+        _uiState.update { state ->
+            state.copy(peakStart = point)
+        }
+    }
+
+    fun updatePeakEndTime(
+        point: LightCurvePoint
+    ) {
+        _uiState.update { state ->
+            state.copy(peakEnd = point)
+        }
+    }
+
+    fun updateEndTime(
+        point: LightCurvePoint
+    ) {
+        _uiState.update { state ->
+            state.copy(end = point)
+        }
+    }
+
+    fun updateChannelValues(
+        values: LightCurveChannelValues
+    ) {
+        _uiState.update { state ->
+            state.copy(
+                channelValues = values.normalized()
+            )
+        }
+    }
+
+    fun updateRepeatEvery() {
+        _uiState.update { state ->
+            state.copy(
+                repeatMode = RepeatMode.EVERY,
+                selectedDays = setOf(1, 2, 3, 4, 5, 6, 7)
+            )
+        }
+    }
+
+    fun updateRepeatWeekdays() {
+        _uiState.update { state ->
+            state.copy(
+                repeatMode = RepeatMode.WEEK,
+                selectedDays = setOf(1, 2, 3, 4, 5)
+            )
+        }
+    }
+
+    fun updateRepeatWeekend() {
+        _uiState.update { state ->
+            state.copy(
+                repeatMode = RepeatMode.WEEKEND,
+                selectedDays = setOf(6, 7)
+            )
+        }
+    }
+
+    fun updateCustomDays(
+        days: Set<Int>
+    ) {
+        val safeDays = days
+            .filter { day ->
+                day in 1..7
+            }
+            .toSet()
+
+        if (safeDays.isEmpty()) {
+            viewModelScope.launch {
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.ShowError(
+                        "Select at least one day"
+                    )
+                )
+            }
+            return
+        }
+
+        _uiState.update { state ->
+            state.copy(
+                repeatMode = RepeatMode.CUSTOM,
+                selectedDays = safeDays
+            )
+        }
+    }
+
+    fun updateMoonlight(
+        settings: MoonlightSettings
+    ) {
+        _uiState.update { state ->
+            state.copy(moonlightSettings = settings)
+        }
+    }
+
+    fun updateCloudSimulation(
+        settings: CloudSimulationSettings
+    ) {
+        _uiState.update { state ->
+            state.copy(cloudSimulationSettings = settings)
+        }
+    }
+
+    fun updateTransitionMode(
+        mode: LightCurveTransitionMode
+    ) {
+        _uiState.update { state ->
+            state.copy(transitionMode = mode)
+        }
+    }
+
+    fun updatePreviewSpeed(
+        speed: PreviewSpeed
+    ) {
+        _uiState.update { state ->
+            state.copy(previewSpeed = speed)
+        }
     }
 
     fun saveProgram(
         name: String,
-        isActive: Boolean
+        activateOnDevice: Boolean
     ) {
+        if (isSaveOperationRunning) {
+            return
+        }
+
+        isSaveOperationRunning = true
+
         viewModelScope.launch {
-            if (_uiState.value.isPreviewRunning) {
-                eventsChannel.send(
-                    DeviceLightProgramEditorEvent.ShowError(
-                        "Stop preview before saving"
-                    )
-                )
-                return@launch
-            }
+            var shouldShowLoading = false
+            var successMessage: String? = null
+            var shouldNavigateBack = false
 
-            val draft = _uiState.value.draft
-
-            when (val validation = LightProgramDraftValidator.validate(draft)) {
-                LightProgramValidationResult.Valid -> Unit
-
-                is LightProgramValidationResult.Invalid -> {
+            try {
+                if (_uiState.value.isPreviewRunning) {
                     eventsChannel.send(
                         DeviceLightProgramEditorEvent.ShowError(
-                            validation.message
+                            "Stop preview before saving"
                         )
                     )
                     return@launch
                 }
-            }
 
-            val resolvedDeviceId = resolveProgramDeviceId()
+                val draft =
+                    _uiState.value.draft
 
-            if (resolvedDeviceId <= 0L) {
-                eventsChannel.send(
-                    DeviceLightProgramEditorEvent.ShowError(
-                        "Device information is missing"
-                    )
-                )
-                return@launch
-            }
+                when (val validation = LightProgramDraftValidator.validate(draft)) {
+                    LightProgramValidationResult.Valid -> Unit
 
-            val savedProgram = buildSavedProgram(
-                name = name,
-                activateOnDevice = isActive,
-                deviceId = resolvedDeviceId,
-                draft = draft
-            )
+                    is LightProgramValidationResult.Invalid -> {
+                        eventsChannel.send(
+                            DeviceLightProgramEditorEvent.ShowError(
+                                validation.message
+                            )
+                        )
+                        return@launch
+                    }
+                }
 
-            if (savedProgram.isActive) {
-                val conflict = findConflictForProgram(savedProgram)
+                val existingEditingProgram = editingProgramId?.let { id ->
+                    lightProgramsDataStoreManager.getProgram(id)
+                }
 
-                if (conflict != null) {
+                if (
+                    editingProgramId != null &&
+                    existingEditingProgram == null
+                ) {
                     eventsChannel.send(
                         DeviceLightProgramEditorEvent.ShowError(
-                            "This program overlaps with ${conflict.name}"
+                            "Program could not be found"
                         )
                     )
                     return@launch
                 }
-            }
 
-            runCatching {
+                val resolvedDeviceId = resolveProgramDeviceId(
+                    existingProgram = existingEditingProgram
+                )
+
+                if (resolvedDeviceId <= 0L) {
+                    eventsChannel.send(
+                        DeviceLightProgramEditorEvent.ShowError(
+                            "Device information is missing"
+                        )
+                    )
+                    return@launch
+                }
+
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.SetLoading(true)
+                )
+                shouldShowLoading = true
+
+                val savedProgram = buildSavedProgram(
+                    name = name,
+                    activateOnDevice = activateOnDevice,
+                    existingProgram = existingEditingProgram,
+                    deviceId = resolvedDeviceId,
+                    draft = draft
+                )
+
+                if (savedProgram.isActive) {
+                    val conflict = findConflictForProgram(savedProgram)
+
+                    if (conflict != null) {
+                        eventsChannel.send(
+                            DeviceLightProgramEditorEvent.ShowError(
+                                "This program overlaps with ${conflict.name}"
+                            )
+                        )
+                        return@launch
+                    }
+                }
+
                 val existingPrograms =
                     lightProgramsDataStoreManager.programsFlow.first()
 
-                val programsToLoad = if (savedProgram.isActive) {
-                    existingPrograms
-                        .filter { program ->
-                            program.deviceId == savedProgram.deviceId &&
-                                program.isActive &&
-                                program.id != savedProgram.id
-                        } + savedProgram
-                } else {
-                    emptyList()
-                }
+                val allProgramsAfterSave =
+                    existingPrograms.withSavedProgram(savedProgram)
 
-                if (savedProgram.isActive) {
-                    val loadResult = lightProgramCommandManager.loadPrograms(
-                        deviceId = savedProgram.deviceId,
-                        programs = programsToLoad
+                val activeProgramsForDevice =
+                    allProgramsAfterSave.activeProgramsForDevice(
+                        deviceId = savedProgram.deviceId
                     )
 
-                    if (!loadResult.isSuccess) {
-                        throw IllegalStateException(
-                            loadResult.message ?: "Program could not be loaded to device"
+                if (savedProgram.isActive) {
+                    val loadResult =
+                        lightProgramCommandManager.loadPrograms(
+                            deviceId = savedProgram.deviceId,
+                            programs = activeProgramsForDevice
                         )
+
+                    if (!loadResult.isSuccess) {
+                        eventsChannel.send(
+                            DeviceLightProgramEditorEvent.ShowError(
+                                loadResult.message ?: "Program could not be loaded to device"
+                            )
+                        )
+                        return@launch
                     }
                 }
 
                 lightProgramsDataStoreManager.saveProgram(savedProgram)
-            }.onSuccess {
+
                 editingProgramId = savedProgram.id
                 editingProgramName = savedProgram.name
                 editingProgramDeviceId = savedProgram.deviceId
@@ -429,24 +492,44 @@ class DeviceLightProgramEditorViewModel(
                     )
                 }
 
-                eventsChannel.send(
-                    DeviceLightProgramEditorEvent.ShowMessage(
-                        if (isActive) {
-                            "Program loaded to device"
-                        } else {
-                            "Program saved"
-                        }
-                    )
-                )
+                successMessage = if (savedProgram.isActive) {
+                    if (activateOnDevice) {
+                        "Program loaded to device"
+                    } else {
+                        "Active program updated"
+                    }
+                } else {
+                    "Program saved"
+                }
 
-                eventsChannel.send(
-                    DeviceLightProgramEditorEvent.NavigateBack
-                )
-            }.onFailure { error ->
+                shouldNavigateBack = true
+            } catch (error: Throwable) {
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowError(
                         error.message ?: "Program could not be saved"
                     )
+                )
+            } finally {
+                if (shouldShowLoading) {
+                    eventsChannel.send(
+                        DeviceLightProgramEditorEvent.SetLoading(false)
+                    )
+                }
+
+                isSaveOperationRunning = false
+            }
+
+            if (successMessage != null) {
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.ShowMessage(
+                        successMessage.orEmpty()
+                    )
+                )
+            }
+
+            if (shouldNavigateBack) {
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.NavigateBack
                 )
             }
         }
@@ -455,6 +538,7 @@ class DeviceLightProgramEditorViewModel(
     private fun buildSavedProgram(
         name: String,
         activateOnDevice: Boolean,
+        existingProgram: SavedLightProgram?,
         deviceId: Long,
         draft: LightProgramDraft
     ): SavedLightProgram {
@@ -463,44 +547,30 @@ class DeviceLightProgramEditorViewModel(
         val cleanName = name
             .trim()
             .ifBlank {
-                editingProgramName.orEmpty().ifBlank {
-                    "Light Program"
-                }
+                existingProgram?.name
+                    ?: editingProgramName
+                    ?: "Light Program"
             }
 
-        return when {
-            activateOnDevice && editingProgramId != null -> {
-                SavedLightProgram(
-                    id = editingProgramId.orEmpty(),
-                    deviceId = deviceId,
-                    name = cleanName,
-                    draft = draft,
-                    isActive = true,
-                    createdAt = editingProgramCreatedAt.takeIf {
-                        it > 0L
-                    } ?: now,
-                    updatedAt = now
-                )
-            }
+        val shouldBeActive =
+            activateOnDevice || existingProgram?.isActive == true
 
-            activateOnDevice -> {
-                LightProgramDraftMapper.toSavedProgram(
-                    draft = draft,
-                    name = cleanName,
-                    deviceId = deviceId,
-                    isActive = true
-                )
-            }
-
-            else -> {
-                LightProgramDraftMapper.toSavedProgram(
-                    draft = draft,
-                    name = cleanName,
-                    deviceId = deviceId,
-                    isActive = false
-                )
-            }
+        if (existingProgram != null) {
+            return existingProgram.copy(
+                deviceId = deviceId,
+                name = cleanName,
+                draft = draft,
+                isActive = shouldBeActive,
+                updatedAt = now
+            )
         }
+
+        return LightProgramDraftMapper.toSavedProgram(
+            draft = draft,
+            name = cleanName,
+            deviceId = deviceId,
+            isActive = shouldBeActive
+        )
     }
 
     private suspend fun findConflictForProgram(
@@ -521,11 +591,55 @@ class DeviceLightProgramEditorViewModel(
         )
     }
 
-    private fun resolveProgramDeviceId(): Long {
+    private fun resolveProgramDeviceId(
+        existingProgram: SavedLightProgram?
+    ): Long {
         return when {
-            editingProgramDeviceId > 0L -> editingProgramDeviceId
-            deviceId > 0L -> deviceId
-            else -> 0L
+            existingProgram?.deviceId != null && existingProgram.deviceId > 0L -> {
+                existingProgram.deviceId
+            }
+
+            editingProgramDeviceId > 0L -> {
+                editingProgramDeviceId
+            }
+
+            deviceId > 0L -> {
+                deviceId
+            }
+
+            else -> {
+                0L
+            }
+        }
+    }
+
+    private fun List<SavedLightProgram>.withSavedProgram(
+        savedProgram: SavedLightProgram
+    ): List<SavedLightProgram> {
+        var replaced = false
+
+        val updated = map { program ->
+            if (program.id == savedProgram.id) {
+                replaced = true
+                savedProgram
+            } else {
+                program
+            }
+        }
+
+        return if (replaced) {
+            updated
+        } else {
+            updated + savedProgram
+        }
+    }
+
+    private fun List<SavedLightProgram>.activeProgramsForDevice(
+        deviceId: Long
+    ): List<SavedLightProgram> {
+        return filter { program ->
+            program.deviceId == deviceId &&
+                program.isActive
         }
     }
 
@@ -563,7 +677,8 @@ class DeviceLightProgramEditorViewModel(
                     return@launch
                 }
 
-                val draft = _uiState.value.draft
+                val draft =
+                    _uiState.value.draft
 
                 when (val validation = LightProgramDraftValidator.validate(draft)) {
                     LightProgramValidationResult.Valid -> Unit
@@ -580,12 +695,6 @@ class DeviceLightProgramEditorViewModel(
 
                 val timeline =
                     LightProgramTimelineBuilder.build(draft)
-
-                eventsChannel.send(
-                    DeviceLightProgramEditorEvent.ShowMessage(
-                        "Preview started: ${speed.label}"
-                    )
-                )
 
                 previewStarted = true
 
@@ -656,12 +765,6 @@ class DeviceLightProgramEditorViewModel(
                         previewProgressPercent = 100
                     )
                 }
-
-                eventsChannel.send(
-                    DeviceLightProgramEditorEvent.ShowMessage(
-                        "Preview finished"
-                    )
-                )
             } finally {
                 if (
                     previewStarted &&

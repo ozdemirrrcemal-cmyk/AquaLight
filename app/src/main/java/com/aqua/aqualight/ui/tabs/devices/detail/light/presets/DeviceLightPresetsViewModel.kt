@@ -4,13 +4,13 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 
 class DeviceLightPresetsViewModel(
     application: Application
@@ -20,11 +20,11 @@ class DeviceLightPresetsViewModel(
         LightPresetDataStoreManager(application.applicationContext)
 
     private val lightRuntimeRepository =
-    LightRuntimeRepository(
-        commandManager = Esp32LightDeviceCommandManager(
-            context = application.applicationContext
+        LightRuntimeRepository(
+            commandManager = Esp32LightDeviceCommandManager(
+                context = application.applicationContext
+            )
         )
-    )
 
     val presetsFlow =
         lightPresetDataStoreManager.presetsFlow
@@ -32,9 +32,11 @@ class DeviceLightPresetsViewModel(
     private val eventsChannel =
         Channel<DeviceLightPresetsEvent>(Channel.BUFFERED)
 
-    val events = eventsChannel.receiveAsFlow()
+    val events =
+        eventsChannel.receiveAsFlow()
 
     private var deviceId: Long = 0L
+    private var isOperationInProgress = false
 
     fun initialize(
         deviceId: Long
@@ -51,32 +53,60 @@ class DeviceLightPresetsViewModel(
         viewModelScope.launch {
             if (deviceId <= 0L) {
                 eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowError("Device information is missing")
+                    DeviceLightPresetsEvent.ShowError(
+                        "Device information is missing"
+                    )
                 )
                 return@launch
             }
 
-            val result = lightRuntimeRepository.applyManualScene(
-                deviceId = deviceId,
-                sceneName = preset.title,
-                red = preset.red,
-                green = preset.green,
-                blue = preset.blue,
-                white = preset.white
-            )
+            if (!beginOperation()) {
+                return@launch
+            }
 
-            if (result.isSuccess) {
-                eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowMessage("${preset.title} applied")
+            var successMessage: String? = null
+            var errorMessage: String? = null
+            var shouldNavigateToManual = false
+
+            try {
+                val result = lightRuntimeRepository.applyManualScene(
+                    deviceId = deviceId,
+                    sceneName = preset.title,
+                    red = preset.red,
+                    green = preset.green,
+                    blue = preset.blue,
+                    white = preset.white
                 )
+
+                if (result.isSuccess) {
+                    successMessage = "${preset.title} applied"
+                    shouldNavigateToManual = true
+                } else {
+                    errorMessage =
+                        result.message ?: "Preset could not be applied"
+                }
+            } catch (error: Exception) {
+                errorMessage =
+                    error.message ?: "Preset could not be applied"
+            } finally {
+                finishOperation()
+            }
+
+            successMessage?.let { message ->
+                eventsChannel.send(
+                    DeviceLightPresetsEvent.ShowMessage(message)
+                )
+            }
+
+            errorMessage?.let { message ->
+                eventsChannel.send(
+                    DeviceLightPresetsEvent.ShowError(message)
+                )
+            }
+
+            if (shouldNavigateToManual) {
                 eventsChannel.send(
                     DeviceLightPresetsEvent.NavigateToManualControl
-                )
-            } else {
-                eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowError(
-                        result.message ?: "Preset could not be applied"
-                    )
                 )
             }
         }
@@ -85,20 +115,65 @@ class DeviceLightPresetsViewModel(
     fun deletePreset(
         preset: LightPresetItem
     ) {
-        if (!preset.isCustom) return
+        if (!preset.isCustom) {
+            return
+        }
 
         viewModelScope.launch {
-            runCatching {
+            if (!beginOperation()) {
+                return@launch
+            }
+
+            var successMessage: String? = null
+            var errorMessage: String? = null
+
+            try {
                 lightPresetDataStoreManager.deletePreset(preset.id)
-            }.onSuccess {
+                successMessage = "${preset.title} deleted"
+            } catch (error: Exception) {
+                errorMessage =
+                    error.message ?: "Preset could not be deleted"
+            } finally {
+                finishOperation()
+            }
+
+            successMessage?.let { message ->
                 eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowMessage("${preset.title} deleted")
+                    DeviceLightPresetsEvent.ShowMessage(message)
                 )
-            }.onFailure {
+            }
+
+            errorMessage?.let { message ->
                 eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowError("Preset could not be deleted")
+                    DeviceLightPresetsEvent.ShowError(message)
                 )
             }
         }
+    }
+
+    private suspend fun beginOperation(): Boolean {
+        if (isOperationInProgress) {
+            return false
+        }
+
+        isOperationInProgress = true
+
+        eventsChannel.send(
+            DeviceLightPresetsEvent.SetLoading(true)
+        )
+
+        return true
+    }
+
+    private suspend fun finishOperation() {
+        if (!isOperationInProgress) {
+            return
+        }
+
+        eventsChannel.send(
+            DeviceLightPresetsEvent.SetLoading(false)
+        )
+
+        isOperationInProgress = false
     }
 }

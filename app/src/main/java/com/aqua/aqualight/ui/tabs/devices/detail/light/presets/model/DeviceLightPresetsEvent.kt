@@ -10,5 +10,9 @@ sealed class DeviceLightPresetsEvent {
         val message: String
     ) : DeviceLightPresetsEvent()
 
+    data class SetLoading(
+        val isLoading: Boolean
+    ) : DeviceLightPresetsEvent()
+
     data object NavigateToManualControl : DeviceLightPresetsEvent()
 }

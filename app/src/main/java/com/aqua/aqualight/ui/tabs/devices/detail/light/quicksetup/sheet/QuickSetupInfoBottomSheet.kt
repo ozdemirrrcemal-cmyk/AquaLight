@@ -3,10 +3,13 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.sheet
 import android.content.Context
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.BottomSheetLightQuickSetupInfoBinding
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class QuickSetupInfoBottomSheet(
@@ -14,11 +17,17 @@ class QuickSetupInfoBottomSheet(
     private val binding: BottomSheetLightQuickSetupInfoBinding
 ) {
 
+    private var lastTouchY: Float = 0f
+
     fun show(
         title: String,
         subtitle: String,
         items: List<String>
     ) {
+        if (items.isEmpty()) {
+            return
+        }
+
         binding.tvSheetTitle.text = title
         binding.tvSheetSubtitle.text = subtitle
 
@@ -28,7 +37,12 @@ class QuickSetupInfoBottomSheet(
             dialog.dismiss()
         }
 
+        configureScrollBehavior()
+        configureBottomSheetOnShow()
+
         dialog.show()
+
+        adjustScrollHeight()
     }
 
     private fun renderRows(
@@ -43,6 +57,96 @@ class QuickSetupInfoBottomSheet(
                     text = text
                 )
             )
+        }
+    }
+
+    private fun configureBottomSheetOnShow() {
+        dialog.setOnShowListener {
+            val bottomSheet = dialog.findViewById<View>(
+                com.google.android.material.R.id.design_bottom_sheet
+            ) ?: return@setOnShowListener
+
+            runCatching {
+                val behavior = BottomSheetBehavior.from(bottomSheet)
+
+                behavior.skipCollapsed = true
+                behavior.isHideable = true
+                behavior.isDraggable = true
+                behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            }
+        }
+    }
+
+    private fun configureScrollBehavior() {
+        binding.infoScrollView.isVerticalScrollBarEnabled = false
+        binding.infoScrollView.overScrollMode = View.OVER_SCROLL_NEVER
+        binding.infoScrollView.isNestedScrollingEnabled = true
+
+        binding.infoScrollView.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    lastTouchY = event.rawY
+                    requestParentInterceptDisallow(true)
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaY = event.rawY - lastTouchY
+                    val draggingDown = deltaY > 0f
+                    val canScrollUp = binding.infoScrollView.canScrollVertically(-1)
+
+                    val shouldSheetHandleGesture =
+                        draggingDown && !canScrollUp
+
+                    requestParentInterceptDisallow(
+                        disallow = !shouldSheetHandleGesture
+                    )
+
+                    lastTouchY = event.rawY
+                }
+
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> {
+                    requestParentInterceptDisallow(false)
+                }
+            }
+
+            false
+        }
+    }
+
+    private fun requestParentInterceptDisallow(
+        disallow: Boolean
+    ) {
+        runCatching {
+            binding.infoScrollView.parent?.requestDisallowInterceptTouchEvent(disallow)
+            binding.root.parent?.requestDisallowInterceptTouchEvent(disallow)
+        }
+    }
+
+    private fun adjustScrollHeight() {
+        binding.infoScrollView.post {
+            val screenHeight =
+                binding.root.resources.displayMetrics.heightPixels
+
+            val maxScrollHeight =
+                (screenHeight * MAX_SCROLL_HEIGHT_RATIO).toInt()
+
+            val contentHeight =
+                binding.infoRowsContainer.measuredHeight
+
+            if (contentHeight <= 0) {
+                return@post
+            }
+
+            val targetHeight =
+                contentHeight.coerceAtMost(maxScrollHeight)
+
+            binding.infoScrollView.layoutParams =
+                binding.infoScrollView.layoutParams.apply {
+                    height = targetHeight
+                }
+
+            binding.infoScrollView.requestLayout()
         }
     }
 
@@ -104,7 +208,7 @@ class QuickSetupInfoBottomSheet(
                 0f,
                 1.05f
             )
-            maxLines = 4
+            maxLines = 5
             ellipsize = null
 
             layoutParams = LinearLayout.LayoutParams(
@@ -127,6 +231,7 @@ class QuickSetupInfoBottomSheet(
     }
 
     companion object {
+        private const val MAX_SCROLL_HEIGHT_RATIO = 0.52f
 
         fun create(
             context: Context
@@ -134,8 +239,8 @@ class QuickSetupInfoBottomSheet(
             val dialog = BottomSheetDialog(context)
 
             val binding = BottomSheetLightQuickSetupInfoBinding.inflate(
-    LayoutInflater.from(context)
-)
+                LayoutInflater.from(context)
+            )
 
             dialog.setContentView(binding.root)
 

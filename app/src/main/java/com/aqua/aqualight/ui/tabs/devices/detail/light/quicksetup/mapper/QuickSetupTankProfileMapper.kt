@@ -34,8 +34,7 @@ object QuickSetupTankProfileMapper {
         val tankType = mapTankType(tank.tankType)
         val tankStyle = mapTankStyle(tank.tankStyle)
 
-        val hasCo2 = tank.materials.any {
-            material ->
+        val hasCo2 = tank.materials.any { material ->
             isCo2Material(
                 categoryKey = material.categoryKey,
                 categoryTitle = material.categoryTitle,
@@ -43,8 +42,7 @@ object QuickSetupTankProfileMapper {
             )
         }
 
-        val hasFertilizer = tank.materials.any {
-            material ->
+        val hasFertilizer = tank.materials.any { material ->
             isFertilizerMaterial(
                 categoryKey = material.categoryKey,
                 categoryTitle = material.categoryTitle,
@@ -52,8 +50,7 @@ object QuickSetupTankProfileMapper {
             )
         }
 
-        val hasNutrientSubstrate = tank.materials.any {
-            material ->
+        val hasNutrientSubstrate = tank.materials.any { material ->
             isNutrientSubstrateMaterial(
                 categoryKey = material.categoryKey,
                 categoryTitle = material.categoryTitle,
@@ -69,19 +66,31 @@ object QuickSetupTankProfileMapper {
         )
 
         val hasGroundCoverPlants = tank.plants.any {
-            isGroundCoverPlant(it.category, it.plantName)
+            isGroundCoverPlant(
+                category = it.category,
+                name = it.plantName
+            )
         }
 
         val hasStemPlants = tank.plants.any {
-            isStemPlant(it.category, it.plantName)
+            isStemPlant(
+                category = it.category,
+                name = it.plantName
+            )
         }
 
         val hasEpiphytePlants = tank.plants.any {
-            isEpiphytePlant(it.category, it.plantName)
+            isEpiphytePlant(
+                category = it.category,
+                name = it.plantName
+            )
         }
 
         val hasFloatingPlants = tank.plants.any {
-            isFloatingPlant(it.category, it.plantName)
+            isFloatingPlant(
+                category = it.category,
+                name = it.plantName
+            )
         }
 
         val hasRedPlants = tank.plants.any {
@@ -142,7 +151,6 @@ object QuickSetupTankProfileMapper {
         )
 
         val warnings = buildWarnings(
-            tank = tank,
             volumeLiters = volumeLiters,
             setupPhase = setupPhase,
             plantDensity = plantDensity,
@@ -195,11 +203,12 @@ object QuickSetupTankProfileMapper {
     private fun calculateVolumeLiters(
         tank: SavedAquariumTank
     ): Int {
-        val calculated = tank.widthCm * tank.lengthCm * tank.heightCm / 1000.0
+        val calculated =
+            tank.widthCm * tank.lengthCm * tank.heightCm / 1000.0
 
         return calculated
-        .roundToInt()
-        .coerceAtLeast(0)
+            .roundToInt()
+            .coerceAtLeast(0)
     }
 
     private fun calculateSetupAgeDays(
@@ -213,9 +222,9 @@ object QuickSetupTankProfileMapper {
         val diffMillis = nowMillis - setupDateMillis
 
         return TimeUnit.MILLISECONDS
-        .toDays(diffMillis.coerceAtLeast(0L))
-        .toInt()
-        .coerceAtLeast(1)
+            .toDays(diffMillis.coerceAtLeast(0L))
+            .toInt()
+            .coerceAtLeast(1)
     }
 
     private fun resolveSetupPhase(
@@ -241,15 +250,19 @@ object QuickSetupTankProfileMapper {
         val value = rawType.cleanKey()
 
         return when {
-            value.contains("planted") -> QuickSetupTankType.PLANTED
-            value.contains("shrimp") -> QuickSetupTankType.SHRIMP
-            value.contains("fish") -> QuickSetupTankType.FISH_ONLY
-            value.contains("marine") -> QuickSetupTankType.MARINE
+            value.contains("blackwater") -> QuickSetupTankType.BLACKWATER
             value.contains("reef") -> QuickSetupTankType.REEF
             value.contains("softies") -> QuickSetupTankType.REEF
             value.contains("sps") -> QuickSetupTankType.REEF
             value.contains("coral") -> QuickSetupTankType.REEF
+            value.contains("marine") -> QuickSetupTankType.MARINE
             value.contains("brackish") -> QuickSetupTankType.BRACKISH
+            value.contains("planted") -> QuickSetupTankType.PLANTED
+            value.contains("shrimp") -> QuickSetupTankType.SHRIMP
+            value.contains("fish") -> QuickSetupTankType.FISH_ONLY
+            value.contains("freshwater") -> QuickSetupTankType.FRESHWATER
+            value.contains("tatli su") -> QuickSetupTankType.FRESHWATER
+            value.contains("tatlı su") -> QuickSetupTankType.FRESHWATER
             else -> QuickSetupTankType.UNKNOWN
         }
     }
@@ -308,7 +321,9 @@ object QuickSetupTankProfileMapper {
                     plantCount <= 11 -> QuickSetupPlantDensity.MEDIUM
                     else -> QuickSetupPlantDensity.DENSE
                 }
-            } else -> {
+            }
+
+            else -> {
                 when {
                     plantCount <= 6 -> QuickSetupPlantDensity.LOW
                     plantCount <= 15 -> QuickSetupPlantDensity.MEDIUM
@@ -459,7 +474,6 @@ object QuickSetupTankProfileMapper {
     }
 
     private fun buildWarnings(
-        tank: SavedAquariumTank,
         volumeLiters: Int,
         setupPhase: QuickSetupSetupPhase,
         plantDensity: QuickSetupPlantDensity,
@@ -511,13 +525,13 @@ object QuickSetupTankProfileMapper {
         val cleanName = name.cleanKey()
 
         return cleanCategory.contains("groundcover") ||
-        cleanCategory.contains("ground cover") ||
-        cleanName.contains("monte carlo") ||
-        cleanName.contains("hemianthus") ||
-        cleanName.contains("glossostigma") ||
-        cleanName.contains("eleocharis") ||
-        cleanName.contains("utricularia") ||
-        cleanName.contains("hairgrass")
+            cleanCategory.contains("ground cover") ||
+            cleanName.contains("monte carlo") ||
+            cleanName.contains("hemianthus") ||
+            cleanName.contains("glossostigma") ||
+            cleanName.contains("eleocharis") ||
+            cleanName.contains("utricularia") ||
+            cleanName.contains("hairgrass")
     }
 
     private fun isStemPlant(
@@ -528,13 +542,13 @@ object QuickSetupTankProfileMapper {
         val cleanName = name.cleanKey()
 
         return cleanCategory.contains("background") ||
-        cleanCategory.contains("middle ground") ||
-        cleanName.contains("rotala") ||
-        cleanName.contains("ludwigia") ||
-        cleanName.contains("hygrophila") ||
-        cleanName.contains("bacopa") ||
-        cleanName.contains("pogostemon") ||
-        cleanName.contains("limnophila")
+            cleanCategory.contains("middle ground") ||
+            cleanName.contains("rotala") ||
+            cleanName.contains("ludwigia") ||
+            cleanName.contains("hygrophila") ||
+            cleanName.contains("bacopa") ||
+            cleanName.contains("pogostemon") ||
+            cleanName.contains("limnophila")
     }
 
     private fun isEpiphytePlant(
@@ -545,10 +559,10 @@ object QuickSetupTankProfileMapper {
         val cleanName = name.cleanKey()
 
         return cleanCategory.contains("epiphyte") ||
-        cleanName.contains("anubias") ||
-        cleanName.contains("bucephalandra") ||
-        cleanName.contains("microsorum") ||
-        cleanName.contains("bolbitis")
+            cleanName.contains("anubias") ||
+            cleanName.contains("bucephalandra") ||
+            cleanName.contains("microsorum") ||
+            cleanName.contains("bolbitis")
     }
 
     private fun isFloatingPlant(
@@ -559,11 +573,11 @@ object QuickSetupTankProfileMapper {
         val cleanName = name.cleanKey()
 
         return cleanCategory.contains("floating") ||
-        cleanName.contains("salvinia") ||
-        cleanName.contains("frogbit") ||
-        cleanName.contains("pistia") ||
-        cleanName.contains("duckweed") ||
-        cleanName.contains("limnobium")
+            cleanName.contains("salvinia") ||
+            cleanName.contains("frogbit") ||
+            cleanName.contains("pistia") ||
+            cleanName.contains("duckweed") ||
+            cleanName.contains("limnobium")
     }
 
     private fun isRedPlant(
@@ -572,14 +586,14 @@ object QuickSetupTankProfileMapper {
         val cleanName = name.cleanKey()
 
         return cleanName.contains("red") ||
-        cleanName.contains("super red") ||
-        cleanName.contains("alternanthera") ||
-        cleanName.contains("ludwigia") ||
-        cleanName.contains("rotala hra") ||
-        cleanName.contains("rotala h ra") ||
-        cleanName.contains("rotala macrandra") ||
-        cleanName.contains("ar mini") ||
-        cleanName.contains("reineckii")
+            cleanName.contains("super red") ||
+            cleanName.contains("alternanthera") ||
+            cleanName.contains("ludwigia") ||
+            cleanName.contains("rotala hra") ||
+            cleanName.contains("rotala h ra") ||
+            cleanName.contains("rotala macrandra") ||
+            cleanName.contains("ar mini") ||
+            cleanName.contains("reineckii")
     }
 
     private fun isHighDemandPlant(
@@ -590,15 +604,15 @@ object QuickSetupTankProfileMapper {
         val cleanName = name.cleanKey()
 
         return cleanCategory.contains("rare") ||
-        cleanName.contains("hemianthus") ||
-        cleanName.contains("cuba") ||
-        cleanName.contains("glossostigma") ||
-        cleanName.contains("utricularia") ||
-        cleanName.contains("eriocaulon") ||
-        cleanName.contains("tonina") ||
-        cleanName.contains("rotala macrandra") ||
-        cleanName.contains("wallichii") ||
-        cleanName.contains("alternanthera")
+            cleanName.contains("hemianthus") ||
+            cleanName.contains("cuba") ||
+            cleanName.contains("glossostigma") ||
+            cleanName.contains("utricularia") ||
+            cleanName.contains("eriocaulon") ||
+            cleanName.contains("tonina") ||
+            cleanName.contains("rotala macrandra") ||
+            cleanName.contains("wallichii") ||
+            cleanName.contains("alternanthera")
     }
 
     private fun isMediumDemandPlant(
@@ -606,9 +620,9 @@ object QuickSetupTankProfileMapper {
         name: String
     ): Boolean {
         return isGroundCoverPlant(category, name) ||
-        isStemPlant(category, name) ||
-        isRedPlant(name) ||
-        category.cleanKey().contains("foreground")
+            isStemPlant(category, name) ||
+            isRedPlant(name) ||
+            category.cleanKey().contains("foreground")
     }
 
     private fun isSensitiveLivestock(
@@ -618,14 +632,14 @@ object QuickSetupTankProfileMapper {
         val value = "$category $name".cleanKey()
 
         return isShrimpLivestock(category, name) ||
-        value.contains("caridina") ||
-        value.contains("crystal") ||
-        value.contains("bee shrimp") ||
-        value.contains("discus") ||
-        value.contains("ram") ||
-        value.contains("apistogramma") ||
-        value.contains("oto") ||
-        value.contains("otocinclus")
+            value.contains("caridina") ||
+            value.contains("crystal") ||
+            value.contains("bee shrimp") ||
+            value.contains("discus") ||
+            value.contains("ram") ||
+            value.contains("apistogramma") ||
+            value.contains("oto") ||
+            value.contains("otocinclus")
     }
 
     private fun isCo2Material(
@@ -636,9 +650,9 @@ object QuickSetupTankProfileMapper {
         val value = "$categoryKey $categoryTitle $name".cleanKey()
 
         return value.contains("co2") ||
-        value.contains("co 2") ||
-        value.contains("carbon dioxide") ||
-        value.contains("karbondioksit")
+            value.contains("co 2") ||
+            value.contains("carbon dioxide") ||
+            value.contains("karbondioksit")
     }
 
     private fun isFertilizerMaterial(
@@ -649,14 +663,14 @@ object QuickSetupTankProfileMapper {
         val value = "$categoryKey $categoryTitle $name".cleanKey()
 
         return value.contains("fertilizer") ||
-        value.contains("fertiliser") ||
-        value.contains("fert") ||
-        value.contains("plant food") ||
-        value.contains("liquid nutrient") ||
-        value.contains("macro") ||
-        value.contains("micro") ||
-        value.contains("gubre") ||
-        value.contains("gübre")
+            value.contains("fertiliser") ||
+            value.contains("fert") ||
+            value.contains("plant food") ||
+            value.contains("liquid nutrient") ||
+            value.contains("macro") ||
+            value.contains("micro") ||
+            value.contains("gubre") ||
+            value.contains("gübre")
     }
 
     private fun isNutrientSubstrateMaterial(
@@ -667,13 +681,13 @@ object QuickSetupTankProfileMapper {
         val value = "$categoryKey $categoryTitle $name".cleanKey()
 
         return value.contains("substrate") ||
-        value.contains("aqua soil") ||
-        value.contains("aquasoil") ||
-        value.contains("soil") ||
-        value.contains("nutrient substrate") ||
-        value.contains("active soil") ||
-        value.contains("substrat") ||
-        value.contains("taban")
+            value.contains("aqua soil") ||
+            value.contains("aquasoil") ||
+            value.contains("soil") ||
+            value.contains("nutrient substrate") ||
+            value.contains("active soil") ||
+            value.contains("substrat") ||
+            value.contains("taban")
     }
 
     private fun isFishLivestock(
@@ -683,20 +697,20 @@ object QuickSetupTankProfileMapper {
         val value = "$category $name".cleanKey()
 
         return value.contains("fish") ||
-        value.contains("balik") ||
-        value.contains("balık") ||
-        value.contains("tetra") ||
-        value.contains("guppy") ||
-        value.contains("rasbora") ||
-        value.contains("cichlid") ||
-        value.contains("betta") ||
-        value.contains("discus") ||
-        value.contains("ram") ||
-        value.contains("apistogramma") ||
-        value.contains("otocinclus") ||
-        value.contains("oto") ||
-        value.contains("molly") ||
-        value.contains("platy")
+            value.contains("balik") ||
+            value.contains("balık") ||
+            value.contains("tetra") ||
+            value.contains("guppy") ||
+            value.contains("rasbora") ||
+            value.contains("cichlid") ||
+            value.contains("betta") ||
+            value.contains("discus") ||
+            value.contains("ram") ||
+            value.contains("apistogramma") ||
+            value.contains("otocinclus") ||
+            value.contains("oto") ||
+            value.contains("molly") ||
+            value.contains("platy")
     }
 
     private fun isShrimpLivestock(
@@ -706,13 +720,13 @@ object QuickSetupTankProfileMapper {
         val value = "$category $name".cleanKey()
 
         return value.contains("shrimp") ||
-        value.contains("karides") ||
-        value.contains("neocaridina") ||
-        value.contains("caridina") ||
-        value.contains("cherry") ||
-        value.contains("amano") ||
-        value.contains("crystal") ||
-        value.contains("bee shrimp")
+            value.contains("karides") ||
+            value.contains("neocaridina") ||
+            value.contains("caridina") ||
+            value.contains("cherry") ||
+            value.contains("amano") ||
+            value.contains("crystal") ||
+            value.contains("bee shrimp")
     }
 
     private fun isSnailLivestock(
@@ -722,19 +736,19 @@ object QuickSetupTankProfileMapper {
         val value = "$category $name".cleanKey()
 
         return value.contains("snail") ||
-        value.contains("salyangoz") ||
-        value.contains("nerite") ||
-        value.contains("ramshorn") ||
-        value.contains("mystery snail")
+            value.contains("salyangoz") ||
+            value.contains("nerite") ||
+            value.contains("ramshorn") ||
+            value.contains("mystery snail")
     }
 
     private fun String.cleanKey(): String {
         return trim()
-        .lowercase()
-        .replace("-", " ")
-        .replace("_", " ")
-        .replace("'", "")
-        .replace(".", " ")
-        .replace(Regex("\\s+"), " ")
+            .lowercase()
+            .replace("-", " ")
+            .replace("_", " ")
+            .replace("'", "")
+            .replace(".", " ")
+            .replace(Regex("\\s+"), " ")
     }
 }

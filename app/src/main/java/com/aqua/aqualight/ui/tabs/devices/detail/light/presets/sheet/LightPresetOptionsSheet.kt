@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presets.sheet
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.aqua.aqualight.R
@@ -16,27 +17,35 @@ class LightPresetOptionsSheet private constructor(
         subtitle: String,
         isCustom: Boolean,
         onApply: () -> Unit,
-        onDelete: () -> Unit
+        onDeleteRequested: () -> Unit
     ) {
         val dialog = BottomSheetDialog(context)
+
         val view = LayoutInflater.from(context).inflate(
             R.layout.bottom_sheet_light_preset_options,
             null,
             false
         )
 
-        val titleText = view.findViewById<TextView>(R.id.tvPresetSheetTitle)
-        val subtitleText = view.findViewById<TextView>(R.id.tvPresetSheetSubtitle)
-        val applyRow = view.findViewById<LinearLayout>(R.id.rowApplyPreset)
-        val deleteRow = view.findViewById<LinearLayout>(R.id.rowDeletePreset)
+        val titleText =
+            view.findViewById<TextView>(R.id.tvPresetSheetTitle)
+
+        val subtitleText =
+            view.findViewById<TextView>(R.id.tvPresetSheetSubtitle)
+
+        val applyRow =
+            view.findViewById<LinearLayout>(R.id.rowApplyPreset)
+
+        val deleteRow =
+            view.findViewById<LinearLayout>(R.id.rowDeletePreset)
 
         titleText.text = presetName
         subtitleText.text = subtitle
 
         deleteRow.visibility = if (isCustom) {
-            android.view.View.VISIBLE
+            View.VISIBLE
         } else {
-            android.view.View.GONE
+            View.GONE
         }
 
         applyRow.setOnClickListener {
@@ -46,7 +55,7 @@ class LightPresetOptionsSheet private constructor(
 
         deleteRow.setOnClickListener {
             dialog.dismiss()
-            onDelete()
+            onDeleteRequested()
         }
 
         dialog.setContentView(view)

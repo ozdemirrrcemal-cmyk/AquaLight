@@ -11,7 +11,7 @@ data class DeviceLightSettingsUiState(
     val phoneTime: String = "--:--",
     val lastSyncTime: String = "Never",
 
-    val thermalProtectionStatusText: String = "SYNC",
+    val thermalProtectionStatusText: String = "Protected",
     val currentTemperatureText: String = "-- °C",
     val temperatureSensorCount: Int = 0,
     val limitTemperatureCelsius: Int = 50,
@@ -19,9 +19,9 @@ data class DeviceLightSettingsUiState(
     val recoveryIntervalSeconds: Int = 60,
 
     val coolingStatusText: String = "Syncing",
-    val coolingFansText: String = "Syncing",
-    val coolingMode: String = "Auto",
-    val coolingModeEnabled: Boolean = true,
+    val coolingFansText: String = "—",
+    val coolingMode: String = "Syncing",
+    val coolingModeEnabled: Boolean = false,
     val coolingFanCount: Int = 0,
     val fanStartTemperatureCelsius: Int = 30,
     val fanFullSpeedTemperatureCelsius: Int = 50

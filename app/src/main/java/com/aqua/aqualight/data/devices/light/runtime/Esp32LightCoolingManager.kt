@@ -1,9 +1,9 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
+import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLDecoder
-import kotlin.math.roundToInt
 
 class Esp32LightCoolingManager(
     private val httpClient: Esp32HttpJsonClient = Esp32HttpJsonClient()
@@ -12,49 +12,11 @@ class Esp32LightCoolingManager(
     suspend fun read(
         ip: String
     ): Result<LightCoolingState> {
-        val queryJson = JSONObject()
-        .put(
-            "LCool",
-            JSONObject()
-            .put("Count", 0)
-            .put(
-                "Data",
-                JSONObject()
-                .put(
-                    "All",
-                    JSONObject()
-                    .put("Enabled", 0)
-                    .put("TMin", 0)
-                    .put("TMax", 0)
-                    .put("LbT", JSONArray())
-                    .put("GPIO_PWM", 0)
-                )
-            )
-        )
-        .put(
-            "LPWMChanelFan",
-            JSONObject()
-            .put("Count", 0)
-            .put(
-                "Data",
-                JSONObject()
-                .put(
-                    "All",
-                    JSONObject()
-                    .put("VNow", 0)
-                    .put("Regime", 0)
-                    .put("GPIO_PWM", 0)
-                )
-            )
-        )
-        .toString()
-
         val response = httpClient.getJson(
             ip = ip,
-            json = queryJson,
+            json = buildCoolingReadJson(),
             requestTag = "cooling_read"
-        ).getOrElse {
-            error ->
+        ).getOrElse { error ->
             return Result.failure(error)
         }
 
@@ -77,122 +39,155 @@ class Esp32LightCoolingManager(
         }
 
         val safeStart =
-        fanStartTemperatureCelsius.coerceIn(25, 45)
+            fanStartTemperatureCelsius.coerceIn(25, 45)
 
         val safeFull =
-        fanFullSpeedTemperatureCelsius
-        .coerceIn(safeStart + 5, 70)
+            fanFullSpeedTemperatureCelsius.coerceIn(
+                safeStart + 5,
+                70
+            )
 
         val root = readCoolingRoot(
             ip = ip
-        ).getOrElse {
-            error ->
+        ).getOrElse { error ->
             return LightCommandResult.failure(
                 error.message ?: "Cooling configuration could not be read"
             )
         }
 
         val coolData = root
-        .optJSONObject("LCool")
-        ?.optJSONObject("Data")
-        ?: JSONObject()
+            .optJSONObject("LCool")
+            ?.optJSONObject("Data")
+            ?: JSONObject()
 
         val fanPwmData = root
-        .optJSONObject("LPWMChanelFan")
-        ?.optJSONObject("Data")
-        ?: JSONObject()
+            .optJSONObject("LPWMChanelFan")
+            ?.optJSONObject("Data")
+            ?: JSONObject()
 
         val fanPwmSnapshots = parseFanPwmData(
             data = fanPwmData
-        ).filter {
-            item ->
+        ).filter { item ->
             isValidGpioPwm(item.gpioPwm)
-        }.sortedBy {
-            item ->
+        }.sortedBy { item ->
             item.index
         }
 
-        val fanPwmByIndex = fanPwmSnapshots.associateBy {
-            item ->
+        val fanPwmByIndex = fanPwmSnapshots.associateBy { item ->
             item.index
         }
 
-        val targetFanCount = maxOf(
-            fanCount,
-            fanPwmSnapshots.size
+        val fanPwmByGpio = fanPwmSnapshots.associateBy { item ->
+            item.gpioPwm
+        }
+
+        val targetIndices = buildTargetFanIndices(
+            coolData = coolData,
+            fanPwmSnapshots = fanPwmSnapshots,
+            fallbackFanCount = fanCount
         )
 
+        if (targetIndices.isEmpty()) {
+            return LightCommandResult.failure(
+                "Cooling fan is not configured"
+            )
+        }
+
         val fallbackLinkedSensors =
-        firstLinkedSensorArray(coolData)
-        ?: defaultLinkedSensorArray()
+            firstLinkedSensorArray(coolData)
+                ?: defaultLinkedSensorArray()
 
-        val data = JSONObject()
+        val coolSettingsData = JSONObject()
+        val fanRegimeData = JSONObject()
 
-        repeat(targetFanCount) {
-            index ->
+        targetIndices.forEach { index ->
             val key = index.toString()
 
             val currentCoolItem = coolData.optJSONObject(key)
 
             val currentLinkedSensors = currentCoolItem
-            ?.optJSONArray("LbT")
-            ?.takeIf {
-                array ->
-                array.countEnabledItems() > 0
-            }
-            ?: fallbackLinkedSensors
+                ?.optJSONArray("LbT")
+                ?.takeIf { array ->
+                    array.countEnabledItems() > 0
+                }
+                ?: fallbackLinkedSensors
 
             val currentCoolGpio = currentCoolItem
-            ?.optString("GPIO_PWM", "")
-            .orEmpty()
+                ?.optString("GPIO_PWM", "")
+                .orEmpty()
 
             val fanPwmGpio = fanPwmByIndex[index]
-            ?.gpioPwm
-            .orEmpty()
+                ?.gpioPwm
+                .orEmpty()
 
             val resolvedGpioPwm = when {
-                isValidGpioPwm(fanPwmGpio) -> {
-                    fanPwmGpio
-                }
-
-                isValidGpioPwm(currentCoolGpio) -> {
-                    currentCoolGpio
-                } else -> {
-                    "-"
-                }
+                isValidGpioPwm(fanPwmGpio) -> fanPwmGpio
+                isValidGpioPwm(currentCoolGpio) -> currentCoolGpio
+                else -> "-"
             }
 
-            data.put(
+            coolSettingsData.put(
                 key,
                 JSONObject()
-                .put(
-                    "Enabled",
-                    if (enabled) {
-                        1
-                    } else {
-                        0
-                    }
+                    .put(
+                        "Enabled",
+                        if (enabled) {
+                            1
+                        } else {
+                            0
+                        }
+                    )
+                    .put("TMin", safeStart)
+                    .put("TMax", safeFull)
+                    .put("LbT", copyJsonArray(currentLinkedSensors))
+                    .put("GPIO_PWM", resolvedGpioPwm)
+            )
+
+            val targetPwm = fanPwmByIndex[index]
+                ?: fanPwmByGpio[resolvedGpioPwm]
+
+            if (targetPwm != null) {
+                fanRegimeData.put(
+                    targetPwm.index.toString(),
+                    JSONObject()
+                        .put(
+                            "Regime",
+                            if (enabled) {
+                                "Auto"
+                            } else {
+                                "Off"
+                            }
+                        )
                 )
-                .put("TMin", safeStart)
-                .put("TMax", safeFull)
-                .put("LbT", copyJsonArray(currentLinkedSensors))
-                .put("GPIO_PWM", resolvedGpioPwm)
+            }
+        }
+
+        if (enabled && fanRegimeData.length() <= 0) {
+            return LightCommandResult.failure(
+                "Cooling PWM channel is not configured"
             )
         }
 
-        val json = JSONObject()
-        .put(
-            "LCool",
-            JSONObject()
-            .put("Count", targetFanCount)
-            .put("Data", data)
+        val settingsJson = buildCoolingSettingsJson(
+            coolSettingsData = coolSettingsData,
+            fanRegimeData = fanRegimeData,
+            targetIndices = targetIndices
         )
-        .toString()
+
+        val settingsResult = httpClient.postSet(
+            ip = ip,
+            json = settingsJson,
+            requestTag = "cooling_set"
+        )
+
+        if (!settingsResult.isSuccess) {
+            return settingsResult
+        }
 
         return httpClient.postSet(
             ip = ip,
-            json = json,
-            requestTag = "cooling_set"
+            json = buildSaveJson(),
+            requestTag = "cooling_save"
         )
     }
 
@@ -203,8 +198,7 @@ class Esp32LightCoolingManager(
             ip = ip,
             json = buildCoolingReadJson(),
             requestTag = "cooling_read_before_set"
-        ).getOrElse {
-            error ->
+        ).getOrElse { error ->
             return Result.failure(error)
         }
 
@@ -217,55 +211,144 @@ class Esp32LightCoolingManager(
 
     private fun buildCoolingReadJson(): String {
         return JSONObject()
-        .put(
-            "LCool",
-            JSONObject()
-            .put("Count", 0)
             .put(
-                "Data",
+                "LCool",
                 JSONObject()
-                .put(
-                    "All",
-                    JSONObject()
-                    .put("Enabled", 0)
-                    .put("TMin", 0)
-                    .put("TMax", 0)
-                    .put("LbT", JSONArray())
-                    .put("GPIO_PWM", 0)
-                )
+                    .put("Count", 0)
+                    .put(
+                        "Data",
+                        JSONObject()
+                            .put(
+                                "All",
+                                JSONObject()
+                                    .put("Enabled", 0)
+                                    .put("TMin", 0)
+                                    .put("TMax", 0)
+                                    .put("LbT", JSONArray())
+                                    .put("GPIO_PWM", 0)
+                            )
+                    )
             )
-        )
-        .put(
-            "LPWMChanelFan",
-            JSONObject()
-            .put("Count", 0)
             .put(
-                "Data",
+                "LPWMChanelFan",
                 JSONObject()
-                .put(
-                    "All",
-                    JSONObject()
-                    .put("VNow", 0)
-                    .put("Regime", 0)
-                    .put("GPIO_PWM", 0)
-                )
+                    .put("Count", 0)
+                    .put(
+                        "Data",
+                        JSONObject()
+                            .put(
+                                "All",
+                                JSONObject()
+                                    .put("VNow", 0)
+                                    .put("Regime", 0)
+                                    .put("GPIO_PWM", 0)
+                            )
+                    )
             )
-        )
-        .toString()
+            .toString()
+    }
+
+    private fun buildCoolingSettingsJson(
+        coolSettingsData: JSONObject,
+        fanRegimeData: JSONObject,
+        targetIndices: List<Int>
+    ): String {
+        val count = (targetIndices.maxOrNull() ?: -1) + 1
+
+        val root = JSONObject()
+            .put(
+                "LCool",
+                JSONObject()
+                    .put("Count", count.coerceAtLeast(0))
+                    .put("Data", coolSettingsData)
+            )
+
+        if (fanRegimeData.length() > 0) {
+            root.put(
+                "LPWMChanelFan",
+                JSONObject()
+                    .put("Data", fanRegimeData)
+            )
+        }
+
+        return root.toString()
+    }
+
+    private fun buildSaveJson(): String {
+        return JSONObject()
+            .put(
+                "Main",
+                JSONObject()
+                    .put("SaveCool", 1)
+            )
+            .toString()
+    }
+
+    private fun buildTargetFanIndices(
+        coolData: JSONObject,
+        fanPwmSnapshots: List<FanPwmSnapshot>,
+        fallbackFanCount: Int
+    ): List<Int> {
+        val indices = mutableSetOf<Int>()
+
+        numericKeys(coolData).forEach { index ->
+            indices += index
+        }
+
+        fanPwmSnapshots.forEach { snapshot ->
+            indices += snapshot.index
+        }
+
+        repeat(fallbackFanCount.coerceAtLeast(0)) { index ->
+            indices += index
+        }
+
+        return indices
+            .filter { index ->
+                index >= 0
+            }
+            .sorted()
+    }
+
+    private fun numericKeys(
+        data: JSONObject
+    ): List<Int> {
+        val result = mutableListOf<Int>()
+        val keys = data.keys()
+
+        while (keys.hasNext()) {
+            val key = keys.next()
+
+            if (key == "All") {
+                continue
+            }
+
+            val index = key.toIntOrNull()
+                ?: continue
+
+            if (index >= 0) {
+                result += index
+            }
+        }
+
+        return result.sorted()
     }
 
     private fun firstLinkedSensorArray(
         coolData: JSONObject
     ): JSONArray? {
-        coolData.keys().forEach {
-            key ->
+        val keys = coolData.keys()
+
+        while (keys.hasNext()) {
+            val key = keys.next()
+
             if (key == "All") {
-                return@forEach
+                continue
             }
 
             val array = coolData
-            .optJSONObject(key)
-            ?.optJSONArray("LbT")
+                .optJSONObject(key)
+                ?.optJSONArray("LbT")
 
             if (
                 array != null &&
@@ -280,7 +363,7 @@ class Esp32LightCoolingManager(
 
     private fun defaultLinkedSensorArray(): JSONArray {
         return JSONArray()
-        .put(1)
+            .put(1)
     }
 
     private fun copyJsonArray(
@@ -301,8 +384,8 @@ class Esp32LightCoolingManager(
         value: String?
     ): Boolean {
         val cleanValue = value
-        .orEmpty()
-        .trim()
+            .orEmpty()
+            .trim()
 
         return cleanValue.isNotBlank() && cleanValue != "-"
     }
@@ -317,43 +400,43 @@ class Esp32LightCoolingManager(
         val coolRoot = root.optJSONObject("LCool")
         val coolData = coolRoot?.optJSONObject("Data") ?: JSONObject()
 
-        val fanPwmData = root
-        .optJSONObject("LPWMChanelFan")
-        ?.optJSONObject("Data")
-        ?: JSONObject()
+        val fanPwmRoot = root.optJSONObject("LPWMChanelFan")
+        val fanPwmData = fanPwmRoot?.optJSONObject("Data") ?: JSONObject()
+
+        val fanPwmSnapshots = parseFanPwmData(
+            data = fanPwmData
+        )
 
         val pwmByIndex =
-        parseFanPwmData(fanPwmData).associateBy {
-            item ->
-            item.index
-        }
+            fanPwmSnapshots.associateBy { item ->
+                item.index
+            }
 
         val pwmByGpio =
-        parseFanPwmData(fanPwmData)
-        .filter {
-            item ->
-            item.gpioPwm.isNotBlank() && item.gpioPwm != "-"
-        }
-        .associateBy {
-            item ->
-            item.gpioPwm
-        }
+            fanPwmSnapshots
+                .filter { item ->
+                    item.gpioPwm.isNotBlank() && item.gpioPwm != "-"
+                }
+                .associateBy { item ->
+                    item.gpioPwm
+                }
+
+        val indices = buildTargetFanIndices(
+            coolData = coolData,
+            fanPwmSnapshots = fanPwmSnapshots,
+            fallbackFanCount = 0
+        )
 
         val fans = mutableListOf<LightCoolingFanState>()
 
-        coolData.keys().forEach {
-            key ->
-            if (key == "All") {
-                return@forEach
-            }
+        indices.forEach { index ->
+            val key = index.toString()
+            val item = coolData.optJSONObject(key)
 
-            val index = key.toIntOrNull() ?: return@forEach
-            val item = coolData.optJSONObject(key) ?: return@forEach
-
-            val gpioPwm = item.optString(
+            val gpioPwm = item?.optString(
                 "GPIO_PWM",
                 ""
-            )
+            ).orEmpty()
 
             val pwm = if (gpioPwm.isNotBlank() && gpioPwm != "-") {
                 pwmByGpio[gpioPwm]
@@ -361,32 +444,52 @@ class Esp32LightCoolingManager(
                 pwmByIndex[index]
             }
 
-            fans += LightCoolingFanState(
-                index = index,
-                enabled = item.optBooleanCompat("Enabled"),
-                fanStartTemperatureCelsius = item
-                .optNullableDouble("TMin")
+            val configuredEnabled =
+                item?.optBooleanCompat("Enabled") ?: false
+
+            val isAutoRegime =
+                pwm?.regime.equals(
+                    "Auto",
+                    ignoreCase = true
+                )
+
+            val resolvedEnabled = if (pwm != null) {
+                configuredEnabled && isAutoRegime
+            } else {
+                configuredEnabled
+            }
+
+            val startTemperature = item
+                ?.optNullableDouble("TMin")
                 ?.roundToInt()
                 ?.coerceIn(25, 45)
-                ?: 30,
-                fanFullSpeedTemperatureCelsius = item
-                .optNullableDouble("TMax")
+                ?: 30
+
+            val fullSpeedTemperature = item
+                ?.optNullableDouble("TMax")
                 ?.roundToInt()
                 ?.coerceIn(35, 70)
-                ?: 50,
+                ?.coerceAtLeast(startTemperature + 5)
+                ?.coerceAtMost(70)
+                ?: 50
+
+            fans += LightCoolingFanState(
+                index = index,
+                enabled = resolvedEnabled,
+                fanStartTemperatureCelsius = startTemperature,
+                fanFullSpeedTemperatureCelsius = fullSpeedTemperature,
                 outputPercent = pwm?.outputPercent,
                 regime = pwm?.regime.orEmpty(),
                 linkedSensorCount = item
-                .optJSONArray("LbT")
-                ?.countEnabledItems()
-                ?: 0
+                    ?.optJSONArray("LbT")
+                    ?.countEnabledItems()
+                    ?: 0
             )
         }
 
         return LightCoolingState(
-            hasData = coolRoot != null || fanPwmData.length() > 0,
-            fans = fans.sortedBy {
-                fan ->
+            hasData = coolRoot != null || fanPwmRoot != null,
+            fans = fans.sortedBy { fan ->
                 fan.index
             }
         )
@@ -396,27 +499,34 @@ class Esp32LightCoolingManager(
         data: JSONObject
     ): List<FanPwmSnapshot> {
         val result = mutableListOf<FanPwmSnapshot>()
+        val keys = data.keys()
 
-        data.keys().forEach {
-            key ->
+        while (keys.hasNext()) {
+            val key = keys.next()
+
             if (key == "All") {
-                return@forEach
+                continue
             }
 
-            val index = key.toIntOrNull() ?: return@forEach
-            val item = data.optJSONObject(key) ?: return@forEach
+            val index = key.toIntOrNull()
+                ?: continue
+
+            val item = data.optJSONObject(key)
+                ?: continue
 
             result += FanPwmSnapshot(
                 index = index,
                 gpioPwm = item.optString("GPIO_PWM", ""),
                 outputPercent = item
-                .optNullableDouble("VNow")
-                ?.toPercent(),
+                    .optNullableDouble("VNow")
+                    ?.toPercent(),
                 regime = item.optString("Regime", "")
             )
         }
 
-        return result
+        return result.sortedBy { item ->
+            item.index
+        }
     }
 
     private fun Double.toPercent(): Int {
@@ -427,8 +537,8 @@ class Esp32LightCoolingManager(
         }
 
         return value
-        .roundToInt()
-        .coerceIn(0, 100)
+            .roundToInt()
+            .coerceIn(0, 100)
     }
 
     private fun JSONArray.countEnabledItems(): Int {

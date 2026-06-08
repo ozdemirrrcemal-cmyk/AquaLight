@@ -10,5 +10,9 @@ sealed interface DeviceLightQuickSetupEvent {
         val message: String
     ) : DeviceLightQuickSetupEvent
 
+    data class SetLoading(
+        val isLoading: Boolean
+    ) : DeviceLightQuickSetupEvent
+
     data object NavigateBack : DeviceLightQuickSetupEvent
 }

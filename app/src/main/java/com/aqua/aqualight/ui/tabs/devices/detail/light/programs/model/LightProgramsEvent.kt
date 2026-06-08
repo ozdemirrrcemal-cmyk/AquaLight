@@ -9,4 +9,8 @@ sealed class LightProgramsEvent {
     data class ShowError(
         val message: String
     ) : LightProgramsEvent()
+
+    data class SetLoading(
+        val isLoading: Boolean
+    ) : LightProgramsEvent()
 }

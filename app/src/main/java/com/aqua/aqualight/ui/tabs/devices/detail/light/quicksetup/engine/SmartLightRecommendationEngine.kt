@@ -67,14 +67,13 @@ object SmartLightRecommendationEngine {
             selectedDays = setOf(1, 2, 3, 4, 5, 6, 7)
         )
 
-        val confidence = calculateConfidence(tankProfile)
+        val confidence = tankProfile.recommendationConfidence
 
         return QuickSetupRecommendation(
             title = buildRecommendationTitle(
                 profile = tankProfile,
                 lightProfile = lightProfile,
-                setupPhase = setupPhase,
-                algaePolicy = algaePolicy
+                setupPhase = setupPhase
             ),
             profileLabel = lightProfile.profileLabel,
             goalLabel = lightProfile.goalLabel,
@@ -88,18 +87,23 @@ object SmartLightRecommendationEngine {
             peakEnd = peakEnd,
             end = end,
             channelValues = channelValues,
-            tankSummary = buildTankSummary(tankProfile, setupPhase),
+            tankSummary = buildTankSummary(
+                profile = tankProfile,
+                setupPhase = setupPhase
+            ),
             reasoningNotes = buildReasoningNotes(
                 profile = tankProfile,
                 lightProfile = lightProfile,
-                setupPhase = setupPhase,
                 agePolicy = agePolicy,
                 algaePolicy = algaePolicy,
                 livestockPolicy = livestockPolicy,
                 durationMinutes = durationMinutes,
                 intensityMultiplier = intensityMultiplier
             ),
-            warnings = buildWarnings(tankProfile, setupPhase),
+            warnings = buildWarnings(
+                profile = tankProfile,
+                setupPhase = setupPhase
+            ),
             draft = draft
         )
     }
@@ -355,24 +359,24 @@ object SmartLightRecommendationEngine {
     }
 
     private fun resolveSetupPhase(
-    profile: QuickSetupTankProfile
-): QuickSetupSetupPhase {
-    if (profile.setupPhase != QuickSetupSetupPhase.UNKNOWN) {
-        return profile.setupPhase
-    }
+        profile: QuickSetupTankProfile
+    ): QuickSetupSetupPhase {
+        if (profile.setupPhase != QuickSetupSetupPhase.UNKNOWN) {
+            return profile.setupPhase
+        }
 
-    if (profile.setupAgeDays <= 0) {
-        return QuickSetupSetupPhase.UNKNOWN
-    }
+        if (profile.setupAgeDays <= 0) {
+            return QuickSetupSetupPhase.UNKNOWN
+        }
 
-    return when (profile.setupAgeDays) {
-        in 1..7 -> QuickSetupSetupPhase.FIRST_WEEK
-        in 8..14 -> QuickSetupSetupPhase.EARLY_START
-        in 15..30 -> QuickSetupSetupPhase.STABILIZING
-        in 31..60 -> QuickSetupSetupPhase.BALANCED_RAMP_UP
-        else -> QuickSetupSetupPhase.MATURE
+        return when (profile.setupAgeDays) {
+            in 1..7 -> QuickSetupSetupPhase.FIRST_WEEK
+            in 8..14 -> QuickSetupSetupPhase.EARLY_START
+            in 15..30 -> QuickSetupSetupPhase.STABILIZING
+            in 31..60 -> QuickSetupSetupPhase.BALANCED_RAMP_UP
+            else -> QuickSetupSetupPhase.MATURE
+        }
     }
-}
 
     private fun buildAgePolicy(
         phase: QuickSetupSetupPhase
@@ -462,8 +466,7 @@ object SmartLightRecommendationEngine {
         profile: QuickSetupTankProfile
     ): Policy {
         val hasSensitiveLivestock =
-            profile.hasShrimp ||
-                profile.hasSensitiveLivestock
+            profile.hasShrimp || profile.hasSensitiveLivestock
 
         return if (hasSensitiveLivestock) {
             Policy(
@@ -624,8 +627,7 @@ object SmartLightRecommendationEngine {
     private fun buildRecommendationTitle(
         profile: QuickSetupTankProfile,
         lightProfile: QuickSetupLightProfile,
-        setupPhase: QuickSetupSetupPhase,
-        algaePolicy: Policy
+        setupPhase: QuickSetupSetupPhase
     ): String {
         if (profile.algaeRisk == QuickSetupAlgaeRisk.HIGH) {
             return "Safe Low-Algae Setup"
@@ -675,7 +677,6 @@ object SmartLightRecommendationEngine {
     private fun buildReasoningNotes(
         profile: QuickSetupTankProfile,
         lightProfile: QuickSetupLightProfile,
-        setupPhase: QuickSetupSetupPhase,
         agePolicy: Policy,
         algaePolicy: Policy,
         livestockPolicy: Policy,
@@ -802,25 +803,6 @@ object SmartLightRecommendationEngine {
         }
 
         return warnings.distinct()
-    }
-
-    private fun calculateConfidence(
-        profile: QuickSetupTankProfile
-    ): QuickSetupRecommendationConfidence {
-        var score = 0
-
-        if (profile.tankId != null) score += 1
-        if (profile.volumeLiters > 0) score += 1
-        if (profile.setupAgeDays > 0) score += 1
-        if (profile.tankType != QuickSetupTankType.UNKNOWN) score += 1
-        if (profile.tankStyle != QuickSetupTankStyle.UNKNOWN) score += 1
-        if (profile.plantCount > 0 || profile.hasFish || profile.hasShrimp) score += 1
-
-        return when {
-            score >= 5 -> QuickSetupRecommendationConfidence.HIGH
-            score >= 3 -> QuickSetupRecommendationConfidence.MEDIUM
-            else -> QuickSetupRecommendationConfidence.LOW
-        }
     }
 
     private fun buildIntensityLabel(

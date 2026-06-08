@@ -10,5 +10,9 @@ sealed interface DeviceLightProgramEditorEvent {
         val message: String
     ) : DeviceLightProgramEditorEvent
 
+    data class SetLoading(
+        val isLoading: Boolean
+    ) : DeviceLightProgramEditorEvent
+
     data object NavigateBack : DeviceLightProgramEditorEvent
 }

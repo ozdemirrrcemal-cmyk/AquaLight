@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.manual
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -14,6 +13,9 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
@@ -89,19 +91,21 @@ class DeviceLightManualFragment :
                 viewModel.events.collect { event ->
                     when (event) {
                         is ManualLightEvent.ShowMessage -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.SUCCESS
+                            )
                         }
 
                         is ManualLightEvent.ShowError -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.ERROR
+                            )
+                        }
+
+                        is ManualLightEvent.SetLoading -> {
+                            showDeviceLoading(event.isLoading)
                         }
 
                         ManualLightEvent.ShowSavePresetSheet -> {

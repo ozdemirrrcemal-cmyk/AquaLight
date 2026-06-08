@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -16,6 +15,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.renderLightModeChip
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import kotlinx.coroutines.launch
 
 class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
@@ -26,15 +27,15 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private val viewModel: DeviceLightViewModel by viewModels()
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val deviceTitle: String
-        get() = arguments
-            ?.getString(ARG_DEVICE_TITLE)
-            .orEmpty()
-            .ifBlank {
-                "WRGB Pro"
-            }
+    get() = arguments
+    ?.getString(ARG_DEVICE_TITLE)
+    .orEmpty()
+    .ifBlank {
+        "WRGB Pro"
+    }
 
     override fun onViewCreated(
         view: View,
@@ -139,7 +140,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
+                viewModel.uiState.collect {
+                    state ->
                     renderUiState(state)
                 }
             }
@@ -180,13 +182,15 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     }
 
     private fun refreshDeviceStatus() {
-        viewModel.refreshNow()
+        if (deviceId <= 0L) {
+            showDeviceSnack(
+                message = "Device information is missing",
+                type = DeviceFeedbackType.ERROR
+            )
+            return
+        }
 
-        Toast.makeText(
-            requireContext(),
-            "Refreshing device status",
-            Toast.LENGTH_SHORT
-        ).show()
+        viewModel.refreshNow()
     }
 
     override fun onDestroyView() {

@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -17,6 +16,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.adapter.LightPresetsAdapter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.catalog.BuiltInLightPresets
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
@@ -59,6 +63,10 @@ class DeviceLightPresetsFragment :
         setupClicks()
         observePresets()
         observeEvents()
+    }
+
+    override fun onResume() {
+        super.onResume()
         syncActivePresetFromRuntime()
     }
 
@@ -127,19 +135,21 @@ class DeviceLightPresetsFragment :
                 viewModel.events.collect { event ->
                     when (event) {
                         is DeviceLightPresetsEvent.ShowMessage -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.SUCCESS
+                            )
                         }
 
                         is DeviceLightPresetsEvent.ShowError -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.ERROR
+                            )
+                        }
+
+                        is DeviceLightPresetsEvent.SetLoading -> {
+                            showDeviceLoading(event.isLoading)
                         }
 
                         DeviceLightPresetsEvent.NavigateToManualControl -> {
@@ -152,6 +162,10 @@ class DeviceLightPresetsFragment :
     }
 
     private fun syncActivePresetFromRuntime() {
+        if (_binding == null) {
+            return
+        }
+
         if (deviceId <= 0L) {
             renderActivePreset(activePreset)
             return
@@ -196,14 +210,20 @@ class DeviceLightPresetsFragment :
         updateFilterUi(filter)
 
         val filtered = when (filter) {
-            PresetFilter.ALL -> allPresets
-
-            PresetFilter.BUILT_IN -> allPresets.filter { preset ->
-                preset.category == LightPresetCategory.BUILT_IN
+            PresetFilter.ALL -> {
+                allPresets
             }
 
-            PresetFilter.CUSTOM -> allPresets.filter { preset ->
-                preset.category == LightPresetCategory.CUSTOM
+            PresetFilter.BUILT_IN -> {
+                allPresets.filter { preset ->
+                    preset.category == LightPresetCategory.BUILT_IN
+                }
+            }
+
+            PresetFilter.CUSTOM -> {
+                allPresets.filter { preset ->
+                    preset.category == LightPresetCategory.CUSTOM
+                }
             }
         }
 
@@ -224,15 +244,20 @@ class DeviceLightPresetsFragment :
         val selectedBg = R.drawable.bg_light_filter_selected
         val transparentBg = android.R.color.transparent
 
-        val selectedText = requireContext().getColor(R.color.light_button_on_primary)
-        val normalText = requireContext().getColor(R.color.light_text_secondary)
+        val selectedText =
+            requireContext().getColor(R.color.light_button_on_primary)
+
+        val normalText =
+            requireContext().getColor(R.color.light_text_secondary)
 
         binding.filterAll.setBackgroundResource(
             if (filter == PresetFilter.ALL) selectedBg else transparentBg
         )
+
         binding.filterBuiltIn.setBackgroundResource(
             if (filter == PresetFilter.BUILT_IN) selectedBg else transparentBg
         )
+
         binding.filterMyPresets.setBackgroundResource(
             if (filter == PresetFilter.CUSTOM) selectedBg else transparentBg
         )
@@ -240,9 +265,11 @@ class DeviceLightPresetsFragment :
         binding.filterAll.setTextColor(
             if (filter == PresetFilter.ALL) selectedText else normalText
         )
+
         binding.filterBuiltIn.setTextColor(
             if (filter == PresetFilter.BUILT_IN) selectedText else normalText
         )
+
         binding.filterMyPresets.setTextColor(
             if (filter == PresetFilter.CUSTOM) selectedText else normalText
         )
@@ -260,8 +287,8 @@ class DeviceLightPresetsFragment :
                 onApply = {
                     applyPresetToDevice(preset)
                 },
-                onDelete = {
-                    deletePreset(preset)
+                onDeleteRequested = {
+                    confirmDeletePreset(preset)
                 }
             )
     }
@@ -272,34 +299,63 @@ class DeviceLightPresetsFragment :
         viewModel.applyPresetToDevice(preset)
     }
 
-    private fun navigateToManualControl() {
-        val bundle = Bundle().apply {
-            putLong(ARG_DEVICE_ID, deviceId)
+    private fun confirmDeletePreset(
+        preset: LightPresetItem
+    ) {
+        if (!preset.isCustom) {
+            return
         }
 
-        findNavController().navigate(
-            R.id.action_deviceLightPresetsFragment_to_deviceLightManualFragment,
-            bundle,
-            NavOptions.Builder()
-                .setPopUpTo(
-                    R.id.deviceLightFragment,
-                    false
-                )
-                .build()
-        )
+        val isCurrentlyActive =
+            activePreset?.id == preset.id
+
+        val message = if (isCurrentlyActive) {
+            "This preset is currently active. Deleting it removes it from saved presets, but current light output will not change."
+        } else {
+            "This removes the preset from your saved presets."
+        }
+
+        DeviceConfirmBottomSheet
+            .create(requireContext())
+            .show(
+                title = "Delete preset?",
+                message = message,
+                confirmText = "Delete",
+                cancelText = "Cancel",
+                tone = DeviceConfirmTone.DANGER,
+                onConfirm = {
+                    deletePreset(preset)
+                }
+            )
     }
 
     private fun deletePreset(
         preset: LightPresetItem
     ) {
-        if (!preset.isCustom) return
-
-        if (activePreset?.id == preset.id) {
-            activePreset = null
-            renderActivePreset(null)
+        if (!preset.isCustom) {
+            return
         }
 
         viewModel.deletePreset(preset)
+    }
+
+    private fun navigateToManualControl() {
+        val bundle = Bundle().apply {
+            putLong(ARG_DEVICE_ID, deviceId)
+        }
+
+        val navOptions = NavOptions.Builder()
+            .setPopUpTo(
+                R.id.deviceLightPresetsFragment,
+                true
+            )
+            .build()
+
+        findNavController().navigate(
+            R.id.action_deviceLightPresetsFragment_to_deviceLightManualFragment,
+            bundle,
+            navOptions
+        )
     }
 
     private fun renderActivePreset(
@@ -308,6 +364,7 @@ class DeviceLightPresetsFragment :
         if (preset == null) {
             binding.tvActivePresetTitle.text = "No preset applied"
             binding.tvActivePresetChannels.text = "Select a preset to apply"
+
             binding.viewActivePresetColor.background = createColorDrawable(
                 Color.TRANSPARENT
             )
@@ -381,7 +438,8 @@ class DeviceLightPresetsFragment :
         fun gammaCorrect(
             value: Double
         ): Int {
-            val normalized = (value / max).coerceIn(0.0, 1.0)
+            val normalized =
+                (value / max).coerceIn(0.0, 1.0)
 
             return (255.0 * normalized.pow(1.0 / 2.2))
                 .roundToInt()

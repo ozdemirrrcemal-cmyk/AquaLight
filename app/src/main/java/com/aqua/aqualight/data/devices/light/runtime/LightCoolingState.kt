@@ -26,6 +26,10 @@ data class LightCoolingState(
                 return "Syncing"
             }
 
+            if (fans.isEmpty()) {
+                return "Not configured"
+            }
+
             return if (enabledFanCount > 0) {
                 "Auto"
             } else {
@@ -50,42 +54,23 @@ data class LightCoolingState(
             val output = maxOutputPercent ?: return "Standby"
 
             return when {
-                output <= 0 -> {
-                    "Standby"
-                }
-
-                output >= 100 -> {
-                    "Full speed"
-                }
-
-                else -> {
-                    "Cooling · $output%"
-                }
+                output <= 0 -> "Standby"
+                output >= 100 -> "Full speed"
+                else -> "Cooling · $output%"
             }
         }
 
     val fansText: String
         get() {
             if (!hasData) {
-                return ""
+                return "Syncing"
             }
 
             return when {
-                fanCount <= 0 -> {
-                    ""
-                }
-
-                enabledFanCount <= 0 -> {
-                    "$fanCount installed"
-                }
-
-                fanCount == 1 -> {
-                    "Auto · 1 fan"
-                }
-
-                else -> {
-                    "Auto · $fanCount fans"
-                }
+                fanCount <= 0 -> "No fan"
+                enabledFanCount <= 0 -> "$fanCount installed"
+                fanCount == 1 -> "Auto · 1 fan"
+                else -> "Auto · $fanCount fans"
             }
         }
 

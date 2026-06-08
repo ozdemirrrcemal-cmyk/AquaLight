@@ -67,7 +67,7 @@ class LightDeviceTimeRepository(
             val address = when (
                 val result = addressResolver.resolve(
                     deviceId = deviceId,
-                    requireOnline = false
+                    requireOnline = true
                 )
             ) {
                 is LightDeviceAddressResolver.Result.Success -> result
@@ -79,25 +79,37 @@ class LightDeviceTimeRepository(
                 }
             }
 
-            val phoneTime = Esp32LightDeviceTimeReader.phoneFallback()
-            val timeZoneOffsetHours = currentPhoneTimeZoneOffsetHours()
+            val phoneTime =
+                Esp32LightDeviceTimeReader.phoneFallback()
 
-            timeWriter.writeTime(
+            val offsetMinutes =
+                currentPhoneTimeZoneOffsetMinutes()
+
+            val protocol =
+                resolveTimeSyncProtocol()
+
+            timeWriter.syncClock(
                 ip = address.ip,
                 timeState = phoneTime,
-                timeZoneOffsetHours = timeZoneOffsetHours
+                timeZoneOffsetMinutes = offsetMinutes,
+                protocol = protocol
             )
         }
     }
 
-    private fun currentPhoneTimeZoneOffsetHours(): Int {
+    private fun resolveTimeSyncProtocol(): LightDeviceTimeSyncProtocol {
+        return LightDeviceTimeSyncProtocol.LEGACY_HOUR_TIME_ZONE
+    }
+
+    private fun currentPhoneTimeZoneOffsetMinutes(): Int {
         val timeZone = TimeZone.getDefault()
         val now = System.currentTimeMillis()
 
-        val offsetMillis = timeZone.getOffset(now)
-
-        return (offsetMillis / ONE_HOUR_MILLIS)
-            .coerceIn(-12, 14)
+        return (timeZone.getOffset(now) / ONE_MINUTE_MILLIS)
+            .coerceIn(
+                MIN_TIME_ZONE_OFFSET_MINUTES,
+                MAX_TIME_ZONE_OFFSET_MINUTES
+            )
     }
 
     private fun fallbackOrThrow(
@@ -112,7 +124,9 @@ class LightDeviceTimeRepository(
     }
 
     companion object {
-        private const val ONE_HOUR_MILLIS =
-            60 * 60 * 1000
+        private const val ONE_MINUTE_MILLIS = 60_000
+
+        private const val MIN_TIME_ZONE_OFFSET_MINUTES = -12 * 60
+        private const val MAX_TIME_ZONE_OFFSET_MINUTES = 14 * 60
     }
 }

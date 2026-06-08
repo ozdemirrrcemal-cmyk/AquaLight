@@ -12,7 +12,6 @@ object SaveLightPresetBottomSheet {
         onSaveClick: (String) -> Unit
     ) {
         val context = fragment.requireContext()
-
         val dialog = BottomSheetDialog(context)
 
         val binding = BottomSheetSaveLightPresetBinding.inflate(
@@ -25,10 +24,18 @@ object SaveLightPresetBottomSheet {
 
         binding.btnConfirmSavePreset.setOnClickListener {
             val presetName =
-                binding.inputPresetName.text?.toString().orEmpty()
+                binding.inputPresetName.text
+                    ?.toString()
+                    .orEmpty()
+                    .trim()
 
-            onSaveClick(presetName)
+            if (presetName.isBlank()) {
+                binding.inputPresetName.error = "Preset name is required"
+                return@setOnClickListener
+            }
+
             dialog.dismiss()
+            onSaveClick(presetName)
         }
 
         dialog.setContentView(binding.root)

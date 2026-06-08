@@ -6,7 +6,15 @@ sealed interface DeviceLightSettingsEvent {
         val message: String
     ) : DeviceLightSettingsEvent
 
+    data class ShowWarning(
+        val message: String
+    ) : DeviceLightSettingsEvent
+
     data class ShowError(
         val message: String
+    ) : DeviceLightSettingsEvent
+
+    data class SetLoading(
+        val isLoading: Boolean
     ) : DeviceLightSettingsEvent
 }

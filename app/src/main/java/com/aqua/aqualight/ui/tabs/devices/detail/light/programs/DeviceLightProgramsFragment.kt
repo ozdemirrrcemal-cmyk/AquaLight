@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.programs
 
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -15,6 +14,9 @@ import com.aqua.aqualight.databinding.FragmentDeviceLightProgramsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter.LightProgramsAdapter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListUiState
@@ -22,10 +24,12 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgr
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.sheet.LightProgramOptionsSheet
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
 import kotlinx.coroutines.launch
 
 class DeviceLightProgramsFragment :
-    Fragment(R.layout.fragment_device_light_programs) {
+Fragment(R.layout.fragment_device_light_programs) {
 
     private var _binding: FragmentDeviceLightProgramsBinding? = null
     private val binding get() = _binding!!
@@ -35,7 +39,7 @@ class DeviceLightProgramsFragment :
     private lateinit var programsAdapter: LightProgramsAdapter
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     override fun onViewCreated(
         view: View,
@@ -77,10 +81,12 @@ class DeviceLightProgramsFragment :
 
     private fun setupRecyclerView() {
         programsAdapter = LightProgramsAdapter(
-            onProgramClick = { program ->
+            onProgramClick = {
+                program ->
                 openProgramEditor(program.id)
             },
-            onProgramOptionsClick = { program ->
+            onProgramOptionsClick = {
+                program ->
                 showProgramOptionsSheet(program)
             }
         )
@@ -112,7 +118,8 @@ class DeviceLightProgramsFragment :
     private fun observeUiState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
+                viewModel.uiState.collect {
+                    state ->
                     renderUiState(state)
                 }
             }
@@ -122,22 +129,25 @@ class DeviceLightProgramsFragment :
     private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.events.collect { event ->
+                viewModel.events.collect {
+                    event ->
                     when (event) {
                         is LightProgramsEvent.ShowMessage -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.SUCCESS
+                            )
                         }
 
                         is LightProgramsEvent.ShowError -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.ERROR
+                            )
+                        }
+
+                        is LightProgramsEvent.SetLoading -> {
+                            showDeviceLoading(event.isLoading)
                         }
                     }
                 }
@@ -206,10 +216,10 @@ class DeviceLightProgramsFragment :
         )
 
         val selectedText =
-            requireContext().getColor(R.color.light_button_on_primary)
+        requireContext().getColor(R.color.light_button_on_primary)
 
         val normalText =
-            requireContext().getColor(R.color.light_text_secondary)
+        requireContext().getColor(R.color.light_text_secondary)
 
         binding.filterAll.setTextColor(
             if (filter == ProgramFilter.ALL) {
@@ -240,54 +250,87 @@ class DeviceLightProgramsFragment :
         program: LightProgramListItem
     ) {
         LightProgramOptionsSheet
-            .create(requireContext())
-            .show(
-                programName = program.name,
-                subtitle = "${program.subtitle} · ${program.startTime} → ${program.endTime}",
-                isActive = program.isActive,
-                onActiveChanged = { isActive ->
-                    viewModel.setProgramActive(
-                        programId = program.id,
-                        isActive = isActive
-                    )
-                },
-                onDuplicate = {
-                    viewModel.duplicateProgram(
-                        programId = program.id
-                    )
-                },
-                onRename = {
-                    showRenameProgramSheet(program)
-                },
-                onDelete = {
-                    viewModel.deleteProgram(
-                        programId = program.id
-                    )
-                }
-            )
+        .create(requireContext())
+        .show(
+            programName = program.name,
+            subtitle = "${program.subtitle} · ${program.startTime} → ${program.endTime}",
+            isActive = program.isActive,
+            onActiveChanged = {
+                isActive ->
+                viewModel.setProgramActive(
+                    programId = program.id,
+                    isActive = isActive
+                )
+            },
+            onDuplicate = {
+                viewModel.duplicateProgram(
+                    programId = program.id
+                )
+            },
+            onRename = {
+                showRenameProgramSheet(program)
+            },
+            onDelete = {
+                confirmDeleteProgram(program)
+            }
+        )
+    }
+
+    private fun confirmDeleteProgram(
+        program: LightProgramListItem
+    ) {
+        val message = if (program.isActive) {
+            "This program is active. Deleting it will also remove it from the device schedule."
+        } else {
+            "Delete this program from your saved programs?"
+        }
+
+        DeviceConfirmBottomSheet
+        .create(requireContext())
+        .show(
+            title = "Delete program?",
+            message = message,
+            confirmText = "Delete",
+            cancelText = "Cancel",
+            tone = DeviceConfirmTone.DANGER,
+            onConfirm = {
+                viewModel.deleteProgram(
+                    programId = program.id
+                )
+            }
+        )
     }
 
     private fun showRenameProgramSheet(
         program: LightProgramListItem
     ) {
         LightProgramNameSheet
-            .create(requireContext())
-            .show(
-                title = "Rename Program",
-                subtitle = "Update this program name.",
-                primaryButtonText = "Rename",
-                initialName = program.name
-            ) { newName ->
-                viewModel.renameProgram(
-                    programId = program.id,
-                    newName = newName
-                )
-            }
+        .create(requireContext())
+        .show(
+            title = "Rename Program",
+            subtitle = "Update this program name.",
+            primaryButtonText = "Rename",
+            initialName = program.name
+        ) {
+            newName ->
+            viewModel.renameProgram(
+                programId = program.id,
+                newName = newName
+            )
+        }
     }
 
     private fun openProgramEditor(
         programId: String? = null
     ) {
+        if (deviceId <= 0L) {
+            showDeviceSnack(
+                message = "Device information is missing",
+                type = DeviceFeedbackType.ERROR
+            )
+            return
+        }
+
         val bundle = Bundle().apply {
             putLong(ARG_DEVICE_ID, deviceId)
 
@@ -303,6 +346,7 @@ class DeviceLightProgramsFragment :
     }
 
     override fun onDestroyView() {
+        showDeviceLoading(false)
         binding.programsRecyclerView.adapter = null
         _binding = null
         super.onDestroyView()

@@ -39,9 +39,8 @@ class DeviceLightProgramsViewModel(
             context = appContext
         )
 
-    private val _uiState = MutableStateFlow(
-        LightProgramListUiState()
-    )
+    private val _uiState =
+        MutableStateFlow(LightProgramListUiState())
 
     val uiState: StateFlow<LightProgramListUiState> =
         _uiState.asStateFlow()
@@ -49,10 +48,12 @@ class DeviceLightProgramsViewModel(
     private val eventsChannel =
         Channel<LightProgramsEvent>(Channel.BUFFERED)
 
-    val events = eventsChannel.receiveAsFlow()
+    val events =
+        eventsChannel.receiveAsFlow()
 
     private var deviceId: Long = 0L
     private var observeProgramsJob: Job? = null
+    private var isProgramOperationRunning: Boolean = false
 
     fun initialize(
         deviceId: Long
@@ -75,7 +76,7 @@ class DeviceLightProgramsViewModel(
                         program.deviceId == deviceId
                     }
                 } else {
-                    savedPrograms
+                    emptyList()
                 }
 
                 val listItems = devicePrograms
@@ -94,6 +95,16 @@ class DeviceLightProgramsViewModel(
 
                 updatePrograms(
                     programs = listItems
+                )
+            }
+        }
+
+        if (deviceId <= 0L) {
+            viewModelScope.launch {
+                eventsChannel.send(
+                    LightProgramsEvent.ShowError(
+                        "Device information is missing"
+                    )
                 )
             }
         }
@@ -117,19 +128,24 @@ class DeviceLightProgramsViewModel(
         programId: String,
         isActive: Boolean
     ) {
-        viewModelScope.launch {
+        launchProgramOperation {
+            if (deviceId <= 0L) {
+                return@launchProgramOperation LightProgramsEvent.ShowError(
+                    "Device information is missing"
+                )
+            }
+
             val savedProgram =
                 lightProgramsDataStoreManager.getProgram(programId)
 
             if (savedProgram == null) {
-                eventsChannel.send(
-                    LightProgramsEvent.ShowError("Program could not be found")
+                return@launchProgramOperation LightProgramsEvent.ShowError(
+                    "Program could not be found"
                 )
-                return@launch
             }
 
             if (savedProgram.isActive == isActive) {
-                return@launch
+                return@launchProgramOperation null
             }
 
             val existingPrograms =
@@ -147,62 +163,57 @@ class DeviceLightProgramsViewModel(
                         existingProgram.id != savedProgram.id
                 }
 
-                val conflict = LightProgramScheduleConflictValidator.findConflict(
-                    candidate = updatedProgram,
-                    existingPrograms = activeProgramsForSameDevice
-                )
+                val conflict =
+                    LightProgramScheduleConflictValidator.findConflict(
+                        candidate = updatedProgram,
+                        existingPrograms = activeProgramsForSameDevice
+                    )
 
                 if (conflict != null) {
-                    eventsChannel.send(
-                        LightProgramsEvent.ShowError(
-                            "This program overlaps with ${conflict.name}"
-                        )
+                    return@launchProgramOperation LightProgramsEvent.ShowError(
+                        "This program overlaps with ${conflict.name}"
                     )
-                    return@launch
                 }
             }
 
-            val programsForDeviceAfterChange = existingPrograms
-                .map { existingProgram ->
-                    if (existingProgram.id == savedProgram.id) {
-                        updatedProgram
-                    } else {
-                        existingProgram
-                    }
+            val allProgramsAfterChange = existingPrograms.map { existingProgram ->
+                if (existingProgram.id == savedProgram.id) {
+                    updatedProgram
+                } else {
+                    existingProgram
                 }
-                .filter { existingProgram ->
-                    existingProgram.deviceId == savedProgram.deviceId
-                }
+            }
 
-            val syncResult = lightProgramCommandManager.loadPrograms(
-                deviceId = savedProgram.deviceId,
-                programs = programsForDeviceAfterChange
-            )
+            val activeProgramsForDeviceAfterChange =
+                allProgramsAfterChange.activeProgramsForDevice(
+                    deviceId = savedProgram.deviceId
+                )
+
+            val syncResult =
+                lightProgramCommandManager.loadPrograms(
+                    deviceId = savedProgram.deviceId,
+                    programs = activeProgramsForDeviceAfterChange
+                )
 
             if (!syncResult.isSuccess) {
-                eventsChannel.send(
-                    LightProgramsEvent.ShowError(
-                        syncResult.message ?: "Program could not be synced to device"
-                    )
+                return@launchProgramOperation LightProgramsEvent.ShowError(
+                    syncResult.message ?: "Program could not be synced to device"
                 )
-                return@launch
             }
 
             lightProgramsDataStoreManager.saveProgram(updatedProgram)
 
             refreshLiveStateIfNoActiveProgram(
                 deviceId = savedProgram.deviceId,
-                programsForDevice = programsForDeviceAfterChange
+                activeProgramsForDevice = activeProgramsForDeviceAfterChange
             )
 
-            eventsChannel.send(
-                LightProgramsEvent.ShowMessage(
-                    if (isActive) {
-                        "Program activated"
-                    } else {
-                        "Program disabled"
-                    }
-                )
+            LightProgramsEvent.ShowMessage(
+                if (isActive) {
+                    "Program activated"
+                } else {
+                    "Program disabled"
+                }
             )
         }
     }
@@ -216,12 +227,15 @@ class DeviceLightProgramsViewModel(
 
             if (savedProgram == null) {
                 eventsChannel.send(
-                    LightProgramsEvent.ShowError("Program could not be found")
+                    LightProgramsEvent.ShowError(
+                        "Program could not be found"
+                    )
                 )
                 return@launch
             }
 
-            val now = System.currentTimeMillis()
+            val now =
+                System.currentTimeMillis()
 
             val duplicatedProgram = savedProgram.copy(
                 id = UUID.randomUUID().toString(),
@@ -231,11 +245,21 @@ class DeviceLightProgramsViewModel(
                 updatedAt = now
             )
 
-            lightProgramsDataStoreManager.saveProgram(duplicatedProgram)
-
-            eventsChannel.send(
-                LightProgramsEvent.ShowMessage("Program duplicated")
-            )
+            runCatching {
+                lightProgramsDataStoreManager.saveProgram(duplicatedProgram)
+            }.onSuccess {
+                eventsChannel.send(
+                    LightProgramsEvent.ShowMessage(
+                        "Program duplicated"
+                    )
+                )
+            }.onFailure {
+                eventsChannel.send(
+                    LightProgramsEvent.ShowError(
+                        "Program could not be duplicated"
+                    )
+                )
+            }
         }
     }
 
@@ -249,7 +273,9 @@ class DeviceLightProgramsViewModel(
 
             if (savedProgram == null) {
                 eventsChannel.send(
-                    LightProgramsEvent.ShowError("Program could not be found")
+                    LightProgramsEvent.ShowError(
+                        "Program could not be found"
+                    )
                 )
                 return@launch
             }
@@ -260,68 +286,116 @@ class DeviceLightProgramsViewModel(
                     savedProgram.name
                 }
 
-            lightProgramsDataStoreManager.saveProgram(
-                savedProgram.copy(
-                    name = cleanName,
-                    updatedAt = System.currentTimeMillis()
+            runCatching {
+                lightProgramsDataStoreManager.saveProgram(
+                    savedProgram.copy(
+                        name = cleanName,
+                        updatedAt = System.currentTimeMillis()
+                    )
                 )
-            )
-
-            eventsChannel.send(
-                LightProgramsEvent.ShowMessage("Program renamed")
-            )
+            }.onSuccess {
+                eventsChannel.send(
+                    LightProgramsEvent.ShowMessage(
+                        "Program renamed"
+                    )
+                )
+            }.onFailure {
+                eventsChannel.send(
+                    LightProgramsEvent.ShowError(
+                        "Program could not be renamed"
+                    )
+                )
+            }
         }
     }
 
     fun deleteProgram(
         programId: String
     ) {
-        viewModelScope.launch {
+        launchProgramOperation {
+            if (deviceId <= 0L) {
+                return@launchProgramOperation LightProgramsEvent.ShowError(
+                    "Device information is missing"
+                )
+            }
+
             val savedProgram =
                 lightProgramsDataStoreManager.getProgram(programId)
 
             if (savedProgram == null) {
-                eventsChannel.send(
-                    LightProgramsEvent.ShowError("Program could not be found")
+                return@launchProgramOperation LightProgramsEvent.ShowError(
+                    "Program could not be found"
                 )
-                return@launch
             }
 
             val existingPrograms =
                 lightProgramsDataStoreManager.programsFlow.first()
 
-            val programsForDeviceAfterDelete = existingPrograms
-                .filter { existingProgram ->
-                    existingProgram.deviceId == savedProgram.deviceId &&
-                        existingProgram.id != savedProgram.id
-                }
+            val allProgramsAfterDelete = existingPrograms.filter { existingProgram ->
+                existingProgram.id != savedProgram.id
+            }
 
-            if (savedProgram.isActive) {
-                val syncResult = lightProgramCommandManager.loadPrograms(
-                    deviceId = savedProgram.deviceId,
-                    programs = programsForDeviceAfterDelete
+            val activeProgramsForDeviceAfterDelete =
+                allProgramsAfterDelete.activeProgramsForDevice(
+                    deviceId = savedProgram.deviceId
                 )
 
-                if (!syncResult.isSuccess) {
-                    eventsChannel.send(
-                        LightProgramsEvent.ShowError(
-                            syncResult.message ?: "Program could not be removed from device"
-                        )
-                    )
-                    return@launch
-                }
+            val syncResult =
+                lightProgramCommandManager.loadPrograms(
+                    deviceId = savedProgram.deviceId,
+                    programs = activeProgramsForDeviceAfterDelete
+                )
+
+            if (!syncResult.isSuccess) {
+                return@launchProgramOperation LightProgramsEvent.ShowError(
+                    syncResult.message ?: "Program could not be removed from device"
+                )
             }
 
             lightProgramsDataStoreManager.deleteProgram(programId)
 
             refreshLiveStateIfNoActiveProgram(
                 deviceId = savedProgram.deviceId,
-                programsForDevice = programsForDeviceAfterDelete
+                activeProgramsForDevice = activeProgramsForDeviceAfterDelete
             )
 
-            eventsChannel.send(
-                LightProgramsEvent.ShowMessage("Program deleted")
+            LightProgramsEvent.ShowMessage(
+                "Program deleted"
             )
+        }
+    }
+
+    private fun launchProgramOperation(
+        block: suspend () -> LightProgramsEvent?
+    ) {
+        if (isProgramOperationRunning) {
+            return
+        }
+
+        isProgramOperationRunning = true
+
+        viewModelScope.launch {
+            eventsChannel.send(
+                LightProgramsEvent.SetLoading(true)
+            )
+
+            val resultEvent = runCatching {
+                block()
+            }.getOrElse { error ->
+                LightProgramsEvent.ShowError(
+                    error.message ?: "Program operation failed"
+                )
+            }
+
+            eventsChannel.send(
+                LightProgramsEvent.SetLoading(false)
+            )
+
+            isProgramOperationRunning = false
+
+            if (resultEvent != null) {
+                eventsChannel.send(resultEvent)
+            }
         }
     }
 
@@ -359,6 +433,15 @@ class DeviceLightProgramsViewModel(
                     !program.isActive
                 }
             }
+        }
+    }
+
+    private fun List<SavedLightProgram>.activeProgramsForDevice(
+        deviceId: Long
+    ): List<SavedLightProgram> {
+        return filter { program ->
+            program.deviceId == deviceId &&
+                program.isActive
         }
     }
 
@@ -412,18 +495,16 @@ class DeviceLightProgramsViewModel(
 
     private fun refreshLiveStateIfNoActiveProgram(
         deviceId: Long,
-        programsForDevice: List<SavedLightProgram>
+        activeProgramsForDevice: List<SavedLightProgram>
     ) {
-        val hasActiveProgram = programsForDevice.any { program ->
-            program.isActive
+        if (activeProgramsForDevice.isNotEmpty()) {
+            return
         }
 
-        if (!hasActiveProgram) {
-            LightDeviceLiveRefreshManager.refreshNow(
-                context = appContext,
-                deviceId = deviceId
-            )
-        }
+        LightDeviceLiveRefreshManager.refreshNow(
+            context = appContext,
+            deviceId = deviceId
+        )
     }
 
     override fun onCleared() {

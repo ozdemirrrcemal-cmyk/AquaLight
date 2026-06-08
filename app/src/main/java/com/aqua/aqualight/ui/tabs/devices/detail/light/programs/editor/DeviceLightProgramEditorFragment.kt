@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -15,11 +14,15 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramEditorBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudFrequency
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCloudSimulationSheet
@@ -137,19 +140,21 @@ class DeviceLightProgramEditorFragment :
                 viewModel.events.collect { event ->
                     when (event) {
                         is DeviceLightProgramEditorEvent.ShowMessage -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.SUCCESS
+                            )
                         }
 
                         is DeviceLightProgramEditorEvent.ShowError -> {
-                            Toast.makeText(
-                                requireContext(),
-                                event.message,
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showDeviceSnack(
+                                message = event.message,
+                                type = DeviceFeedbackType.ERROR
+                            )
+                        }
+
+                        is DeviceLightProgramEditorEvent.SetLoading -> {
+                            showDeviceLoading(event.isLoading)
                         }
 
                         DeviceLightProgramEditorEvent.NavigateBack -> {
@@ -170,7 +175,7 @@ class DeviceLightProgramEditorFragment :
             binding.tvTimeStartValue.text = state.start.label
             binding.tvTimePeakStartValue.text = state.peakStart.label
             binding.tvTimePeakEndValue.text = state.peakEnd.label
-            binding.tvTimeEndValue.text = state.end.label
+            binding.tvTimeEndValue.text = LightProgramTimeMath.endLabel(state.end)
 
             setSliderValueIfNeeded(
                 slider = binding.sliderRed,
@@ -358,20 +363,44 @@ class DeviceLightProgramEditorFragment :
         }
 
         binding.btnLoadToDevice.setOnClickListener {
+            val isEditing = viewModel.isEditingExistingProgram()
+
             showProgramNameSheet(
-                title = "Load to Device",
-                subtitle = "Name this program before loading it to the device.",
-                primaryButtonText = "Load",
-                isActive = true
+                title = if (isEditing) {
+                    "Update Device"
+                } else {
+                    "Load to Device"
+                },
+                subtitle = if (isEditing) {
+                    "Save changes and update the active device schedule."
+                } else {
+                    "Name this program before loading it to the device."
+                },
+                primaryButtonText = if (isEditing) {
+                    "Update"
+                } else {
+                    "Load"
+                },
+                activateOnDevice = true
             )
         }
 
         binding.btnSaveAs.setOnClickListener {
+            val isEditing = viewModel.isEditingExistingProgram()
+
             showProgramNameSheet(
-                title = "Save As",
-                subtitle = "Save this program without activating it.",
+                title = if (isEditing) {
+                    "Save Changes"
+                } else {
+                    "Save Program"
+                },
+                subtitle = if (isEditing) {
+                    "Update this program. Active programs will sync to the device."
+                } else {
+                    "Save this program without loading it to the device."
+                },
                 primaryButtonText = "Save",
-                isActive = false
+                activateOnDevice = false
             )
         }
     }
@@ -407,10 +436,8 @@ class DeviceLightProgramEditorFragment :
         binding.sliderRed.addOnChangeListener { _, value, fromUser ->
             if (isRendering || !fromUser) return@addOnChangeListener
 
-            val current = viewModel.uiState.value.channelValues
-
             viewModel.updateChannelValues(
-                current.copy(
+                viewModel.uiState.value.channelValues.copy(
                     red = value.toInt()
                 )
             )
@@ -419,10 +446,8 @@ class DeviceLightProgramEditorFragment :
         binding.sliderGreen.addOnChangeListener { _, value, fromUser ->
             if (isRendering || !fromUser) return@addOnChangeListener
 
-            val current = viewModel.uiState.value.channelValues
-
             viewModel.updateChannelValues(
-                current.copy(
+                viewModel.uiState.value.channelValues.copy(
                     green = value.toInt()
                 )
             )
@@ -431,10 +456,8 @@ class DeviceLightProgramEditorFragment :
         binding.sliderBlue.addOnChangeListener { _, value, fromUser ->
             if (isRendering || !fromUser) return@addOnChangeListener
 
-            val current = viewModel.uiState.value.channelValues
-
             viewModel.updateChannelValues(
-                current.copy(
+                viewModel.uiState.value.channelValues.copy(
                     blue = value.toInt()
                 )
             )
@@ -443,10 +466,8 @@ class DeviceLightProgramEditorFragment :
         binding.sliderWhite.addOnChangeListener { _, value, fromUser ->
             if (isRendering || !fromUser) return@addOnChangeListener
 
-            val current = viewModel.uiState.value.channelValues
-
             viewModel.updateChannelValues(
-                current.copy(
+                viewModel.uiState.value.channelValues.copy(
                     white = value.toInt()
                 )
             )
@@ -478,7 +499,7 @@ class DeviceLightProgramEditorFragment :
         title: String,
         subtitle: String,
         primaryButtonText: String,
-        isActive: Boolean
+        activateOnDevice: Boolean
     ) {
         LightProgramNameSheet
             .create(requireContext())
@@ -490,7 +511,7 @@ class DeviceLightProgramEditorFragment :
             ) { name ->
                 viewModel.saveProgram(
                     name = name,
-                    isActive = isActive
+                    activateOnDevice = activateOnDevice
                 )
             }
     }
@@ -508,67 +529,35 @@ class DeviceLightProgramEditorFragment :
             requireContext().getColor(R.color.light_text_secondary)
 
         binding.repeatEvery.setBackgroundResource(
-            if (state.repeatMode == RepeatMode.EVERY) {
-                selectedBg
-            } else {
-                transparentBg
-            }
+            if (state.repeatMode == RepeatMode.EVERY) selectedBg else transparentBg
         )
 
         binding.repeatWeekdays.setBackgroundResource(
-            if (state.repeatMode == RepeatMode.WEEK) {
-                selectedBg
-            } else {
-                transparentBg
-            }
+            if (state.repeatMode == RepeatMode.WEEK) selectedBg else transparentBg
         )
 
         binding.repeatWeekend.setBackgroundResource(
-            if (state.repeatMode == RepeatMode.WEEKEND) {
-                selectedBg
-            } else {
-                transparentBg
-            }
+            if (state.repeatMode == RepeatMode.WEEKEND) selectedBg else transparentBg
         )
 
         binding.repeatCustom.setBackgroundResource(
-            if (state.repeatMode == RepeatMode.CUSTOM) {
-                selectedBg
-            } else {
-                transparentBg
-            }
+            if (state.repeatMode == RepeatMode.CUSTOM) selectedBg else transparentBg
         )
 
         binding.repeatEvery.setTextColor(
-            if (state.repeatMode == RepeatMode.EVERY) {
-                selectedText
-            } else {
-                normalText
-            }
+            if (state.repeatMode == RepeatMode.EVERY) selectedText else normalText
         )
 
         binding.repeatWeekdays.setTextColor(
-            if (state.repeatMode == RepeatMode.WEEK) {
-                selectedText
-            } else {
-                normalText
-            }
+            if (state.repeatMode == RepeatMode.WEEK) selectedText else normalText
         )
 
         binding.repeatWeekend.setTextColor(
-            if (state.repeatMode == RepeatMode.WEEKEND) {
-                selectedText
-            } else {
-                normalText
-            }
+            if (state.repeatMode == RepeatMode.WEEKEND) selectedText else normalText
         )
 
         binding.repeatCustom.setTextColor(
-            if (state.repeatMode == RepeatMode.CUSTOM) {
-                selectedText
-            } else {
-                normalText
-            }
+            if (state.repeatMode == RepeatMode.CUSTOM) selectedText else normalText
         )
     }
 
@@ -631,6 +620,8 @@ class DeviceLightProgramEditorFragment :
     }
 
     override fun onDestroyView() {
+        showDeviceLoading(false)
+
         previewDaySheet?.dismiss()
         previewDaySheet = null
 

@@ -10,5 +10,9 @@ sealed interface ManualLightEvent {
         val message: String
     ) : ManualLightEvent
 
+    data class SetLoading(
+        val isLoading: Boolean
+    ) : ManualLightEvent
+
     data object ShowSavePresetSheet : ManualLightEvent
 }

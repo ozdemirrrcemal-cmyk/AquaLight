@@ -80,6 +80,14 @@ class DeviceLightViewModel(
 
         observeJob?.cancel()
 
+        if (deviceId <= 0L) {
+            _uiState.value = createDeviceTimeUnavailableState(
+                programs = emptyList(),
+                liveState = LightDeviceLiveState.initial(0L)
+            )
+            return
+        }
+
         LightDeviceLiveRefreshManager.start(
             context = appContext,
             deviceId = deviceId,
@@ -130,6 +138,10 @@ class DeviceLightViewModel(
     }
 
     fun refreshNow() {
+        if (deviceId <= 0L) {
+            return
+        }
+
         LightDeviceLiveRefreshManager.refreshNow(
             context = appContext,
             deviceId = deviceId

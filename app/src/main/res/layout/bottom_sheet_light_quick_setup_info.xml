@@ -36,12 +36,17 @@
         android:text="Detailed information about this recommendation."
         tools:text="Main factors used by the smart recommendation engine." />
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/infoScrollView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
+        android:clipToPadding="false"
         android:fillViewport="false"
-        android:overScrollMode="ifContentScrolls">
+        android:fadingEdgeLength="0dp"
+        android:overScrollMode="never"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="none">
 
         <LinearLayout
             android:id="@+id/infoRowsContainer"
@@ -49,7 +54,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnClose"

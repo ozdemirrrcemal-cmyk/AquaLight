@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
+import kotlin.math.roundToInt
 import org.json.JSONObject
 import java.net.URLDecoder
 
@@ -55,6 +56,12 @@ class Esp32LightThermalProtectionManager(
         recoveryIntervalSeconds: Int,
         sensorCount: Int
     ): LightCommandResult {
+        if (sensorCount <= 0) {
+            return LightCommandResult.failure(
+                "Temperature sensor is not configured"
+            )
+        }
+
         val safeLimit =
             limitTemperatureCelsius.coerceIn(40, 75)
 
@@ -64,10 +71,10 @@ class Esp32LightThermalProtectionManager(
         val safeRecovery =
             recoveryIntervalSeconds.coerceIn(15, 300)
 
-        val temperatureData = JSONObject()
+        val resolvedSensorCount =
+            sensorCount.coerceAtLeast(1)
 
-        val resolvedSensorCount = sensorCount
-            .coerceAtLeast(1)
+        val temperatureData = JSONObject()
 
         repeat(resolvedSensorCount) { index ->
             temperatureData.put(
@@ -77,10 +84,11 @@ class Esp32LightThermalProtectionManager(
             )
         }
 
-        val json = JSONObject()
+        val settingsJson = JSONObject()
             .put(
                 "LTemperature",
                 JSONObject()
+                    .put("Count", resolvedSensorCount)
                     .put("Data", temperatureData)
             )
             .put(
@@ -91,11 +99,32 @@ class Esp32LightThermalProtectionManager(
             )
             .toString()
 
-        return httpClient.postSet(
+        val settingsResult = httpClient.postSet(
             ip = ip,
-            json = json,
+            json = settingsJson,
             requestTag = "thermal_protection_set"
         )
+
+        if (!settingsResult.isSuccess) {
+            return settingsResult
+        }
+
+        return httpClient.postSet(
+            ip = ip,
+            json = buildSaveJson(),
+            requestTag = "thermal_protection_save"
+        )
+    }
+
+    private fun buildSaveJson(): String {
+        return JSONObject()
+            .put(
+                "Main",
+                JSONObject()
+                    .put("SaveCool", 1)
+                    .put("SaveLight", 1)
+            )
+            .toString()
     }
 
     private fun parseState(
@@ -111,8 +140,13 @@ class Esp32LightThermalProtectionManager(
         val temperatureData =
             temperatureRoot?.optJSONObject("Data")
 
-        val sensorCount =
+        val declaredSensorCount =
             temperatureRoot?.optInt("Count", 0) ?: 0
+
+        val sensorCount = maxOf(
+            declaredSensorCount,
+            countNumericObjects(temperatureData)
+        )
 
         val firstTemperatureObject =
             firstObjectFromData(temperatureData)
@@ -123,17 +157,23 @@ class Esp32LightThermalProtectionManager(
         val limitTemperature =
             firstTemperatureObject
                 ?.optNullableDouble("TempLightErr")
-                ?.toInt()
+                ?.roundToInt()
                 ?: 50
 
         val lightRoot =
             root.optJSONObject("LLight")
 
         val lightReduction =
-            lightRoot?.optInt("LightDownErr", 70) ?: 70
+            lightRoot
+                ?.optNullableDouble("LightDownErr")
+                ?.roundToInt()
+                ?: 70
 
         val recoveryInterval =
-            lightRoot?.optInt("TimeDownErr", 60) ?: 60
+            lightRoot
+                ?.optNullableDouble("TimeDownErr")
+                ?.roundToInt()
+                ?: 60
 
         val currentReductionMultiplier =
             lightRoot?.optNullableDouble("kLightErr")
@@ -149,6 +189,34 @@ class Esp32LightThermalProtectionManager(
         )
     }
 
+    private fun countNumericObjects(
+        data: JSONObject?
+    ): Int {
+        if (data == null) {
+            return 0
+        }
+
+        var count = 0
+        val keys = data.keys()
+
+        while (keys.hasNext()) {
+            val key = keys.next()
+
+            if (key == "All") {
+                continue
+            }
+
+            if (
+                key.toIntOrNull() != null &&
+                data.optJSONObject(key) != null
+            ) {
+                count++
+            }
+        }
+
+        return count
+    }
+
     private fun firstObjectFromData(
         data: JSONObject?
     ): JSONObject? {
@@ -160,6 +228,11 @@ class Esp32LightThermalProtectionManager(
 
         while (keys.hasNext()) {
             val key = keys.next()
+
+            if (key == "All") {
+                continue
+            }
+
             val item = data.optJSONObject(key)
 
             if (item != null) {
