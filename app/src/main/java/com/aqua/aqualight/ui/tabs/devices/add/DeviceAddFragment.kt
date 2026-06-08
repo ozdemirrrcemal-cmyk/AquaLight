@@ -37,7 +37,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { result ->
+    ) {
+        result ->
         if (hasRequiredPermissionsFromResult(result)) {
             loadCandidates()
         } else {
@@ -75,7 +76,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun setupRecycler() {
-        adapter = DeviceAddAdapter { candidate ->
+        adapter = DeviceAddAdapter {
+            candidate ->
             handleCandidateClick(
                 candidate = candidate
             )
@@ -142,14 +144,14 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         result: Map<String, Boolean>
     ): Boolean {
         val locationGranted =
-            result[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
-                result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION) ||
-                isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION)
+        result[Manifest.permission.ACCESS_COARSE_LOCATION] == true ||
+        result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+        isPermissionGranted(Manifest.permission.ACCESS_COARSE_LOCATION) ||
+        isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION)
 
         val nearbyWifiGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             result[Manifest.permission.NEARBY_WIFI_DEVICES] == true ||
-                isPermissionGranted(Manifest.permission.NEARBY_WIFI_DEVICES)
+            isPermissionGranted(Manifest.permission.NEARBY_WIFI_DEVICES)
         } else {
             true
         }
@@ -362,30 +364,30 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         }
 
         findNavController().navigate(
-            R.id.action_deviceAddFragment_to_deviceSetupFragment,
+            R.id.action_deviceAddFragment_to_deviceRouterFragment,
             args
         )
     }
 
     private fun openDeviceMenu(
-    deviceId: Long
-) {
-    val args = Bundle().apply {
-        putLong("deviceId", deviceId)
-    }
-
-    findNavController().navigate(
-        R.id.deviceRouterFragment,
-        args,
-        navOptions {
-            popUpTo(R.id.devicesFragment) {
-                inclusive = false
-            }
-
-            launchSingleTop = true
+        deviceId: Long
+    ) {
+        val args = Bundle().apply {
+            putLong("deviceId", deviceId)
         }
-    )
-}
+
+        findNavController().navigate(
+            R.id.deviceRouterFragment,
+            args,
+            navOptions {
+                popUpTo(R.id.devicesFragment) {
+                    inclusive = false
+                }
+
+                launchSingleTop = true
+            }
+        )
+    }
     override fun onDestroyView() {
         binding.scanAnimation.cancelAnimation()
         binding.rvCandidates.adapter = null

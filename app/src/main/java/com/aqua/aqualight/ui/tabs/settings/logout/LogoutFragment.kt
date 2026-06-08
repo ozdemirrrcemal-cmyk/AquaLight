@@ -23,13 +23,13 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class LogoutFragment :
-    Fragment(R.layout.fragment_logout) {
+Fragment(R.layout.fragment_logout) {
 
     private var _binding: FragmentLogoutBinding? = null
     private val binding get() = _binding!!
 
     private val auth
-        get() = FirebaseAuth.getInstance()
+    get() = FirebaseAuth.getInstance()
 
     private val userPrefs by lazy {
         UserPreferencesManager.create(requireContext())
@@ -40,7 +40,7 @@ class LogoutFragment :
     }
 
     private val baseActivity
-        get() = activity as? BaseActivity
+    get() = activity as? BaseActivity
 
     // ---------------------------------------------------------
     // ON CREATE VIEW
@@ -53,11 +53,11 @@ class LogoutFragment :
     ): View {
 
         _binding =
-            FragmentLogoutBinding.inflate(
-                inflater,
-                container,
-                false
-            )
+        FragmentLogoutBinding.inflate(
+            inflater,
+            container,
+            false
+        )
 
         return binding.root
     }
@@ -88,19 +88,19 @@ class LogoutFragment :
     private fun setupNavigation() {
 
         binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
+            AquaHeaderConfig(
+                title = getString(R.string.settings_about_title),
+                showBackButton = true,
+                onBackClick = {
+                    findNavController().popBackStack()
+                }
+            )
+        )
 
         binding.rowChangePassword.setOnClickListener {
 
             findNavController().navigate(
-                R.id.action_logoutFragment_to_changePasswordFragment
+                R.id.action_logoutFragment_to_reAuthenticateFragment
             )
         }
 
@@ -167,7 +167,7 @@ class LogoutFragment :
         baseActivity?.showLoading(true)
 
         binding.btnLogout.isEnabled =
-            false
+        false
 
         viewLifecycleOwner.lifecycleScope.launch {
 
@@ -182,7 +182,7 @@ class LogoutFragment :
             } finally {
 
                 binding.btnLogout.isEnabled =
-                    true
+                true
 
                 baseActivity?.showLoading(false)
             }
@@ -255,13 +255,13 @@ class LogoutFragment :
     private fun navigateToReAuth() {
 
         val bundle =
-            Bundle().apply {
+        Bundle().apply {
 
-                putString(
-                    ReAuthenticateFragment.ARG_ACTION,
-                    ReAuthenticateFragment.ACTION_DELETE_ACCOUNT
-                )
-            }
+            putString(
+                ReAuthenticateFragment.ARG_ACTION,
+                ReAuthenticateFragment.ACTION_DELETE_ACCOUNT
+            )
+        }
 
         findNavController().navigate(
             R.id.reAuthenticateFragment,
@@ -276,22 +276,22 @@ class LogoutFragment :
     private fun navigateToLogin() {
 
         val rootNav =
-            (
-                requireActivity()
-                    .supportFragmentManager
-                    .findFragmentById(R.id.nav_host)
-                        as NavHostFragment
-                ).navController
+        (
+            requireActivity()
+            .supportFragmentManager
+            .findFragmentById(R.id.nav_host)
+            as NavHostFragment
+        ).navController
 
         val opts =
-            navOptions {
+        navOptions {
 
-                popUpTo(R.id.nav_app) {
-                    inclusive = true
-                }
-
-                launchSingleTop = true
+            popUpTo(R.id.nav_app) {
+                inclusive = true
             }
+
+            launchSingleTop = true
+        }
 
         rootNav.navigate(
             R.id.authContainerFragment,
