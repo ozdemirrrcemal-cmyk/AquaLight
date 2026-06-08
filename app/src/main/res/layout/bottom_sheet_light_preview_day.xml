@@ -24,21 +24,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
-        android:text="Preview Day" />
+        android:text="@string/light_preview_day_title" />
 
     <TextView
         style="@style/TextAppearance.Aqua.Light.SheetSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Simulate the full program on device." />
+        android:text="@string/light_preview_day_description" />
 
     <TextView
         style="@style/TextAppearance.Aqua.Light.Caption"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="SPEED" />
+        android:text="@string/light_preview_day_speed_label" />
 
     <LinearLayout
         android:id="@+id/previewSpeedSelector"
@@ -58,7 +58,7 @@
             android:layout_weight="1"
             android:background="@drawable/bg_light_filter_selected"
             android:gravity="center"
-            android:text="1 min" />
+            android:text="@string/light_preview_day_speed_one_minute" />
 
         <TextView
             android:id="@+id/speedThreeMinutes"
@@ -67,7 +67,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="3 min" />
+            android:text="@string/light_preview_day_speed_three_minutes" />
 
         <TextView
             android:id="@+id/speedFiveMinutes"
@@ -76,7 +76,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="5 min" />
+            android:text="@string/light_preview_day_speed_five_minutes" />
 
     </LinearLayout>
 
@@ -85,7 +85,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
-        android:text="During preview, live program will be temporarily overridden." />
+        android:text="@string/light_preview_day_override_warning" />
 
     <ProgressBar
         android:id="@+id/previewProgressBar"
@@ -105,7 +105,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="end"
-        android:text="0%" />
+        android:text="@string/light_preview_day_progress_default" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnStartPreview"
@@ -113,6 +113,6 @@
         android:layout_width="match_parent"
         android:layout_height="54dp"
         android:layout_marginTop="24dp"
-        android:text="Start Preview" />
+        android:text="@string/light_preview_day_start_button" />
 
 </LinearLayout>

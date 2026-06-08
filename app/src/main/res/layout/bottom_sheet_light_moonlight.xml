@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/moonlightSheetRoot"
     android:layout_width="match_parent"
@@ -25,14 +24,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
-        android:text="Moonlight" />
+        android:text="@string/light_moonlight_title" />
 
     <TextView
         style="@style/TextAppearance.Aqua.Light.SheetSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Run soft night lighting after the main program." />
+        android:text="@string/light_moonlight_description" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -46,7 +45,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Enable Moonlight" />
+            android:text="@string/light_moonlight_enable" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switchMoonlightEnabled"
@@ -74,7 +73,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Follow Program End" />
+                android:text="@string/light_moonlight_follow_program_end" />
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switchFollowProgramEnd"
@@ -99,14 +98,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Start Time" />
+                android:text="@string/light_moonlight_start_time" />
 
             <TextView
                 android:id="@+id/tvMoonlightStart"
                 style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Program End" />
+                android:text="@string/light_moonlight_program_end" />
 
         </LinearLayout>
 
@@ -125,14 +124,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="End Time" />
+                android:text="@string/light_moonlight_end_time" />
 
             <TextView
                 android:id="@+id/tvMoonlightEnd"
                 style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="06:00" />
+                android:text="@string/light_moonlight_end_default" />
 
         </LinearLayout>
 
@@ -141,7 +140,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="CHANNEL" />
+            android:text="@string/light_moonlight_channel_label" />
 
         <LinearLayout
             android:id="@+id/moonlightChannelSelector"
@@ -161,7 +160,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/bg_light_filter_selected"
                 android:gravity="center"
-                android:text="Blue" />
+                android:text="@string/light_channel_blue" />
 
             <TextView
                 android:id="@+id/channelWhite"
@@ -170,7 +169,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="White" />
+                android:text="@string/light_channel_white" />
 
             <TextView
                 android:id="@+id/channelBlueWhite"
@@ -179,7 +178,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="Blue + White" />
+                android:text="@string/light_channel_blue_white" />
 
         </LinearLayout>
 
@@ -189,7 +188,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
-            android:text="Intensity 5%" />
+            android:text="@string/light_moonlight_intensity_default" />
 
         <com.google.android.material.slider.Slider
             android:id="@+id/sliderMoonlightIntensity"
@@ -216,7 +215,7 @@
             android:layout_height="match_parent"
             android:layout_marginEnd="10dp"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/common_cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnApply"
@@ -225,7 +224,7 @@
             android:layout_height="match_parent"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:text="Apply" />
+            android:text="@string/common_apply" />
 
     </LinearLayout>
 

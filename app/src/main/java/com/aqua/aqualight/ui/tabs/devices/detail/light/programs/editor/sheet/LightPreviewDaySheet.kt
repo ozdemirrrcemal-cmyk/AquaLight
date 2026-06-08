@@ -127,19 +127,23 @@ class LightPreviewDaySheet private constructor(
         val safeProgress = progressPercent.coerceIn(0, 100)
 
         binding.previewProgressBar.progress = safeProgress
-        binding.tvPreviewProgress.text = "$safeProgress%"
+        binding.tvPreviewProgress.text =
+            context.getString(
+                R.string.light_preview_day_progress_format,
+                safeProgress
+            )
 
         binding.btnStartPreview.text = when {
             isPreviewRunning -> {
-                "Stop Preview"
+                context.getString(R.string.light_preview_day_stop_button)
             }
 
             safeProgress >= 100 -> {
-                "Start Again"
+                context.getString(R.string.light_preview_day_start_again_button)
             }
 
             else -> {
-                "Start Preview"
+                context.getString(R.string.light_preview_day_start_button)
             }
         }
 

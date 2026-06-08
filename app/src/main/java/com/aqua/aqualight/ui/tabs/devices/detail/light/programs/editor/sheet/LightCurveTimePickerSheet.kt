@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.widget.NumberPicker
 import com.aqua.aqualight.databinding.BottomSheetLightCurveTimePickerBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import java.util.Locale
 
 class LightCurveTimePickerSheet private constructor(
     private val context: Context
@@ -53,7 +54,7 @@ class LightCurveTimePickerSheet private constructor(
         picker.wrapSelectorWheel = true
 
         picker.displayedValues = (0..23)
-            .map { "%02d".format(it) }
+            .map { String.format(Locale.US, "%02d", it) }
             .toTypedArray()
     }
 
@@ -67,7 +68,7 @@ class LightCurveTimePickerSheet private constructor(
         picker.wrapSelectorWheel = true
 
         picker.displayedValues = (0..59)
-            .map { "%02d".format(it) }
+            .map { String.format(Locale.US, "%02d", it) }
             .toTypedArray()
     }
 

@@ -23,14 +23,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
-        android:text="Transition Variant" />
+        android:text="@string/light_transition_variant_title" />
 
     <TextView
         style="@style/TextAppearance.Aqua.Light.SheetSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Choose how sunrise and sunset ramps should feel." />
+        android:text="@string/light_transition_variant_description" />
 
     <LinearLayout
         android:id="@+id/modeLinear"
@@ -51,14 +51,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Linear" />
+            android:text="@string/light_transition_variant_linear" />
 
         <TextView
             android:id="@+id/checkLinear"
             style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Selected" />
+            android:text="@string/common_selected" />
 
     </LinearLayout>
 
@@ -86,14 +86,14 @@
                 style="@style/TextAppearance.Aqua.Light.SheetRowTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Smooth" />
+                android:text="@string/light_transition_variant_smooth" />
 
             <TextView
                 style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Soft start and soft finish" />
+                android:text="@string/light_transition_variant_smooth_description" />
 
         </LinearLayout>
 
@@ -101,8 +101,7 @@
             android:id="@+id/checkSmooth"
             style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="" />
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
@@ -130,14 +129,14 @@
                 style="@style/TextAppearance.Aqua.Light.SheetRowTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Natural" />
+                android:text="@string/light_transition_variant_natural" />
 
             <TextView
                 style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Sunrise-like ramp curve" />
+                android:text="@string/light_transition_variant_natural_description" />
 
         </LinearLayout>
 
@@ -145,8 +144,7 @@
             android:id="@+id/checkNatural"
             style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="" />
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
@@ -163,7 +161,7 @@
             android:layout_height="match_parent"
             android:layout_marginEnd="10dp"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/common_cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnApply"
@@ -172,7 +170,7 @@
             android:layout_height="match_parent"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:text="Apply" />
+            android:text="@string/common_apply" />
 
     </LinearLayout>
 

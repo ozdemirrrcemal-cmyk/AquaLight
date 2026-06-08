@@ -34,17 +34,30 @@ class LightMoonlightSheet private constructor(
         var intensity = initialSettings.intensityPercent.coerceIn(1, 15)
 
         fun renderEnabledState() {
-            binding.moonlightOptionsContainer.alpha = if (enabled) 1f else 0.45f
+            binding.moonlightOptionsContainer.alpha = if (enabled) {
+                1f
+            } else {
+                0.45f
+            }
+
             binding.moonlightOptionsContainer.isEnabled = enabled
             setChildrenEnabled(binding.moonlightOptionsContainer, enabled)
         }
 
         fun renderFollowProgramEnd() {
             binding.rowMoonlightStart.visibility =
-                if (followProgramEnd) View.GONE else View.VISIBLE
+                if (followProgramEnd) {
+                    View.GONE
+                } else {
+                    View.VISIBLE
+                }
 
             binding.tvMoonlightStart.text =
-                if (followProgramEnd) "Program End" else startTime.label
+                if (followProgramEnd) {
+                    context.getString(R.string.light_moonlight_program_end)
+                } else {
+                    startTime.label
+                }
         }
 
         fun renderChannel() {
@@ -63,7 +76,12 @@ class LightMoonlightSheet private constructor(
         }
 
         fun renderIntensity() {
-            binding.tvMoonlightIntensity.text = "Intensity $intensity%"
+            binding.tvMoonlightIntensity.text =
+                context.getString(
+                    R.string.light_moonlight_intensity_format,
+                    intensity
+                )
+
             binding.sliderMoonlightIntensity.value = intensity.toFloat()
         }
 
@@ -90,7 +108,7 @@ class LightMoonlightSheet private constructor(
             LightCurveTimePickerSheet
                 .create(context)
                 .show(
-                    title = "Moonlight Start",
+                    title = context.getString(R.string.light_moonlight_start_picker_title),
                     initialHour = startTime.hour,
                     initialMinute = startTime.minute
                 ) { hour, minute ->
@@ -103,7 +121,7 @@ class LightMoonlightSheet private constructor(
             LightCurveTimePickerSheet
                 .create(context)
                 .show(
-                    title = "Moonlight End",
+                    title = context.getString(R.string.light_moonlight_end_picker_title),
                     initialHour = endTime.hour,
                     initialMinute = endTime.minute
                 ) { hour, minute ->
@@ -129,7 +147,12 @@ class LightMoonlightSheet private constructor(
 
         binding.sliderMoonlightIntensity.addOnChangeListener { _, value, _ ->
             intensity = value.toInt()
-            binding.tvMoonlightIntensity.text = "Intensity $intensity%"
+
+            binding.tvMoonlightIntensity.text =
+                context.getString(
+                    R.string.light_moonlight_intensity_format,
+                    intensity
+                )
         }
 
         binding.btnCancel.setOnClickListener {
@@ -158,7 +181,11 @@ class LightMoonlightSheet private constructor(
         selected: Boolean
     ) {
         view.setBackgroundResource(
-            if (selected) R.drawable.bg_light_filter_selected else android.R.color.transparent
+            if (selected) {
+                R.drawable.bg_light_filter_selected
+            } else {
+                android.R.color.transparent
+            }
         )
 
         view.setTextColor(

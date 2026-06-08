@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/timePickerSheetRoot"
     android:layout_width="match_parent"
@@ -25,15 +24,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
-        android:text="Start Time"
-        tools:text="Peak Start Time" />
+        android:text="@string/light_time_picker_title_start"
+        tools:text="@string/light_time_picker_title_peak_start" />
 
     <TextView
         style="@style/TextAppearance.Aqua.Light.SheetSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Set the schedule point time." />
+        android:text="@string/light_time_picker_description" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -53,7 +52,7 @@
             android:layout_width="42dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text=":" />
+            android:text="@string/common_time_separator" />
 
         <NumberPicker
             android:id="@+id/minutePicker"
@@ -76,7 +75,7 @@
             android:layout_height="match_parent"
             android:layout_marginEnd="10dp"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/common_cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnApply"
@@ -85,7 +84,7 @@
             android:layout_height="match_parent"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:text="Apply" />
+            android:text="@string/common_apply" />
 
     </LinearLayout>
 

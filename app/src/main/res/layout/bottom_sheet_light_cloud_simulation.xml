@@ -24,14 +24,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
-        android:text="Cloud Simulation" />
+        android:text="@string/light_cloud_simulation_title" />
 
     <TextView
         style="@style/TextAppearance.Aqua.Light.SheetSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Create short natural dimming events during the program." />
+        android:text="@string/light_cloud_simulation_description" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -45,7 +45,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Enable Cloud Simulation" />
+            android:text="@string/light_cloud_simulation_enable" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switchCloudEnabled"
@@ -68,14 +68,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="Cloud Coverage 25%" />
+            android:text="@string/light_cloud_simulation_coverage_default" />
 
         <TextView
             style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Higher coverage means stronger temporary dimming." />
+            android:text="@string/light_cloud_simulation_coverage_description" />
 
         <com.google.android.material.slider.Slider
             android:id="@+id/sliderCloudCoverage"
@@ -92,7 +92,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="FREQUENCY" />
+            android:text="@string/light_cloud_simulation_frequency_label" />
 
         <LinearLayout
             android:id="@+id/cloudFrequencySelector"
@@ -111,7 +111,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="Rare" />
+                android:text="@string/light_cloud_simulation_frequency_rare" />
 
             <TextView
                 android:id="@+id/frequencyNormal"
@@ -121,7 +121,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/bg_light_filter_selected"
                 android:gravity="center"
-                android:text="Normal" />
+                android:text="@string/light_cloud_simulation_frequency_normal" />
 
             <TextView
                 android:id="@+id/frequencyFrequent"
@@ -130,7 +130,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="Frequent" />
+                android:text="@string/light_cloud_simulation_frequency_frequent" />
 
         </LinearLayout>
 
@@ -149,7 +149,7 @@
             android:layout_height="match_parent"
             android:layout_marginEnd="10dp"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/common_cancel" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnApply"
@@ -158,7 +158,7 @@
             android:layout_height="match_parent"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            android:text="Apply" />
+            android:text="@string/common_apply" />
 
     </LinearLayout>
 

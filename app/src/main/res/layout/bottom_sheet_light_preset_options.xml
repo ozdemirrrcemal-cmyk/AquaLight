@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/presetOptionsSheetRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -17,22 +18,22 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="18dp"
         android:background="@drawable/bg_light_sheet_handle" />
-		
-<TextView
-    android:id="@+id/tvPresetSheetTitle"
-    style="@style/TextAppearance.Aqua.Light.SheetTitle"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="22dp"
-    android:text="Plant Growth" />
 
-<TextView
-    android:id="@+id/tvPresetSheetSubtitle"
-    style="@style/TextAppearance.Aqua.Light.SheetSubtitle"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:text="R90 · G75 · B45 · W90" />
+    <TextView
+        android:id="@+id/tvPresetSheetTitle"
+        style="@style/TextAppearance.Aqua.Light.SheetTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        tools:text="@string/light_preset_options_preview_title" />
+
+    <TextView
+        android:id="@+id/tvPresetSheetSubtitle"
+        style="@style/TextAppearance.Aqua.Light.SheetSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        tools:text="@string/light_preset_options_preview_subtitle" />
 
     <LinearLayout
         android:id="@+id/rowApplyPreset"
@@ -53,13 +54,13 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Apply to Device" />
+            android:text="@string/light_preset_options_apply_to_device" />
 
         <TextView
             style="@style/TextAppearance.Aqua.Light.Body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="→" />
+            android:text="@string/common_chevron_right" />
 
     </LinearLayout>
 
@@ -82,13 +83,13 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Delete" />
+            android:text="@string/common_delete" />
 
         <TextView
             style="@style/TextAppearance.Aqua.Light.Body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="×" />
+            android:text="@string/common_close_symbol" />
 
     </LinearLayout>
 

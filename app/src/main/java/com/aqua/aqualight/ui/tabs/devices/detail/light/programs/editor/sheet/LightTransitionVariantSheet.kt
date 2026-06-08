@@ -79,10 +79,18 @@ class LightTransitionVariantSheet private constructor(
         selected: Boolean
     ) {
         row.setBackgroundResource(
-            if (selected) R.drawable.bg_light_filter_selected else R.drawable.bg_light_program_time_panel
+            if (selected) {
+                R.drawable.bg_light_filter_selected
+            } else {
+                R.drawable.bg_light_program_time_panel
+            }
         )
 
-        checkText.text = if (selected) "Selected" else ""
+        checkText.text = if (selected) {
+            context.getString(R.string.common_selected)
+        } else {
+            ""
+        }
 
         checkText.setTextColor(
             if (selected) {

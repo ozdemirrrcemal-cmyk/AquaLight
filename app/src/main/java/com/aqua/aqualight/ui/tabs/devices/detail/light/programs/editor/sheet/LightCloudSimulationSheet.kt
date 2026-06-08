@@ -35,7 +35,12 @@ class LightCloudSimulationSheet private constructor(
         }
 
         fun renderCoverage() {
-            binding.tvCloudCoverage.text = "Cloud Coverage $coverage%"
+            binding.tvCloudCoverage.text =
+                context.getString(
+                    R.string.light_cloud_simulation_coverage_format,
+                    coverage
+                )
+
             binding.sliderCloudCoverage.value = coverage.toFloat()
         }
 
@@ -67,7 +72,12 @@ class LightCloudSimulationSheet private constructor(
 
         binding.sliderCloudCoverage.addOnChangeListener { _, value, _ ->
             coverage = value.toInt()
-            binding.tvCloudCoverage.text = "Cloud Coverage $coverage%"
+
+            binding.tvCloudCoverage.text =
+                context.getString(
+                    R.string.light_cloud_simulation_coverage_format,
+                    coverage
+                )
         }
 
         binding.frequencyRare.setOnClickListener {
@@ -108,7 +118,11 @@ class LightCloudSimulationSheet private constructor(
         selected: Boolean
     ) {
         view.setBackgroundResource(
-            if (selected) R.drawable.bg_light_filter_selected else android.R.color.transparent
+            if (selected) {
+                R.drawable.bg_light_filter_selected
+            } else {
+                android.R.color.transparent
+            }
         )
 
         view.setTextColor(
