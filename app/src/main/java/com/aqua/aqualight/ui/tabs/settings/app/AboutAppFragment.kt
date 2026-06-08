@@ -67,18 +67,24 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
     }
 
     private fun setupLegalClicks() {
-        binding.rowPrivacy.setOnClickListener {
-            findNavController().navigate(R.id.action_appSettingsFragment_to_privacyFragment)
-        }
-
-        binding.rowTerms.setOnClickListener {
-            findNavController().navigate(R.id.action_appSettingsFragment_to_termsOfUseFragment)
-        }
-
-        binding.rowLicenses.setOnClickListener {
-            findNavController().navigate(R.id.action_appSettingsFragment_to_openSourceLicensesFragment)
-        }
+    binding.rowPrivacy.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_aboutAppFragment_to_privacyFragment
+        )
     }
+
+    binding.rowTerms.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_aboutAppFragment_to_termsOfUseFragment
+        )
+    }
+
+    binding.rowLicenses.setOnClickListener {
+        findNavController().navigate(
+            R.id.action_aboutAppFragment_to_openSourceLicensesFragment
+        )
+    }
+}
 
     override fun onDestroyView() {
         _binding = null

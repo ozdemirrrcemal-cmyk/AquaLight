@@ -6,7 +6,6 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
@@ -24,15 +23,28 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     private var hasRouted = false
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         devicesStore = DevicesDataStoreManager.create(requireContext())
-        tankStore = AquariumTankDataStoreManager(requireContext().applicationContext)
+        tankStore = AquariumTankDataStoreManager(
+            requireContext().applicationContext
+        )
 
-        if (hasRouted) return
+        if (hasRouted) {
+            return
+        }
 
-        val deviceId = requireArguments().getLong(ARG_DEVICE_ID, INVALID_DEVICE_ID)
+        val deviceId = requireArguments().getLong(
+            ARG_DEVICE_ID,
+            INVALID_DEVICE_ID
+        )
 
         if (deviceId <= 0L) {
             openUnsupportedDevice(
@@ -45,7 +57,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         routeDevice(deviceId)
     }
 
-    private fun routeDevice(deviceId: Long) {
+    private fun routeDevice(
+        deviceId: Long
+    ) {
         hasRouted = true
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -53,12 +67,14 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 showGlobalLoading(true)
 
                 val device = devicesStore.devicesFlow
-                .first()
-                .firstOrNull {
-                    it.id == deviceId
-                }
+                    .first()
+                    .firstOrNull { savedDevice ->
+                        savedDevice.id == deviceId
+                    }
 
-                if (!isAdded) return@launch
+                if (!isAdded) {
+                    return@launch
+                }
 
                 if (device == null) {
                     openUnsupportedDevice(
@@ -68,7 +84,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                     return@launch
                 }
 
-                val definition = AquaDeviceCatalog.findByType(device.deviceType)
+                val definition = AquaDeviceCatalog.findByType(
+                    device.deviceType
+                )
 
                 if (definition == null) {
                     openUnsupportedDevice(
@@ -82,19 +100,18 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
                 val tanks = tankStore.tanksFlow.first()
 
-                val assignedTankName = device.tankId?.let {
-                    tankId ->
-                    tanks.firstOrNull {
-                        it.id == tankId
+                val assignedTankName = device.tankId?.let { tankId ->
+                    tanks.firstOrNull { tank ->
+                        tank.id == tankId
                     }?.name
                 }.orEmpty()
 
                 val deviceIp = requireArguments()
-                .getString(ARG_DEVICE_IP)
-                .orEmpty()
-                .ifBlank {
-                    device.ip
-                }
+                    .getString(ARG_DEVICE_IP)
+                    .orEmpty()
+                    .ifBlank {
+                        device.ip
+                    }
 
                 val routerTitle = resolveRouterTitle(
                     productModel = device.productModel,
@@ -112,9 +129,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                     deviceIp = deviceIp,
                     routerTitle = routerTitle,
                     controllerTitle = controllerTitle,
-                    canEditDeviceName = assignedTankName.isBlank(),
-                    userDeviceName = device.name,
-                    defaultDeviceTitle = routerTitle,
                     definition = definition
                 )
             } finally {
@@ -128,38 +142,28 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         deviceIp: String,
         routerTitle: String,
         controllerTitle: String,
-        canEditDeviceName: Boolean,
-        userDeviceName: String,
-        defaultDeviceTitle: String,
         definition: AquaDeviceDefinition
     ) {
-        val popRouterOptions = navOptions {
-            popUpTo(R.id.deviceRouterFragment) {
-                inclusive = true
-            }
-        }
-
         when (definition.uiController) {
             AquaDeviceUiController.GENERIC_LIGHT -> {
                 findNavController().navigate(
-                    R.id.deviceLightFragment,
+                    R.id.action_deviceRouterFragment_to_deviceLightFragment,
                     bundleOf(
                         ARG_DEVICE_ID to deviceId,
                         ARG_DEVICE_TITLE to controllerTitle
-                    ),
-                    popRouterOptions
+                    )
                 )
             }
+
             AquaDeviceUiController.GENERIC_DOSING,
             AquaDeviceUiController.CUSTOM_DOSING_4CH -> {
                 findNavController().navigate(
-                    R.id.deviceDosingFragment,
+                    R.id.action_deviceRouterFragment_to_deviceDosingFragment,
                     bundleOf(
                         ARG_DEVICE_ID to deviceId,
                         ARG_DEVICE_IP to deviceIp,
                         ARG_DEVICE_TITLE to controllerTitle
-                    ),
-                    popRouterOptions
+                    )
                 )
             }
 
@@ -167,28 +171,28 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             AquaDeviceUiController.CUSTOM_TIMER_MULTI_CONTROL,
             AquaDeviceUiController.CUSTOM_TIMER_SCENE_PRO -> {
                 findNavController().navigate(
-                    R.id.deviceTimerFragment,
+                    R.id.action_deviceRouterFragment_to_deviceTimerFragment,
                     bundleOf(
                         ARG_DEVICE_ID to deviceId,
                         ARG_DEVICE_IP to deviceIp,
                         ARG_DEVICE_TITLE to controllerTitle
-                    ),
-                    popRouterOptions
+                    )
                 )
             }
 
             AquaDeviceUiController.GENERIC_COOLING,
             AquaDeviceUiController.CUSTOM_COOLING_ADVANCED -> {
                 findNavController().navigate(
-                    R.id.deviceCoolingFragment,
+                    R.id.action_deviceRouterFragment_to_deviceCoolingFragment,
                     bundleOf(
                         ARG_DEVICE_ID to deviceId,
                         ARG_DEVICE_IP to deviceIp,
                         ARG_DEVICE_TITLE to controllerTitle
-                    ),
-                    popRouterOptions
+                    )
                 )
-            } else -> {
+            }
+
+            else -> {
                 openUnsupportedDevice(
                     title = routerTitle,
                     message = "This device controller will be added in the new professional navigation structure."
@@ -197,18 +201,16 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         }
     }
 
-    private fun openUnsupportedDevice(title: String, message: String) {
+    private fun openUnsupportedDevice(
+        title: String,
+        message: String
+    ) {
         findNavController().navigate(
-            R.id.unsupportedDeviceFragment,
+            R.id.action_deviceRouterFragment_to_unsupportedDeviceFragment,
             bundleOf(
                 ARG_DEVICE_TITLE to title,
                 ARG_MESSAGE to message
-            ),
-            navOptions {
-                popUpTo(R.id.deviceRouterFragment) {
-                    inclusive = true
-                }
-            }
+            )
         )
     }
 
@@ -235,7 +237,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         }
     }
 
-    private fun showGlobalLoading(show: Boolean) {
+    private fun showGlobalLoading(
+        show: Boolean
+    ) {
         (activity as? BaseActivity)?.showLoading(show)
     }
 

@@ -199,6 +199,14 @@
         app:popEnterAnim="@anim/nav_slide_in_left"
         app:popExitAnim="@anim/nav_slide_out_right"
         />
+		
+	<action
+    android:id="@+id/action_aquariumMaintenanceFragment_to_tankSettingsFragment"
+    app:destination="@id/tankSettingsFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
 
   </fragment>
 
@@ -289,11 +297,24 @@
 
   </fragment>
 
-  <fragment
+ <fragment
     android:id="@+id/deviceSetupFragment"
     android:name="com.aqua.aqualight.ui.tabs.devices.setup.DeviceSetupFragment"
     android:label="Device Setup"
-    tools:layout="@layout/fragment_device_setup" />
+    tools:layout="@layout/fragment_device_setup">
+
+    <action
+        android:id="@+id/action_deviceSetupFragment_to_deviceRouterFragment"
+        app:destination="@id/deviceRouterFragment"
+        app:popUpTo="@id/devicesFragment"
+        app:popUpToInclusive="false"
+        app:launchSingleTop="true"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+</fragment>
 
   <fragment
     android:id="@+id/deviceRouterFragment"
@@ -302,55 +323,65 @@
     tools:layout="@layout/fragment_device_router">
 
     <argument
-      android:name="deviceId"
-      app:argType="long" />
+        android:name="deviceId"
+        app:argType="long" />
 
     <argument
-      android:name="deviceIp"
-      app:argType="string"
-      android:defaultValue="" />
-	  
-	 <action
-    android:id="@+id/action_deviceRouterFragment_to_deviceLightFragment"
-    app:destination="@id/deviceLightFragment"
-    app:enterAnim="@anim/nav_slide_in_right"
-    app:exitAnim="@anim/nav_slide_out_left"
-    app:popEnterAnim="@anim/nav_slide_in_left"
-    app:popExitAnim="@anim/nav_slide_out_right" />
+        android:name="deviceIp"
+        app:argType="string"
+        android:defaultValue="" />
 
-<action
-    android:id="@+id/action_deviceRouterFragment_to_deviceDosingFragment"
-    app:destination="@id/deviceDosingFragment"
-    app:enterAnim="@anim/nav_slide_in_right"
-    app:exitAnim="@anim/nav_slide_out_left"
-    app:popEnterAnim="@anim/nav_slide_in_left"
-    app:popExitAnim="@anim/nav_slide_out_right" />
+    <action
+        android:id="@+id/action_deviceRouterFragment_to_deviceLightFragment"
+        app:destination="@id/deviceLightFragment"
+        app:popUpTo="@id/deviceRouterFragment"
+        app:popUpToInclusive="true"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
 
-<action
-    android:id="@+id/action_deviceRouterFragment_to_deviceTimerFragment"
-    app:destination="@id/deviceTimerFragment"
-    app:enterAnim="@anim/nav_slide_in_right"
-    app:exitAnim="@anim/nav_slide_out_left"
-    app:popEnterAnim="@anim/nav_slide_in_left"
-    app:popExitAnim="@anim/nav_slide_out_right" />
+    <action
+        android:id="@+id/action_deviceRouterFragment_to_deviceDosingFragment"
+        app:destination="@id/deviceDosingFragment"
+        app:popUpTo="@id/deviceRouterFragment"
+        app:popUpToInclusive="true"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
 
-<action
-    android:id="@+id/action_deviceRouterFragment_to_deviceCoolingFragment"
-    app:destination="@id/deviceCoolingFragment"
-    app:enterAnim="@anim/nav_slide_in_right"
-    app:exitAnim="@anim/nav_slide_out_left"
-    app:popEnterAnim="@anim/nav_slide_in_left"
-    app:popExitAnim="@anim/nav_slide_out_right" />
+    <action
+        android:id="@+id/action_deviceRouterFragment_to_deviceTimerFragment"
+        app:destination="@id/deviceTimerFragment"
+        app:popUpTo="@id/deviceRouterFragment"
+        app:popUpToInclusive="true"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
 
-<action
-    android:id="@+id/action_deviceRouterFragment_to_unsupportedDeviceFragment"
-    app:destination="@id/unsupportedDeviceFragment"
-    app:enterAnim="@anim/nav_slide_in_right"
-    app:exitAnim="@anim/nav_slide_out_left"
-    app:popEnterAnim="@anim/nav_slide_in_left"
-    app:popExitAnim="@anim/nav_slide_out_right" />
+    <action
+        android:id="@+id/action_deviceRouterFragment_to_deviceCoolingFragment"
+        app:destination="@id/deviceCoolingFragment"
+        app:popUpTo="@id/deviceRouterFragment"
+        app:popUpToInclusive="true"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
 
-  </fragment>
+    <action
+        android:id="@+id/action_deviceRouterFragment_to_unsupportedDeviceFragment"
+        app:destination="@id/unsupportedDeviceFragment"
+        app:popUpTo="@id/deviceRouterFragment"
+        app:popUpToInclusive="true"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+</fragment>
 
   <fragment
     android:id="@+id/unsupportedDeviceFragment"
@@ -809,11 +840,37 @@
     android:label="Language"
     tools:layout="@layout/fragment_language_settings" />
 
-  <fragment
+ <fragment
     android:id="@+id/aboutAppFragment"
     android:name="com.aqua.aqualight.ui.tabs.settings.app.AboutAppFragment"
     android:label="About"
-    tools:layout="@layout/fragment_about_app" />
+    tools:layout="@layout/fragment_about_app">
+
+    <action
+        android:id="@+id/action_aboutAppFragment_to_privacyFragment"
+        app:destination="@id/privacyFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_aboutAppFragment_to_termsOfUseFragment"
+        app:destination="@id/termsOfUseFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+    <action
+        android:id="@+id/action_aboutAppFragment_to_openSourceLicensesFragment"
+        app:destination="@id/openSourceLicensesFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right" />
+
+</fragment>
 
   <fragment
     android:id="@+id/termsOfUseFragment"
