@@ -74,6 +74,14 @@
         app:popEnterAnim="@anim/nav_slide_in_left"
         app:popExitAnim="@anim/nav_slide_out_right"
         />
+		
+	<action
+    android:id="@+id/action_tankDetailFragment_to_tankDeviceSelectFragment"
+    app:destination="@id/tankDeviceSelectFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
 
   </fragment>
 
@@ -174,6 +182,17 @@
       android:defaultValue="false" />
 
   </fragment>
+  
+  <fragment
+    android:id="@+id/tankDeviceSelectFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectFragment"
+    android:label="@string/tank_device_select_title">
+
+    <argument
+        android:name="tankId"
+        app:argType="long" />
+
+</fragment>
 
   <!-- 🧰 Maintenance Tab -->
   <fragment
