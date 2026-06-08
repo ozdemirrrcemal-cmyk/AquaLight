@@ -75,7 +75,7 @@
 <string name="light_preview_day_override_warning">During preview, live program will be temporarily overridden.</string>
 <string name="light_preview_day_progress_default">0%</string>
 <string name="light_preview_day_progress_format">%1$d%%</string>
-<string name="light_preview_day_start_button">Start Preview</string
+<string name="light_preview_day_start_button">Start Preview</string>
 <string name="light_preview_day_stop_button">Stop Preview</string>
 <string name="light_preview_day_start_again_button">Start Again</string>
 
