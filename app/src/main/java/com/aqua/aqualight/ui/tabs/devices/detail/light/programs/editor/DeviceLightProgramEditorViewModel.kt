@@ -4,8 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
@@ -20,24 +22,22 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.validatio
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.validation.LightProgramValidationResult
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper.LightProgramDraftMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineEvaluator
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
-import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineEvaluator
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlin.math.roundToInt
-import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class DeviceLightProgramEditorViewModel(
@@ -45,47 +45,47 @@ class DeviceLightProgramEditorViewModel(
 ) : AndroidViewModel(application) {
 
     private val appContext =
-    application.applicationContext
+        application.applicationContext
 
     private val lightProgramsDataStoreManager =
-    LightProgramsDataStoreManager(appContext)
+        LightProgramsDataStoreManager(appContext)
 
     private val lightProgramCommandManager =
-    Esp32LightProgramCommandManager(
-        context = appContext
-    )
-
-    private val lightRuntimeRepository =
-    LightRuntimeRepository(
-        commandManager = Esp32LightDeviceCommandManager(
+        Esp32LightProgramCommandManager(
             context = appContext
         )
-    )
 
-    private var previewJob: Job? = null
+    private val lightRuntimeRepository =
+        LightRuntimeRepository(
+            commandManager = Esp32LightDeviceCommandManager(
+                context = appContext
+            )
+        )
 
     private val _uiState =
-    MutableStateFlow(DeviceLightProgramEditorUiState.default())
+        MutableStateFlow(DeviceLightProgramEditorUiState.default())
 
     val uiState: StateFlow<DeviceLightProgramEditorUiState> =
-    _uiState.asStateFlow()
+        _uiState.asStateFlow()
 
     private val eventsChannel =
-    Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
+        Channel<DeviceLightProgramEditorEvent>(Channel.BUFFERED)
 
     val events = eventsChannel.receiveAsFlow()
 
     private var deviceId: Long = 0L
     private var liveStateJob: Job? = null
 
+    private var previewJob: Job? = null
+    private var previewSessionVersion: Long = 0L
+
     private val liveRefreshOwnerKey =
-    "DeviceLightProgramEditorViewModel_${System.identityHashCode(this)}"
+        "DeviceLightProgramEditorViewModel_${System.identityHashCode(this)}"
 
     private var editingProgramId: String? = null
     private var editingProgramName: String? = null
     private var editingProgramDeviceId: Long = 0L
     private var editingProgramCreatedAt: Long = 0L
-    private var editingProgramWasActive: Boolean = false
 
     fun initialize(
         deviceId: Long,
@@ -108,7 +108,16 @@ class DeviceLightProgramEditorViewModel(
 
         if (!programId.isNullOrBlank()) {
             loadProgram(programId)
+        } else {
+            clearEditingMetadata()
         }
+    }
+
+    private fun clearEditingMetadata() {
+        editingProgramId = null
+        editingProgramName = null
+        editingProgramDeviceId = 0L
+        editingProgramCreatedAt = 0L
     }
 
     private fun startLiveRefreshIfPossible() {
@@ -149,13 +158,11 @@ class DeviceLightProgramEditorViewModel(
         liveStateJob = viewModelScope.launch {
             LightDeviceLiveRefreshManager.observe(
                 deviceId = deviceId
-            ).collect {
-                liveState ->
+            ).collect { liveState ->
                 val deviceTime = liveState.deviceTime
-                ?: return@collect
+                    ?: return@collect
 
-                _uiState.update {
-                    state ->
+                _uiState.update { state ->
                     state.copy(
                         currentDeviceTime = deviceTime.curvePoint
                     )
@@ -293,7 +300,6 @@ class DeviceLightProgramEditorViewModel(
             editingProgramName = program.name
             editingProgramDeviceId = program.deviceId
             editingProgramCreatedAt = program.createdAt
-            editingProgramWasActive = program.isActive
 
             if (deviceId <= 0L && program.deviceId > 0L) {
                 deviceId = program.deviceId
@@ -326,6 +332,15 @@ class DeviceLightProgramEditorViewModel(
         isActive: Boolean
     ) {
         viewModelScope.launch {
+            if (_uiState.value.isPreviewRunning) {
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.ShowError(
+                        "Stop preview before saving"
+                    )
+                )
+                return@launch
+            }
+
             val draft = _uiState.value.draft
 
             when (val validation = LightProgramDraftValidator.validate(draft)) {
@@ -354,7 +369,7 @@ class DeviceLightProgramEditorViewModel(
 
             val savedProgram = buildSavedProgram(
                 name = name,
-                isActive = isActive,
+                activateOnDevice = isActive,
                 deviceId = resolvedDeviceId,
                 draft = draft
             )
@@ -374,16 +389,15 @@ class DeviceLightProgramEditorViewModel(
 
             runCatching {
                 val existingPrograms =
-                lightProgramsDataStoreManager.programsFlow.first()
+                    lightProgramsDataStoreManager.programsFlow.first()
 
                 val programsToLoad = if (savedProgram.isActive) {
                     existingPrograms
-                    .filter {
-                        program ->
-                        program.deviceId == savedProgram.deviceId &&
-                        program.isActive &&
-                        program.id != savedProgram.id
-                    } + savedProgram
+                        .filter { program ->
+                            program.deviceId == savedProgram.deviceId &&
+                                program.isActive &&
+                                program.id != savedProgram.id
+                        } + savedProgram
                 } else {
                     emptyList()
                 }
@@ -407,7 +421,6 @@ class DeviceLightProgramEditorViewModel(
                 editingProgramName = savedProgram.name
                 editingProgramDeviceId = savedProgram.deviceId
                 editingProgramCreatedAt = savedProgram.createdAt
-                editingProgramWasActive = savedProgram.isActive
 
                 if (savedProgram.isActive) {
                     LightDeviceLiveRefreshManager.refreshNow(
@@ -426,9 +439,10 @@ class DeviceLightProgramEditorViewModel(
                     )
                 )
 
-                eventsChannel.send(DeviceLightProgramEditorEvent.NavigateBack)
-            }.onFailure {
-                error ->
+                eventsChannel.send(
+                    DeviceLightProgramEditorEvent.NavigateBack
+                )
+            }.onFailure { error ->
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowError(
                         error.message ?: "Program could not be saved"
@@ -440,54 +454,65 @@ class DeviceLightProgramEditorViewModel(
 
     private fun buildSavedProgram(
         name: String,
-        isActive: Boolean,
+        activateOnDevice: Boolean,
         deviceId: Long,
         draft: LightProgramDraft
     ): SavedLightProgram {
-        val cleanName = name.ifBlank {
-            editingProgramName.orEmpty().ifBlank {
-                "Light Program"
+        val now = System.currentTimeMillis()
+
+        val cleanName = name
+            .trim()
+            .ifBlank {
+                editingProgramName.orEmpty().ifBlank {
+                    "Light Program"
+                }
             }
-        }
 
-        val shouldBeActive = if (isActive) {
-            true
-        } else {
-            editingProgramWasActive
-        }
+        return when {
+            activateOnDevice && editingProgramId != null -> {
+                SavedLightProgram(
+                    id = editingProgramId.orEmpty(),
+                    deviceId = deviceId,
+                    name = cleanName,
+                    draft = draft,
+                    isActive = true,
+                    createdAt = editingProgramCreatedAt.takeIf {
+                        it > 0L
+                    } ?: now,
+                    updatedAt = now
+                )
+            }
 
-        return if (editingProgramId != null) {
-            SavedLightProgram(
-                id = editingProgramId.orEmpty(),
-                deviceId = deviceId,
-                name = cleanName,
-                draft = draft,
-                isActive = shouldBeActive,
-                createdAt = editingProgramCreatedAt.takeIf {
-                    it > 0L
-                } ?: System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
-            )
-        } else {
-            LightProgramDraftMapper.toSavedProgram(
-                draft = draft,
-                name = cleanName,
-                deviceId = deviceId,
-                isActive = isActive
-            )
+            activateOnDevice -> {
+                LightProgramDraftMapper.toSavedProgram(
+                    draft = draft,
+                    name = cleanName,
+                    deviceId = deviceId,
+                    isActive = true
+                )
+            }
+
+            else -> {
+                LightProgramDraftMapper.toSavedProgram(
+                    draft = draft,
+                    name = cleanName,
+                    deviceId = deviceId,
+                    isActive = false
+                )
+            }
         }
     }
 
     private suspend fun findConflictForProgram(
         savedProgram: SavedLightProgram
     ): SavedLightProgram? {
-        val existingPrograms = lightProgramsDataStoreManager.programsFlow.first()
+        val existingPrograms =
+            lightProgramsDataStoreManager.programsFlow.first()
 
-        val comparablePrograms = existingPrograms.filter {
-            program ->
+        val comparablePrograms = existingPrograms.filter { program ->
             program.deviceId == savedProgram.deviceId &&
-            program.isActive &&
-            program.id != savedProgram.id
+                program.isActive &&
+                program.id != savedProgram.id
         }
 
         return LightProgramScheduleConflictValidator.findConflict(
@@ -507,12 +532,14 @@ class DeviceLightProgramEditorViewModel(
     fun startPreview(
         speed: PreviewSpeed
     ) {
+        previewSessionVersion += 1L
+        val sessionVersion = previewSessionVersion
+
         updatePreviewSpeed(speed)
 
         previewJob?.cancel()
 
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             state.copy(
                 previewSimulationTime = null,
                 isPreviewRunning = false,
@@ -523,36 +550,37 @@ class DeviceLightProgramEditorViewModel(
         var runningJob: Job? = null
 
         runningJob = viewModelScope.launch {
-            if (deviceId <= 0L) {
-                eventsChannel.send(
-                    DeviceLightProgramEditorEvent.ShowError(
-                        "Device information is missing"
-                    )
-                )
-                return@launch
-            }
-
-            val draft = _uiState.value.draft
-
-            when (val validation = LightProgramDraftValidator.validate(draft)) {
-                LightProgramValidationResult.Valid -> Unit
-
-                is LightProgramValidationResult.Invalid -> {
-                    eventsChannel.send(
-                        DeviceLightProgramEditorEvent.ShowError(
-                            validation.message
-                        )
-                    )
-                    return@launch
-                }
-            }
-
-            val timeline = LightProgramTimelineBuilder.build(draft)
-
             var previewStarted = false
             var previewFinishedNormally = false
 
             try {
+                if (deviceId <= 0L) {
+                    eventsChannel.send(
+                        DeviceLightProgramEditorEvent.ShowError(
+                            "Device information is missing"
+                        )
+                    )
+                    return@launch
+                }
+
+                val draft = _uiState.value.draft
+
+                when (val validation = LightProgramDraftValidator.validate(draft)) {
+                    LightProgramValidationResult.Valid -> Unit
+
+                    is LightProgramValidationResult.Invalid -> {
+                        eventsChannel.send(
+                            DeviceLightProgramEditorEvent.ShowError(
+                                validation.message
+                            )
+                        )
+                        return@launch
+                    }
+                }
+
+                val timeline =
+                    LightProgramTimelineBuilder.build(draft)
+
                 eventsChannel.send(
                     DeviceLightProgramEditorEvent.ShowMessage(
                         "Preview started: ${speed.label}"
@@ -561,8 +589,7 @@ class DeviceLightProgramEditorViewModel(
 
                 previewStarted = true
 
-                _uiState.update {
-                    state ->
+                _uiState.update { state ->
                     state.copy(
                         previewSimulationTime = pointFromMinute(0),
                         isPreviewRunning = true,
@@ -578,15 +605,15 @@ class DeviceLightProgramEditorViewModel(
                         return@launch
                     }
 
-                    val minute = ((24 * 60) * frame) / (frameCount - 1)
+                    val minute =
+                        ((24 * 60) * frame) / (frameCount - 1)
 
                     val progressPercent =
-                    ((frame.toDouble() / (frameCount - 1).toDouble()) * 100.0)
-                    .roundToInt()
-                    .coerceIn(0, 100)
+                        ((frame.toDouble() / (frameCount - 1).toDouble()) * 100.0)
+                            .roundToInt()
+                            .coerceIn(0, 100)
 
-                    _uiState.update {
-                        state ->
+                    _uiState.update { state ->
                         state.copy(
                             previewSimulationTime = pointFromMinute(minute),
                             isPreviewRunning = true,
@@ -594,19 +621,21 @@ class DeviceLightProgramEditorViewModel(
                         )
                     }
 
-                    val output = LightProgramTimelineEvaluator.outputAtMinute(
-                        timeline = timeline,
-                        minute = minute
-                    )
+                    val output =
+                        LightProgramTimelineEvaluator.outputAtMinute(
+                            timeline = timeline,
+                            minute = minute
+                        )
 
-                    val result = lightRuntimeRepository.applyManualScene(
-    deviceId = deviceId,
-    sceneName = "Preview Day",
-    red = output.red,
-    green = output.green,
-    blue = output.blue,
-    white = output.white
-)
+                    val result =
+                        lightRuntimeRepository.applyManualScene(
+                            deviceId = deviceId,
+                            sceneName = "Preview Day",
+                            red = output.red,
+                            green = output.green,
+                            blue = output.blue,
+                            white = output.white
+                        )
 
                     if (!result.isSuccess) {
                         eventsChannel.send(
@@ -622,8 +651,7 @@ class DeviceLightProgramEditorViewModel(
 
                 previewFinishedNormally = true
 
-                _uiState.update {
-                    state ->
+                _uiState.update { state ->
                     state.copy(
                         previewProgressPercent = 100
                     )
@@ -635,7 +663,10 @@ class DeviceLightProgramEditorViewModel(
                     )
                 )
             } finally {
-                if (previewStarted) {
+                if (
+                    previewStarted &&
+                    previewSessionVersion == sessionVersion
+                ) {
                     withContext(NonCancellable) {
                         resumeAutoAfterPreview(
                             finalProgressPercent = if (previewFinishedNormally) {
@@ -645,9 +676,8 @@ class DeviceLightProgramEditorViewModel(
                             }
                         )
                     }
-                } else {
-                    _uiState.update {
-                        state ->
+                } else if (previewSessionVersion == sessionVersion) {
+                    _uiState.update { state ->
                         state.copy(
                             previewSimulationTime = null,
                             isPreviewRunning = false,
@@ -673,8 +703,7 @@ class DeviceLightProgramEditorViewModel(
             return
         }
 
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             state.copy(
                 previewSimulationTime = null,
                 isPreviewRunning = false,
@@ -683,7 +712,6 @@ class DeviceLightProgramEditorViewModel(
         }
     }
 
-    
     private suspend fun resumeAutoAfterPreview(
         finalProgressPercent: Int
     ) {
@@ -696,8 +724,7 @@ class DeviceLightProgramEditorViewModel(
             deviceId = deviceId
         )
 
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             state.copy(
                 previewSimulationTime = null,
                 isPreviewRunning = false,
@@ -708,10 +735,10 @@ class DeviceLightProgramEditorViewModel(
 
     private fun PreviewSpeed.previewFrameDelayMillis(): Long {
         val totalDurationMillis =
-        durationMinutes * 60_000L
+            durationMinutes * 60_000L
 
         return (totalDurationMillis / (PREVIEW_FRAME_COUNT - 1))
-        .coerceAtLeast(100L)
+            .coerceAtLeast(100L)
     }
 
     private fun pointFromMinute(
@@ -739,8 +766,7 @@ class DeviceLightProgramEditorViewModel(
         previewJob?.cancel()
         previewJob = null
 
-        _uiState.update {
-            state ->
+        _uiState.update { state ->
             state.copy(
                 previewSimulationTime = null,
                 isPreviewRunning = false,

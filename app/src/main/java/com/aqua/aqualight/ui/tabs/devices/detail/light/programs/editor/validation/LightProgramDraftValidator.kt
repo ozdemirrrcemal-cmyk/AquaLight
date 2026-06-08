@@ -23,12 +23,20 @@ object LightProgramDraftValidator {
 
         val channels = draft.channelValues
 
-        if (
-            channels.red == 0 &&
-            channels.green == 0 &&
-            channels.blue == 0 &&
-            channels.white == 0
-        ) {
+        val channelValues = listOf(
+            channels.red,
+            channels.green,
+            channels.blue,
+            channels.white
+        )
+
+        if (channelValues.any { value -> value !in 0..100 }) {
+            return LightProgramValidationResult.Invalid(
+                "Channel values must be between 0% and 100%."
+            )
+        }
+
+        if (channelValues.all { value -> value == 0 }) {
             return LightProgramValidationResult.Invalid(
                 "At least one channel must be above 0%."
             )
@@ -37,6 +45,18 @@ object LightProgramDraftValidator {
         if (draft.selectedDays.isEmpty()) {
             return LightProgramValidationResult.Invalid(
                 "Select at least one repeat day."
+            )
+        }
+
+        if (draft.selectedDays.any { day -> day !in 1..7 }) {
+            return LightProgramValidationResult.Invalid(
+                "Repeat days are invalid."
+            )
+        }
+
+        if (draft.cloudSimulationSettings.enabled) {
+            return LightProgramValidationResult.Invalid(
+                "Cloud simulation is not available yet."
             )
         }
 
@@ -49,7 +69,9 @@ object LightProgramDraftValidator {
                 )
             }
 
-            val timeline = LightProgramTimelineBuilder.build(draft)
+            val timeline = LightProgramTimelineBuilder.build(
+                draft = draft
+            )
 
             val moonlightPhase = timeline.phases.firstOrNull { phase ->
                 phase.type == LightProgramPhaseType.MOONLIGHT

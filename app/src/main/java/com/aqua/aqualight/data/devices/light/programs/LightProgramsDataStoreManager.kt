@@ -28,10 +28,9 @@ class LightProgramsDataStoreManager(
         program: SavedLightProgram
     ) {
         context.lightProgramsDataStore.updateData { preferences ->
-            val existingPrograms = preferences.programsList
-                .filterNot { existing ->
-                    existing.id == program.id
-                }
+            val existingPrograms = preferences.programsList.filterNot { existing ->
+                existing.id == program.id
+            }
 
             preferences.toBuilder()
                 .clearPrograms()
@@ -59,36 +58,13 @@ class LightProgramsDataStoreManager(
         programId: String
     ) {
         context.lightProgramsDataStore.updateData { preferences ->
-            preferences.toBuilder()
-                .clearPrograms()
-                .addAllPrograms(
-                    preferences.programsList.filterNot { program ->
-                        program.id == programId
-                    }
-                )
-                .build()
-        }
-    }
+            val remainingPrograms = preferences.programsList.filterNot { program ->
+                program.id == programId
+            }
 
-    suspend fun setProgramActive(
-        programId: String,
-        active: Boolean
-    ) {
-        context.lightProgramsDataStore.updateData { preferences ->
             preferences.toBuilder()
                 .clearPrograms()
-                .addAllPrograms(
-                    preferences.programsList.map { program ->
-                        if (program.id == programId) {
-                            program.toBuilder()
-                                .setIsActive(active)
-                                .setUpdatedAt(System.currentTimeMillis())
-                                .build()
-                        } else {
-                            program
-                        }
-                    }
-                )
+                .addAllPrograms(remainingPrograms)
                 .build()
         }
     }

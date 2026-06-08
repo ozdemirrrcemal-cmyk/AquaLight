@@ -73,15 +73,6 @@
                                 android:layout_height="wrap_content"
                                 android:text="Light Curve" />
 
-                            <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:ellipsize="end"
-                                android:maxLines="1"
-                                android:text="Preview and adjust the daily output curve." />
-
                         </LinearLayout>
 
                         <ImageButton

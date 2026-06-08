@@ -29,7 +29,7 @@ data class LightProgramDraft(
                     blue = 0,
                     white = 0
                 ),
-                repeatMode = RepeatMode.CUSTOM,
+                repeatMode = RepeatMode.EVERY,
                 selectedDays = setOf(1, 2, 3, 4, 5, 6, 7),
                 moonlightSettings = MoonlightSettings(),
                 cloudSimulationSettings = CloudSimulationSettings(),

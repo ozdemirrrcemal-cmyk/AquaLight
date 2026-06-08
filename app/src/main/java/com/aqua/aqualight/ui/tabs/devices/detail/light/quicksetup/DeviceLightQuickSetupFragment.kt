@@ -19,6 +19,7 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.DeviceLightQuickSetupEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupRecommendation
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.sheet.QuickSetupInfoBottomSheet
 import kotlinx.coroutines.launch
 
 class DeviceLightQuickSetupFragment :
@@ -68,6 +69,32 @@ class DeviceLightQuickSetupFragment :
         binding.btnLoadToDevice.setOnClickListener {
             viewModel.loadToDevice()
         }
+
+        binding.btnShowAllReasons.setOnClickListener {
+            val items = viewModel.uiState.value
+                .recommendation
+                ?.reasoningNotes
+                .orEmpty()
+
+            showInfoSheet(
+                title = "Why this setup?",
+                subtitle = "All factors used by the smart recommendation engine.",
+                items = items
+            )
+        }
+
+        binding.btnShowAllWarnings.setOnClickListener {
+            val items = viewModel.uiState.value
+                .recommendation
+                ?.warnings
+                .orEmpty()
+
+            showInfoSheet(
+                title = "Before applying",
+                subtitle = "Important notes before saving or loading this program.",
+                items = items
+            )
+        }
     }
 
     private fun observeUiState() {
@@ -114,6 +141,13 @@ class DeviceLightQuickSetupFragment :
         state: QuickSetupUiState
     ) {
         val recommendation = state.recommendation
+
+        if (state.isLoading) {
+            renderNoLinkedTank(
+                message = "Analyzing tank profile and preparing a smart light recommendation."
+            )
+            return
+        }
 
         if (recommendation == null) {
             renderNoLinkedTank(
@@ -169,20 +203,49 @@ class DeviceLightQuickSetupFragment :
         binding.tvBlueValue.text = "B${recommendation.channelValues.blue}"
         binding.tvWhiteValue.text = "W${recommendation.channelValues.white}"
 
+        val visibleReasons =
+            recommendation.reasoningNotes.take(MAX_VISIBLE_REASON_ROWS)
+
         renderCompactInfoRows(
             container = binding.reasoningContainer,
-            items = recommendation.reasoningNotes
+            items = visibleReasons,
+            maxLines = 2
         )
+
+        binding.btnShowAllReasons.visibility =
+            if (recommendation.reasoningNotes.size > MAX_VISIBLE_REASON_ROWS) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+
+        binding.btnShowAllReasons.text =
+            "View all ${recommendation.reasoningNotes.size} reasons"
 
         if (recommendation.warnings.isEmpty()) {
             binding.cardWarnings.visibility = View.GONE
+            binding.btnShowAllWarnings.visibility = View.GONE
         } else {
             binding.cardWarnings.visibility = View.VISIBLE
 
+            val visibleWarnings =
+                recommendation.warnings.take(MAX_VISIBLE_WARNING_ROWS)
+
             renderCompactInfoRows(
                 container = binding.warningsContainer,
-                items = recommendation.warnings
+                items = visibleWarnings,
+                maxLines = 2
             )
+
+            binding.btnShowAllWarnings.visibility =
+                if (recommendation.warnings.size > MAX_VISIBLE_WARNING_ROWS) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
+
+            binding.btnShowAllWarnings.text =
+                "View all ${recommendation.warnings.size} notes"
         }
     }
 
@@ -195,16 +258,16 @@ class DeviceLightQuickSetupFragment :
         binding.btnLoadToDevice.isEnabled =
             !state.isSaving && state.recommendation != null
 
-        binding.btnSaveProgram.text = if (state.isProgramSaved) {
-            "Update"
-        } else {
-            "Save"
+        binding.btnSaveProgram.text = when {
+            state.isSaving -> "Saving..."
+            state.isProgramSaved -> "Update"
+            else -> "Save"
         }
 
-        binding.btnLoadToDevice.text = if (state.isProgramLoaded) {
-            "Reload"
-        } else {
-            "Load Device"
+        binding.btnLoadToDevice.text = when {
+            state.isSaving -> "Please wait"
+            state.isProgramLoaded -> "Reload"
+            else -> "Load to Device"
         }
     }
 
@@ -221,13 +284,23 @@ class DeviceLightQuickSetupFragment :
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
                 setBackgroundResource(R.drawable.bg_light_program_time_panel)
-                setPadding(12.dp(), 9.dp(), 12.dp(), 9.dp())
+                setPadding(
+                    14.dp(),
+                    10.dp(),
+                    14.dp(),
+                    10.dp()
+                )
 
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    setMargins(0, 0, 0, 7.dp())
+                    setMargins(
+                        0,
+                        0,
+                        0,
+                        7.dp()
+                    )
                 }
             }
 
@@ -297,7 +370,8 @@ class DeviceLightQuickSetupFragment :
 
     private fun renderCompactInfoRows(
         container: LinearLayout,
-        items: List<String>
+        items: List<String>,
+        maxLines: Int
     ) {
         container.removeAllViews()
 
@@ -306,13 +380,23 @@ class DeviceLightQuickSetupFragment :
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
                 setBackgroundResource(R.drawable.bg_light_program_time_panel)
-                setPadding(11.dp(), 8.dp(), 11.dp(), 8.dp())
+                setPadding(
+                    12.dp(),
+                    9.dp(),
+                    12.dp(),
+                    9.dp()
+                )
 
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 ).apply {
-                    setMargins(0, 0, 0, 7.dp())
+                    setMargins(
+                        0,
+                        0,
+                        0,
+                        7.dp()
+                    )
                 }
             }
 
@@ -327,7 +411,12 @@ class DeviceLightQuickSetupFragment :
                     26.dp(),
                     26.dp()
                 ).apply {
-                    setMargins(0, 0, 10.dp(), 0)
+                    setMargins(
+                        0,
+                        0,
+                        10.dp(),
+                        0
+                    )
                 }
             }
 
@@ -335,9 +424,16 @@ class DeviceLightQuickSetupFragment :
                 setTextAppearance(R.style.TextAppearance_Aqua_Light_ActionSubtitle)
                 this.text = text
                 includeFontPadding = false
-                setLineSpacing(0f, 1.0f)
-                maxLines = 2
-                ellipsize = android.text.TextUtils.TruncateAt.END
+                setLineSpacing(
+                    0f,
+                    1.0f
+                )
+                this.maxLines = maxLines
+                ellipsize = if (maxLines <= 2) {
+                    android.text.TextUtils.TruncateAt.END
+                } else {
+                    null
+                }
 
                 layoutParams = LinearLayout.LayoutParams(
                     0,
@@ -352,6 +448,24 @@ class DeviceLightQuickSetupFragment :
         }
     }
 
+    private fun showInfoSheet(
+        title: String,
+        subtitle: String,
+        items: List<String>
+    ) {
+        if (items.isEmpty()) {
+            return
+        }
+
+        QuickSetupInfoBottomSheet
+            .create(requireContext())
+            .show(
+                title = title,
+                subtitle = subtitle,
+                items = items
+            )
+    }
+
     private fun Int.dp(): Int {
         return (this * resources.displayMetrics.density).toInt()
     }
@@ -363,5 +477,8 @@ class DeviceLightQuickSetupFragment :
 
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
+
+        private const val MAX_VISIBLE_REASON_ROWS = 4
+        private const val MAX_VISIBLE_WARNING_ROWS = 3
     }
 }

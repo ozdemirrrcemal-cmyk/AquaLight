@@ -12,10 +12,21 @@ object LightProgramTimelineBuilder {
     ): LightProgramTimeline {
         val phases = mutableListOf<LightProgramTimelinePhase>()
 
-        val mainStart = LightProgramTimeMath.startMinutes(draft.start)
-        val mainPeakStart = LightProgramTimeMath.normalMinutes(draft.peakStart)
-        val mainPeakEnd = LightProgramTimeMath.normalMinutes(draft.peakEnd)
-        val mainEnd = LightProgramTimeMath.endMinutes(draft.end)
+        val mainStart = LightProgramTimeMath.startMinutes(
+            point = draft.start
+        )
+
+        val mainPeakStart = LightProgramTimeMath.normalMinutes(
+            point = draft.peakStart
+        )
+
+        val mainPeakEnd = LightProgramTimeMath.normalMinutes(
+            point = draft.peakEnd
+        )
+
+        val mainEnd = LightProgramTimeMath.endMinutes(
+            point = draft.end
+        )
 
         phases += LightProgramTimelinePhase(
             type = LightProgramPhaseType.MAIN_CURVE,
@@ -80,11 +91,13 @@ object LightProgramTimelineBuilder {
         startMinute: Int,
         endMinute: Int
     ): Int {
-        return if (endMinute <= startMinute) {
-            endMinute + LightProgramTimelinePhase.MINUTES_PER_DAY
-        } else {
-            endMinute
+        var normalizedEnd = endMinute
+
+        while (normalizedEnd <= startMinute) {
+            normalizedEnd += LightProgramTimelinePhase.MINUTES_PER_DAY
         }
+
+        return normalizedEnd
     }
 
     private fun moonlightChannelValues(
@@ -92,7 +105,9 @@ object LightProgramTimelineBuilder {
         intensityPercent: Int
     ): LightCurveChannelValues {
         val safeIntensity = intensityPercent.coerceIn(1, 15)
-        val softWhite = (safeIntensity / 2).coerceAtLeast(1)
+
+        val softWhite = (safeIntensity / 2)
+            .coerceAtLeast(1)
 
         return when (channel) {
             MoonlightChannel.BLUE -> {
