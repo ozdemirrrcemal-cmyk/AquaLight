@@ -64,10 +64,11 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     private fun setupClickListeners() {
         binding.rowSmartCareSuggestions.setOnClickListener {
             binding.switchSmartCareSuggestions.isChecked =
-                !binding.switchSmartCareSuggestions.isChecked
+            !binding.switchSmartCareSuggestions.isChecked
         }
 
-        binding.switchSmartCareSuggestions.setOnCheckedChangeListener { _, isChecked ->
+        binding.switchSmartCareSuggestions.setOnCheckedChangeListener {
+            _, isChecked ->
             if (!isUpdatingSwitchesProgrammatically) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     aquariumTankViewModel.updateSmartCareEnabled(
@@ -80,10 +81,11 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
         binding.rowCareReminderNotifications.setOnClickListener {
             binding.switchCareReminderNotifications.isChecked =
-                !binding.switchCareReminderNotifications.isChecked
+            !binding.switchCareReminderNotifications.isChecked
         }
 
-        binding.switchCareReminderNotifications.setOnCheckedChangeListener { _, isChecked ->
+        binding.switchCareReminderNotifications.setOnCheckedChangeListener {
+            _, isChecked ->
             if (!isUpdatingSwitchesProgrammatically) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     aquariumTankViewModel.updateCareRemindersEnabled(
@@ -108,8 +110,10 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
     }
 
     private fun observeTank() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            val tank = tanks.firstOrNull { savedTank ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+            tanks ->
+            val tank = tanks.firstOrNull {
+                savedTank ->
                 savedTank.id == tankId
             }
 
@@ -142,10 +146,10 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         isUpdatingSwitchesProgrammatically = true
 
         binding.switchSmartCareSuggestions.isChecked =
-            tank.smartCareEnabled
+        tank.smartCareEnabled
 
         binding.switchCareReminderNotifications.isChecked =
-            tank.careRemindersEnabled
+        tank.careRemindersEnabled
 
         isUpdatingSwitchesProgrammatically = false
     }
@@ -195,7 +199,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
                 if (!popped) {
                     findNavController().navigate(
-                        R.id.aquariumFragment
+                        R.id.action_tankSettingsFragment_to_aquariumFragment
                     )
                 }
             } catch (exception: Exception) {
@@ -294,7 +298,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         isDeletingTank = true
 
         (parentFragment as? TankSettingsFragment)
-            ?.markTankDeletionInProgress()
+        ?.markTankDeletionInProgress()
 
         val baseActivity = activity as? BaseActivity
         baseActivity?.showLoading(true)
@@ -314,7 +318,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
                 if (!popped) {
                     findNavController().navigate(
-                        R.id.aquariumFragment
+                        R.id.action_tankSettingsFragment_to_aquariumFragment
                     )
                 }
             } catch (exception: Exception) {

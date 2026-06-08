@@ -129,6 +129,27 @@
         app:popEnterAnim="@anim/nav_slide_in_left"
         app:popExitAnim="@anim/nav_slide_out_right"
         />
+		
+	<action
+    android:id="@+id/action_tankSettingsFragment_to_tankDetailFragment"
+    app:destination="@id/tankDetailFragment"
+    app:popUpTo="@id/tankSettingsFragment"
+    app:popUpToInclusive="true"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+<action
+    android:id="@+id/action_tankSettingsFragment_to_aquariumFragment"
+    app:destination="@id/aquariumFragment"
+    app:popUpTo="@id/aquariumFragment"
+    app:popUpToInclusive="false"
+    app:launchSingleTop="true"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
 
   </fragment>
 

@@ -72,26 +72,28 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         savedInstanceState: Bundle?
     ): SettingsTab {
         val navSavedTab = findNavController()
-            .currentBackStackEntry
-            ?.savedStateHandle
-            ?.get<String>(KEY_SELECTED_TAB)
-            ?.let { tabName ->
-                runCatching {
-                    SettingsTab.valueOf(tabName)
-                }.getOrNull()
-            }
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?.get<String>(KEY_SELECTED_TAB)
+        ?.let {
+            tabName ->
+            runCatching {
+                SettingsTab.valueOf(tabName)
+            }.getOrNull()
+        }
 
         if (navSavedTab != null) {
             return navSavedTab
         }
 
         val instanceSavedTab = savedInstanceState
-            ?.getString(KEY_SELECTED_TAB)
-            ?.let { tabName ->
-                runCatching {
-                    SettingsTab.valueOf(tabName)
-                }.getOrNull()
-            }
+        ?.getString(KEY_SELECTED_TAB)
+        ?.let {
+            tabName ->
+            runCatching {
+                SettingsTab.valueOf(tabName)
+            }.getOrNull()
+        }
 
         return instanceSavedTab ?: getInitialTab()
     }
@@ -100,12 +102,12 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         tab: SettingsTab
     ) {
         findNavController()
-            .currentBackStackEntry
-            ?.savedStateHandle
-            ?.set(
-                KEY_SELECTED_TAB,
-                tab.name
-            )
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?.set(
+            KEY_SELECTED_TAB,
+            tab.name
+        )
     }
 
     private fun setupClickListeners() {
@@ -126,7 +128,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         }
 
         binding.scoreContainer.setOnClickListener {
-            currentTank?.let { tank ->
+            currentTank?.let {
+                tank ->
                 showCareProfileSheet(tank)
             }
         }
@@ -148,7 +151,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             binding.basicFragmentContainer,
             binding.detailsFragmentContainer,
             binding.othersFragmentContainer
-        ).forEach { container ->
+        ).forEach {
+            container ->
             container.setOnSwipeLeftListener {
                 moveTabBy(offset = 1)
             }
@@ -181,8 +185,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun observeTank() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            val tank = tanks.firstOrNull { savedTank ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
+            tanks ->
+            val tank = tanks.firstOrNull {
+                savedTank ->
                 savedTank.id == tankId
             }
 
@@ -312,7 +318,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private fun resetTabs() {
         val inactiveColor = Color.parseColor("#8FA4BE")
 
-        SettingsTab.values().forEach { tab ->
+        SettingsTab.values().forEach {
+            tab ->
             tabViewFor(tab).apply {
                 setTextColor(inactiveColor)
                 setTypeface(null, Typeface.NORMAL)
@@ -351,15 +358,15 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     ) {
         binding.settingsTabsContainer.post {
             val textWidth = tabView.paint
-                .measureText(tabView.text.toString())
-                .toInt()
+            .measureText(tabView.text.toString())
+            .toInt()
 
             val underlineWidth = (textWidth * 0.90f)
-                .toInt()
-                .coerceIn(
-                    36.dp(),
-                    72.dp()
-                )
+            .toInt()
+            .coerceIn(
+                36.dp(),
+                72.dp()
+            )
 
             val params = binding.tabUnderline.layoutParams
             params.width = underlineWidth
@@ -368,9 +375,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
 
             binding.tabUnderline.animate()
-                .translationX(targetX)
-                .setDuration(180)
-                .start()
+            .translationX(targetX)
+            .setDuration(180)
+            .start()
         }
     }
 
@@ -397,7 +404,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
         sheetBinding.tvCareProfilePercent.text = "${result.percent}%"
         sheetBinding.tvCareProfileSummary.text =
-            "${result.completedCount} of ${result.totalCount} care details completed"
+        "${result.completedCount} of ${result.totalCount} care details completed"
 
         sheetBinding.careProgressTrack.background = createRoundedDrawable(
             color = "#DDE3EA",
@@ -415,7 +422,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
 
         sheetBinding.careProfileItemsContainer.removeAllViews()
 
-        result.items.forEach { item ->
+        result.items.forEach {
+            item ->
             val rowBinding = ItemCareProfileRowBinding.inflate(
                 layoutInflater,
                 sheetBinding.careProfileItemsContainer,
@@ -465,7 +473,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 resources.displayMetrics.heightPixels * 0.82f
             ).roundToInt()
 
-            bottomSheet?.let { sheet ->
+            bottomSheet?.let {
+                sheet ->
                 sheet.setBackgroundColor(Color.TRANSPARENT)
 
                 val params = sheet.layoutParams
@@ -549,9 +558,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 openTankDetailCareProfileAction(
                     TankDetailFragment.CARE_PROFILE_ACTION_LIVESTOCK
                 )
-            }
-
-            else -> Unit
+            } else -> Unit
         }
     }
 
@@ -587,21 +594,19 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             return
         }
 
-        navController.popBackStack()
-
         navController.navigate(
-            R.id.tankDetailFragment,
+            R.id.action_tankSettingsFragment_to_tankDetailFragment,
             bundleOf(
                 "tankId" to tankId
             )
         )
 
         navController.currentBackStackEntry
-            ?.savedStateHandle
-            ?.set(
-                TankDetailFragment.KEY_CARE_PROFILE_ACTION,
-                action
-            )
+        ?.savedStateHandle
+        ?.set(
+            TankDetailFragment.KEY_CARE_PROFILE_ACTION,
+            action
+        )
     }
 
     fun openMaterialPickerFlow(
