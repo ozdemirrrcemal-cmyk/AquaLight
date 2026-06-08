@@ -51,7 +51,7 @@
 <string name="light_moonlight_start_picker_title">Moonlight Start</string>
 <string name="light_moonlight_end_picker_title">Moonlight End</string>
 
-</resources<string name="light_moonlight_program_end">Program End</string>
+<string name="light_moonlight_program_end">Program End</string>
 <string name="light_moonlight_start_picker_title">Moonlight Start</string>
 <string name="light_moonlight_end_picker_title">Moonlight End</string>
 <string name="light_moonlight_intensity_format">Intensity %1$d%%</string>
