@@ -14,21 +14,11 @@
 
     <action
       android:id="@+id/action_aquariumFragment_to_createTankFragment"
-      app:destination="@id/createTankFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/createTankFragment" />
 
     <action
       android:id="@+id/action_aquariumFragment_to_tankDetailFragment"
-      app:destination="@id/tankDetailFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/tankDetailFragment" />
 
   </fragment>
 
@@ -50,30 +40,15 @@
 
     <action
       android:id="@+id/action_tankDetailFragment_to_tankSettingsFragment"
-      app:destination="@id/tankSettingsFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/tankSettingsFragment" />
 
     <action
       android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
-      app:destination="@id/tankDetailLivestockFormFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/tankDetailLivestockFormFragment" />
 
     <action
       android:id="@+id/action_tankDetailFragment_to_tankDetailPlantTagFragment"
-      app:destination="@id/tankDetailPlantTagFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/tankDetailPlantTagFragment" />
 
   </fragment>
 
@@ -115,12 +90,7 @@
 
     <action
       android:id="@+id/action_tankSettingsFragment_to_materialPickerFragment"
-      app:destination="@id/materialPickerFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/materialPickerFragment" />
 
   </fragment>
 
@@ -153,12 +123,7 @@
 
     <action
       android:id="@+id/action_tankDetailPlantTagFragment_to_plantPickerFragment"
-      app:destination="@id/plantPickerFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/plantPickerFragment" />
 
   </fragment>
 
@@ -184,21 +149,11 @@
 
     <action
       android:id="@+id/action_aquariumMaintenanceFragment_to_addCareTaskFragment"
-      app:destination="@id/addCareTaskFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/addCareTaskFragment" />
 
     <action
       android:id="@+id/action_aquariumMaintenanceFragment_to_taskDetailFragment"
-      app:destination="@id/taskDetailFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/taskDetailFragment" />
 
   </fragment>
 
@@ -214,12 +169,7 @@
 
     <action
       android:id="@+id/action_taskDetailFragment_to_addCareTaskFragment"
-      app:destination="@id/addCareTaskFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/addCareTaskFragment" />
 
   </fragment>
 
@@ -245,21 +195,11 @@
 
     <action
       android:id="@+id/action_devicesFragment_to_deviceAddFragment"
-      app:destination="@id/deviceAddFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/deviceAddFragment" />
 
     <action
       android:id="@+id/action_devicesFragment_to_deviceRouterFragment"
-      app:destination="@id/deviceRouterFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/deviceRouterFragment" />
 
   </fragment>
 
@@ -271,21 +211,11 @@
 
     <action
       android:id="@+id/action_deviceAddFragment_to_deviceSetupFragment"
-      app:destination="@id/deviceSetupFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/deviceSetupFragment" />
 
     <action
       android:id="@+id/action_deviceAddFragment_to_deviceRouterFragment"
-      app:destination="@id/deviceRouterFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/deviceRouterFragment" />
 
   </fragment>
 
@@ -348,48 +278,23 @@
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightProgramsFragment"
-        app:destination="@id/deviceLightProgramsFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:destination="@id/deviceLightProgramsFragment" />
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightManualFragment"
-        app:destination="@id/deviceLightManualFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:destination="@id/deviceLightManualFragment" />
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightPresetsFragment"
-        app:destination="@id/deviceLightPresetsFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:destination="@id/deviceLightPresetsFragment" />
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightSettingsFragment"
-        app:destination="@id/deviceLightSettingsFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:destination="@id/deviceLightSettingsFragment" />
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightQuickSetupFragment"
-        app:destination="@id/deviceLightQuickSetupFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:destination="@id/deviceLightQuickSetupFragment" />
 
 </fragment>
 
@@ -406,12 +311,7 @@
 
     <action
         android:id="@+id/action_deviceLightProgramsFragment_to_deviceLightProgramEditorFragment"
-        app:destination="@id/deviceLightProgramEditorFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:destination="@id/deviceLightProgramEditorFragment" />
 
 </fragment>
 
@@ -457,12 +357,7 @@
 
     <action
         android:id="@+id/action_deviceLightPresetsFragment_to_deviceLightManualFragment"
-        app:destination="@id/deviceLightManualFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:destination="@id/deviceLightManualFragment" />
 
 </fragment>
 
@@ -593,30 +488,15 @@
 
     <action
       android:id="@+id/action_logoutFragment_to_changePasswordFragment"
-      app:destination="@id/changePasswordFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/changePasswordFragment" />
 
     <action
       android:id="@+id/action_logoutFragment_to_changeEmailFragment"
-      app:destination="@id/changeEmailFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/changeEmailFragment" />
 
     <action
       android:id="@+id/action_logoutFragment_to_securitySettingsFragment"
-      app:destination="@id/securitySettingsFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+      app:destination="@id/securitySettingsFragment" />
 
   </fragment>
 
