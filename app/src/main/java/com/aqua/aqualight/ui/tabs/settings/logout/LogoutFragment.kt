@@ -100,7 +100,8 @@ Fragment(R.layout.fragment_logout) {
         binding.rowChangePassword.setOnClickListener {
 
             findNavController().navigate(
-                R.id.action_logoutFragment_to_reAuthenticateFragment
+                R.id.action_logoutFragment_to_reAuthenticateFragment,
+                bundle
             )
         }
 
