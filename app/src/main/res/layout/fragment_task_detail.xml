@@ -5,11 +5,11 @@
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:background="@color/background_color">
-
-  <androidx.constraintlayout.widget.ConstraintLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     android:id="@+id/headerContainer"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
+    android:minHeight="74dp"
     android:background="@color/background_color"
     android:elevation="8dp"
     android:paddingStart="16dp"
@@ -21,55 +21,56 @@
     app:layout_constraintTop_toTopOf="parent">
 
     <ImageButton
-      android:id="@+id/btnBack"
-      android:layout_width="42dp"
-      android:layout_height="42dp"
-      android:background="?attr/selectableItemBackgroundBorderless"
-      android:contentDescription="Back"
-      android:padding="9dp"
-      android:src="@drawable/ic_back"
-      app:tint="?attr/colorOnSurface"
-      app:layout_constraintBottom_toBottomOf="@id/tvHeaderTitle"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="@id/tvHeaderTitle" />
-    <TextView
-      android:id="@+id/tvHeaderTitle"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_marginStart="88dp"
-      android:layout_marginEnd="88dp"
-      android:ellipsize="end"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:maxLines="1"
-      android:text="Task Detail"
-      android:textColor="@android:color/white"
-      android:textSize="20sp"
-      android:textStyle="bold"
-      app:layout_constraintBottom_toBottomOf="@id/btnBack"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="@id/btnBack" />
+        android:id="@+id/btnBack"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Back"
+        android:padding="9dp"
+        android:src="@drawable/ic_back"
+        app:tint="?attr/colorOnSurface"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <TextView
-      android:id="@+id/btnEditTask"
-      android:layout_width="wrap_content"
-      android:layout_height="36dp"
-      android:background="@drawable/bg_maintenance_tab_selected"
-      android:gravity="center"
-      android:includeFontPadding="false"
-      android:minWidth="58dp"
-      android:paddingStart="14dp"
-      android:paddingEnd="14dp"
-      android:text="Edit"
-      android:textColor="@android:color/white"
-      android:textSize="12.5sp"
-      android:textStyle="bold"
-      app:layout_constraintBottom_toBottomOf="@id/btnBack"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintTop_toTopOf="@id/btnBack" />
+        android:id="@+id/tvHeaderTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:text="Task Detail"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@id/btnBack"
+        app:layout_constraintEnd_toStartOf="@id/btnEditTask"
+        app:layout_constraintTop_toTopOf="@id/btnBack"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack" />
 
-  </androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:id="@+id/btnEditTask"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_maintenance_tab_selected"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:minWidth="58dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:text="Edit"
+        android:textColor="@android:color/white"
+        android:textSize="12.5sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/btnBack"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
 
   <ScrollView
     android:id="@+id/detailScrollView"
