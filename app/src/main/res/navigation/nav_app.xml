@@ -777,22 +777,6 @@
         app:popEnterAnim="@anim/nav_slide_in_left"
         app:popExitAnim="@anim/nav_slide_out_right" />
 
-    <action
-        android:id="@+id/action_appSettingsFragment_to_termsOfUseFragment"
-        app:destination="@id/termsOfUseFragment"
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right" />
-
-    <action
-        android:id="@+id/action_appSettingsFragment_to_openSourceLicensesFragment"
-        app:destination="@id/openSourceLicensesFragment"
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right" />
-
 </fragment>
 
   <fragment
@@ -819,16 +803,6 @@
     android:name="com.aqua.aqualight.ui.tabs.settings.logout.LogoutFragment"
     android:label="Logout"
     tools:layout="@layout/fragment_logout">
-
-    <action
-      android:id="@+id/action_logoutFragment_to_changePasswordFragment"
-      app:destination="@id/changePasswordFragment" 
-        app:enterAnim="@anim/nav_slide_in_right"
-        app:exitAnim="@anim/nav_slide_out_left"
-        app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
-
     <action
       android:id="@+id/action_logoutFragment_to_changeEmailFragment"
       app:destination="@id/changeEmailFragment" 
