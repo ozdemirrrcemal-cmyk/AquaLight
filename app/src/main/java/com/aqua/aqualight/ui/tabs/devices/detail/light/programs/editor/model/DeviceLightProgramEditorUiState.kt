@@ -29,17 +29,18 @@ data class DeviceLightProgramEditorUiState(
 ) {
 
     val draft: LightProgramDraft
-        get() = LightProgramDraft(
-            start = start,
-            peakStart = peakStart,
-            peakEnd = peakEnd,
-            channelValues = channelValues.normalized(),
-            repeatMode = repeatMode,
-            selectedDays = selectedDays,
-            moonlightSettings = moonlightSettings,
-            cloudSimulationSettings = cloudSimulationSettings,
-            transitionMode = transitionMode
-        )
+    get() = LightProgramDraft(
+        start = start,
+        peakStart = peakStart,
+        peakEnd = peakEnd,
+        end = end,
+        channelValues = channelValues.normalized(),
+        repeatMode = repeatMode,
+        selectedDays = selectedDays,
+        moonlightSettings = moonlightSettings,
+        cloudSimulationSettings = cloudSimulationSettings,
+        transitionMode = transitionMode
+    )
 
     val graphState: LightCurveGraphState
         get() {
