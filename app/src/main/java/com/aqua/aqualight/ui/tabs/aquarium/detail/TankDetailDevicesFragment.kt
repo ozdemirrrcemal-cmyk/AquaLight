@@ -196,6 +196,7 @@ class TankDetailDevicesFragment :
                 startTimeText = "--:--",
                 endTimeText = "--:--",
                 outputPercent = 0,
+				timelineProgressPercent = 0,
                 channels = buildLightChannels()
             )
         } else {

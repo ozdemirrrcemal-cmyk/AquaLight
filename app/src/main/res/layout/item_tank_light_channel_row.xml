@@ -6,12 +6,12 @@
     android:id="@+id/channelRowRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingTop="7dp"
-    android:paddingBottom="7dp">
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp">
 
     <TextView
         android:id="@+id/tvChannelLabel"
-        android:layout_width="64dp"
+        android:layout_width="58dp"
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:includeFontPadding="false"
@@ -37,11 +37,11 @@
         app:layout_constraintTop_toTopOf="parent"
         app:trackColor="#2A1B22"
         app:trackCornerRadius="4dp"
-        app:trackThickness="7dp" />
+        app:trackThickness="6dp" />
 
     <TextView
         android:id="@+id/tvChannelValue"
-        android:layout_width="44dp"
+        android:layout_width="38dp"
         android:layout_height="wrap_content"
         android:gravity="end"
         android:includeFontPadding="false"
