@@ -32,7 +32,7 @@ class TankDetailDevicesAdapter(
         viewType: Int
     ): RecyclerView.ViewHolder {
         val inflater =
-            LayoutInflater.from(parent.context)
+        LayoutInflater.from(parent.context)
 
         return when (viewType) {
             VIEW_TYPE_LIGHT -> {
@@ -45,9 +45,7 @@ class TankDetailDevicesAdapter(
                     onDeviceClick = onDeviceClick,
                     onDeviceLongClick = onDeviceLongClick
                 )
-            }
-
-            else -> {
+            } else -> {
                 GenericViewHolder(
                     binding = ItemTankDetailDeviceGenericCardBinding.inflate(
                         inflater,
@@ -90,26 +88,26 @@ class TankDetailDevicesAdapter(
             item: TankAssignedDeviceUi.Light
         ) {
             binding.tvDeviceName.text =
-                item.title
+            item.title
 
             binding.tvDeviceType.text =
-                item.subtitle
+            item.subtitle
 
             binding.ivDeviceIcon.setImageResource(
                 item.iconRes
             )
 
             binding.ivDeviceIcon.imageTintList =
-                null
+            null
 
             binding.ivDeviceIcon.clearColorFilter()
 
             binding.tvConnectionStatus.text =
-                if (item.isOnline) {
-                    "Online"
-                } else {
-                    "Offline"
-                }
+            if (item.isOnline) {
+                "Online"
+            } else {
+                "Offline"
+            }
 
             binding.tvConnectionStatus.setTextColor(
                 if (item.isOnline) {
@@ -119,17 +117,34 @@ class TankDetailDevicesAdapter(
                 }
             )
 
+            binding.tvProgramLabel.text =
+            item.modeLabel
+
             binding.tvProgramName.text =
-                item.programName
+            item.programName
 
             binding.tvStartTime.text =
-                item.startTimeText
+            item.startTimeText
 
             binding.tvEndTime.text =
-                item.endTimeText
+            item.endTimeText
 
             binding.tvOutputPercent.text =
-                "${item.outputPercent}%"
+            "${item.outputPercent}%"
+
+            binding.tvOutputPercent.setTextColor(
+                item.accentColorInt
+            )
+
+            binding.ivRampDown.imageTintList =
+            android.content.res.ColorStateList.valueOf(
+                item.accentColorInt
+            )
+
+            binding.viewTimelineActive.backgroundTintList =
+            android.content.res.ColorStateList.valueOf(
+                item.accentColorInt
+            )
 
             bindTimelineProgress(
                 progressPercent = item.timelineProgressPercent
@@ -152,21 +167,22 @@ class TankDetailDevicesAdapter(
         private fun bindTimelineProgress(
             progressPercent: Int
         ) {
-            binding.tvLightTimeline.doOnLayout { timeline ->
+            binding.tvLightTimeline.doOnLayout {
+                timeline ->
                 val activeWidth =
-                    timeline.width * progressPercent.coerceIn(
-                        0,
-                        100
-                    ) / 100
+                timeline.width * progressPercent.coerceIn(
+                    0,
+                    100
+                ) / 100
 
                 val params =
-                    binding.viewTimelineActive.layoutParams
+                binding.viewTimelineActive.layoutParams
 
                 params.width =
-                    activeWidth
+                activeWidth
 
                 binding.viewTimelineActive.layoutParams =
-                    params
+                params
             }
         }
 
@@ -175,25 +191,26 @@ class TankDetailDevicesAdapter(
         ) {
             binding.channelContainer.removeAllViews()
 
-            channels.forEach { channel ->
+            channels.forEach {
+                channel ->
                 val channelBinding =
-                    ItemTankLightChannelRowBinding.inflate(
-                        LayoutInflater.from(binding.root.context),
-                        binding.channelContainer,
-                        false
-                    )
+                ItemTankLightChannelRowBinding.inflate(
+                    LayoutInflater.from(binding.root.context),
+                    binding.channelContainer,
+                    false
+                )
 
                 val safePercent =
-                    channel.currentPercent.coerceIn(
-                        0,
-                        100
-                    )
+                channel.currentPercent.coerceIn(
+                    0,
+                    100
+                )
 
                 channelBinding.tvChannelLabel.text =
-                    channel.label
+                channel.label
 
                 channelBinding.tvChannelValue.text =
-                    "$safePercent%"
+                "$safePercent%"
 
                 channelBinding.progressChannel.bind(
                     progressPercent = safePercent,
@@ -251,26 +268,26 @@ class TankDetailDevicesAdapter(
             item: TankAssignedDeviceUi.Generic
         ) {
             binding.tvDeviceName.text =
-                item.title
+            item.title
 
             binding.tvDeviceType.text =
-                item.subtitle
+            item.subtitle
 
             binding.ivDeviceIcon.setImageResource(
                 item.iconRes
             )
 
             binding.ivDeviceIcon.imageTintList =
-                null
+            null
 
             binding.ivDeviceIcon.clearColorFilter()
 
             binding.tvConnectionStatus.text =
-                if (item.isOnline) {
-                    "Online"
-                } else {
-                    "Offline"
-                }
+            if (item.isOnline) {
+                "Online"
+            } else {
+                "Offline"
+            }
 
             binding.tvConnectionStatus.setTextColor(
                 if (item.isOnline) {
@@ -311,9 +328,9 @@ class TankDetailDevicesAdapter(
     private companion object {
 
         const val VIEW_TYPE_LIGHT =
-            1
+        1
 
         const val VIEW_TYPE_GENERIC =
-            2
+        2
     }
 }

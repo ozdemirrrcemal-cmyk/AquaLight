@@ -6,13 +6,13 @@
     android:id="@+id/channelRowRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="25dp"
-    android:paddingTop="4dp"
-    android:paddingBottom="4dp">
+    android:minHeight="22dp"
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp">
 
     <TextView
         android:id="@+id/tvChannelLabel"
-        android:layout_width="58dp"
+        android:layout_width="52dp"
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:includeFontPadding="false"
@@ -30,8 +30,8 @@
         android:id="@+id/progressChannel"
         android:layout_width="0dp"
         android:layout_height="6dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/tvChannelValue"
         app:layout_constraintStart_toEndOf="@id/tvChannelLabel"
@@ -39,7 +39,7 @@
 
     <TextView
         android:id="@+id/tvChannelValue"
-        android:layout_width="56dp"
+        android:layout_width="44dp"
         android:layout_height="wrap_content"
         android:gravity="end"
         android:includeFontPadding="false"

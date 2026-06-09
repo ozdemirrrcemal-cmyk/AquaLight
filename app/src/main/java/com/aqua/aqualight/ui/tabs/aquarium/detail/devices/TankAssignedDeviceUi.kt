@@ -19,11 +19,14 @@ sealed class TankAssignedDeviceUi {
         override val subtitle: String,
         @DrawableRes override val iconRes: Int,
         override val isOnline: Boolean,
+        val mode: TankLightCardMode,
+        val modeLabel: String,
         val programName: String,
         val startTimeText: String,
         val endTimeText: String,
         val outputPercent: Int,
         val timelineProgressPercent: Int,
+        val accentColorInt: Int,
         val channels: List<TankLightChannelUi>
     ) : TankAssignedDeviceUi()
 
@@ -43,6 +46,14 @@ data class TankLightChannelUi(
     val targetPercent: Int,
     val colorInt: Int
 )
+
+enum class TankLightCardMode {
+    AUTO,
+    MANUAL,
+    SCENE,
+    MOONLIGHT,
+    NO_PROGRAM
+}
 
 enum class TankLightChannelKey {
     WHITE,

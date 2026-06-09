@@ -157,20 +157,22 @@ class TankAssignedDeviceUiMapper {
             }
         }
 
+        val modeContent =
+        buildModeContent(
+            displayProgram = displayProgram
+        )
+
         return TankAssignedDeviceUi.Light(
             deviceId = device.id,
             title = title,
             subtitle = subtitle,
             iconRes = iconRes,
             isOnline = online,
-            programName = displayProgram?.name ?: "No active program",
-            startTimeText = displayProgram?.draft?.start?.label ?: "--:--",
-            endTimeText = displayProgram?.let {
-                program ->
-                LightProgramTimeMath.endLabel(
-                    program.draft.end
-                )
-            } ?: "--:--",
+            mode = modeContent.mode,
+            modeLabel = modeContent.label,
+            programName = modeContent.title,
+            startTimeText = modeContent.leftText,
+            endTimeText = modeContent.rightText,
             outputPercent = outputPercent.coerceIn(
                 0,
                 100
@@ -179,6 +181,7 @@ class TankAssignedDeviceUiMapper {
                 program = displayProgram,
                 currentMinute = currentMinute
             ),
+            accentColorInt = modeContent.accentColorInt,
             channels = buildLightChannels(
                 device = device,
                 liveState = liveState,
@@ -681,6 +684,41 @@ class TankAssignedDeviceUiMapper {
         return calendar.get(Calendar.HOUR_OF_DAY) * 60 +
         calendar.get(Calendar.MINUTE)
     }
+
+    private fun buildModeContent(
+        displayProgram: SavedLightProgram?
+    ): LightModeContent {
+        if (displayProgram == null) {
+            return LightModeContent(
+                mode = TankLightCardMode.NO_PROGRAM,
+                label = "NO ACTIVE PROGRAM",
+                title = "Program not set",
+                leftText = "--:--",
+                rightText = "--:--",
+                accentColorInt = Color.parseColor("#90A1B5")
+            )
+        }
+
+        return LightModeContent(
+            mode = TankLightCardMode.AUTO,
+            label = "ACTIVE PROGRAM",
+            title = displayProgram.name,
+            leftText = displayProgram.draft.start.label,
+            rightText = LightProgramTimeMath.endLabel(
+                displayProgram.draft.end
+            ),
+            accentColorInt = Color.parseColor("#8EB8FF")
+        )
+    }
+
+    private data class LightModeContent(
+        val mode: TankLightCardMode,
+        val label: String,
+        val title: String,
+        val leftText: String,
+        val rightText: String,
+        val accentColorInt: Int
+    )
 
     private data class LightChannelConfig(
         val key: TankLightChannelKey,

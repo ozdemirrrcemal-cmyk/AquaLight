@@ -24,10 +24,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="14dp"
-        android:paddingTop="14dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="14dp">
+        android:paddingStart="13dp"
+        android:paddingTop="13dp"
+        android:paddingEnd="13dp"
+        android:paddingBottom="13dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -119,7 +119,7 @@
             android:id="@+id/programSummaryCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="9dp"
             app:cardBackgroundColor="#142437"
             app:cardCornerRadius="18dp"
             app:cardElevation="0dp"
@@ -130,9 +130,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingStart="12dp"
-                android:paddingTop="10dp"
+                android:paddingTop="9dp"
                 android:paddingEnd="12dp"
-                android:paddingBottom="10dp">
+                android:paddingBottom="9dp">
 
                 <TextView
                     android:id="@+id/tvProgramLabel"
@@ -150,7 +150,7 @@
                     android:id="@+id/tvProgramName"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
+                    android:layout_marginTop="4dp"
                     android:layout_marginEnd="10dp"
                     android:ellipsize="end"
                     android:includeFontPadding="false"
@@ -174,13 +174,13 @@
                     app:layout_constraintBottom_toBottomOf="@id/tvProgramName"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="@id/tvProgramLabel"
-                    tools:text="72%" />
+                    tools:text="85%" />
 
                 <LinearLayout
                     android:id="@+id/startTimeGroup"
                     android:layout_width="wrap_content"
-                    android:layout_height="26dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_height="25dp"
+                    android:layout_marginTop="9dp"
                     android:background="@drawable/bg_light_time_chip"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
@@ -235,7 +235,7 @@
                 <LinearLayout
                     android:id="@+id/endTimeGroup"
                     android:layout_width="wrap_content"
-                    android:layout_height="26dp"
+                    android:layout_height="25dp"
                     android:background="@drawable/bg_light_time_chip"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
@@ -253,7 +253,7 @@
                         android:textColor="#A8B5C5"
                         android:textSize="11.5sp"
                         android:textStyle="bold"
-                        tools:text="22:00" />
+                        tools:text="23:00" />
 
                     <ImageView
                         android:id="@+id/ivRampDown"
@@ -274,7 +274,7 @@
             android:id="@+id/channelContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="9dp"
+            android:layout_marginTop="8dp"
             android:orientation="vertical"
             tools:itemCount="4"
             tools:listitem="@layout/item_tank_light_channel_row" />
