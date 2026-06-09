@@ -59,7 +59,7 @@ class TankAssignedDeviceUiMapper {
                 iconRes = iconRes,
                 online = online,
                 programs = programs,
-                lightState = lightState
+                lightState = lightState,
                 modeOverride = modeOverride
             )
         } else {
@@ -182,10 +182,10 @@ class TankAssignedDeviceUiMapper {
                 100
             ),
             timelineProgressPercent = modeContent.timelineProgressPercent
-    ?: calculateTimelineProgressPercent(
-        program = displayProgram,
-        currentMinute = currentMinute
-    ),
+            ?: calculateTimelineProgressPercent(
+                program = displayProgram,
+                currentMinute = currentMinute
+            ),
             accentColorInt = modeContent.accentColorInt,
             channels = buildLightChannels(
                 device = device,
@@ -691,91 +691,81 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun buildModeContent(
-    displayProgram: SavedLightProgram?,
-    modeOverride: TankLightModeOverride?
-): LightModeContent {
-    when (modeOverride?.mode) {
-        TankLightCardMode.MANUAL -> {
+        displayProgram: SavedLightProgram?,
+        modeOverride: TankLightModeOverride?
+    ): LightModeContent {
+        when (modeOverride?.mode) {
+            TankLightCardMode.MANUAL -> {
+                return LightModeContent(
+                    mode = TankLightCardMode.MANUAL,
+                    label = "MANUAL MODE",
+                    title = "Manual Control",
+                    leftText = "Manual",
+                    rightText = "Auto",
+                    accentColorInt = Color.parseColor("#C8A86B"),
+                    timelineProgressPercent = 100
+                )
+            }
+
+            TankLightCardMode.SCENE -> {
+                return LightModeContent(
+                    mode = TankLightCardMode.SCENE,
+                    label = "SCENE ACTIVE",
+                    title = modeOverride.title.ifBlank {
+                        "Scene Mode"
+                    },
+                    leftText = "Scene",
+                    rightText = "Auto",
+                    accentColorInt = Color.parseColor("#A37CFF"),
+                    timelineProgressPercent = 100
+                )
+            }
+
+            TankLightCardMode.MOONLIGHT -> {
+                return LightModeContent(
+                    mode = TankLightCardMode.MOONLIGHT,
+                    label = "MOONLIGHT",
+                    title = modeOverride.title.ifBlank {
+                        "Moonlight Mode"
+                    },
+                    leftText = "Night",
+                    rightText = "Auto",
+                    accentColorInt = Color.parseColor("#7FA7FF"),
+                    timelineProgressPercent = 100
+                )
+            }
+
+            TankLightCardMode.AUTO,
+            TankLightCardMode.NO_PROGRAM,
+            null -> {
+                // Continue below.
+            }
+        }
+
+        if (displayProgram == null) {
             return LightModeContent(
-                mode = TankLightCardMode.MANUAL,
-                label = "MANUAL MODE",
-                title = "Manual Control",
-                leftText = "Manual",
-                rightText = "Auto",
-                accentColorInt = Color.parseColor("#C8A86B"),
-                timelineProgressPercent = 100
+                mode = TankLightCardMode.NO_PROGRAM,
+                label = "NO ACTIVE PROGRAM",
+                title = "Program not set",
+                leftText = "--:--",
+                rightText = "--:--",
+                accentColorInt = Color.parseColor("#90A1B5"),
+                timelineProgressPercent = 0
             )
         }
 
-        TankLightCardMode.SCENE -> {
-            return LightModeContent(
-                mode = TankLightCardMode.SCENE,
-                label = "SCENE ACTIVE",
-                title = modeOverride.title.ifBlank {
-                    "Scene Mode"
-                },
-                leftText = "Scene",
-                rightText = "Auto",
-                accentColorInt = Color.parseColor("#A37CFF"),
-                timelineProgressPercent = 100
-            )
-        }
-
-        TankLightCardMode.MOONLIGHT -> {
-            return LightModeContent(
-                mode = TankLightCardMode.MOONLIGHT,
-                label = "MOONLIGHT",
-                title = modeOverride.title.ifBlank {
-                    "Moonlight Mode"
-                },
-                leftText = "Night",
-                rightText = "Auto",
-                accentColorInt = Color.parseColor("#7FA7FF"),
-                timelineProgressPercent = 100
-            )
-        }
-
-        TankLightCardMode.AUTO,
-        TankLightCardMode.NO_PROGRAM,
-        null -> {
-            // Continue below.
-        }
-    }
-
-    if (displayProgram == null) {
         return LightModeContent(
-            mode = TankLightCardMode.NO_PROGRAM,
-            label = "NO ACTIVE PROGRAM",
-            title = "Program not set",
-            leftText = "--:--",
-            rightText = "--:--",
-            accentColorInt = Color.parseColor("#90A1B5"),
-            timelineProgressPercent = 0
+            mode = TankLightCardMode.AUTO,
+            label = "ACTIVE PROGRAM",
+            title = displayProgram.name,
+            leftText = displayProgram.draft.start.label,
+            rightText = LightProgramTimeMath.endLabel(
+                displayProgram.draft.end
+            ),
+            accentColorInt = Color.parseColor("#8EB8FF"),
+            timelineProgressPercent = null
         )
     }
-
-    return LightModeContent(
-        mode = TankLightCardMode.AUTO,
-        label = "ACTIVE PROGRAM",
-        title = displayProgram.name,
-        leftText = displayProgram.draft.start.label,
-        rightText = LightProgramTimeMath.endLabel(
-            displayProgram.draft.end
-        ),
-        accentColorInt = Color.parseColor("#8EB8FF"),
-        timelineProgressPercent = null
-    )
-}
-
-private data class LightModeContent(
-    val mode: TankLightCardMode,
-    val label: String,
-    val title: String,
-    val leftText: String,
-    val rightText: String,
-    val accentColorInt: Int,
-    val timelineProgressPercent: Int?
-)
 
     private data class LightModeContent(
         val mode: TankLightCardMode,
@@ -783,7 +773,8 @@ private data class LightModeContent(
         val title: String,
         val leftText: String,
         val rightText: String,
-        val accentColorInt: Int
+        val accentColorInt: Int,
+        val timelineProgressPercent: Int?
     )
 
     private data class LightChannelConfig(
