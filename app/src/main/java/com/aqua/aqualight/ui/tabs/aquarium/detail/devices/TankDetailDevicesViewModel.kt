@@ -221,7 +221,7 @@ class TankDetailDevicesViewModel(
                         lightStatesFlow.update { current ->
                             current + (
                                 deviceId to liveState
-                                )
+                            )
                         }
 
                         lightModeOverridesFlow.update { current ->
@@ -235,7 +235,7 @@ class TankDetailDevicesViewModel(
                             } else {
                                 current + (
                                     deviceId to modeOverride
-                                    )
+                                )
                             }
                         }
                     }
@@ -289,15 +289,8 @@ class TankDetailDevicesViewModel(
                         "Scene Mode"
                     }
 
-            val mode =
-                if (isMoonlightSceneName(sceneName)) {
-                    TankLightCardMode.MOONLIGHT
-                } else {
-                    TankLightCardMode.SCENE
-                }
-
             return TankLightModeOverride(
-                mode = mode,
+                mode = TankLightCardMode.SCENE,
                 title = sceneName,
                 outputPercent = outputPercent,
                 red = red,
@@ -351,21 +344,6 @@ class TankDetailDevicesViewModel(
         return value.coerceIn(
             0,
             100
-        )
-    }
-
-    private fun isMoonlightSceneName(
-        sceneName: String
-    ): Boolean {
-        val normalized =
-            sceneName.lowercase()
-
-        return normalized.contains(
-            "moon"
-        ) || normalized.contains(
-            "moonlight"
-        ) || normalized.contains(
-            "night"
         )
     }
 

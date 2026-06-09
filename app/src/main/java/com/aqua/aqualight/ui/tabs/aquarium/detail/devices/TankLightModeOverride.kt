@@ -7,5 +7,8 @@ data class TankLightModeOverride(
     val red: Int? = null,
     val green: Int? = null,
     val blue: Int? = null,
-    val white: Int? = null
+    val white: Int? = null,
+    val leftText: String? = null,
+    val rightText: String? = null,
+    val timelineProgressPercent: Int? = null
 )

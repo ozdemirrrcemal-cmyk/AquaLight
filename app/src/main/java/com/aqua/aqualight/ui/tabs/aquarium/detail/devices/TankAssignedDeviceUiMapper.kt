@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import java.util.Calendar
@@ -138,10 +139,25 @@ class TankAssignedDeviceUiMapper {
                 ?: todayPrograms.firstOrNull()
                 ?: activePrograms.firstOrNull()
 
+        val moonlightOverride =
+            if (modeOverride == null) {
+                buildMoonlightOverride(
+                    programs = todayPrograms.ifEmpty {
+                        activePrograms
+                    },
+                    currentMinute = currentMinute
+                )
+            } else {
+                null
+            }
+
+        val effectiveModeOverride =
+            modeOverride ?: moonlightOverride
+
         val outputPercent =
             when {
-                modeOverride?.outputPercent != null -> {
-                    modeOverride.outputPercent
+                effectiveModeOverride?.outputPercent != null -> {
+                    effectiveModeOverride.outputPercent
                 }
 
                 liveState.hasLiveChannels -> {
@@ -163,7 +179,7 @@ class TankAssignedDeviceUiMapper {
         val modeContent =
             buildModeContent(
                 displayProgram = displayProgram,
-                modeOverride = modeOverride
+                modeOverride = effectiveModeOverride
             )
 
         return TankAssignedDeviceUi.Light(
@@ -193,9 +209,179 @@ class TankAssignedDeviceUiMapper {
                 runningProgram = runningProgram,
                 displayProgram = displayProgram,
                 currentMinute = currentMinute,
-                modeOverride = modeOverride
+                modeOverride = effectiveModeOverride
             )
         )
+    }
+
+    private fun buildMoonlightOverride(
+        programs: List<SavedLightProgram>,
+        currentMinute: Int
+    ): TankLightModeOverride? {
+        return programs.firstNotNullOfOrNull { program ->
+            buildMoonlightOverrideForProgram(
+                program = program,
+                currentMinute = currentMinute
+            )
+        }
+    }
+
+    private fun buildMoonlightOverrideForProgram(
+        program: SavedLightProgram,
+        currentMinute: Int
+    ): TankLightModeOverride? {
+        val settings =
+            program.draft.moonlightSettings
+
+        if (!settings.enabled) {
+            return null
+        }
+
+        val startPoint =
+            if (settings.followProgramEnd) {
+                program.draft.end
+            } else {
+                settings.startTime
+            }
+
+        val endPoint =
+            settings.endTime
+
+        val startMinute =
+            normalizeMinute(
+                minute = startPoint.totalMinutes
+            )
+
+        val endMinute =
+            normalizeMinute(
+                minute = endPoint.totalMinutes
+            )
+
+        val safeCurrentMinute =
+            normalizeMinute(
+                minute = currentMinute
+            )
+
+        if (
+            !isMinuteInRange(
+                currentMinute = safeCurrentMinute,
+                startMinute = startMinute,
+                endMinute = endMinute
+            )
+        ) {
+            return null
+        }
+
+        val intensity =
+            settings.intensityPercent.coerceIn(
+                0,
+                100
+            )
+
+        val blue =
+            when (settings.channel) {
+                MoonlightChannel.BLUE,
+                MoonlightChannel.BLUE_WHITE -> {
+                    intensity
+                }
+
+                MoonlightChannel.WHITE -> {
+                    0
+                }
+            }
+
+        val white =
+            when (settings.channel) {
+                MoonlightChannel.WHITE,
+                MoonlightChannel.BLUE_WHITE -> {
+                    intensity
+                }
+
+                MoonlightChannel.BLUE -> {
+                    0
+                }
+            }
+
+        return TankLightModeOverride(
+            mode = TankLightCardMode.MOONLIGHT,
+            title = "Moonlight Mode",
+            outputPercent = intensity,
+            red = 0,
+            green = 0,
+            blue = blue,
+            white = white,
+            leftText = startPoint.label,
+            rightText = endPoint.label,
+            timelineProgressPercent = moonlightProgressPercent(
+                currentMinute = safeCurrentMinute,
+                startMinute = startMinute,
+                endMinute = endMinute
+            )
+        )
+    }
+
+    private fun isMinuteInRange(
+        currentMinute: Int,
+        startMinute: Int,
+        endMinute: Int
+    ): Boolean {
+        if (startMinute == endMinute) {
+            return false
+        }
+
+        return if (startMinute < endMinute) {
+            currentMinute >= startMinute && currentMinute < endMinute
+        } else {
+            currentMinute >= startMinute || currentMinute < endMinute
+        }
+    }
+
+    private fun moonlightProgressPercent(
+        currentMinute: Int,
+        startMinute: Int,
+        endMinute: Int
+    ): Int {
+        if (startMinute == endMinute) {
+            return 0
+        }
+
+        val duration =
+            if (endMinute > startMinute) {
+                endMinute - startMinute
+            } else {
+                (MINUTES_PER_DAY - startMinute) + endMinute
+            }
+
+        if (duration <= 0) {
+            return 0
+        }
+
+        val elapsed =
+            if (currentMinute >= startMinute) {
+                currentMinute - startMinute
+            } else {
+                (MINUTES_PER_DAY - startMinute) + currentMinute
+            }
+
+        return ((elapsed.toDouble() / duration.toDouble()) * 100.0)
+            .roundToInt()
+            .coerceIn(
+                0,
+                100
+            )
+    }
+
+    private fun normalizeMinute(
+        minute: Int
+    ): Int {
+        val value =
+            minute % MINUTES_PER_DAY
+
+        return if (value < 0) {
+            value + MINUTES_PER_DAY
+        } else {
+            value
+        }
     }
 
     private fun buildLightChannels(
@@ -331,7 +517,8 @@ class TankAssignedDeviceUiMapper {
         currentMinute: Int,
         semantic: LightChannelSemantic
     ): Int {
-        if (!isProgramRunningAt(
+        if (
+            !isProgramRunningAt(
                 program = program,
                 minute = currentMinute
             )
@@ -392,7 +579,8 @@ class TankAssignedDeviceUiMapper {
         currentMinute: Int,
         peakPercent: Int
     ): Int {
-        if (!isProgramRunningAt(
+        if (
+            !isProgramRunningAt(
                 program = program,
                 minute = currentMinute
             )
@@ -494,9 +682,13 @@ class TankAssignedDeviceUiMapper {
         }
 
         return when {
-            currentMinute <= start -> 0
+            currentMinute <= start -> {
+                0
+            }
 
-            currentMinute >= end -> 100
+            currentMinute >= end -> {
+                100
+            }
 
             else -> {
                 (((currentMinute - start).toDouble() / (end - start).toDouble()) * 100.0)
@@ -696,8 +888,13 @@ class TankAssignedDeviceUiMapper {
         weekDay: Int
     ): Int {
         return when (weekDay) {
-            in 1..7 -> weekDay
-            else -> todayAppDay()
+            in 1..7 -> {
+                weekDay
+            }
+
+            else -> {
+                todayAppDay()
+            }
         }
     }
 
@@ -732,7 +929,7 @@ class TankAssignedDeviceUiMapper {
                     label = "MANUAL MODE",
                     title = "Manual Control",
                     leftText = "Manual",
-                    rightText = "Auto",
+                    rightText = "Resume",
                     accentColorInt = Color.parseColor("#C8A86B"),
                     timelineProgressPercent = 100
                 )
@@ -746,7 +943,7 @@ class TankAssignedDeviceUiMapper {
                         "Scene Mode"
                     },
                     leftText = "Scene",
-                    rightText = "Auto",
+                    rightText = "Resume",
                     accentColorInt = Color.parseColor("#A37CFF"),
                     timelineProgressPercent = 100
                 )
@@ -759,10 +956,10 @@ class TankAssignedDeviceUiMapper {
                     title = modeOverride.title.ifBlank {
                         "Moonlight Mode"
                     },
-                    leftText = "Night",
-                    rightText = "Auto",
+                    leftText = modeOverride.leftText ?: "--:--",
+                    rightText = modeOverride.rightText ?: "--:--",
                     accentColorInt = Color.parseColor("#7FA7FF"),
-                    timelineProgressPercent = 100
+                    timelineProgressPercent = modeOverride.timelineProgressPercent ?: 0
                 )
             }
 
@@ -816,7 +1013,10 @@ class TankAssignedDeviceUiMapper {
     )
 
     private companion object {
-        const val ONLINE_TIMEOUT_MS =
+        private const val ONLINE_TIMEOUT_MS =
             90_000L
+
+        private const val MINUTES_PER_DAY =
+            24 * 60
     }
 }
