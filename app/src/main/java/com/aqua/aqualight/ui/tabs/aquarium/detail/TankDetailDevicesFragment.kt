@@ -145,31 +145,31 @@ class TankDetailDevicesFragment :
     }
 
     private fun openDeviceMenuScreen(
-        device: TankAssignedDeviceUi
-    ) {
-        val args =
-            Bundle().apply {
-                putLong(
-                    ARG_DEVICE_ID,
-                    device.deviceId
-                )
+    device: TankAssignedDeviceUi
+) {
+    val args =
+        Bundle().apply {
+            putLong(
+                ARG_DEVICE_ID,
+                device.deviceId
+            )
 
-                putString(
-                    ARG_DEVICE_TITLE,
-                    device.title
-                )
+            putString(
+                ARG_DEVICE_TITLE,
+                device.title
+            )
 
-                putString(
-                    ARG_DEVICE_IP,
-                    ""
-                )
-            }
+            putString(
+                ARG_DEVICE_IP,
+                ""
+            )
+        }
 
-        findNavController().navigate(
-            R.id.action_tankDetailFragment_to_deviceMenuFragment,
-            args
-        )
-    }
+    findNavController().navigate(
+        R.id.action_tankDetailFragment_to_deviceRouterFragment,
+        args
+    )
+}
 
     override fun onDestroyView() {
         binding.rvTankDevices.adapter =
