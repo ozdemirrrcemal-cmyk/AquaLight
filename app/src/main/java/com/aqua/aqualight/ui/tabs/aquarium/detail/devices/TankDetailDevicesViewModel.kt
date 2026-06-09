@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreMana
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
@@ -322,14 +323,11 @@ class TankDetailDevicesViewModel(
             return 0
         }
 
-        return maxOf(
-            runtime.red,
-            runtime.green,
-            runtime.blue,
-            runtime.white
-        ).coerceIn(
-            0,
-            100
+        return LightOutputMath.outputPercent(
+            red = runtime.red,
+            green = runtime.green,
+            blue = runtime.blue,
+            white = runtime.white
         )
     }
 

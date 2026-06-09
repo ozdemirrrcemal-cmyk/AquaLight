@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
+import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
@@ -499,11 +500,11 @@ class TankAssignedDeviceUiMapper {
             LightChannelSemantic.BLUE -> values.blue
             LightChannelSemantic.WHITE -> values.white
             LightChannelSemantic.UNKNOWN -> {
-                maxOf(
-                    values.red,
-                    values.green,
-                    values.blue,
-                    values.white
+                LightOutputMath.outputPercent(
+                    red = values.red,
+                    green = values.green,
+                    blue = values.blue,
+                    white = values.white
                 )
             }
         }.coerceIn(
@@ -553,14 +554,11 @@ class TankAssignedDeviceUiMapper {
         currentMinute: Int
     ): Int {
         val peakPercent =
-            maxOf(
-                program.draft.channelValues.red,
-                program.draft.channelValues.green,
-                program.draft.channelValues.blue,
-                program.draft.channelValues.white
-            ).coerceIn(
-                0,
-                100
+            LightOutputMath.outputPercent(
+                red = program.draft.channelValues.red,
+                green = program.draft.channelValues.green,
+                blue = program.draft.channelValues.blue,
+                white = program.draft.channelValues.white
             )
 
         if (peakPercent <= 0) {
