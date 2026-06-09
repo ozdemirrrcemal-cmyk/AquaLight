@@ -16,6 +16,8 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesAdapter
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectFragment
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
 import kotlinx.coroutines.launch
 
 class TankDetailDevicesFragment :
@@ -124,10 +126,31 @@ class TankDetailDevicesFragment :
     }
 
     private fun handleDeviceLongClick(
-        device: TankAssignedDeviceUi
-    ) {
-        // Sonraki adımda Remove / Settings bottom sheet burada açılacak.
-    }
+    device: TankAssignedDeviceUi
+) {
+    showRemoveDeviceFromTankSheet(
+        device = device
+    )
+}
+
+private fun showRemoveDeviceFromTankSheet(
+    device: TankAssignedDeviceUi
+) {
+    DeviceConfirmBottomSheet
+        .create(requireContext())
+        .show(
+            title = "Remove device from tank?",
+            message = "${device.title} will remain saved, but it will no longer be assigned to this tank.",
+            confirmText = "Remove",
+            cancelText = "Cancel",
+            tone = DeviceConfirmTone.DANGER,
+            onConfirm = {
+                viewModel.removeDeviceFromTank(
+                    deviceId = device.deviceId
+                )
+            }
+        )
+}
 
     private fun openTankDeviceSelectScreen() {
         val args =

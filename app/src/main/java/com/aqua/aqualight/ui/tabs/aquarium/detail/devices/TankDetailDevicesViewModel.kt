@@ -147,6 +147,20 @@ class TankDetailDevicesViewModel(
                 }
             }
     }
+	
+	fun removeDeviceFromTank(
+    deviceId: Long
+) {
+    if (deviceId <= 0L) {
+        return
+    }
+
+    viewModelScope.launch {
+        devicesStore.removeDeviceFromTank(
+            deviceId = deviceId
+        )
+    }
+}
 
     private fun updateLightObservers(
         devices: List<DevicesDataStoreManager.DeviceInfoUi>
