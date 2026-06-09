@@ -7,22 +7,25 @@ sealed class TankAssignedDeviceUi {
     abstract val deviceId: Long
     abstract val title: String
     abstract val subtitle: String
+
+    @get:DrawableRes
     abstract val iconRes: Int
+
     abstract val isOnline: Boolean
 
     data class Light(
-    override val deviceId: Long,
-    override val title: String,
-    override val subtitle: String,
-    @DrawableRes override val iconRes: Int,
-    override val isOnline: Boolean,
-    val programName: String,
-    val startTimeText: String,
-    val endTimeText: String,
-    val outputPercent: Int,
-    val timelineProgressPercent: Int,
-    val channels: List<TankLightChannelUi>
-) : TankAssignedDeviceUi()
+        override val deviceId: Long,
+        override val title: String,
+        override val subtitle: String,
+        @DrawableRes override val iconRes: Int,
+        override val isOnline: Boolean,
+        val programName: String,
+        val startTimeText: String,
+        val endTimeText: String,
+        val outputPercent: Int,
+        val timelineProgressPercent: Int,
+        val channels: List<TankLightChannelUi>
+    ) : TankAssignedDeviceUi()
 
     data class Generic(
         override val deviceId: Long,
