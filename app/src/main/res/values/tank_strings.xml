@@ -13,7 +13,5 @@
 <string name="tank_device_select_ip_status">IP: %1$s</string>
 <string name="tank_device_select_serial_status">Serial: %1$s</string>
 <string name="tank_device_select_assign_error">Device could not be assigned to this tank.</string>
-
-<string name="tank_device_select_unknown_device">Unknown device</string>
 <string name="tank_device_select_serial_unavailable">Serial number unavailable</string>
 </resources>
