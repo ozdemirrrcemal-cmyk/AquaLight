@@ -7,6 +7,8 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
+import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
@@ -35,6 +37,9 @@ class TankDetailDevicesViewModel(
             appContext
         )
 
+    private val lightRuntimeRepository =
+        LightRuntimeRepository()
+
     private val mapper =
         TankAssignedDeviceUiMapper()
 
@@ -48,6 +53,11 @@ class TankDetailDevicesViewModel(
 
     private val lightStatesFlow =
         MutableStateFlow<Map<Long, LightDeviceLiveState>>(
+            emptyMap()
+        )
+
+    private val lightModeOverridesFlow =
+        MutableStateFlow<Map<Long, TankLightModeOverride>>(
             emptyMap()
         )
 
@@ -99,13 +109,15 @@ class TankDetailDevicesViewModel(
                     ),
                     DevicePresenceMonitor.statuses,
                     lightProgramsStore.programsFlow,
-                    lightStatesFlow
-                ) { devices, statuses, programs, lightStates ->
+                    lightStatesFlow,
+                    lightModeOverridesFlow
+                ) { devices, statuses, programs, lightStates, lightModeOverrides ->
                     SourceState(
                         devices = devices,
                         statuses = statuses,
                         programs = programs,
-                        lightStates = lightStates
+                        lightStates = lightStates,
+                        lightModeOverrides = lightModeOverrides
                     )
                 }.collect { state ->
                     updateLightObservers(
@@ -122,7 +134,8 @@ class TankDetailDevicesViewModel(
                                 statuses = state.statuses,
                                 programs = state.programs,
                                 lightState = state.lightStates[device.id],
-                                now = now
+                                now = now,
+                                modeOverride = state.lightModeOverrides[device.id]
                             )
                         }
 
@@ -161,6 +174,10 @@ class TankDetailDevicesViewModel(
                 current - deviceId
             }
 
+            lightModeOverridesFlow.update { current ->
+                current - deviceId
+            }
+
             LightDeviceLiveRefreshManager.stop(
                 deviceId = deviceId,
                 ownerKey = liveRefreshOwnerKey
@@ -185,17 +202,171 @@ class TankDetailDevicesViewModel(
 
             lightLiveJobs[deviceId] =
                 viewModelScope.launch {
-                    LightDeviceLiveRefreshManager.observe(
-                        deviceId = deviceId
-                    ).collect { liveState ->
+                    combine(
+                        LightDeviceLiveRefreshManager.observe(
+                            deviceId = deviceId
+                        ),
+                        lightRuntimeRepository.observeManualRuntime(
+                            deviceId = deviceId
+                        )
+                    ) { liveState, manualRuntime ->
+                        liveState to manualRuntime
+                    }.collect { pair ->
+                        val liveState =
+                            pair.first
+
+                        val manualRuntime =
+                            pair.second
+
                         lightStatesFlow.update { current ->
                             current + (
                                 deviceId to liveState
                                 )
                         }
+
+                        lightModeOverridesFlow.update { current ->
+                            val modeOverride =
+                                buildModeOverrideFromManualRuntime(
+                                    runtime = manualRuntime
+                                )
+
+                            if (modeOverride == null) {
+                                current - deviceId
+                            } else {
+                                current + (
+                                    deviceId to modeOverride
+                                    )
+                            }
+                        }
                     }
                 }
         }
+    }
+
+    private fun buildModeOverrideFromManualRuntime(
+        runtime: LightManualRuntimeState
+    ): TankLightModeOverride? {
+        val isManualActive =
+            runtime.isManualMode || runtime.isManualScene
+
+        if (!isManualActive) {
+            return null
+        }
+
+        val outputPercent =
+            manualOutputPercent(
+                runtime = runtime
+            )
+
+        val red =
+            manualChannelPercent(
+                isPowerOn = runtime.isPowerOn,
+                value = runtime.red
+            )
+
+        val green =
+            manualChannelPercent(
+                isPowerOn = runtime.isPowerOn,
+                value = runtime.green
+            )
+
+        val blue =
+            manualChannelPercent(
+                isPowerOn = runtime.isPowerOn,
+                value = runtime.blue
+            )
+
+        val white =
+            manualChannelPercent(
+                isPowerOn = runtime.isPowerOn,
+                value = runtime.white
+            )
+
+        if (runtime.isManualScene) {
+            val sceneName =
+                runtime.activeSceneName.orEmpty()
+                    .ifBlank {
+                        "Scene Mode"
+                    }
+
+            val mode =
+                if (isMoonlightSceneName(sceneName)) {
+                    TankLightCardMode.MOONLIGHT
+                } else {
+                    TankLightCardMode.SCENE
+                }
+
+            return TankLightModeOverride(
+                mode = mode,
+                title = sceneName,
+                outputPercent = outputPercent,
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            )
+        }
+
+        if (runtime.isManualMode) {
+            return TankLightModeOverride(
+                mode = TankLightCardMode.MANUAL,
+                title = "Manual Control",
+                outputPercent = outputPercent,
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            )
+        }
+
+        return null
+    }
+
+    private fun manualOutputPercent(
+        runtime: LightManualRuntimeState
+    ): Int {
+        if (!runtime.isPowerOn) {
+            return 0
+        }
+
+        return maxOf(
+            runtime.red,
+            runtime.green,
+            runtime.blue,
+            runtime.white
+        ).coerceIn(
+            0,
+            100
+        )
+    }
+
+    private fun manualChannelPercent(
+        isPowerOn: Boolean,
+        value: Int
+    ): Int {
+        if (!isPowerOn) {
+            return 0
+        }
+
+        return value.coerceIn(
+            0,
+            100
+        )
+    }
+
+    private fun isMoonlightSceneName(
+        sceneName: String
+    ): Boolean {
+        val normalized =
+            sceneName.lowercase()
+
+        return normalized.contains(
+            "moon"
+        ) || normalized.contains(
+            "moonlight"
+        ) || normalized.contains(
+            "night"
+        )
     }
 
     private fun clearLightObservers() {
@@ -212,6 +383,9 @@ class TankDetailDevicesViewModel(
 
         lightStatesFlow.value =
             emptyMap()
+
+        lightModeOverridesFlow.value =
+            emptyMap()
     }
 
     override fun onCleared() {
@@ -226,6 +400,7 @@ class TankDetailDevicesViewModel(
         val devices: List<DevicesDataStoreManager.DeviceInfoUi>,
         val statuses: Map<Long, DeviceStatusState>,
         val programs: List<SavedLightProgram>,
-        val lightStates: Map<Long, LightDeviceLiveState>
+        val lightStates: Map<Long, LightDeviceLiveState>,
+        val lightModeOverrides: Map<Long, TankLightModeOverride>
     )
 }
