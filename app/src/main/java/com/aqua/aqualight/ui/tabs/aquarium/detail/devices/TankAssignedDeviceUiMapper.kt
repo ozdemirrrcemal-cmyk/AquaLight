@@ -26,7 +26,8 @@ class TankAssignedDeviceUiMapper {
         statuses: Map<Long, DeviceStatusState>,
         programs: List<SavedLightProgram>,
         lightState: LightDeviceLiveState?,
-        now: Long
+        now: Long,
+        modeOverride: TankLightModeOverride? = null
     ): TankAssignedDeviceUi {
         val title =
         getDeviceTitle(
@@ -59,6 +60,7 @@ class TankAssignedDeviceUiMapper {
                 online = online,
                 programs = programs,
                 lightState = lightState
+                modeOverride = modeOverride
             )
         } else {
             TankAssignedDeviceUi.Generic(
@@ -78,7 +80,8 @@ class TankAssignedDeviceUiMapper {
         iconRes: Int,
         online: Boolean,
         programs: List<SavedLightProgram>,
-        lightState: LightDeviceLiveState?
+        lightState: LightDeviceLiveState?,
+        modeOverride: TankLightModeOverride?
     ): TankAssignedDeviceUi.Light {
         val liveState =
         lightState ?: LightDeviceLiveState.initial(
@@ -159,7 +162,8 @@ class TankAssignedDeviceUiMapper {
 
         val modeContent =
         buildModeContent(
-            displayProgram = displayProgram
+            displayProgram = displayProgram,
+            modeOverride = modeOverride
         )
 
         return TankAssignedDeviceUi.Light(
@@ -177,10 +181,11 @@ class TankAssignedDeviceUiMapper {
                 0,
                 100
             ),
-            timelineProgressPercent = calculateTimelineProgressPercent(
-                program = displayProgram,
-                currentMinute = currentMinute
-            ),
+            timelineProgressPercent = modeContent.timelineProgressPercent
+    ?: calculateTimelineProgressPercent(
+        program = displayProgram,
+        currentMinute = currentMinute
+    ),
             accentColorInt = modeContent.accentColorInt,
             channels = buildLightChannels(
                 device = device,
@@ -686,30 +691,91 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun buildModeContent(
-        displayProgram: SavedLightProgram?
-    ): LightModeContent {
-        if (displayProgram == null) {
+    displayProgram: SavedLightProgram?,
+    modeOverride: TankLightModeOverride?
+): LightModeContent {
+    when (modeOverride?.mode) {
+        TankLightCardMode.MANUAL -> {
             return LightModeContent(
-                mode = TankLightCardMode.NO_PROGRAM,
-                label = "NO ACTIVE PROGRAM",
-                title = "Program not set",
-                leftText = "--:--",
-                rightText = "--:--",
-                accentColorInt = Color.parseColor("#90A1B5")
+                mode = TankLightCardMode.MANUAL,
+                label = "MANUAL MODE",
+                title = "Manual Control",
+                leftText = "Manual",
+                rightText = "Auto",
+                accentColorInt = Color.parseColor("#C8A86B"),
+                timelineProgressPercent = 100
             )
         }
 
+        TankLightCardMode.SCENE -> {
+            return LightModeContent(
+                mode = TankLightCardMode.SCENE,
+                label = "SCENE ACTIVE",
+                title = modeOverride.title.ifBlank {
+                    "Scene Mode"
+                },
+                leftText = "Scene",
+                rightText = "Auto",
+                accentColorInt = Color.parseColor("#A37CFF"),
+                timelineProgressPercent = 100
+            )
+        }
+
+        TankLightCardMode.MOONLIGHT -> {
+            return LightModeContent(
+                mode = TankLightCardMode.MOONLIGHT,
+                label = "MOONLIGHT",
+                title = modeOverride.title.ifBlank {
+                    "Moonlight Mode"
+                },
+                leftText = "Night",
+                rightText = "Auto",
+                accentColorInt = Color.parseColor("#7FA7FF"),
+                timelineProgressPercent = 100
+            )
+        }
+
+        TankLightCardMode.AUTO,
+        TankLightCardMode.NO_PROGRAM,
+        null -> {
+            // Continue below.
+        }
+    }
+
+    if (displayProgram == null) {
         return LightModeContent(
-            mode = TankLightCardMode.AUTO,
-            label = "ACTIVE PROGRAM",
-            title = displayProgram.name,
-            leftText = displayProgram.draft.start.label,
-            rightText = LightProgramTimeMath.endLabel(
-                displayProgram.draft.end
-            ),
-            accentColorInt = Color.parseColor("#8EB8FF")
+            mode = TankLightCardMode.NO_PROGRAM,
+            label = "NO ACTIVE PROGRAM",
+            title = "Program not set",
+            leftText = "--:--",
+            rightText = "--:--",
+            accentColorInt = Color.parseColor("#90A1B5"),
+            timelineProgressPercent = 0
         )
     }
+
+    return LightModeContent(
+        mode = TankLightCardMode.AUTO,
+        label = "ACTIVE PROGRAM",
+        title = displayProgram.name,
+        leftText = displayProgram.draft.start.label,
+        rightText = LightProgramTimeMath.endLabel(
+            displayProgram.draft.end
+        ),
+        accentColorInt = Color.parseColor("#8EB8FF"),
+        timelineProgressPercent = null
+    )
+}
+
+private data class LightModeContent(
+    val mode: TankLightCardMode,
+    val label: String,
+    val title: String,
+    val leftText: String,
+    val rightText: String,
+    val accentColorInt: Int,
+    val timelineProgressPercent: Int?
+)
 
     private data class LightModeContent(
         val mode: TankLightCardMode,
