@@ -47,7 +47,7 @@
         android:maxLines="1"
         android:singleLine="true"
         android:textColor="#F2F6FA"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/progressChannel"
         app:layout_constraintEnd_toEndOf="parent"
