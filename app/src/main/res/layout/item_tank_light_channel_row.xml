@@ -41,7 +41,6 @@
         android:id="@+id/tvChannelValue"
         android:layout_width="56dp"
         android:layout_height="wrap_content"
-        android:ellipsize="clip"
         android:gravity="end"
         android:includeFontPadding="false"
         android:lines="1"
