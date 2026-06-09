@@ -12,10 +12,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentTankDeviceSelectBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class TankDeviceSelectFragment :
@@ -52,9 +56,13 @@ class TankDeviceSelectFragment :
         _binding =
             FragmentTankDeviceSelectBinding.bind(view)
 
+        DevicePresenceMonitor.start(
+            context = requireContext()
+        )
+
         setupHeader()
         setupRecycler()
-        observeSavedDevices()
+        observeAvailableDevices()
     }
 
     private fun setupHeader() {
@@ -85,20 +93,33 @@ class TankDeviceSelectFragment :
             adapter
     }
 
-    private fun observeSavedDevices() {
-        renderDevices(
-            items = emptyList()
-        )
-
+    private fun observeAvailableDevices() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
-                devicesStore.unassignedDevicesFlow.collect { devices ->
+                combine(
+                    devicesStore.unassignedDevicesFlow,
+                    DevicePresenceMonitor.statuses
+                ) { devices, statuses ->
+                    devices to statuses
+                }.collect { pair ->
+
+                    val devices =
+                        pair.first
+
+                    val statuses =
+                        pair.second
+
+                    val now =
+                        System.currentTimeMillis()
 
                     val items =
                         devices.map { device ->
-                            device.toSelectItem()
+                            device.toSelectItem(
+                                statuses = statuses,
+                                now = now
+                            )
                         }
 
                     renderDevices(
@@ -109,7 +130,19 @@ class TankDeviceSelectFragment :
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.toSelectItem(): TankDeviceSelectItem {
+    private fun DevicesDataStoreManager.DeviceInfoUi.toSelectItem(
+        statuses: Map<Long, DeviceStatusState>,
+        now: Long
+    ): TankDeviceSelectItem {
+        val presenceState =
+            statuses[id]
+
+        val online =
+            presenceState?.isOnline ?: (
+                lastSeenMillis > 0L &&
+                    now - lastSeenMillis <= ONLINE_TIMEOUT_MS
+                )
+
         return TankDeviceSelectItem(
             deviceId = id,
             title = buildDeviceTitle(),
@@ -117,25 +150,29 @@ class TankDeviceSelectFragment :
             iconRes = DeviceIconMapper.iconFor(
                 deviceType
             ),
-            isOnline = buildDeviceOnlineState()
+            isOnline = online
         )
     }
 
     private fun DevicesDataStoreManager.DeviceInfoUi.buildDeviceTitle(): String {
-        return aquaName
-            .ifBlank {
-                name
-            }
+        val catalogName =
+            AquaDeviceCatalog.findByType(
+                type = deviceType
+            )?.displayName.orEmpty()
+
+        return name
             .ifBlank {
                 productModel
             }
             .ifBlank {
+                catalogName
+            }
+            .ifBlank {
+                aquaName
+            }
+            .ifBlank {
                 productFamily
             }
-    }
-
-    private fun DevicesDataStoreManager.DeviceInfoUi.buildDeviceOnlineState(): Boolean {
-        return ip.isNotBlank()
     }
 
     private fun renderDevices(
@@ -223,5 +260,8 @@ class TankDeviceSelectFragment :
 
         const val RESULT_SELECTED_TANK_ID =
             "tankDeviceSelectResultTankId"
+
+        private const val ONLINE_TIMEOUT_MS =
+            90_000L
     }
 }

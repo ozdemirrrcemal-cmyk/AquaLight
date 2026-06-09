@@ -87,17 +87,15 @@
             app:layout_constraintTop_toBottomOf="@id/tvDeviceName"
             tools:text="SN-AQL-7F4C91" />
 
-        <ImageView
-            android:id="@+id/ivConnectionStatus"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:alpha="0.95"
-            android:contentDescription="@string/devices_scan_button_desc"
-            android:src="@drawable/ic_status_wifi"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/device_status_connected" />
+      <ImageView
+    android:id="@+id/ivDeviceIcon"
+    android:layout_width="30dp"
+    android:layout_height="30dp"
+    android:layout_gravity="center"
+    android:adjustViewBounds="true"
+    android:contentDescription="@string/app_name"
+    android:scaleType="centerInside"
+    android:src="@drawable/ic_device_light" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
