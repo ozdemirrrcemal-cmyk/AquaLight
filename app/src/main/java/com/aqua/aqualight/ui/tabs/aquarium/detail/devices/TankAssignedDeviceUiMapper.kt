@@ -12,6 +12,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.Lig
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import com.aqua.aqualight.data.devices.catalog.light.LightChannelColor
+import com.aqua.aqualight.data.devices.catalog.light.LightProductCatalog
 import java.util.Calendar
 import kotlin.math.roundToInt
 
@@ -700,74 +702,165 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun DevicesDataStoreManager.DeviceInfoUi.supportedLightChannels(): List<LightChannelConfig> {
-        val rawText =
-            lightSearchText()
+    val catalogDefinition =
+        LightProductCatalog.findByType(
+            type = deviceType
+        ) ?: LightProductCatalog.findByProductId(
+            productId = productId
+        ) ?: LightProductCatalog.findByLegacyIdentity(
+            aquaName = aquaName,
+            name = name
+        )
 
-        return when {
-            rawText.contains("wrgb") -> {
-                listOf(
-                    LightChannelConfig(
-                        key = TankLightChannelKey.WHITE,
-                        label = "White",
-                        semantic = LightChannelSemantic.WHITE,
-                        colorInt = Color.parseColor("#D8DDE4")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.RED,
-                        label = "Red",
-                        semantic = LightChannelSemantic.RED,
-                        colorInt = Color.parseColor("#D16D6D")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.GREEN,
-                        label = "Green",
-                        semantic = LightChannelSemantic.GREEN,
-                        colorInt = Color.parseColor("#72B77D")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.BLUE,
-                        label = "Blue",
-                        semantic = LightChannelSemantic.BLUE,
-                        colorInt = Color.parseColor("#6D97D1")
-                    )
+    val catalogChannels =
+        catalogDefinition
+            ?.channels
+            .orEmpty()
+            .sortedBy { channel ->
+                channel.order
+            }
+            .mapNotNull { channel ->
+                channel.color.toTankLightChannelConfig(
+                    displayName = channel.displayName
                 )
             }
 
-            rawText.contains("rgb") -> {
-                listOf(
-                    LightChannelConfig(
-                        key = TankLightChannelKey.RED,
-                        label = "Red",
-                        semantic = LightChannelSemantic.RED,
-                        colorInt = Color.parseColor("#D16D6D")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.GREEN,
-                        label = "Green",
-                        semantic = LightChannelSemantic.GREEN,
-                        colorInt = Color.parseColor("#72B77D")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.BLUE,
-                        label = "Blue",
-                        semantic = LightChannelSemantic.BLUE,
-                        colorInt = Color.parseColor("#6D97D1")
-                    )
-                )
-            }
+    if (catalogChannels.isNotEmpty()) {
+        return catalogChannels
+    }
 
-            else -> {
-                listOf(
-                    LightChannelConfig(
-                        key = TankLightChannelKey.INTENSITY,
-                        label = "Intensity",
-                        semantic = LightChannelSemantic.UNKNOWN,
-                        colorInt = Color.parseColor("#8EB8FF")
-                    )
-                )
-            }
+    return fallbackLightChannelsByChannelCount()
+}
+
+private fun LightChannelColor.toTankLightChannelConfig(
+    displayName: String
+): LightChannelConfig? {
+    return when (this) {
+        LightChannelColor.WHITE -> {
+            LightChannelConfig(
+                key = TankLightChannelKey.WHITE,
+                label = displayName.ifBlank {
+                    "White"
+                }
+            )
+        }
+
+        LightChannelColor.RED -> {
+            LightChannelConfig(
+                key = TankLightChannelKey.RED,
+                label = displayName.ifBlank {
+                    "Red"
+                }
+            )
+        }
+
+        LightChannelColor.GREEN -> {
+            LightChannelConfig(
+                key = TankLightChannelKey.GREEN,
+                label = displayName.ifBlank {
+                    "Green"
+                }
+            )
+        }
+
+        LightChannelColor.BLUE -> {
+            LightChannelConfig(
+                key = TankLightChannelKey.BLUE,
+                label = displayName.ifBlank {
+                    "Blue"
+                }
+            )
+        }
+
+        LightChannelColor.WARM_WHITE,
+        LightChannelColor.COOL_WHITE -> {
+            LightChannelConfig(
+                key = TankLightChannelKey.WHITE,
+                label = displayName.ifBlank {
+                    "White"
+                }
+            )
+        }
+
+        LightChannelColor.UV -> {
+            LightChannelConfig(
+                key = TankLightChannelKey.UV,
+                label = displayName.ifBlank {
+                    "UV"
+                }
+            )
+        }
+
+        LightChannelColor.CUSTOM -> {
+            LightChannelConfig(
+                key = TankLightChannelKey.INTENSITY,
+                label = displayName.ifBlank {
+                    "Intensity"
+                }
+            )
         }
     }
+}
+
+private fun DevicesDataStoreManager.DeviceInfoUi.fallbackLightChannelsByChannelCount(): List<LightChannelConfig> {
+    return when (channelCount) {
+        4 -> {
+            listOf(
+                LightChannelConfig(
+                    key = TankLightChannelKey.WHITE,
+                    label = "White"
+                ),
+                LightChannelConfig(
+                    key = TankLightChannelKey.RED,
+                    label = "Red"
+                ),
+                LightChannelConfig(
+                    key = TankLightChannelKey.GREEN,
+                    label = "Green"
+                ),
+                LightChannelConfig(
+                    key = TankLightChannelKey.BLUE,
+                    label = "Blue"
+                )
+            )
+        }
+
+        3 -> {
+            listOf(
+                LightChannelConfig(
+                    key = TankLightChannelKey.RED,
+                    label = "Red"
+                ),
+                LightChannelConfig(
+                    key = TankLightChannelKey.GREEN,
+                    label = "Green"
+                ),
+                LightChannelConfig(
+                    key = TankLightChannelKey.BLUE,
+                    label = "Blue"
+                )
+            )
+        }
+
+        1 -> {
+            listOf(
+                LightChannelConfig(
+                    key = TankLightChannelKey.INTENSITY,
+                    label = "Intensity"
+                )
+            )
+        }
+
+        else -> {
+            listOf(
+                LightChannelConfig(
+                    key = TankLightChannelKey.INTENSITY,
+                    label = "Intensity"
+                )
+            )
+        }
+    }
+}
 
     private fun DevicesDataStoreManager.DeviceInfoUi.isLightDevice(): Boolean {
         val rawText =
