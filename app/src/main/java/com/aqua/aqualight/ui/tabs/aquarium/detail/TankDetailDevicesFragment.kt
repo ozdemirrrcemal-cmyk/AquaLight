@@ -118,7 +118,9 @@ class TankDetailDevicesFragment :
     private fun handleDeviceClick(
         device: TankAssignedDeviceUi
     ) {
-        // Sonraki adımda cihaz detayına/router'a açacağız.
+        openDeviceMenuScreen(
+            device = device
+        )
     }
 
     private fun handleDeviceLongClick(
@@ -142,6 +144,33 @@ class TankDetailDevicesFragment :
         )
     }
 
+    private fun openDeviceMenuScreen(
+        device: TankAssignedDeviceUi
+    ) {
+        val args =
+            Bundle().apply {
+                putLong(
+                    ARG_DEVICE_ID,
+                    device.deviceId
+                )
+
+                putString(
+                    ARG_DEVICE_TITLE,
+                    device.title
+                )
+
+                putString(
+                    ARG_DEVICE_IP,
+                    ""
+                )
+            }
+
+        findNavController().navigate(
+            R.id.action_tankDetailFragment_to_deviceMenuFragment,
+            args
+        )
+    }
+
     override fun onDestroyView() {
         binding.rvTankDevices.adapter =
             null
@@ -156,6 +185,15 @@ class TankDetailDevicesFragment :
 
         private const val ARG_TANK_ID =
             "tankId"
+
+        private const val ARG_DEVICE_ID =
+            "deviceId"
+
+        private const val ARG_DEVICE_TITLE =
+            "deviceTitle"
+
+        private const val ARG_DEVICE_IP =
+            "deviceIp"
 
         fun newInstance(
             tankId: Long

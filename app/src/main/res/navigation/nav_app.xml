@@ -81,6 +81,14 @@
     app:exitAnim="@anim/nav_slide_out_left"
     app:popEnterAnim="@anim/nav_slide_in_left"
     app:popExitAnim="@anim/nav_slide_out_right" />
+	
+<action
+    android:id="@+id/action_tankDetailFragment_to_deviceMenuFragment"
+    app:destination="@id/deviceMenuFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
 
   </fragment>
 
