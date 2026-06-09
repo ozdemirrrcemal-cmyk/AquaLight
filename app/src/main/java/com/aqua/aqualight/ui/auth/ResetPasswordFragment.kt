@@ -25,16 +25,11 @@ class ResetPasswordFragment : Fragment() {
     private val baseActivity
         get() = activity as? BaseActivity
 
-    // ---------------------------------------------------
-    // ON CREATE VIEW
-    // ---------------------------------------------------
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding =
             FragmentResetPasswordBinding.inflate(
                 inflater,
@@ -47,30 +42,19 @@ class ResetPasswordFragment : Fragment() {
         return binding.root
     }
 
-    // ---------------------------------------------------
-    // UI
-    // ---------------------------------------------------
-
     private fun setupUI() =
         with(binding) {
 
             btnSend.setOnClickListener {
-
                 handleResetPassword()
             }
 
-            btnBack.setOnClickListener {
-
+            btnReturnToSignIn.setOnClickListener {
                 findNavController().popBackStack()
             }
         }
 
-    // ---------------------------------------------------
-    // RESET PASSWORD
-    // ---------------------------------------------------
-
     private fun handleResetPassword() {
-
         val email =
             binding.emailEditText.text
                 ?.toString()
@@ -82,7 +66,6 @@ class ResetPasswordFragment : Fragment() {
         when {
 
             email.isEmpty() -> {
-
                 baseActivity?.showLoading(false)
 
                 DialogManager.showInfoDialog(
@@ -102,7 +85,6 @@ class ResetPasswordFragment : Fragment() {
             !Patterns.EMAIL_ADDRESS
                 .matcher(email)
                 .matches() -> {
-
                 baseActivity?.showLoading(false)
 
                 DialogManager.showInfoDialog(
@@ -120,7 +102,6 @@ class ResetPasswordFragment : Fragment() {
             }
         }
 
-        // 🚀 Firebase request
         binding.btnSend.isEnabled = false
 
         binding.btnSend.text =
@@ -139,8 +120,6 @@ class ResetPasswordFragment : Fragment() {
                     )
 
                 if (task.isSuccessful) {
-
-                    // ✅ Başarılı bilgi diyaloğu
                     DialogManager.showInfoDialog(
                         requireContext(),
                         DialogType.SUCCESS,
@@ -151,15 +130,12 @@ class ResetPasswordFragment : Fragment() {
                             R.string.reset_success_message
                         ),
                         onDismiss = {
-
                             findNavController()
                                 .popBackStack()
                         },
                         autoDismissMillis = 1800L
                     )
-
                 } else {
-
                     val errorMsg =
                         task.exception?.localizedMessage
                             ?: getString(
@@ -178,12 +154,7 @@ class ResetPasswordFragment : Fragment() {
             }
     }
 
-    // ---------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         super.onDestroyView()
 
         _binding = null

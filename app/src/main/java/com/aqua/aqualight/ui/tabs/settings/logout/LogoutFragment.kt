@@ -15,7 +15,6 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
 import com.aqua.aqualight.ui.auth.security.ReAuthManager
 import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -47,11 +46,12 @@ class LogoutFragment :
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLogoutBinding.inflate(
-            inflater,
-            container,
-            false
-        )
+        _binding =
+            FragmentLogoutBinding.inflate(
+                inflater,
+                container,
+                false
+            )
 
         return binding.root
     }
@@ -65,21 +65,18 @@ class LogoutFragment :
             savedInstanceState
         )
 
-        setupNavigation()
+        setupHeader()
+        setupNavigationRows()
         setupButtons()
     }
 
-    private fun setupNavigation() {
+    private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            AquaHeaderConfig(
-                title = getString(R.string.settings_about_title),
-                showBackButton = true,
-                onBackClick = {
-                    findNavController().popBackStack()
-                }
-            )
+            fragment = this
         )
+    }
 
+    private fun setupNavigationRows() {
         binding.rowChangePassword.setOnClickListener {
             findNavController().navigate(
                 R.id.action_logoutFragment_to_reAuthenticateFragment
@@ -126,9 +123,12 @@ class LogoutFragment :
     }
 
     private fun performLogout() {
-        baseActivity?.showLoading(true)
+        baseActivity?.showLoading(
+            true
+        )
 
-        binding.btnLogout.isEnabled = false
+        binding.btnLogout.isEnabled =
+            false
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -138,9 +138,12 @@ class LogoutFragment :
 
                 navigateToLogin()
             } finally {
-                binding.btnLogout.isEnabled = true
+                binding.btnLogout.isEnabled =
+                    true
 
-                baseActivity?.showLoading(false)
+                baseActivity?.showLoading(
+                    false
+                )
             }
         }
     }
@@ -187,12 +190,13 @@ class LogoutFragment :
     }
 
     private fun navigateToReAuthForDeleteAccount() {
-        val bundle = Bundle().apply {
-            putString(
-                ReAuthenticateFragment.ARG_ACTION,
-                ReAuthenticateFragment.ACTION_DELETE_ACCOUNT
-            )
-        }
+        val bundle =
+            Bundle().apply {
+                putString(
+                    ReAuthenticateFragment.ARG_ACTION,
+                    ReAuthenticateFragment.ACTION_DELETE_ACCOUNT
+                )
+            }
 
         findNavController().navigate(
             R.id.action_logoutFragment_to_reAuthenticateFragment,
@@ -201,30 +205,35 @@ class LogoutFragment :
     }
 
     private fun navigateToLogin() {
-        val rootNav = (
-            requireActivity()
-                .supportFragmentManager
-                .findFragmentById(R.id.nav_host) as NavHostFragment
-            ).navController
+        val rootNav =
+            (
+                requireActivity()
+                    .supportFragmentManager
+                    .findFragmentById(R.id.nav_host) as NavHostFragment
+                ).navController
 
-        val opts = navOptions {
-            popUpTo(R.id.nav_app) {
-                inclusive = true
+        val options =
+            navOptions {
+                popUpTo(R.id.nav_app) {
+                    inclusive =
+                        true
+                }
+
+                launchSingleTop =
+                    true
             }
-
-            launchSingleTop = true
-        }
 
         rootNav.navigate(
             R.id.authContainerFragment,
             null,
-            opts
+            options
         )
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
 
-        _binding = null
+        _binding =
+            null
     }
 }

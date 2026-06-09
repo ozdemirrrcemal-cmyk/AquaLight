@@ -4,10 +4,8 @@ import android.os.Bundle
 import android.view.View
 import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentOpenSourceLicensesBinding
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class OpenSourceLicensesFragment : Fragment(R.layout.fragment_open_source_licenses) {
@@ -15,49 +13,72 @@ class OpenSourceLicensesFragment : Fragment(R.layout.fragment_open_source_licens
     private var _binding: FragmentOpenSourceLicensesBinding? = null
     private val binding get() = _binding!!
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        _binding = FragmentOpenSourceLicensesBinding.bind(view)
+        _binding =
+            FragmentOpenSourceLicensesBinding.bind(view)
 
-        binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
-
+        setupHeader()
         setupLicensesWebView()
+    }
+
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this
+        )
     }
 
     private fun setupLicensesWebView() {
         binding.webViewLicenses.apply {
-            webViewClient = WebViewClient()
+            webViewClient =
+                WebViewClient()
 
-            settings.javaScriptEnabled = false
-            settings.domStorageEnabled = false
-            settings.allowFileAccess = true
-            settings.allowContentAccess = false
-            settings.builtInZoomControls = false
-            settings.displayZoomControls = false
+            settings.javaScriptEnabled =
+                false
 
-            loadUrl("file:///android_asset/open_source_licenses_en.html")
+            settings.domStorageEnabled =
+                false
+
+            settings.allowFileAccess =
+                true
+
+            settings.allowContentAccess =
+                false
+
+            settings.builtInZoomControls =
+                false
+
+            settings.displayZoomControls =
+                false
+
+            loadUrl(
+                "file:///android_asset/open_source_licenses_en.html"
+            )
         }
     }
 
     override fun onDestroyView() {
         binding.webViewLicenses.apply {
             stopLoading()
-            loadUrl("about:blank")
+
+            loadUrl(
+                "about:blank"
+            )
+
             clearHistory()
             removeAllViews()
             destroy()
         }
 
-        _binding = null
+        _binding =
+            null
 
         super.onDestroyView()
     }

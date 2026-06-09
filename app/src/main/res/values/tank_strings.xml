@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string name="tank_device_select_title">Select Device</string>
+<string name="tank_device_select_info_title">Choose a saved device</string>
+<string name="tank_device_select_info_subtitle">Select one of your saved AquaLight devices to assign it to this tank.</string>
+<string name="tank_device_select_empty_title">No saved devices</string>
+<string name="tank_device_select_empty_subtitle">Add a device from the Devices screen first, then return here to assign it to this tank.</string>
+<string name="tank_device_select_arrow_desc">Select device</string>
+
+
+<string name="tank_device_select_unknown_device">AquaLight Device</string>
+<string name="tank_device_select_saved_device">Saved device</string>
+<string name="tank_device_select_ip_status">IP: %1$s</string>
+<string name="tank_device_select_serial_status">Serial: %1$s</string>
+<string name="tank_device_select_assign_error">Device could not be assigned to this tank.</string>
+
+<string name="tank_device_select_unknown_device">Unknown device</string>
+<string name="tank_device_select_serial_unavailable">Serial number unavailable</string>
+</resources>

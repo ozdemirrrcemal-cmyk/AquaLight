@@ -33,6 +33,8 @@ import java.util.Locale
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.navigation.fragment.findNavController
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 
 class TankDetailLivestockFormFragment :
@@ -183,11 +185,13 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     private fun setupInitialUi() {
         val isEditing = editingLivestockId > 0L
 
-        binding.tvFormTitle.text = if (isEditing) {
-            "Edit Livestock"
-        } else {
-            "Add Livestock"
-        }
+        setupHeader(
+            title = if (isEditing) {
+                "Edit Livestock"
+            } else {
+                "Add Livestock"
+            }
+        )
 
         binding.btnSaveLife.text = if (isEditing) {
             "Save Changes"
@@ -198,10 +202,21 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         binding.btnDeleteLife.isVisible = isEditing
     }
 
+    private fun setupHeader(
+        title: String
+    ) {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = title,
+                onBackClick = {
+                    closeForm()
+                }
+            )
+        )
+    }
+
     private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            closeForm()
-        }
 
         binding.btnDecreaseQuantity.setOnClickListener {
             if (selectedQuantity > 1) {

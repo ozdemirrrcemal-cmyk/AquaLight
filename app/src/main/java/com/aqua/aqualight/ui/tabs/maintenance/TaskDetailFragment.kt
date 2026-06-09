@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
 import android.graphics.Color
-import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
@@ -17,6 +16,9 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTaskDetailBinding
 import com.aqua.aqualight.databinding.ItemTaskDetailRowBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
@@ -61,27 +63,43 @@ class TaskDetailFragment :
       return
     }
 
+    setupHeader()
     setupClickListeners()
     observeTanks()
     observeTask()
   }
 
-  private fun setupClickListeners() {
-    binding.btnBack.setOnClickListener {
-      findNavController().popBackStack()
-    }
-
-    binding.btnEditTask.setOnClickListener {
-      val task = currentTask ?: return@setOnClickListener
-
-      if (
-        task.source == CareTaskSource.MANUAL &&
+  private fun setupHeader(
+    task: CareTaskUi? = currentTask
+  ) {
+    val canEdit =
+      task?.source == CareTaskSource.MANUAL &&
         task.status == CareTaskStatus.PENDING
-      ) {
-        openEditTaskScreen(task)
-      }
-    }
 
+    binding.appHeader.setupAquaHeader(
+      fragment = this,
+      config = AquaHeaderConfig(
+        titleOverride = "Task Detail",
+        onBackClick = {
+          findNavController().popBackStack()
+        },
+        pillTextAction = if (canEdit && task != null) {
+          AquaHeaderPillTextAction(
+            text = "Edit",
+            backgroundRes = R.drawable.bg_maintenance_tab_selected,
+            contentDescription = "Edit task",
+            onClick = {
+              openEditTaskScreen(task)
+            }
+          )
+        } else {
+          null
+        }
+      )
+    )
+  }
+
+  private fun setupClickListeners() {
     binding.btnDeleteTask.setOnClickListener {
       val task = currentTask ?: return@setOnClickListener
 
@@ -100,8 +118,7 @@ class TaskDetailFragment :
   }
 
   private fun observeTanks() {
-    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-      tanks ->
+    aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
       maintenanceViewModel.setTanks(tanks)
     }
   }
@@ -109,8 +126,7 @@ class TaskDetailFragment :
   private fun observeTask() {
     viewLifecycleOwner.lifecycleScope.launch {
       viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        maintenanceViewModel.taskByIdFlow(taskId).collect {
-          task ->
+        maintenanceViewModel.taskByIdFlow(taskId).collect { task ->
           if (task == null) {
             return@collect
           }
@@ -125,6 +141,8 @@ class TaskDetailFragment :
   private fun renderTask(
     task: CareTaskUi
   ) {
+    setupHeader(task)
+
     val accentColor = Color.parseColor(task.accentColor)
 
     binding.ivTaskIcon.setImageResource(task.iconRes)
@@ -229,8 +247,6 @@ class TaskDetailFragment :
     val isPending = task.status == CareTaskStatus.PENDING
 
     binding.btnCompleteTask.isVisible = isPending
-
-    binding.btnEditTask.isVisible = isManual && isPending
     binding.btnDeleteTask.isVisible = isManual
 
     binding.tvAutoTaskInfo.isVisible = !isManual

@@ -1,89 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-<string name="light_cloud_simulation_title">Cloud Simulation</string>
-<string name="light_cloud_simulation_description">Create short natural dimming events during the program.</string>
-<string name="light_cloud_simulation_enable">Enable Cloud Simulation</string>
-<string name="light_cloud_simulation_coverage_default">Cloud Coverage 25%</string>
-<string name="light_cloud_simulation_coverage_format">Cloud Coverage %1$d%%</string>
-<string name="light_cloud_simulation_coverage_description">Higher coverage means stronger temporary dimming.</string>
-<string name="light_cloud_simulation_frequency_label">FREQUENCY</string>
-<string name="light_cloud_simulation_frequency_rare">Rare</string>
-<string name="light_cloud_simulation_frequency_normal">Normal</string>
-<string name="light_cloud_simulation_frequency_frequent">Frequent</string>
 
-<string name="common_cancel">Cancel</string>
-<string name="common_apply">Apply</string>
+    <string name="light_cloud_simulation_title">Cloud Simulation</string>
+    <string name="light_cloud_simulation_description">Create short natural dimming events during the program.</string>
+    <string name="light_cloud_simulation_enable">Enable Cloud Simulation</string>
+    <string name="light_cloud_simulation_coverage_format">Cloud Coverage %1$d%%</string>
+    <string name="light_cloud_simulation_coverage_description">Higher coverage means stronger temporary dimming.</string>
+    <string name="light_cloud_simulation_frequency_label">FREQUENCY</string>
+    <string name="light_cloud_simulation_frequency_rare">Rare</string>
+    <string name="light_cloud_simulation_frequency_normal">Normal</string>
+    <string name="light_cloud_simulation_frequency_frequent">Frequent</string>
 
+    <string name="common_cancel">Cancel</string>
+    <string name="common_apply">Apply</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_selected">Selected</string>
 
-<string name="light_time_picker_title_start">Start Time</string>
-<string name="light_time_picker_title_peak_start">Peak Start Time</string>
-<string name="light_time_picker_description">Set the schedule point time.</string>
+    <string name="light_time_picker_title_start">Start Time</string>
+    <string name="light_time_picker_title_peak_start">Peak Start Time</string>
+    <string name="light_time_picker_description">Set the schedule point time.</string>
 
-<string name="common_time_separator">:</string>
+    <string name="light_custom_days_title">Custom Days</string>
+    <string name="light_custom_days_description">Choose the days this program should run.</string>
 
-<string name="light_custom_days_title">Custom Days</string>
-<string name="light_custom_days_description">Choose the days this program should run.</string>
+    <string name="common_day_monday">Monday</string>
+    <string name="common_day_tuesday">Tuesday</string>
+    <string name="common_day_wednesday">Wednesday</string>
+    <string name="common_day_thursday">Thursday</string>
+    <string name="common_day_friday">Friday</string>
+    <string name="common_day_saturday">Saturday</string>
+    <string name="common_day_sunday">Sunday</string>
 
-<string name="common_day_monday">Monday</string>
-<string name="common_day_tuesday">Tuesday</string>
-<string name="common_day_wednesday">Wednesday</string>
-<string name="common_day_thursday">Thursday</string>
-<string name="common_day_friday">Friday</string>
-<string name="common_day_saturday">Saturday</string>
-<string name="common_day_sunday">Sunday</string>
+    <string name="light_moonlight_title">Moonlight</string>
+    <string name="light_moonlight_description">Run soft night lighting after the main program.</string>
+    <string name="light_moonlight_enable">Enable Moonlight</string>
+    <string name="light_moonlight_follow_program_end">Follow Program End</string>
+    <string name="light_moonlight_start_time">Start Time</string>
+    <string name="light_moonlight_end_time">End Time</string>
+    <string name="light_moonlight_program_end">Program End</string>
+    <string name="light_moonlight_channel_label">CHANNEL</string>
+    <string name="light_moonlight_intensity_format">Intensity %1$d%%</string>
+    <string name="light_moonlight_start_picker_title">Moonlight Start</string>
+    <string name="light_moonlight_end_picker_title">Moonlight End</string>
 
-<string name="light_moonlight_title">Moonlight</string>
-<string name="light_moonlight_description">Run soft night lighting after the main program.</string>
-<string name="light_moonlight_enable">Enable Moonlight</string>
-<string name="light_moonlight_follow_program_end">Follow Program End</string>
-<string name="light_moonlight_start_time">Start Time</string>
-<string name="light_moonlight_end_time">End Time</string>
-<string name="light_moonlight_program_end">Program End</string>
-<string name="light_moonlight_end_default">06:00</string>
-<string name="light_moonlight_channel_label">CHANNEL</string>
-<string name="light_moonlight_intensity_default">Intensity 5%</string>
-<string name="light_moonlight_intensity_format">Intensity %1$d%%</string>
+    <string name="light_channel_blue">Blue</string>
+    <string name="light_channel_white">White</string>
+    <string name="light_channel_blue_white">Blue + White</string>
 
-<string name="light_channel_blue">Blue</string>
-<string name="light_channel_white">White</string>
-<string name="light_channel_blue_white">Blue + White</string>
+    <string name="light_transition_variant_title">Transition Variant</string>
+    <string name="light_transition_variant_description">Choose how sunrise and sunset ramps should feel.</string>
+    <string name="light_transition_variant_linear">Linear</string>
+    <string name="light_transition_variant_smooth">Smooth</string>
+    <string name="light_transition_variant_smooth_description">Soft start and soft finish</string>
+    <string name="light_transition_variant_natural">Natural</string>
+    <string name="light_transition_variant_natural_description">Sunrise-like ramp curve</string>
 
-<string name="light_moonlight_start_picker_title">Moonlight Start</string>
-<string name="light_moonlight_end_picker_title">Moonlight End</string>
-<string name="light_moonlight_intensity_format">Intensity %1$d%%</string>
+    <string name="light_preview_day_title">Preview Day</string>
+    <string name="light_preview_day_description">Simulate the full program on device.</string>
+    <string name="light_preview_day_speed_label">SPEED</string>
+    <string name="light_preview_day_speed_one_minute">1 min</string>
+    <string name="light_preview_day_speed_three_minutes">3 min</string>
+    <string name="light_preview_day_speed_five_minutes">5 min</string>
+    <string name="light_preview_day_override_warning">During preview, live program will be temporarily overridden.</string>
+    <string name="light_preview_day_progress_format">%1$d%%</string>
+    <string name="light_preview_day_start_button">Start Preview</string>
+    <string name="light_preview_day_stop_button">Stop Preview</string>
+    <string name="light_preview_day_start_again_button">Start Again</string>
 
-<string name="light_transition_variant_title">Transition Variant</string>
-<string name="light_transition_variant_description">Choose how sunrise and sunset ramps should feel.</string>
-<string name="light_transition_variant_linear">Linear</string>
-<string name="light_transition_variant_smooth">Smooth</string>
-<string name="light_transition_variant_smooth_description">Soft start and soft finish</string>
-<string name="light_transition_variant_natural">Natural</string>
-<string name="light_transition_variant_natural_description">Sunrise-like ramp curve</string>
-
-<string name="common_selected">Selected</string>
-
-<string name="light_preview_day_title">Preview Day</string>
-<string name="light_preview_day_description">Simulate the full program on device.</string>
-<string name="light_preview_day_speed_label">SPEED</string>
-<string name="light_preview_day_speed_one_minute">1 min</string>
-<string name="light_preview_day_speed_three_minutes">3 min</string>
-<string name="light_preview_day_speed_five_minutes">5 min</string>
-<string name="light_preview_day_override_warning">During preview, live program will be temporarily overridden.</string>
-<string name="light_preview_day_progress_default">0%</string>
-<string name="light_preview_day_progress_format">%1$d%%</string>
-<string name="light_preview_day_start_button">Start Preview</string>
-<string name="light_preview_day_stop_button">Stop Preview</string>
-<string name="light_preview_day_start_again_button">Start Again</string>
-
-<string name="light_preset_options_preview_title">Plant Growth</string>
-<string name="light_preset_options_preview_subtitle">R90 · G75 · B45 · W90</string>
-<string name="light_preset_options_apply_to_device">Apply to Device</string>
-
-<string name="common_delete">Delete</string>
-<string name="common_chevron_right">→</string>
-<string name="common_close_symbol">×</string>
-
-
-
+    <string name="light_preset_options_apply_to_device">Apply to Device</string>
 
 </resources>

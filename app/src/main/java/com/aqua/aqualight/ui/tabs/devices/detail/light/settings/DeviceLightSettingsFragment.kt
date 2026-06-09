@@ -7,7 +7,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightSettingsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
@@ -53,27 +52,24 @@ class DeviceLightSettingsFragment :
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            AquaHeaderConfig(
-                title = "Light Settings",
-                showBackButton = true,
-                onBackClick = {
-                    findNavController().popBackStack()
-                },
-                actions = listOf(
-                    AquaHeaderAction(
-                        iconRes = R.drawable.ic_refresh,
-                        contentDescription = "Refresh device info",
-                        onClick = {
-                            viewModel.refreshAll(
-                                showMessage = false
-                            )
-                        }
-                    )
+    binding.appHeader.setupAquaHeader(
+        fragment = this,
+        config = AquaHeaderConfig(
+            titleOverride = "Light Settings",
+            actions = listOf(
+                AquaHeaderAction(
+                    iconRes = R.drawable.ic_refresh,
+                    contentDescription = "Refresh device info",
+                    onClick = {
+                        viewModel.refreshAll(
+                            showMessage = false
+                        )
+                    }
                 )
             )
         )
-    }
+    )
+}
 
     private fun setupClicks() {
         binding.btnUpdateFirmware.setOnClickListener {

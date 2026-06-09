@@ -4,77 +4,115 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
+import coil3.load
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUsageBinding
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
-import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private var _binding: FragmentUsageBinding? = null
     private val binding get() = _binding!!
 
-    // DataStore manager
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val userPrefs by lazy {
+        UserPreferencesManager.create(requireContext())
+    }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentUsageBinding.bind(view)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        // 🔙 Geri
+        _binding =
+            FragmentUsageBinding.bind(view)
+
+        setupHeader()
+
+        observeUsageAnalytics()
+    }
+
+    private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
+            fragment = this
+        )
+    }
 
-        // 🔄 DataStore'dan usage verisini dinle ve UI'ye bağla
+    private fun observeUsageAnalytics() {
         viewLifecycleOwner.lifecycleScope.launch {
             userPrefs.usageAnalyticsFlow.collectLatest { usage ->
-                bindUsageToUi(usage)
+                bindUsageToUi(
+                    usage
+                )
             }
         }
     }
 
-    private fun bindUsageToUi(usage: UserPreferencesManager.UsageAnalyticsUi) {
-        // 📊 Son 7 gün (otomasyon + uyarılar)
-        binding.tvTotalSessionsValue.text = usage.weeklyAutomationCount.toString()
-        binding.tvTotalTimeValue.text = usage.weeklyAlertCount.toString()
+    private fun bindUsageToUi(
+        usage: UserPreferencesManager.UsageAnalyticsUi
+    ) {
+        binding.tvTotalSessionsValue.text =
+            usage.weeklyAutomationCount.toString()
 
-        // 📅 Bugün (otomasyon + manuel)
-        binding.tvTodaySessionsValue.text = usage.todayAutomationCount.toString()
-        binding.tvTodayTimeValue.text = usage.todayManualActionCount.toString()
+        binding.tvTotalTimeValue.text =
+            usage.weeklyAlertCount.toString()
 
-        // 🕒 Son olay
-        binding.tvLastOpenValue.text = formatLastEventTime(usage.lastEventTimeMillis)
+        binding.tvTodaySessionsValue.text =
+            usage.todayAutomationCount.toString()
+
+        binding.tvTodayTimeValue.text =
+            usage.todayManualActionCount.toString()
+
+        binding.tvLastOpenValue.text =
+            formatLastEventTime(
+                usage.lastEventTimeMillis
+            )
+
         binding.tvMostUsedDeviceValue.text =
             usage.lastEventDescription.ifBlank {
-                getString(R.string.usage_last_event_none) // "Henüz kayıtlı olay yok" vb.
+                getString(
+                    R.string.usage_last_event_none
+                )
             }
     }
 
-    private fun formatLastEventTime(timeMillis: Long): String {
-        if (timeMillis <= 0L) {
-            return getString(R.string.usage_last_open_never) // "No events yet" gibi bir string
+    private fun formatLastEventTime(
+        timeMillis: Long
+    ): String {
+        if (
+            timeMillis <= 0L
+        ) {
+            return getString(
+                R.string.usage_last_open_never
+            )
         }
-        val date = Date(timeMillis)
-        val sdf = SimpleDateFormat("MMM d, HH:mm", Locale.getDefault())
-        return sdf.format(date)
+
+        val date =
+            Date(timeMillis)
+
+        val formatter =
+            SimpleDateFormat(
+                "MMM d, HH:mm",
+                Locale.getDefault()
+            )
+
+        return formatter.format(
+            date
+        )
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+
         _binding = null
     }
 }

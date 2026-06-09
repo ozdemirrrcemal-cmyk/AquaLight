@@ -105,7 +105,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="end"
-        android:text="@string/light_preview_day_progress_default" />
+        tools:text="0%" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnStartPreview"

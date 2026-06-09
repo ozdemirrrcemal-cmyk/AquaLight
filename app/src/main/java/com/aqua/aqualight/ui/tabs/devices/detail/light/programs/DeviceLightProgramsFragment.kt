@@ -59,25 +59,22 @@ Fragment(R.layout.fragment_device_light_programs) {
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            AquaHeaderConfig(
-                title = "Programs",
-                showBackButton = true,
-                onBackClick = {
-                    findNavController().popBackStack()
-                },
-                actions = listOf(
-                    AquaHeaderAction(
-                        iconRes = R.drawable.ic_add,
-                        contentDescription = "Add program",
-                        onClick = {
-                            openProgramEditor()
-                        }
-                    )
+    binding.appHeader.setupAquaHeader(
+        fragment = this,
+        config = AquaHeaderConfig(
+            titleOverride = "Programs",
+            actions = listOf(
+                AquaHeaderAction(
+                    iconRes = R.drawable.ic_add,
+                    contentDescription = "Add program",
+                    onClick = {
+                        openProgramEditor()
+                    }
                 )
             )
         )
-    }
+    )
+}
 
     private fun setupRecyclerView() {
         programsAdapter = LightProgramsAdapter(

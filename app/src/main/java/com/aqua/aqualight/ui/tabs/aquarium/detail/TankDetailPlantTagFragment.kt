@@ -19,6 +19,9 @@ import coil3.load
 import coil3.request.crossfade
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantTagBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconAction
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
@@ -62,9 +65,33 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
         _binding = FragmentPlantTagBinding.bind(view)
 
+        setupHeader()
         setupTankData()
         setupResultListener()
         setupClickListeners()
+    }
+
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = "Tag your plants",
+                onBackClick = {
+                    findNavController().navigateUp()
+                },
+                cardIconAction = AquaHeaderCardIconAction(
+                    iconRes = R.drawable.ic_check_24,
+                    contentDescription = "Confirm",
+                    backgroundColor = Color.parseColor("#1F6F4A"),
+                    strokeColor = Color.parseColor("#2A8A5E"),
+                    iconTintColor = Color.WHITE,
+                    enabled = !isSaving,
+                    onClick = {
+                        savePlantsAndClose()
+                    }
+                )
+            )
+        )
     }
 
     private fun setupTankData() {
@@ -153,14 +180,6 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
-        }
-
-        binding.btnConfirm.setOnClickListener {
-            savePlantsAndClose()
-        }
-
         binding.imageTouchArea.setOnTouchListener { touchedView, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 pendingMarkerX = event.x / touchedView.width.toFloat()
@@ -191,6 +210,7 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         }
 
         isSaving = true
+        setupHeader()
 
         viewLifecycleOwner.lifecycleScope.launch {
             aquariumTankViewModel.updateTankPlants(

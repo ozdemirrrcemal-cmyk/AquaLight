@@ -18,6 +18,9 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderAction
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
@@ -55,12 +58,38 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
         selectedTab = restoreSelectedTab(savedInstanceState)
 
+        setupHeader(
+            title = "Aquarium"
+        )
         setupClickListeners()
         setupSystemBackButton()
         setupSwipeBetweenTabs()
         observeCareProfileActions()
         observeTank()
         selectTab(selectedTab)
+    }
+
+    private fun setupHeader(
+        title: String
+    ) {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = title,
+                onBackClick = {
+                    findNavController().navigateUp()
+                },
+                actions = listOf(
+                    AquaHeaderAction(
+                        iconRes = R.drawable.ic_edit_24,
+                        contentDescription = "Edit tank",
+                        onClick = {
+                            openTankSettings()
+                        }
+                    )
+                )
+            )
+        )
     }
 
     private fun restoreSelectedTab(
@@ -76,14 +105,6 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     }
 
     private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
-        }
-
-        binding.btnEdit.setOnClickListener {
-            openTankSettings()
-        }
-
         binding.tabDevices.setOnClickListener {
             selectTab(TankDetailTab.DEVICES)
         }
@@ -266,7 +287,9 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     ) {
         currentTank = tank
 
-        binding.tvTankTitle.text = tank.name
+        setupHeader(
+            title = tank.name
+        )
 
         if (!tank.photoUri.isNullOrBlank()) {
             binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {

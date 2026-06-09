@@ -68,7 +68,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
-            android:text="@string/light_cloud_simulation_coverage_default" />
+            tools:text="Cloud Coverage 25%" />
 
         <TextView
             style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"

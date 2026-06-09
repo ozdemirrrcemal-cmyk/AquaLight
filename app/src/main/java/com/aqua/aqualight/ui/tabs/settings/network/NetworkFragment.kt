@@ -11,9 +11,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentNetworkBinding
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
@@ -26,75 +26,100 @@ import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.SocketTimeoutException
-import java.util.Locale
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
-import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class NetworkFragment : Fragment(R.layout.fragment_network) {
 
     private var _binding: FragmentNetworkBinding? = null
     private val binding get() = _binding!!
 
-    // Sürekli UDP dinleme için job
     private var udpListenJob: Job? = null
 
     private val tag = "NetworkFragment"
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentNetworkBinding.bind(view)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        // 🔙 Geri
-        binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
+        _binding =
+            FragmentNetworkBinding.bind(view)
 
-        // 📡 Bağlantı bilgisi
+        setupHeader()
         bindConnectionStatus()
-
-        // 🧩 UDP cihazlarını sürekli dinle
         startUdpScanLoop()
     }
 
-    // ----------------------------------------------------
-    // 📡 Bağlantı durumu kartı
-    // ----------------------------------------------------
-    private fun bindConnectionStatus() {
-        val cm = requireContext()
-            .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        val network = cm.activeNetwork
-        val caps = cm.getNetworkCapabilities(network)
-
-        val isOnline = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        val statusText = if (isOnline) {
-            getString(R.string.network_status_online)
-        } else {
-            getString(R.string.network_status_offline)
-        }
-
-        val typeText = when {
-            caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true ->
-                getString(R.string.network_type_wifi)
-            caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true ->
-                getString(R.string.network_type_mobile)
-            else ->
-                getString(R.string.network_type_unknown)
-        }
-
-        binding.tvStatusValue.text = statusText
-        binding.tvTypeValue.text = typeText
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this
+        )
     }
 
-    // ----------------------------------------------------
-    // 🧩 UDP cihaz modeli (JSON’dan ayrıştırılmış)
-    // ----------------------------------------------------
+    private fun bindConnectionStatus() {
+        val connectivityManager =
+            requireContext()
+                .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val network =
+            connectivityManager.activeNetwork
+
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(
+                network
+            )
+
+        val isOnline =
+            capabilities?.hasCapability(
+                NetworkCapabilities.NET_CAPABILITY_INTERNET
+            ) == true
+
+        val statusText =
+            if (isOnline) {
+                getString(
+                    R.string.network_status_online
+                )
+            } else {
+                getString(
+                    R.string.network_status_offline
+                )
+            }
+
+        val typeText =
+            when {
+                capabilities?.hasTransport(
+                    NetworkCapabilities.TRANSPORT_WIFI
+                ) == true -> {
+                    getString(
+                        R.string.network_type_wifi
+                    )
+                }
+
+                capabilities?.hasTransport(
+                    NetworkCapabilities.TRANSPORT_CELLULAR
+                ) == true -> {
+                    getString(
+                        R.string.network_type_mobile
+                    )
+                }
+
+                else -> {
+                    getString(
+                        R.string.network_type_unknown
+                    )
+                }
+            }
+
+        binding.tvStatusValue.text =
+            statusText
+
+        binding.tvTypeValue.text =
+            typeText
+    }
+
     data class UdpDeviceUi(
         val ip: String,
         val name: String,
@@ -107,258 +132,442 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         val lastSeenMillis: Long
     )
 
-    // ----------------------------------------------------
-    // 🧩 Sürekli UDP tarama (ESP32: port 10888)
-    // ----------------------------------------------------
     private fun startUdpScanLoop() {
-        // İlk girişte "tarama" yazsın
         binding.deviceListContainer.removeAllViews()
-        binding.tvNoDevices.visibility = View.VISIBLE
-        binding.tvNoDevices.text = getString(R.string.network_devices_scanning)
 
-        // Eski job varsa iptal et
+        binding.tvNoDevices.visibility =
+            View.VISIBLE
+
+        binding.tvNoDevices.text =
+            getString(
+                R.string.network_devices_scanning
+            )
+
         udpListenJob?.cancel()
 
-        udpListenJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            // IP bazlı cache, son görülen cihazlar
-            val devicesMap = LinkedHashMap<String, UdpDeviceUi>()
+        udpListenJob =
+            viewLifecycleOwner.lifecycleScope.launch(
+                Dispatchers.IO
+            ) {
+                val devicesMap =
+                    LinkedHashMap<String, UdpDeviceUi>()
 
-            val port = 10888                // ESP32 UDPlocalPort
-            val listenTimeoutMs = 1000      // her turda max 1 sn bekle
-            val staleTimeoutMs = 3 * 60_000L // 3 dk görmediysek listeden düş
-            var lastRefreshSend = 0L
+                val port =
+                    10888
 
-            while (isActive) {
-                val nowLoop = System.currentTimeMillis()
+                val listenTimeoutMs =
+                    1000
 
-                // Her 5 saniyede bir ESP32'lere "RefreshUDP" isteği gönder
-                if (nowLoop - lastRefreshSend > 5000) {
-                    sendUdpRefreshBroadcast(port)
-                    lastRefreshSend = nowLoop
-                }
+                val staleTimeoutMs =
+                    3 * 60_000L
 
-                // Bir tur UDP dinle
-                val newDevices = listenForUdpBroadcasts(
-                    port = port,
-                    timeoutMillis = listenTimeoutMs
-                )
+                var lastRefreshSend =
+                    0L
 
-                val now = System.currentTimeMillis()
+                while (isActive) {
+                    val nowLoop =
+                        System.currentTimeMillis()
 
-                // Yeni gelenleri map'e işle
-                newDevices.forEach { dev ->
-                    devicesMap[dev.ip] = dev.copy(lastSeenMillis = now)
-                }
+                    if (
+                        nowLoop - lastRefreshSend >
+                        5000
+                    ) {
+                        sendUdpRefreshBroadcast(
+                            port
+                        )
 
-                // Zaman aşımına uğrayanları filtrele
-                val visibleDevices = devicesMap.values
-                    .filter { now - it.lastSeenMillis <= staleTimeoutMs }
-                    .sortedBy { it.aquaName ?: it.name }
+                        lastRefreshSend =
+                            nowLoop
+                    }
 
-                withContext(Dispatchers.Main) {
-                    bindDevicesToUi(visibleDevices)
+                    val newDevices =
+                        listenForUdpBroadcasts(
+                            port = port,
+                            timeoutMillis = listenTimeoutMs
+                        )
+
+                    val now =
+                        System.currentTimeMillis()
+
+                    newDevices.forEach { device ->
+                        devicesMap[device.ip] =
+                            device.copy(
+                                lastSeenMillis = now
+                            )
+                    }
+
+                    val visibleDevices =
+                        devicesMap.values
+                            .filter {
+                                now - it.lastSeenMillis <= staleTimeoutMs
+                            }
+                            .sortedBy {
+                                it.aquaName ?: it.name
+                            }
+
+                    withContext(
+                        Dispatchers.Main
+                    ) {
+                        bindDevicesToUi(
+                            visibleDevices
+                        )
+                    }
                 }
             }
-        }
     }
 
-    /**
-     * ESP32'lere UDP üzerinden "RefreshUDP" komutu gönder.
-     * MNetUdp.UDPRead içinde Command == "RefreshUDP" görünce cihaz hemen broadcast yapıyor.
-     */
-    private fun sendUdpRefreshBroadcast(port: Int) {
+    private fun sendUdpRefreshBroadcast(
+        port: Int
+    ) {
         try {
             DatagramSocket().use { socket ->
-                socket.broadcast = true
-                val data = """{"Command":"RefreshUDP"}""".toByteArray(Charsets.UTF_8)
-                val packet = DatagramPacket(
-                    data,
-                    data.size,
-                    InetAddress.getByName("255.255.255.255"),
-                    port
+                socket.broadcast =
+                    true
+
+                val data =
+                    """{"Command":"RefreshUDP"}"""
+                        .toByteArray(
+                            Charsets.UTF_8
+                        )
+
+                val packet =
+                    DatagramPacket(
+                        data,
+                        data.size,
+                        InetAddress.getByName("255.255.255.255"),
+                        port
+                    )
+
+                socket.send(
+                    packet
                 )
-                socket.send(packet)
             }
         } catch (e: Exception) {
-            Log.e(tag, "UDP RefreshUDP gönderme hatası", e)
+            Log.e(
+                tag,
+                "UDP RefreshUDP send failed",
+                e
+            )
         }
     }
 
-    /**
-     * Bir tur UDP dinler, o sürede gelen cihazları döner.
-     */
     private fun listenForUdpBroadcasts(
         port: Int,
         timeoutMillis: Int
     ): List<UdpDeviceUi> {
-        val result = LinkedHashMap<String, UdpDeviceUi>() // IP bazlı uniq
+        val result =
+            LinkedHashMap<String, UdpDeviceUi>()
 
         try {
             DatagramSocket(port).use { socket ->
-                socket.soTimeout = timeoutMillis
+                socket.soTimeout =
+                    timeoutMillis
 
-                val buffer = ByteArray(4096)
+                val buffer =
+                    ByteArray(4096)
 
                 while (true) {
-                    val packet = DatagramPacket(buffer, buffer.size)
+                    val packet =
+                        DatagramPacket(
+                            buffer,
+                            buffer.size
+                        )
 
                     try {
-                        socket.receive(packet)
-                    } catch (e: SocketTimeoutException) {
-                        // Süre doldu → bu tur bitti
+                        socket.receive(
+                            packet
+                        )
+                    } catch (_: SocketTimeoutException) {
                         break
                     }
 
-                    val senderIp = packet.address?.hostAddress ?: continue
-                    val length = packet.length
-                    val payload = buffer.copyOf(length).toString(Charsets.UTF_8).trim()
+                    val senderIp =
+                        packet.address
+                            ?.hostAddress
+                            ?: continue
+
+                    val length =
+                        packet.length
+
+                    val payload =
+                        buffer.copyOf(
+                            length
+                        )
+                            .toString(
+                                Charsets.UTF_8
+                            )
+                            .trim()
 
                     try {
-                        val device = parseEsp32UdpJson(senderIp, payload)
-                        if (device != null) {
-                            result[senderIp] = device
-                        } else {
-                            // Beklenmeyen formatta paket gelirse bile en azından IP'yi göster
-                            result[senderIp] = UdpDeviceUi(
-                                ip = senderIp,
-                                name = "Aqua device",
-                                aquaName = null,
-                                cloneName = null,
-                                firmware = null,
-                                hasLight = false,
-                                hasTimer = false,
-                                hasTemperature = false,
-                                lastSeenMillis = System.currentTimeMillis()
+                        val device =
+                            parseEsp32UdpJson(
+                                senderIp,
+                                payload
                             )
+
+                        if (device != null) {
+                            result[senderIp] =
+                                device
+                        } else {
+                            result[senderIp] =
+                                UdpDeviceUi(
+                                    ip = senderIp,
+                                    name = "Aqua device",
+                                    aquaName = null,
+                                    cloneName = null,
+                                    firmware = null,
+                                    hasLight = false,
+                                    hasTimer = false,
+                                    hasTemperature = false,
+                                    lastSeenMillis = System.currentTimeMillis()
+                                )
                         }
                     } catch (e: Exception) {
-                        Log.e(tag, "UDP JSON parse hatası: $payload", e)
+                        Log.e(
+                            tag,
+                            "UDP JSON parse failed: $payload",
+                            e
+                        )
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.e(tag, "UDP dinleme hatası", e)
+            Log.e(
+                tag,
+                "UDP listen failed",
+                e
+            )
         }
 
         return result.values.toList()
     }
 
-    /**
-     * ESP32'nin gönderdiği JSON'u parse edip UdpDeviceUi nesnesine çevirir.
-     */
     private fun parseEsp32UdpJson(
         senderIp: String,
         payload: String
     ): UdpDeviceUi? {
-        val root = try {
-            JSONObject(payload)
-        } catch (e: Exception) {
-            return null
-        }
+        val root =
+            try {
+                JSONObject(
+                    payload
+                )
+            } catch (_: Exception) {
+                return null
+            }
 
-        val dataObj = root.optJSONObject("Data") ?: return null
-        val dev0 = dataObj.optJSONObject("0") ?: return null
+        val dataObj =
+            root.optJSONObject(
+                "Data"
+            ) ?: return null
 
-        val name = dev0.optString("Name", "")
-        val aquaName = dev0.optString("AquaName", null)
-        val cloneName = dev0.optString("CloneName", null)
-        val firmware = dev0.optString("FirmwareBuild", null)
+        val dev0 =
+            dataObj.optJSONObject(
+                "0"
+            ) ?: return null
 
-        // IP hem JSON içinden hem de gönderen soketten gelebilir;
-        // JSON'da yoksa senderIp'yi kullan
-        val ipFromJson = dev0.optString("IP", null)
-        val finalIp = if (!ipFromJson.isNullOrBlank()) ipFromJson else senderIp
+        val name =
+            dev0.optString(
+                "Name",
+                ""
+            )
 
-        val hasLight = dev0.optInt("TabLight", 0) != 0
-        val hasTimer = dev0.optInt("TabTimer", 0) != 0
-        val hasTemp = dev0.optInt("TabTemperature", 0) != 0
+        val aquaName =
+            dev0.optString(
+                "AquaName",
+                null
+            )
+
+        val cloneName =
+            dev0.optString(
+                "CloneName",
+                null
+            )
+
+        val firmware =
+            dev0.optString(
+                "FirmwareBuild",
+                null
+            )
+
+        val ipFromJson =
+            dev0.optString(
+                "IP",
+                null
+            )
+
+        val finalIp =
+            if (
+                !ipFromJson.isNullOrBlank()
+            ) {
+                ipFromJson
+            } else {
+                senderIp
+            }
+
+        val hasLight =
+            dev0.optInt(
+                "TabLight",
+                0
+            ) != 0
+
+        val hasTimer =
+            dev0.optInt(
+                "TabTimer",
+                0
+            ) != 0
+
+        val hasTemperature =
+            dev0.optInt(
+                "TabTemperature",
+                0
+            ) != 0
 
         return UdpDeviceUi(
             ip = finalIp,
-            name = name.ifBlank { "Aqua device" },
+            name = name.ifBlank {
+                "Aqua device"
+            },
             aquaName = aquaName,
             cloneName = cloneName,
             firmware = firmware,
             hasLight = hasLight,
             hasTimer = hasTimer,
-            hasTemperature = hasTemp,
+            hasTemperature = hasTemperature,
             lastSeenMillis = System.currentTimeMillis()
         )
     }
 
-    // ----------------------------------------------------
-    // 🧩 Cihaz listesini UI'ye bas
-    // ----------------------------------------------------
-    private fun bindDevicesToUi(devices: List<UdpDeviceUi>) {
-        val container = binding.deviceListContainer
+    private fun bindDevicesToUi(
+        devices: List<UdpDeviceUi>
+    ) {
+        val container =
+            binding.deviceListContainer
+
         container.removeAllViews()
 
-        if (devices.isEmpty()) {
-            binding.tvNoDevices.visibility = View.VISIBLE
-            binding.tvNoDevices.text = getString(R.string.network_devices_empty)
+        if (
+            devices.isEmpty()
+        ) {
+            binding.tvNoDevices.visibility =
+                View.VISIBLE
+
+            binding.tvNoDevices.text =
+                getString(
+                    R.string.network_devices_empty
+                )
+
             return
         }
 
-        binding.tvNoDevices.visibility = View.GONE
+        binding.tvNoDevices.visibility =
+            View.GONE
 
-        val inflater = LayoutInflater.from(container.context)
+        val inflater =
+            LayoutInflater.from(
+                container.context
+            )
 
         devices.forEach { device ->
-            val row = inflater.inflate(
-                R.layout.simple_list_item_udp_device,
-                container,
-                false
-            ) as ViewGroup
+            val row =
+                inflater.inflate(
+                    R.layout.simple_list_item_udp_device,
+                    container,
+                    false
+                ) as ViewGroup
 
-            val tvName = row.findViewById<TextView>(R.id.tvDeviceName)
-            val tvInfo = row.findViewById<TextView>(R.id.tvDeviceInfo)
+            val tvName =
+                row.findViewById<TextView>(
+                    R.id.tvDeviceName
+                )
 
-            // 1. satır: AquaName (varsa) yoksa Name
-            val mainName = when {
-                !device.aquaName.isNullOrBlank() -> device.aquaName
-                device.name.isNotBlank() -> device.name
-                else -> getString(R.string.network_device_default_name)
-            }
+            val tvInfo =
+                row.findViewById<TextView>(
+                    R.id.tvDeviceInfo
+                )
 
-            tvName.text = mainName
+            val mainName =
+                when {
+                    !device.aquaName.isNullOrBlank() -> {
+                        device.aquaName
+                    }
 
-            // 2. satır: "IP • Name"
-            tvInfo.text = buildString {
-                append(device.ip)
-                if (device.name.isNotBlank()) {
-                    append(" • ")
-                    append(device.name)
+                    device.name.isNotBlank() -> {
+                        device.name
+                    }
+
+                    else -> {
+                        getString(
+                            R.string.network_device_default_name
+                        )
+                    }
                 }
-            }
 
-            container.addView(row)
+            tvName.text =
+                mainName
+
+            tvInfo.text =
+                buildString {
+                    append(
+                        device.ip
+                    )
+
+                    if (
+                        device.name.isNotBlank()
+                    ) {
+                        append(
+                            " • "
+                        )
+
+                        append(
+                            device.name
+                        )
+                    }
+                }
+
+            container.addView(
+                row
+            )
         }
     }
 
-    // (İstersen ileride IP de göstermek için kullanırsın)
     @Suppress("unused")
     private fun getLocalIpv4(): String? {
         return try {
-            val interfaces = NetworkInterface.getNetworkInterfaces()
-            for (ni in interfaces) {
-                val addrs = ni.inetAddresses
-                for (addr in addrs) {
-                    if (!addr.isLoopbackAddress && addr is Inet4Address) {
-                        return addr.hostAddress
+            val interfaces =
+                NetworkInterface.getNetworkInterfaces()
+
+            for (
+                networkInterface in interfaces
+            ) {
+                val addresses =
+                    networkInterface.inetAddresses
+
+                for (
+                    address in addresses
+                ) {
+                    if (
+                        !address.isLoopbackAddress &&
+                        address is Inet4Address
+                    ) {
+                        return address.hostAddress
                     }
                 }
             }
+
             null
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
-        // UDP dinlemeyi durdur
         udpListenJob?.cancel()
-        udpListenJob = null
-        _binding = null
+        udpListenJob =
+            null
+
+        _binding =
+            null
+
+        super.onDestroyView()
     }
 }

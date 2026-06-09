@@ -20,6 +20,9 @@ import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidateLoader
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
 import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.launch
 
 class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
@@ -68,9 +71,29 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             devicesStore = devicesStore
         )
 
+        setupHeader()
         setupRecycler()
-        setupClickListeners()
         requestPermissionsAndLoad()
+    }
+
+    private fun setupHeader(
+        title: String = getString(R.string.device_add_title),
+        retryEnabled: Boolean = true
+    ) {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = title,
+                filledIconAction = AquaHeaderFilledIconAction(
+                    iconRes = R.drawable.ic_radar,
+                    contentDescription = "Search again",
+                    enabled = retryEnabled,
+                    onClick = {
+                        requestPermissionsAndLoad()
+                    }
+                )
+            )
+        )
     }
 
     private fun setupRecycler() {
@@ -85,16 +108,6 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         )
 
         binding.rvCandidates.adapter = adapter
-    }
-
-    private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
-
-        binding.btnRetry.setOnClickListener {
-            requestPermissionsAndLoad()
-        }
     }
 
     private fun requestPermissionsAndLoad() {
@@ -205,11 +218,9 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.rvCandidates.isVisible = false
         binding.emptyContainer.isVisible = false
 
-        binding.btnRetry.isEnabled = false
-        binding.btnRetry.alpha = 0.45f
-
-        binding.tvTitle.text = getString(
-            R.string.device_add_searching_title
+        setupHeader(
+            title = getString(R.string.device_add_searching_title),
+            retryEnabled = false
         )
 
         binding.tvSubtitle.text = getString(
@@ -228,11 +239,9 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.rvCandidates.isVisible = true
         binding.emptyContainer.isVisible = false
 
-        binding.btnRetry.isEnabled = true
-        binding.btnRetry.alpha = 1f
-
-        binding.tvTitle.text = getString(
-            R.string.device_add_title
+        setupHeader(
+            title = getString(R.string.device_add_title),
+            retryEnabled = true
         )
 
         adapter.submitList(
@@ -249,11 +258,9 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.rvCandidates.isVisible = false
         binding.emptyContainer.isVisible = true
 
-        binding.btnRetry.isEnabled = true
-        binding.btnRetry.alpha = 1f
-
-        binding.tvTitle.text = getString(
-            R.string.device_add_title
+        setupHeader(
+            title = getString(R.string.device_add_title),
+            retryEnabled = true
         )
 
         binding.tvSubtitle.text = getString(
@@ -276,11 +283,9 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         binding.rvCandidates.isVisible = false
         binding.emptyContainer.isVisible = true
 
-        binding.btnRetry.isEnabled = true
-        binding.btnRetry.alpha = 1f
-
-        binding.tvTitle.text = getString(
-            R.string.device_add_title
+        setupHeader(
+            title = getString(R.string.device_add_title),
+            retryEnabled = true
         )
 
         binding.tvSubtitle.text = getString(

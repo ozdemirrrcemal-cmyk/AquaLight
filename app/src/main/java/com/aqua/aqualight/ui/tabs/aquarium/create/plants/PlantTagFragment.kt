@@ -16,6 +16,9 @@ import coil3.load
 import coil3.request.crossfade
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantTagBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconAction
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.google.android.material.card.MaterialCardView
@@ -34,17 +37,48 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     private var pendingMarkerX: Float = 0.5f
     private var pendingMarkerY: Float = 0.5f
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
+
         _binding = FragmentPlantTagBinding.bind(view)
 
         selectedPlants.clear()
         selectedPlants.addAll(viewModel.tankDraft.plants)
 
+        setupHeader()
         setupImage()
         setupResultListener()
         setupClickListeners()
         renderPlants()
         renderMarkers()
+    }
+
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = "Tag your plants",
+                onBackClick = {
+                    closePlantTagFlow()
+                },
+                cardIconAction = AquaHeaderCardIconAction(
+                    iconRes = R.drawable.ic_check_24,
+                    contentDescription = "Confirm",
+                    backgroundColor = Color.parseColor("#1F6F4A"),
+                    strokeColor = Color.parseColor("#2A8A5E"),
+                    iconTintColor = Color.WHITE,
+                    onClick = {
+                        confirmPlantTags()
+                    }
+                )
+            )
+        )
     }
 
     private fun setupImage() {
@@ -88,23 +122,6 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            (requireParentFragment() as? CreateTankFragment)
-                ?.closePlantTagFlow()
-        }
-
-        binding.btnConfirm.setOnClickListener {
-            viewModel.updateTankPlants(selectedPlants)
-
-            parentFragmentManager.setFragmentResult(
-                RESULT_KEY,
-                bundleOf(RESULT_UPDATED to true)
-            )
-
-            (requireParentFragment() as? CreateTankFragment)
-                ?.closePlantTagFlow()
-        }
-
         binding.imageTouchArea.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_UP) {
                 pendingMarkerX = event.x / view.width.toFloat()
@@ -118,6 +135,22 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 true
             }
         }
+    }
+
+    private fun confirmPlantTags() {
+        viewModel.updateTankPlants(selectedPlants)
+
+        parentFragmentManager.setFragmentResult(
+            RESULT_KEY,
+            bundleOf(RESULT_UPDATED to true)
+        )
+
+        closePlantTagFlow()
+    }
+
+    private fun closePlantTagFlow() {
+        (requireParentFragment() as? CreateTankFragment)
+            ?.closePlantTagFlow()
     }
 
     private fun renderPlants() {

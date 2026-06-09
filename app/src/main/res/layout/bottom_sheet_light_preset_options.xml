@@ -25,7 +25,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
-        tools:text="@string/light_preset_options_preview_title" />
+        tools:text="Plant Growth" />
 
     <TextView
         android:id="@+id/tvPresetSheetSubtitle"
@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        tools:text="@string/light_preset_options_preview_subtitle" />
+        tools:text="R90 · G75 · B45 · W90" />
 
     <LinearLayout
         android:id="@+id/rowApplyPreset"
@@ -56,11 +56,12 @@
             android:layout_weight="1"
             android:text="@string/light_preset_options_apply_to_device" />
 
-        <TextView
-            style="@style/TextAppearance.Aqua.Light.Body"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/common_chevron_right" />
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_upload_to_device_24"
+            android:tint="@color/light_text_secondary" />
 
     </LinearLayout>
 
@@ -85,11 +86,12 @@
             android:layout_weight="1"
             android:text="@string/common_delete" />
 
-        <TextView
-            style="@style/TextAppearance.Aqua.Light.Body"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/common_close_symbol" />
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_delete"
+            android:tint="@color/light_text_secondary" />
 
     </LinearLayout>
 

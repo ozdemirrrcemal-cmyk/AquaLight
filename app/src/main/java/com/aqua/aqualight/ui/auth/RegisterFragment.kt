@@ -35,16 +35,11 @@ class RegisterFragment : Fragment() {
     private val baseActivity
         get() = activity as? BaseActivity
 
-    // ---------------------------------------------------
-    // ON CREATE VIEW
-    // ---------------------------------------------------
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding =
             FragmentRegisterBinding.inflate(
                 inflater,
@@ -57,30 +52,19 @@ class RegisterFragment : Fragment() {
         return binding.root
     }
 
-    // ---------------------------------------------------
-    // UI
-    // ---------------------------------------------------
-
     private fun setupUI() =
         with(binding) {
 
             btnRegister.setOnClickListener {
-
                 handleRegister()
             }
 
-            btnBack.setOnClickListener {
-
+            btnReturnToSignIn.setOnClickListener {
                 findNavController().popBackStack()
             }
         }
 
-    // ---------------------------------------------------
-    // REGISTER
-    // ---------------------------------------------------
-
     private fun handleRegister() {
-
         val email =
             binding.emailEditText.text
                 ?.toString()
@@ -108,7 +92,6 @@ class RegisterFragment : Fragment() {
                 email.isEmpty() ||
                     password.isEmpty() ||
                     repeatPassword.isEmpty() -> {
-
                     R.string.register_empty_fields_message to
                         R.string.register_empty_fields_title
                 }
@@ -116,19 +99,16 @@ class RegisterFragment : Fragment() {
                 !Patterns.EMAIL_ADDRESS
                     .matcher(email)
                     .matches() -> {
-
                     R.string.invalid_email to
                         R.string.invalid_email_title
                 }
 
                 password.length < 6 -> {
-
                     R.string.invalid_password to
                         R.string.invalid_password_title
                 }
 
                 password != repeatPassword -> {
-
                     R.string.passwords_do_not_match to
                         R.string.passwords_do_not_match_title
                 }
@@ -137,7 +117,6 @@ class RegisterFragment : Fragment() {
             }
 
             if (warning != null) {
-
                 baseActivity?.showLoading(false)
 
                 DialogManager.showInfoDialog(
@@ -169,23 +148,16 @@ class RegisterFragment : Fragment() {
                         getString(R.string.register_button)
 
                     if (task.isSuccessful) {
-
                         val user =
                             task.result?.user
 
                         if (user != null) {
-
                             lifecycleScope.launch {
-
                                 try {
-
                                     saveSession(user)
 
-                                    // ✅ Direkt uygulamaya geç
                                     navigateToAppGraph()
-
                                 } catch (e: Exception) {
-
                                     DialogManager.showInfoDialog(
                                         requireContext(),
                                         DialogType.ERROR,
@@ -200,9 +172,7 @@ class RegisterFragment : Fragment() {
                                     )
                                 }
                             }
-
                         } else {
-
                             DialogManager.showInfoDialog(
                                 requireContext(),
                                 DialogType.ERROR,
@@ -214,9 +184,7 @@ class RegisterFragment : Fragment() {
                                 )
                             )
                         }
-
                     } else {
-
                         val errorMsg =
                             task.exception?.localizedMessage
                                 ?: getString(
@@ -236,14 +204,9 @@ class RegisterFragment : Fragment() {
         }
     }
 
-    // ---------------------------------------------------
-    // SAVE SESSION
-    // ---------------------------------------------------
-
     private suspend fun saveSession(
         user: FirebaseUser
     ) {
-
         userPrefs.saveUserSession(
             idToken = user.uid,
             isLoggedIn = true
@@ -257,23 +220,17 @@ class RegisterFragment : Fragment() {
         )
     }
 
-    // ---------------------------------------------------
-    // NAVIGATE APP
-    // ---------------------------------------------------
-
     private fun navigateToAppGraph() {
-
         val rootNav =
             (
                 requireActivity()
                     .supportFragmentManager
                     .findFragmentById(R.id.nav_host)
-                        as NavHostFragment
+                    as NavHostFragment
                 ).navController
 
         val opts =
             navOptions {
-
                 popUpTo(
                     R.id.authContainerFragment
                 ) {
@@ -290,12 +247,7 @@ class RegisterFragment : Fragment() {
         )
     }
 
-    // ---------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         super.onDestroyView()
 
         _binding = null

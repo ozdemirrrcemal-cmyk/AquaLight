@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -29,9 +28,13 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        _binding = FragmentDeviceCoolingBinding.bind(view)
+        _binding =
+            FragmentDeviceCoolingBinding.bind(view)
 
         setupHeader()
         bindEmptyState()
@@ -39,24 +42,25 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            AquaHeaderConfig(
-                title = deviceTitle,
-                showBackButton = true,
-                onBackClick = {
-                    findNavController().popBackStack()
-                }
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = deviceTitle
             )
         )
     }
 
     private fun bindEmptyState() {
-        binding.tvEmptyTitle.text = deviceTitle
+        binding.tvEmptyTitle.text =
+            deviceTitle
+
         binding.tvEmptyMessage.text =
             "Device ID: $deviceId\nCooling controller screen will be built here."
     }
 
     override fun onDestroyView() {
-        _binding = null
+        _binding =
+            null
+
         super.onDestroyView()
     }
 

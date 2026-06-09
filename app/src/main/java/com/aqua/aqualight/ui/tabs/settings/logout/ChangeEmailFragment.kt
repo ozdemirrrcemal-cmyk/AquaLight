@@ -12,13 +12,12 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
-import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class ChangeEmailFragment :
     Fragment(R.layout.fragment_change_email) {
@@ -35,36 +34,33 @@ class ChangeEmailFragment :
     private val baseActivity
         get() = activity as? BaseActivity
 
-    // ---------------------------------------------------
-    // ON VIEW CREATED
-    // ---------------------------------------------------
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding =
             FragmentChangeEmailBinding.bind(view)
 
-        binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
+        setupHeader()
+        setupScreen()
+    }
 
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this
+        )
+    }
+
+    private fun setupScreen() {
         val user =
             auth.currentUser
 
-        // Kullanıcı yoksa
         if (user == null) {
-
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.ERROR,
@@ -75,38 +71,30 @@ class ChangeEmailFragment :
                     R.string.change_email_user_not_found_message
                 ),
                 onDismiss = {
-                    findNavController().popBackStack()
+                    findNavController()
+                        .popBackStack()
                 }
             )
 
             return
         }
 
-        // Google kullanıcı kontrolü
         val isGoogleUser =
             user.providerData.any {
                 it.providerId == "google.com"
             }
 
         if (isGoogleUser) {
-
             showGoogleOnlyInfo()
-
             return
         }
 
         binding.btnSaveEmail.setOnClickListener {
-
             attemptEmailChange()
         }
     }
 
-    // ---------------------------------------------------
-    // GOOGLE INFO UI
-    // ---------------------------------------------------
-
     private fun showGoogleOnlyInfo() {
-
         val user =
             auth.currentUser ?: return
 
@@ -132,12 +120,7 @@ class ChangeEmailFragment :
             )
     }
 
-    // ---------------------------------------------------
-    // VALIDATION
-    // ---------------------------------------------------
-
     private fun attemptEmailChange() {
-
         val currentEmail =
             binding.etCurrentEmail.text
                 .toString()
@@ -157,7 +140,6 @@ class ChangeEmailFragment :
             auth.currentUser
 
         if (user == null) {
-
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.ERROR,
@@ -172,22 +154,9 @@ class ChangeEmailFragment :
             return
         }
 
-        // Reset errors
-        binding.inputLayoutCurrentEmail.error =
-            null
+        clearErrors()
 
-        binding.inputLayoutNewEmail.error =
-            null
-
-        binding.inputLayoutPassword.error =
-            null
-
-        binding.inputLayoutCurrentEmail.helperText =
-            null
-
-        // Empty checks
         if (currentEmail.isEmpty()) {
-
             binding.inputLayoutCurrentEmail.error =
                 getString(
                     R.string.change_email_error_current_required
@@ -197,7 +166,6 @@ class ChangeEmailFragment :
         }
 
         if (newEmail.isEmpty()) {
-
             binding.inputLayoutNewEmail.error =
                 getString(
                     R.string.change_email_error_new_required
@@ -207,7 +175,6 @@ class ChangeEmailFragment :
         }
 
         if (password.isEmpty()) {
-
             binding.inputLayoutPassword.error =
                 getString(
                     R.string.change_email_error_password_required
@@ -216,13 +183,11 @@ class ChangeEmailFragment :
             return
         }
 
-        // Email format
         if (
             !Patterns.EMAIL_ADDRESS
                 .matcher(newEmail)
                 .matches()
         ) {
-
             binding.inputLayoutNewEmail.error =
                 getString(
                     R.string.change_email_error_invalid_format
@@ -231,14 +196,12 @@ class ChangeEmailFragment :
             return
         }
 
-        // Aynı email kontrolü
         if (
             currentEmail.equals(
                 newEmail,
                 ignoreCase = true
             )
         ) {
-
             binding.inputLayoutNewEmail.error =
                 getString(
                     R.string.change_email_same_email
@@ -247,9 +210,7 @@ class ChangeEmailFragment :
             return
         }
 
-        // Eski email doğrulama
         if (currentEmail != user.email) {
-
             binding.inputLayoutCurrentEmail.error =
                 getString(
                     R.string.change_email_old_incorrect
@@ -265,20 +226,31 @@ class ChangeEmailFragment :
         )
     }
 
-    // ---------------------------------------------------
-    // REAUTH
-    // ---------------------------------------------------
+    private fun clearErrors() {
+        binding.inputLayoutCurrentEmail.error =
+            null
+
+        binding.inputLayoutNewEmail.error =
+            null
+
+        binding.inputLayoutPassword.error =
+            null
+
+        binding.inputLayoutCurrentEmail.helperText =
+            null
+    }
 
     private fun reauthenticateAndVerifyBeforeUpdate(
         oldEmail: String,
         password: String,
         newEmail: String
     ) {
-
         val user =
             auth.currentUser ?: return
 
-        baseActivity?.showLoading(true)
+        baseActivity?.showLoading(
+            true
+        )
 
         binding.btnSaveEmail.isEnabled =
             false
@@ -289,16 +261,18 @@ class ChangeEmailFragment :
                 password
             )
 
-        user.reauthenticate(credential)
+        user.reauthenticate(
+            credential
+        )
             .addOnSuccessListener {
-
                 verifyBeforeUpdateEmail(
                     newEmail
                 )
             }
             .addOnFailureListener {
-
-                baseActivity?.showLoading(false)
+                baseActivity?.showLoading(
+                    false
+                )
 
                 binding.btnSaveEmail.isEnabled =
                     true
@@ -310,14 +284,9 @@ class ChangeEmailFragment :
             }
     }
 
-    // ---------------------------------------------------
-    // VERIFY + UPDATE EMAIL
-    // ---------------------------------------------------
-
     private fun verifyBeforeUpdateEmail(
         newEmail: String
     ) {
-
         val user =
             auth.currentUser ?: return
 
@@ -325,8 +294,9 @@ class ChangeEmailFragment :
             newEmail
         )
             .addOnSuccessListener {
-
-                baseActivity?.showLoading(false)
+                baseActivity?.showLoading(
+                    false
+                )
 
                 binding.btnSaveEmail.isEnabled =
                     true
@@ -342,25 +312,20 @@ class ChangeEmailFragment :
                         newEmail
                     ),
                     onDismiss = {
-
-                        // Logout
                         auth.signOut()
 
-                        // Clear local session
-                        viewLifecycleOwner
-                            .lifecycleScope
-                            .launch {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            userPrefs.logout()
 
-                                userPrefs.logout()
-
-                                navigateToLoginRoot()
-                            }
+                            navigateToLoginRoot()
+                        }
                     }
                 )
             }
             .addOnFailureListener { e ->
-
-                baseActivity?.showLoading(false)
+                baseActivity?.showLoading(
+                    false
+                )
 
                 binding.btnSaveEmail.isEnabled =
                     true
@@ -380,45 +345,36 @@ class ChangeEmailFragment :
             }
     }
 
-    // ---------------------------------------------------
-    // NAVIGATION
-    // ---------------------------------------------------
-
     private fun navigateToLoginRoot() {
-
         val rootNav =
             (
                 requireActivity()
                     .supportFragmentManager
-                    .findFragmentById(R.id.nav_host)
-                        as NavHostFragment
+                    .findFragmentById(R.id.nav_host) as NavHostFragment
                 ).navController
 
-        val opts =
+        val options =
             navOptions {
-
                 popUpTo(R.id.nav_app) {
-                    inclusive = true
+                    inclusive =
+                        true
                 }
 
-                launchSingleTop = true
+                launchSingleTop =
+                    true
             }
 
         rootNav.navigate(
             R.id.authContainerFragment,
             null,
-            opts
+            options
         )
     }
 
-    // ---------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         super.onDestroyView()
 
-        _binding = null
+        _binding =
+            null
     }
 }

@@ -14,6 +14,9 @@ import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.databinding.FragmentScanDevicesBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
@@ -42,9 +45,29 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         _binding = FragmentScanDevicesBinding.bind(view)
         devicesStore = DevicesDataStoreManager.create(requireContext())
 
+        setupHeader()
         setupRecyclerView()
-        setupClickListeners()
         startScan()
+    }
+
+    private fun setupHeader(
+        title: String = getString(R.string.device_scan_header_list),
+        rescanEnabled: Boolean = true
+    ) {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = title,
+                filledIconAction = AquaHeaderFilledIconAction(
+                    iconRes = R.drawable.ic_radar,
+                    contentDescription = getString(R.string.device_scan_scan_again),
+                    enabled = rescanEnabled,
+                    onClick = {
+                        startScan()
+                    }
+                )
+            )
+        )
     }
 
     private fun setupRecyclerView() {
@@ -57,16 +80,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         )
 
         binding.rvDevices.adapter = adapter
-    }
-
-    private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
-
-        binding.btnRescan.setOnClickListener {
-            startScan()
-        }
     }
 
     private fun startScan() {
@@ -117,12 +130,10 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun showScanningState() {
-        binding.tvTitle.text = getString(
-            R.string.device_scan_header_scanning
+        setupHeader(
+            title = getString(R.string.device_scan_header_scanning),
+            rescanEnabled = false
         )
-
-        binding.btnRescan.isEnabled = false
-        binding.btnRescan.alpha = 0.4f
 
         binding.scanAnimation.visibility = View.VISIBLE
         binding.scanAnimation.playAnimation()
@@ -136,14 +147,12 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     private fun showResultState(
         devices: List<DiscoveredAquaDevice>
     ) {
-        binding.tvTitle.text = getString(
-            R.string.device_scan_header_list
+        setupHeader(
+            title = getString(R.string.device_scan_header_list),
+            rescanEnabled = true
         )
 
         stopScanAnimation()
-
-        binding.btnRescan.isEnabled = true
-        binding.btnRescan.alpha = 1f
 
         if (devices.isEmpty()) {
             binding.rvDevices.visibility = View.GONE
@@ -164,14 +173,12 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun showTimeoutState() {
-        binding.tvTitle.text = getString(
-            R.string.device_scan_header_list
+        setupHeader(
+            title = getString(R.string.device_scan_header_list),
+            rescanEnabled = true
         )
 
         stopScanAnimation()
-
-        binding.btnRescan.isEnabled = true
-        binding.btnRescan.alpha = 1f
 
         binding.rvDevices.visibility = View.GONE
         binding.tvNoDevices.visibility = View.VISIBLE
@@ -184,14 +191,12 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
     }
 
     private fun showErrorState() {
-        binding.tvTitle.text = getString(
-            R.string.device_scan_header_list
+        setupHeader(
+            title = getString(R.string.device_scan_header_list),
+            rescanEnabled = true
         )
 
         stopScanAnimation()
-
-        binding.btnRescan.isEnabled = true
-        binding.btnRescan.alpha = 1f
 
         binding.rvDevices.visibility = View.GONE
         binding.tvNoDevices.visibility = View.VISIBLE

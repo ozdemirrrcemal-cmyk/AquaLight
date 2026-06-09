@@ -131,7 +131,7 @@
                 style="@style/TextAppearance.Aqua.Light.SheetRowSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/light_moonlight_end_default" />
+                tools:text="06:00" />
 
         </LinearLayout>
 
@@ -188,7 +188,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
-            android:text="@string/light_moonlight_intensity_default" />
+            tools:text="Intensity 5%" />
 
         <com.google.android.material.slider.Slider
             android:id="@+id/sliderMoonlightIntensity"

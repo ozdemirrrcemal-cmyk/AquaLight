@@ -15,10 +15,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentFeedbackBinding
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -28,8 +28,6 @@ import com.google.firebase.storage.storage
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
-import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class FeedbackFragment :
     Fragment(R.layout.fragment_feedback) {
@@ -49,18 +47,10 @@ class FeedbackFragment :
             MAX_SCREENSHOT_SIZE_MB * 1024 * 1024
     }
 
-    // ---------------------------------------------------
-    // VIEW BINDING
-    // ---------------------------------------------------
-
     private var _binding:
         FragmentFeedbackBinding? = null
 
     private val binding get() = _binding!!
-
-    // ---------------------------------------------------
-    // FIREBASE
-    // ---------------------------------------------------
 
     private val db:
         FirebaseFirestore by lazy {
@@ -72,10 +62,6 @@ class FeedbackFragment :
             FirebaseAuth.getInstance()
         }
 
-    // ---------------------------------------------------
-    // UI STATE
-    // ---------------------------------------------------
-
     private lateinit var originalButtonText:
         CharSequence
 
@@ -84,10 +70,6 @@ class FeedbackFragment :
 
     private var screenshotUri:
         Uri? = null
-
-    // ---------------------------------------------------
-    // IMAGE PICKER
-    // ---------------------------------------------------
 
     private val pickScreenshot =
         registerForActivityResult(
@@ -101,7 +83,6 @@ class FeedbackFragment :
 
             if (uri != null) {
 
-                // FILE SIZE CHECK
                 if (!isFileSizeValid(uri)) {
 
                     showSnackBar(
@@ -114,7 +95,8 @@ class FeedbackFragment :
                     return@registerForActivityResult
                 }
 
-                screenshotUri = uri
+                screenshotUri =
+                    uri
 
                 binding.tvScreenshotInfo.text =
                     getFileName(uri)
@@ -122,7 +104,6 @@ class FeedbackFragment :
                 binding.ivScreenshotClear.isVisible =
                     true
 
-                // PREMIUM SELECTED STATE
                 applySelectedScreenshotStyle()
 
                 showSnackBar(
@@ -134,15 +115,10 @@ class FeedbackFragment :
             }
         }
 
-    // ---------------------------------------------------
-    // ON VIEW CREATED
-    // ---------------------------------------------------
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-
         super.onViewCreated(
             view,
             savedInstanceState
@@ -155,36 +131,20 @@ class FeedbackFragment :
             binding.btnSend.text
 
         setupHeader()
-
         setupCategoryDropdown()
-
         setupValidationWatchers()
-
         setupSendButton()
-
         setupLottie()
-
         setupScreenshotVisibility()
-
         resetScreenshotStyle()
     }
-
-    // ---------------------------------------------------
-    // HEADER
-    // ---------------------------------------------------
 
     private fun setupHeader() =
         with(binding) {
 
-            binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
+            appHeader.setupAquaHeader(
+                fragment = this@FeedbackFragment
+            )
 
             tvSubInfo.text =
                 getString(
@@ -196,10 +156,6 @@ class FeedbackFragment :
                     R.string.feedback_footer
                 )
         }
-
-    // ---------------------------------------------------
-    // CATEGORY
-    // ---------------------------------------------------
 
     private fun setupCategoryDropdown() =
         with(binding) {
@@ -216,7 +172,9 @@ class FeedbackFragment :
                     categories
                 )
 
-            autoCategory.setAdapter(adapter)
+            autoCategory.setAdapter(
+                adapter
+            )
 
             autoCategory.setDropDownBackgroundDrawable(
                 ContextCompat.getDrawable(
@@ -226,43 +184,33 @@ class FeedbackFragment :
             )
 
             autoCategory.setOnClickListener {
-
                 autoCategory.showDropDown()
             }
         }
-
-    // ---------------------------------------------------
-    // VALIDATION WATCHERS
-    // ---------------------------------------------------
 
     private fun setupValidationWatchers() =
         with(binding) {
 
             autoCategory.addTextChangedListener {
-
                 if (!it.isNullOrBlank()) {
-
                     inputLayoutCategory.error =
                         null
                 }
             }
 
             etMessage.addTextChangedListener {
-
                 val value =
                     it?.toString()
                         ?.trim()
                         .orEmpty()
 
                 if (value.length >= 10) {
-
                     inputLayoutMessage.error =
                         null
                 }
             }
 
             etEmail.addTextChangedListener {
-
                 val value =
                     it?.toString()
                         ?.trim()
@@ -274,22 +222,16 @@ class FeedbackFragment :
                         .matcher(value)
                         .matches()
                 ) {
-
                     inputLayoutEmail.error =
                         null
                 }
             }
         }
 
-    // ---------------------------------------------------
-    // SCREENSHOT VISIBILITY
-    // ---------------------------------------------------
-
     private fun setupScreenshotVisibility() =
         with(binding) {
 
             if (SCREENSHOT_ENABLED) {
-
                 tvScreenshotLabel.isVisible =
                     true
 
@@ -297,9 +239,7 @@ class FeedbackFragment :
                     true
 
                 setupScreenshotRow()
-
             } else {
-
                 tvScreenshotLabel.isVisible =
                     false
 
@@ -308,45 +248,29 @@ class FeedbackFragment :
             }
         }
 
-    // ---------------------------------------------------
-    // SCREENSHOT ROW
-    // ---------------------------------------------------
-
     private fun setupScreenshotRow() =
         with(binding) {
 
             rowAddScreenshot.setOnClickListener {
-
                 pickScreenshot.launch(
                     "image/*"
                 )
             }
 
             ivScreenshotClear.setOnClickListener {
-
                 clearScreenshot()
             }
         }
-
-    // ---------------------------------------------------
-    // SEND BUTTON
-    // ---------------------------------------------------
 
     private fun setupSendButton() =
         with(binding) {
 
             btnSend.setOnClickListener {
-
                 if (!isSending) {
-
                     sendFeedback()
                 }
             }
         }
-
-    // ---------------------------------------------------
-    // LOTTIE
-    // ---------------------------------------------------
 
     private fun setupLottie() =
         with(binding) {
@@ -357,7 +281,6 @@ class FeedbackFragment :
                     override fun onAnimationEnd(
                         animation: Animator
                     ) {
-
                         if (
                             !isAdded ||
                             _binding == null
@@ -384,10 +307,6 @@ class FeedbackFragment :
                 }
             )
         }
-
-    // ---------------------------------------------------
-    // PREMIUM SELECTED STATE
-    // ---------------------------------------------------
 
     private fun applySelectedScreenshotStyle() =
         with(binding) {
@@ -420,10 +339,6 @@ class FeedbackFragment :
                 )
         }
 
-    // ---------------------------------------------------
-    // DEFAULT STATE
-    // ---------------------------------------------------
-
     private fun resetScreenshotStyle() =
         with(binding) {
 
@@ -454,10 +369,6 @@ class FeedbackFragment :
                     R.color.card_stroke
                 )
         }
-
-    // ---------------------------------------------------
-    // VALIDATE FORM
-    // ---------------------------------------------------
 
     private fun validateForm():
         Boolean {
@@ -495,7 +406,6 @@ class FeedbackFragment :
                 false
 
             if (category.isEmpty()) {
-
                 inputLayoutCategory.error =
                     getString(
                         R.string.feedback_error_category_required
@@ -506,7 +416,6 @@ class FeedbackFragment :
             }
 
             if (message.length < 10) {
-
                 inputLayoutMessage.error =
                     getString(
                         R.string.feedback_error_message_too_short
@@ -522,7 +431,6 @@ class FeedbackFragment :
                     .matcher(email)
                     .matches()
             ) {
-
                 inputLayoutEmail.error =
                     getString(
                         R.string.feedback_error_email_invalid
@@ -536,17 +444,14 @@ class FeedbackFragment :
         }
     }
 
-    // ---------------------------------------------------
-    // SEND FEEDBACK
-    // ---------------------------------------------------
-
     private fun sendFeedback() {
-
         if (!validateForm()) {
             return
         }
 
-        setSendingState(true)
+        setSendingState(
+            true
+        )
 
         val user =
             auth.currentUser
@@ -597,7 +502,6 @@ class FeedbackFragment :
             !SCREENSHOT_ENABLED ||
             currentScreenshot == null
         ) {
-
             saveFeedbackOnly(
                 docRef.id,
                 feedbackData
@@ -614,33 +518,20 @@ class FeedbackFragment :
         )
     }
 
-    // ---------------------------------------------------
-    // SAVE FEEDBACK ONLY
-    // ---------------------------------------------------
-
     private fun saveFeedbackOnly(
         documentId: String,
         feedbackData: HashMap<String, Any?>
     ) {
-
         db.collection("feedback_items")
             .document(documentId)
             .set(feedbackData)
-
             .addOnSuccessListener {
-
                 handleSuccess()
             }
-
             .addOnFailureListener {
-
                 handleError(it)
             }
     }
-
-    // ---------------------------------------------------
-    // UPLOAD IMAGE
-    // ---------------------------------------------------
 
     private fun uploadScreenshotAndSaveFeedback(
         uid: String,
@@ -648,11 +539,11 @@ class FeedbackFragment :
         screenshotUri: Uri,
         feedbackData: HashMap<String, Any?>
     ) {
-
         try {
-
             val compressedFile =
-                compressImage(screenshotUri)
+                compressImage(
+                    screenshotUri
+                )
 
             val storageRef =
                 Firebase.storage.reference
@@ -663,18 +554,15 @@ class FeedbackFragment :
             storageRef.putFile(
                 Uri.fromFile(compressedFile)
             )
-
                 .continueWithTask { task ->
 
                     if (!task.isSuccessful) {
-
                         throw task.exception
                             ?: Exception("Upload failed")
                     }
 
                     storageRef.downloadUrl
                 }
-
                 .addOnSuccessListener { uri ->
 
                     if (
@@ -690,21 +578,14 @@ class FeedbackFragment :
                         feedbackData
                     )
                 }
-
                 .addOnFailureListener {
-
                     handleError(it)
                 }
 
         } catch (e: Exception) {
-
             handleError(e)
         }
     }
-
-    // ---------------------------------------------------
-    // IMAGE COMPRESSION
-    // ---------------------------------------------------
 
     private fun compressImage(
         uri: Uri
@@ -726,10 +607,9 @@ class FeedbackFragment :
         val ratio =
             minOf(
                 maxSize.toFloat() /
-                        originalBitmap.width,
-
+                    originalBitmap.width,
                 maxSize.toFloat() /
-                        originalBitmap.height
+                    originalBitmap.height
             )
 
         val width =
@@ -764,22 +644,16 @@ class FeedbackFragment :
         )
 
         outputStream.flush()
-
         outputStream.close()
 
         return file
     }
-
-    // ---------------------------------------------------
-    // FILE SIZE CHECK
-    // ---------------------------------------------------
 
     private fun isFileSizeValid(
         uri: Uri
     ): Boolean {
 
         return try {
-
             val descriptor =
                 requireContext()
                     .contentResolver
@@ -795,15 +669,10 @@ class FeedbackFragment :
 
             size <= MAX_SCREENSHOT_SIZE_BYTES
 
-        } catch (e: Exception) {
-
+        } catch (_: Exception) {
             false
         }
     }
-
-    // ---------------------------------------------------
-    // FILE NAME
-    // ---------------------------------------------------
 
     private fun getFileName(
         uri: Uri
@@ -824,7 +693,6 @@ class FeedbackFragment :
                 )
 
         cursor?.use {
-
             val nameIndex =
                 it.getColumnIndex(
                     OpenableColumns.DISPLAY_NAME
@@ -834,27 +702,25 @@ class FeedbackFragment :
                 nameIndex != -1 &&
                 it.moveToFirst()
             ) {
-
                 result =
-                    it.getString(nameIndex)
+                    it.getString(
+                        nameIndex
+                    )
             }
         }
 
         return result
     }
 
-    // ---------------------------------------------------
-    // SUCCESS
-    // ---------------------------------------------------
-
     private fun handleSuccess() {
-
         if (
             !isAdded ||
             _binding == null
         ) return
 
-        setSendingState(false)
+        setSendingState(
+            false
+        )
 
         resetForm()
 
@@ -868,14 +734,9 @@ class FeedbackFragment :
         )
     }
 
-    // ---------------------------------------------------
-    // ERROR
-    // ---------------------------------------------------
-
     private fun handleError(
         throwable: Throwable?
     ) {
-
         if (
             !isAdded ||
             _binding == null
@@ -887,20 +748,20 @@ class FeedbackFragment :
             throwable
         )
 
-        setSendingState(false)
+        setSendingState(
+            false
+        )
 
         val message =
             when (throwable) {
 
                 is StorageException -> {
-
                     getString(
                         R.string.feedback_error_upload
                     )
                 }
 
                 else -> {
-
                     getString(
                         R.string.feedback_error_generic
                     )
@@ -912,10 +773,6 @@ class FeedbackFragment :
             BaseActivity.SnackType.ERROR
         )
     }
-
-    // ---------------------------------------------------
-    // RESET FORM
-    // ---------------------------------------------------
 
     private fun resetForm() =
         with(binding) {
@@ -939,10 +796,6 @@ class FeedbackFragment :
             clearScreenshot()
         }
 
-    // ---------------------------------------------------
-    // CLEAR SCREENSHOT
-    // ---------------------------------------------------
-
     private fun clearScreenshot() =
         with(binding) {
 
@@ -960,14 +813,9 @@ class FeedbackFragment :
             resetScreenshotStyle()
         }
 
-    // ---------------------------------------------------
-    // SENDING STATE
-    // ---------------------------------------------------
-
     private fun setSendingState(
         sending: Boolean
     ) {
-
         if (
             !isAdded ||
             _binding == null
@@ -983,13 +831,10 @@ class FeedbackFragment :
 
             btnSend.text =
                 if (sending) {
-
                     getString(
                         R.string.feedback_sending
                     )
-
                 } else {
-
                     originalButtonText
                 }
 
@@ -1004,10 +849,6 @@ class FeedbackFragment :
             sending
         )
     }
-
-    // ---------------------------------------------------
-    // SUCCESS UI
-    // ---------------------------------------------------
 
     private fun showSuccessUI() =
         with(binding) {
@@ -1033,15 +874,10 @@ class FeedbackFragment :
             lottieSuccess.playAnimation()
         }
 
-    // ---------------------------------------------------
-    // APP VERSION
-    // ---------------------------------------------------
-
     private fun getAppVersion():
         String {
 
         return try {
-
             val info =
                 requireContext()
                     .packageManager
@@ -1053,21 +889,15 @@ class FeedbackFragment :
             info.versionName
                 ?: "unknown"
 
-        } catch (e: Exception) {
-
+        } catch (_: Exception) {
             "unknown"
         }
     }
-
-    // ---------------------------------------------------
-    // GLOBAL SNACKBAR
-    // ---------------------------------------------------
 
     private fun showSnackBar(
         message: String,
         type: BaseActivity.SnackType
     ) {
-
         (
             requireActivity()
                 as? BaseActivity
@@ -1077,12 +907,7 @@ class FeedbackFragment :
         )
     }
 
-    // ---------------------------------------------------
-    // DESTROY
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         super.onDestroyView()
 
         _binding =

@@ -52,16 +52,13 @@ class DeviceLightQuickSetupFragment :
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            AquaHeaderConfig(
-                title = "Smart Quick Setup",
-                showBackButton = true,
-                onBackClick = {
-                    findNavController().popBackStack()
-                }
-            )
+    binding.appHeader.setupAquaHeader(
+        fragment = this,
+        config = AquaHeaderConfig(
+            titleOverride = "Smart Quick Setup"
         )
-    }
+    )
+}
 
     private fun setupClicks() {
         binding.btnSaveProgram.setOnClickListener {

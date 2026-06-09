@@ -17,10 +17,9 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserInfoBinding
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
-import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class UserInfoFragment :
     Fragment(R.layout.fragment_user_info) {
@@ -37,35 +36,21 @@ class UserInfoFragment :
             20
     }
 
-    // ---------------------------------------------------
-    // VIEW BINDING
-    // ---------------------------------------------------
-
     private var _binding:
         FragmentUserInfoBinding? = null
 
     private val binding get() = _binding!!
 
-    // ---------------------------------------------------
-    // DATASTORE
-    // ---------------------------------------------------
-
     private val userPrefs by lazy {
-
         UserPreferencesManager.create(
             requireContext()
         )
     }
 
-    // ---------------------------------------------------
-    // ON VIEW CREATED
-    // ---------------------------------------------------
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-
         super.onViewCreated(
             view,
             savedInstanceState
@@ -74,166 +59,109 @@ class UserInfoFragment :
         _binding =
             FragmentUserInfoBinding.bind(view)
 
+        setupHeader()
         observeUserInfo()
-
         setupClickListeners()
-
         setupValidationWatcher()
     }
 
-    // ---------------------------------------------------
-    // OBSERVE USER INFO
-    // ---------------------------------------------------
-
-    private fun observeUserInfo() {
-
-        viewLifecycleOwner.lifecycleScope.launch {
-
-            userPrefs.userPrefsFlow
-                .collectLatest { prefs ->
-
-                    if (
-                        !isAdded ||
-                        _binding == null
-                    ) return@collectLatest
-
-                    // NAME
-
-                    binding.tvName.text =
-                        prefs.fullName.ifBlank {
-
-                            getString(
-                                R.string.user_info_name_default
-                            )
-                        }
-
-                    // EMAIL
-
-                    binding.tvUserEmail.text =
-                        prefs.email.ifBlank {
-
-                            getString(
-                                R.string.user_info_email_default
-                            )
-                        }
-
-                    // USERNAME
-
-                    val username =
-                        prefs.username
-
-                    if (
-                        username.isNotBlank()
-                    ) {
-
-                        if (
-                            binding.etUsername.text
-                                ?.toString() != username
-                        ) {
-
-                            binding.etUsername
-                                .setText(username)
-                        }
-
-                    } else {
-
-                        binding.etUsername
-                            .setText("")
-                    }
-
-                    // PROFILE PHOTO
-
-                    if (
-                        prefs.profilePhotoUrl
-                            .isNotBlank()
-                    ) {
-
-                        binding.ivUserPhoto.load(
-                            prefs.profilePhotoUrl
-                        ) {
-
-                            placeholder(
-                                R.drawable.ic_profile_placeholder
-                            )
-
-                            error(
-                                R.drawable.ic_profile_placeholder
-                            )
-
-                            crossfade(true)
-                        }
-
-                    } else {
-
-                        binding.ivUserPhoto
-                            .setImageResource(
-                                R.drawable.ic_profile_placeholder
-                            )
-                    }
-                }
-        }
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this
+        )
     }
 
-    // ---------------------------------------------------
-    // VALIDATION WATCHER
-    // ---------------------------------------------------
+    private fun observeUserInfo() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            userPrefs.userPrefsFlow.collectLatest { prefs ->
+
+                if (
+                    !isAdded ||
+                    _binding == null
+                ) return@collectLatest
+
+                binding.tvName.text =
+                    prefs.fullName.ifBlank {
+                        getString(
+                            R.string.user_info_name_default
+                        )
+                    }
+
+                binding.tvUserEmail.text =
+                    prefs.email.ifBlank {
+                        getString(
+                            R.string.user_info_email_default
+                        )
+                    }
+
+                val username =
+                    prefs.username
+
+                if (username.isNotBlank()) {
+                    if (
+                        binding.etUsername.text
+                            ?.toString() != username
+                    ) {
+                        binding.etUsername.setText(
+                            username
+                        )
+                    }
+                } else {
+                    binding.etUsername.setText("")
+                }
+
+                if (prefs.profilePhotoUrl.isNotBlank()) {
+                    binding.ivUserPhoto.load(
+                        prefs.profilePhotoUrl
+                    ) {
+                        placeholder(
+                            R.drawable.ic_profile_placeholder
+                        )
+
+                        error(
+                            R.drawable.ic_profile_placeholder
+                        )
+
+                        crossfade(
+                            true
+                        )
+                    }
+                } else {
+                    binding.ivUserPhoto.setImageResource(
+                        R.drawable.ic_profile_placeholder
+                    )
+                }
+            }
+        }
+    }
 
     private fun setupValidationWatcher() =
         with(binding) {
 
             etUsername.addTextChangedListener {
-
                 resetUsernameError()
             }
         }
 
-    // ---------------------------------------------------
-    // CLICK LISTENERS
-    // ---------------------------------------------------
-
     private fun setupClickListeners() =
-        with(binding) {
+    with(binding) {
 
-            // BACK
-
-            binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
-
-            // ADDRESS
-
-            rowAddress.setOnClickListener {
-
-                findNavController()
-                    .navigate(
-                        R.id.action_userInfoFragment_to_userAddressFragment
-                    )
-            }
-
-            // SAVE
-
-            btnSave.setOnClickListener {
-
-                hideKeyboard()
-
-                etUsername.clearFocus()
-
-                saveUserInfo()
-            }
+        rowAddress.setOnClickListener {
+            findNavController().navigate(
+                R.id.action_userInfoFragment_to_userAddressFragment
+            )
         }
 
-    // ---------------------------------------------------
-    // SAVE USER INFO
-    // ---------------------------------------------------
+        btnSave.setOnClickListener {
+            hideKeyboard()
+
+            etUsername.clearFocus()
+
+            saveUserInfo()
+        }
+    }
 
     private fun saveUserInfo() {
-
         val username =
             binding.etUsername.text
                 ?.toString()
@@ -242,14 +170,7 @@ class UserInfoFragment :
 
         resetUsernameError()
 
-        // ---------------------------------------------------
-        // EMPTY
-        // ---------------------------------------------------
-
-        if (
-            username.isEmpty()
-        ) {
-
+        if (username.isEmpty()) {
             showUsernameError(
                 getString(
                     R.string.user_info_username_empty_message
@@ -259,15 +180,7 @@ class UserInfoFragment :
             return
         }
 
-        // ---------------------------------------------------
-        // TOO SHORT
-        // ---------------------------------------------------
-
-        if (
-            username.length <
-            USERNAME_MIN_LENGTH
-        ) {
-
+        if (username.length < USERNAME_MIN_LENGTH) {
             showUsernameError(
                 getString(
                     R.string.user_info_username_too_short
@@ -276,20 +189,11 @@ class UserInfoFragment :
 
             return
         }
-		
-        // ---------------------------------------------------
-        // INVALID CHARACTERS
-        // ---------------------------------------------------
 
         val usernameRegex =
             Regex("^[a-zA-Z0-9_.]+$")
 
-        if (
-            !usernameRegex.matches(
-                username
-            )
-        ) {
-
+        if (!usernameRegex.matches(username)) {
             showUsernameError(
                 getString(
                     R.string.user_info_username_invalid
@@ -299,18 +203,13 @@ class UserInfoFragment :
             return
         }
 
-        // ---------------------------------------------------
-        // SAVE
-        // ---------------------------------------------------
-
-        setLoadingState(true)
+        setLoadingState(
+            true
+        )
 
         viewLifecycleOwner.lifecycleScope.launch {
-
             try {
-
                 userPrefs.update { prefs ->
-
                     prefs.toBuilder()
                         .setUsername(username)
                         .build()
@@ -321,7 +220,9 @@ class UserInfoFragment :
                     _binding == null
                 ) return@launch
 
-                setLoadingState(false)
+                setLoadingState(
+                    false
+                )
 
                 showSnackBar(
                     getString(
@@ -330,11 +231,9 @@ class UserInfoFragment :
                     BaseActivity.SnackType.SUCCESS
                 )
 
-                findNavController()
-                    .popBackStack()
+                findNavController().popBackStack()
 
             } catch (e: Exception) {
-
                 Log.e(
                     TAG,
                     "Save user info failed",
@@ -346,7 +245,9 @@ class UserInfoFragment :
                     _binding == null
                 ) return@launch
 
-                setLoadingState(false)
+                setLoadingState(
+                    false
+                )
 
                 showSnackBar(
                     getString(
@@ -358,14 +259,9 @@ class UserInfoFragment :
         }
     }
 
-    // ---------------------------------------------------
-    // SHOW USERNAME ERROR
-    // ---------------------------------------------------
-
     private fun showUsernameError(
         message: String
     ) {
-
         binding.tvUsernameError.text =
             message
 
@@ -382,12 +278,7 @@ class UserInfoFragment :
             2
     }
 
-    // ---------------------------------------------------
-    // RESET USERNAME ERROR
-    // ---------------------------------------------------
-
     private fun resetUsernameError() {
-
         binding.tvUsernameError.visibility =
             View.GONE
 
@@ -401,12 +292,7 @@ class UserInfoFragment :
             1
     }
 
-    // ---------------------------------------------------
-    // HIDE KEYBOARD
-    // ---------------------------------------------------
-
     private fun hideKeyboard() {
-
         val imm =
             requireContext()
                 .getSystemService(
@@ -419,14 +305,9 @@ class UserInfoFragment :
         )
     }
 
-    // ---------------------------------------------------
-    // LOADING STATE
-    // ---------------------------------------------------
-
     private fun setLoadingState(
         loading: Boolean
     ) {
-
         if (
             !isAdded ||
             _binding == null
@@ -435,40 +316,25 @@ class UserInfoFragment :
         binding.btnSave.isEnabled =
             !loading
 
-        (
-            requireActivity()
-                as? BaseActivity
-            )?.showLoading(
+        (requireActivity() as? BaseActivity)?.showLoading(
             loading
         )
     }
-
-    // ---------------------------------------------------
-    // GLOBAL SNACKBAR
-    // ---------------------------------------------------
 
     private fun showSnackBar(
         message: String,
         type: BaseActivity.SnackType
     ) {
-
-        (
-            requireActivity()
-                as? BaseActivity
-            )?.showSnackBar(
+        (requireActivity() as? BaseActivity)?.showSnackBar(
             message,
             type
         )
     }
 
-    // ---------------------------------------------------
-    // DESTROY
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         super.onDestroyView()
 
-        _binding = null
+        _binding =
+            null
     }
 }

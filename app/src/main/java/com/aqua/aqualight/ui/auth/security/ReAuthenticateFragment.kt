@@ -14,6 +14,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentReAuthenticateBinding
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -55,10 +56,6 @@ class ReAuthenticateFragment :
     private var isLoading = false
 
     private var currentAction = ACTION_DELETE_ACCOUNT
-
-    // ---------------------------------------------------
-    // GOOGLE LAUNCHER
-    // ---------------------------------------------------
 
     private val googleLauncher =
         registerForActivityResult(
@@ -133,10 +130,6 @@ class ReAuthenticateFragment :
             }
         }
 
-    // ---------------------------------------------------
-    // ON VIEW CREATED
-    // ---------------------------------------------------
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -153,26 +146,17 @@ class ReAuthenticateFragment :
 
         setupGoogle()
 
-        setupBackButton()
+        setupHeader()
 
         setupUi()
     }
 
-    // ---------------------------------------------------
-    // BACK BUTTON
-    // ---------------------------------------------------
+    private fun setupHeader() {
 
-    private fun setupBackButton() {
-
-        binding.btnBack.setOnClickListener {
-
-            findNavController().popBackStack()
-        }
+        binding.appHeader.setupAquaHeader(
+            fragment = this
+        )
     }
-
-    // ---------------------------------------------------
-    // GOOGLE SETUP
-    // ---------------------------------------------------
 
     private fun setupGoogle() {
 
@@ -193,10 +177,6 @@ class ReAuthenticateFragment :
             )
     }
 
-    // ---------------------------------------------------
-    // UI
-    // ---------------------------------------------------
-
     private fun setupUi() {
 
         val user = auth.currentUser ?: return
@@ -215,10 +195,6 @@ class ReAuthenticateFragment :
             setupPasswordUi()
         }
     }
-
-    // ---------------------------------------------------
-    // GOOGLE UI
-    // ---------------------------------------------------
 
     private fun setupGoogleUi() {
 
@@ -240,10 +216,6 @@ class ReAuthenticateFragment :
             startGoogleReAuthentication()
         }
     }
-
-    // ---------------------------------------------------
-    // PASSWORD UI
-    // ---------------------------------------------------
 
     private fun setupPasswordUi() {
 
@@ -280,10 +252,6 @@ class ReAuthenticateFragment :
         }
     }
 
-    // ---------------------------------------------------
-    // GOOGLE REAUTH
-    // ---------------------------------------------------
-
     private fun startGoogleReAuthentication() {
 
         if (isLoading) return
@@ -302,10 +270,6 @@ class ReAuthenticateFragment :
                 googleLauncher.launch(signIntent)
             }
     }
-
-    // ---------------------------------------------------
-    // PASSWORD REAUTH
-    // ---------------------------------------------------
 
     private fun validatePasswordReAuthentication() {
 
@@ -365,10 +329,6 @@ class ReAuthenticateFragment :
             }
     }
 
-    // ---------------------------------------------------
-    // AUTHENTICATED ACTION
-    // ---------------------------------------------------
-
     private fun handleAuthenticatedAction() {
 
         when (currentAction) {
@@ -392,10 +352,6 @@ class ReAuthenticateFragment :
             }
         }
     }
-
-    // ---------------------------------------------------
-    // DELETE ACCOUNT
-    // ---------------------------------------------------
 
     private fun deleteAccount() {
 
@@ -471,10 +427,6 @@ class ReAuthenticateFragment :
             }
     }
 
-    // ---------------------------------------------------
-    // LOADING STATE
-    // ---------------------------------------------------
-
     private fun setLoadingState(
         loading: Boolean
     ) {
@@ -508,10 +460,6 @@ class ReAuthenticateFragment :
             }
     }
 
-    // ---------------------------------------------------
-    // SHAKE ANIMATION
-    // ---------------------------------------------------
-
     private fun shakeView(view: View) {
 
         view.animate()
@@ -537,10 +485,6 @@ class ReAuthenticateFragment :
             }
     }
 
-    // ---------------------------------------------------
-    // NAVIGATE LOGIN
-    // ---------------------------------------------------
-
     private fun navigateToLogin() {
 
         val rootNav =
@@ -548,7 +492,7 @@ class ReAuthenticateFragment :
                 requireActivity()
                     .supportFragmentManager
                     .findFragmentById(R.id.nav_host)
-                        as NavHostFragment
+                    as NavHostFragment
                 ).navController
 
         val opts =
@@ -567,10 +511,6 @@ class ReAuthenticateFragment :
             opts
         )
     }
-
-    // ---------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------
 
     override fun onDestroyView() {
 

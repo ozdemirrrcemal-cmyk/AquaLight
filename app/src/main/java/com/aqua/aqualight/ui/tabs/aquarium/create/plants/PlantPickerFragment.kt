@@ -2,18 +2,18 @@ package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 
 import android.graphics.Color
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.os.bundleOf
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantPickerBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.google.android.material.card.MaterialCardView
 
 class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
@@ -34,67 +34,51 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         _binding = FragmentPlantPickerBinding.bind(view)
 
-        setupClickListeners()
-        setupSearch()
+        setupHeader()
         renderPlantList(plants)
     }
 
-    private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            closePicker()
-        }
-
-        binding.btnClearSearch.setOnClickListener {
-            binding.etSearchPlants.setText("")
-        }
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                onBackClick = {
+                    closePicker()
+                },
+                searchField = AquaHeaderSearchField(
+                    hint = "Type here to search...",
+                    onTextChanged = { query ->
+                        filterPlants(query)
+                    },
+                    onClearClick = {
+                        renderPlantList(plants)
+                    }
+                )
+            )
+        )
     }
 
-    private fun setupSearch() {
-        binding.etSearchPlants.addTextChangedListener(
-            object : TextWatcher {
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int
-                ) = Unit
+    private fun filterPlants(
+        query: String
+    ) {
+        val normalizedQuery = query.trim()
 
-                override fun onTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    before: Int,
-                    count: Int
-                ) {
-                    val query = s
-                        ?.toString()
-                        ?.trim()
-                        .orEmpty()
-
-                    binding.btnClearSearch.isVisible = query.isNotEmpty()
-
-                    val filteredPlants = if (query.isBlank()) {
-                        plants
-                    } else {
-                        plants.filter { plant ->
-                            plant.name.contains(
-                                query,
-                                ignoreCase = true
-                            ) ||
-                                plant.category.contains(
-                                    query,
-                                    ignoreCase = true
-                                )
-                        }
-                    }
-
-                    renderPlantList(filteredPlants)
-                }
-
-                override fun afterTextChanged(
-                    s: Editable?
-                ) = Unit
+        val filteredPlants = if (normalizedQuery.isBlank()) {
+            plants
+        } else {
+            plants.filter { plant ->
+                plant.name.contains(
+                    normalizedQuery,
+                    ignoreCase = true
+                ) ||
+                    plant.category.contains(
+                        normalizedQuery,
+                        ignoreCase = true
+                    )
             }
-        )
+        }
+
+        renderPlantList(filteredPlants)
     }
 
     private fun renderPlantList(

@@ -37,16 +37,11 @@ class SignInFragment : Fragment() {
     private val baseActivity
         get() = activity as? BaseActivity
 
-    // ---------------------------------------------------
-    // ON CREATE VIEW
-    // ---------------------------------------------------
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding =
             FragmentSigninBinding.inflate(
                 inflater,
@@ -59,37 +54,25 @@ class SignInFragment : Fragment() {
         return binding.root
     }
 
-    // ---------------------------------------------------
-    // UI
-    // ---------------------------------------------------
-
     private fun setupUI() =
         with(binding) {
 
             btnLogin.setOnClickListener {
-
                 handleSignIn()
             }
 
             tvForgotPassword.setOnClickListener {
-
                 findNavController().navigate(
                     R.id.action_signInFragment_to_resetPasswordFragment
                 )
             }
 
-            btnBack.setOnClickListener {
-
+            btnReturnToAuth.setOnClickListener {
                 findNavController().popBackStack()
             }
         }
 
-    // ---------------------------------------------------
-    // SIGN IN
-    // ---------------------------------------------------
-
     private fun handleSignIn() {
-
         val email =
             binding.emailEditText.text
                 ?.toString()
@@ -106,15 +89,10 @@ class SignInFragment : Fragment() {
 
         lifecycleScope.launch {
 
-            // -------------------------------
-            // EMPTY CHECK
-            // -------------------------------
-
             if (
                 email.isEmpty() ||
                 password.isEmpty()
             ) {
-
                 baseActivity?.showLoading(false)
 
                 showWarning(
@@ -125,16 +103,11 @@ class SignInFragment : Fragment() {
                 return@launch
             }
 
-            // -------------------------------
-            // EMAIL FORMAT
-            // -------------------------------
-
             if (
                 !Patterns.EMAIL_ADDRESS
                     .matcher(email)
                     .matches()
             ) {
-
                 baseActivity?.showLoading(false)
 
                 showWarning(
@@ -145,10 +118,6 @@ class SignInFragment : Fragment() {
                 return@launch
             }
 
-            // -------------------------------
-            // LOADING UI
-            // -------------------------------
-
             binding.btnLogin.isEnabled =
                 false
 
@@ -156,10 +125,6 @@ class SignInFragment : Fragment() {
                 getString(
                     R.string.signin_loading
                 )
-
-            // -------------------------------
-            // FIREBASE LOGIN
-            // -------------------------------
 
             auth.signInWithEmailAndPassword(
                 email,
@@ -177,30 +142,20 @@ class SignInFragment : Fragment() {
                             R.string.signin_login_button
                         )
 
-                    // -----------------------
-                    // SUCCESS
-                    // -----------------------
-
                     if (task.isSuccessful) {
-
                         val user =
                             task.result?.user
 
                         if (user != null) {
-
                             viewLifecycleOwner
                                 .lifecycleScope
                                 .launch {
 
                                     try {
-
                                         saveSession(user)
 
-                                        // ✅ Direkt uygulamaya geç
                                         navigateToAppGraph()
-
                                     } catch (e: Exception) {
-
                                         DialogManager.showInfoDialog(
                                             requireContext(),
                                             DialogType.ERROR,
@@ -215,9 +170,7 @@ class SignInFragment : Fragment() {
                                         )
                                     }
                                 }
-
                         } else {
-
                             DialogManager.showInfoDialog(
                                 requireContext(),
                                 DialogType.ERROR,
@@ -229,13 +182,7 @@ class SignInFragment : Fragment() {
                                 )
                             )
                         }
-
                     } else {
-
-                        // -----------------------
-                        // ERROR
-                        // -----------------------
-
                         val errorMsg =
                             task.exception
                                 ?.localizedMessage
@@ -256,15 +203,10 @@ class SignInFragment : Fragment() {
         }
     }
 
-    // ---------------------------------------------------
-    // WARNING DIALOG
-    // ---------------------------------------------------
-
     private fun showWarning(
         titleRes: Int,
         msgRes: Int
     ) {
-
         DialogManager.showInfoDialog(
             requireContext(),
             DialogType.WARNING,
@@ -273,21 +215,14 @@ class SignInFragment : Fragment() {
         )
     }
 
-    // ---------------------------------------------------
-    // SAVE SESSION
-    // ---------------------------------------------------
-
     private suspend fun saveSession(
         user: FirebaseUser
     ) {
-
-        // 🔐 Session
         userPrefs.saveUserSession(
             idToken = user.uid,
             isLoggedIn = true
         )
 
-        // 👤 Profile
         userPrefs.saveProfile(
             email = user.email ?: "",
             username = null,
@@ -296,23 +231,17 @@ class SignInFragment : Fragment() {
         )
     }
 
-    // ---------------------------------------------------
-    // NAVIGATE APP
-    // ---------------------------------------------------
-
     private fun navigateToAppGraph() {
-
         val rootNav =
             (
                 requireActivity()
                     .supportFragmentManager
                     .findFragmentById(R.id.nav_host)
-                        as NavHostFragment
+                    as NavHostFragment
                 ).navController
 
         val opts =
             navOptions {
-
                 popUpTo(
                     R.id.authContainerFragment
                 ) {
@@ -329,12 +258,7 @@ class SignInFragment : Fragment() {
         )
     }
 
-    // ---------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         super.onDestroyView()
 
         _binding = null

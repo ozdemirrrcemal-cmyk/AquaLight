@@ -101,16 +101,24 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        _binding = FragmentTankPhotoBinding.bind(view)
+    override fun onViewCreated(
+    view: View,
+    savedInstanceState: Bundle?
+) {
+    super.onViewCreated(
+        view,
+        savedInstanceState
+    )
 
-        setupExistingPhoto()
-        setupPhotoSourceResultListener()
-        setupPlantTagResultListener()
-        setupClickListeners()
-        renderSelectedPlants()
-    }
+    _binding =
+        FragmentTankPhotoBinding.bind(view)
 
+    setupExistingPhoto()
+    setupPhotoSourceResultListener()
+    setupPlantTagResultListener()
+    setupClickListeners()
+    renderSelectedPlants()
+}
     private fun setupExistingPhoto() {
         val currentPhotoUri = viewModel.tankDraft.photoUri
 

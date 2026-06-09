@@ -71,16 +71,13 @@ class DeviceLightPresetsFragment :
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            AquaHeaderConfig(
-                title = "Presets & Scenes",
-                showBackButton = true,
-                onBackClick = {
-                    findNavController().popBackStack()
-                }
-            )
+    binding.appHeader.setupAquaHeader(
+        fragment = this,
+        config = AquaHeaderConfig(
+            titleOverride = "Presets & Scenes"
         )
-    }
+    )
+}
 
     private fun setupRecyclerView() {
         presetsAdapter = LightPresetsAdapter(

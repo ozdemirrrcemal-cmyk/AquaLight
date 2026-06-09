@@ -8,84 +8,30 @@
     android:background="@color/background_color"
     tools:context=".ui.tabs.devices.ScanDevicesFragment">
 
-    <!-- 🔹 Üst Bar -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/headerContainer"
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="20dp"
-        android:paddingBottom="12dp"
-        android:background="@color/background_color"
-        android:elevation="8dp"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- 🔙 Back -->
-        <ImageView
-            android:id="@+id/btnBack"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_back"
-            android:scaleType="center"
-            app:tint="?attr/colorOnSurface"
-            android:clickable="true"
-            android:focusable="true"
-            android:contentDescription="@string/device_scan_back_button_desc"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <!-- 🏷️ Title -->
-        <TextView
-            android:id="@+id/tvTitle"
-            style="@style/TextAppearance.Aqua.EditProfileTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/device_scan_header_list"
-            android:importantForAccessibility="yes"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <!-- 🔁 Scan again button (icon) -->
-        <ImageView
-            android:id="@+id/btnRescan"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="@drawable/bg_add_button_small"
-            android:padding="8dp"
-            android:src="@drawable/ic_radar"
-            android:scaleType="centerInside"
-            app:tint="?attr/colorOnSurface"
-            android:clickable="true"
-            android:focusable="true"
-            android:contentDescription="@string/device_scan_scan_again"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!-- 🔄 Lottie animation (ortalanmış) -->
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/scanAnimation"
         android:layout_width="560dp"
         android:layout_height="560dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader"
+        app:layout_constraintVertical_bias="0.35"
         app:lottie_autoPlay="true"
         app:lottie_loop="true"
-        app:lottie_rawRes="@raw/scan_devices"
-        app:layout_constraintTop_toBottomOf="@id/headerContainer"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.35" />
+        app:lottie_rawRes="@raw/scan_devices" />
 
-    <!-- 📋 Device list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDevices"
         android:layout_width="0dp"
@@ -93,26 +39,25 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/headerContainer"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader"
         tools:listitem="@layout/item_scan_device" />
 
-    <!-- ❌ No devices found (ekranın ortalarına yakın) -->
-   <TextView
+    <TextView
         android:id="@+id/tvNoDevices"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="32dp"
+        android:gravity="center"
         android:text="@string/device_scan_no_devices"
         android:textAlignment="center"
-        android:gravity="center"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.5" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

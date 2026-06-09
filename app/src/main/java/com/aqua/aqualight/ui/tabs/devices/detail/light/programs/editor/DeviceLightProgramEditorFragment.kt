@@ -74,16 +74,13 @@ class DeviceLightProgramEditorFragment :
     }
 
     private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            AquaHeaderConfig(
-                title = "Program Editor",
-                showBackButton = true,
-                onBackClick = {
-                    findNavController().popBackStack()
-                }
-            )
+    binding.appHeader.setupAquaHeader(
+        fragment = this,
+        config = AquaHeaderConfig(
+            titleOverride = "Program Editor"
         )
-    }
+    )
+}
 
     private fun setupProgramSettingsRows() {
         bindActionRow(

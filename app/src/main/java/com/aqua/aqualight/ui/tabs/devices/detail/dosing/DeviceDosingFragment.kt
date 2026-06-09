@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceDosingBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -29,9 +28,13 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        _binding = FragmentDeviceDosingBinding.bind(view)
+        _binding =
+            FragmentDeviceDosingBinding.bind(view)
 
         setupHeader()
         bindEmptyState()
@@ -39,24 +42,25 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-            AquaHeaderConfig(
-                title = deviceTitle,
-                showBackButton = true,
-                onBackClick = {
-                    findNavController().popBackStack()
-                }
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = deviceTitle
             )
         )
     }
 
     private fun bindEmptyState() {
-        binding.tvEmptyTitle.text = deviceTitle
+        binding.tvEmptyTitle.text =
+            deviceTitle
+
         binding.tvEmptyMessage.text =
             "Device ID: $deviceId\nDosing controller screen will be built here."
     }
 
     override fun onDestroyView() {
-        _binding = null
+        _binding =
+            null
+
         super.onDestroyView()
     }
 

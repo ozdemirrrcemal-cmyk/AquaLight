@@ -4,16 +4,14 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentSecuritySettingsBinding
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
-import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class SecuritySettingsFragment :
     Fragment(R.layout.fragment_security_settings) {
@@ -25,147 +23,103 @@ class SecuritySettingsFragment :
         UserPreferencesManager.create(requireContext())
     }
 
-    // ---------------------------------------------------
-    // ON VIEW CREATED
-    // ---------------------------------------------------
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
     ) {
-
-        super.onViewCreated(view, savedInstanceState)
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
         _binding =
             FragmentSecuritySettingsBinding.bind(view)
 
-        setupNavigation()
-
+        setupHeader()
         bindSwitchesToDataStore()
-
         setupInfoClicks()
     }
 
-    // ---------------------------------------------------
-    // NAVIGATION
-    // ---------------------------------------------------
-
-    private fun setupNavigation() {
-
+    private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
+            fragment = this
+        )
     }
 
-    // ---------------------------------------------------
-    // SWITCHES
-    // ---------------------------------------------------
-
     private fun bindSwitchesToDataStore() {
-
-        var isInitializing = true
+        var isInitializing =
+            true
 
         viewLifecycleOwner.lifecycleScope.launch {
-
             val prefs =
                 userPrefs.userPrefsFlow.first()
 
-            // Mevcut değerleri yükle
             binding.switch2FA.isChecked =
                 prefs.twoFactorEnabled
 
             binding.switchLoginAlerts.isChecked =
                 prefs.loginAlertsEnabled
 
-            isInitializing = false
+            isInitializing =
+                false
 
-            // ---------------------------------------------------
-            // 2FA SWITCH
-            // ---------------------------------------------------
-
-            binding.switch2FA
-                .setOnCheckedChangeListener { _, isChecked ->
-
-                    if (isInitializing) {
-                        return@setOnCheckedChangeListener
-                    }
-
-                    viewLifecycleOwner.lifecycleScope.launch {
-
-                        userPrefs.updateTwoFactorEnabled(
-                            isChecked
-                        )
-
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.INFO,
-                            title = getString(
-                                R.string.security_feature_in_development_title
-                            ),
-                            message = getString(
-                                R.string.security_2fa_placeholder_message
-                            )
-                        )
-                    }
+            binding.switch2FA.setOnCheckedChangeListener { _, isChecked ->
+                if (isInitializing) {
+                    return@setOnCheckedChangeListener
                 }
 
-            // ---------------------------------------------------
-            // LOGIN ALERTS SWITCH
-            // ---------------------------------------------------
+                viewLifecycleOwner.lifecycleScope.launch {
+                    userPrefs.updateTwoFactorEnabled(
+                        isChecked
+                    )
 
-            binding.switchLoginAlerts
-                .setOnCheckedChangeListener { _, isChecked ->
-
-                    if (isInitializing) {
-                        return@setOnCheckedChangeListener
-                    }
-
-                    viewLifecycleOwner.lifecycleScope.launch {
-
-                        userPrefs.updateLoginAlertsEnabled(
-                            isChecked
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.INFO,
+                        title = getString(
+                            R.string.security_feature_in_development_title
+                        ),
+                        message = getString(
+                            R.string.security_2fa_placeholder_message
                         )
-
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.INFO,
-                            title = getString(
-                                R.string.security_login_alerts_title
-                            ),
-                            message =
-                                if (isChecked) {
-
-                                    getString(
-                                        R.string.security_login_alerts_enabled
-                                    )
-
-                                } else {
-
-                                    getString(
-                                        R.string.security_login_alerts_disabled
-                                    )
-                                }
-                        )
-                    }
+                    )
                 }
+            }
+
+            binding.switchLoginAlerts.setOnCheckedChangeListener { _, isChecked ->
+                if (isInitializing) {
+                    return@setOnCheckedChangeListener
+                }
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    userPrefs.updateLoginAlertsEnabled(
+                        isChecked
+                    )
+
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.INFO,
+                        title = getString(
+                            R.string.security_login_alerts_title
+                        ),
+                        message =
+                            if (isChecked) {
+                                getString(
+                                    R.string.security_login_alerts_enabled
+                                )
+                            } else {
+                                getString(
+                                    R.string.security_login_alerts_disabled
+                                )
+                            }
+                    )
+                }
+            }
         }
     }
 
-    // ---------------------------------------------------
-    // INFO CLICKS
-    // ---------------------------------------------------
-
     private fun setupInfoClicks() {
-
-        // Kartın tamamına tıklanınca açıklama göster
         binding.cardSecurity.setOnClickListener {
-
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.INFO,
@@ -178,9 +132,7 @@ class SecuritySettingsFragment :
             )
         }
 
-        // 2FA switch uzun basma
         binding.switch2FA.setOnLongClickListener {
-
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.INFO,
@@ -195,9 +147,7 @@ class SecuritySettingsFragment :
             true
         }
 
-        // Login alerts uzun basma
         binding.switchLoginAlerts.setOnLongClickListener {
-
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.INFO,
@@ -213,12 +163,7 @@ class SecuritySettingsFragment :
         }
     }
 
-    // ---------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         super.onDestroyView()
 
         _binding = null

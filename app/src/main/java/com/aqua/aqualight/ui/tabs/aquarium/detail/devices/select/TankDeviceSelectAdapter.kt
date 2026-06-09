@@ -1,11 +1,14 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select
 
+import android.graphics.PorterDuff
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.databinding.ItemTankDeviceSelectBinding
+import com.aqua.aqualight.R
+import com.aqua.aqualight.databinding.ItemTankDeviceSelectCardBinding
 
 class TankDeviceSelectAdapter(
     private val onDeviceClick: (TankDeviceSelectItem) -> Unit
@@ -17,11 +20,12 @@ class TankDeviceSelectAdapter(
         parent: ViewGroup,
         viewType: Int
     ): ViewHolder {
-        val binding = ItemTankDeviceSelectBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+        val binding =
+            ItemTankDeviceSelectCardBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
 
         return ViewHolder(
             binding = binding,
@@ -39,17 +43,75 @@ class TankDeviceSelectAdapter(
     }
 
     class ViewHolder(
-        private val binding: ItemTankDeviceSelectBinding,
+        private val binding: ItemTankDeviceSelectCardBinding,
         private val onDeviceClick: (TankDeviceSelectItem) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
             item: TankDeviceSelectItem
         ) {
-            binding.tvDeviceInitial.text = item.initial
-            binding.tvDeviceTitle.text = item.title
-            binding.tvDeviceSubtitle.text = item.subtitle
-            binding.tvDeviceStatus.text = item.statusText
+            val context =
+                binding.root.context
+
+            val deviceName =
+                item.title
+                    .trim()
+                    .ifBlank {
+                        context.getString(
+                            R.string.tank_device_select_unknown_device
+                        )
+                    }
+
+            val serialNumber =
+                item.serialNumber
+                    .trim()
+                    .ifBlank {
+                        context.getString(
+                            R.string.tank_device_select_serial_unavailable
+                        )
+                    }
+
+            binding.tvDeviceName.text =
+                deviceName
+
+            binding.tvSerialNumber.text =
+                serialNumber
+
+            binding.ivDeviceIcon.setImageResource(
+                item.iconRes
+            )
+
+            binding.ivDeviceIcon.contentDescription =
+                deviceName
+
+            val statusColorRes =
+                if (item.isOnline) {
+                    R.color.dialog_icon_success
+                } else {
+                    R.color.settings_text_secondary
+                }
+
+            binding.ivConnectionStatus.setColorFilter(
+                ContextCompat.getColor(
+                    context,
+                    statusColorRes
+                ),
+                PorterDuff.Mode.SRC_IN
+            )
+
+            binding.root.contentDescription =
+                buildString {
+                    append(deviceName)
+                    append(", ")
+                    append(serialNumber)
+                    append(
+                        if (item.isOnline) {
+                            ", Online"
+                        } else {
+                            ", Offline"
+                        }
+                    )
+                }
 
             binding.root.setOnClickListener {
                 onDeviceClick(item)

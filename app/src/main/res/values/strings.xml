@@ -1269,6 +1269,8 @@ Delete Failed
 <string name="settings_backup_restore_section_description">Backup and restore aquarium data section</string>
 <string name="settings_backup_restore_arrow_description">Open backup and restore settings</string>
 <string name="back">Back</string>
+
+
 <!-- Device add -->
 <string name="device_add_title">Add Device</string>
 <string name="device_add_searching_title">Searching...</string>
@@ -1346,22 +1348,9 @@ Delete Failed
 
 
 
+<string name="user_info_username_too_long">Username is too long.</string>
 
 
 
-
-<string name="tank_device_select_title">Select Device</string>
-<string name="tank_device_select_info_title">Choose a saved device</string>
-<string name="tank_device_select_info_subtitle">Select one of your saved AquaLight devices to assign it to this tank.</string>
-<string name="tank_device_select_empty_title">No saved devices</string>
-<string name="tank_device_select_empty_subtitle">Add a device from the Devices screen first, then return here to assign it to this tank.</string>
-<string name="tank_device_select_arrow_desc">Select device</string>
-
-
-<string name="tank_device_select_unknown_device">AquaLight Device</string>
-<string name="tank_device_select_saved_device">Saved device</string>
-<string name="tank_device_select_ip_status">IP: %1$s</string>
-<string name="tank_device_select_serial_status">Serial: %1$s</string>
-<string name="tank_device_select_assign_error">Device could not be assigned to this tank.</string>
 
 </resources>

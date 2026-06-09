@@ -22,6 +22,8 @@ import com.aqua.aqualight.data.devices.setup.HomeWifiConnectionWaiter
 import com.aqua.aqualight.data.devices.setup.LegacyDeviceSetupClient
 import com.aqua.aqualight.databinding.FragmentDeviceSetupBinding
 import com.aqua.aqualight.ui.common.bottomsheet.HomeWifiNetworksBottomSheetFragment
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.delay
@@ -80,9 +82,24 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         deviceStoreWriter = DeviceStoreWriter(devicesStore)
 
         readArgs()
+        setupHeader()
         renderInitialState()
         setupClickListeners()
         setupHomeWifiBottomSheetResultListener()
+    }
+
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = displayName,
+                onBackClick = {
+                    if (!isSettingUp && !isScanningNetworks) {
+                        findNavController().popBackStack()
+                    }
+                }
+            )
+        )
     }
 
     private fun readArgs() {
@@ -106,15 +123,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             ""
         )
 
-        expectedDeviceType = AquaDeviceType.entries.firstOrNull {
-            type ->
+        expectedDeviceType = AquaDeviceType.entries.firstOrNull { type ->
             type.storageKey == deviceTypeKey
         } ?: AquaDeviceType.UNKNOWN
     }
 
     private fun renderInitialState() {
-        binding.tvTitle.text = displayName
-        binding.tvSubtitle.text = familyName
         binding.tvSetupSsid.text = setupSsid
         binding.tvStatus.text = getString(R.string.device_setup_choose_home_wifi)
         binding.etHomeWifiSsid.setText("")
@@ -131,12 +145,6 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener {
-            if (!isSettingUp && !isScanningNetworks) {
-                findNavController().popBackStack()
-            }
-        }
-
         binding.inputHomeWifiSsid.setEndIconOnClickListener {
             scanHomeNetworks()
         }
@@ -154,8 +162,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         parentFragmentManager.setFragmentResultListener(
             HomeWifiNetworksBottomSheetFragment.REQUEST_KEY,
             viewLifecycleOwner
-        ) {
-            _, result ->
+        ) { _, result ->
             val ssid = result.getString(
                 HomeWifiNetworksBottomSheetFragment.RESULT_SSID
             ).orEmpty()
@@ -254,7 +261,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 if (isViewReady()) {
                     showError(
                         exception.message
-                        ?: getString(R.string.device_setup_scan_error)
+                            ?: getString(R.string.device_setup_scan_error)
                     )
 
                     setBusy(
@@ -273,8 +280,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private suspend fun getOrCreateSetupConnection(): DeviceSetupWifiConnector.SetupConnection {
-        setupConnection?.let {
-            connection ->
+        setupConnection?.let { connection ->
             return connection
         }
 
@@ -294,7 +300,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         }
 
         val input = readAndValidateHomeWifiInput()
-        ?: return
+            ?: return
 
         isSettingUp = true
 
@@ -318,7 +324,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 if (isViewReady()) {
                     showError(
                         exception.message
-                        ?: getString(R.string.device_setup_generic_failed)
+                            ?: getString(R.string.device_setup_generic_failed)
                     )
 
                     setBusy(
@@ -339,14 +345,14 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private fun readAndValidateHomeWifiInput(): HomeWifiInput? {
         val homeSsid = selectedHomeSsid.ifBlank {
             binding.etHomeWifiSsid.text
-            ?.toString()
-            ?.trim()
-            .orEmpty()
+                ?.toString()
+                ?.trim()
+                .orEmpty()
         }
 
         val homePassword = binding.etHomeWifiPassword.text
-        ?.toString()
-        .orEmpty()
+            ?.toString()
+            .orEmpty()
 
         if (setupSsid.isBlank()) {
             showError(
@@ -409,7 +415,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         if (!setupResult.success) {
             throw IllegalStateException(
                 setupResult.errorMessage
-                ?: getString(R.string.device_setup_not_accepted)
+                    ?: getString(R.string.device_setup_not_accepted)
             )
         }
 
@@ -471,9 +477,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         delay(7_000L)
 
         val discoveredDevice = waitForDeviceOnHomeNetwork()
-        ?: throw IllegalStateException(
-            getString(R.string.device_setup_device_not_found)
-        )
+            ?: throw IllegalStateException(
+                getString(R.string.device_setup_device_not_found)
+            )
 
         deviceStoreWriter.saveDiscoveredDevice(
             device = discoveredDevice
@@ -559,18 +565,18 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         if (!closeApResult.success) {
             throw IllegalStateException(
                 closeApResult.errorMessage
-                ?: getString(R.string.device_setup_close_ap_failed)
+                    ?: getString(R.string.device_setup_close_ap_failed)
             )
         }
     }
 
     private suspend fun waitForDeviceOnHomeNetwork(): DiscoveredAquaDevice? {
         val setupShortId = setupSsid
-        .substringAfterLast(
-            delimiter = "-",
-            missingDelimiterValue = ""
-        )
-        .trim()
+            .substringAfterLast(
+                delimiter = "-",
+                missingDelimiterValue = ""
+            )
+            .trim()
 
         repeat(20) {
             val result = DeviceDiscoveryService.scan(
@@ -579,8 +585,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 reason = DeviceScanReason.MANUAL_SCAN
             )
 
-            val match = result.devices.firstOrNull {
-                device ->
+            val match = result.devices.firstOrNull { device ->
                 isExpectedDevice(
                     device = device,
                     setupShortId = setupShortId
@@ -602,7 +607,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         setupShortId: String
     ): Boolean {
         val typeMatches = expectedDeviceType == AquaDeviceType.UNKNOWN ||
-        device.deviceType == expectedDeviceType
+            device.deviceType == expectedDeviceType
 
         if (!typeMatches) {
             return false
@@ -616,10 +621,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         val deviceIdText = device.id.toString()
 
         return deviceIdText.endsWith(setupShortId) ||
-        (
-            normalizedShortId.isNotBlank() &&
-            deviceIdText.endsWith(normalizedShortId)
-        )
+            (
+                normalizedShortId.isNotBlank() &&
+                    deviceIdText.endsWith(normalizedShortId)
+                )
     }
 
     private fun showWifiNetworksBottomSheet(
@@ -627,8 +632,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     ) {
         HomeWifiNetworksBottomSheetFragment.show(
             fragmentManager = parentFragmentManager,
-            networks = networks.map {
-                network ->
+            networks = networks.map { network ->
                 HomeWifiNetworksBottomSheetFragment.HomeWifiNetworkItem(
                     ssid = network.ssid,
                     rssi = network.rssi
@@ -653,7 +657,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             number = binding.tvStepWifiNumber,
             label = binding.tvStepWifiLabel,
             completed = activeStep == SetupUiStep.CONNECT ||
-            activeStep == SetupUiStep.DONE,
+                activeStep == SetupUiStep.DONE,
             active = activeStep == SetupUiStep.WIFI
         )
 
@@ -702,7 +706,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 backgroundColor = Color.parseColor("#143A5F")
                 strokeColor = Color.parseColor("#2B95F6")
                 textColor = Color.parseColor("#6CB7FF")
-            } else -> {
+            }
+
+            else -> {
                 backgroundColor = Color.parseColor("#10233A")
                 strokeColor = Color.parseColor("#243D5C")
                 textColor = Color.parseColor("#8FA4BE")
@@ -743,7 +749,13 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         binding.etHomeWifiSsid.isEnabled = enabled
         binding.etHomeWifiPassword.isEnabled = enabled
         binding.btnStartSetup.isEnabled = enabled
-        binding.btnBack.isEnabled = enabled
+
+        binding.appHeader.btnBack.isEnabled = enabled
+        binding.appHeader.btnBack.alpha = if (enabled) {
+            1f
+        } else {
+            0.45f
+        }
 
         binding.btnStartSetup.alpha = if (enabled) {
             1f

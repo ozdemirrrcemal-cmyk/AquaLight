@@ -1,96 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout 
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp">
 
-    <!-- 📧 Email input -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/emailContainer"
         style="@style/AuthTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="4dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/signin_email_desc"
         app:layout_constraintBottom_toTopOf="@id/passwordContainer"
-        app:layout_constraintVertical_chainStyle="packed"
-        android:contentDescription="@string/signin_email_desc">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/emailEditText"
-			style="@style/AuthEditText"
+            style="@style/AuthEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/signin_email_hint"
             android:inputType="textEmailAddress" />
+
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- 🔒 Password input -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordContainer"
         style="@style/AuthTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:passwordToggleEnabled="true"
         android:layout_marginBottom="4dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/emailContainer"
+        android:contentDescription="@string/signin_password_desc"
         app:layout_constraintBottom_toTopOf="@id/tvForgotPassword"
-        android:contentDescription="@string/signin_password_desc">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/emailContainer"
+        app:passwordToggleEnabled="true">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/passwordEditText"
-			style="@style/AuthEditText"
+            style="@style/AuthEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/signin_password_hint"
             android:inputType="textPassword" />
+
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- ❓ Forgot Password -->
     <TextView
         android:id="@+id/tvForgotPassword"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:contentDescription="@string/signin_forgot_password_desc"
         android:text="@string/signin_forgot_password"
         android:textColor="@android:color/white"
         android:textSize="12sp"
-        android:layout_marginTop="6dp"
-        android:contentDescription="@string/signin_forgot_password_desc"
-        app:layout_constraintTop_toBottomOf="@id/passwordContainer"
-        app:layout_constraintStart_toStartOf="@id/passwordContainer"
         app:layout_constraintBottom_toTopOf="@id/btnLogin"
+        app:layout_constraintStart_toStartOf="@id/passwordContainer"
+        app:layout_constraintTop_toBottomOf="@id/passwordContainer"
         app:layout_constraintVertical_bias="0.5" />
 
-    <!-- 🔴 Login Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogin"
         style="@style/RedButton"
-        android:text="@string/signin_login_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
         android:contentDescription="@string/signin_login_button_desc"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
+        android:text="@string/signin_login_button"
+        app:layout_constraintBottom_toTopOf="@id/btnReturnToAuth"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/btnBack"
-        android:layout_marginBottom="4dp" />
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- ⚫ Back Button -->
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnBack"
+        android:id="@+id/btnReturnToAuth"
         style="@style/BlackButton"
-        android:text="@string/signin_back_button"
-        android:contentDescription="@string/signin_back_button_desc"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="20dp"
+        android:contentDescription="@string/signin_back_button_desc"
+        android:text="@string/signin_back_button"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="20dp" />
-	
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -10,89 +10,143 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentLanguageSettingsBinding
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
-import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
 
     private var _binding: FragmentLanguageSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val userPrefs by lazy { UserPreferencesManager.create(requireContext()) }
+    private val userPrefs by lazy {
+        UserPreferencesManager.create(requireContext())
+    }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentLanguageSettingsBinding.bind(view)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(
+            view,
+            savedInstanceState
+        )
 
-        binding.appHeader.setupAquaHeader(
-    AquaHeaderConfig(
-        title = getString(R.string.settings_about_title),
-        showBackButton = true,
-        onBackClick = {
-            findNavController().popBackStack()
-        }
-    )
-)
+        _binding =
+            FragmentLanguageSettingsBinding.bind(view)
 
+        setupHeader()
         observeSelectedLanguage()
         setupLanguageClicks()
+    }
+
+    private fun setupHeader() {
+        binding.appHeader.setupAquaHeader(
+            fragment = this
+        )
     }
 
     private fun observeSelectedLanguage() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             userPrefs.languageCode.collectLatest { code ->
-                updateLanguageSelection(code)
+                updateLanguageSelection(
+                    code
+                )
             }
         }
     }
 
-    private fun setupLanguageClicks() = with(binding) {
+    private fun setupLanguageClicks() =
+        with(binding) {
 
-        fun select(code: String) {
-            viewLifecycleOwner.lifecycleScope.launch {
-                // 1) DataStore’a kaydet
-                userPrefs.updateLanguage(code)
+            fun select(
+                code: String
+            ) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    userPrefs.updateLanguage(
+                        code
+                    )
 
-                // 2) Locale’i anında uygula
-                applyLanguage(code)
+                    applyLanguage(
+                        code
+                    )
 
-                // 3) Bir önceki menüye dön
-                findNavController().popBackStack()
+                    findNavController()
+                        .popBackStack()
+                }
+            }
+
+            cardTurkish.setOnClickListener {
+                select("tr")
+            }
+
+            radioTurkish.setOnClickListener {
+                select("tr")
+            }
+
+            cardEnglish.setOnClickListener {
+                select("en")
+            }
+
+            radioEnglish.setOnClickListener {
+                select("en")
+            }
+
+            cardGerman.setOnClickListener {
+                select("de")
+            }
+
+            radioGerman.setOnClickListener {
+                select("de")
+            }
+
+            cardFrench.setOnClickListener {
+                select("fr")
+            }
+
+            radioFrench.setOnClickListener {
+                select("fr")
+            }
+
+            cardRussian.setOnClickListener {
+                select("ru")
+            }
+
+            radioRussian.setOnClickListener {
+                select("ru")
+            }
+
+            cardChinese.setOnClickListener {
+                select("zh")
+            }
+
+            radioChinese.setOnClickListener {
+                select("zh")
             }
         }
 
-        // Kart + radio’yu aynı davranışa bağla
-        cardTurkish.setOnClickListener { select("tr") }
-        radioTurkish.setOnClickListener { select("tr") }
+    private fun updateLanguageSelection(
+        code: String
+    ) = with(binding) {
 
-        cardEnglish.setOnClickListener { select("en") }
-        radioEnglish.setOnClickListener { select("en") }
+        radioTurkish.isChecked =
+            false
 
-        cardGerman.setOnClickListener { select("de") }
-        radioGerman.setOnClickListener { select("de") }
+        radioEnglish.isChecked =
+            false
 
-        cardFrench.setOnClickListener { select("fr") }
-        radioFrench.setOnClickListener { select("fr") }
+        radioGerman.isChecked =
+            false
 
-        cardRussian.setOnClickListener { select("ru") }
-        radioRussian.setOnClickListener { select("ru") }
+        radioFrench.isChecked =
+            false
 
-        cardChinese.setOnClickListener { select("zh") }
-        radioChinese.setOnClickListener { select("zh") }
-    }
+        radioRussian.isChecked =
+            false
 
-    private fun updateLanguageSelection(code: String) = with(binding) {
-        // Hepsini sıfırla
-        radioTurkish.isChecked = false
-        radioEnglish.isChecked = false
-        radioGerman.isChecked = false
-        radioFrench.isChecked = false
-        radioRussian.isChecked = false
-        radioChinese.isChecked = false
+        radioChinese.isChecked =
+            false
 
-        // Seçileni işaretle
         when (code) {
             "tr" -> radioTurkish.isChecked = true
             "en" -> radioEnglish.isChecked = true
@@ -103,16 +157,28 @@ class LanguageSettingsFragment : Fragment(R.layout.fragment_language_settings) {
         }
     }
 
-    private fun applyLanguage(code: String) {
-        val safeCode = code.ifBlank { "en" }  // Default dil istersen "tr" de yapabilirsin
-        val localeList = LocaleListCompat.forLanguageTags(safeCode)
-        AppCompatDelegate.setApplicationLocales(localeList)
-        // AppCompatDelegate değişiklik sonrası activity’yi recreate ediyor,
-        // bu yüzden stringler hemen güncelleniyor.
+    private fun applyLanguage(
+        code: String
+    ) {
+        val safeCode =
+            code.ifBlank {
+                "en"
+            }
+
+        val localeList =
+            LocaleListCompat.forLanguageTags(
+                safeCode
+            )
+
+        AppCompatDelegate.setApplicationLocales(
+            localeList
+        )
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+
+        _binding =
+            null
     }
 }
