@@ -10,18 +10,23 @@ class DeviceStoreWriter(
     suspend fun saveDiscoveredDevice(
         device: DiscoveredAquaDevice
     ): Long {
-        val alreadyExists = devicesStore.deviceExists(
-            id = device.id
+        val existingDeviceId = devicesStore.findStoredDeviceIdForIdentity(
+            id = device.id,
+            deviceUid = device.deviceUid,
+            macAddress = device.macAddress,
+            firmwareSerial = device.firmwareSerial
         )
 
-        if (alreadyExists) {
+        if (existingDeviceId != null) {
             devicesStore.updateDevicesLastSeen(
                 discovered = listOf(
-                    device.toLastSeenUpdate()
+                    device.toLastSeenUpdate(
+                        storedDeviceId = existingDeviceId
+                    )
                 )
             )
 
-            return device.id
+            return existingDeviceId
         }
 
         val definition = AquaDeviceCatalog.findByType(
@@ -81,9 +86,11 @@ class DeviceStoreWriter(
         return device.id
     }
 
-    private fun DiscoveredAquaDevice.toLastSeenUpdate(): DevicesDataStoreManager.DeviceLastSeenUpdate {
+    private fun DiscoveredAquaDevice.toLastSeenUpdate(
+        storedDeviceId: Long = id
+    ): DevicesDataStoreManager.DeviceLastSeenUpdate {
         return DevicesDataStoreManager.DeviceLastSeenUpdate(
-            id = id,
+            id = storedDeviceId,
             ip = ip,
             firmwareBuild = firmwareBuild,
             deviceUid = deviceUid,

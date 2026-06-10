@@ -336,7 +336,10 @@
 
     <action
       android:id="@+id/action_deviceAddFragment_to_deviceRouterFragment"
-      app:destination="@id/deviceRouterFragment" 
+      app:destination="@id/deviceRouterFragment"
+        app:popUpTo="@id/devicesFragment"
+        app:popUpToInclusive="false"
+        app:launchSingleTop="true"
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"

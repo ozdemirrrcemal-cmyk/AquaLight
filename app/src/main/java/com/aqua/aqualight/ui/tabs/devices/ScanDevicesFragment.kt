@@ -8,9 +8,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.DeviceSerialFormatter
+import com.aqua.aqualight.data.devices.DeviceStoreWriter
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
@@ -30,6 +29,7 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
     private lateinit var adapter: ScanDevicesAdapter
     private lateinit var devicesStore: DevicesDataStoreManager
+    private lateinit var deviceStoreWriter: DeviceStoreWriter
 
     private var scanJob: Job? = null
     private var isSavingDevice: Boolean = false
@@ -45,6 +45,9 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
 
         _binding = FragmentScanDevicesBinding.bind(view)
         devicesStore = DevicesDataStoreManager.create(requireContext())
+        deviceStoreWriter = DeviceStoreWriter(
+            devicesStore = devicesStore
+        )
 
         setupHeader()
         setupRecyclerView()
@@ -237,98 +240,32 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             return
         }
 
-        val definition = AquaDeviceCatalog.findByType(
-            type = device.deviceType
-        )
-
-        if (definition == null) {
-            showGlobalSnackBar(
-                message = "This device is not supported by this app version.",
-                type = BaseActivity.SnackType.WARNING
-            )
-            return
-        }
-
-        val savedAquaName = definition.family.displayName.ifBlank {
-            device.aquaName.ifBlank { "-" }
-        }
-
-        val savedName = definition.displayName.ifBlank {
-            device.name.ifBlank { "Device" }
-        }
-
-        val serial = DeviceSerialFormatter.buildSerial(
-            aquaName = savedAquaName,
-            name = savedName,
-            id = device.id,
-            firmwareSerial = device.firmwareSerial.orEmpty(),
-            deviceUid = device.deviceUid.orEmpty(),
-            macAddress = device.macAddress.orEmpty()
-        )
-
         isSavingDevice = true
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val alreadyExists = devicesStore.deviceExists(
-                    id = device.id
-                )
-
-                if (alreadyExists) {
-                    devicesStore.updateDevicesLastSeen(
-                        discovered = listOf(
-                            device.toLastSeenUpdate()
-                        )
-                    )
-
-                    showGlobalSnackBar(
-                        message = getString(R.string.device_scan_already_added),
-                        type = BaseActivity.SnackType.WARNING
-                    )
-
-                    if (_binding != null) {
-                        findNavController().popBackStack()
-                    }
-
-                    return@launch
-                }
-
-                devicesStore.addDevice(
+                val existingDeviceId = devicesStore.findStoredDeviceIdForIdentity(
                     id = device.id,
-                    aquaName = savedAquaName,
-                    name = savedName,
-                    ip = device.ip,
-                    serial = serial,
-                    firmwareBuild = device.firmwareBuild,
-                    deviceUid = device.deviceUid.orEmpty(),
-                    macAddress = device.macAddress.orEmpty(),
-                    firmwareSerial = device.firmwareSerial.orEmpty(),
-
-                    deviceType = device.deviceType,
-
-                    udpVersion = device.udpVersion,
-                    tabLight = device.tabLight,
-                    tabTimer = device.tabTimer,
-                    tabTemperature = device.tabTemperature,
-
-                    productId = device.productId.orEmpty(),
-                    productFamily = device.productFamily.orEmpty(),
-                    productModel = device.productModel.orEmpty(),
-                    hardwareRevision = device.hardwareRevision.orEmpty(),
-                    firmwareVersion = device.firmwareVersion.orEmpty(),
-                    apiVersion = device.apiVersion,
-
-                    channelCount = device.channelCount,
-                    sensorCount = device.sensorCount,
-
-                    supportedFeatures = device.supportedFeatures,
-                    supportedScreens = device.supportedScreens
+                    deviceUid = device.deviceUid,
+                    macAddress = device.macAddress,
+                    firmwareSerial = device.firmwareSerial
                 )
 
-                devicesStore.updateDevicesLastSeen(
-                    discovered = listOf(
-                        device.toLastSeenUpdate()
-                    )
+                deviceStoreWriter.saveDiscoveredDevice(
+                    device = device
+                )
+
+                showGlobalSnackBar(
+                    message = if (existingDeviceId != null) {
+                        getString(R.string.device_scan_already_added)
+                    } else {
+                        getString(R.string.device_scan_saved_success)
+                    },
+                    type = if (existingDeviceId != null) {
+                        BaseActivity.SnackType.WARNING
+                    } else {
+                        BaseActivity.SnackType.SUCCESS
+                    }
                 )
 
                 if (_binding != null) {
@@ -347,37 +284,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                 isSavingDevice = false
             }
         }
-    }
-
-    private fun DiscoveredAquaDevice.toLastSeenUpdate(): DevicesDataStoreManager.DeviceLastSeenUpdate {
-        return DevicesDataStoreManager.DeviceLastSeenUpdate(
-            id = id,
-            ip = ip,
-            firmwareBuild = firmwareBuild,
-            deviceUid = deviceUid,
-            macAddress = macAddress,
-            firmwareSerial = firmwareSerial,
-
-            deviceType = deviceType,
-
-            udpVersion = udpVersion,
-            tabLight = tabLight,
-            tabTimer = tabTimer,
-            tabTemperature = tabTemperature,
-
-            productId = productId,
-            productFamily = productFamily,
-            productModel = productModel,
-            hardwareRevision = hardwareRevision,
-            firmwareVersion = firmwareVersion,
-            apiVersion = apiVersion,
-
-            channelCount = channelCount,
-            sensorCount = sensorCount,
-
-            supportedFeatures = supportedFeatures,
-            supportedScreens = supportedScreens
-        )
     }
 
     private fun isValidDevice(

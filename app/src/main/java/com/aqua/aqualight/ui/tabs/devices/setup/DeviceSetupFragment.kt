@@ -11,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
 import com.aqua.aqualight.data.devices.DeviceStoreWriter
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
@@ -617,14 +618,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             return true
         }
 
-        val normalizedShortId = setupShortId.trimStart('0')
-        val deviceIdText = device.id.toString()
-
-        return deviceIdText.endsWith(setupShortId) ||
-            (
-                normalizedShortId.isNotBlank() &&
-                    deviceIdText.endsWith(normalizedShortId)
-                )
+        return DeviceIdentityMatcher.matchesSetupShortId(
+            discoveredDevice = device,
+            setupShortId = setupShortId
+        )
     }
 
     private fun showWifiNetworksBottomSheet(

@@ -163,6 +163,29 @@ class DevicesDataStoreManager private constructor(
             }
     }
 
+    suspend fun findStoredDeviceIdForIdentity(
+        id: Long,
+        deviceUid: String?,
+        macAddress: String?,
+        firmwareSerial: String?
+    ): Long? {
+        return devicesPrefsFlow.first()
+            .devicesList
+            .map { device ->
+                device.toUi()
+            }
+            .firstOrNull { savedDevice ->
+                DeviceIdentityMatcher.matchesStoredIdentity(
+                    savedDevice = savedDevice,
+                    id = id,
+                    deviceUid = deviceUid,
+                    macAddress = macAddress,
+                    firmwareSerial = firmwareSerial
+                )
+            }
+            ?.id
+    }
+
     suspend fun addDevice(
         id: Long,
         aquaName: String,
@@ -407,8 +430,13 @@ class DevicesDataStoreManager private constructor(
 
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
+                val savedDevice = device.toUi()
+
                 val match = discovered.firstOrNull { discoveredDevice ->
-                    discoveredDevice.id == device.id
+                    DeviceIdentityMatcher.samePhysicalDevice(
+                        savedDevice = savedDevice,
+                        update = discoveredDevice
+                    )
                 }
 
                 if (match != null) {

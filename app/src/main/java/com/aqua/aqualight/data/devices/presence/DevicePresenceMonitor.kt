@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.presence
 
 import android.content.Context
+import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager.DeviceInfoUi
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
@@ -491,7 +492,10 @@ object DevicePresenceMonitor {
         discoveredDevices: List<DiscoveredAquaDevice>
     ): DiscoveredAquaDevice? {
         return discoveredDevices.firstOrNull { discoveredDevice ->
-            discoveredDevice.id == savedDevice.id
+            DeviceIdentityMatcher.samePhysicalDevice(
+                savedDevice = savedDevice,
+                discoveredDevice = discoveredDevice
+            )
         }
     }
 
