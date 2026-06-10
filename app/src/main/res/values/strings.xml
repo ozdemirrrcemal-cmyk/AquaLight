@@ -1087,7 +1087,6 @@ Delete Failed
 </string>
 
 
-
     <!-- Özellik etiketleri (alt satırda görünecek) -->
     <string name="network_tag_light">Işık</string>
     <string name="network_tag_timer">Zamanlayıcı</string>
@@ -1099,19 +1098,6 @@ Delete Failed
 <string name="devices_title">Devices</string>
 <string name="devices_scan_button_desc">Scan for devices</string>
 <string name="devices_no_selected">No device selected</string>
-
-<!-- Scan devices screen -->
-<string name="device_scan_back_button_desc">Back to devices</string>
-<string name="device_scan_header_scanning">Searching...</string>
-<string name="device_scan_header_list">Device list</string>
-
-<string name="device_scan_no_devices">
-    No devices found nearby.\nPlease make sure you are connected to the same network.
-</string>
-
-<string name="device_scan_scan_again">Scan again</string>
-<string name="device_scan_searching">Searching devices...</string>
-
 <string name="devices_delete_title_single">Delete device?</string>
 <string name="devices_delete_title_multi">Delete %1$d devices?</string>
 
@@ -1126,27 +1112,6 @@ Delete Failed
 <string name="devices_selected_device_toast">
     Selected devices: %1$s
 </string>
-
-<string name="device_scan_timeout">
-    Scan timed out. Please try again.
-</string>
-
-<string name="device_scan_error">
-    An error occurred during scanning. Please try again.
-</string>
-
-<string name="device_scan_invalid_device">
-    Invalid device detected.
-</string>
-
-<string name="device_scan_already_added">
-    This device has already been added.
-</string>
-
-<string name="device_scan_saved_success">
-    Device saved.
-</string>
-
 <string name="device_offline_title">Device offline</string>
 <string name="device_offline_message">This device is currently offline. Please make sure it is powered on and connected to the same network.</string>
 
@@ -1347,14 +1312,7 @@ Delete Failed
 <string name="wifi_signal">Wi-Fi signal</string>
 
 
-
-
-
-
-
 <string name="user_info_username_too_long">Username is too long.</string>
-
-
 
 
 </resources>

@@ -155,9 +155,10 @@ object DevicePresenceMonitor {
             return fallbackState
         }
 
-        val matchedDevice = result.devices.firstOrNull { discoveredDevice ->
-            discoveredDevice.id == deviceId
-        }
+        val matchedDevice = findMatchingDiscoveredDevice(
+            savedDevice = savedDevice,
+            discoveredDevices = result.devices
+        )
 
         return if (matchedDevice != null) {
             devicesStore.updateDevicesLastSeen(
