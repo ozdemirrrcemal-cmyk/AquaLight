@@ -3,10 +3,18 @@ package com.aqua.aqualight.ui.tabs.devices.detail.timer
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentDeviceTimerBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
@@ -37,7 +45,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
             FragmentDeviceTimerBinding.bind(view)
 
         setupHeader()
-        bindEmptyState()
+        observeDeviceStatus()
     }
 
     private fun setupHeader() {
@@ -49,12 +57,78 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
         )
     }
 
-    private fun bindEmptyState() {
+    private fun observeDeviceStatus() {
+        DevicePresenceMonitor.start(
+            requireContext().applicationContext
+        )
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                DevicePresenceMonitor.statuses.collectLatest { statuses ->
+                    bindDeviceStatus(
+                        statuses[deviceId]
+                    )
+                }
+            }
+        }
+    }
+
+    private fun bindDeviceStatus(
+        statusState: DeviceStatusState?
+    ) {
         binding.tvEmptyTitle.text =
             deviceTitle
 
         binding.tvEmptyMessage.text =
-            "Device ID: $deviceId\nTimer controller screen will be built here."
+            buildStatusMessage(
+                statusState
+            )
+    }
+
+    private fun buildStatusMessage(
+        statusState: DeviceStatusState?
+    ): String {
+        val status =
+            statusState?.status ?: DeviceConnectionStatus.UNKNOWN
+
+        val statusText =
+            when (status) {
+                DeviceConnectionStatus.ONLINE -> "Online"
+                DeviceConnectionStatus.CHECKING -> "Checking connection"
+                DeviceConnectionStatus.STALE -> "Connection is stale"
+                DeviceConnectionStatus.OFFLINE -> "Offline"
+                DeviceConnectionStatus.UNKNOWN -> "Unknown"
+            }
+
+        val resolvedIp =
+            statusState?.ip.orEmpty().ifBlank {
+                requireArguments()
+                    .getString(ARG_DEVICE_IP)
+                    .orEmpty()
+            }
+
+        return buildString {
+            append("Device ID: ")
+            append(deviceId)
+            append("\n")
+            append("Status: ")
+            append(statusText)
+
+            if (resolvedIp.isNotBlank()) {
+                append("\nIP: ")
+                append(resolvedIp)
+            }
+
+            append("\n\n")
+
+            if (status == DeviceConnectionStatus.ONLINE) {
+                append("The timer controller screen will be built here. Live commands remain protected by the central connection guard.")
+            } else {
+                append("This device is not ready for live control. Keep it powered on and connected to the same network.")
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -66,6 +140,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
+        const val ARG_DEVICE_IP = "deviceIp"
         const val ARG_DEVICE_TITLE = "deviceTitle"
     }
 }
