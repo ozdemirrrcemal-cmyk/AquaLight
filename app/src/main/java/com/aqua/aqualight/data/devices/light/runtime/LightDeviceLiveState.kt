@@ -45,7 +45,7 @@ data class LightDeviceLiveState(
 
     val actualOutputPercent: Int
         get() {
-            if (!isLiveDataFresh) {
+            if (!hasFreshLiveData) {
                 return 0
             }
 
@@ -58,7 +58,7 @@ data class LightDeviceLiveState(
 
     val actualPowerWatts: Double?
         get() {
-            if (!isLiveDataFresh) {
+            if (!hasFreshLiveData) {
                 return null
             }
 
@@ -81,12 +81,28 @@ data class LightDeviceLiveState(
         }
 
     val hasLiveChannels: Boolean
-        get() = isLiveDataFresh && channels.isNotEmpty()
+        get() = hasFreshLiveData && channels.isNotEmpty()
+
+    val hasFreshLiveData: Boolean
+        get() {
+            if (!isLiveDataFresh) {
+                return false
+            }
+
+            if (liveDataUpdatedMillis <= 0L) {
+                return false
+            }
+
+            val ageMillis =
+                System.currentTimeMillis() - liveDataUpdatedMillis
+
+            return ageMillis <= LIVE_DATA_FRESHNESS_MS
+        }
 
     fun channelFor(
         semantic: LightChannelSemantic
     ): LightDeviceLiveChannelState? {
-        if (!isLiveDataFresh) {
+        if (!hasFreshLiveData) {
             return null
         }
 
@@ -102,6 +118,7 @@ data class LightDeviceLiveState(
     companion object {
 
         private const val DEVICE_TIME_FRESHNESS_MS = 30_000L
+        private const val LIVE_DATA_FRESHNESS_MS = 12_000L
 
         fun initial(
             deviceId: Long

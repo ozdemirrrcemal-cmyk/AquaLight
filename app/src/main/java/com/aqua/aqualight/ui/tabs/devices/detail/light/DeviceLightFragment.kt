@@ -26,6 +26,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private val viewModel: DeviceLightViewModel by viewModels()
 
+    private var latestState: DeviceLightDashboardUiState = DeviceLightDashboardUiState()
+
     private val deviceId: Long
         get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
@@ -85,6 +87,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun setupClicks() {
         binding.cardManual.setOnClickListener {
+            if (!ensureControlsEnabled()) {
+                return@setOnClickListener
+            }
+
             val bundle =
                 Bundle().apply {
                     putLong(
@@ -100,6 +106,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardPrograms.setOnClickListener {
+            if (!ensureControlsEnabled()) {
+                return@setOnClickListener
+            }
+
             val bundle =
                 Bundle().apply {
                     putLong(
@@ -115,6 +125,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardQuickSetup.setOnClickListener {
+            if (!ensureControlsEnabled()) {
+                return@setOnClickListener
+            }
+
             val bundle =
                 Bundle().apply {
                     putLong(
@@ -130,6 +144,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardPresets.setOnClickListener {
+            if (!ensureControlsEnabled()) {
+                return@setOnClickListener
+            }
+
             val bundle =
                 Bundle().apply {
                     putLong(
@@ -146,6 +164,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     }
 
     private fun openSettings() {
+        if (!ensureControlsEnabled()) {
+            return
+        }
+
         val bundle =
             Bundle().apply {
                 putLong(
@@ -177,6 +199,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private fun renderUiState(
         state: DeviceLightDashboardUiState
     ) {
+        latestState = state
+
         binding.tvActiveProgramName.text =
             state.activeProgramName
 
@@ -229,6 +253,44 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         binding.todayLightPlanGraphView.setState(
             state.todayPlanGraphState
         )
+
+        renderControlAvailability(
+            state
+        )
+    }
+
+    private fun renderControlAvailability(
+        state: DeviceLightDashboardUiState
+    ) {
+        val enabled = state.controlsEnabled
+        val alpha = if (enabled) {
+            1f
+        } else {
+            0.55f
+        }
+
+        binding.cardManual.isEnabled = enabled
+        binding.cardPrograms.isEnabled = enabled
+        binding.cardQuickSetup.isEnabled = enabled
+        binding.cardPresets.isEnabled = enabled
+
+        binding.cardManual.alpha = alpha
+        binding.cardPrograms.alpha = alpha
+        binding.cardQuickSetup.alpha = alpha
+        binding.cardPresets.alpha = alpha
+    }
+
+    private fun ensureControlsEnabled(): Boolean {
+        if (latestState.controlsEnabled) {
+            return true
+        }
+
+        showDeviceSnack(
+            message = latestState.connectionStatusText,
+            type = DeviceFeedbackType.WARNING
+        )
+
+        return false
     }
 
     private fun refreshDeviceStatus() {

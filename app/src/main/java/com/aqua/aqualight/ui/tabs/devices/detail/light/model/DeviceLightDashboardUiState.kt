@@ -29,5 +29,9 @@ data class DeviceLightDashboardUiState(
     val todayPlanGraphState: TodayLightPlanGraphState =
         TodayLightPlanGraphState.empty(
             LightCurvePoint.of(0, 0)
-        )
+        ),
+
+    val isDeviceOnline: Boolean = false,
+    val controlsEnabled: Boolean = false,
+    val connectionStatusText: String = "Checking device connection"
 )

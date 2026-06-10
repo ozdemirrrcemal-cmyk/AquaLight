@@ -10,6 +10,9 @@ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeState
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
+import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
@@ -88,6 +91,8 @@ class DeviceLightViewModel(
             return
         }
 
+        DevicePresenceMonitor.start(appContext)
+
         LightDeviceLiveRefreshManager.start(
             context = appContext,
             deviceId = deviceId,
@@ -98,17 +103,18 @@ class DeviceLightViewModel(
             combine(
                 lightProgramsDataStoreManager.programsFlow,
                 lightRuntimeRepository.observeManualRuntime(deviceId),
-                LightDeviceLiveRefreshManager.observe(deviceId)
+                LightDeviceLiveRefreshManager.observe(deviceId),
+                DevicePresenceMonitor.statuses
             ) {
-                programs, manualRuntime, liveState ->
-                Triple(
-                    programs,
-                    manualRuntime,
-                    liveState
+                programs, manualRuntime, liveState, statuses ->
+                DashboardInputs(
+                    programs = programs,
+                    manualRuntime = manualRuntime,
+                    liveState = liveState,
+                    presenceState = statuses[this@DeviceLightViewModel.deviceId]
                 )
-            }.collect {
-                (programs, manualRuntime, liveState) ->
-                val activeProgramsForDevice = programs.filter {
+            }.collect { inputs ->
+                val activeProgramsForDevice = inputs.programs.filter {
                     program ->
                     program.deviceId == this@DeviceLightViewModel.deviceId &&
                     program.isActive
@@ -116,23 +122,26 @@ class DeviceLightViewModel(
 
                 val baseState = createStateFromPrograms(
                     programs = activeProgramsForDevice,
-                    liveState = liveState
+                    liveState = inputs.liveState
                 )
 
                 val finalState = if (
-                    manualRuntime.isManualMode ||
-                    manualRuntime.isManualScene
+                    inputs.manualRuntime.isManualMode ||
+                    inputs.manualRuntime.isManualScene
                 ) {
                     createManualRuntimeState(
                         baseState = baseState,
-                        manualRuntime = manualRuntime,
-                        liveState = liveState
+                        manualRuntime = inputs.manualRuntime,
+                        liveState = inputs.liveState
                     )
                 } else {
                     baseState
                 }
 
-                _uiState.value = finalState
+                _uiState.value = finalState.withConnectionState(
+                    presenceState = inputs.presenceState,
+                    liveState = inputs.liveState
+                )
             }
         }
     }
@@ -413,6 +422,61 @@ class DeviceLightViewModel(
                 )
             }
         )
+    }
+
+    private fun DeviceLightDashboardUiState.withConnectionState(
+        presenceState: DeviceStatusState?,
+        liveState: LightDeviceLiveState
+    ): DeviceLightDashboardUiState {
+        val status = presenceState?.status ?: DeviceConnectionStatus.UNKNOWN
+        val isOnline = presenceState?.isOnline == true
+        val statusText = connectionStatusTextFor(status)
+
+        if (isOnline) {
+            return copy(
+                isDeviceOnline = true,
+                controlsEnabled = true,
+                connectionStatusText = statusText
+            )
+        }
+
+        return copy(
+            activeProgramName = "Device offline",
+            runStatus = statusText,
+            liveMode = LightDashboardMode.IDLE,
+            currentWattText = "-- W",
+            outputPercentText = "0%",
+            redChannelText = "R --",
+            greenChannelText = "G --",
+            blueChannelText = "B --",
+            whiteChannelText = "W --",
+            deviceTimeText = if (liveState.hasDeviceTime) {
+                liveState.deviceTimeText
+            } else {
+                "--:--"
+            },
+            nextEventText = "Reconnect the controller to continue",
+            healthTemperatureText = "-- °C",
+            healthTemperatureStatusText = "Unavailable",
+            healthFanText = "Unavailable",
+            healthFanStatusText = "Unavailable",
+            timelineStatusText = "Live connection unavailable",
+            isDeviceOnline = false,
+            controlsEnabled = false,
+            connectionStatusText = statusText
+        )
+    }
+
+    private fun connectionStatusTextFor(
+        status: DeviceConnectionStatus
+    ): String {
+        return when (status) {
+            DeviceConnectionStatus.ONLINE -> "Online"
+            DeviceConnectionStatus.CHECKING -> "Checking device connection"
+            DeviceConnectionStatus.STALE -> "Connection is unstable · controls disabled"
+            DeviceConnectionStatus.OFFLINE -> "Device offline · controls disabled"
+            DeviceConnectionStatus.UNKNOWN -> "Waiting for device connection"
+        }
     }
 
     private fun buildTodayGraphSegments(
@@ -1065,6 +1129,13 @@ class DeviceLightViewModel(
             dayOfWeek - 1
         }
     }
+
+    private data class DashboardInputs(
+        val programs: List<SavedLightProgram>,
+        val manualRuntime: LightManualRuntimeState,
+        val liveState: LightDeviceLiveState,
+        val presenceState: DeviceStatusState?
+    )
 
     override fun onCleared() {
         observeJob?.cancel()
