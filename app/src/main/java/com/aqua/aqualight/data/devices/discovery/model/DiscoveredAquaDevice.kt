@@ -17,7 +17,17 @@ data class DiscoveredAquaDevice(
     val name: String,
 
     /**
-     * İleride ESP32 firmware tarafına eklenecek profesyonel kimlik alanları.
+     * Ticari cihaz kimliği.
+     *
+     * ID sayısal eşleşmenin ana kaynağıdır; bu alanlar ise izlenebilirlik,
+     * servis ve ileride güvenli migration için saklanır.
+     */
+    val deviceUid: String? = null,
+    val macAddress: String? = null,
+    val serialNumber: String? = null,
+
+    /**
+     * ESP32 firmware tarafındaki profesyonel ürün kimliği alanları.
      */
     val productId: String? = null,
     val productFamily: String? = null,

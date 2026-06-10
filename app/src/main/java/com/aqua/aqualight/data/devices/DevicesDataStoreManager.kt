@@ -65,6 +65,9 @@ class DevicesDataStoreManager private constructor(
         val name: String,
         val ip: String,
         val serial: String,
+        val deviceUid: String = "",
+        val macAddress: String = "",
+        val firmwareSerial: String = "",
         val firmwareBuild: String,
         val lastSeenMillis: Long,
         val tankId: Long? = null,
@@ -94,6 +97,9 @@ class DevicesDataStoreManager private constructor(
         val id: Long,
         val ip: String,
         val firmwareBuild: String = "",
+        val deviceUid: String? = null,
+        val macAddress: String? = null,
+        val firmwareSerial: String? = null,
 
         val deviceType: AquaDeviceType? = null,
 
@@ -164,6 +170,9 @@ class DevicesDataStoreManager private constructor(
         ip: String,
         serial: String,
         firmwareBuild: String,
+        deviceUid: String = "",
+        macAddress: String = "",
+        firmwareSerial: String = "",
 
         deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN,
 
@@ -205,6 +214,9 @@ class DevicesDataStoreManager private constructor(
                 .setName(name)
                 .setIp(ip)
                 .setSerial(serial)
+                .setDeviceUid(deviceUid)
+                .setMacAddress(macAddress)
+                .setFirmwareSerial(firmwareSerial)
                 .setFirmwareBuild(firmwareBuild)
                 .setLastSeenMillis(now)
                 .setTankId(0L)
@@ -396,8 +408,7 @@ class DevicesDataStoreManager private constructor(
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
                 val match = discovered.firstOrNull { discoveredDevice ->
-                    discoveredDevice.id == device.id ||
-                        discoveredDevice.ip == device.ip
+                    discoveredDevice.id == device.id
                 }
 
                 if (match != null) {
@@ -407,6 +418,24 @@ class DevicesDataStoreManager private constructor(
 
                         if (match.firmwareBuild.isNotBlank()) {
                             setFirmwareBuild(match.firmwareBuild)
+                        }
+
+                        match.deviceUid?.takeIf { value ->
+                            value.isNotBlank()
+                        }?.let { value ->
+                            setDeviceUid(value)
+                        }
+
+                        match.macAddress?.takeIf { value ->
+                            value.isNotBlank()
+                        }?.let { value ->
+                            setMacAddress(value)
+                        }
+
+                        match.firmwareSerial?.takeIf { value ->
+                            value.isNotBlank()
+                        }?.let { value ->
+                            setFirmwareSerial(value)
                         }
 
                         match.deviceType?.let { value ->
@@ -505,6 +534,9 @@ class DevicesDataStoreManager private constructor(
             name = name,
             ip = ip,
             serial = serial,
+            deviceUid = deviceUid,
+            macAddress = macAddress,
+            firmwareSerial = firmwareSerial,
             firmwareBuild = firmwareBuild,
             lastSeenMillis = lastSeenMillis,
             tankId = tankId.takeIf { value ->

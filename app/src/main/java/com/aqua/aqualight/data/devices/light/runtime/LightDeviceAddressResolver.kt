@@ -26,9 +26,9 @@ class LightDeviceAddressResolver(
         val presenceState = DevicePresenceMonitor.statuses.value[deviceId]
 
         if (
+            !requireOnline &&
             presenceState != null &&
-            presenceState.ip.isNotBlank() &&
-            (!requireOnline || presenceState.isOnline)
+            presenceState.ip.isNotBlank()
         ) {
             return Result.Success(
                 deviceId = deviceId,
@@ -64,7 +64,8 @@ class LightDeviceAddressResolver(
         val checkedState = DevicePresenceMonitor.checkDeviceNow(
             context = appContext,
             deviceId = deviceId,
-            knownIp = savedIp
+            knownIp = savedIp,
+            allowRecentOnlineCache = false
         )
 
         if (checkedState == null) {

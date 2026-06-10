@@ -41,13 +41,12 @@ object LightManualRuntimeStore {
         val safeBlue = blue.coerceIn(0, 100)
         val safeWhite = white.coerceIn(0, 100)
 
-        val isPowerOn =
-            LightOutputMath.outputPercent(
-                red = safeRed,
-                green = safeGreen,
-                blue = safeBlue,
-                white = safeWhite
-            ) > 0
+        val isPowerOn = maxOf(
+            safeRed,
+            safeGreen,
+            safeBlue,
+            safeWhite
+        ) > 0
 
         updateState(
             LightManualRuntimeState(
@@ -78,13 +77,12 @@ object LightManualRuntimeStore {
         val safeBlue = blue.coerceIn(0, 100)
         val safeWhite = white.coerceIn(0, 100)
 
-        val isPowerOn =
-            LightOutputMath.outputPercent(
-                red = safeRed,
-                green = safeGreen,
-                blue = safeBlue,
-                white = safeWhite
-            ) > 0
+        val isPowerOn = maxOf(
+            safeRed,
+            safeGreen,
+            safeBlue,
+            safeWhite
+        ) > 0
 
         updateState(
             current.copy(

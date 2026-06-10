@@ -35,4 +35,8 @@ message SavedDeviceInfo {
 
   repeated string supported_features = 22;
   repeated string supported_screens = 23;
+
+  string device_uid = 24;
+  string mac_address = 25;
+  string firmware_serial = 26;
 }

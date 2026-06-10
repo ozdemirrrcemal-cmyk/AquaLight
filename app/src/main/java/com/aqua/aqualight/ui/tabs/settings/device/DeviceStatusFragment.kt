@@ -146,10 +146,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
                         ?: device.lastSeenMillis
 
                 val online =
-                    statusState?.isOnline ?: (
-                        lastSeenMillis > 0L &&
-                            now - lastSeenMillis <= ONLINE_TIMEOUT_MS
-                        )
+                    statusState?.isOnline == true
 
                 val lastSeenText =
                     if (lastSeenMillis > 0L) {
@@ -249,7 +246,4 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
         super.onDestroyView()
     }
 
-    private companion object {
-        const val ONLINE_TIMEOUT_MS = 90_000L
-    }
 }

@@ -24,6 +24,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.util.Locale
 import kotlin.coroutines.coroutineContext
 
@@ -168,16 +169,42 @@ object UdpDeviceDiscovery {
             0L
         )
 
+        val deviceUid = deviceJson.firstNonBlankString(
+            "DeviceUid",
+            "DeviceUID",
+            "UID",
+            "DeviceId",
+            "DeviceID"
+        )
+
+        val macAddress = deviceJson.firstNonBlankString(
+            "MacAddress",
+            "MAC",
+            "Mac",
+            "macAddress"
+        )
+
+        val serialNumber = deviceJson.firstNonBlankString(
+            "SerialNumber",
+            "Serial",
+            "FirmwareSerial"
+        )
+
+        val espChipId = deviceJson.optNullableLong("ESPChipID")
+
         val ip = deviceJson
             .optString("IP", sourceIp)
             .ifBlank {
                 sourceIp
             }
 
-        val finalId = if (idRaw > 0L) {
-            idRaw
-        } else {
-            createStableIdFromIp(ip)
+        val finalId = when {
+            idRaw > 0L -> idRaw
+            espChipId != null && espChipId > 0L -> espChipId
+            !deviceUid.isNullOrBlank() -> createStableIdFromIdentity(deviceUid)
+            !serialNumber.isNullOrBlank() -> createStableIdFromIdentity(serialNumber)
+            !macAddress.isNullOrBlank() -> createStableIdFromIdentity(macAddress)
+            else -> createStableIdFromIp(ip)
         }
 
         if (finalId <= 0L) {
@@ -285,6 +312,10 @@ object UdpDeviceDiscovery {
 
             aquaName = aquaName,
             name = name,
+
+            deviceUid = deviceUid,
+            macAddress = macAddress,
+            serialNumber = serialNumber,
 
             productId = productId,
             productFamily = productFamily,
@@ -483,7 +514,64 @@ object UdpDeviceDiscovery {
     private fun createStableIdFromIp(
         ip: String
     ): Long {
-        return ip.hashCode().toLong() and 0x00000000FFFFFFFFL
+        return createStableIdFromIdentity(
+            identity = "legacy-ip:$ip"
+        )
+    }
+
+    private fun createStableIdFromIdentity(
+        identity: String
+    ): Long {
+        val normalized = identity.trim().lowercase(Locale.US)
+
+        if (normalized.isBlank()) {
+            return 0L
+        }
+
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(normalized.toByteArray(StandardCharsets.UTF_8))
+
+        var value = 0L
+        for (index in 0 until 8) {
+            value = (value shl 8) or (digest[index].toLong() and 0xFFL)
+        }
+
+        return (value and Long.MAX_VALUE).takeIf { stableId ->
+            stableId > 0L
+        } ?: 0L
+    }
+
+    private fun JSONObject.optNullableLong(
+        key: String
+    ): Long? {
+        if (!has(key) || isNull(key)) {
+            return null
+        }
+
+        return try {
+            when (val value = get(key)) {
+                is Number -> value.toLong()
+                is String -> value.trim().toLongOrNull()
+                else -> null
+            }
+        } catch (exception: Exception) {
+            null
+        }
+    }
+
+    private fun JSONObject.firstNonBlankString(
+        vararg keys: String
+    ): String? {
+        keys.forEach { key ->
+            val value = optString(key, "")
+                .trim()
+
+            if (value.isNotBlank()) {
+                return value
+            }
+        }
+
+        return null
     }
 
     private fun JSONObject.optNullableInt(
