@@ -541,7 +541,7 @@
     android:id="@+id/deviceLightProgramEditorFragment"
     android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.DeviceLightProgramEditorFragment"
     android:label="@string/screen_title_light_program_editor"
-	tools:layout="@layout/fragment_device_light_program_editör">
+	tools:layout="@layout/fragment_device_light_program_editor">
 
     <argument
         android:name="deviceId"
