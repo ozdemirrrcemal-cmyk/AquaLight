@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
@@ -38,6 +39,10 @@ class DeviceLightManualViewModel(
 
     private val appContext =
         application.applicationContext
+
+    init {
+        LightManualRuntimeStore.configure(appContext)
+    }
 
     private val lightPresetDataStoreManager =
         LightPresetDataStoreManager(appContext)
@@ -163,11 +168,6 @@ class DeviceLightManualViewModel(
                 }
             }
         }
-
-        LightDeviceLiveRefreshManager.refreshNow(
-            context = appContext,
-            deviceId = deviceId
-        )
     }
 
     fun setPowerOn(
@@ -769,13 +769,23 @@ class DeviceLightManualViewModel(
         val isManualOverrideActive =
             state.isManualMode || state.isManualScene
 
+        val shouldRestoreManualFromDevice =
+            liveState.hasLiveChannels &&
+                !preservePreviewValues &&
+                !isManualOverrideActive &&
+                liveState.looksLikeManualOutput()
+
         val shouldApplyLiveToManualControls =
             liveState.hasLiveChannels &&
                 !preservePreviewValues &&
-                isManualOverrideActive
+                (isManualOverrideActive || shouldRestoreManualFromDevice)
 
         val liveChannelState = if (shouldApplyLiveToManualControls) {
             state.copy(
+                isManualMode = true,
+                isManualScene = false,
+                activeSceneName = null,
+                activeSceneSource = null,
                 isPowerOn = liveState.actualPowerWatts
                     ?.let { watts ->
                         watts > 0.0
@@ -882,6 +892,28 @@ class DeviceLightManualViewModel(
             DeviceConnectionStatus.STALE -> "Connection is unstable · controls disabled"
             DeviceConnectionStatus.OFFLINE -> "Device offline · controls disabled"
             DeviceConnectionStatus.UNKNOWN -> "Waiting for device connection"
+        }
+    }
+
+    private fun LightDeviceLiveState.looksLikeManualOutput(): Boolean {
+        val hasAnyOutput = channels.any { channel ->
+            (channel.valuePercent ?: 0) > 0
+        }
+
+        if (!hasAnyOutput) {
+            return false
+        }
+
+        val regimes = channels.map { channel ->
+            channel.regime.trim().lowercase()
+        }
+
+        return regimes.any { regime ->
+            regime.contains("manual") ||
+                regime.contains("vmanual") ||
+                regime == "1" ||
+                regime == "m" ||
+                regime.contains("scene")
         }
     }
 
