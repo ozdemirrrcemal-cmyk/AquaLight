@@ -8,7 +8,6 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -612,9 +611,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         }
 
         navController.navigate(
-            R.id.action_tankSettingsFragment_to_tankDetailFragment,
-            bundleOf(
-                "tankId" to tankId
+            TankSettingsFragmentDirections.actionTankSettingsFragmentToTankDetailFragment(
+                tankId = tankId
             )
         )
 
@@ -633,31 +631,17 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         selectTab(SettingsTab.DETAILS)
 
         navigateFromTankSettings(
-            actionId = R.id.action_tankSettingsFragment_to_materialPickerFragment,
-            args = Bundle().apply {
-                putString(
-                    MaterialPickerFragment.ARG_MODE,
-                    MaterialPickerFragment.MODE_SETTINGS
-                )
-                putLong(
-                    MaterialPickerFragment.ARG_TANK_ID,
-                    tankId
-                )
-                putString(
-                    MaterialPickerFragment.ARG_CATEGORY_KEY,
-                    categoryKey
-                )
-                putString(
-                    MaterialPickerFragment.ARG_CATEGORY_TITLE,
-                    categoryTitle
-                )
-            }
+            TankSettingsFragmentDirections.actionTankSettingsFragmentToMaterialPickerFragment(
+                argMode = MaterialPickerFragment.MODE_SETTINGS,
+                argTankId = tankId,
+                argCategoryKey = categoryKey,
+                argCategoryTitle = categoryTitle
+            )
         )
     }
 
     private fun navigateFromTankSettings(
-        actionId: Int,
-        args: Bundle
+        directions: NavDirections
     ) {
         val navController = findNavController()
 
@@ -668,8 +652,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         saveSelectedTabState(selectedTab)
 
         navController.navigate(
-            actionId,
-            args
+            directions
         )
     }
 

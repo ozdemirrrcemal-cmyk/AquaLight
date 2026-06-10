@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -302,9 +301,8 @@ class TaskDetailFragment :
     task: CareTaskUi
   ) {
     findNavController().navigate(
-      R.id.action_taskDetailFragment_to_addCareTaskFragment,
-      bundleOf(
-        "taskId" to task.id
+      TaskDetailFragmentDirections.actionTaskDetailFragmentToAddCareTaskFragment(
+        taskId = task.id
       )
     )
   }

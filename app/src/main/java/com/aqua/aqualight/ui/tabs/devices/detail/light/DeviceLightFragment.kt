@@ -91,17 +91,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 return@setOnClickListener
             }
 
-            val bundle =
-                Bundle().apply {
-                    putLong(
-                        ARG_DEVICE_ID,
-                        deviceId
-                    )
-                }
-
             findNavController().navigate(
-                R.id.action_deviceLightFragment_to_deviceLightManualFragment,
-                bundle
+                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightManualFragment(
+                    deviceId = deviceId
+                )
             )
         }
 
@@ -110,17 +103,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 return@setOnClickListener
             }
 
-            val bundle =
-                Bundle().apply {
-                    putLong(
-                        ARG_DEVICE_ID,
-                        deviceId
-                    )
-                }
-
             findNavController().navigate(
-                R.id.action_deviceLightFragment_to_deviceLightProgramsFragment,
-                bundle
+                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightProgramsFragment(
+                    deviceId = deviceId
+                )
             )
         }
 
@@ -129,17 +115,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 return@setOnClickListener
             }
 
-            val bundle =
-                Bundle().apply {
-                    putLong(
-                        ARG_DEVICE_ID,
-                        deviceId
-                    )
-                }
-
             findNavController().navigate(
-                R.id.action_deviceLightFragment_to_deviceLightQuickSetupFragment,
-                bundle
+                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightQuickSetupFragment(
+                    deviceId = deviceId
+                )
             )
         }
 
@@ -148,17 +127,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 return@setOnClickListener
             }
 
-            val bundle =
-                Bundle().apply {
-                    putLong(
-                        ARG_DEVICE_ID,
-                        deviceId
-                    )
-                }
-
             findNavController().navigate(
-                R.id.action_deviceLightFragment_to_deviceLightPresetsFragment,
-                bundle
+                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightPresetsFragment(
+                    deviceId = deviceId
+                )
             )
         }
     }
@@ -168,17 +140,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             return
         }
 
-        val bundle =
-            Bundle().apply {
-                putLong(
-                    ARG_DEVICE_ID,
-                    deviceId
-                )
-            }
-
         findNavController().navigate(
-            R.id.action_deviceLightFragment_to_deviceLightSettingsFragment,
-            bundle
+            DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightSettingsFragment(
+                deviceId = deviceId
+            )
         )
     }
 

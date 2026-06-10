@@ -5,6 +5,10 @@
   android:id="@+id/nav_app"
   app:startDestination="@id/aquariumFragment">
 
+  <action
+    android:id="@+id/action_global_taskDetailFragment"
+    app:destination="@id/taskDetailFragment" />
+
   <!-- 🐠 Aquarium Tab -->
   <fragment
     android:id="@+id/aquariumFragment"
@@ -127,6 +131,11 @@
     <argument
       android:name="tankId"
       app:argType="long" />
+
+    <argument
+      android:name="startTab"
+      app:argType="string"
+      android:defaultValue="" />
 
     <action
       android:id="@+id/action_tankSettingsFragment_to_materialPickerFragment"
@@ -353,6 +362,26 @@
     android:name="com.aqua.aqualight.ui.tabs.devices.setup.DeviceSetupFragment"
     android:label="@string/screen_title_device_setup"
     tools:layout="@layout/fragment_device_setup">
+
+    <argument
+        android:name="setupSsid"
+        app:argType="string"
+        android:defaultValue="" />
+
+    <argument
+        android:name="displayName"
+        app:argType="string"
+        android:defaultValue="Device" />
+
+    <argument
+        android:name="familyName"
+        app:argType="string"
+        android:defaultValue="Aqua device" />
+
+    <argument
+        android:name="deviceType"
+        app:argType="string"
+        android:defaultValue="unknown" />
 
     <action
         android:id="@+id/action_deviceSetupFragment_to_deviceRouterFragment"
@@ -623,6 +652,10 @@
     android:label="@string/screen_title_dosing"
     tools:layout="@layout/fragment_device_dosing">
 
+    <argument android:name="deviceId" app:argType="long" />
+    <argument android:name="deviceIp" app:argType="string" android:defaultValue="" />
+    <argument android:name="deviceTitle" app:argType="string" android:defaultValue="" />
+
 </fragment>
 
 
@@ -870,7 +903,14 @@
     android:id="@+id/reAuthenticateFragment"
     android:name="com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment"
     android:label="@string/screen_title_re_authenticate"
-    tools:layout="@layout/fragment_re_authenticate" />
+    tools:layout="@layout/fragment_re_authenticate">
+
+    <argument
+        android:name="arg_action"
+        app:argType="string"
+        android:defaultValue="delete_account" />
+
+  </fragment>
 
   <!-- 🌐 Language / About / Legal -->
   <fragment

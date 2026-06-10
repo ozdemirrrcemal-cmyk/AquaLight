@@ -148,7 +148,7 @@ class UserInfoFragment :
 
         rowAddress.setOnClickListener {
             findNavController().navigate(
-                R.id.action_userInfoFragment_to_userAddressFragment
+                UserInfoFragmentDirections.actionUserInfoFragmentToUserAddressFragment()
             )
         }
 

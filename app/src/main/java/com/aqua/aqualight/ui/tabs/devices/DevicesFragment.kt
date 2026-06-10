@@ -256,44 +256,18 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private fun openAddDeviceScreen() {
         findNavController().navigate(
-            R.id.action_devicesFragment_to_deviceAddFragment
+            DevicesFragmentDirections.actionDevicesFragmentToDeviceAddFragment()
         )
     }
 
     private fun openDeviceMenu(
         device: DeviceCardUi
     ) {
-        val args =
-            Bundle().apply {
-                putLong(
-                    "deviceId",
-                    device.id
-                )
-
-                putString(
-                    "deviceName",
-                    device.displayName
-                )
-
-                putString(
-                    "deviceAquaName",
-                    device.familyName
-                )
-
-                putString(
-                    "deviceIp",
-                    device.ip
-                )
-
-                putString(
-                    "deviceSerial",
-                    device.serial
-                )
-            }
-
         findNavController().navigate(
-            R.id.action_devicesFragment_to_deviceRouterFragment,
-            args
+            DevicesFragmentDirections.actionDevicesFragmentToDeviceRouterFragment(
+                deviceId = device.id,
+                deviceIp = device.ip
+            )
         )
     }
 

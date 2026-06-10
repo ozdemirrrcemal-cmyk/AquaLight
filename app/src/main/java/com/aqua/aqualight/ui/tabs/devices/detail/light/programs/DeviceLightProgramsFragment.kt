@@ -328,17 +328,11 @@ Fragment(R.layout.fragment_device_light_programs) {
             return
         }
 
-        val bundle = Bundle().apply {
-            putLong(ARG_DEVICE_ID, deviceId)
-
-            if (!programId.isNullOrBlank()) {
-                putString(ARG_PROGRAM_ID, programId)
-            }
-        }
-
         findNavController().navigate(
-            R.id.action_deviceLightProgramsFragment_to_deviceLightProgramEditorFragment,
-            bundle
+            DeviceLightProgramsFragmentDirections.actionDeviceLightProgramsFragmentToDeviceLightProgramEditorFragment(
+                deviceId = deviceId,
+                programId = programId
+            )
         )
     }
 

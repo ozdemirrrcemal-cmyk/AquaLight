@@ -8,7 +8,6 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -77,9 +76,8 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         isOpeningPlantTagScreen = true
 
         navController.navigate(
-            R.id.action_tankDetailFragment_to_tankDetailPlantTagFragment,
-            bundleOf(
-                "tankId" to tankId
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailPlantTagFragment(
+                tankId = tankId
             )
         )
     }

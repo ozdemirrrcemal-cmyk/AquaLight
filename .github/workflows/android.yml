@@ -62,7 +62,9 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run Architecture Guard
-        run: python3 tools/architecture_guard.py
+        run: |
+          python3 tools/architecture_guard.py
+          python3 tools/navigation_guard.py
 
       # İsteğe bağlı: bağımlılık modül cache’lerini temizle (refresh-deps)
       - name: 🔄 Force refresh dependencies (optional)

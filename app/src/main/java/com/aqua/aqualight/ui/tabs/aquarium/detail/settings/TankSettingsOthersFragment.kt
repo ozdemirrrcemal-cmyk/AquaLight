@@ -199,7 +199,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
                 if (!popped) {
                     findNavController().navigate(
-                        R.id.action_tankSettingsFragment_to_aquariumFragment
+                        TankSettingsFragmentDirections.actionTankSettingsFragmentToAquariumFragment()
                     )
                 }
             } catch (exception: Exception) {
@@ -318,7 +318,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
 
                 if (!popped) {
                     findNavController().navigate(
-                        R.id.action_tankSettingsFragment_to_aquariumFragment
+                        TankSettingsFragmentDirections.actionTankSettingsFragmentToAquariumFragment()
                     )
                 }
             } catch (exception: Exception) {

@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -11,8 +10,9 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.access.DeviceAccessGuard
 import com.aqua.aqualight.data.devices.access.DeviceOpenResult
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerRoute
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
+import com.aqua.aqualight.data.devices.catalog.toControllerRoute
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -42,10 +42,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             return
         }
 
-        val deviceId = requireArguments().getLong(
-            ARG_DEVICE_ID,
-            INVALID_DEVICE_ID
-        )
+        val deviceId = DeviceRouterFragmentArgs.fromBundle(requireArguments()).deviceId
 
         if (deviceId <= 0L) {
             openUnsupportedDevice(
@@ -153,58 +150,50 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         controllerTitle: String,
         definition: AquaDeviceDefinition
     ) {
-        when (definition.controllerType) {
-            AquaDeviceControllerType.GENERIC_LIGHT -> {
+        when (definition.controllerType.toControllerRoute()) {
+            AquaDeviceControllerRoute.LIGHT -> {
                 findNavController().navigate(
-                    R.id.action_deviceRouterFragment_to_deviceLightFragment,
-                    bundleOf(
-                        ARG_DEVICE_ID to deviceId,
-                        ARG_DEVICE_TITLE to controllerTitle
+                    DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceLightFragment(
+                        deviceId = deviceId,
+                        deviceTitle = controllerTitle
                     )
                 )
             }
 
-            AquaDeviceControllerType.GENERIC_DOSING,
-            AquaDeviceControllerType.CUSTOM_DOSING_4CH -> {
+            AquaDeviceControllerRoute.DOSING -> {
                 findNavController().navigate(
-                    R.id.action_deviceRouterFragment_to_deviceDosingFragment,
-                    bundleOf(
-                        ARG_DEVICE_ID to deviceId,
-                        ARG_DEVICE_IP to deviceIp,
-                        ARG_DEVICE_TITLE to controllerTitle
+                    DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceDosingFragment(
+                        deviceId = deviceId,
+                        deviceIp = deviceIp,
+                        deviceTitle = controllerTitle
                     )
                 )
             }
 
-            AquaDeviceControllerType.GENERIC_TIMER,
-            AquaDeviceControllerType.CUSTOM_TIMER_MULTI_CONTROL,
-            AquaDeviceControllerType.CUSTOM_TIMER_SCENE_PRO -> {
+            AquaDeviceControllerRoute.TIMER -> {
                 findNavController().navigate(
-                    R.id.action_deviceRouterFragment_to_deviceTimerFragment,
-                    bundleOf(
-                        ARG_DEVICE_ID to deviceId,
-                        ARG_DEVICE_IP to deviceIp,
-                        ARG_DEVICE_TITLE to controllerTitle
+                    DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceTimerFragment(
+                        deviceId = deviceId,
+                        deviceIp = deviceIp,
+                        deviceTitle = controllerTitle
                     )
                 )
             }
 
-            AquaDeviceControllerType.GENERIC_COOLING,
-            AquaDeviceControllerType.CUSTOM_COOLING_ADVANCED -> {
+            AquaDeviceControllerRoute.COOLING -> {
                 findNavController().navigate(
-                    R.id.action_deviceRouterFragment_to_deviceCoolingFragment,
-                    bundleOf(
-                        ARG_DEVICE_ID to deviceId,
-                        ARG_DEVICE_IP to deviceIp,
-                        ARG_DEVICE_TITLE to controllerTitle
+                    DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceCoolingFragment(
+                        deviceId = deviceId,
+                        deviceIp = deviceIp,
+                        deviceTitle = controllerTitle
                     )
                 )
             }
 
-            else -> {
+            AquaDeviceControllerRoute.UNSUPPORTED -> {
                 openUnsupportedDevice(
                     title = routerTitle,
-                    message = "This device controller will be added in the new professional navigation structure."
+                    message = "This device controller is not supported by this app version."
                 )
             }
         }
@@ -215,10 +204,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         message: String
     ) {
         findNavController().navigate(
-            R.id.action_deviceRouterFragment_to_unsupportedDeviceFragment,
-            bundleOf(
-                ARG_DEVICE_TITLE to title,
-                ARG_MESSAGE to message
+            DeviceRouterFragmentDirections.actionDeviceRouterFragmentToUnsupportedDeviceFragment(
+                deviceTitle = title,
+                message = message
             )
         )
     }

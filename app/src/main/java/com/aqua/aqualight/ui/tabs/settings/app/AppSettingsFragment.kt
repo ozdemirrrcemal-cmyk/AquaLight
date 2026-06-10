@@ -130,13 +130,13 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
             cardLanguage.setOnClickListener {
                 findNavController().navigate(
-                    R.id.action_appSettingsFragment_to_languageSettingsFragment
+                    AppSettingsFragmentDirections.actionAppSettingsFragmentToLanguageSettingsFragment()
                 )
             }
 
             cardAbout.setOnClickListener {
                 findNavController().navigate(
-                    R.id.action_appSettingsFragment_to_aboutAppFragment
+                    AppSettingsFragmentDirections.actionAppSettingsFragmentToAboutAppFragment()
                 )
             }
         }

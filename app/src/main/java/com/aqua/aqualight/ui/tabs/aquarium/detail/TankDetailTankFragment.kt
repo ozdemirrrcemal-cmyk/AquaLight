@@ -90,20 +90,19 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
     private fun openTankSettings() {
         findNavController().navigate(
-            R.id.action_tankDetailFragment_to_tankSettingsFragment,
-            Bundle().apply {
-                putLong("tankId", tankId)
-            }
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
+                tankId = tankId,
+                startTab = ""
+            )
         )
     }
 
     private fun openTankSettingsDetails() {
         findNavController().navigate(
-            R.id.action_tankDetailFragment_to_tankSettingsFragment,
-            Bundle().apply {
-                putLong("tankId", tankId)
-                putString("startTab", "details")
-            }
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
+                tankId = tankId,
+                startTab = "details"
+            )
         )
     }
 

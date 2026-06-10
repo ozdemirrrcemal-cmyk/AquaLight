@@ -721,13 +721,11 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private fun openDeviceMenu(
         deviceId: Long
     ) {
-        val args = Bundle().apply {
-            putLong("deviceId", deviceId)
-        }
-
         findNavController().navigate(
-            R.id.action_deviceSetupFragment_to_deviceRouterFragment,
-            args
+            DeviceSetupFragmentDirections.actionDeviceSetupFragmentToDeviceRouterFragment(
+                deviceId = deviceId,
+                deviceIp = ""
+            )
         )
     }
 

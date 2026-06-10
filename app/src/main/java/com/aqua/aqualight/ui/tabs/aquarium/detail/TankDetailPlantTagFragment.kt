@@ -197,9 +197,8 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
     private fun openPlantPickerScreen() {
         findNavController().navigate(
-            R.id.action_tankDetailPlantTagFragment_to_plantPickerFragment,
-            bundleOf(
-                PlantPickerFragment.ARG_USE_NAV_RESULT to true
+            TankDetailPlantTagFragmentDirections.actionTankDetailPlantTagFragmentToPlantPickerFragment(
+                useNavResult = true
             )
         )
     }

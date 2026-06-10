@@ -79,19 +79,21 @@ class LogoutFragment :
     private fun setupNavigationRows() {
         binding.rowChangePassword.setOnClickListener {
             findNavController().navigate(
-                R.id.action_logoutFragment_to_reAuthenticateFragment
+                LogoutFragmentDirections.actionLogoutFragmentToReAuthenticateFragment(
+                    argAction = ReAuthenticateFragment.ACTION_CHANGE_PASSWORD
+                )
             )
         }
 
         binding.rowChangeEmail.setOnClickListener {
             findNavController().navigate(
-                R.id.action_logoutFragment_to_changeEmailFragment
+                LogoutFragmentDirections.actionLogoutFragmentToChangeEmailFragment()
             )
         }
 
         binding.rowSecuritySettings.setOnClickListener {
             findNavController().navigate(
-                R.id.action_logoutFragment_to_securitySettingsFragment
+                LogoutFragmentDirections.actionLogoutFragmentToSecuritySettingsFragment()
             )
         }
     }
@@ -190,17 +192,10 @@ class LogoutFragment :
     }
 
     private fun navigateToReAuthForDeleteAccount() {
-        val bundle =
-            Bundle().apply {
-                putString(
-                    ReAuthenticateFragment.ARG_ACTION,
-                    ReAuthenticateFragment.ACTION_DELETE_ACCOUNT
-                )
-            }
-
         findNavController().navigate(
-            R.id.action_logoutFragment_to_reAuthenticateFragment,
-            bundle
+            LogoutFragmentDirections.actionLogoutFragmentToReAuthenticateFragment(
+                argAction = ReAuthenticateFragment.ACTION_DELETE_ACCOUNT
+            )
         )
     }
 

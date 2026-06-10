@@ -84,7 +84,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                             showDeleteConfirmDialog()
                         } else {
                             findNavController().navigate(
-                                R.id.action_aquariumFragment_to_createTankFragment
+                                AquariumFragmentDirections.actionAquariumFragmentToCreateTankFragment()
                             )
                         }
                     }
@@ -176,13 +176,9 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
             )
         } else {
             findNavController().navigate(
-                R.id.action_aquariumFragment_to_tankDetailFragment,
-                Bundle().apply {
-                    putLong(
-                        "tankId",
-                        tank.id
-                    )
-                }
+                AquariumFragmentDirections.actionAquariumFragmentToTankDetailFragment(
+                    tankId = tank.id
+                )
             )
         }
     }

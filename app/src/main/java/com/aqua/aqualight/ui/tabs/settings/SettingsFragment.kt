@@ -140,55 +140,55 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun setupClickListeners() = with(binding) {
     ivProfilePhoto.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_editProfileFragment
+            SettingsFragmentDirections.actionSettingsFragmentToEditProfileFragment()
         )
     }
 
     rowUserInfo.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_userInfoFragment
+            SettingsFragmentDirections.actionSettingsFragmentToUserInfoFragment()
         )
     }
 
     rowDeviceStatus.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_deviceStatusFragment
+            SettingsFragmentDirections.actionSettingsFragmentToDeviceStatusFragment()
         )
     }
 
     rowNetwork.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_networkFragment
+            SettingsFragmentDirections.actionSettingsFragmentToNetworkFragment()
         )
     }
 
     rowSettings.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_appSettingsFragment
+            SettingsFragmentDirections.actionSettingsFragmentToAppSettingsFragment()
         )
     }
 
     rowUsage.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_usageFragment
+            SettingsFragmentDirections.actionSettingsFragmentToUsageFragment()
         )
     }
 
     rowPrivacy.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_privacyFragment
+            SettingsFragmentDirections.actionSettingsFragmentToPrivacyFragment()
         )
     }
 
     rowFeedback.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_feedbackFragment
+            SettingsFragmentDirections.actionSettingsFragmentToFeedbackFragment()
         )
     }
 
     rowLogout.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_logoutFragment
+            SettingsFragmentDirections.actionSettingsFragmentToLogoutFragment()
         )
     }
 }

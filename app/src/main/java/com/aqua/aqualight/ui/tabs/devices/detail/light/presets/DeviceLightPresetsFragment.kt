@@ -354,10 +354,6 @@ class DeviceLightPresetsFragment :
     }
 
     private fun navigateToManualControl() {
-        val bundle = Bundle().apply {
-            putLong(ARG_DEVICE_ID, deviceId)
-        }
-
         val navOptions = NavOptions.Builder()
             .setPopUpTo(
                 R.id.deviceLightPresetsFragment,
@@ -366,8 +362,9 @@ class DeviceLightPresetsFragment :
             .build()
 
         findNavController().navigate(
-            R.id.action_deviceLightPresetsFragment_to_deviceLightManualFragment,
-            bundle,
+            DeviceLightPresetsFragmentDirections.actionDeviceLightPresetsFragmentToDeviceLightManualFragment(
+                deviceId = deviceId
+            ),
             navOptions
         )
     }

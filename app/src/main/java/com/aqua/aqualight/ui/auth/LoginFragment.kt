@@ -180,14 +180,14 @@ class LoginFragment : Fragment() {
             btnSignIn.setOnClickListener {
 
                 findNavController().navigate(
-                    R.id.action_loginFragment_to_signInFragment
+                    LoginFragmentDirections.actionLoginFragmentToSignInFragment()
                 )
             }
 
             btnRegister.setOnClickListener {
 
                 findNavController().navigate(
-                    R.id.action_loginFragment_to_registerFragment
+                    LoginFragmentDirections.actionLoginFragmentToRegisterFragment()
                 )
             }
         }

@@ -15,7 +15,6 @@ import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesAdapter
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectFragment
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
 import kotlinx.coroutines.launch
@@ -153,46 +152,23 @@ private fun showRemoveDeviceFromTankSheet(
 }
 
     private fun openTankDeviceSelectScreen() {
-        val args =
-            Bundle().apply {
-                putLong(
-                    TankDeviceSelectFragment.ARG_TANK_ID,
-                    tankId
-                )
-            }
-
         findNavController().navigate(
-            R.id.action_tankDetailFragment_to_tankDeviceSelectFragment,
-            args
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankDeviceSelectFragment(
+                tankId = tankId
+            )
         )
     }
 
     private fun openDeviceMenuScreen(
-    device: TankAssignedDeviceUi
-) {
-    val args =
-        Bundle().apply {
-            putLong(
-                ARG_DEVICE_ID,
-                device.deviceId
+        device: TankAssignedDeviceUi
+    ) {
+        findNavController().navigate(
+            TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
+                deviceId = device.deviceId,
+                deviceIp = ""
             )
-
-            putString(
-                ARG_DEVICE_TITLE,
-                device.title
-            )
-
-            putString(
-                ARG_DEVICE_IP,
-                ""
-            )
-        }
-
-    findNavController().navigate(
-        R.id.action_tankDetailFragment_to_deviceRouterFragment,
-        args
-    )
-}
+        )
+    }
 
     override fun onDestroyView() {
         binding.rvTankDevices.adapter =

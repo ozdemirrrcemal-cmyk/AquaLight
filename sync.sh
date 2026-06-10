@@ -5,7 +5,7 @@ set -u
 #   ./sync.sh [debug|release] "commit mesajı"
 # Default: debug, branch -> main
 
-AIDE_DIR="/storage/internal/project/AquaLight"
+AIDE_DIR="/storage/internal_new/project/AquaLight"
 GIT_DIR="$HOME/projects/AquaLight"
 
 MODE=${1:-debug}
