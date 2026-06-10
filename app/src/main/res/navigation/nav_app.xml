@@ -564,6 +564,28 @@
         app:popExitAnim="@anim/nav_slide_out_right"
         />
 
+    <action
+        android:id="@+id/action_deviceLightProgramsFragment_to_deviceLightAutomationFragment"
+        app:destination="@id/deviceLightAutomationFragment"
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightAutomationFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.automation.DeviceLightAutomationFragment"
+    android:label="Light Automation"
+    tools:layout="@layout/fragment_device_light_automation">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
 </fragment>
 
 <fragment

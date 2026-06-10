@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.devices.light.programs.model
+package com.aqua.aqualight.data.devices.light.automation.model
 
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
 

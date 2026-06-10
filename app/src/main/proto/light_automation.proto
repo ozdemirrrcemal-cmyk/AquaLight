@@ -1,0 +1,10 @@
+syntax = "proto3";
+option java_package = "com.aqua.aqualight.data.devices.light.automation";
+option java_multiple_files = true;
+message LightAutomationPreferences { repeated LightAutomationDeviceSettings devices = 1; }
+message LightAutomationDeviceSettings { int64 device_id = 1; AutomationMoonlightSettings moonlight = 2; AutomationCloudSimulationSettings cloud_simulation = 3; int64 updated_at = 4; bool pending_device_sync = 5; }
+message AutomationTimePoint { int32 hour = 1; int32 minute = 2; }
+message AutomationMoonlightSettings { bool enabled = 1; bool follow_program_end = 2; AutomationTimePoint start_time = 3; AutomationTimePoint end_time = 4; AutomationMoonlightChannel channel = 5; int32 intensity_percent = 6; }
+message AutomationCloudSimulationSettings { bool enabled = 1; int32 coverage_percent = 2; AutomationCloudFrequency frequency = 3; }
+enum AutomationMoonlightChannel { AUTOMATION_MOONLIGHT_CHANNEL_BLUE = 0; AUTOMATION_MOONLIGHT_CHANNEL_WHITE = 1; AUTOMATION_MOONLIGHT_CHANNEL_BLUE_WHITE = 2; }
+enum AutomationCloudFrequency { AUTOMATION_CLOUD_FREQUENCY_RARE = 0; AUTOMATION_CLOUD_FREQUENCY_NORMAL = 1; AUTOMATION_CLOUD_FREQUENCY_FREQUENT = 2; }

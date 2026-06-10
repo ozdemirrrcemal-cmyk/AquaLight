@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet
+package com.aqua.aqualight.ui.tabs.devices.detail.light.automation.sheet
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -7,8 +7,8 @@ import android.widget.TextView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.BottomSheetLightMoonlightBinding
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.programs.model.MoonlightChannel
-import com.aqua.aqualight.data.devices.light.programs.model.MoonlightSettings
+import com.aqua.aqualight.data.devices.light.automation.model.MoonlightChannel
+import com.aqua.aqualight.data.devices.light.automation.model.MoonlightSettings
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class LightMoonlightSheet private constructor(

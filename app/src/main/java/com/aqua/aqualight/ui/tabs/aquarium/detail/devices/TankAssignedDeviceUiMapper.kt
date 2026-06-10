@@ -12,7 +12,6 @@ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
-import com.aqua.aqualight.data.devices.light.programs.model.MoonlightChannel
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import java.util.Calendar
@@ -146,20 +145,8 @@ class TankAssignedDeviceUiMapper {
                 ?: todayPrograms.firstOrNull()
                 ?: activePrograms.firstOrNull()
 
-        val moonlightOverride =
-            if (modeOverride == null) {
-                buildMoonlightOverride(
-                    programs = todayPrograms.ifEmpty {
-                        activePrograms
-                    },
-                    currentMinute = currentMinute
-                )
-            } else {
-                null
-            }
-
         val effectiveModeOverride =
-            modeOverride ?: moonlightOverride
+            if (online) modeOverride else null
 
         val outputPercent =
             when {
@@ -212,176 +199,6 @@ class TankAssignedDeviceUiMapper {
                 modeOverride = effectiveModeOverride
             )
         )
-    }
-
-    private fun buildMoonlightOverride(
-        programs: List<SavedLightProgram>,
-        currentMinute: Int
-    ): TankLightModeOverride? {
-        return programs.firstNotNullOfOrNull { program ->
-            buildMoonlightOverrideForProgram(
-                program = program,
-                currentMinute = currentMinute
-            )
-        }
-    }
-
-    private fun buildMoonlightOverrideForProgram(
-        program: SavedLightProgram,
-        currentMinute: Int
-    ): TankLightModeOverride? {
-        val settings =
-            program.draft.moonlightSettings
-
-        if (!settings.enabled) {
-            return null
-        }
-
-        val startPoint =
-            if (settings.followProgramEnd) {
-                program.draft.end
-            } else {
-                settings.startTime
-            }
-
-        val endPoint =
-            settings.endTime
-
-        val startMinute =
-            normalizeMinute(
-                minute = startPoint.totalMinutes
-            )
-
-        val endMinute =
-            normalizeMinute(
-                minute = endPoint.totalMinutes
-            )
-
-        val safeCurrentMinute =
-            normalizeMinute(
-                minute = currentMinute
-            )
-
-        if (
-            !isMinuteInRange(
-                currentMinute = safeCurrentMinute,
-                startMinute = startMinute,
-                endMinute = endMinute
-            )
-        ) {
-            return null
-        }
-
-        val intensity =
-            settings.intensityPercent.coerceIn(
-                0,
-                100
-            )
-
-        val blue =
-            when (settings.channel) {
-                MoonlightChannel.BLUE,
-                MoonlightChannel.BLUE_WHITE -> {
-                    intensity
-                }
-
-                MoonlightChannel.WHITE -> {
-                    0
-                }
-            }
-
-        val white =
-            when (settings.channel) {
-                MoonlightChannel.WHITE,
-                MoonlightChannel.BLUE_WHITE -> {
-                    intensity
-                }
-
-                MoonlightChannel.BLUE -> {
-                    0
-                }
-            }
-
-        return TankLightModeOverride(
-            mode = TankLightCardMode.MOONLIGHT,
-            title = "Moonlight Mode",
-            outputPercent = intensity,
-            red = 0,
-            green = 0,
-            blue = blue,
-            white = white,
-            leftText = startPoint.label,
-            rightText = endPoint.label,
-            timelineProgressPercent = moonlightProgressPercent(
-                currentMinute = safeCurrentMinute,
-                startMinute = startMinute,
-                endMinute = endMinute
-            )
-        )
-    }
-
-    private fun isMinuteInRange(
-        currentMinute: Int,
-        startMinute: Int,
-        endMinute: Int
-    ): Boolean {
-        if (startMinute == endMinute) {
-            return false
-        }
-
-        return if (startMinute < endMinute) {
-            currentMinute >= startMinute && currentMinute < endMinute
-        } else {
-            currentMinute >= startMinute || currentMinute < endMinute
-        }
-    }
-
-    private fun moonlightProgressPercent(
-        currentMinute: Int,
-        startMinute: Int,
-        endMinute: Int
-    ): Int {
-        if (startMinute == endMinute) {
-            return 0
-        }
-
-        val duration =
-            if (endMinute > startMinute) {
-                endMinute - startMinute
-            } else {
-                (MINUTES_PER_DAY - startMinute) + endMinute
-            }
-
-        if (duration <= 0) {
-            return 0
-        }
-
-        val elapsed =
-            if (currentMinute >= startMinute) {
-                currentMinute - startMinute
-            } else {
-                (MINUTES_PER_DAY - startMinute) + currentMinute
-            }
-
-        return ((elapsed.toDouble() / duration.toDouble()) * 100.0)
-            .roundToInt()
-            .coerceIn(
-                0,
-                100
-            )
-    }
-
-    private fun normalizeMinute(
-        minute: Int
-    ): Int {
-        val value =
-            minute % MINUTES_PER_DAY
-
-        return if (value < 0) {
-            value + MINUTES_PER_DAY
-        } else {
-            value
-        }
     }
 
     private fun buildLightChannels(

@@ -31,13 +31,6 @@ object LightProgramTimelineEvaluator {
                 )
             }
 
-            LightProgramPhaseType.MOONLIGHT -> {
-                phase.channelValues
-            }
-
-            LightProgramPhaseType.CLOUD_OVERLAY -> {
-                phase.channelValues
-            }
         }
     }
 

@@ -19,8 +19,6 @@ message LightProgram {
   RepeatMode repeat_mode = 7;
   repeated int32 selected_days = 8;
 
-  MoonlightSettings moonlight = 9;
-  CloudSimulationSettings cloud_simulation = 10;
   TransitionMode transition_mode = 11;
 
   int64 created_at = 12;
@@ -46,38 +44,11 @@ message LightChannelValues {
   int32 white = 4;
 }
 
-message MoonlightSettings {
-  bool enabled = 1;
-  bool follow_program_end = 2;
-  TimePoint start_time = 3;
-  TimePoint end_time = 4;
-  MoonlightChannel channel = 5;
-  int32 intensity_percent = 6;
-}
-
-message CloudSimulationSettings {
-  bool enabled = 1;
-  int32 coverage_percent = 2;
-  CloudFrequency frequency = 3;
-}
-
 enum RepeatMode {
   REPEAT_MODE_EVERY = 0;
   REPEAT_MODE_WEEK = 1;
   REPEAT_MODE_WEEKEND = 2;
   REPEAT_MODE_CUSTOM = 3;
-}
-
-enum MoonlightChannel {
-  MOONLIGHT_CHANNEL_BLUE = 0;
-  MOONLIGHT_CHANNEL_WHITE = 1;
-  MOONLIGHT_CHANNEL_BLUE_WHITE = 2;
-}
-
-enum CloudFrequency {
-  CLOUD_FREQUENCY_RARE = 0;
-  CLOUD_FREQUENCY_NORMAL = 1;
-  CLOUD_FREQUENCY_FREQUENT = 2;
 }
 
 enum TransitionMode {

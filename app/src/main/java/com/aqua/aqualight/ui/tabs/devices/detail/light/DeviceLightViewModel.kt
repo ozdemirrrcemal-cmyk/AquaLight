@@ -514,39 +514,14 @@ class DeviceLightViewModel(
                 appDay = previousAppDay
             )
 
-            timeline.phases.forEach {
-                phase ->
-                when (phase.type) {
-                    LightProgramPhaseType.MAIN_CURVE -> {
-                        if (scheduledToday) {
-                            result += buildMainProgramGraphSegment(
-                                program = program,
-                                phase = phase,
-                                runningProgram = runningProgram,
-                                nextProgramToday = nextProgramToday
-                            )
-                        }
-                    }
-
-                    LightProgramPhaseType.MOONLIGHT -> {
-                        if (scheduledToday) {
-                            result += buildMoonlightEveningSegments(
-                                program = program,
-                                phase = phase,
-                                currentMinute = currentMinute
-                            )
-                        }
-
-                        if (scheduledYesterday) {
-                            result += buildMoonlightEarlyMorningSegments(
-                                program = program,
-                                phase = phase,
-                                currentMinute = currentMinute
-                            )
-                        }
-                    }
-
-                    LightProgramPhaseType.CLOUD_OVERLAY -> Unit
+            timeline.phases.forEach { phase ->
+                if (phase.type == LightProgramPhaseType.MAIN_CURVE && scheduledToday) {
+                    result += buildMainProgramGraphSegment(
+                        program = program,
+                        phase = phase,
+                        runningProgram = runningProgram,
+                        nextProgramToday = nextProgramToday
+                    )
                 }
             }
         }
@@ -599,86 +574,6 @@ class DeviceLightViewModel(
             peakEndMinute = (phase.peakEndMinute ?: phase.endMinute)
             .coerceIn(0, MINUTES_PER_DAY),
             endMinute = phase.endMinute.coerceIn(0, MINUTES_PER_DAY)
-        )
-    }
-
-    private fun buildMoonlightEveningSegments(
-        program: SavedLightProgram,
-        phase: LightProgramTimelinePhase,
-        currentMinute: Int
-    ): List<TodayLightPlanGraphSegment> {
-        val start = phase.startMinute.coerceIn(0, MINUTES_PER_DAY)
-        val end = phase.endMinute.coerceIn(0, MINUTES_PER_DAY)
-
-        if (end <= start) {
-            return emptyList()
-        }
-
-        return listOf(
-            buildMoonlightGraphSegment(
-                id = "${program.id}_moon_evening",
-                startMinute = start,
-                endMinute = end,
-                outputPercent = phase.outputPercent,
-                currentMinute = currentMinute
-            )
-        )
-    }
-
-    private fun buildMoonlightEarlyMorningSegments(
-        program: SavedLightProgram,
-        phase: LightProgramTimelinePhase,
-        currentMinute: Int
-    ): List<TodayLightPlanGraphSegment> {
-        if (phase.endMinute <= MINUTES_PER_DAY) {
-            return emptyList()
-        }
-
-        val end = (phase.endMinute - MINUTES_PER_DAY)
-        .coerceIn(0, MINUTES_PER_DAY)
-
-        if (end <= 0) {
-            return emptyList()
-        }
-
-        return listOf(
-            buildMoonlightGraphSegment(
-                id = "${program.id}_moon_morning",
-                startMinute = 0,
-                endMinute = end,
-                outputPercent = phase.outputPercent,
-                currentMinute = currentMinute
-            )
-        )
-    }
-
-    private fun buildMoonlightGraphSegment(
-        id: String,
-        startMinute: Int,
-        endMinute: Int,
-        outputPercent: Int,
-        currentMinute: Int
-    ): TodayLightPlanGraphSegment {
-        val isCurrent =
-        currentMinute >= startMinute &&
-        currentMinute < endMinute
-
-        return TodayLightPlanGraphSegment(
-            id = id,
-            name = "Moonlight",
-            start = pointFromMinuteForGraph(startMinute),
-            peakStart = pointFromMinuteForGraph(startMinute),
-            peakEnd = pointFromMinuteForGraph(endMinute),
-            end = pointFromMinuteForGraph(endMinute),
-            outputPercent = outputPercent.coerceIn(1, 30),
-            transitionMode = LightCurveTransitionMode.LINEAR,
-            isCurrent = isCurrent,
-            isNext = false,
-            type = TodayLightPlanGraphSegmentType.MOONLIGHT,
-            startMinute = startMinute,
-            peakStartMinute = startMinute,
-            peakEndMinute = endMinute,
-            endMinute = endMinute
         )
     }
 

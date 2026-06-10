@@ -9,11 +9,6 @@ data class LightProgramTimeline(
             phase.type == LightProgramPhaseType.MAIN_CURVE
         }
 
-    val moonlightPhase: LightProgramTimelinePhase?
-        get() = phases.firstOrNull { phase ->
-            phase.type == LightProgramPhaseType.MOONLIGHT
-        }
-
     val effectiveStartMinute: Int?
         get() = phases.minOfOrNull { phase ->
             phase.startMinute

@@ -540,14 +540,6 @@
                         android:text="Program Settings" />
 
                     <include
-                        android:id="@+id/actionMoonlight"
-                        layout="@layout/item_light_editor_action_row" />
-
-                    <include
-                        android:id="@+id/actionCloudSimulation"
-                        layout="@layout/item_light_editor_action_row" />
-
-                    <include
                         android:id="@+id/actionTransitionSmoothing"
                         layout="@layout/item_light_editor_action_row" />
 
