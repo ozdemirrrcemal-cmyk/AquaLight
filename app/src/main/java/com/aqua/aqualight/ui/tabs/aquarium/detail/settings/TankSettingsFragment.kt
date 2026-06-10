@@ -16,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
+import androidx.navigation.NavDirections
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderScoreBadge
