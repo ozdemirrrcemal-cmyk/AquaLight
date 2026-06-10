@@ -192,7 +192,7 @@ object LightDeviceLiveRefreshManager {
         val address = when (
             val result = addressResolver.resolve(
                 deviceId = deviceId,
-                requireOnline = true
+                requireOnline = false
             )
         ) {
             is LightDeviceAddressResolver.Result.Success -> {
@@ -203,10 +203,6 @@ object LightDeviceLiveRefreshManager {
                 stateFlow.update { state ->
                     state.copy(
                         isRefreshing = false,
-                        channels = emptyList(),
-                        thermalProtection = LightThermalProtectionState(),
-                        cooling = LightCoolingState(),
-                        lastUpdatedMillis = 0L,
                         errorMessage = result.message
                     )
                 }
@@ -244,11 +240,15 @@ object LightDeviceLiveRefreshManager {
                             0L
                         }
                     },
-                    channels = snapshot.channels,
+                    channels = if (snapshot.channels.isNotEmpty()) {
+                        snapshot.channels
+                    } else {
+                        state.channels
+                    },
                     thermalProtection = snapshot.thermalProtection
-                        ?: LightThermalProtectionState(),
+                        ?: state.thermalProtection,
                     cooling = snapshot.cooling
-                        ?: LightCoolingState(),
+                        ?: state.cooling,
                     lastUpdatedMillis = now,
                     errorMessage = snapshot.partialErrorMessage
                 )
@@ -257,10 +257,6 @@ object LightDeviceLiveRefreshManager {
             stateFlow.update { state ->
                 state.copy(
                     isRefreshing = false,
-                    channels = emptyList(),
-                    thermalProtection = LightThermalProtectionState(),
-                    cooling = LightCoolingState(),
-                    lastUpdatedMillis = 0L,
                     errorMessage = error.message
                         ?: "Live device data could not be read"
                 )

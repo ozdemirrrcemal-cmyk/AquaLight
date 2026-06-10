@@ -86,25 +86,15 @@ class DeviceAddCandidateLoader(
                 buildList {
                     add(device.id.toString())
 
-                    listOf(
-                        device.serial,
-                        device.firmwareSerial,
-                        device.deviceUid,
-                        device.macAddress
-                    ).forEach { identity ->
-                        val suffix = identity
-                            .substringAfterLast(
-                                delimiter = "-",
-                                missingDelimiterValue = identity
-                            )
-                            .filter { char ->
-                                char.isLetterOrDigit()
-                            }
-                            .trim()
+                    val serialSuffix = device.serial
+                        .substringAfterLast(
+                            delimiter = "-",
+                            missingDelimiterValue = ""
+                        )
+                        .trim()
 
-                        if (suffix.isNotBlank()) {
-                            add(suffix)
-                        }
+                    if (serialSuffix.isNotBlank()) {
+                        add(serialSuffix)
                     }
                 }
             }

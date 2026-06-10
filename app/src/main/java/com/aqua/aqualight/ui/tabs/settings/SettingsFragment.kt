@@ -102,8 +102,15 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 }.collectLatest { pair ->
                     val devices = pair.first
                     val statuses = pair.second
+                    val now = System.currentTimeMillis()
+
                     val activeDeviceCount = devices.count { device ->
-                        statuses[device.id]?.isOnline == true
+                        val statusState = statuses[device.id]
+
+                        statusState?.isOnline ?: (
+                            device.lastSeenMillis > 0L &&
+                                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
+                            )
                     }
 
                     updateActiveDevices(
@@ -325,6 +332,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private companion object {
+        const val ONLINE_TIMEOUT_MS = 60_000L
+
         const val URL_WEBSITE = "https://aqualight.example.com"
         const val URL_FACEBOOK = "https://www.facebook.com/aqualight"
         const val URL_INSTAGRAM = "https://www.instagram.com/aqualight"

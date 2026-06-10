@@ -5,21 +5,12 @@ object DeviceSerialFormatter {
     fun buildSerial(
         aquaName: String,
         name: String,
-        id: Long,
-        firmwareSerial: String? = null,
-        deviceUid: String? = null,
-        macAddress: String? = null
+        id: Long
     ): String {
-        val preferredIdentity = firstCleanIdentity(
-            firmwareSerial,
-            deviceUid,
-            macAddress
-        )
-
         return buildSerial(
             aquaName = aquaName,
             name = name,
-            rawId = preferredIdentity ?: id.toString()
+            rawId = id.toString()
         )
     }
 
@@ -65,27 +56,13 @@ object DeviceSerialFormatter {
         return "$aquaInitial$nameInitial"
     }
 
-    private fun firstCleanIdentity(
-        vararg values: String?
-    ): String? {
-        return values.firstNotNullOfOrNull { value ->
-            value
-                ?.trim()
-                ?.takeIf { identity ->
-                    identity.isNotBlank()
-                }
-        }
-    }
-
     private fun cleanId(
         rawId: String
     ): String {
         return rawId
             .filter { char ->
-                char.isLetterOrDigit()
+                char.isDigit()
             }
-            .uppercase()
-            .takeLast(12)
             .ifBlank {
                 "0000"
             }

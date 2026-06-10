@@ -8,7 +8,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
@@ -257,13 +256,10 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             device.name.ifBlank { "Device" }
         }
 
-        val serial = DeviceSerialFormatter.buildSerial(
+        val serial = buildSerial(
             aquaName = savedAquaName,
             name = savedName,
-            id = device.id,
-            firmwareSerial = device.serialNumber,
-            deviceUid = device.deviceUid,
-            macAddress = device.macAddress
+            id = device.id
         )
 
         isSavingDevice = true
@@ -300,9 +296,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
                     ip = device.ip,
                     serial = serial,
                     firmwareBuild = device.firmwareBuild,
-                    deviceUid = device.deviceUid.orEmpty(),
-                    macAddress = device.macAddress.orEmpty(),
-                    firmwareSerial = device.serialNumber.orEmpty(),
 
                     deviceType = device.deviceType,
 
@@ -354,9 +347,6 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
             id = id,
             ip = ip,
             firmwareBuild = firmwareBuild,
-            deviceUid = deviceUid,
-            macAddress = macAddress,
-            firmwareSerial = serialNumber,
 
             deviceType = deviceType,
 
@@ -400,6 +390,32 @@ class ScanDevicesFragment : Fragment(R.layout.fragment_scan_devices) {
         }
 
         return true
+    }
+
+    private fun buildSerial(
+        aquaName: String,
+        name: String,
+        id: Long
+    ): String {
+        val aquaInitial = aquaName.firstOrNull()
+            ?.uppercaseChar()
+            ?: 'X'
+
+        val nameInitial = name.firstOrNull()
+            ?.uppercaseChar()
+            ?: 'X'
+
+        val core = if (id != 0L) {
+            id.toString()
+        } else {
+            ""
+        }
+
+        return if (core.isNotEmpty()) {
+            "$aquaInitial$nameInitial-$core"
+        } else {
+            "$aquaInitial$nameInitial"
+        }
     }
 
     private fun showGlobalSnackBar(

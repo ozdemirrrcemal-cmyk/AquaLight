@@ -12,9 +12,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentTankDeviceSelectBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class TankDeviceSelectFragment :
@@ -31,10 +36,13 @@ class TankDeviceSelectFragment :
         )
     }
 
-    private var isAssigning = false
+    private var isAssigning =
+        false
 
     private val tankId: Long
-        get() = requireArguments().getLong(ARG_TANK_ID)
+        get() = requireArguments().getLong(
+            ARG_TANK_ID
+        )
 
     override fun onViewCreated(
         view: View,
@@ -45,48 +53,73 @@ class TankDeviceSelectFragment :
             savedInstanceState
         )
 
-        _binding = FragmentTankDeviceSelectBinding.bind(view)
+        _binding =
+            FragmentTankDeviceSelectBinding.bind(view)
+
+        DevicePresenceMonitor.start(
+            context = requireContext()
+        )
 
         setupHeader()
         setupRecycler()
-        observeSavedDevices()
+        observeAvailableDevices()
     }
 
     private fun setupHeader() {
-    binding.appHeader.setupAquaHeader(
-        fragment = this,
-        config = AquaHeaderConfig(
-            titleOverride = getString(R.string.tank_device_select_title)
-        )
-    )
-}
-
-    private fun setupRecycler() {
-        adapter = TankDeviceSelectAdapter { item ->
-            assignDeviceToTank(
-                item = item
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = getString(
+                    R.string.tank_device_select_title
+                )
             )
-        }
-
-        binding.rvDevices.layoutManager = LinearLayoutManager(
-            requireContext()
         )
-
-        binding.rvDevices.adapter = adapter
     }
 
-    private fun observeSavedDevices() {
-        showLoading()
+    private fun setupRecycler() {
+        adapter =
+            TankDeviceSelectAdapter { item ->
+                assignDeviceToTank(
+                    item = item
+                )
+            }
 
+        binding.rvDevices.layoutManager =
+            LinearLayoutManager(
+                requireContext()
+            )
+
+        binding.rvDevices.adapter =
+            adapter
+    }
+
+    private fun observeAvailableDevices() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
-                devicesStore.unassignedDevicesFlow.collect { devices ->
+                combine(
+                    devicesStore.unassignedDevicesFlow,
+                    DevicePresenceMonitor.statuses
+                ) { devices, statuses ->
+                    devices to statuses
+                }.collect { pair ->
+
+                    val devices =
+                        pair.first
+
+                    val statuses =
+                        pair.second
+
+                    val now =
+                        System.currentTimeMillis()
 
                     val items =
                         devices.map { device ->
-                            device.toSelectItem()
+                            device.toSelectItem(
+                                statuses = statuses,
+                                now = now
+                            )
                         }
 
                     renderDevices(
@@ -97,89 +130,63 @@ class TankDeviceSelectFragment :
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.toSelectItem(): TankDeviceSelectItem {
+    private fun DevicesDataStoreManager.DeviceInfoUi.toSelectItem(
+        statuses: Map<Long, DeviceStatusState>,
+        now: Long
+    ): TankDeviceSelectItem {
+        val presenceState =
+            statuses[id]
+
+        val online =
+            presenceState?.isOnline ?: (
+                lastSeenMillis > 0L &&
+                    now - lastSeenMillis <= ONLINE_TIMEOUT_MS
+                )
+
         return TankDeviceSelectItem(
             deviceId = id,
             title = buildDeviceTitle(),
-            subtitle = buildDeviceSubtitle(),
-            statusText = buildDeviceStatus()
+            serialNumber = serial.trim(),
+            iconRes = DeviceIconMapper.iconFor(
+                deviceType
+            ),
+            isOnline = online
         )
     }
 
     private fun DevicesDataStoreManager.DeviceInfoUi.buildDeviceTitle(): String {
-        return aquaName
-            .ifBlank { name }
-            .ifBlank { productModel }
-            .ifBlank {
-                getString(R.string.tank_device_select_unknown_device)
-            }
-    }
+        val catalogName =
+            AquaDeviceCatalog.findByType(
+                type = deviceType
+            )?.displayName.orEmpty()
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.buildDeviceSubtitle(): String {
-        val productText =
-            listOf(
-                productFamily,
+        return name
+            .ifBlank {
                 productModel
-            )
-                .filter { value ->
-                    value.isNotBlank()
-                }
-                .distinct()
-                .joinToString(
-                    separator = " • "
-                )
-
-        if (productText.isNotBlank()) {
-            return productText
-        }
-
-        if (name.isNotBlank() && name != aquaName) {
-            return name
-        }
-
-        return deviceType.storageKey
-            .ifBlank {
-                getString(R.string.tank_device_select_saved_device)
             }
-    }
-
-    private fun DevicesDataStoreManager.DeviceInfoUi.buildDeviceStatus(): String {
-        if (ip.isNotBlank()) {
-            return getString(
-                R.string.tank_device_select_ip_status,
-                ip
-            )
-        }
-
-        if (serial.isNotBlank()) {
-            return getString(
-                R.string.tank_device_select_serial_status,
-                serial
-            )
-        }
-
-        return getString(
-            R.string.tank_device_select_saved_device
-        )
+            .ifBlank {
+                catalogName
+            }
+            .ifBlank {
+                aquaName
+            }
+            .ifBlank {
+                productFamily
+            }
     }
 
     private fun renderDevices(
         items: List<TankDeviceSelectItem>
     ) {
-        binding.progressLoading.isVisible = false
-
         adapter.submitList(
             items
         )
 
-        binding.rvDevices.isVisible = items.isNotEmpty()
-        binding.cardEmpty.isVisible = items.isEmpty()
-    }
+        binding.rvDevices.isVisible =
+            items.isNotEmpty()
 
-    private fun showLoading() {
-        binding.progressLoading.isVisible = true
-        binding.rvDevices.isVisible = false
-        binding.cardEmpty.isVisible = false
+        binding.tvEmptyState.isVisible =
+            items.isEmpty()
     }
 
     private fun assignDeviceToTank(
@@ -189,7 +196,8 @@ class TankDeviceSelectFragment :
             return
         }
 
-        isAssigning = true
+        isAssigning =
+            true
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -214,14 +222,18 @@ class TankDeviceSelectFragment :
                         tankId
                     )
 
-                findNavController().popBackStack()
+                findNavController()
+                    .popBackStack()
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
-                isAssigning = false
+                isAssigning =
+                    false
 
                 (activity as? BaseActivity)?.showSnackBar(
-                    message = getString(R.string.tank_device_select_assign_error),
+                    message = getString(
+                        R.string.tank_device_select_assign_error
+                    ),
                     type = BaseActivity.SnackType.ERROR
                 )
             }
@@ -229,20 +241,27 @@ class TankDeviceSelectFragment :
     }
 
     override fun onDestroyView() {
-        binding.rvDevices.adapter = null
-        _binding = null
+        binding.rvDevices.adapter =
+            null
+
+        _binding =
+            null
 
         super.onDestroyView()
     }
 
     companion object {
 
-        const val ARG_TANK_ID = "tankId"
+        const val ARG_TANK_ID =
+            "tankId"
 
         const val RESULT_SELECTED_DEVICE_ID =
             "tankDeviceSelectResultDeviceId"
 
         const val RESULT_SELECTED_TANK_ID =
             "tankDeviceSelectResultTankId"
+
+        private const val ONLINE_TIMEOUT_MS =
+            90_000L
     }
 }

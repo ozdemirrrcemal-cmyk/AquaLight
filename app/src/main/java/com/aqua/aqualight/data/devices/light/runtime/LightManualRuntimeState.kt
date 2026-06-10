@@ -11,6 +11,7 @@ data class LightManualRuntimeState(
     val isPowerOn: Boolean = false,
     val updatedAt: Long = System.currentTimeMillis()
 ) {
+
     val isManualMode: Boolean
         get() = mode == LightControlMode.MANUAL ||
             mode == LightControlMode.MANUAL_SCENE
@@ -19,7 +20,13 @@ data class LightManualRuntimeState(
         get() = mode == LightControlMode.MANUAL_SCENE
 
     val masterOutputPercent: Int
-        get() = maxOf(red, green, blue, white).coerceIn(0, 100)
+        get() =
+            LightOutputMath.outputPercent(
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            )
 
     val previewRed: Int
         get() = percentToRgb(red)

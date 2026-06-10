@@ -8,8 +8,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.access.DeviceAccessGuard
-import com.aqua.aqualight.data.devices.access.DeviceOpenResult
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
-    private lateinit var accessGuard: DeviceAccessGuard
+    private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var tankStore: AquariumTankDataStoreManager
 
     private var hasRouted = false
@@ -32,7 +32,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             savedInstanceState
         )
 
-        accessGuard = DeviceAccessGuard(requireContext())
+        devicesStore = DevicesDataStoreManager.create(requireContext())
         tankStore = AquariumTankDataStoreManager(
             requireContext().applicationContext
         )
@@ -66,78 +66,71 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             try {
                 showGlobalLoading(true)
 
-                val preferredIp = requireArguments()
+                val device = devicesStore.devicesFlow
+                    .first()
+                    .firstOrNull { savedDevice ->
+                        savedDevice.id == deviceId
+                    }
+
+                if (!isAdded) {
+                    return@launch
+                }
+
+                if (device == null) {
+                    openUnsupportedDevice(
+                        title = "Device Not Found",
+                        message = "This device is no longer available."
+                    )
+                    return@launch
+                }
+
+                val definition = AquaDeviceCatalog.findByType(
+                    device.deviceType
+                )
+
+                if (definition == null) {
+                    openUnsupportedDevice(
+                        title = device.productModel.ifBlank {
+                            "Unsupported Device"
+                        },
+                        message = "This device is not supported by this app version."
+                    )
+                    return@launch
+                }
+
+                val tanks = tankStore.tanksFlow.first()
+
+                val assignedTankName = device.tankId?.let { tankId ->
+                    tanks.firstOrNull { tank ->
+                        tank.id == tankId
+                    }?.name
+                }.orEmpty()
+
+                val deviceIp = requireArguments()
                     .getString(ARG_DEVICE_IP)
                     .orEmpty()
-
-                when (
-                    val openResult = accessGuard.resolveForOpen(
-                        deviceId = deviceId,
-                        preferredIp = preferredIp
-                    )
-                ) {
-                    is DeviceOpenResult.Allowed -> {
-                        if (!isAdded) {
-                            return@launch
-                        }
-
-                        val device = openResult.device
-                        val definition = openResult.definition
-
-                        val tanks = tankStore.tanksFlow.first()
-
-                        val assignedTankName = device.tankId?.let { tankId ->
-                            tanks.firstOrNull { tank ->
-                                tank.id == tankId
-                            }?.name
-                        }.orEmpty()
-
-                        val routerTitle = resolveRouterTitle(
-                            productModel = device.productModel,
-                            definition = definition
-                        )
-
-                        val controllerTitle = resolveControllerTitle(
-                            assignedTankName = assignedTankName,
-                            userDeviceName = device.name,
-                            fallbackDeviceTitle = routerTitle
-                        )
-
-                        routeToController(
-                            deviceId = device.id,
-                            deviceIp = openResult.ip,
-                            routerTitle = routerTitle,
-                            controllerTitle = controllerTitle,
-                            definition = definition
-                        )
+                    .ifBlank {
+                        device.ip
                     }
 
-                    is DeviceOpenResult.Offline -> {
-                        openOfflineDevice(
-                            title = openResult.device.name.ifBlank {
-                                openResult.device.productModel.ifBlank {
-                                    DEFAULT_DEVICE_TITLE
-                                }
-                            }
-                        )
-                    }
+                val routerTitle = resolveRouterTitle(
+                    productModel = device.productModel,
+                    definition = definition
+                )
 
-                    is DeviceOpenResult.Unsupported -> {
-                        openUnsupportedDevice(
-                            title = openResult.device.productModel.ifBlank {
-                                "Unsupported Device"
-                            },
-                            message = "This device is not supported by this app version."
-                        )
-                    }
+                val controllerTitle = resolveControllerTitle(
+                    assignedTankName = assignedTankName,
+                    userDeviceName = device.name,
+                    fallbackDeviceTitle = routerTitle
+                )
 
-                    DeviceOpenResult.NotFound -> {
-                        openUnsupportedDevice(
-                            title = "Device Not Found",
-                            message = "This device is no longer available."
-                        )
-                    }
-                }
+                routeToController(
+                    deviceId = device.id,
+                    deviceIp = deviceIp,
+                    routerTitle = routerTitle,
+                    controllerTitle = controllerTitle,
+                    definition = definition
+                )
             } finally {
                 showGlobalLoading(false)
             }
@@ -206,21 +199,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 )
             }
         }
-    }
-
-
-    private fun openOfflineDevice(
-        title: String
-    ) {
-        findNavController().navigate(
-            R.id.action_deviceRouterFragment_to_unsupportedDeviceFragment,
-            bundleOf(
-                ARG_DEVICE_TITLE to title,
-                ARG_MESSAGE to getString(
-                    R.string.device_offline_message
-                )
-            )
-        )
     }
 
     private fun openUnsupportedDevice(

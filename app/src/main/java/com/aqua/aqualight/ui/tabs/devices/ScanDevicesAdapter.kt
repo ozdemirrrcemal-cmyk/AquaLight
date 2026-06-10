@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.databinding.ItemScanDeviceBinding
@@ -86,13 +85,10 @@ class ScanDevicesAdapter(
             displayName: String,
             familyName: String
         ): String {
-            val serial = DeviceSerialFormatter.buildSerial(
+            val serial = buildSerial(
                 aquaName = familyName,
                 name = displayName,
-                id = device.id,
-                firmwareSerial = device.serialNumber,
-                deviceUid = device.deviceUid,
-                macAddress = device.macAddress
+                id = device.id
             )
 
             val firmware = device.firmwareBuild
@@ -100,6 +96,22 @@ class ScanDevicesAdapter(
                 ?: "Firmware unknown"
 
             return "$serial • ${device.ip} • $firmware"
+        }
+
+        private fun buildSerial(
+            aquaName: String,
+            name: String,
+            id: Long
+        ): String {
+            val aquaInitial = aquaName.firstOrNull()
+                ?.uppercaseChar()
+                ?: 'X'
+
+            val nameInitial = name.firstOrNull()
+                ?.uppercaseChar()
+                ?: 'X'
+
+            return "$aquaInitial$nameInitial-$id"
         }
     }
 
