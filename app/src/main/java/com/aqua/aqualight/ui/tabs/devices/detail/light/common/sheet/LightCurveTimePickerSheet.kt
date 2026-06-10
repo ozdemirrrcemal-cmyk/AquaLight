@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet
+package com.aqua.aqualight.ui.tabs.devices.detail.light.common.sheet
 
 import android.content.Context
 import android.view.LayoutInflater

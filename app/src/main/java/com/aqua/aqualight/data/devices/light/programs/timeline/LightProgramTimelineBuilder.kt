@@ -14,7 +14,7 @@ object LightProgramTimelineBuilder {
             phases = listOf(
                 LightProgramTimelinePhase(
                     type = LightProgramPhaseType.MAIN_CURVE,
-                    name = "Main Program",
+                    label = "Main Program",
                     startMinute = mainStart,
                     endMinute = mainEnd,
                     peakStartMinute = mainPeakStart,

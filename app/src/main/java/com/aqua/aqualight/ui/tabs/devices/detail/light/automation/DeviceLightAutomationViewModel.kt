@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.automation.LightAutomationDataStoreManager
 import com.aqua.aqualight.data.devices.light.automation.model.CloudSimulationSettings
 import com.aqua.aqualight.data.devices.light.automation.model.MoonlightSettings
+import com.aqua.aqualight.data.devices.light.runtime.Esp32LightAutomationCommandManager
 import com.aqua.aqualight.ui.tabs.devices.detail.light.automation.model.DeviceLightAutomationUiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 
 class DeviceLightAutomationViewModel(application: Application) : AndroidViewModel(application) {
     private val automationStore = LightAutomationDataStoreManager(application.applicationContext)
+    private val automationCommandManager = Esp32LightAutomationCommandManager(application.applicationContext)
     private val _uiState = MutableStateFlow(DeviceLightAutomationUiState())
     val uiState: StateFlow<DeviceLightAutomationUiState> = _uiState.asStateFlow()
     private var deviceId: Long = 0L
@@ -31,6 +33,7 @@ class DeviceLightAutomationViewModel(application: Application) : AndroidViewMode
             }
         }
     }
-    fun updateMoonlight(settings: MoonlightSettings) { val id = deviceId; if (id <= 0L) return; viewModelScope.launch { automationStore.updateMoonlight(id, settings) } }
-    fun updateCloudSimulation(settings: CloudSimulationSettings) { val id = deviceId; if (id <= 0L) return; viewModelScope.launch { automationStore.updateCloudSimulation(id, settings) } }
+    fun updateMoonlight(settings: MoonlightSettings) { val id = deviceId; if (id <= 0L) return; viewModelScope.launch { val saved = automationStore.updateMoonlight(id, settings); syncAutomationSettings(id, saved) } }
+    fun updateCloudSimulation(settings: CloudSimulationSettings) { val id = deviceId; if (id <= 0L) return; viewModelScope.launch { val saved = automationStore.updateCloudSimulation(id, settings); syncAutomationSettings(id, saved) } }
+    private suspend fun syncAutomationSettings(deviceId: Long, settings: com.aqua.aqualight.data.devices.light.automation.model.LightAutomationSettings) { val result = automationCommandManager.applyAutomationSettings(deviceId, settings); if (result.isSuccess) { automationStore.markSynced(deviceId) } }
 }
