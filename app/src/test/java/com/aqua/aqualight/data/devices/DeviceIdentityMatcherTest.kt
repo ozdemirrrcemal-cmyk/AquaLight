@@ -89,25 +89,25 @@ class DeviceIdentityMatcherTest {
     }
 
     private fun savedDevice(
-        id: Long,
-        deviceUid: String = "",
-        macAddress: String = "",
-        firmwareSerial: String = ""
-    ): DevicesDataStoreManager.DeviceInfoUi {
-        return DevicesDataStoreManager.DeviceInfoUi(
-            id = id,
-            aquaName = "AquaLight",
-            name = "WRGB Pro2",
-            ip = "192.168.1.25",
-            serial = "AQL-$id",
-            deviceUid = deviceUid,
-            macAddress = macAddress,
-            firmwareSerial = firmwareSerial,
-            firmwareBuild = "test",
-            lastSeenMillis = 0L,
-            deviceType = AquaDeviceType.AQUA_LIGHT_001
-        )
-    }
+    id: Long,
+    deviceUid: String = "",
+    macAddress: String = "",
+    firmwareSerial: String = ""
+): DevicesDataStoreManager.DeviceInfo {
+    return DevicesDataStoreManager.DeviceInfo(
+        id = id,
+        aquaName = "AquaLight",
+        name = "WRGB Pro2",
+        ip = "192.168.1.25",
+        serial = "AQL-$id",
+        deviceUid = deviceUid,
+        macAddress = macAddress,
+        firmwareSerial = firmwareSerial,
+        firmwareBuild = "test",
+        lastSeenMillis = 0L,
+        deviceType = AquaDeviceType.AQUA_LIGHT_001
+    )
+}
 
     private fun discoveredDevice(
         id: Long,

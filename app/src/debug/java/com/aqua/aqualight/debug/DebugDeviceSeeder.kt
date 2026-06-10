@@ -42,7 +42,7 @@ object DebugDeviceSeeder {
 
     private suspend fun seedDosingDeviceIfNeeded(
         devicesManager: DevicesDataStoreManager,
-        currentDevices: List<DevicesDataStoreManager.DeviceInfoUi>
+        currentDevices: List<DevicesDataStoreManager.DeviceInfo>
     ) {
         val alreadyExists =
             currentDevices.any { device ->
@@ -112,7 +112,7 @@ object DebugDeviceSeeder {
 
     private suspend fun seedLightDeviceIfNeeded(
         devicesManager: DevicesDataStoreManager,
-        currentDevices: List<DevicesDataStoreManager.DeviceInfoUi>
+        currentDevices: List<DevicesDataStoreManager.DeviceInfo>
     ) {
         val alreadyExists =
             currentDevices.any { device ->
