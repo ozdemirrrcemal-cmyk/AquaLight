@@ -21,6 +21,10 @@ import androidx.navigation.fragment.navArgs
 
 class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
+    interface PlantPickerHost {
+        fun closePlantPickerFlow()
+    }
+
     private val args: PlantPickerFragmentArgs by navArgs()
 
     private var _binding: FragmentPlantPickerBinding? = null
@@ -240,7 +244,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             resultBundle
         )
 
-        parentFragmentManager.popBackStack()
+        closeEmbeddedPicker()
     }
 
     private fun closePicker() {
@@ -249,7 +253,13 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             return
         }
 
-        parentFragmentManager.popBackStack()
+        closeEmbeddedPicker()
+    }
+
+    private fun closeEmbeddedPicker() {
+        (parentFragment as? PlantPickerHost)
+            ?.closePlantPickerFlow()
+            ?: parentFragmentManager.popBackStack()
     }
 
     private fun usesNavigationResult(): Boolean {
@@ -273,5 +283,13 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         const val RESULT_PLANT_NAME = "plant_name"
         const val RESULT_PLANT_CATEGORY = "plant_category"
+
+        fun newCreateInstance(): PlantPickerFragment {
+            return PlantPickerFragment().apply {
+                arguments = bundleOf(
+                    ARG_USE_NAV_RESULT to false
+                )
+            }
+        }
     }
 }
