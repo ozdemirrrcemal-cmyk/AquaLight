@@ -34,7 +34,10 @@ class DeviceStoreWriter(
         val serial = DeviceSerialFormatter.buildSerial(
             aquaName = savedAquaName,
             name = savedName,
-            id = device.id
+            id = device.id,
+            firmwareSerial = device.firmwareSerial.orEmpty(),
+            deviceUid = device.deviceUid.orEmpty(),
+            macAddress = device.macAddress.orEmpty()
         )
 
         devicesStore.addDevice(
@@ -44,6 +47,9 @@ class DeviceStoreWriter(
             ip = device.ip,
             serial = serial,
             firmwareBuild = device.firmwareBuild,
+            deviceUid = device.deviceUid.orEmpty(),
+            macAddress = device.macAddress.orEmpty(),
+            firmwareSerial = device.firmwareSerial.orEmpty(),
 
             deviceType = device.deviceType,
 
@@ -80,6 +86,9 @@ class DeviceStoreWriter(
             id = id,
             ip = ip,
             firmwareBuild = firmwareBuild,
+            deviceUid = deviceUid,
+            macAddress = macAddress,
+            firmwareSerial = firmwareSerial,
 
             deviceType = deviceType,
 

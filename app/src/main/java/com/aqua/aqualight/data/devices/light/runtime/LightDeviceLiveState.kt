@@ -12,6 +12,8 @@ data class LightDeviceLiveState(
         LightThermalProtectionState(),
     val cooling: LightCoolingState =
         LightCoolingState(),
+    val liveDataUpdatedMillis: Long = 0L,
+    val isLiveDataFresh: Boolean = false,
     val lastUpdatedMillis: Long = 0L,
     val errorMessage: String? = null
 ) {
@@ -42,14 +44,24 @@ data class LightDeviceLiveState(
         }
 
     val actualOutputPercent: Int
-        get() = channels
-            .mapNotNull { channel ->
-                channel.valuePercent
+        get() {
+            if (!isLiveDataFresh) {
+                return 0
             }
-            .maxOrNull() ?: 0
+
+            return channels
+                .mapNotNull { channel ->
+                    channel.valuePercent
+                }
+                .maxOrNull() ?: 0
+        }
 
     val actualPowerWatts: Double?
         get() {
+            if (!isLiveDataFresh) {
+                return null
+            }
+
             val values = channels.mapNotNull { channel ->
                 channel.actualWatts
             }
@@ -69,11 +81,15 @@ data class LightDeviceLiveState(
         }
 
     val hasLiveChannels: Boolean
-        get() = channels.isNotEmpty()
+        get() = isLiveDataFresh && channels.isNotEmpty()
 
     fun channelFor(
         semantic: LightChannelSemantic
     ): LightDeviceLiveChannelState? {
+        if (!isLiveDataFresh) {
+            return null
+        }
+
         return channels.firstOrNull { channel ->
             channel.semantic == semantic
         }
@@ -98,6 +114,8 @@ data class LightDeviceLiveState(
                 channels = emptyList(),
                 thermalProtection = LightThermalProtectionState(),
                 cooling = LightCoolingState(),
+                liveDataUpdatedMillis = 0L,
+                isLiveDataFresh = false,
                 lastUpdatedMillis = 0L,
                 errorMessage = null
             )

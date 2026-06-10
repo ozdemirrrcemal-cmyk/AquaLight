@@ -1010,13 +1010,7 @@ class TankAssignedDeviceUiMapper {
         statuses: Map<Long, DeviceStatusState>,
         now: Long
     ): Boolean {
-        val statusState =
-            statuses[device.id]
-
-        return statusState?.isOnline ?: (
-            device.lastSeenMillis > 0L &&
-                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
-            )
+        return statuses[device.id]?.isOnline == true
     }
 
     private fun isProgramRunningAt(
@@ -1181,9 +1175,6 @@ class TankAssignedDeviceUiMapper {
     )
 
     private companion object {
-        private const val ONLINE_TIMEOUT_MS =
-            90_000L
-
         private const val MINUTES_PER_DAY =
             24 * 60
     }

@@ -64,7 +64,8 @@ class LightDeviceAddressResolver(
         val checkedState = DevicePresenceMonitor.checkDeviceNow(
             context = appContext,
             deviceId = deviceId,
-            knownIp = savedIp
+            knownIp = savedIp,
+            allowRecentOnlineCache = false
         )
 
         if (checkedState == null) {

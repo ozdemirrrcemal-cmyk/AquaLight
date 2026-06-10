@@ -168,16 +168,61 @@ object UdpDeviceDiscovery {
             0L
         )
 
+        val espChipId = deviceJson.optLong(
+            "ESPChipID",
+            0L
+        )
+
         val ip = deviceJson
             .optString("IP", sourceIp)
             .ifBlank {
                 sourceIp
             }
 
-        val finalId = if (idRaw > 0L) {
-            idRaw
-        } else {
-            createStableIdFromIp(ip)
+        val deviceUid = deviceJson.firstNonBlankString(
+            "DeviceUid",
+            "DeviceUID",
+            "UID",
+            "deviceUid"
+        )
+
+        val macAddress = deviceJson.firstNonBlankString(
+            "MacAddress",
+            "MAC",
+            "macAddress"
+        )
+
+        val firmwareSerial = deviceJson.firstNonBlankString(
+            "SerialNumber",
+            "Serial",
+            "FirmwareSerial",
+            "firmwareSerial"
+        )
+
+        val finalId = when {
+            idRaw > 0L -> {
+                idRaw
+            }
+
+            espChipId > 0L -> {
+                espChipId
+            }
+
+            !deviceUid.isNullOrBlank() -> {
+                createStableIdFromString(deviceUid)
+            }
+
+            !firmwareSerial.isNullOrBlank() -> {
+                createStableIdFromString(firmwareSerial)
+            }
+
+            !macAddress.isNullOrBlank() -> {
+                createStableIdFromString(macAddress)
+            }
+
+            else -> {
+                createStableIdFromIp(ip)
+            }
         }
 
         if (finalId <= 0L) {
@@ -285,6 +330,10 @@ object UdpDeviceDiscovery {
 
             aquaName = aquaName,
             name = name,
+
+            deviceUid = deviceUid,
+            macAddress = macAddress,
+            firmwareSerial = firmwareSerial,
 
             productId = productId,
             productFamily = productFamily,
@@ -483,7 +532,33 @@ object UdpDeviceDiscovery {
     private fun createStableIdFromIp(
         ip: String
     ): Long {
-        return ip.hashCode().toLong() and 0x00000000FFFFFFFFL
+        return createStableIdFromString(
+            value = ip
+        )
+    }
+
+    private fun createStableIdFromString(
+        value: String
+    ): Long {
+        return value.trim()
+            .lowercase(Locale.US)
+            .hashCode()
+            .toLong() and 0x00000000FFFFFFFFL
+    }
+
+    private fun JSONObject.firstNonBlankString(
+        vararg keys: String
+    ): String? {
+        keys.forEach { key ->
+            val value = optString(key, "")
+                .trim()
+
+            if (value.isNotBlank()) {
+                return value
+            }
+        }
+
+        return null
     }
 
     private fun JSONObject.optNullableInt(

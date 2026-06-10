@@ -111,14 +111,10 @@ class TankDeviceSelectFragment :
                     val statuses =
                         pair.second
 
-                    val now =
-                        System.currentTimeMillis()
-
                     val items =
                         devices.map { device ->
                             device.toSelectItem(
-                                statuses = statuses,
-                                now = now
+                                statuses = statuses
                             )
                         }
 
@@ -131,17 +127,10 @@ class TankDeviceSelectFragment :
     }
 
     private fun DevicesDataStoreManager.DeviceInfoUi.toSelectItem(
-        statuses: Map<Long, DeviceStatusState>,
-        now: Long
+        statuses: Map<Long, DeviceStatusState>
     ): TankDeviceSelectItem {
-        val presenceState =
-            statuses[id]
-
         val online =
-            presenceState?.isOnline ?: (
-                lastSeenMillis > 0L &&
-                    now - lastSeenMillis <= ONLINE_TIMEOUT_MS
-                )
+            statuses[id]?.isOnline == true
 
         return TankDeviceSelectItem(
             deviceId = id,
@@ -260,8 +249,5 @@ class TankDeviceSelectFragment :
 
         const val RESULT_SELECTED_TANK_ID =
             "tankDeviceSelectResultTankId"
-
-        private const val ONLINE_TIMEOUT_MS =
-            90_000L
     }
 }
