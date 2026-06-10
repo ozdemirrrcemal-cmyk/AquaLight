@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.widget.TextView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.BottomSheetLightTransitionVariantBinding
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class LightTransitionVariantSheet private constructor(

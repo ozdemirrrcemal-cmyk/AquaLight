@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.materials
 
+import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
+import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -26,8 +28,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.catalog.MaterialCatalog
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
@@ -108,7 +110,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                     closePicker()
                 },
                 searchField = AquaHeaderSearchField(
-                    hint = "Type here to search...",
+                    hint = getString(R.string.catalog_search_hint),
                     text = searchQuery,
                     onTextChanged = { query ->
                         searchQuery = query.trim()
@@ -358,7 +360,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
     private fun showEmptyState() {
         val emptyText = TextView(requireContext()).apply {
-            text = "No materials found"
+            text = getString(R.string.material_picker_no_materials_found)
             gravity = Gravity.CENTER
             setTextColor(Color.parseColor("#8FA4BE"))
             textSize = 15f
@@ -501,7 +503,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
     private fun createNewMaterialButton(): View {
         return MaterialButton(requireContext()).apply {
-            text = "New $categoryTitle"
+            text = getString(R.string.material_picker_new_title, categoryTitle)
             textSize = 14f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
@@ -542,12 +544,12 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         addSheetHeader(
             root = root,
-            title = "New Material",
+            title = getString(R.string.material_picker_new_material),
             dialog = dialog
         )
 
         val labelName = TextView(requireContext()).apply {
-            text = "Material Name"
+            text = getString(R.string.material_picker_material_name)
             setTextColor(Color.WHITE)
             textSize = 14f
 
@@ -584,7 +586,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                 setSelection(currentSearchText.length)
             }
 
-            hint = "Enter material name"
+            hint = getString(R.string.material_picker_enter_material_name)
             setHintTextColor(Color.parseColor("#7F91AA"))
             setTextColor(Color.WHITE)
             textSize = 15f
@@ -610,7 +612,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         root.addView(nameInputCard)
 
         val labelCategory = TextView(requireContext()).apply {
-            text = "Category"
+            text = getString(R.string.material_picker_category)
             setTextColor(Color.WHITE)
             textSize = 14f
 
@@ -664,7 +666,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         root.addView(categoryInputCard)
 
         val saveButton = MaterialButton(requireContext()).apply {
-            text = "Save"
+            text = getString(R.string.material_picker_save)
             textSize = 16f
             setTextColor(Color.WHITE)
             setTypeface(null, Typeface.BOLD)
@@ -686,7 +688,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                     .orEmpty()
 
                 if (materialName.isBlank()) {
-                    nameInput.error = "Required"
+                    nameInput.error = getString(R.string.material_picker_required)
                     return@setOnClickListener
                 }
 
@@ -698,7 +700,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         root.addView(saveButton)
 
         val cancel = TextView(requireContext()).apply {
-            text = "Cancel"
+            text = getString(R.string.material_picker_cancel)
             gravity = Gravity.CENTER
             setTextColor(Color.parseColor("#8FA4BE"))
             textSize = 15f
@@ -840,9 +842,9 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         val count = selectedProductIds.size
 
         binding.tvSelectedCount.text = if (count == 0) {
-            "No materials selected"
+            getString(R.string.material_picker_no_materials_selected)
         } else {
-            "$count selected"
+            getString(R.string.material_picker_selected_count, count)
         }
     }
 

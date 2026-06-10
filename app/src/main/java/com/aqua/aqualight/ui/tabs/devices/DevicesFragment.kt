@@ -22,7 +22,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -39,7 +39,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DevicesListAdapter
 
-    private var latestDevices: List<DevicesDataStoreManager.DeviceInfoUi> = emptyList()
+    private var latestDevices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
     private var latestTanks: List<SavedAquariumTank> = emptyList()
     private var latestStatuses: Map<Long, DeviceStatusState> = emptyMap()
 
@@ -244,7 +244,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     private fun getTankNameForDevice(
-        device: DevicesDataStoreManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfo
     ): String {
         val connectedTankId =
             device.tankId ?: return ""

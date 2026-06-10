@@ -126,7 +126,7 @@ class TankDeviceSelectFragment :
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.toSelectItem(
+    private fun DevicesDataStoreManager.DeviceInfo.toSelectItem(
         statuses: Map<Long, DeviceStatusState>
     ): TankDeviceSelectItem {
         val online =
@@ -143,7 +143,7 @@ class TankDeviceSelectFragment :
         )
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.buildDeviceTitle(): String {
+    private fun DevicesDataStoreManager.DeviceInfo.buildDeviceTitle(): String {
         val catalogName =
             AquaDeviceCatalog.findByType(
                 type = deviceType

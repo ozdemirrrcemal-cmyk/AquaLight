@@ -6,7 +6,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 sealed interface DeviceOpenResult {
 
     data class Allowed(
-        val device: DevicesDataStoreManager.DeviceInfoUi,
+        val device: DevicesDataStoreManager.DeviceInfo,
         val ip: String,
         val definition: AquaDeviceDefinition
     ) : DeviceOpenResult
@@ -14,10 +14,10 @@ sealed interface DeviceOpenResult {
     data object NotFound : DeviceOpenResult
 
     data class Unsupported(
-        val device: DevicesDataStoreManager.DeviceInfoUi
+        val device: DevicesDataStoreManager.DeviceInfo
     ) : DeviceOpenResult
 
     data class Offline(
-        val device: DevicesDataStoreManager.DeviceInfoUi
+        val device: DevicesDataStoreManager.DeviceInfo
     ) : DeviceOpenResult
 }

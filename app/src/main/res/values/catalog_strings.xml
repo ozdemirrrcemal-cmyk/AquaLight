@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Catalog picker shared UI -->
+    <string name="catalog_search_hint">Type here to search...</string>
+
+    <!-- Material catalog picker -->
+    <string name="material_picker_no_materials_found">No materials found</string>
+    <string name="material_picker_new_title">New %1$s</string>
+    <string name="material_picker_new_material">New Material</string>
+    <string name="material_picker_material_name">Material Name</string>
+    <string name="material_picker_enter_material_name">Enter material name</string>
+    <string name="material_picker_category">Category</string>
+    <string name="material_picker_required">Required</string>
+    <string name="material_picker_save">Save</string>
+    <string name="material_picker_cancel">Cancel</string>
+    <string name="material_picker_no_materials_selected">No materials selected</string>
+    <string name="material_picker_selected_count">%1$d selected</string>
+    <string name="material_picker_not_selected">Not selected</string>
+    <string name="material_picker_more_count">%1$s +%2$d more</string>
+
+    <!-- Plant catalog picker -->
+    <string name="plant_picker_title">Aquarium Plants</string>
+    <string name="plant_picker_found">%1$d plants found</string>
+    <string name="plant_picker_empty">No plants found</string>
+</resources>

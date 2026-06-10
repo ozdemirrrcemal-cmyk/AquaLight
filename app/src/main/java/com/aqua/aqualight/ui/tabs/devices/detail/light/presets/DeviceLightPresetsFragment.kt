@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
+import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
@@ -114,7 +115,7 @@ class DeviceLightPresetsFragment :
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.presetsFlow.collect { savedPresets ->
                     val customPresets = savedPresets.map { preset ->
-                        preset.toListItem()
+                        toCustomPresetItem(preset)
                     }
 
                     allPresets = BuiltInLightPresets.presets + customPresets
@@ -124,6 +125,22 @@ class DeviceLightPresetsFragment :
                 }
             }
         }
+    }
+
+
+    private fun toCustomPresetItem(
+        preset: SavedLightPreset
+    ): LightPresetItem {
+        return LightPresetItem(
+            id = preset.id,
+            title = preset.name,
+            subtitle = "Custom saved preset",
+            category = LightPresetCategory.CUSTOM,
+            red = preset.red,
+            green = preset.green,
+            blue = preset.blue,
+            white = preset.white
+        )
     }
 
     private fun observeEvents() {

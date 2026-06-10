@@ -1,14 +1,18 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveGraphState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveMoonlightGraphSegment
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramPhaseType
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimeline
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelinePhase
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphState
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveMoonlightGraphSegment
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.programs.model.CloudSimulationSettings
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
+import com.aqua.aqualight.data.devices.light.programs.model.MoonlightSettings
+import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramPhaseType
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimeline
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelineBuilder
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelinePhase
 
 data class DeviceLightProgramEditorUiState(
     val start: LightCurvePoint,

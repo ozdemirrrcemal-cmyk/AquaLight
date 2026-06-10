@@ -6,8 +6,8 @@ import android.view.View
 import android.widget.TextView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.BottomSheetLightCloudSimulationBinding
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudFrequency
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudSimulationSettings
+import com.aqua.aqualight.data.devices.light.programs.model.CloudFrequency
+import com.aqua.aqualight.data.devices.light.programs.model.CloudSimulationSettings
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class LightCloudSimulationSheet private constructor(

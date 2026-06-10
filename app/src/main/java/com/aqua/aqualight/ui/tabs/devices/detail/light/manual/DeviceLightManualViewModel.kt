@@ -16,7 +16,7 @@ import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.SavedLightPreset
+import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt

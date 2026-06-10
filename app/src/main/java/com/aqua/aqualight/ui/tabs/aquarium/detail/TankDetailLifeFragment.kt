@@ -16,8 +16,8 @@ import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.LivestockCategories
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
 import java.util.Date

@@ -12,7 +12,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.access.DeviceAccessGuard
 import com.aqua.aqualight.data.devices.access.DeviceOpenResult
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -153,8 +153,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         controllerTitle: String,
         definition: AquaDeviceDefinition
     ) {
-        when (definition.uiController) {
-            AquaDeviceUiController.GENERIC_LIGHT -> {
+        when (definition.controllerType) {
+            AquaDeviceControllerType.GENERIC_LIGHT -> {
                 findNavController().navigate(
                     R.id.action_deviceRouterFragment_to_deviceLightFragment,
                     bundleOf(
@@ -164,8 +164,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 )
             }
 
-            AquaDeviceUiController.GENERIC_DOSING,
-            AquaDeviceUiController.CUSTOM_DOSING_4CH -> {
+            AquaDeviceControllerType.GENERIC_DOSING,
+            AquaDeviceControllerType.CUSTOM_DOSING_4CH -> {
                 findNavController().navigate(
                     R.id.action_deviceRouterFragment_to_deviceDosingFragment,
                     bundleOf(
@@ -176,9 +176,9 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 )
             }
 
-            AquaDeviceUiController.GENERIC_TIMER,
-            AquaDeviceUiController.CUSTOM_TIMER_MULTI_CONTROL,
-            AquaDeviceUiController.CUSTOM_TIMER_SCENE_PRO -> {
+            AquaDeviceControllerType.GENERIC_TIMER,
+            AquaDeviceControllerType.CUSTOM_TIMER_MULTI_CONTROL,
+            AquaDeviceControllerType.CUSTOM_TIMER_SCENE_PRO -> {
                 findNavController().navigate(
                     R.id.action_deviceRouterFragment_to_deviceTimerFragment,
                     bundleOf(
@@ -189,8 +189,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 )
             }
 
-            AquaDeviceUiController.GENERIC_COOLING,
-            AquaDeviceUiController.CUSTOM_COOLING_ADVANCED -> {
+            AquaDeviceControllerType.GENERIC_COOLING,
+            AquaDeviceControllerType.CUSTOM_COOLING_ADVANCED -> {
                 findNavController().navigate(
                     R.id.action_deviceRouterFragment_to_deviceCoolingFragment,
                     bundleOf(

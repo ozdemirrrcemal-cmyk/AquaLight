@@ -12,7 +12,7 @@ import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -163,7 +163,7 @@ class TankDetailDevicesViewModel(
 }
 
     private fun updateLightObservers(
-        devices: List<DevicesDataStoreManager.DeviceInfoUi>
+        devices: List<DevicesDataStoreManager.DeviceInfo>
     ) {
         val lightDeviceIds =
             devices
@@ -387,7 +387,7 @@ class TankDetailDevicesViewModel(
     }
 
     private data class SourceState(
-        val devices: List<DevicesDataStoreManager.DeviceInfoUi>,
+        val devices: List<DevicesDataStoreManager.DeviceInfo>,
         val statuses: Map<Long, DeviceStatusState>,
         val programs: List<SavedLightProgram>,
         val lightStates: Map<Long, LightDeviceLiveState>,

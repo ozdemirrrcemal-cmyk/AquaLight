@@ -3,7 +3,7 @@ package com.aqua.aqualight.data.devices.presence
 import android.content.Context
 import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager.DeviceInfoUi
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager.DeviceInfo
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
@@ -274,7 +274,7 @@ object DevicePresenceMonitor {
 
     private suspend fun applyDiscoveryResult(
         devicesStore: DevicesDataStoreManager,
-        savedDevices: List<DeviceInfoUi>,
+        savedDevices: List<DeviceInfo>,
         discoveredDevices: List<DiscoveredAquaDevice>
     ) {
         val now = System.currentTimeMillis()
@@ -356,7 +356,7 @@ object DevicePresenceMonitor {
     }
 
     private fun emitPassiveStates(
-        savedDevices: List<DeviceInfoUi>
+        savedDevices: List<DeviceInfo>
     ) {
         val now = System.currentTimeMillis()
 
@@ -377,7 +377,7 @@ object DevicePresenceMonitor {
     }
 
     private fun setCheckingState(
-        device: DeviceInfoUi,
+        device: DeviceInfo,
         now: Long
     ) {
         val previousState = _statuses.value[device.id]
@@ -401,7 +401,7 @@ object DevicePresenceMonitor {
     }
 
     private fun buildState(
-        device: DeviceInfoUi,
+        device: DeviceInfo,
         now: Long,
         missedCount: Int,
         lastSeenOverride: Long? = null,
@@ -453,7 +453,7 @@ object DevicePresenceMonitor {
     }
 
     private fun buildUnknownState(
-        device: DeviceInfoUi,
+        device: DeviceInfo,
         now: Long,
         ipOverride: String? = null
     ): DeviceStatusState {
@@ -472,7 +472,7 @@ object DevicePresenceMonitor {
     }
 
     private fun buildOfflineState(
-        device: DeviceInfoUi,
+        device: DeviceInfo,
         now: Long,
         missedCount: Int,
         previousState: DeviceStatusState?,
@@ -489,7 +489,7 @@ object DevicePresenceMonitor {
     }
 
     private fun findMatchingDiscoveredDevice(
-        savedDevice: DeviceInfoUi,
+        savedDevice: DeviceInfo,
         discoveredDevices: List<DiscoveredAquaDevice>
     ): DiscoveredAquaDevice? {
         return discoveredDevices.firstOrNull { discoveredDevice ->

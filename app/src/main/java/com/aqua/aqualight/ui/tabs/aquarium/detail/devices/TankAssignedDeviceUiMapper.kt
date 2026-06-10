@@ -9,10 +9,10 @@ import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
+import com.aqua.aqualight.data.devices.light.programs.model.MoonlightChannel
+import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import java.util.Calendar
 import kotlin.math.roundToInt
@@ -20,13 +20,13 @@ import kotlin.math.roundToInt
 class TankAssignedDeviceUiMapper {
 
     fun isLightDeviceForObserver(
-        device: DevicesDataStoreManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfo
     ): Boolean {
         return device.isLightDevice()
     }
 
     fun map(
-        device: DevicesDataStoreManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfo,
         statuses: Map<Long, DeviceStatusState>,
         programs: List<SavedLightProgram>,
         lightState: LightDeviceLiveState?,
@@ -78,7 +78,7 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun mapLightDevice(
-        device: DevicesDataStoreManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfo,
         title: String,
         subtitle: String,
         iconRes: Int,
@@ -388,7 +388,7 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun buildLightChannels(
-        device: DevicesDataStoreManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfo,
         liveState: LightDeviceLiveState,
         runningProgram: SavedLightProgram?,
         displayProgram: SavedLightProgram?,
@@ -701,7 +701,7 @@ class TankAssignedDeviceUiMapper {
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.supportedLightChannels(): List<LightChannelConfig> {
+    private fun DevicesDataStoreManager.DeviceInfo.supportedLightChannels(): List<LightChannelConfig> {
         val catalogDefinition =
             LightProductCatalog.findByType(
                 type = deviceType
@@ -732,7 +732,7 @@ class TankAssignedDeviceUiMapper {
         return fallbackLightChannelsByChannelCount()
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.isLightDevice(): Boolean {
+    private fun DevicesDataStoreManager.DeviceInfo.isLightDevice(): Boolean {
         val catalogDefinition =
             LightProductCatalog.findByType(
                 type = deviceType
@@ -857,7 +857,7 @@ class TankAssignedDeviceUiMapper {
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.fallbackLightChannelsByChannelCount(): List<LightChannelConfig> {
+    private fun DevicesDataStoreManager.DeviceInfo.fallbackLightChannelsByChannelCount(): List<LightChannelConfig> {
         return when (channelCount) {
             4 -> {
                 listOf(
@@ -952,7 +952,7 @@ class TankAssignedDeviceUiMapper {
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.lightSearchText(): String {
+    private fun DevicesDataStoreManager.DeviceInfo.lightSearchText(): String {
         val definition =
             AquaDeviceCatalog.findByType(
                 type = deviceType
@@ -974,7 +974,7 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun getDeviceTitle(
-        device: DevicesDataStoreManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfo
     ): String {
         val definition =
             AquaDeviceCatalog.findByType(
@@ -990,7 +990,7 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun getDeviceTypeText(
-        device: DevicesDataStoreManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfo
     ): String {
         val definition =
             AquaDeviceCatalog.findByType(
@@ -1006,7 +1006,7 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun isDeviceOnline(
-        device: DevicesDataStoreManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfo,
         statuses: Map<Long, DeviceStatusState>,
         now: Long
     ): Boolean {

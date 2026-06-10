@@ -59,7 +59,7 @@ class DevicesDataStoreManager private constructor(
         }
     }
 
-    data class DeviceInfoUi(
+    data class DeviceInfo(
         val id: Long,
         val aquaName: String,
         val name: String,
@@ -131,13 +131,13 @@ class DevicesDataStoreManager private constructor(
             }
         }
 
-    val devicesFlow: Flow<List<DeviceInfoUi>> = devicesPrefsFlow.map { prefs ->
+    val devicesFlow: Flow<List<DeviceInfo>> = devicesPrefsFlow.map { prefs ->
         prefs.devicesList.map { device ->
-            device.toUi()
+            device.toDeviceInfo()
         }
     }
 
-    val unassignedDevicesFlow: Flow<List<DeviceInfoUi>> = devicesFlow.map { devices ->
+    val unassignedDevicesFlow: Flow<List<DeviceInfo>> = devicesFlow.map { devices ->
         devices.filter { device ->
             device.tankId == null
         }
@@ -145,7 +145,7 @@ class DevicesDataStoreManager private constructor(
 
     fun devicesForTankFlow(
         tankId: Long
-    ): Flow<List<DeviceInfoUi>> {
+    ): Flow<List<DeviceInfo>> {
         return devicesFlow.map { devices ->
             devices.filter { device ->
                 device.tankId == tankId
@@ -172,7 +172,7 @@ class DevicesDataStoreManager private constructor(
         return devicesPrefsFlow.first()
             .devicesList
             .map { device ->
-                device.toUi()
+                device.toDeviceInfo()
             }
             .firstOrNull { savedDevice ->
                 DeviceIdentityMatcher.matchesStoredIdentity(
@@ -430,7 +430,7 @@ class DevicesDataStoreManager private constructor(
 
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
-                val savedDevice = device.toUi()
+                val savedDevice = device.toDeviceInfo()
 
                 val match = discovered.firstOrNull { discoveredDevice ->
                     DeviceIdentityMatcher.samePhysicalDevice(
@@ -540,7 +540,7 @@ class DevicesDataStoreManager private constructor(
         }
     }
 
-    private fun SavedDeviceInfo.toUi(): DeviceInfoUi {
+    private fun SavedDeviceInfo.toDeviceInfo(): DeviceInfo {
         val fallbackType = AquaDeviceCatalog.resolveTypeByLegacyIdentity(
             aquaName = aquaName,
             name = name
@@ -556,7 +556,7 @@ class DevicesDataStoreManager private constructor(
             fallbackType
         }
 
-        return DeviceInfoUi(
+        return DeviceInfo(
             id = id,
             aquaName = aquaName,
             name = name,

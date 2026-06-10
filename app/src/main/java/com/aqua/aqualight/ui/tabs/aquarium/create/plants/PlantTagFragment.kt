@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import coil3.load
 import coil3.request.crossfade
+import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantTagBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconAction

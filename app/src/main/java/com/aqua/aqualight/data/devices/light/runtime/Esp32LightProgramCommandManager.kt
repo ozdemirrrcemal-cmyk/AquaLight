@@ -1,14 +1,14 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
 import android.content.Context
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramPhaseType
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelinePhase
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
+import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramPhaseType
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelineBuilder
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelinePhase
+import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramScheduleConflictValidator
 import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject

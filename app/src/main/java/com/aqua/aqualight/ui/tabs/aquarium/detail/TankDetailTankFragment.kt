@@ -15,9 +15,9 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat

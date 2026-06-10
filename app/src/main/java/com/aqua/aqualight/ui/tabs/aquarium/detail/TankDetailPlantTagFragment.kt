@@ -24,7 +24,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
+import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 

@@ -13,7 +13,7 @@ import java.util.Locale
 object DeviceIdentityMatcher {
 
     fun samePhysicalDevice(
-        savedDevice: DevicesDataStoreManager.DeviceInfoUi,
+        savedDevice: DevicesDataStoreManager.DeviceInfo,
         discoveredDevice: DiscoveredAquaDevice
     ): Boolean {
         if (savedDevice.id > 0L && savedDevice.id == discoveredDevice.id) {
@@ -26,7 +26,7 @@ object DeviceIdentityMatcher {
     }
 
     fun samePhysicalDevice(
-        savedDevice: DevicesDataStoreManager.DeviceInfoUi,
+        savedDevice: DevicesDataStoreManager.DeviceInfo,
         update: DevicesDataStoreManager.DeviceLastSeenUpdate
     ): Boolean {
         if (savedDevice.id > 0L && savedDevice.id == update.id) {
@@ -39,7 +39,7 @@ object DeviceIdentityMatcher {
     }
 
     fun matchesStoredIdentity(
-        savedDevice: DevicesDataStoreManager.DeviceInfoUi,
+        savedDevice: DevicesDataStoreManager.DeviceInfo,
         id: Long,
         deviceUid: String?,
         macAddress: String?,
@@ -55,7 +55,7 @@ object DeviceIdentityMatcher {
     }
 
     fun matchesSetupShortId(
-        savedDevice: DevicesDataStoreManager.DeviceInfoUi,
+        savedDevice: DevicesDataStoreManager.DeviceInfo,
         setupShortId: String
     ): Boolean {
         return matchesSetupShortId(

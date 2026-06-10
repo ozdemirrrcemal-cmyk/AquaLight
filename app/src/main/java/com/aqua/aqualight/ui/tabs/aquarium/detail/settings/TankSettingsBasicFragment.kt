@@ -27,7 +27,7 @@ import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.yalantis.ucrop.UCrop
 import java.io.File

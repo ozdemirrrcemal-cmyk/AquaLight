@@ -15,7 +15,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailPlantsBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
 import com.google.android.material.card.MaterialCardView
 
 class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) {

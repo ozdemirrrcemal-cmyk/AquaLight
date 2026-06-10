@@ -31,11 +31,11 @@ import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.care.model.CareTaskSource
+import com.aqua.aqualight.data.care.model.CareTaskStatus
+import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.settings.app.NotificationsBottomSheet
 import com.aqua.aqualight.utils.NotificationHelper

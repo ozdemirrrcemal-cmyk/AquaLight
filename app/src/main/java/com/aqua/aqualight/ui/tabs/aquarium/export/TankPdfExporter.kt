@@ -16,9 +16,9 @@ import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import androidx.core.content.FileProvider
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import java.util.concurrent.TimeUnit
 import java.io.File
@@ -44,7 +44,7 @@ object TankPdfExporter {
   fun createTankReportPdf(
     context: Context,
     tank: SavedAquariumTank,
-    devices: List<DevicesDataStoreManager.DeviceInfoUi> = emptyList()
+    devices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
   ): Uri {
     val document = PdfDocument()
     val writer = PdfWriter(document)
@@ -211,7 +211,7 @@ object TankPdfExporter {
   }
 
   private fun getDeviceNameText(
-    device: DevicesDataStoreManager.DeviceInfoUi
+    device: DevicesDataStoreManager.DeviceInfo
   ): String {
     return device.name.ifBlank {
       "Device"
@@ -219,7 +219,7 @@ object TankPdfExporter {
   }
 
   private fun getDeviceTypeText(
-    device: DevicesDataStoreManager.DeviceInfoUi
+    device: DevicesDataStoreManager.DeviceInfo
   ): String {
     return device.aquaName.ifBlank {
       "Device"
@@ -228,7 +228,7 @@ object TankPdfExporter {
 
 
   private fun getDeviceFirmwareText(
-    device: DevicesDataStoreManager.DeviceInfoUi
+    device: DevicesDataStoreManager.DeviceInfo
   ): String {
     return device.firmwareBuild
     .substringBefore(" (")

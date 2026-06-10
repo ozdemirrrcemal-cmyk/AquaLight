@@ -17,7 +17,7 @@ import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -33,7 +33,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DeviceStatusAdapter
 
-    private var latestDevices: List<DevicesDataStoreManager.DeviceInfoUi> = emptyList()
+    private var latestDevices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
     private var latestTanks: List<SavedAquariumTank> = emptyList()
     private var latestStatuses: Map<Long, DeviceStatusState> = emptyMap()
 
@@ -200,7 +200,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     }
 
     private fun getTankNameForDevice(
-        device: DevicesDataStoreManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfo
     ): String {
         val connectedTankId =
             device.tankId ?: return "Not connected"

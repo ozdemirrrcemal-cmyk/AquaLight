@@ -19,3 +19,13 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# AquaLight production hardening
+# Keep WorkManager workers and broadcast receivers used from manifest/WorkManager factories.
+-keep class com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker { *; }
+-keep class com.aqua.aqualight.data.care.reminder.CareTaskReminderReceiver { *; }
+-keep class com.aqua.aqualight.data.care.reminder.CareTaskBootReceiver { *; }
+
+# Preserve line numbers in release crash reports while keeping source obfuscation enabled.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

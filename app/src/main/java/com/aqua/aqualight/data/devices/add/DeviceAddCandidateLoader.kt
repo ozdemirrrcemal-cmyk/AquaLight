@@ -39,7 +39,7 @@ class DeviceAddCandidateLoader(
     }
 
     private suspend fun loadLocalNetworkCandidates(
-        savedDevices: List<DevicesDataStoreManager.DeviceInfoUi>
+        savedDevices: List<DevicesDataStoreManager.DeviceInfo>
     ): List<DeviceAddCandidate> {
         val result = DeviceDiscoveryService.scan(
             context = context,
@@ -81,7 +81,7 @@ class DeviceAddCandidateLoader(
     private fun mergeCandidates(
         setupCandidates: List<DeviceAddCandidate>,
         localCandidates: List<DeviceAddCandidate>,
-        savedDevices: List<DevicesDataStoreManager.DeviceInfoUi>
+        savedDevices: List<DevicesDataStoreManager.DeviceInfo>
     ): List<DeviceAddCandidate> {
         val filteredSetupCandidates = setupCandidates.filter { candidate ->
             val shortId = candidate.setupShortId?.trim().orEmpty()

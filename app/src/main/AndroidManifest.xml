@@ -76,11 +76,11 @@
       android:theme="@style/AppTheme" />
 
     <receiver
-      android:name="com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskReminderReceiver"
+      android:name="com.aqua.aqualight.data.care.reminder.CareTaskReminderReceiver"
       android:exported="false" />
 
     <receiver
-      android:name="com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskBootReceiver"
+      android:name="com.aqua.aqualight.data.care.reminder.CareTaskBootReceiver"
       android:enabled="true"
       android:exported="true">
 

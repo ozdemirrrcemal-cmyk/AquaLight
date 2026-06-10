@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 
+import com.aqua.aqualight.data.aquarium.catalog.plant.PlantCatalog
+import com.aqua.aqualight.data.aquarium.catalog.plant.AquariumPlant
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -46,7 +48,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     closePicker()
                 },
                 searchField = AquaHeaderSearchField(
-                    hint = "Type here to search...",
+                    hint = getString(R.string.catalog_search_hint),
                     onTextChanged = { query ->
                         filterPlants(query)
                     },
@@ -88,9 +90,9 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         val title = TextView(requireContext()).apply {
             text = if (plantList.size == plants.size) {
-                "Aquarium Plants"
+                getString(R.string.plant_picker_title)
             } else {
-                "${plantList.size} plants found"
+                getString(R.string.plant_picker_found, plantList.size)
             }
 
             setTextColor(Color.parseColor("#8FA4BE"))
@@ -121,7 +123,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
     private fun showEmptySearchResult() {
         val emptyText = TextView(requireContext()).apply {
-            text = "No plants found"
+            text = getString(R.string.plant_picker_empty)
             setTextColor(Color.parseColor("#8FA4BE"))
             textSize = 15f
             gravity = Gravity.CENTER

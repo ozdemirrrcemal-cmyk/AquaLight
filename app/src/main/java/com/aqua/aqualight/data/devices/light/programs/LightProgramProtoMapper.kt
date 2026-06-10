@@ -1,15 +1,15 @@
 package com.aqua.aqualight.data.devices.light.programs
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues as UiChannelValues
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudFrequency as UiCloudFrequency
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudSimulationSettings as UiCloudSimulationSettings
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramDraft
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel as UiMoonlightChannel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightSettings as UiMoonlightSettings
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode as UiRepeatMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues as UiChannelValues
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.programs.model.CloudFrequency as UiCloudFrequency
+import com.aqua.aqualight.data.devices.light.programs.model.CloudSimulationSettings as UiCloudSimulationSettings
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
+import com.aqua.aqualight.data.devices.light.programs.model.MoonlightChannel as UiMoonlightChannel
+import com.aqua.aqualight.data.devices.light.programs.model.MoonlightSettings as UiMoonlightSettings
+import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode as UiRepeatMode
+import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import java.util.UUID
 
 object LightProgramProtoMapper {
