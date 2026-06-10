@@ -25,8 +25,11 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
+import androidx.navigation.fragment.navArgs
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
+
+    private val args: TankDetailFragmentArgs by navArgs()
 
     private var _binding: FragmentTankDetailBinding? = null
     private val binding get() = _binding!!
@@ -43,7 +46,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     ) {
         super.onCreate(savedInstanceState)
 
-        tankId = requireArguments().getLong(ARG_TANK_ID)
+        tankId = args.tankId
     }
 
     override fun onViewCreated(

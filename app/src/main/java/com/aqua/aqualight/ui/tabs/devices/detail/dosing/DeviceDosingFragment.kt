@@ -15,22 +15,23 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
+
+    private val args: DeviceDosingFragmentArgs by navArgs()
+
 
     private var _binding: FragmentDeviceDosingBinding? = null
     private val binding get() = _binding!!
 
     private val deviceId: Long
-        get() = requireArguments().getLong(ARG_DEVICE_ID)
+        get() = args.deviceId
 
     private val deviceTitle: String
-        get() = requireArguments()
-            .getString(ARG_DEVICE_TITLE)
-            .orEmpty()
-            .ifBlank {
-                "Dosing"
-            }
+        get() = args.deviceTitle.ifBlank {
+            "Dosing"
+        }
 
     override fun onViewCreated(
         view: View,
@@ -104,9 +105,7 @@ class DeviceDosingFragment : Fragment(R.layout.fragment_device_dosing) {
 
         val resolvedIp =
             statusState?.ip.orEmpty().ifBlank {
-                requireArguments()
-                    .getString(ARG_DEVICE_IP)
-                    .orEmpty()
+                args.deviceIp
             }
 
         return buildString {

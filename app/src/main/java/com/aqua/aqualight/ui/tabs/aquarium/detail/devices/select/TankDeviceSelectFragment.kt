@@ -21,9 +21,13 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class TankDeviceSelectFragment :
     Fragment(R.layout.fragment_tank_device_select) {
+
+    private val args: TankDeviceSelectFragmentArgs by navArgs()
+
 
     private var _binding: FragmentTankDeviceSelectBinding? = null
     private val binding get() = _binding!!
@@ -40,9 +44,7 @@ class TankDeviceSelectFragment :
         false
 
     private val tankId: Long
-        get() = requireArguments().getLong(
-            ARG_TANK_ID
-        )
+        get() = args.tankId
 
     override fun onViewCreated(
         view: View,

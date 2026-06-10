@@ -21,9 +21,13 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLigh
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.sheet.LightSettingValueSheet
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class DeviceLightSettingsFragment :
     Fragment(R.layout.fragment_device_light_settings) {
+
+    private val args: DeviceLightSettingsFragmentArgs by navArgs()
+
 
     private var _binding: FragmentDeviceLightSettingsBinding? = null
     private val binding get() = _binding!!
@@ -33,7 +37,7 @@ class DeviceLightSettingsFragment :
     private var hasResumedOnce = false
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+        get() = args.deviceId
 
     override fun onViewCreated(
         view: View,

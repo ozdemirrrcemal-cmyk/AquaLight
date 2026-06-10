@@ -18,8 +18,11 @@ import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.renderLightModeChip
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
+
+    private val args: DeviceLightFragmentArgs by navArgs()
 
     private var _binding: FragmentDeviceLightBinding? = null
     private val binding get() = _binding!!
@@ -29,15 +32,12 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private var latestState: DeviceLightDashboardUiState = DeviceLightDashboardUiState()
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+        get() = args.deviceId
 
     private val deviceTitle: String
-        get() = arguments
-            ?.getString(ARG_DEVICE_TITLE)
-            .orEmpty()
-            .ifBlank {
-                "WRGB Pro"
-            }
+        get() = args.deviceTitle.ifBlank {
+            "WRGB Pro"
+        }
 
     override fun onViewCreated(
         view: View,

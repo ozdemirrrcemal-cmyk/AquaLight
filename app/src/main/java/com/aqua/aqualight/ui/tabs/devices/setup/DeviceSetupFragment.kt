@@ -29,8 +29,11 @@ import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
+
+    private val args: DeviceSetupFragmentArgs by navArgs()
 
     private var _binding: FragmentDeviceSetupBinding? = null
     private val binding get() = _binding!!
@@ -104,25 +107,13 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private fun readArgs() {
-        displayName = requireArguments().getString(
-            "displayName",
-            "Device"
-        )
+        displayName = args.displayName
 
-        familyName = requireArguments().getString(
-            "familyName",
-            "Aqua device"
-        )
+        familyName = args.familyName
 
-        setupSsid = requireArguments().getString(
-            "setupSsid",
-            ""
-        )
+        setupSsid = args.setupSsid
 
-        val deviceTypeKey = requireArguments().getString(
-            "deviceType",
-            ""
-        )
+        val deviceTypeKey = args.deviceType
 
         expectedDeviceType = AquaDeviceType.entries.firstOrNull { type ->
             type.storageKey == deviceTypeKey

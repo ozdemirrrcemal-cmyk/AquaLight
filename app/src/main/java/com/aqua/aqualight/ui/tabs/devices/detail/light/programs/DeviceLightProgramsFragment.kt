@@ -27,9 +27,13 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.sheet.LightProgramOptions
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class DeviceLightProgramsFragment :
 Fragment(R.layout.fragment_device_light_programs) {
+
+    private val args: DeviceLightProgramsFragmentArgs by navArgs()
+
 
     private var _binding: FragmentDeviceLightProgramsBinding? = null
     private val binding get() = _binding!!
@@ -39,7 +43,7 @@ Fragment(R.layout.fragment_device_light_programs) {
     private lateinit var programsAdapter: LightProgramsAdapter
 
     private val deviceId: Long
-    get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+    get() = args.deviceId
 
     override fun onViewCreated(
         view: View,

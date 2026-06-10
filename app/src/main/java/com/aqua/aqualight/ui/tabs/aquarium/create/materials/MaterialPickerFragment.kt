@@ -35,8 +35,11 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.util.Locale
+import androidx.navigation.fragment.navArgs
 
 class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
+
+    private val args: MaterialPickerFragmentArgs by navArgs()
 
     interface MaterialPickerHost {
         fun closeMaterialPickerFlow()
@@ -67,18 +70,12 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        pickerMode = requireArguments().getString(
-            ARG_MODE,
-            MODE_CREATE
-        )
+        pickerMode = args.argMode
 
-        tankId = requireArguments().getLong(
-            ARG_TANK_ID,
-            0L
-        )
+        tankId = args.argTankId
 
-        categoryKey = requireArguments().getString(ARG_CATEGORY_KEY).orEmpty()
-        categoryTitle = requireArguments().getString(ARG_CATEGORY_TITLE).orEmpty()
+        categoryKey = args.argCategoryKey
+        categoryTitle = args.argCategoryTitle
     }
 
     override fun onViewCreated(

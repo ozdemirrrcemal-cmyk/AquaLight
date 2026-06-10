@@ -46,9 +46,12 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import androidx.navigation.fragment.navArgs
 
 class AddCareTaskFragment :
     Fragment(R.layout.fragment_add_care_task) {
+
+    private val args: AddCareTaskFragmentArgs by navArgs()
 
     private var _binding: FragmentAddCareTaskBinding? = null
     private val binding get() = _binding!!
@@ -118,10 +121,7 @@ class AddCareTaskFragment :
 
         _binding = FragmentAddCareTaskBinding.bind(view)
 
-        taskId = requireArguments().getLong(
-            "taskId",
-            -1L
-        )
+        taskId = args.taskId
 
         setupInitialUi()
         setupClickListeners()

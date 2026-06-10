@@ -16,7 +16,6 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBinding
-import androidx.navigation.NavDirections
 import com.aqua.aqualight.databinding.ItemCareProfileRowBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderScoreBadge
@@ -30,8 +29,12 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlin.math.roundToInt
+import androidx.navigation.NavDirections
+import androidx.navigation.fragment.navArgs
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
+
+    private val args: TankSettingsFragmentArgs by navArgs()
 
     private var _binding: FragmentTankSettingsBinding? = null
     private val binding get() = _binding!!
@@ -48,7 +51,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     ) {
         super.onCreate(savedInstanceState)
 
-        tankId = requireArguments().getLong(ARG_TANK_ID)
+        tankId = args.tankId
     }
 
     override fun onViewCreated(
@@ -324,7 +327,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun getInitialTab(): SettingsTab {
-        val startTab = arguments?.getString(ARG_START_TAB)
+        val startTab = args.startTab
 
         return when (startTab) {
             START_TAB_DETAILS -> SettingsTab.DETAILS

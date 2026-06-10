@@ -17,8 +17,11 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.google.android.material.card.MaterialCardView
+import androidx.navigation.fragment.navArgs
 
 class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
+
+    private val args: PlantPickerFragmentArgs by navArgs()
 
     private var _binding: FragmentPlantPickerBinding? = null
     private val binding get() = _binding!!
@@ -250,10 +253,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
     }
 
     private fun usesNavigationResult(): Boolean {
-        return arguments?.getBoolean(
-            ARG_USE_NAV_RESULT,
-            false
-        ) == true
+        return args.useNavResult
     }
 
     private fun Int.dp(): Int {

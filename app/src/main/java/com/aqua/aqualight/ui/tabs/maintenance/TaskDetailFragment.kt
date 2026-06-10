@@ -28,9 +28,12 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.navigation.fragment.navArgs
 
 class TaskDetailFragment :
   Fragment(R.layout.fragment_task_detail) {
+
+  private val args: TaskDetailFragmentArgs by navArgs()
 
   private var _binding: FragmentTaskDetailBinding? = null
   private val binding get() = _binding!!
@@ -52,10 +55,7 @@ class TaskDetailFragment :
 
     _binding = FragmentTaskDetailBinding.bind(view)
 
-    taskId = requireArguments().getLong(
-      "taskId",
-      -1L
-    )
+    taskId = args.taskId
 
     if (taskId <= 0L) {
       findNavController().popBackStack()

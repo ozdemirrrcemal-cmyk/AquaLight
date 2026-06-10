@@ -31,9 +31,13 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.sheet.LightPreset
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import androidx.navigation.fragment.navArgs
 
 class DeviceLightPresetsFragment :
     Fragment(R.layout.fragment_device_light_presets) {
+
+    private val args: DeviceLightPresetsFragmentArgs by navArgs()
+
 
     private var _binding: FragmentDeviceLightPresetsBinding? = null
     private val binding get() = _binding!!
@@ -47,7 +51,7 @@ class DeviceLightPresetsFragment :
     private var activePreset: LightPresetItem? = null
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+        get() = args.deviceId
 
     override fun onViewCreated(
         view: View,

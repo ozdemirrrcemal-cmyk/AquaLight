@@ -16,8 +16,11 @@ import com.aqua.aqualight.data.devices.catalog.toControllerRoute
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
+
+    private val args: DeviceRouterFragmentArgs by navArgs()
 
     private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var tankStore: AquariumTankDataStoreManager
@@ -42,7 +45,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             return
         }
 
-        val deviceId = DeviceRouterFragmentArgs.fromBundle(requireArguments()).deviceId
+        val deviceId = args.deviceId
 
         if (deviceId <= 0L) {
             openUnsupportedDevice(

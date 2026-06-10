@@ -34,9 +34,13 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.Lig
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 import com.google.android.material.slider.Slider
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class DeviceLightProgramEditorFragment :
     Fragment(R.layout.fragment_device_light_program_editor) {
+
+    private val args: DeviceLightProgramEditorFragmentArgs by navArgs()
+
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
@@ -47,10 +51,10 @@ class DeviceLightProgramEditorFragment :
     private var previewDaySheet: LightPreviewDaySheet? = null
 
     private val deviceId: Long
-        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
+        get() = args.deviceId
 
     private val programId: String?
-        get() = arguments?.getString(ARG_PROGRAM_ID)
+        get() = args.programId
 
     override fun onViewCreated(
         view: View,
