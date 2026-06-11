@@ -63,11 +63,11 @@ class LightDeviceAddressResolver(
         }
 
         val checkedState = DevicePresenceMonitor.checkDeviceNow(
-            context = appContext,
-            deviceId = deviceId,
-            knownIp = savedIp,
-            allowRecentOnlineCache = false
-        )
+    context = appContext,
+    deviceId = deviceId,
+    knownIp = savedIp,
+    allowRecentOnlineCache = !forceLiveCheck
+)
 
         if (checkedState == null) {
             return Result.Failure("Device status could not be checked")

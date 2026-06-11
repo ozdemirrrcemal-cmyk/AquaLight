@@ -30,6 +30,7 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
+import com.aqua.aqualight.base.BaseActivity
 import kotlinx.coroutines.launch
 
 class TankDetailFragment :
@@ -166,6 +167,14 @@ class TankDetailFragment :
             }
         }
     }
+	
+	private fun showGlobalLoading(
+    show: Boolean
+) {
+    (activity as? BaseActivity)?.showLoading(
+        show
+    )
+}
 
     private fun moveTabBy(
         offset: Int
@@ -274,75 +283,82 @@ class TankDetailFragment :
     }
 
     override fun onTankDetailDeviceClicked(
-        device: TankAssignedDeviceUi
-    ) {
-        if (device.deviceId <= 0L || isOpeningDevice) {
-            return
-        }
-
-        isOpeningDevice = true
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val result =
-                    DeviceAccessGuard(
-                        context = requireContext()
-                    ).resolveForOpen(
-                        deviceId = device.deviceId
-                    )
-
-                if (!isAdded || _binding == null) {
-                    return@launch
-                }
-
-                when (result) {
-                    is DeviceOpenResult.Allowed -> {
-                        navigateFromTankDetail(
-                            TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
-                                deviceId = result.device.id,
-                                deviceIp = result.ip,
-                                deviceTitle = device.title
-                            )
-                        )
-                    }
-
-                    DeviceOpenResult.NotFound -> {
-                        openUnsupportedDeviceScreen(
-                            title = "Device Not Found",
-                            message = "This device is no longer available."
-                        )
-                    }
-
-                    is DeviceOpenResult.Unsupported -> {
-                        openUnsupportedDeviceScreen(
-                            title = result.device.productModel.ifBlank {
-                                "Unsupported Device"
-                            },
-                            message = "This device is not supported by this app version."
-                        )
-                    }
-
-                    is DeviceOpenResult.Offline -> {
-                        openUnsupportedDeviceScreen(
-                            title = result.device.productModel.ifBlank {
-                                result.device.name.ifBlank {
-                                    device.title.ifBlank {
-                                        DEFAULT_DEVICE_TITLE
-                                    }
-                                }
-                            },
-                            message = getString(
-                                R.string.device_offline_message
-                            )
-                        )
-                    }
-                }
-            } finally {
-                isOpeningDevice = false
-            }
-        }
+    device: TankAssignedDeviceUi
+) {
+    if (device.deviceId <= 0L || isOpeningDevice) {
+        return
     }
 
+    isOpeningDevice = true
+
+    viewLifecycleOwner.lifecycleScope.launch {
+        try {
+            showGlobalLoading(
+                show = true
+            )
+
+            val result =
+                DeviceAccessGuard(
+                    context = requireContext()
+                ).resolveForOpen(
+                    deviceId = device.deviceId
+                )
+
+            if (!isAdded || _binding == null) {
+                return@launch
+            }
+
+            when (result) {
+                is DeviceOpenResult.Allowed -> {
+                    navigateFromTankDetail(
+                        TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
+                            deviceId = result.device.id,
+                            deviceIp = result.ip,
+                            deviceTitle = device.title
+                        )
+                    )
+                }
+
+                DeviceOpenResult.NotFound -> {
+                    openUnsupportedDeviceScreen(
+                        title = "Device Not Found",
+                        message = "This device is no longer available."
+                    )
+                }
+
+                is DeviceOpenResult.Unsupported -> {
+                    openUnsupportedDeviceScreen(
+                        title = result.device.productModel.ifBlank {
+                            "Unsupported Device"
+                        },
+                        message = "This device is not supported by this app version."
+                    )
+                }
+
+                is DeviceOpenResult.Offline -> {
+                    openUnsupportedDeviceScreen(
+                        title = result.device.productModel.ifBlank {
+                            result.device.name.ifBlank {
+                                device.title.ifBlank {
+                                    DEFAULT_DEVICE_TITLE
+                                }
+                            }
+                        },
+                        message = getString(
+                            R.string.device_offline_message
+                        )
+                    )
+                }
+            }
+        } finally {
+            isOpeningDevice = false
+
+            showGlobalLoading(
+                show = false
+            )
+        }
+    }
+}
     private fun openUnsupportedDeviceScreen(
         title: String,
         message: String

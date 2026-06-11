@@ -207,7 +207,7 @@ object LightDeviceLiveRefreshManager {
             val result = addressResolver.resolve(
                 deviceId = deviceId,
                 requireOnline = true,
-                forceLiveCheck = true
+                forceLiveCheck = false
             )
         ) {
             is LightDeviceAddressResolver.Result.Success -> {
