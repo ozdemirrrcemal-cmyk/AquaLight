@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
+import com.aqua.aqualight.data.network.LocalNetworkAddressPolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -128,6 +129,8 @@ class Esp32HttpJsonClient {
         ip: String,
         block: suspend () -> T
     ): T {
+        LocalNetworkAddressPolicy.requireLocalCleartextHost(ip)
+
         return mutexFor(ip).withLock {
             block()
         }

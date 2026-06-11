@@ -6,10 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
@@ -208,34 +207,8 @@ class LogoutFragment :
     }
 
     private fun navigateToLogin() {
-        (activity as? com.aqua.aqualight.ui.main.MainActivity)
-            ?.clearSessionNavigationState()
-
-        val rootNav =
-            (
-                requireActivity()
-                    .supportFragmentManager
-                    .findFragmentById(R.id.nav_host) as NavHostFragment
-                ).navController
-
-        val options =
-            navOptions {
-                popUpTo(R.id.nav_app) {
-                    inclusive =
-                        true
-                }
-
-                launchSingleTop =
-                    true
-            }
-
-        rootNav.navigate(
-            R.id.authContainerFragment,
-            null,
-            options
-        )
+        RootNavigator.openAuthGraph(this)
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
 

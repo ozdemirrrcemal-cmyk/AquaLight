@@ -8,10 +8,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
@@ -278,34 +277,8 @@ class ChangeEmailFragment :
     }
 
     private fun navigateToLoginRoot() {
-        (activity as? com.aqua.aqualight.ui.main.MainActivity)
-            ?.clearSessionNavigationState()
-
-        val rootNav =
-            (
-                requireActivity()
-                    .supportFragmentManager
-                    .findFragmentById(R.id.nav_host) as NavHostFragment
-                ).navController
-
-        val options =
-            navOptions {
-                popUpTo(R.id.nav_app) {
-                    inclusive =
-                        true
-                }
-
-                launchSingleTop =
-                    true
-            }
-
-        rootNav.navigate(
-            R.id.authContainerFragment,
-            null,
-            options
-        )
+        RootNavigator.openAuthGraph(this)
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
 

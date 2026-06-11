@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!--
+        AquaLight uses Firebase Auth plus local encrypted DataStore files.
+        Android cloud backup is disabled in the manifest, and these exclusions
+        protect against accidental re-enablement in future release variants.
+    -->
+    <exclude domain="file" path="datastore/" />
+    <exclude domain="file" path="data_key.bin" />
+    <exclude domain="file" path="profile_photos/" />
+    <exclude domain="file" path="tank_photos/" />
+    <exclude domain="sharedpref" path="__androidx_security_crypto_encrypted_file_pref__.xml" />
+</full-backup-content>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:id="@+id/nav_maintenance"
+  app:startDestination="@id/aquariumMaintenanceFragment">
+
+<!-- 🧰 Maintenance Tab -->
+  <fragment
+    android:id="@+id/aquariumMaintenanceFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment"
+    android:label="@string/screen_title_maintenance"
+    tools:layout="@layout/fragment_aquarium_maintenance">
+
+    <action
+      android:id="@+id/action_aquariumMaintenanceFragment_to_addCareTaskFragment"
+      app:destination="@id/addCareTaskFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+    <action
+      android:id="@+id/action_aquariumMaintenanceFragment_to_taskDetailFragment"
+      app:destination="@id/taskDetailFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+		
+	<action
+    android:id="@+id/action_aquariumMaintenanceFragment_to_tankSettingsFragment"
+    app:destination="@id/tankSettingsFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/taskDetailFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.TaskDetailFragment"
+    android:label="@string/screen_title_task_detail"
+    tools:layout="@layout/fragment_task_detail">
+
+    <argument
+      android:name="taskId"
+      app:argType="long" />
+
+    <action
+      android:id="@+id/action_taskDetailFragment_to_addCareTaskFragment"
+      app:destination="@id/addCareTaskFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/addCareTaskFragment"
+    android:name="com.aqua.aqualight.ui.tabs.maintenance.AddCareTaskFragment"
+    android:label="@string/screen_title_add_care_task"
+    tools:layout="@layout/fragment_add_care_task">
+
+    <argument
+      android:name="taskId"
+      app:argType="long"
+      android:defaultValue="-1L" />
+
+  </fragment>
+
+</navigation>

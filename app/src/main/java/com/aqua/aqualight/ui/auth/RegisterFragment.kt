@@ -9,10 +9,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentRegisterBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
@@ -136,30 +135,7 @@ class RegisterFragment : Fragment() {
     }
 
     private fun navigateToAppGraph() {
-        val rootNav =
-            (
-                requireActivity()
-                    .supportFragmentManager
-                    .findFragmentById(R.id.nav_host)
-                    as NavHostFragment
-                ).navController
-
-        val opts =
-            navOptions {
-                popUpTo(
-                    R.id.authContainerFragment
-                ) {
-                    inclusive = true
-                }
-
-                launchSingleTop = true
-            }
-
-        rootNav.navigate(
-            R.id.nav_app,
-            null,
-            opts
-        )
+        RootNavigator.openAppGraph(this)
     }
 
     override fun onDestroyView() {

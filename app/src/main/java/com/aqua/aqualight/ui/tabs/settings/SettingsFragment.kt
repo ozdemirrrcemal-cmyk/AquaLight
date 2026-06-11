@@ -194,6 +194,41 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 }
 
     private fun setupSocialLinks() = with(binding) {
+        ivSocialWebsite.visibility = if (URL_WEBSITE.isBlank()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+
+        ivSocialFacebook.visibility = if (URL_FACEBOOK.isBlank()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+
+        ivSocialInstagram.visibility = if (URL_INSTAGRAM.isBlank()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+
+        ivSocialYoutube.visibility = if (URL_YOUTUBE.isBlank()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+
+        rowSocialLinks.visibility = if (
+            URL_WEBSITE.isBlank() &&
+            URL_FACEBOOK.isBlank() &&
+            URL_INSTAGRAM.isBlank() &&
+            URL_YOUTUBE.isBlank()
+        ) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
+
         ivSocialWebsite.setOnClickListener {
             openUrlInBrowser(URL_WEBSITE)
         }
@@ -325,10 +360,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private companion object {
-        const val URL_WEBSITE = "https://aqualight.example.com"
-        const val URL_FACEBOOK = "https://www.facebook.com/aqualight"
-        const val URL_INSTAGRAM = "https://www.instagram.com/aqualight"
-        const val URL_YOUTUBE = "https://youtube.com/@aqualight"
+        const val URL_WEBSITE = ""
+        const val URL_FACEBOOK = ""
+        const val URL_INSTAGRAM = ""
+        const val URL_YOUTUBE = ""
 
         const val PKG_FACEBOOK = "com.facebook.katana"
         const val PKG_INSTAGRAM = "com.instagram.android"

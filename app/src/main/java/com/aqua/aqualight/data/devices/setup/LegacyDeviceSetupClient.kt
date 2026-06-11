@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.setup
 
 import android.net.Network
+import com.aqua.aqualight.data.network.LocalNetworkAddressPolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -13,6 +14,10 @@ import java.net.URL
 import java.net.URLEncoder
 
 class LegacyDeviceSetupClient {
+
+    init {
+        LocalNetworkAddressPolicy.requireLocalCleartextHost(SETUP_DEVICE_IP)
+    }
 
     data class SetupResult(
         val success: Boolean,
@@ -384,7 +389,8 @@ class LegacyDeviceSetupClient {
     }
 
     private companion object {
-        const val BASE_URL = "http://192.168.4.1"
+        const val SETUP_DEVICE_IP = "192.168.4.1"
+        const val BASE_URL = "http://$SETUP_DEVICE_IP"
         const val WIFI_SC = "WiFiSC"
     }
 }

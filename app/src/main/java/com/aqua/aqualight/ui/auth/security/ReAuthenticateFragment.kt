@@ -7,10 +7,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
 import com.aqua.aqualight.data.auth.AccountDeletionManager
@@ -481,35 +480,8 @@ class ReAuthenticateFragment :
     }
 
     private fun navigateToLogin() {
-
-        (activity as? com.aqua.aqualight.ui.main.MainActivity)
-            ?.clearSessionNavigationState()
-
-        val rootNav =
-            (
-                requireActivity()
-                    .supportFragmentManager
-                    .findFragmentById(R.id.nav_host)
-                    as NavHostFragment
-                ).navController
-
-        val opts =
-            navOptions {
-
-                popUpTo(R.id.nav_app) {
-                    inclusive = true
-                }
-
-                launchSingleTop = true
-            }
-
-        rootNav.navigate(
-            R.id.authContainerFragment,
-            null,
-            opts
-        )
+        RootNavigator.openAuthGraph(this)
     }
-
     override fun onDestroyView() {
 
         _binding = null

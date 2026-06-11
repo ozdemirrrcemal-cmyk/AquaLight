@@ -14,6 +14,7 @@ import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.ActivityMainBinding
+import com.aqua.aqualight.ui.navigation.AppDestinationContract
 import kotlinx.coroutines.launch
 
 class MainActivity : BaseActivity() {
@@ -176,10 +177,7 @@ class MainActivity : BaseActivity() {
             return
         }
 
-        val currentDestinationId = navController.currentDestination?.id
-            ?: return
-
-        if (!isInAppDest(currentDestinationId)) {
+        if (!AppDestinationContract.isInsideAppGraph(navController.currentDestination)) {
             return
         }
 
@@ -210,18 +208,6 @@ class MainActivity : BaseActivity() {
         )
     }
 
-    private fun isInAppDest(
-        destinationId: Int
-    ): Boolean {
-        return when (destinationId) {
-            R.id.aquariumFragment,
-            R.id.aquariumMaintenanceFragment,
-            R.id.devicesFragment,
-            R.id.settingsFragment -> true
-            else -> false
-        }
-    }
-
     private fun setupBottomBarIfNeeded(
         navController: NavController
     ) {
@@ -234,11 +220,14 @@ class MainActivity : BaseActivity() {
         binding.bottomNav.setupWithNavController(navController)
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            val inAppDestination = isInAppDest(destination.id)
+            val isTopLevelDestination =
+                AppDestinationContract.isTopLevelDestination(destination.id)
+            val isInsideAppGraph =
+                AppDestinationContract.isInsideAppGraph(destination)
 
-            binding.bottomNav.isVisible = inAppDestination
+            binding.bottomNav.isVisible = isTopLevelDestination
 
-            if (inAppDestination) {
+            if (isInsideAppGraph) {
                 isAuthenticated = authSessionManager.isAuthenticated()
                 startSessionBoundServicesIfNeeded()
                 consumePendingCareTaskIfPossible()

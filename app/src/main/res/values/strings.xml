@@ -834,15 +834,15 @@ Delete Failed
     </string>
 	
 	    <!-- 🧩 Two-Factor Authentication -->
-    <string name="security_2fa_label">Two-factor authentication</string>
+    <string name="security_2fa_label">Two-factor authentication — coming soon</string>
     <string name="security_2fa_desc">
-        Enable an extra security step when signing in to your account.
+        Two-factor authentication is currently unavailable.
     </string>
 
     <!-- 🔔 Login alerts -->
-    <string name="security_login_alerts_label">Login alerts</string>
+    <string name="security_login_alerts_label">Login alerts — coming soon</string>
     <string name="security_login_alerts_desc">
-        Get notified when your account is accessed from a new device or location.
+        Login alerts are currently unavailable.
     </string>
 	
 	<!-- 👤 User info – address screen -->
@@ -1173,15 +1173,15 @@ Delete Failed
 </string>
 
 <string name="security_settings_info_message">
-    Manage your account security preferences and login protection settings.
+    Advanced account security features will be enabled only after the backend supports them end to end. They are shown as unavailable so the app does not present placeholder security as real protection.
 </string>
 
 <string name="security_feature_in_development_title">
-    Feature In Development
+    Security feature unavailable
 </string>
 
 <string name="security_2fa_placeholder_message">
-    Two-factor authentication infrastructure will be added in a future update.
+    Two-factor authentication is not active yet. It will be enabled only when server-side verification is available.
 </string>
 
 <string name="security_login_alerts_title">
@@ -1189,11 +1189,11 @@ Delete Failed
 </string>
 
 <string name="security_login_alerts_enabled">
-    Login alerts enabled successfully.
+    Login alerts are not active yet.
 </string>
 
 <string name="security_login_alerts_disabled">
-    Login alerts disabled successfully.
+    Login alerts are not active yet.
 </string>
 
 <string name="security_2fa_info_title">
@@ -1201,7 +1201,7 @@ Delete Failed
 </string>
 
 <string name="security_2fa_info_message">
-    Adds an additional security layer during sign in using verification confirmation.
+    Two-factor authentication requires real server-side verification before it can protect an account.
 </string>
 
 <string name="security_login_alerts_info_title">
@@ -1209,7 +1209,7 @@ Delete Failed
 </string>
 
 <string name="security_login_alerts_info_message">
-    Receive notifications when your account is accessed from a new device or location.
+    Login alerts require real session/device monitoring before they can be enabled.
 </string>
 
 <string name="feedback_error_upload">
