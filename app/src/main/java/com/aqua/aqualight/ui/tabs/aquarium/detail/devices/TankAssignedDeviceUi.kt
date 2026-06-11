@@ -52,7 +52,10 @@ enum class TankLightCardMode {
     MANUAL,
     SCENE,
     MOONLIGHT,
-    NO_PROGRAM
+    NO_PROGRAM,
+    OFFLINE,
+    SYNCING,
+    WAITING
 }
 
 enum class TankLightChannelKey {

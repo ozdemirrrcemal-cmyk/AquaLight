@@ -498,125 +498,115 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun buildModeContent(
-        isOnline: Boolean,
-        hasDeviceTime: Boolean,
-        hasActualLiveData: Boolean,
-        displayProgram: SavedLightProgram?,
-        modeOverride: TankLightModeOverride?
-    ): LightModeContent {
-        if (!isOnline) {
-            return LightModeContent(
-                mode = TankLightCardMode.OFFLINE,
-                label = "OFFLINE",
-                title = "No live data",
-                leftText = "--:--",
-                rightText = "--:--",
-                accentColorInt = Color.parseColor("#90A1B5"),
-                timelineProgressPercent = 0
-            )
-        }
-
-        if (!hasDeviceTime) {
-            return LightModeContent(
-                mode = TankLightCardMode.NO_PROGRAM,
-                label = "SYNCING",
-                title = "Waiting for ESP32 time",
-                leftText = "--:--",
-                rightText = "--:--",
-                accentColorInt = Color.parseColor("#90A1B5"),
-                timelineProgressPercent = 0
-            )
-        }
-
-        if (!hasActualLiveData && displayProgram == null) {
-            return LightModeContent(
-                mode = TankLightCardMode.NO_PROGRAM,
-                label = "WAITING",
-                title = "Waiting for live data",
-                leftText = "--:--",
-                rightText = "--:--",
-                accentColorInt = Color.parseColor("#90A1B5"),
-                timelineProgressPercent = 0
-            )
-        }
-
-        when (modeOverride?.mode) {
-            TankLightCardMode.MANUAL -> {
-                return LightModeContent(
-                    mode = TankLightCardMode.MANUAL,
-                    label = "MANUAL MODE",
-                    title = "Manual Control",
-                    leftText = "Manual",
-                    rightText = "Resume",
-                    accentColorInt = Color.parseColor("#C8A86B"),
-                    timelineProgressPercent = 100
-                )
-            }
-
-            TankLightCardMode.SCENE -> {
-                return LightModeContent(
-                    mode = TankLightCardMode.SCENE,
-                    label = "SCENE ACTIVE",
-                    title = modeOverride.title.ifBlank {
-                        "Scene Mode"
-                    },
-                    leftText = "Scene",
-                    rightText = "Resume",
-                    accentColorInt = Color.parseColor("#A37CFF"),
-                    timelineProgressPercent = 100
-                )
-            }
-
-            TankLightCardMode.MOONLIGHT -> {
-                return LightModeContent(
-                    mode = TankLightCardMode.MOONLIGHT,
-                    label = "MOONLIGHT",
-                    title = modeOverride.title.ifBlank {
-                        "Moonlight Mode"
-                    },
-                    leftText = modeOverride.leftText ?: "--:--",
-                    rightText = modeOverride.rightText ?: "--:--",
-                    accentColorInt = Color.parseColor("#7FA7FF"),
-                    timelineProgressPercent = modeOverride.timelineProgressPercent ?: 0
-                )
-            }
-
-            TankLightCardMode.AUTO,
-            TankLightCardMode.NO_PROGRAM,
-            TankLightCardMode.OFFLINE,
-            null -> {
-                // Continue below.
-            }
-        }
-
-        if (displayProgram == null) {
-            return LightModeContent(
-                mode = TankLightCardMode.NO_PROGRAM,
-                label = "NO ACTIVE PROGRAM",
-                title = "Program not set",
-                leftText = "--:--",
-                rightText = "--:--",
-                accentColorInt = Color.parseColor("#90A1B5"),
-                timelineProgressPercent = 0
-            )
-        }
-
+    isOnline: Boolean,
+    hasDeviceTime: Boolean,
+    hasActualLiveData: Boolean,
+    displayProgram: SavedLightProgram?,
+    modeOverride: TankLightModeOverride?
+): LightModeContent {
+    if (!isOnline) {
         return LightModeContent(
-            mode = TankLightCardMode.AUTO,
-            label = if (hasActualLiveData) {
-                "ACTIVE PROGRAM"
-            } else {
-                "SCHEDULED"
-            },
-            title = displayProgram.name,
-            leftText = displayProgram.draft.start.label,
-            rightText = LightProgramTimeMath.endLabel(
-                displayProgram.draft.end
-            ),
-            accentColorInt = Color.parseColor("#8EB8FF"),
-            timelineProgressPercent = null
+            mode = TankLightCardMode.OFFLINE,
+            label = "OFFLINE",
+            title = "No live data",
+            leftText = "--:--",
+            rightText = "--:--",
+            accentColorInt = Color.parseColor("#90A1B5"),
+            timelineProgressPercent = 0
         )
     }
+
+    when (modeOverride?.mode) {
+        TankLightCardMode.MANUAL -> {
+            return LightModeContent(
+                mode = TankLightCardMode.MANUAL,
+                label = "MANUAL MODE",
+                title = "Manual Control",
+                leftText = "Manual",
+                rightText = "Resume",
+                accentColorInt = Color.parseColor("#C8A86B"),
+                timelineProgressPercent = 100
+            )
+        }
+
+        TankLightCardMode.SCENE -> {
+            return LightModeContent(
+                mode = TankLightCardMode.SCENE,
+                label = "SCENE ACTIVE",
+                title = modeOverride.title.ifBlank {
+                    "Scene Mode"
+                },
+                leftText = "Scene",
+                rightText = "Resume",
+                accentColorInt = Color.parseColor("#A37CFF"),
+                timelineProgressPercent = 100
+            )
+        }
+
+        TankLightCardMode.MOONLIGHT -> {
+            return LightModeContent(
+                mode = TankLightCardMode.MOONLIGHT,
+                label = "MOONLIGHT",
+                title = modeOverride.title.ifBlank {
+                    "Moonlight Mode"
+                },
+                leftText = modeOverride.leftText ?: "--:--",
+                rightText = modeOverride.rightText ?: "--:--",
+                accentColorInt = Color.parseColor("#7FA7FF"),
+                timelineProgressPercent = modeOverride.timelineProgressPercent ?: 0
+            )
+        }
+
+        TankLightCardMode.AUTO,
+        TankLightCardMode.NO_PROGRAM,
+        TankLightCardMode.OFFLINE,
+        TankLightCardMode.SYNCING,
+        TankLightCardMode.WAITING,
+        null -> {
+            // Continue with automatic card state.
+        }
+    }
+
+    if (!hasDeviceTime) {
+        return LightModeContent(
+            mode = TankLightCardMode.SYNCING,
+            label = "SYNCING",
+            title = "Waiting for ESP32 time",
+            leftText = "--:--",
+            rightText = "--:--",
+            accentColorInt = Color.parseColor("#90A1B5"),
+            timelineProgressPercent = 0
+        )
+    }
+
+    if (displayProgram == null) {
+        return LightModeContent(
+            mode = TankLightCardMode.NO_PROGRAM,
+            label = "NO ACTIVE PROGRAM",
+            title = "Program not set",
+            leftText = "--:--",
+            rightText = "--:--",
+            accentColorInt = Color.parseColor("#90A1B5"),
+            timelineProgressPercent = 0
+        )
+    }
+
+    return LightModeContent(
+        mode = TankLightCardMode.AUTO,
+        label = if (hasActualLiveData) {
+            "ACTIVE PROGRAM"
+        } else {
+            "SCHEDULED"
+        },
+        title = displayProgram.name,
+        leftText = displayProgram.draft.start.label,
+        rightText = LightProgramTimeMath.endLabel(
+            displayProgram.draft.end
+        ),
+        accentColorInt = Color.parseColor("#8EB8FF"),
+        timelineProgressPercent = null
+    )
+}
 
     private data class LightModeContent(
         val mode: TankLightCardMode,

@@ -10,9 +10,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * Single entry point for light runtime data.
  *
  * Screens must not create independent live/manual data pipelines. This facade
- * shares the ESP32 refresh loop, initializes manual runtime storage once, and
- * exposes one combined runtime stream for dashboard, manual controls and tank
- * cards.
+ * shares the ESP32 refresh loop, initializes snapshot cache, and exposes one
+ * combined runtime stream for dashboard, manual controls and tank cards.
+ *
+ * LightManualRuntimeStore is intentionally in-memory and does not require
+ * Context/configuration.
  */
 object LightDeviceDataCenter {
 
@@ -22,10 +24,6 @@ object LightDeviceDataCenter {
         context: Context
     ) {
         val appContext = context.applicationContext
-
-        LightManualRuntimeStore.configure(
-            context = appContext
-        )
 
         LightDeviceSnapshotCache.configure(
             context = appContext
@@ -116,4 +114,3 @@ object LightDeviceDataCenter {
         )
     }
 }
-
