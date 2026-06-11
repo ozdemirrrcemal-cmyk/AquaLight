@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.light.presets.model
 
 data class SavedLightPreset(
     val id: String,
+    val ownerUid: String = "",
     val name: String,
     val red: Int,
     val green: Int,

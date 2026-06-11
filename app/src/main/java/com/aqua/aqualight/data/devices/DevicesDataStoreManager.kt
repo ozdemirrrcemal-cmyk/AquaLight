@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -61,6 +62,7 @@ class DevicesDataStoreManager private constructor(
 
     data class DeviceInfo(
         val id: Long,
+        val ownerUid: String = "",
         val aquaName: String,
         val name: String,
         val ip: String,
@@ -132,9 +134,13 @@ class DevicesDataStoreManager private constructor(
         }
 
     val devicesFlow: Flow<List<DeviceInfo>> = devicesPrefsFlow.map { prefs ->
-        prefs.devicesList.map { device ->
-            device.toDeviceInfo()
-        }
+        prefs.devicesList
+            .filter { device ->
+                device.belongsToCurrentUser()
+            }
+            .map { device ->
+                device.toDeviceInfo()
+            }
     }
 
     val unassignedDevicesFlow: Flow<List<DeviceInfo>> = devicesFlow.map { devices ->
@@ -159,7 +165,7 @@ class DevicesDataStoreManager private constructor(
         return devicesPrefsFlow.first()
             .devicesList
             .any { device ->
-                device.id == id
+                device.id == id && device.belongsToCurrentUser()
             }
     }
 
@@ -171,6 +177,9 @@ class DevicesDataStoreManager private constructor(
     ): Long? {
         return devicesPrefsFlow.first()
             .devicesList
+            .filter { device ->
+                device.belongsToCurrentUser()
+            }
             .map { device ->
                 device.toDeviceInfo()
             }
@@ -217,8 +226,14 @@ class DevicesDataStoreManager private constructor(
         supportedFeatures: Set<String> = emptySet(),
         supportedScreens: Set<String> = emptySet()
     ) {
+        val ownerUid = UserDataScope.requireCurrentUid()
+
         dataStore.updateData { prefs ->
-            if (prefs.devicesList.any { device -> device.id == id }) {
+            if (
+                prefs.devicesList.any { device ->
+                    device.id == id && device.belongsToOwner(ownerUid)
+                }
+            ) {
                 return@updateData prefs
             }
 
@@ -233,6 +248,7 @@ class DevicesDataStoreManager private constructor(
 
             val device = SavedDeviceInfo.newBuilder()
                 .setId(id)
+                .setOwnerUid(ownerUid)
                 .setAquaName(aquaName)
                 .setName(name)
                 .setIp(ip)
@@ -290,7 +306,7 @@ class DevicesDataStoreManager private constructor(
     ) {
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
-                if (device.id != id) {
+                if (device.id != id || !device.belongsToCurrentUser()) {
                     return@map device
                 }
 
@@ -334,7 +350,7 @@ class DevicesDataStoreManager private constructor(
     ) {
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
-                if (device.id == deviceId) {
+                if (device.id == deviceId && device.belongsToCurrentUser()) {
                     device.toBuilder()
                         .setTankId(tankId)
                         .build()
@@ -355,7 +371,7 @@ class DevicesDataStoreManager private constructor(
     ) {
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
-                if (device.id == deviceId) {
+                if (device.id == deviceId && device.belongsToCurrentUser()) {
                     device.toBuilder()
                         .setTankId(0L)
                         .build()
@@ -376,7 +392,7 @@ class DevicesDataStoreManager private constructor(
     ) {
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
-                if (device.tankId == tankId) {
+                if (device.tankId == tankId && device.belongsToCurrentUser()) {
                     device.toBuilder()
                         .setTankId(0L)
                         .build()
@@ -400,8 +416,8 @@ class DevicesDataStoreManager private constructor(
         }
 
         dataStore.updateData { prefs ->
-            val filteredDevices = prefs.devicesList.filter { device ->
-                device.id !in ids
+            val filteredDevices = prefs.devicesList.filterNot { device ->
+                device.id in ids && device.belongsToCurrentUser()
             }
 
             prefs.toBuilder()
@@ -411,10 +427,46 @@ class DevicesDataStoreManager private constructor(
         }
     }
 
-    suspend fun clearAllDevices() {
+    suspend fun clearAllDevices(
+        ownerUid: String? = null
+    ) {
+        val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
+
         dataStore.updateData { prefs ->
+            val remainingDevices = prefs.devicesList.filterNot { device ->
+                device.belongsToOwner(targetOwnerUid)
+            }
+
             prefs.toBuilder()
                 .clearDevices()
+                .addAllDevices(remainingDevices)
+                .build()
+        }
+    }
+
+    suspend fun assignLegacyDevicesToOwner(
+        ownerUid: String
+    ) {
+        val targetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
+        if (targetOwnerUid.isBlank()) {
+            return
+        }
+
+        dataStore.updateData { prefs ->
+            val updatedDevices = prefs.devicesList.map { device ->
+                if (device.ownerUid.isBlank()) {
+                    device.toBuilder()
+                        .setOwnerUid(targetOwnerUid)
+                        .build()
+                } else {
+                    device
+                }
+            }
+
+            prefs.toBuilder()
+                .clearDevices()
+                .addAllDevices(updatedDevices)
                 .build()
         }
     }
@@ -430,6 +482,10 @@ class DevicesDataStoreManager private constructor(
 
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
+                if (!device.belongsToCurrentUser()) {
+                    return@map device
+                }
+
                 val savedDevice = device.toDeviceInfo()
 
                 val match = discovered.firstOrNull { discoveredDevice ->
@@ -558,6 +614,7 @@ class DevicesDataStoreManager private constructor(
 
         return DeviceInfo(
             id = id,
+            ownerUid = ownerUid,
             aquaName = aquaName,
             name = name,
             ip = ip,
@@ -598,6 +655,31 @@ class DevicesDataStoreManager private constructor(
 
             supportedFeatures = supportedFeaturesList.toSet(),
             supportedScreens = supportedScreensList.toSet()
+        )
+    }
+
+    private fun String?.orCurrentOwnerUidOrReturn(): String {
+        val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
+
+        if (explicitOwnerUid.isNotBlank()) {
+            return explicitOwnerUid
+        }
+
+        return UserDataScope.currentUid()
+    }
+
+    private fun SavedDeviceInfo.belongsToCurrentUser(): Boolean {
+        return UserDataScope.belongsToCurrentUser(
+            recordOwnerUid = ownerUid
+        )
+    }
+
+    private fun SavedDeviceInfo.belongsToOwner(
+        ownerUid: String
+    ): Boolean {
+        return UserDataScope.belongsToOwner(
+            recordOwnerUid = this.ownerUid,
+            ownerUid = ownerUid
         )
     }
 

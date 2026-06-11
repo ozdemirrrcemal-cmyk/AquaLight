@@ -22,6 +22,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.ui.main.MainActivity
 
 object NotificationHelper {
@@ -172,7 +173,8 @@ object NotificationHelper {
     title: String,
     message: String,
     largeIconRes: Int? = null,
-    largeIconColor: String? = null
+    largeIconColor: String? = null,
+    ownerUid: String = UserDataScope.currentUid()
   ) {
     if (!hasSystemPermission(context)) {
       return
@@ -184,7 +186,10 @@ object NotificationHelper {
 
     createNotificationChannel(context)
 
-    val notificationId = getTaskNotificationId(taskId)
+    val notificationId = getTaskNotificationId(
+      taskId = taskId,
+      ownerUid = ownerUid
+    )
 
     showNotificationInternal(
       context = context,
@@ -193,6 +198,7 @@ object NotificationHelper {
       title = title,
       message = message,
       taskId = taskId,
+      ownerUid = ownerUid,
       largeIconRes = largeIconRes,
       largeIconColor = largeIconColor
     )
@@ -200,11 +206,24 @@ object NotificationHelper {
 
   fun cancelCareTaskNotification(
     context: Context,
-    taskId: Long
+    taskId: Long,
+    ownerUid: String = UserDataScope.currentUid()
   ) {
-    NotificationManagerCompat.from(context).cancel(
-      getTaskNotificationId(taskId)
+    val notificationManager = NotificationManagerCompat.from(context)
+
+    listOf(
+      UserDataScope.LEGACY_OWNER_UID,
+      UserDataScope.normalizeOwnerUid(ownerUid)
     )
+      .distinct()
+      .forEach { candidateOwnerUid ->
+        notificationManager.cancel(
+          getTaskNotificationId(
+            taskId = taskId,
+            ownerUid = candidateOwnerUid
+          )
+        )
+      }
   }
 
   fun cancelAllAppNotifications(
@@ -223,6 +242,7 @@ object NotificationHelper {
     title: String,
     message: String,
     taskId: Long? = null,
+    ownerUid: String = UserDataScope.currentUid(),
     largeIconRes: Int? = null,
     largeIconColor: String? = null
   ) {
@@ -243,6 +263,11 @@ object NotificationHelper {
         putExtra(
           MainActivity.EXTRA_OPEN_CARE_TASK_ID,
           taskId
+        )
+
+        putExtra(
+          MainActivity.EXTRA_OWNER_UID,
+          UserDataScope.normalizeOwnerUid(ownerUid)
         )
       }
     } else {
@@ -384,14 +409,12 @@ object NotificationHelper {
   }
 
   private fun getTaskNotificationId(
-    taskId: Long
+    taskId: Long,
+    ownerUid: String
   ): Int {
-    val value = (taskId % Int.MAX_VALUE).toInt()
-
-    return if (value == 0) {
-      1
-    } else {
-      value
-    }
+    return UserDataScope.notificationRequestCode(
+      taskId = taskId,
+      ownerUid = ownerUid
+    )
   }
 }

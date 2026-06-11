@@ -64,7 +64,8 @@ object SessionBoundServiceManager {
             pendingTasks.forEach { task ->
                 CareTaskReminderScheduler.cancel(
                     context = context,
-                    taskId = task.id
+                    taskId = task.id,
+                    ownerUid = task.ownerUid
                 )
             }
         }

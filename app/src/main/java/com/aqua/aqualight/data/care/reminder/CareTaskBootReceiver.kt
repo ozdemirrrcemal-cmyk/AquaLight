@@ -32,7 +32,10 @@ class CareTaskBootReceiver : BroadcastReceiver() {
       try {
         val sessionManager = AuthSessionManager.create(context)
 
-        if (!sessionManager.isAuthenticated()) {
+        if (
+          sessionManager.currentSessionState() !is
+          AuthSessionManager.SessionState.Authenticated
+        ) {
           return@launch
         }
 

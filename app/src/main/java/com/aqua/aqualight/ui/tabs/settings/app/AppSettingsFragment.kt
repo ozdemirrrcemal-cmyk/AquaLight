@@ -320,7 +320,8 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
         pendingTasks.forEach { task ->
             CareTaskReminderScheduler.cancel(
                 context = context,
-                taskId = task.id
+                taskId = task.id,
+                ownerUid = task.ownerUid
             )
         }
     }

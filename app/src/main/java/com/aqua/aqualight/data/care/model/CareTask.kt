@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.care.model
 
 data class CareTask(
   val id: Long,
+  val ownerUid: String = "",
   val tankId: Long,
   val title: String,
   val description: String,

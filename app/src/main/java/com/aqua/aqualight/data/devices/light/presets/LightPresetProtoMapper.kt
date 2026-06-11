@@ -10,6 +10,7 @@ object LightPresetProtoMapper {
         return LightPresetProto
             .newBuilder()
             .setId(preset.id)
+            .setOwnerUid(preset.ownerUid)
             .setName(preset.name)
             .setRed(preset.red)
             .setGreen(preset.green)
@@ -25,6 +26,7 @@ object LightPresetProtoMapper {
     ): SavedLightPreset {
         return SavedLightPreset(
             id = proto.id,
+            ownerUid = proto.ownerUid,
             name = proto.name,
             red = proto.red,
             green = proto.green,

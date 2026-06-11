@@ -59,6 +59,8 @@ class AccountDeletionManager private constructor(
                 )
             )
 
+        val ownerUid = user.uid
+
         val accountDeleteError = runCatching {
             user.delete().awaitCompletion()
         }.exceptionOrNull()
@@ -70,6 +72,7 @@ class AccountDeletionManager private constructor(
         }
 
         val localCleanupResult = userDataCleaner.clearLocalUserData(
+            ownerUid = ownerUid,
             clearUserPreferences = true,
             stopSessionBoundServices = true
         )

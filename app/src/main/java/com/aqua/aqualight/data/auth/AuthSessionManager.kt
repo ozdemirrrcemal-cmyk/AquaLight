@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.auth
 
 import android.content.Context
+import com.aqua.aqualight.data.user.UserDataOwnershipMigrator
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -15,7 +16,8 @@ import com.google.firebase.auth.auth
  */
 class AuthSessionManager private constructor(
     private val firebaseAuth: FirebaseAuth,
-    private val userPrefs: UserPreferencesManager
+    private val userPrefs: UserPreferencesManager,
+    private val ownershipMigrator: UserDataOwnershipMigrator
 ) {
 
     data class Session(
@@ -38,10 +40,15 @@ class AuthSessionManager private constructor(
         fun create(
             context: Context
         ): AuthSessionManager {
+            val appContext = context.applicationContext
+
             return AuthSessionManager(
                 firebaseAuth = Firebase.auth,
                 userPrefs = UserPreferencesManager.create(
-                    context.applicationContext
+                    appContext
+                ),
+                ownershipMigrator = UserDataOwnershipMigrator.create(
+                    appContext
                 )
             )
         }
@@ -64,6 +71,9 @@ class AuthSessionManager private constructor(
         }
 
         syncLocalSession(user)
+        ownershipMigrator.migrateLegacyRecordsToOwner(
+            ownerUid = user.uid
+        )
 
         return SessionState.Authenticated(
             session = user.toSession()
@@ -74,6 +84,9 @@ class AuthSessionManager private constructor(
         user: FirebaseUser
     ): Session {
         syncLocalSession(user)
+        ownershipMigrator.migrateLegacyRecordsToOwner(
+            ownerUid = user.uid
+        )
         replaceCachedProfile(user)
         return user.toSession()
     }

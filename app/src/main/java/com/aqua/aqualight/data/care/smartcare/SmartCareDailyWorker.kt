@@ -27,7 +27,10 @@ class SmartCareDailyWorker(
         applicationContext
       )
 
-      if (!sessionManager.isAuthenticated()) {
+      if (
+        sessionManager.currentSessionState() !is
+        AuthSessionManager.SessionState.Authenticated
+      ) {
         return Result.success()
       }
 

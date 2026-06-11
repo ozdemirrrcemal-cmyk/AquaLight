@@ -19,6 +19,7 @@ object LightProgramProtoMapper {
             .setId(safeProgram.id)
             .setDeviceId(safeProgram.deviceId)
             .setName(safeProgram.name)
+            .setOwnerUid(safeProgram.ownerUid)
             .setIsActive(safeProgram.isActive)
             .setTiming(toProtoTiming(safeProgram.draft))
             .setChannels(toProtoChannels(safeProgram.draft.channelValues))
@@ -44,6 +45,7 @@ object LightProgramProtoMapper {
             id = proto.id.ifBlank {
                 UUID.randomUUID().toString()
             },
+            ownerUid = proto.ownerUid,
             deviceId = proto.deviceId.coerceAtLeast(0L),
             name = proto.name.trim().ifBlank {
                 "Light Program"
@@ -87,6 +89,7 @@ object LightProgramProtoMapper {
             id = program.id.ifBlank {
                 UUID.randomUUID().toString()
             },
+            ownerUid = program.ownerUid.trim(),
             deviceId = program.deviceId.coerceAtLeast(0L),
             name = program.name.trim().ifBlank {
                 "Light Program"

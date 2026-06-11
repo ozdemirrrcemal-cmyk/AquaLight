@@ -6,6 +6,7 @@ import androidx.datastore.dataStore
 import com.aqua.aqualight.data.devices.light.automation.model.CloudSimulationSettings
 import com.aqua.aqualight.data.devices.light.automation.model.LightAutomationSettings
 import com.aqua.aqualight.data.devices.light.automation.model.MoonlightSettings
+import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -27,10 +28,13 @@ class LightAutomationDataStoreManager(
         return context.lightAutomationDataStore.data.map { preferences ->
             preferences.devicesList
                 .firstOrNull { device ->
-                    device.deviceId == id
+                    device.deviceId == id && device.belongsToCurrentUser()
                 }
                 ?.let(LightAutomationProtoMapper::fromProto)
-                ?: LightAutomationSettings.default(id)
+                ?: LightAutomationSettings.default(
+                    deviceId = id,
+                    ownerUid = UserDataScope.currentUid()
+                )
         }
     }
 
@@ -100,10 +104,46 @@ class LightAutomationDataStoreManager(
         )
     }
 
-    suspend fun clearAllSettings() {
+    suspend fun clearAllSettings(
+        ownerUid: String? = null
+    ) {
+        val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
+
         context.lightAutomationDataStore.updateData { preferences ->
+            val remainingDevices = preferences.devicesList.filterNot { device ->
+                device.belongsToOwner(targetOwnerUid)
+            }
+
             preferences.toBuilder()
                 .clearDevices()
+                .addAllDevices(remainingDevices)
+                .build()
+        }
+    }
+
+    suspend fun assignLegacySettingsToOwner(
+        ownerUid: String
+    ) {
+        val targetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
+        if (targetOwnerUid.isBlank()) {
+            return
+        }
+
+        context.lightAutomationDataStore.updateData { preferences ->
+            val updatedDevices = preferences.devicesList.map { device ->
+                if (device.ownerUid.isBlank()) {
+                    device.toBuilder()
+                        .setOwnerUid(targetOwnerUid)
+                        .build()
+                } else {
+                    device
+                }
+            }
+
+            preferences.toBuilder()
+                .clearDevices()
+                .addAllDevices(updatedDevices)
                 .build()
         }
     }
@@ -112,8 +152,13 @@ class LightAutomationDataStoreManager(
         settings: LightAutomationSettings,
         pendingDeviceSync: Boolean
     ) {
+        val ownerUid = settings.ownerUid.ifBlank {
+            UserDataScope.requireCurrentUid()
+        }
+
         val safe = LightAutomationProtoMapper.sanitize(
             settings.copy(
+                ownerUid = ownerUid,
                 updatedAt = System.currentTimeMillis(),
                 pendingDeviceSync = pendingDeviceSync
             )
@@ -124,7 +169,8 @@ class LightAutomationDataStoreManager(
                 .clearDevices()
                 .addAllDevices(
                     preferences.devicesList.filterNot { device ->
-                        device.deviceId == safe.deviceId
+                        device.deviceId == safe.deviceId &&
+                            device.belongsToOwner(safe.ownerUid)
                     }
                 )
                 .addDevices(
@@ -133,4 +179,29 @@ class LightAutomationDataStoreManager(
                 .build()
         }
     }
+    private fun String?.orCurrentOwnerUidOrReturn(): String {
+        val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
+
+        if (explicitOwnerUid.isNotBlank()) {
+            return explicitOwnerUid
+        }
+
+        return UserDataScope.currentUid()
+    }
+
+    private fun LightAutomationDeviceSettings.belongsToCurrentUser(): Boolean {
+        return UserDataScope.belongsToCurrentUser(
+            recordOwnerUid = ownerUid
+        )
+    }
+
+    private fun LightAutomationDeviceSettings.belongsToOwner(
+        ownerUid: String
+    ): Boolean {
+        return UserDataScope.belongsToOwner(
+            recordOwnerUid = this.ownerUid,
+            ownerUid = ownerUid
+        )
+    }
+
 }

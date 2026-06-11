@@ -39,4 +39,6 @@ message SavedDeviceInfo {
   string device_uid = 24;
   string mac_address = 25;
   string firmware_serial = 26;
+
+  string owner_uid = 100;
 }

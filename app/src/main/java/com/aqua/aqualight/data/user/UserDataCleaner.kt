@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.user
 
 import android.content.Context
+import android.net.Uri
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
@@ -12,13 +13,13 @@ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceSnapshotCache
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import java.io.File
+import kotlinx.coroutines.flow.first
 
 /**
  * Clears local data that belongs to the active user account.
  *
- * Until full UID-scoped stores are introduced, account deletion treats every
- * local aquarium/device/care/light store as belonging to the active session and
- * clears them together. Normal logout intentionally does not call this cleaner.
+ * Records are removed only for the target Firebase uid. Normal logout
+ * intentionally does not call this cleaner.
  */
 class UserDataCleaner private constructor(
     private val appContext: Context
@@ -66,10 +67,25 @@ class UserDataCleaner private constructor(
     }
 
     suspend fun clearLocalUserData(
+        ownerUid: String? = null,
         clearUserPreferences: Boolean = true,
         stopSessionBoundServices: Boolean = true
     ): CleanupResult {
+        val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
         val issues = mutableListOf<CleanupIssue>()
+        val tankDataStoreManager = AquariumTankDataStoreManager(
+            appContext
+        )
+        val tankPhotoUris = tankDataStoreManager
+            .tanksSnapshotForOwner(
+                ownerUid = targetOwnerUid
+            )
+            .mapNotNull { tank ->
+                tank.photoUri
+            }
+        val profilePhotoUri = UserPreferencesManager.create(
+            appContext
+        ).userPrefsFlow.first().profilePhotoUrl
 
         suspend fun runStep(
             step: Step,
@@ -108,6 +124,7 @@ class UserDataCleaner private constructor(
             CareTaskDataStoreManager.create(
                 appContext
             ).clearAllTasks(
+                ownerUid = targetOwnerUid,
                 cancelReminders = true
             )
         }
@@ -115,9 +132,9 @@ class UserDataCleaner private constructor(
         runStep(
             step = Step.AQUARIUM_TANKS
         ) {
-            AquariumTankDataStoreManager(
-                appContext
-            ).clearAllTanks()
+            tankDataStoreManager.clearAllTanks(
+                ownerUid = targetOwnerUid
+            )
         }
 
         runStep(
@@ -125,7 +142,9 @@ class UserDataCleaner private constructor(
         ) {
             DevicesDataStoreManager.create(
                 appContext
-            ).clearAllDevices()
+            ).clearAllDevices(
+                ownerUid = targetOwnerUid
+            )
         }
 
         runStep(
@@ -133,7 +152,9 @@ class UserDataCleaner private constructor(
         ) {
             LightProgramsDataStoreManager(
                 appContext
-            ).clearAllPrograms()
+            ).clearAllPrograms(
+                ownerUid = targetOwnerUid
+            )
         }
 
         runStep(
@@ -141,7 +162,9 @@ class UserDataCleaner private constructor(
         ) {
             LightPresetDataStoreManager(
                 appContext
-            ).clearAllPresets()
+            ).clearAllPresets(
+                ownerUid = targetOwnerUid
+            )
         }
 
         runStep(
@@ -149,13 +172,18 @@ class UserDataCleaner private constructor(
         ) {
             LightAutomationDataStoreManager(
                 appContext
-            ).clearAllSettings()
+            ).clearAllSettings(
+                ownerUid = targetOwnerUid
+            )
         }
 
         runStep(
             step = Step.APP_OWNED_FILES
         ) {
-            clearAppOwnedUserFiles()
+            clearAppOwnedUserFiles(
+                profilePhotoUri = profilePhotoUri,
+                tankPhotoUris = tankPhotoUris
+            )
         }
 
         if (clearUserPreferences) {
@@ -173,6 +201,16 @@ class UserDataCleaner private constructor(
         )
     }
 
+    private fun String?.orCurrentOwnerUidOrReturn(): String {
+        val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
+
+        if (explicitOwnerUid.isNotBlank()) {
+            return explicitOwnerUid
+        }
+
+        return UserDataScope.currentUid()
+    }
+
     private fun clearLightRuntime() {
         LightDeviceDataCenter.stopAll()
 
@@ -184,26 +222,74 @@ class UserDataCleaner private constructor(
         LightManualRuntimeStore.clearAll()
     }
 
-    private fun clearAppOwnedUserFiles() {
-        listOf(
-            File(
-                appContext.filesDir,
-                "profile_photos"
-            ),
-            File(
-                appContext.filesDir,
-                "tank_photos"
-            ),
-            File(
-                appContext.cacheDir,
-                "tank_exports"
-            ),
-            File(
-                appContext.cacheDir,
-                "feedback_temp.jpg"
-            )
-        ).forEach { file ->
-            file.deleteRecursively()
+    private fun clearAppOwnedUserFiles(
+        profilePhotoUri: String,
+        tankPhotoUris: List<String>
+    ) {
+        (tankPhotoUris + profilePhotoUri)
+            .filter { uri ->
+                uri.isNotBlank()
+            }
+            .forEach { uri ->
+                deleteAppOwnedUri(uri)
+            }
+
+        File(
+            appContext.cacheDir,
+            "feedback_temp.jpg"
+        ).delete()
+    }
+
+    private fun deleteAppOwnedUri(
+        value: String
+    ) {
+        val uri = runCatching {
+            Uri.parse(value)
+        }.getOrNull() ?: return
+
+        if (uri.scheme == "content") {
+            runCatching {
+                appContext.contentResolver.delete(
+                    uri,
+                    null,
+                    null
+                )
+            }
+            return
+        }
+
+        val file = when (uri.scheme) {
+            "file" -> uri.path?.let(::File)
+            null,
+            "" -> File(value)
+            else -> null
+        } ?: return
+
+        if (!file.isAppOwnedFile()) {
+            return
+        }
+
+        file.deleteRecursively()
+    }
+
+    private fun File.isAppOwnedFile(): Boolean {
+        val canonicalFile = runCatching {
+            canonicalFile
+        }.getOrNull() ?: return false
+
+        val allowedRoots = listOf(
+            File(appContext.filesDir, "profile_photos"),
+            File(appContext.filesDir, "tank_photos"),
+            File(appContext.cacheDir, "tank_exports")
+        )
+
+        return allowedRoots.any { root ->
+            val canonicalRoot = runCatching {
+                root.canonicalFile
+            }.getOrNull() ?: return@any false
+
+            canonicalFile.path == canonicalRoot.path ||
+                canonicalFile.path.startsWith(canonicalRoot.path + File.separator)
         }
     }
 }

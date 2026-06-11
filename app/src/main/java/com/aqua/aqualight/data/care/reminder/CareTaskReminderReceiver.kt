@@ -3,8 +3,10 @@ package com.aqua.aqualight.data.care.reminder
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
@@ -29,6 +31,10 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
       -1L
     )
 
+    val intentOwnerUid = intent.getStringExtra(
+      CareTaskReminderScheduler.EXTRA_OWNER_UID
+    ).orEmpty()
+
     if (taskId <= 0L) {
       return
     }
@@ -38,6 +44,21 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
     CoroutineScope(Dispatchers.IO).launch {
       try {
         val appContext = context.applicationContext
+
+        val activeUid = AuthSessionManager.create(
+          appContext
+        ).currentUser()?.uid.orEmpty()
+
+        if (activeUid.isBlank()) {
+          return@launch
+        }
+
+        if (
+          intentOwnerUid.isNotBlank() &&
+          intentOwnerUid != activeUid
+        ) {
+          return@launch
+        }
 
         val userPrefs = UserPreferencesManager.create(
           appContext
@@ -62,12 +83,24 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         ?: return@launch
 
         if (
+          task.ownerUid.isNotBlank() &&
+          !UserDataScope.belongsToOwner(
+            recordOwnerUid = task.ownerUid,
+            ownerUid = activeUid,
+            includeLegacy = false
+          )
+        ) {
+          return@launch
+        }
+
+        if (
           task.status != CareTaskStatus.PENDING ||
           !task.reminderEnabled
         ) {
           CareTaskReminderScheduler.cancel(
             context = appContext,
-            taskId = task.id
+            taskId = task.id,
+            ownerUid = task.ownerUid.ifBlank { activeUid }
           )
           return@launch
         }
@@ -126,7 +159,8 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
           title = title,
           message = message,
           largeIconRes = typeUi.iconRes,
-          largeIconColor = typeUi.accentColor
+          largeIconColor = typeUi.accentColor,
+          ownerUid = task.ownerUid.ifBlank { activeUid }
         )
 
         if (task.missedReminderEnabled) {

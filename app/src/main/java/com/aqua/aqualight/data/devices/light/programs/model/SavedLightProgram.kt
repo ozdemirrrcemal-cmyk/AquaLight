@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
 
 data class SavedLightProgram(
     val id: String,
+    val ownerUid: String = "",
     val deviceId: Long,
     val name: String,
     val draft: LightProgramDraft,

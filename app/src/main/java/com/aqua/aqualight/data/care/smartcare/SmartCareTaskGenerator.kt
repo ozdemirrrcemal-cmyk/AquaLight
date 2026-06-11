@@ -157,6 +157,7 @@ object SmartCareTaskGenerator {
         rule = rule,
         setupDay = profile.setupDay
       ),
+      ownerUid = tank.ownerUid,
       tankId = profile.tankId,
       tankName = profile.tankName,
       ruleId = rule.id,

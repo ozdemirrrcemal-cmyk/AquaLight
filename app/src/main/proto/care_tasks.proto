@@ -35,4 +35,6 @@ message StoredCareTask {
   string generatedRuleKey = 17;
   int64 createdAtMillis = 18;
   int64 updatedAtMillis = 19;
+
+  string owner_uid = 100;
 }

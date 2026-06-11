@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.aquarium.model
 
 data class SavedAquariumTank(
     val id: Long,
+    val ownerUid: String = "",
     val name: String,
     val description: String,
     val photoUri: String?,

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -19,24 +20,36 @@ class LightProgramsDataStoreManager(
 
     val programsFlow: Flow<List<SavedLightProgram>> =
         context.lightProgramsDataStore.data.map { preferences ->
-            preferences.programsList.map { proto ->
-                LightProgramProtoMapper.fromProto(proto)
-            }
+            preferences.programsList
+                .filter { proto ->
+                    proto.belongsToCurrentUser()
+                }
+                .map { proto ->
+                    LightProgramProtoMapper.fromProto(proto)
+                }
         }
 
     suspend fun saveProgram(
         program: SavedLightProgram
     ) {
+        val ownerUid = program.ownerUid.ifBlank {
+            UserDataScope.requireCurrentUid()
+        }
+
+        val scopedProgram = program.copy(
+            ownerUid = ownerUid
+        )
+
         context.lightProgramsDataStore.updateData { preferences ->
             val existingPrograms = preferences.programsList.filterNot { existing ->
-                existing.id == program.id
+                existing.id == scopedProgram.id && existing.belongsToOwner(ownerUid)
             }
 
             preferences.toBuilder()
                 .clearPrograms()
                 .addAllPrograms(existingPrograms)
                 .addPrograms(
-                    LightProgramProtoMapper.toProto(program)
+                    LightProgramProtoMapper.toProto(scopedProgram)
                 )
                 .build()
         }
@@ -59,7 +72,7 @@ class LightProgramsDataStoreManager(
     ) {
         context.lightProgramsDataStore.updateData { preferences ->
             val remainingPrograms = preferences.programsList.filterNot { program ->
-                program.id == programId
+                program.id == programId && program.belongsToCurrentUser()
             }
 
             preferences.toBuilder()
@@ -69,11 +82,72 @@ class LightProgramsDataStoreManager(
         }
     }
 
-    suspend fun clearAllPrograms() {
+    suspend fun clearAllPrograms(
+        ownerUid: String? = null
+    ) {
+        val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
+
         context.lightProgramsDataStore.updateData { preferences ->
+            val remainingPrograms = preferences.programsList.filterNot { program ->
+                program.belongsToOwner(targetOwnerUid)
+            }
+
             preferences.toBuilder()
                 .clearPrograms()
+                .addAllPrograms(remainingPrograms)
                 .build()
         }
+    }
+
+    suspend fun assignLegacyProgramsToOwner(
+        ownerUid: String
+    ) {
+        val targetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
+        if (targetOwnerUid.isBlank()) {
+            return
+        }
+
+        context.lightProgramsDataStore.updateData { preferences ->
+            val updatedPrograms = preferences.programsList.map { program ->
+                if (program.ownerUid.isBlank()) {
+                    program.toBuilder()
+                        .setOwnerUid(targetOwnerUid)
+                        .build()
+                } else {
+                    program
+                }
+            }
+
+            preferences.toBuilder()
+                .clearPrograms()
+                .addAllPrograms(updatedPrograms)
+                .build()
+        }
+    }
+
+    private fun String?.orCurrentOwnerUidOrReturn(): String {
+        val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
+
+        if (explicitOwnerUid.isNotBlank()) {
+            return explicitOwnerUid
+        }
+
+        return UserDataScope.currentUid()
+    }
+
+    private fun LightProgram.belongsToCurrentUser(): Boolean {
+        return UserDataScope.belongsToCurrentUser(
+            recordOwnerUid = ownerUid
+        )
+    }
+
+    private fun LightProgram.belongsToOwner(
+        ownerUid: String
+    ): Boolean {
+        return UserDataScope.belongsToOwner(
+            recordOwnerUid = this.ownerUid,
+            ownerUid = ownerUid
+        )
     }
 }

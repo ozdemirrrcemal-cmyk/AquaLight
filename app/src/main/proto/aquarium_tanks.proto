@@ -26,6 +26,8 @@ message StoredTank {
   bool smartCareDisabled = 14;
   bool careRemindersDisabled = 15;
 
+  string owner_uid = 100;
+
   repeated StoredPlantTag plants = 20;
   repeated StoredMaterial materials = 30;
   repeated StoredLivestock livestock = 40;

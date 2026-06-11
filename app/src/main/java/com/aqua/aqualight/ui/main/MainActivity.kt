@@ -12,6 +12,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
@@ -20,6 +21,7 @@ class MainActivity : BaseActivity() {
     companion object {
         const val EXTRA_START_IN_APP = "EXTRA_START_IN_APP"
         const val EXTRA_OPEN_CARE_TASK_ID = "EXTRA_OPEN_CARE_TASK_ID"
+        const val EXTRA_OWNER_UID = "EXTRA_OWNER_UID"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -31,6 +33,7 @@ class MainActivity : BaseActivity() {
 
     private var isAuthenticated: Boolean = false
     private var pendingCareTaskId: Long = -1L
+    private var pendingCareTaskOwnerUid: String = ""
     private var bottomBarSetup: Boolean = false
 
     override fun onCreate(
@@ -97,9 +100,11 @@ class MainActivity : BaseActivity() {
     fun clearSessionNavigationState() {
         isAuthenticated = false
         pendingCareTaskId = -1L
+        pendingCareTaskOwnerUid = ""
 
         intent?.removeExtra(EXTRA_OPEN_CARE_TASK_ID)
         intent?.removeExtra(EXTRA_START_IN_APP)
+        intent?.removeExtra(EXTRA_OWNER_UID)
     }
 
     private suspend fun isUserAuthenticated(): Boolean {
@@ -137,15 +142,37 @@ class MainActivity : BaseActivity() {
             return
         }
 
+        val ownerUid = intent?.getStringExtra(
+            EXTRA_OWNER_UID
+        ).orEmpty()
+
         pendingCareTaskId = taskId
+        pendingCareTaskOwnerUid = ownerUid
         intent?.removeExtra(EXTRA_OPEN_CARE_TASK_ID)
         intent?.removeExtra(EXTRA_START_IN_APP)
+        intent?.removeExtra(EXTRA_OWNER_UID)
     }
 
     private fun consumePendingCareTaskIfPossible() {
         val taskId = pendingCareTaskId
+        val ownerUid = pendingCareTaskOwnerUid
 
         if (taskId <= 0L || !isAuthenticated) {
+            return
+        }
+
+        val activeUid = authSessionManager.currentUser()?.uid.orEmpty()
+
+        if (
+            ownerUid.isNotBlank() &&
+            !UserDataScope.belongsToOwner(
+                recordOwnerUid = ownerUid,
+                ownerUid = activeUid,
+                includeLegacy = false
+            )
+        ) {
+            pendingCareTaskId = -1L
+            pendingCareTaskOwnerUid = ""
             return
         }
 
@@ -157,6 +184,7 @@ class MainActivity : BaseActivity() {
         }
 
         pendingCareTaskId = -1L
+        pendingCareTaskOwnerUid = ""
 
         binding.navHost.post {
             runCatching {
@@ -167,6 +195,7 @@ class MainActivity : BaseActivity() {
                 )
             }.onFailure {
                 pendingCareTaskId = taskId
+                pendingCareTaskOwnerUid = ownerUid
             }
         }
     }

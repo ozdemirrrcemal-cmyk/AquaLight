@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.care.smartcare
 
 data class SmartCareGeneratedTask(
   val id: String,
+  val ownerUid: String = "",
   val tankId: Long,
   val tankName: String,
   val ruleId: String,

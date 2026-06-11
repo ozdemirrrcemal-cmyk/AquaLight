@@ -10,7 +10,9 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.aquariumTanksDataStore: DataStore<AquariumTanksStore> by dataStore(
@@ -25,6 +27,9 @@ class AquariumTankDataStoreManager(
   val tanksFlow: Flow<List<SavedAquariumTank>> =
     context.aquariumTanksDataStore.data.map { store ->
       store.getTanksList()
+        .filter { storedTank ->
+          storedTank.belongsToCurrentUser()
+        }
         .map { storedTank ->
           storedTank.toSavedAquariumTank()
         }
@@ -34,11 +39,13 @@ class AquariumTankDataStoreManager(
   suspend fun addTankFromDraft(
     draft: TankDraft
   ): Long {
+    val ownerUid = UserDataScope.requireCurrentUid()
     val nowMillis = System.currentTimeMillis()
     val tankId = nowMillis
 
     val storedTank = draft.toStoredTank(
       tankId = tankId,
+      ownerUid = ownerUid,
       createdAtMillis = nowMillis
     )
 
@@ -54,11 +61,12 @@ class AquariumTankDataStoreManager(
   suspend fun duplicateTank(
     tankId: Long
   ): Long {
+    val ownerUid = UserDataScope.requireCurrentUid()
     var newTankId = System.currentTimeMillis()
 
     context.aquariumTanksDataStore.updateData { currentStore ->
       val sourceTank = currentStore.getTanksList().firstOrNull { storedTank ->
-        storedTank.id == tankId
+        storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
       } ?: throw IllegalArgumentException("Tank not found.")
 
       val existingIds = currentStore.getTanksList().map { storedTank ->
@@ -69,12 +77,17 @@ class AquariumTankDataStoreManager(
         newTankId++
       }
 
-      val existingNames = currentStore.getTanksList().map { storedTank ->
-        storedTank.name
-      }.toSet()
+      val existingNames = currentStore.getTanksList()
+        .filter { storedTank ->
+          storedTank.belongsToOwner(ownerUid)
+        }
+        .map { storedTank ->
+          storedTank.name
+        }.toSet()
 
       val duplicatedTank = sourceTank.toBuilder()
         .setId(newTankId)
+        .setOwnerUid(ownerUid)
         .setName(
           createDuplicateTankName(
             originalName = sourceTank.name,
@@ -99,12 +112,13 @@ class AquariumTankDataStoreManager(
       return
     }
 
+    val ownerUid = UserDataScope.requireCurrentUid()
     val idsToDelete = tankIds.toSet()
 
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList()
         .filterNot { storedTank ->
-          storedTank.id in idsToDelete
+          storedTank.id in idsToDelete && storedTank.belongsToOwner(ownerUid)
         }
 
       currentStore.toBuilder()
@@ -114,12 +128,71 @@ class AquariumTankDataStoreManager(
     }
   }
 
-  suspend fun clearAllTanks() {
+  suspend fun clearAllTanks(
+    ownerUid: String? = null
+  ) {
+    val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
+
     context.aquariumTanksDataStore.updateData { currentStore ->
+      val remainingTanks = currentStore.getTanksList()
+        .filterNot { storedTank ->
+          storedTank.belongsToOwner(targetOwnerUid)
+        }
+
       currentStore.toBuilder()
         .clearTanks()
+        .addAllTanks(remainingTanks)
         .build()
     }
+  }
+
+  suspend fun assignLegacyTanksToOwner(
+    ownerUid: String
+  ) {
+    val targetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
+    if (targetOwnerUid.isBlank()) {
+      return
+    }
+
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      val updatedTanks = currentStore.getTanksList().map { storedTank ->
+        if (storedTank.ownerUid.isBlank()) {
+          storedTank.toBuilder()
+            .setOwnerUid(targetOwnerUid)
+            .build()
+        } else {
+          storedTank
+        }
+      }
+
+      currentStore.toBuilder()
+        .clearTanks()
+        .addAllTanks(updatedTanks)
+        .build()
+    }
+  }
+
+  suspend fun tanksSnapshotForOwner(
+    ownerUid: String
+  ): List<SavedAquariumTank> {
+    val targetOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
+    if (targetOwnerUid.isBlank()) {
+      return emptyList()
+    }
+
+    return context.aquariumTanksDataStore.data
+      .map { store ->
+        store.getTanksList()
+          .filter { storedTank ->
+            storedTank.belongsToOwner(targetOwnerUid)
+          }
+          .map { storedTank ->
+            storedTank.toSavedAquariumTank()
+          }
+      }
+      .first()
   }
 
   suspend fun updateTankPhoto(
@@ -128,7 +201,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setPhotoUri(photoUri.orEmpty())
             .build()
@@ -150,7 +223,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setTankStyle(tankStyle)
             .build()
@@ -172,7 +245,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setDescription(description)
             .build()
@@ -194,7 +267,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setName(
               name.ifBlank {
@@ -220,7 +293,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setTankType(tankType)
             .build()
@@ -245,7 +318,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setWidthCm(widthCm)
             .setLengthCm(lengthCm)
@@ -274,7 +347,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setVolumeUnit(volumeUnit)
             .build()
@@ -296,7 +369,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setSetupDateMillis(setupDateMillis)
             .build()
@@ -318,7 +391,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .clearPlants()
             .addAllPlants(
@@ -352,7 +425,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           val otherMaterials = storedTank.getMaterialsList()
             .filterNot { material ->
               material.categoryKey == categoryKey
@@ -393,7 +466,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .addLivestock(
               livestock.toStoredLivestock()
@@ -417,7 +490,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           val updatedLivestock = storedTank.getLivestockList().map { storedLivestock ->
             if (storedLivestock.id == livestock.id) {
               livestock.toStoredLivestock()
@@ -448,7 +521,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           val updatedLivestock = storedTank.getLivestockList()
             .filterNot { storedLivestock ->
               storedLivestock.id == livestockId
@@ -476,7 +549,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setSmartCareDisabled(!enabled)
             .build()
@@ -498,7 +571,7 @@ class AquariumTankDataStoreManager(
   ) {
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
-        if (storedTank.id == tankId) {
+        if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
           storedTank.toBuilder()
             .setCareRemindersDisabled(!enabled)
             .build()
@@ -516,10 +589,12 @@ class AquariumTankDataStoreManager(
 
   private fun TankDraft.toStoredTank(
     tankId: Long,
+    ownerUid: String,
     createdAtMillis: Long
   ): StoredTank {
     return StoredTank.newBuilder()
       .setId(tankId)
+      .setOwnerUid(ownerUid)
       .setName(
         name.ifBlank {
           "Unnamed Aquarium"
@@ -583,6 +658,7 @@ class AquariumTankDataStoreManager(
   private fun StoredTank.toSavedAquariumTank(): SavedAquariumTank {
     return SavedAquariumTank(
       id = id,
+      ownerUid = ownerUid,
       name = name,
       description = description,
       photoUri = photoUri.ifBlank {
@@ -635,6 +711,31 @@ class AquariumTankDataStoreManager(
           note = livestock.note
         )
       }
+    )
+  }
+
+  private fun String?.orCurrentOwnerUidOrReturn(): String {
+    val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
+
+    if (explicitOwnerUid.isNotBlank()) {
+      return explicitOwnerUid
+    }
+
+    return UserDataScope.currentUid()
+  }
+
+  private fun StoredTank.belongsToCurrentUser(): Boolean {
+    return UserDataScope.belongsToCurrentUser(
+      recordOwnerUid = ownerUid
+    )
+  }
+
+  private fun StoredTank.belongsToOwner(
+    ownerUid: String
+  ): Boolean {
+    return UserDataScope.belongsToOwner(
+      recordOwnerUid = this.ownerUid,
+      ownerUid = ownerUid
     )
   }
 

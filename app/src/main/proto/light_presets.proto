@@ -18,4 +18,6 @@ message LightPresetProto {
 
   int64 created_at = 7;
   int64 updated_at = 8;
+
+  string owner_uid = 100;
 }

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskStatus
+import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.utils.NotificationHelper
 import java.util.concurrent.TimeUnit
 
@@ -16,6 +17,7 @@ object CareTaskReminderScheduler {
   "com.aqua.aqualight.action.CARE_TASK_REMINDER"
 
   const val EXTRA_TASK_ID = "extra_task_id"
+  const val EXTRA_OWNER_UID = "extra_owner_uid"
 
   fun schedule(
     context: Context,
@@ -27,7 +29,8 @@ object CareTaskReminderScheduler {
     ) {
       cancel(
         context = context,
-        taskId = task.id
+        taskId = task.id,
+        ownerUid = task.ownerUid
       )
       return
     }
@@ -41,6 +44,7 @@ object CareTaskReminderScheduler {
     scheduleAt(
       context = context,
       taskId = task.id,
+      ownerUid = task.ownerUid,
       triggerAtMillis = task.dueAtMillis
     )
   }
@@ -65,35 +69,49 @@ object CareTaskReminderScheduler {
     scheduleAt(
       context = context,
       taskId = task.id,
+      ownerUid = task.ownerUid,
       triggerAtMillis = triggerAtMillis
     )
   }
 
   fun cancel(
     context: Context,
-    taskId: Long
+    taskId: Long,
+    ownerUid: String = UserDataScope.currentUid()
   ) {
     val alarmManager = context.getSystemService(
       Context.ALARM_SERVICE
     ) as AlarmManager
 
-    val pendingIntent = createPendingIntent(
-      context = context,
-      taskId = taskId
-    )
+    val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
 
-    alarmManager.cancel(pendingIntent)
-    pendingIntent.cancel()
-
-    NotificationHelper.cancelCareTaskNotification(
-      context = context,
-      taskId = taskId
+    listOf(
+      UserDataScope.LEGACY_OWNER_UID,
+      normalizedOwnerUid
     )
+      .distinct()
+      .forEach { candidateOwnerUid ->
+        val pendingIntent = createPendingIntent(
+          context = context,
+          taskId = taskId,
+          ownerUid = candidateOwnerUid
+        )
+
+        alarmManager.cancel(pendingIntent)
+        pendingIntent.cancel()
+
+        NotificationHelper.cancelCareTaskNotification(
+          context = context,
+          taskId = taskId,
+          ownerUid = candidateOwnerUid
+        )
+      }
   }
 
   private fun scheduleAt(
     context: Context,
     taskId: Long,
+    ownerUid: String,
     triggerAtMillis: Long
   ) {
     val alarmManager = context.getSystemService(
@@ -102,7 +120,8 @@ object CareTaskReminderScheduler {
 
     val pendingIntent = createPendingIntent(
       context = context,
-      taskId = taskId
+      taskId = taskId,
+      ownerUid = ownerUid
     )
 
     alarmManager.cancel(pendingIntent)
@@ -124,8 +143,11 @@ object CareTaskReminderScheduler {
 
   private fun createPendingIntent(
     context: Context,
-    taskId: Long
+    taskId: Long,
+    ownerUid: String
   ): PendingIntent {
+    val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(ownerUid)
+
     val intent = Intent(
       context,
       CareTaskReminderReceiver::class.java
@@ -135,11 +157,18 @@ object CareTaskReminderScheduler {
         EXTRA_TASK_ID,
         taskId
       )
+      putExtra(
+        EXTRA_OWNER_UID,
+        normalizedOwnerUid
+      )
     }
 
     return PendingIntent.getBroadcast(
       context,
-      getRequestCode(taskId),
+      getRequestCode(
+        taskId = taskId,
+        ownerUid = normalizedOwnerUid
+      ),
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT or
       PendingIntent.FLAG_IMMUTABLE
@@ -147,14 +176,12 @@ object CareTaskReminderScheduler {
   }
 
   private fun getRequestCode(
-    taskId: Long
+    taskId: Long,
+    ownerUid: String
   ): Int {
-    val value = (taskId % Int.MAX_VALUE).toInt()
-
-    return if (value == 0) {
-      1
-    } else {
-      value
-    }
+    return UserDataScope.notificationRequestCode(
+      taskId = taskId,
+      ownerUid = ownerUid
+    )
   }
 }
