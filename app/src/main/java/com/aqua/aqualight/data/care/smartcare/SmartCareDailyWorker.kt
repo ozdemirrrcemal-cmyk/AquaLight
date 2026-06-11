@@ -6,6 +6,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import kotlinx.coroutines.flow.first
@@ -22,6 +23,14 @@ class SmartCareDailyWorker(
 
   override suspend fun doWork(): Result {
     return try {
+      val sessionManager = AuthSessionManager.create(
+        applicationContext
+      )
+
+      if (!sessionManager.isAuthenticated()) {
+        return Result.success()
+      }
+
       val tankDataStoreManager = AquariumTankDataStoreManager(
         applicationContext
       )
@@ -69,6 +78,16 @@ class SmartCareDailyWorker(
         WORK_NAME,
         ExistingPeriodicWorkPolicy.UPDATE,
         request
+      )
+    }
+
+    fun cancel(
+      context: Context
+    ) {
+      WorkManager.getInstance(
+        context.applicationContext
+      ).cancelUniqueWork(
+        WORK_NAME
       )
     }
 

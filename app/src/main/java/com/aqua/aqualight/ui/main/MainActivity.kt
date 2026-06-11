@@ -11,7 +11,7 @@ import com.aqua.aqualight.NavAppDirections
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AuthSessionManager
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
@@ -94,6 +94,14 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    fun clearSessionNavigationState() {
+        isAuthenticated = false
+        pendingCareTaskId = -1L
+
+        intent?.removeExtra(EXTRA_OPEN_CARE_TASK_ID)
+        intent?.removeExtra(EXTRA_START_IN_APP)
+    }
+
     private suspend fun isUserAuthenticated(): Boolean {
         return authSessionManager.currentSessionState() is
             AuthSessionManager.SessionState.Authenticated
@@ -168,7 +176,7 @@ class MainActivity : BaseActivity() {
             return
         }
 
-        DevicePresenceMonitor.start(
+        SessionBoundServiceManager.start(
             context = applicationContext
         )
     }

@@ -274,6 +274,17 @@ class UserPreferencesManager private constructor(
             prefs.toBuilder()
                 .clearUid()
                 .setIsLoggedIn(false)
+                .clearEmail()
+                .clearUsername()
+                .clearFullName()
+                .clearProfilePhotoUrl()
+                .clearFirstName()
+                .clearLastName()
+                .clearCity()
+                .clearAddressLine()
+                .clearPostCode()
+                .clearPhoneNumber()
+                .clearCountry()
                 .build()
         }
     }

@@ -11,14 +11,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
 import com.aqua.aqualight.ui.auth.security.ReAuthManager
 import com.aqua.aqualight.ui.auth.security.ReAuthenticateFragment
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class LogoutFragment :
@@ -27,15 +26,12 @@ class LogoutFragment :
     private var _binding: FragmentLogoutBinding? = null
     private val binding get() = _binding!!
 
-    private val auth
-        get() = FirebaseAuth.getInstance()
-
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
-    }
-
     private val reAuthManager by lazy {
         ReAuthManager()
+    }
+
+    private val logoutManager by lazy {
+        LogoutManager.create(requireContext())
     }
 
     private val baseActivity
@@ -134,9 +130,23 @@ class LogoutFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                auth.signOut()
+                val result = logoutManager.logout()
 
-                userPrefs.logout()
+                if (result.hasBlockingError) {
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.ERROR,
+                        title = getString(
+                            R.string.logout_dialog_title
+                        ),
+                        message = result.preferenceCleanupError
+                            ?.localizedMessage
+                            ?: getString(
+                                R.string.auth_provider_error_message
+                            )
+                    )
+                    return@launch
+                }
 
                 navigateToLogin()
             } finally {
@@ -200,6 +210,9 @@ class LogoutFragment :
     }
 
     private fun navigateToLogin() {
+        (activity as? com.aqua.aqualight.ui.main.MainActivity)
+            ?.clearSessionNavigationState()
+
         val rootNav =
             (
                 requireActivity()

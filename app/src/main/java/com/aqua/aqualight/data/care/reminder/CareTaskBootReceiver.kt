@@ -4,7 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.smartcare.SmartCareDailyWorker
+import com.aqua.aqualight.data.auth.AuthSessionManager
+import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -29,10 +30,16 @@ class CareTaskBootReceiver : BroadcastReceiver() {
 
     CoroutineScope(Dispatchers.IO).launch {
       try {
-        // 🧠 Restore SmartCare daily worker after boot/update
-        SmartCareDailyWorker.schedule(context)
+        val sessionManager = AuthSessionManager.create(context)
 
-        // 🔔 Restore pending task reminders
+        if (!sessionManager.isAuthenticated()) {
+          return@launch
+        }
+
+        // 🧠 Restore session-bound services after boot/update
+        SessionBoundServiceManager.start(context)
+
+        // 🔔 Restore pending task reminders for the active session
         val manager = CareTaskDataStoreManager.create(context)
 
         val pendingTasks = manager.pendingTasksFlow

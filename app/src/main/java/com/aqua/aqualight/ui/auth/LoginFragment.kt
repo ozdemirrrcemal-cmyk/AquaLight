@@ -14,12 +14,12 @@ import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AuthSessionManager
+import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
 import com.aqua.aqualight.databinding.FragmentLoginBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.Firebase
 import com.google.firebase.auth.GoogleAuthProvider
@@ -164,23 +164,9 @@ class LoginFragment : Fragment() {
     // ---------------------------------------------------
 
     private fun setupGoogleSignIn() {
-
-        val gso =
-            GoogleSignInOptions.Builder(
-                GoogleSignInOptions.DEFAULT_SIGN_IN
-            )
-                .requestIdToken(
-                    getString(
-                        R.string.default_web_client_id
-                    )
-                )
-                .requestEmail()
-                .build()
-
         googleSignInClient =
-            GoogleSignIn.getClient(
-                requireContext(),
-                gso
+            GoogleSignInClientFactory.create(
+                requireContext()
             )
     }
 

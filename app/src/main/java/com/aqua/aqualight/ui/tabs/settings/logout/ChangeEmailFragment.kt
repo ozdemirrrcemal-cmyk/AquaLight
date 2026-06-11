@@ -10,7 +10,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
@@ -27,8 +27,8 @@ class ChangeEmailFragment :
 
     private val auth get() = FirebaseAuth.getInstance()
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
+    private val logoutManager by lazy {
+        LogoutManager.create(requireContext())
     }
 
     private val baseActivity
@@ -312,10 +312,8 @@ class ChangeEmailFragment :
                         newEmail
                     ),
                     onDismiss = {
-                        auth.signOut()
-
                         viewLifecycleOwner.lifecycleScope.launch {
-                            userPrefs.logout()
+                            logoutManager.cleanupAfterLocalSensitiveAction()
 
                             navigateToLoginRoot()
                         }
@@ -346,6 +344,9 @@ class ChangeEmailFragment :
     }
 
     private fun navigateToLoginRoot() {
+        (activity as? com.aqua.aqualight.ui.main.MainActivity)
+            ?.clearSessionNavigationState()
+
         val rootNav =
             (
                 requireActivity()

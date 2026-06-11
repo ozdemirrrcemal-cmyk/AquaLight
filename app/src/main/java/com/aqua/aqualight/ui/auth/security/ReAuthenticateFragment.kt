@@ -12,6 +12,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
+import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentReAuthenticateBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -19,7 +21,6 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -82,9 +83,29 @@ class ReAuthenticateFragment :
                 val account =
                     task.getResult(ApiException::class.java)
 
+                val token = account.idToken
+
+                if (token.isNullOrBlank()) {
+                    baseActivity?.showLoading(false)
+                    setLoadingState(false)
+
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.ERROR,
+                        title = getString(
+                            R.string.re_auth_verification_failed_title
+                        ),
+                        message = getString(
+                            R.string.re_auth_google_wrong_account
+                        )
+                    )
+
+                    return@registerForActivityResult
+                }
+
                 val credential =
                     GoogleAuthProvider.getCredential(
-                        account.idToken,
+                        token,
                         null
                     )
 
@@ -162,21 +183,9 @@ class ReAuthenticateFragment :
     }
 
     private fun setupGoogle() {
-
-        val gso =
-            GoogleSignInOptions.Builder(
-                GoogleSignInOptions.DEFAULT_SIGN_IN
-            )
-                .requestIdToken(
-                    getString(R.string.default_web_client_id)
-                )
-                .requestEmail()
-                .build()
-
         googleSignInClient =
-            GoogleSignIn.getClient(
-                requireContext(),
-                gso
+            GoogleSignInClientFactory.create(
+                requireContext()
             )
     }
 
@@ -366,6 +375,11 @@ class ReAuthenticateFragment :
 
                 lifecycleScope.launch {
 
+                    SessionBoundServiceManager.stop(
+                        context = requireContext(),
+                        cancelNotifications = true
+                    )
+
                     userPrefs.clearAllUserData()
 
                     auth.signOut()
@@ -489,6 +503,9 @@ class ReAuthenticateFragment :
     }
 
     private fun navigateToLogin() {
+
+        (activity as? com.aqua.aqualight.ui.main.MainActivity)
+            ?.clearSessionNavigationState()
 
         val rootNav =
             (

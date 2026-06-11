@@ -207,6 +207,14 @@ object NotificationHelper {
     )
   }
 
+  fun cancelAllAppNotifications(
+    context: Context
+  ) {
+    NotificationManagerCompat.from(
+      context.applicationContext
+    ).cancelAll()
+  }
+
   @SuppressLint("MissingPermission")
   private fun showNotificationInternal(
     context: Context,
