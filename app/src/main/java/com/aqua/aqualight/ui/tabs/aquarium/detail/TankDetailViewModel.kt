@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TankDetailViewModel(
@@ -23,13 +22,11 @@ class TankDetailViewModel(
             context = application.applicationContext
         )
 
-    private val _uiState =
-        MutableStateFlow(
-            TankDetailUiState()
-        )
+    private val _isOpeningDevice =
+        MutableStateFlow(false)
 
-    val uiState: StateFlow<TankDetailUiState> =
-        _uiState.asStateFlow()
+    val isOpeningDevice: StateFlow<Boolean> =
+        _isOpeningDevice.asStateFlow()
 
     private val _events =
         MutableSharedFlow<TankDetailEvent>(
@@ -39,33 +36,20 @@ class TankDetailViewModel(
     val events: SharedFlow<TankDetailEvent> =
         _events.asSharedFlow()
 
-    fun selectTab(
-        tab: TankDetailTab
-    ) {
-        _uiState.update { current ->
-            current.copy(
-                selectedTab = tab
-            )
-        }
-    }
-
     fun openDevice(
         deviceId: Long,
         deviceTitle: String
     ) {
         if (
             deviceId <= 0L ||
-            _uiState.value.isOpeningDevice
+            _isOpeningDevice.value
         ) {
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { current ->
-                current.copy(
-                    isOpeningDevice = true
-                )
-            }
+            _isOpeningDevice.value =
+                true
 
             try {
                 val result =
@@ -107,19 +91,11 @@ class TankDetailViewModel(
                     TankDetailEvent.ShowOpenFailed
                 )
             } finally {
-                _uiState.update { current ->
-                    current.copy(
-                        isOpeningDevice = false
-                    )
-                }
+                _isOpeningDevice.value =
+                    false
             }
         }
     }
-
-    data class TankDetailUiState(
-        val selectedTab: TankDetailTab = TankDetailTab.DEVICES,
-        val isOpeningDevice: Boolean = false
-    )
 
     sealed interface TankDetailEvent {
 

@@ -45,17 +45,13 @@ class TankDetailFragment :
     private var _binding: FragmentTankDetailBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: TankDetailViewModel by viewModels()
+    private val tankDetailViewModel: TankDetailViewModel by viewModels()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
     private var tankId: Long = 0L
+    private var selectedTab: TankDetailTab = TankDetailTab.DEVICES
     private var currentTank: SavedAquariumTank? = null
-
-    private var currentUiState =
-        TankDetailViewModel.TankDetailUiState()
-
-    private var hasRenderedTab: Boolean = false
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -74,7 +70,13 @@ class TankDetailFragment :
             savedInstanceState
         )
 
-        _binding = FragmentTankDetailBinding.bind(view)
+        _binding =
+            FragmentTankDetailBinding.bind(view)
+
+        selectedTab =
+            restoreSelectedTab(
+                savedInstanceState = savedInstanceState
+            )
 
         setupHeader(
             title = "Aquarium"
@@ -82,33 +84,30 @@ class TankDetailFragment :
         setupClickListeners()
         setupSystemBackButton()
         setupSwipeBetweenTabs()
-        observeViewModel()
+        observeDeviceOpenState()
         observeCareProfileActions()
         observeTank()
-
-        viewModel.selectTab(
-            restoreSelectedTab(
-                savedInstanceState = savedInstanceState
-            )
+        selectTab(
+            tab = selectedTab
         )
     }
 
-    private fun observeViewModel() {
+    private fun observeDeviceOpenState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
                 launch {
-                    viewModel.uiState.collect { state ->
-                        renderState(
-                            state = state
+                    tankDetailViewModel.isOpeningDevice.collect { isOpening ->
+                        showGlobalLoading(
+                            show = isOpening
                         )
                     }
                 }
 
                 launch {
-                    viewModel.events.collect { event ->
-                        handleEvent(
+                    tankDetailViewModel.events.collect { event ->
+                        handleDeviceOpenEvent(
                             event = event
                         )
                     }
@@ -117,36 +116,7 @@ class TankDetailFragment :
         }
     }
 
-    private fun renderState(
-        state: TankDetailViewModel.TankDetailUiState
-    ) {
-        if (_binding == null) {
-            return
-        }
-
-        val previousTab =
-            currentUiState.selectedTab
-
-        currentUiState =
-            state
-
-        if (
-            !hasRenderedTab ||
-            previousTab != state.selectedTab
-        ) {
-            hasRenderedTab = true
-
-            renderSelectedTab(
-                tab = state.selectedTab
-            )
-        }
-
-        showGlobalLoading(
-            show = state.isOpeningDevice
-        )
-    }
-
-    private fun handleEvent(
+    private fun handleDeviceOpenEvent(
         event: TankDetailViewModel.TankDetailEvent
     ) {
         if (!isAdded || _binding == null) {
@@ -223,36 +193,36 @@ class TankDetailFragment :
                 runCatching {
                     TankDetailTab.valueOf(tabName)
                 }.getOrNull()
-            } ?: currentUiState.selectedTab
+            } ?: selectedTab
     }
 
     private fun setupClickListeners() {
         binding.tabDevices.setOnClickListener {
-            viewModel.selectTab(
+            selectTab(
                 TankDetailTab.DEVICES
             )
         }
 
         binding.tabActivity.setOnClickListener {
-            viewModel.selectTab(
+            selectTab(
                 TankDetailTab.ACTIVITY
             )
         }
 
         binding.tabTank.setOnClickListener {
-            viewModel.selectTab(
+            selectTab(
                 TankDetailTab.TANK
             )
         }
 
         binding.tabPlants.setOnClickListener {
-            viewModel.selectTab(
+            selectTab(
                 TankDetailTab.PLANTS
             )
         }
 
         binding.tabTankLife.setOnClickListener {
-            viewModel.selectTab(
+            selectTab(
                 TankDetailTab.TANK_LIFE
             )
         }
@@ -304,7 +274,7 @@ class TankDetailFragment :
     ) {
         val currentIndex =
             TAB_ORDER.indexOf(
-                currentUiState.selectedTab
+                selectedTab
             )
 
         if (currentIndex == -1) {
@@ -321,7 +291,7 @@ class TankDetailFragment :
             return
         }
 
-        viewModel.selectTab(
+        selectTab(
             TAB_ORDER[targetIndex]
         )
     }
@@ -347,7 +317,7 @@ class TankDetailFragment :
             binding.root.post {
                 when (action) {
                     CARE_PROFILE_ACTION_PLANTS -> {
-                        viewModel.selectTab(
+                        selectTab(
                             TankDetailTab.PLANTS
                         )
 
@@ -355,7 +325,7 @@ class TankDetailFragment :
                     }
 
                     CARE_PROFILE_ACTION_LIVESTOCK -> {
-                        viewModel.selectTab(
+                        selectTab(
                             TankDetailTab.TANK_LIFE
                         )
 
@@ -422,7 +392,7 @@ class TankDetailFragment :
     override fun onTankDetailDeviceClicked(
         device: TankAssignedDeviceUi
     ) {
-        viewModel.openDevice(
+        tankDetailViewModel.openDevice(
             deviceId = device.deviceId,
             deviceTitle = device.title
         )
@@ -515,9 +485,12 @@ class TankDetailFragment :
             false
     }
 
-    private fun renderSelectedTab(
+    private fun selectTab(
         tab: TankDetailTab
     ) {
+        selectedTab =
+            tab
+
         resetTabs()
         activateTab(
             tabViewFor(
@@ -748,7 +721,9 @@ class TankDetailFragment :
     }
 
     private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
+        return (
+            this * resources.displayMetrics.density
+        ).toInt()
     }
 
     override fun onSaveInstanceState(
@@ -760,7 +735,7 @@ class TankDetailFragment :
 
         outState.putString(
             KEY_SELECTED_TAB,
-            currentUiState.selectedTab.name
+            selectedTab.name
         )
     }
 
@@ -773,6 +748,14 @@ class TankDetailFragment :
             null
 
         super.onDestroyView()
+    }
+
+    private enum class TankDetailTab {
+        DEVICES,
+        ACTIVITY,
+        TANK,
+        PLANTS,
+        TANK_LIFE
     }
 
     companion object {
