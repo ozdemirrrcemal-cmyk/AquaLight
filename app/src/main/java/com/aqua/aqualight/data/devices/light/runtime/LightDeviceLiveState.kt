@@ -83,6 +83,25 @@ data class LightDeviceLiveState(
     val hasLiveChannels: Boolean
         get() = hasFreshLiveData && channels.isNotEmpty()
 
+    val hasManualOverrideTelemetry: Boolean
+        get() = hasFreshLiveData && channels.any { channel ->
+            channel.hasManualOverrideTelemetry
+        }
+
+    val hasManualOverride: Boolean
+        get() = hasFreshLiveData && channels.any { channel ->
+            channel.isManualOverrideActive
+        }
+
+    fun manualChannelValuePercent(
+        semantic: LightChannelSemantic
+    ): Int? {
+        return channelFor(
+            semantic = semantic
+        )?.effectiveManualValuePercent
+    }
+
+
     val hasFreshLiveData: Boolean
         get() {
             if (!isLiveDataFresh) {

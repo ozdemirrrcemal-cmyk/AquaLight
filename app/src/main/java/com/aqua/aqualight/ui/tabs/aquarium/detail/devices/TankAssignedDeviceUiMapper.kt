@@ -6,9 +6,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
 import com.aqua.aqualight.data.devices.catalog.light.LightChannelColor
 import com.aqua.aqualight.data.devices.catalog.light.LightProductCatalog
-import com.aqua.aqualight.data.devices.light.runtime.LightEffectiveRuntimeMode
-import com.aqua.aqualight.data.devices.light.runtime.LightEffectiveRuntimeResolver
-import com.aqua.aqualight.data.devices.light.runtime.LightEffectiveRuntimeState
+import com.aqua.aqualight.data.devices.light.runtime.LightActualDataPolicy
 import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
@@ -36,7 +34,7 @@ class TankAssignedDeviceUiMapper {
         programs: List<SavedLightProgram>,
         lightState: LightDeviceLiveState?,
         now: Long,
-        runtimeState: LightEffectiveRuntimeState? = null
+        modeOverride: TankLightModeOverride? = null
     ): TankAssignedDeviceUi {
         val commonCardState =
             deviceCardStateMapper.map(
@@ -53,7 +51,13 @@ class TankAssignedDeviceUiMapper {
             commonCardState.familyName
 
         val online =
-            commonCardState.isOnline
+            commonCardState.isOnline ||
+                (
+                    device.isLightDevice() &&
+                        lightState?.let { state ->
+                            state.hasFreshLiveData || state.hasDeviceTime
+                        } == true
+                    )
 
         val iconRes =
             DeviceIconMapper.iconFor(
@@ -69,7 +73,7 @@ class TankAssignedDeviceUiMapper {
                 online = online,
                 programs = programs,
                 lightState = lightState,
-                runtimeState = runtimeState
+                modeOverride = modeOverride
             )
         } else {
             TankAssignedDeviceUi.Generic(
@@ -90,7 +94,7 @@ class TankAssignedDeviceUiMapper {
         online: Boolean,
         programs: List<SavedLightProgram>,
         lightState: LightDeviceLiveState?,
-        runtimeState: LightEffectiveRuntimeState?
+        modeOverride: TankLightModeOverride?
     ): TankAssignedDeviceUi.Light {
         val liveState =
             lightState ?: LightDeviceLiveState.initial(
@@ -147,26 +151,50 @@ class TankAssignedDeviceUiMapper {
                 ?: todayPrograms.firstOrNull()
                 ?: activePrograms.firstOrNull()
 
-        val effectiveRuntimeState =
-            if (online) {
-                runtimeState ?: LightEffectiveRuntimeResolver.syncing(
-                    deviceId = device.id
-                )
-            } else {
-                null
-            }
+        val waitingForFirstRuntimeEmission =
+            lightState == null
+        val shouldSuppressStoredRuntime =
+            waitingForFirstRuntimeEmission || !liveState.hasLiveChannels
+
+        val displayProgramForCard = if (shouldSuppressStoredRuntime) {
+            null
+        } else {
+            displayProgram
+        }
+
+        val effectiveModeOverride =
+            if (online && !shouldSuppressStoredRuntime) modeOverride else null
 
         val outputPercent =
-            LightEffectiveRuntimeResolver.actualOutputPercent(
-                liveState = liveState,
-                runtimeState = effectiveRuntimeState
-            )
+            when {
+                shouldSuppressStoredRuntime -> {
+                    0
+                }
+
+                online && effectiveModeOverride?.outputPercent != null -> {
+                    effectiveModeOverride.outputPercent
+                }
+
+                liveState.hasLiveChannels -> {
+                    LightActualDataPolicy.actualOutputPercent(liveState)
+                }
+
+                else -> {
+                    0
+                }
+            }
 
         val modeContent =
-            buildModeContent(
-                displayProgram = displayProgram,
-                runtimeState = effectiveRuntimeState
-            )
+            if (shouldSuppressStoredRuntime) {
+                buildLiveSyncingContent(
+                    online = online || waitingForFirstRuntimeEmission
+                )
+            } else {
+                buildModeContent(
+                    displayProgram = displayProgramForCard,
+                    modeOverride = effectiveModeOverride
+                )
+            }
 
         return TankAssignedDeviceUi.Light(
             deviceId = device.id,
@@ -193,9 +221,9 @@ class TankAssignedDeviceUiMapper {
                 device = device,
                 liveState = liveState,
                 runningProgram = runningProgram,
-                displayProgram = displayProgram,
+                displayProgram = displayProgramForCard,
                 currentMinute = currentMinute,
-                runtimeState = effectiveRuntimeState
+                modeOverride = effectiveModeOverride
             )
         )
     }
@@ -206,7 +234,7 @@ class TankAssignedDeviceUiMapper {
         runningProgram: SavedLightProgram?,
         displayProgram: SavedLightProgram?,
         currentMinute: Int,
-        runtimeState: LightEffectiveRuntimeState?
+        modeOverride: TankLightModeOverride?
     ): List<TankLightChannelUi> {
         return device.supportedLightChannels().map { channel ->
             val currentPercent =
@@ -215,18 +243,14 @@ class TankAssignedDeviceUiMapper {
                     liveState = liveState,
                     runningProgram = runningProgram,
                     currentMinute = currentMinute,
-                    runtimeState = runtimeState
+                    modeOverride = modeOverride
                 )
 
             val targetPercent =
-                if (runtimeState?.mode == LightEffectiveRuntimeMode.SYNCING) {
-                    currentPercent
-                } else {
-                    targetLightChannelPercent(
-                        channel = channel,
-                        program = displayProgram
-                    )
-                }
+                targetLightChannelPercent(
+                    channel = channel,
+                    program = displayProgram
+                )
 
             TankLightChannelUi(
                 key = channel.key,
@@ -243,12 +267,56 @@ class TankAssignedDeviceUiMapper {
         liveState: LightDeviceLiveState,
         runningProgram: SavedLightProgram?,
         currentMinute: Int,
-        runtimeState: LightEffectiveRuntimeState?
+        modeOverride: TankLightModeOverride?
     ): Int {
-        return LightEffectiveRuntimeResolver.actualChannelPercent(
-            liveState = liveState,
-            semantic = channel.semantic,
-            runtimeState = runtimeState
+        if (liveState.hasLiveChannels) {
+            overrideChannelPercent(
+                semantic = channel.semantic,
+                modeOverride = modeOverride
+            )?.let { percent ->
+                return percent
+            }
+
+            return when (channel.semantic) {
+                LightChannelSemantic.RED,
+                LightChannelSemantic.GREEN,
+                LightChannelSemantic.BLUE,
+                LightChannelSemantic.WHITE -> {
+                    LightActualDataPolicy.actualChannelPercent(
+                        liveState = liveState,
+                        semantic = channel.semantic
+                    )
+                }
+
+                LightChannelSemantic.UNKNOWN -> {
+                    LightActualDataPolicy.actualOutputPercent(liveState).coerceIn(
+                        0,
+                        100
+                    )
+                }
+            }
+        }
+
+        return 0
+    }
+
+    private fun overrideChannelPercent(
+        semantic: LightChannelSemantic,
+        modeOverride: TankLightModeOverride?
+    ): Int? {
+        if (modeOverride == null) {
+            return null
+        }
+
+        return when (semantic) {
+            LightChannelSemantic.RED -> modeOverride.red
+            LightChannelSemantic.GREEN -> modeOverride.green
+            LightChannelSemantic.BLUE -> modeOverride.blue
+            LightChannelSemantic.WHITE -> modeOverride.white
+            LightChannelSemantic.UNKNOWN -> modeOverride.outputPercent
+        }?.coerceIn(
+            0,
+            100
         )
     }
 
@@ -657,12 +725,38 @@ class TankAssignedDeviceUiMapper {
             calendar.get(Calendar.MINUTE)
     }
 
+    private fun buildLiveSyncingContent(
+        online: Boolean
+    ): LightModeContent {
+        return LightModeContent(
+            mode = TankLightCardMode.NO_PROGRAM,
+            label = if (online) {
+                "SYNCING LIVE DATA"
+            } else {
+                "DEVICE OFFLINE"
+            },
+            title = if (online) {
+                "Reading device"
+            } else {
+                "Waiting for connection"
+            },
+            leftText = if (online) {
+                "Live"
+            } else {
+                "Offline"
+            },
+            rightText = "--",
+            accentColorInt = Color.parseColor("#90A1B5"),
+            timelineProgressPercent = 0
+        )
+    }
+
     private fun buildModeContent(
         displayProgram: SavedLightProgram?,
-        runtimeState: LightEffectiveRuntimeState?
+        modeOverride: TankLightModeOverride?
     ): LightModeContent {
-        when (runtimeState?.mode) {
-            LightEffectiveRuntimeMode.MANUAL -> {
+        when (modeOverride?.mode) {
+            TankLightCardMode.MANUAL -> {
                 return LightModeContent(
                     mode = TankLightCardMode.MANUAL,
                     label = "MANUAL MODE",
@@ -674,11 +768,11 @@ class TankAssignedDeviceUiMapper {
                 )
             }
 
-            LightEffectiveRuntimeMode.SCENE -> {
+            TankLightCardMode.SCENE -> {
                 return LightModeContent(
                     mode = TankLightCardMode.SCENE,
                     label = "SCENE ACTIVE",
-                    title = runtimeState.title.ifBlank {
+                    title = modeOverride.title.ifBlank {
                         "Scene Mode"
                     },
                     leftText = "Scene",
@@ -688,33 +782,22 @@ class TankAssignedDeviceUiMapper {
                 )
             }
 
-            LightEffectiveRuntimeMode.MOONLIGHT -> {
+            TankLightCardMode.MOONLIGHT -> {
                 return LightModeContent(
                     mode = TankLightCardMode.MOONLIGHT,
                     label = "MOONLIGHT",
-                    title = runtimeState.title.ifBlank {
+                    title = modeOverride.title.ifBlank {
                         "Moonlight Mode"
                     },
-                    leftText = runtimeState.leftText ?: "--:--",
-                    rightText = runtimeState.rightText ?: "--:--",
+                    leftText = modeOverride.leftText ?: "--:--",
+                    rightText = modeOverride.rightText ?: "--:--",
                     accentColorInt = Color.parseColor("#7FA7FF"),
-                    timelineProgressPercent = runtimeState.timelineProgressPercent ?: 0
+                    timelineProgressPercent = modeOverride.timelineProgressPercent ?: 0
                 )
             }
 
-            LightEffectiveRuntimeMode.SYNCING -> {
-                return LightModeContent(
-                    mode = TankLightCardMode.NO_PROGRAM,
-                    label = "SYNCING",
-                    title = "Reading light state",
-                    leftText = "--:--",
-                    rightText = "--:--",
-                    accentColorInt = Color.parseColor("#90A1B5"),
-                    timelineProgressPercent = 0
-                )
-            }
-
-            LightEffectiveRuntimeMode.AUTO,
+            TankLightCardMode.AUTO,
+            TankLightCardMode.NO_PROGRAM,
             null -> {
                 // Continue below.
             }

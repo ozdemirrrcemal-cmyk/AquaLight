@@ -36,6 +36,9 @@ class DeviceLightManualFragment :
 
     private var isRendering = false
 
+    private val userControlledSliderIds =
+        mutableSetOf<Int>()
+
     private val deviceId: Long
         get() = args.deviceId
 
@@ -276,6 +279,10 @@ class DeviceLightManualFragment :
         slider: Slider,
         value: Int
     ) {
+        if (userControlledSliderIds.contains(slider.id)) {
+            return
+        }
+
         val safeValue =
             value
                 .coerceIn(0, 100)
@@ -348,12 +355,14 @@ class DeviceLightManualFragment :
                 override fun onStartTrackingTouch(
                     slider: Slider
                 ) {
+                    userControlledSliderIds.add(slider.id)
                     viewModel.beginSliderInteraction()
                 }
 
                 override fun onStopTrackingTouch(
                     slider: Slider
                 ) {
+                    userControlledSliderIds.remove(slider.id)
                     viewModel.endSliderInteraction()
                 }
             }
@@ -452,6 +461,8 @@ class DeviceLightManualFragment :
     }
 
     override fun onDestroyView() {
+        userControlledSliderIds.clear()
+
         _binding =
             null
 

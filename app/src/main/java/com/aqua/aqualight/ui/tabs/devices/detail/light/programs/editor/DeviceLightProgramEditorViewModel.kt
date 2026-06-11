@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceDataCenter
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
 import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
@@ -45,6 +45,10 @@ class DeviceLightProgramEditorViewModel(
     private val appContext =
         application.applicationContext
 
+    init {
+        LightDeviceDataCenter.configure(appContext)
+    }
+
     private val lightProgramsDataStoreManager =
         LightProgramsDataStoreManager(appContext)
 
@@ -55,7 +59,6 @@ class DeviceLightProgramEditorViewModel(
 
     private val lightRuntimeRepository =
         LightRuntimeRepository(
-            context = appContext,
             commandManager = Esp32LightDeviceCommandManager(
                 context = appContext
             )
@@ -135,7 +138,7 @@ class DeviceLightProgramEditorViewModel(
             return
         }
 
-        LightDeviceLiveRefreshManager.start(
+        LightDeviceDataCenter.start(
             context = appContext,
             deviceId = deviceId,
             ownerKey = liveRefreshOwnerKey
@@ -143,7 +146,7 @@ class DeviceLightProgramEditorViewModel(
 
         observeLiveDeviceTime()
 
-        LightDeviceLiveRefreshManager.refreshNow(
+        LightDeviceDataCenter.refreshNow(
             context = appContext,
             deviceId = deviceId
         )
@@ -156,7 +159,7 @@ class DeviceLightProgramEditorViewModel(
             return
         }
 
-        LightDeviceLiveRefreshManager.stop(
+        LightDeviceDataCenter.stop(
             deviceId = targetDeviceId,
             ownerKey = liveRefreshOwnerKey
         )
@@ -166,7 +169,7 @@ class DeviceLightProgramEditorViewModel(
         liveStateJob?.cancel()
 
         liveStateJob = viewModelScope.launch {
-            LightDeviceLiveRefreshManager.observe(
+            LightDeviceDataCenter.observeLiveState(
                 deviceId = deviceId
             ).collect { liveState ->
                 val deviceTime = liveState.deviceTime
@@ -467,7 +470,7 @@ class DeviceLightProgramEditorViewModel(
                 editingProgramCreatedAt = savedProgram.createdAt
 
                 if (savedProgram.isActive) {
-                    LightDeviceLiveRefreshManager.refreshNow(
+                    LightDeviceDataCenter.refreshNow(
                         context = appContext,
                         deviceId = savedProgram.deviceId
                     )
@@ -803,7 +806,7 @@ class DeviceLightProgramEditorViewModel(
             deviceId = deviceId
         )
 
-        LightDeviceLiveRefreshManager.refreshNow(
+        LightDeviceDataCenter.refreshNow(
             context = appContext,
             deviceId = deviceId
         )

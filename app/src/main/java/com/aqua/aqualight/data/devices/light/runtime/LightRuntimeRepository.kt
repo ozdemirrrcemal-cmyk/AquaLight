@@ -1,17 +1,8 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
-import android.content.Context
-
 class LightRuntimeRepository(
-    context: Context? = null,
     private val commandManager: LightDeviceCommandManager = FailingLightDeviceCommandManager()
 ) {
-
-    init {
-        context?.let { appContext ->
-            LightManualRuntimeStore.configure(appContext)
-        }
-    }
 
     suspend fun applyManualScene(
         deviceId: Long,

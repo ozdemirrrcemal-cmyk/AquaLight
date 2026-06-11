@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceDataCenter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
 import kotlinx.coroutines.channels.Channel
@@ -16,17 +17,17 @@ class DeviceLightPresetsViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val appContext =
-        application.applicationContext
+    init {
+        LightDeviceDataCenter.configure(application.applicationContext)
+    }
 
     private val lightPresetDataStoreManager =
-        LightPresetDataStoreManager(appContext)
+        LightPresetDataStoreManager(application.applicationContext)
 
     private val lightRuntimeRepository =
         LightRuntimeRepository(
-            context = appContext,
             commandManager = Esp32LightDeviceCommandManager(
-                context = appContext
+                context = application.applicationContext
             )
         )
 

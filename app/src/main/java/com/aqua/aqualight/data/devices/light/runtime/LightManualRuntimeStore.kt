@@ -19,6 +19,7 @@ object LightManualRuntimeStore {
     private const val KEY_WHITE = "white"
     private const val KEY_POWER = "power"
     private const val KEY_UPDATED_AT = "updated_at"
+    private const val DEVICE_AUTO_CONFIRM_GRACE_MS = 3_000L
 
     @Volatile
     private var prefs: SharedPreferences? = null
@@ -147,6 +148,87 @@ object LightManualRuntimeStore {
                 updatedAt = System.currentTimeMillis()
             )
         )
+    }
+
+    fun syncFromLiveState(
+        deviceId: Long,
+        liveState: LightDeviceLiveState
+    ) {
+        if (deviceId <= 0L || !liveState.hasLiveChannels) {
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        val current = current(deviceId)
+
+        if (liveState.hasManualOverride) {
+            val hasRecentLocalManualOverride =
+                (current.isManualMode || current.isManualScene) &&
+                    now - current.updatedAt <= DEVICE_AUTO_CONFIRM_GRACE_MS
+
+            if (hasRecentLocalManualOverride) {
+                return
+            }
+
+            val red = liveState.manualChannelValuePercent(LightChannelSemantic.RED)
+                ?: liveState.channelFor(LightChannelSemantic.RED)?.valuePercent
+                ?: current.red
+            val green = liveState.manualChannelValuePercent(LightChannelSemantic.GREEN)
+                ?: liveState.channelFor(LightChannelSemantic.GREEN)?.valuePercent
+                ?: current.green
+            val blue = liveState.manualChannelValuePercent(LightChannelSemantic.BLUE)
+                ?: liveState.channelFor(LightChannelSemantic.BLUE)?.valuePercent
+                ?: current.blue
+            val white = liveState.manualChannelValuePercent(LightChannelSemantic.WHITE)
+                ?: liveState.channelFor(LightChannelSemantic.WHITE)?.valuePercent
+                ?: current.white
+
+            val isPowerOn = LightOutputMath.outputPercent(
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            ) > 0
+
+            updateState(
+                current.copy(
+                    mode = if (current.isManualScene) {
+                        LightControlMode.MANUAL_SCENE
+                    } else {
+                        LightControlMode.MANUAL
+                    },
+                    activeSceneName = if (current.isManualScene) {
+                        current.activeSceneName
+                    } else {
+                        null
+                    },
+                    red = red.coerceIn(0, 100),
+                    green = green.coerceIn(0, 100),
+                    blue = blue.coerceIn(0, 100),
+                    white = white.coerceIn(0, 100),
+                    isPowerOn = isPowerOn,
+                    updatedAt = now
+                )
+            )
+            return
+        }
+
+        if (!liveState.hasManualOverrideTelemetry) {
+            return
+        }
+
+        val hasLocalManualOverride =
+            current.isManualMode || current.isManualScene
+        val isRecentLocalCommand =
+            now - current.updatedAt <= DEVICE_AUTO_CONFIRM_GRACE_MS
+
+        if (hasLocalManualOverride && !isRecentLocalCommand) {
+            updateState(
+                LightManualRuntimeState.auto(deviceId).copy(
+                    updatedAt = now
+                )
+            )
+        }
     }
 
     fun resumeAuto(

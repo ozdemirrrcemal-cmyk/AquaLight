@@ -6,13 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.light.automation.LightAutomationDataStoreManager
 import com.aqua.aqualight.data.devices.light.automation.model.LightAutomationSettings
+import com.aqua.aqualight.data.devices.light.automation.model.MoonlightChannel
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceDataCenter
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
-import com.aqua.aqualight.data.devices.light.runtime.LightEffectiveRuntimeResolver
-import com.aqua.aqualight.data.devices.light.runtime.LightEffectiveRuntimeState
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
-import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
+import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class TankDetailDevicesViewModel(
     application: Application
@@ -46,8 +46,9 @@ class TankDetailDevicesViewModel(
             appContext
         )
 
-    private val lightRuntimeRepository =
-        LightRuntimeRepository(appContext)
+    init {
+        LightDeviceDataCenter.configure(appContext)
+    }
 
     private val mapper =
         TankAssignedDeviceUiMapper()
@@ -65,8 +66,8 @@ class TankDetailDevicesViewModel(
             emptyMap()
         )
 
-    private val lightRuntimeStatesFlow =
-        MutableStateFlow<Map<Long, LightEffectiveRuntimeState>>(
+    private val lightModeOverridesFlow =
+        MutableStateFlow<Map<Long, TankLightModeOverride>>(
             emptyMap()
         )
 
@@ -119,14 +120,14 @@ class TankDetailDevicesViewModel(
                     DevicePresenceMonitor.statuses,
                     lightProgramsStore.programsFlow,
                     lightStatesFlow,
-                    lightRuntimeStatesFlow
-                ) { devices, statuses, programs, lightStates, lightRuntimeStates ->
+                    lightModeOverridesFlow
+                ) { devices, statuses, programs, lightStates, lightModeOverrides ->
                     SourceState(
                         devices = devices,
                         statuses = statuses,
                         programs = programs,
                         lightStates = lightStates,
-                        lightRuntimeStates = lightRuntimeStates
+                        lightModeOverrides = lightModeOverrides
                     )
                 }.collect { state ->
                     updateLightObservers(
@@ -144,7 +145,7 @@ class TankDetailDevicesViewModel(
                                 programs = state.programs,
                                 lightState = state.lightStates[device.id],
                                 now = now,
-                                runtimeState = state.lightRuntimeStates[device.id]
+                                modeOverride = state.lightModeOverrides[device.id]
                             )
                         }
 
@@ -197,11 +198,11 @@ class TankDetailDevicesViewModel(
                 current - deviceId
             }
 
-            lightRuntimeStatesFlow.update { current ->
+            lightModeOverridesFlow.update { current ->
                 current - deviceId
             }
 
-            LightDeviceLiveRefreshManager.stop(
+            LightDeviceDataCenter.stop(
                 deviceId = deviceId,
                 ownerKey = liveRefreshOwnerKey
             )
@@ -212,17 +213,13 @@ class TankDetailDevicesViewModel(
                 return@forEach
             }
 
-            seedInitialLightRuntimeState(
-                deviceId = deviceId
-            )
-
-            LightDeviceLiveRefreshManager.start(
+            LightDeviceDataCenter.start(
                 context = appContext,
                 deviceId = deviceId,
                 ownerKey = liveRefreshOwnerKey
             )
 
-            LightDeviceLiveRefreshManager.refreshNow(
+            LightDeviceDataCenter.refreshNow(
                 context = appContext,
                 deviceId = deviceId
             )
@@ -230,19 +227,16 @@ class TankDetailDevicesViewModel(
             lightLiveJobs[deviceId] =
                 viewModelScope.launch {
                     combine(
-                        LightDeviceLiveRefreshManager.observe(
-                            deviceId = deviceId
-                        ),
-                        lightRuntimeRepository.observeManualRuntime(
+                        LightDeviceDataCenter.observe(
                             deviceId = deviceId
                         ),
                         lightAutomationStore.observeSettings(
                             deviceId = deviceId
                         )
-                    ) { liveState, manualRuntime, automationSettings ->
+                    ) { runtimeSnapshot, automationSettings ->
                         LightRuntimeSource(
-                            liveState = liveState,
-                            manualRuntime = manualRuntime,
+                            liveState = runtimeSnapshot.liveState,
+                            manualRuntime = runtimeSnapshot.manualRuntime,
                             automationSettings = automationSettings
                         )
                     }.collect { source ->
@@ -261,53 +255,266 @@ class TankDetailDevicesViewModel(
                             )
                         }
 
-                        lightRuntimeStatesFlow.update { current ->
+                        lightModeOverridesFlow.update { current ->
                             val currentMinute =
                                 liveState.deviceTime?.curvePoint?.totalMinutes
                                     ?: currentPhoneMinute()
 
-                            val runtimeState =
-                                LightEffectiveRuntimeResolver.resolve(
-                                    deviceId = deviceId,
-                                    manualRuntime = manualRuntime,
-                                    automationSettings = automationSettings,
+                            val modeOverride =
+                                buildModeOverrideFromManualRuntime(
+                                    runtime = manualRuntime
+                                ) ?: buildModeOverrideFromAutomation(
+                                    settings = automationSettings,
                                     currentMinute = currentMinute
                                 )
 
-                            current + (deviceId to runtimeState)
+                            if (modeOverride == null) {
+                                current - deviceId
+                            } else {
+                                current + (
+                                    deviceId to modeOverride
+                                )
+                            }
                         }
                     }
                 }
         }
     }
 
+    private fun buildModeOverrideFromAutomation(
+        settings: LightAutomationSettings,
+        currentMinute: Int
+    ): TankLightModeOverride? {
+        val moonlight = settings.moonlight
 
-    private fun seedInitialLightRuntimeState(
-        deviceId: Long
-    ) {
-        val manualRuntime =
-            lightRuntimeRepository.currentManualRuntime(
-                deviceId = deviceId
-            )
-
-        val runtimeState =
-            LightEffectiveRuntimeResolver.resolve(
-                deviceId = deviceId,
-                manualRuntime = manualRuntime,
-                automationSettings = null,
-                currentMinute = currentPhoneMinute()
-            )
-
-        lightRuntimeStatesFlow.update { current ->
-            current + (deviceId to runtimeState)
+        if (!moonlight.enabled) {
+            return null
         }
+
+        val startMinute = if (moonlight.followProgramEnd) {
+            moonlight.startTime.totalMinutes
+        } else {
+            moonlight.startTime.totalMinutes
+        }
+
+        val endMinute = moonlight.endTime.totalMinutes
+
+        if (!isMinuteInRange(
+                currentMinute = currentMinute,
+                startMinute = startMinute,
+                endMinute = endMinute
+            )
+        ) {
+            return null
+        }
+
+        val intensity = moonlight.intensityPercent.coerceIn(1, 15)
+        val softWhite = (intensity / 2).coerceAtLeast(1)
+        val red = 0
+        val green = 0
+        val blue = when (moonlight.channel) {
+            MoonlightChannel.BLUE,
+            MoonlightChannel.BLUE_WHITE -> intensity
+            MoonlightChannel.WHITE -> 0
+        }
+        val white = when (moonlight.channel) {
+            MoonlightChannel.WHITE -> intensity
+            MoonlightChannel.BLUE_WHITE -> softWhite
+            MoonlightChannel.BLUE -> 0
+        }
+
+        return TankLightModeOverride(
+            mode = TankLightCardMode.MOONLIGHT,
+            title = "Moonlight Mode",
+            outputPercent = LightOutputMath.outputPercent(
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            ),
+            red = red,
+            green = green,
+            blue = blue,
+            white = white,
+            leftText = labelForMinute(startMinute),
+            rightText = labelForMinute(endMinute),
+            timelineProgressPercent = moonlightProgressPercent(
+                currentMinute = currentMinute,
+                startMinute = startMinute,
+                endMinute = endMinute
+            )
+        )
+    }
+
+    private fun isMinuteInRange(
+        currentMinute: Int,
+        startMinute: Int,
+        endMinute: Int
+    ): Boolean {
+        if (startMinute == endMinute) {
+            return false
+        }
+
+        return if (startMinute < endMinute) {
+            currentMinute >= startMinute && currentMinute < endMinute
+        } else {
+            currentMinute >= startMinute || currentMinute < endMinute
+        }
+    }
+
+    private fun moonlightProgressPercent(
+        currentMinute: Int,
+        startMinute: Int,
+        endMinute: Int
+    ): Int {
+        if (startMinute == endMinute) {
+            return 0
+        }
+
+        val duration =
+            if (endMinute > startMinute) {
+                endMinute - startMinute
+            } else {
+                (MINUTES_PER_DAY - startMinute) + endMinute
+            }
+
+        if (duration <= 0) {
+            return 0
+        }
+
+        val elapsed =
+            if (currentMinute >= startMinute) {
+                currentMinute - startMinute
+            } else {
+                (MINUTES_PER_DAY - startMinute) + currentMinute
+            }
+
+        return ((elapsed.toDouble() / duration.toDouble()) * 100.0)
+            .roundToInt()
+            .coerceIn(0, 100)
+    }
+
+    private fun buildModeOverrideFromManualRuntime(
+        runtime: LightManualRuntimeState
+    ): TankLightModeOverride? {
+        val isManualActive =
+            runtime.isManualMode || runtime.isManualScene
+
+        if (!isManualActive) {
+            return null
+        }
+
+        val outputPercent =
+            manualOutputPercent(
+                runtime = runtime
+            )
+
+        val red =
+            manualChannelPercent(
+                isPowerOn = runtime.isPowerOn,
+                value = runtime.red
+            )
+
+        val green =
+            manualChannelPercent(
+                isPowerOn = runtime.isPowerOn,
+                value = runtime.green
+            )
+
+        val blue =
+            manualChannelPercent(
+                isPowerOn = runtime.isPowerOn,
+                value = runtime.blue
+            )
+
+        val white =
+            manualChannelPercent(
+                isPowerOn = runtime.isPowerOn,
+                value = runtime.white
+            )
+
+        if (runtime.isManualScene) {
+            val sceneName =
+                runtime.activeSceneName.orEmpty()
+                    .ifBlank {
+                        "Scene Mode"
+                    }
+
+            return TankLightModeOverride(
+                mode = TankLightCardMode.SCENE,
+                title = sceneName,
+                outputPercent = outputPercent,
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            )
+        }
+
+        if (runtime.isManualMode) {
+            return TankLightModeOverride(
+                mode = TankLightCardMode.MANUAL,
+                title = "Manual Control",
+                outputPercent = outputPercent,
+                red = red,
+                green = green,
+                blue = blue,
+                white = white
+            )
+        }
+
+        return null
+    }
+
+    private fun currentPhoneMinute(): Int {
+        val calendar = java.util.Calendar.getInstance()
+        return calendar.get(java.util.Calendar.HOUR_OF_DAY) * 60 +
+            calendar.get(java.util.Calendar.MINUTE)
+    }
+
+    private fun labelForMinute(
+        minute: Int
+    ): String {
+        val normalized = ((minute % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY
+        val hour = normalized / 60
+        val min = normalized % 60
+        return "%02d:%02d".format(hour, min)
+    }
+
+    private fun manualOutputPercent(
+        runtime: LightManualRuntimeState
+    ): Int {
+        if (!runtime.isPowerOn) {
+            return 0
+        }
+
+        return LightOutputMath.outputPercent(
+            red = runtime.red,
+            green = runtime.green,
+            blue = runtime.blue,
+            white = runtime.white
+        )
+    }
+
+    private fun manualChannelPercent(
+        isPowerOn: Boolean,
+        value: Int
+    ): Int {
+        if (!isPowerOn) {
+            return 0
+        }
+
+        return value.coerceIn(
+            0,
+            100
+        )
     }
 
     private fun clearLightObservers() {
         lightLiveJobs.forEach { entry ->
             entry.value.cancel()
 
-            LightDeviceLiveRefreshManager.stop(
+            LightDeviceDataCenter.stop(
                 deviceId = entry.key,
                 ownerKey = liveRefreshOwnerKey
             )
@@ -318,7 +525,7 @@ class TankDetailDevicesViewModel(
         lightStatesFlow.value =
             emptyMap()
 
-        lightRuntimeStatesFlow.value =
+        lightModeOverridesFlow.value =
             emptyMap()
     }
 
@@ -330,10 +537,8 @@ class TankDetailDevicesViewModel(
         super.onCleared()
     }
 
-    private fun currentPhoneMinute(): Int {
-        val calendar = java.util.Calendar.getInstance()
-        return calendar.get(java.util.Calendar.HOUR_OF_DAY) * 60 +
-            calendar.get(java.util.Calendar.MINUTE)
+    private companion object {
+        private const val MINUTES_PER_DAY = 24 * 60
     }
 
     private data class LightRuntimeSource(
@@ -347,6 +552,6 @@ class TankDetailDevicesViewModel(
         val statuses: Map<Long, DeviceStatusState>,
         val programs: List<SavedLightProgram>,
         val lightStates: Map<Long, LightDeviceLiveState>,
-        val lightRuntimeStates: Map<Long, LightEffectiveRuntimeState>
+        val lightModeOverrides: Map<Long, TankLightModeOverride>
     )
 }

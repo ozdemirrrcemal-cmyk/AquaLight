@@ -11,7 +11,11 @@ data class LightDeviceLiveChannelState(
     val color: Long,
     val regime: String,
     val vNow: Double?,
-    val maxWatts: Double?
+    val maxWatts: Double?,
+    val manualValuePercent: Int? = null,
+    val manualRemainingMillis: Long = 0L,
+    val isManualOverrideActive: Boolean = false,
+    val hasManualOverrideTelemetry: Boolean = false
 ) {
 
     val valuePercent: Int?
@@ -19,6 +23,16 @@ data class LightDeviceLiveChannelState(
             ?.coerceIn(0.0, 100.0)
             ?.roundToInt()
             ?.coerceIn(0, 100)
+
+    val effectiveManualValuePercent: Int?
+        get() {
+            if (!isManualOverrideActive) {
+                return null
+            }
+
+            return manualValuePercent
+                ?.coerceIn(0, 100)
+        }
 
     val actualWatts: Double?
         get() {

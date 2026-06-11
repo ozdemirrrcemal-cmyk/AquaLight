@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceDataCenter
 import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListUiState
@@ -30,6 +30,10 @@ class DeviceLightProgramsViewModel(
 
     private val appContext =
         application.applicationContext
+
+    init {
+        LightDeviceDataCenter.configure(appContext)
+    }
 
     private val lightProgramsDataStoreManager =
         LightProgramsDataStoreManager(appContext)
@@ -501,7 +505,7 @@ class DeviceLightProgramsViewModel(
             return
         }
 
-        LightDeviceLiveRefreshManager.refreshNow(
+        LightDeviceDataCenter.refreshNow(
             context = appContext,
             deviceId = deviceId
         )

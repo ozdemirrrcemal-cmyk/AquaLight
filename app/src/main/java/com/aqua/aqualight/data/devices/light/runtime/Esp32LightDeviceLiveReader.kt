@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.light.runtime
 
 import org.json.JSONObject
 import java.net.URLDecoder
+import kotlin.math.roundToInt
 
 class Esp32LightDeviceLiveReader(
     private val httpClient: Esp32HttpJsonClient = Esp32HttpJsonClient(),
@@ -105,6 +106,13 @@ class Esp32LightDeviceLiveReader(
                                 "All",
                                 JSONObject()
                                     .put("VNow", 0)
+                                    .put(
+                                        "VManual",
+                                        JSONObject()
+                                            .put("V", 0)
+                                            .put("TOffMs", 0)
+                                            .put("Active", 0)
+                                    )
                                     .put("Regime", 0)
                                     .put("Name", 0)
                                     .put("Color", 0)
@@ -155,6 +163,22 @@ class Esp32LightDeviceLiveReader(
             val item = pwmData.optJSONObject(pwmIndex) ?: return@forEach
             val entry = entriesByPwmIndex[pwmIndex] ?: return@forEach
 
+            val manualJson = item.optJSONObject("VManual")
+            val manualValuePercent = manualJson
+                ?.optNullableDouble("V")
+                ?.let { value ->
+                    normalizeManualPercent(value)
+                }
+            val manualRemainingMillis = manualJson
+                ?.optNullableLong("TOffMs")
+                ?: 0L
+            val isManualOverrideActive = manualJson
+                ?.optNullableBoolean("Active")
+                ?: (
+                    manualValuePercent != null &&
+                        manualRemainingMillis > 0L
+                    )
+
             channels += LightDeviceLiveChannelState(
                 semantic = entry.semantic,
                 pwmIndex = entry.pwmIndex,
@@ -176,7 +200,11 @@ class Esp32LightDeviceLiveReader(
                     ""
                 ),
                 vNow = item.optNullableDouble("VNow"),
-                maxWatts = item.optNullableDouble("W")
+                maxWatts = item.optNullableDouble("W"),
+                manualValuePercent = manualValuePercent,
+                manualRemainingMillis = manualRemainingMillis,
+                isManualOverrideActive = isManualOverrideActive,
+                hasManualOverrideTelemetry = manualJson != null
             )
         }
 
@@ -207,6 +235,58 @@ class Esp32LightDeviceLiveReader(
             null
         } else {
             value
+        }
+    }
+
+    private fun normalizeManualPercent(
+        value: Double
+    ): Int? {
+        if (value < 0.0) {
+            return null
+        }
+
+        val percent = if (value <= 1.0) {
+            value * 100.0
+        } else {
+            value
+        }
+
+        return percent
+            .roundToInt()
+            .coerceIn(0, 100)
+    }
+
+    private fun JSONObject.optNullableLong(
+        key: String
+    ): Long? {
+        if (!has(key) || isNull(key)) {
+            return null
+        }
+
+        return optLong(
+            key,
+            0L
+        )
+    }
+
+    private fun JSONObject.optNullableBoolean(
+        key: String
+    ): Boolean? {
+        if (!has(key) || isNull(key)) {
+            return null
+        }
+
+        return when (val value = opt(key)) {
+            is Boolean -> value
+            is Number -> value.toInt() != 0
+            is String -> {
+                when (value.trim().lowercase()) {
+                    "1", "true", "yes", "on", "active" -> true
+                    "0", "false", "no", "off", "inactive" -> false
+                    else -> null
+                }
+            }
+            else -> null
         }
     }
 

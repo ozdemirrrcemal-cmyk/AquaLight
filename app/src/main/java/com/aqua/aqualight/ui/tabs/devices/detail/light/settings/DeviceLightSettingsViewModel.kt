@@ -8,10 +8,12 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightCoolingManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightThermalProtectionManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceAddressResolver
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceDataCenter
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
 import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
 import java.text.SimpleDateFormat
@@ -33,6 +35,10 @@ class DeviceLightSettingsViewModel(
 
     private val appContext =
         application.applicationContext
+
+    init {
+        LightDeviceDataCenter.configure(appContext)
+    }
 
     private val devicesDataStoreManager =
         DevicesDataStoreManager.create(appContext)
@@ -84,7 +90,7 @@ class DeviceLightSettingsViewModel(
             previousDeviceId > 0L &&
             previousDeviceId != deviceId
         ) {
-            LightDeviceLiveRefreshManager.stop(
+            LightDeviceDataCenter.stop(
                 deviceId = previousDeviceId,
                 ownerKey = liveRefreshOwnerKey
             )
@@ -107,7 +113,7 @@ class DeviceLightSettingsViewModel(
 
         DevicePresenceMonitor.start(appContext)
 
-        LightDeviceLiveRefreshManager.start(
+        LightDeviceDataCenter.start(
             context = appContext,
             deviceId = deviceId,
             ownerKey = liveRefreshOwnerKey
@@ -130,7 +136,7 @@ class DeviceLightSettingsViewModel(
         refreshPhoneTime()
 
         if (deviceId > 0L) {
-            LightDeviceLiveRefreshManager.refreshNow(
+            LightDeviceDataCenter.refreshNow(
                 context = appContext,
                 deviceId = deviceId
             )
@@ -155,7 +161,7 @@ class DeviceLightSettingsViewModel(
 
         DevicePresenceMonitor.start(appContext)
 
-        LightDeviceLiveRefreshManager.refreshNow(
+        LightDeviceDataCenter.refreshNow(
             context = appContext,
             deviceId = deviceId
         )
@@ -168,7 +174,7 @@ class DeviceLightSettingsViewModel(
         liveStateJob?.cancel()
 
         liveStateJob = viewModelScope.launch {
-            LightDeviceLiveRefreshManager.observe(
+            LightDeviceDataCenter.observeLiveState(
                 deviceId = deviceId
             ).collect { liveState ->
                 val thermal = liveState.thermalProtection
@@ -178,7 +184,10 @@ class DeviceLightSettingsViewModel(
                     val preserveEditableSettings =
                         isApplyingSettings
 
-                    if (!state.isDeviceOnline) {
+                    val hasLiveContact =
+                        liveState.hasFreshLiveData || liveState.hasDeviceTime
+
+                    if (!state.isDeviceOnline && !hasLiveContact) {
                         return@update state.copy(
                             deviceTime = "--:--",
                             thermalProtectionStatusText = "Unavailable",
@@ -193,6 +202,13 @@ class DeviceLightSettingsViewModel(
                     }
 
                     state.copy(
+                        isDeviceOnline = state.isDeviceOnline || hasLiveContact,
+                        controlsEnabled = state.controlsEnabled || hasLiveContact,
+                        connectionStatusText = if (hasLiveContact) {
+                            connectionStatusTextFor(DeviceConnectionStatus.ONLINE)
+                        } else {
+                            state.connectionStatusText
+                        },
                         deviceTime = if (liveState.hasDeviceTime) {
                             liveState.deviceTimeText
                         } else {
@@ -260,10 +276,18 @@ class DeviceLightSettingsViewModel(
         profileJob = viewModelScope.launch {
             combine(
                 devicesDataStoreManager.devicesFlow,
-                DevicePresenceMonitor.statuses
-            ) { devices, statuses ->
-                devices to statuses
-            }.collect { (devices, statuses) ->
+                DevicePresenceMonitor.statuses,
+                LightDeviceDataCenter.observeLiveState(deviceId)
+            ) { devices, statuses, liveState ->
+                DeviceProfileInputs(
+                    devices = devices,
+                    statuses = statuses,
+                    liveState = liveState
+                )
+            }.collect { inputs ->
+                val devices = inputs.devices
+                val statuses = inputs.statuses
+                val liveState = inputs.liveState
                 val device = devices.firstOrNull { savedDevice ->
                     savedDevice.id == deviceId
                 }
@@ -311,6 +335,22 @@ class DeviceLightSettingsViewModel(
                         formatEnumName(device.deviceType.name)
                     }
 
+                val hasLiveContact = liveState.hasFreshLiveData || liveState.hasDeviceTime
+                val isOnline = status?.isOnline == true || hasLiveContact
+                val effectiveStatus = when {
+                    status?.isOnline == true -> {
+                        status.status
+                    }
+
+                    hasLiveContact -> {
+                        DeviceConnectionStatus.ONLINE
+                    }
+
+                    else -> {
+                        status?.status ?: DeviceConnectionStatus.UNKNOWN
+                    }
+                }
+
                 _uiState.update { state ->
                     state.copy(
                         deviceName = resolvedDeviceName,
@@ -334,10 +374,10 @@ class DeviceLightSettingsViewModel(
                                 "—"
                             },
 
-                        isDeviceOnline = status?.isOnline == true,
-                        controlsEnabled = status?.isOnline == true,
+                        isDeviceOnline = isOnline,
+                        controlsEnabled = isOnline,
                         connectionStatusText = connectionStatusTextFor(
-                            status?.status ?: DeviceConnectionStatus.UNKNOWN
+                            effectiveStatus
                         )
                     )
                 }
@@ -392,7 +432,7 @@ class DeviceLightSettingsViewModel(
                 )
             }
 
-            LightDeviceLiveRefreshManager.refreshNow(
+            LightDeviceDataCenter.refreshNow(
                 context = appContext,
                 deviceId = deviceId
             )
@@ -581,7 +621,7 @@ class DeviceLightSettingsViewModel(
                 return@launchSettingsOperation
             }
 
-            LightDeviceLiveRefreshManager.refreshNow(
+            LightDeviceDataCenter.refreshNow(
                 context = appContext,
                 deviceId = deviceId
             )
@@ -677,7 +717,7 @@ class DeviceLightSettingsViewModel(
                 return@launchSettingsOperation
             }
 
-            LightDeviceLiveRefreshManager.refreshNow(
+            LightDeviceDataCenter.refreshNow(
                 context = appContext,
                 deviceId = deviceId
             )
@@ -762,6 +802,13 @@ class DeviceLightSettingsViewModel(
         )
     }
 
+
+    private data class DeviceProfileInputs(
+        val devices: List<DevicesDataStoreManager.DeviceInfo>,
+        val statuses: Map<Long, DeviceStatusState>,
+        val liveState: LightDeviceLiveState
+    )
+
     private fun connectionStatusTextFor(
         status: DeviceConnectionStatus
     ): String {
@@ -806,7 +853,7 @@ class DeviceLightSettingsViewModel(
         liveStateJob?.cancel()
 
         if (deviceId > 0L) {
-            LightDeviceLiveRefreshManager.stop(
+            LightDeviceDataCenter.stop(
                 deviceId = deviceId,
                 ownerKey = liveRefreshOwnerKey
             )

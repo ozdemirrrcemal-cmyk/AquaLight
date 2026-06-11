@@ -54,6 +54,7 @@ object LightDeviceLiveRefreshManager {
 
         val appContext = context.applicationContext
 
+        LightManualRuntimeStore.configure(appContext)
         LightAppVisibilityMonitor.register(appContext)
         DevicePresenceMonitor.start(appContext)
 
@@ -135,6 +136,7 @@ object LightDeviceLiveRefreshManager {
 
         val appContext = context.applicationContext
 
+        LightManualRuntimeStore.configure(appContext)
         LightAppVisibilityMonitor.register(appContext)
 
         scope.launch {
@@ -222,6 +224,8 @@ object LightDeviceLiveRefreshManager {
         ).onSuccess { snapshot ->
             val now = System.currentTimeMillis()
 
+            var nextState: LightDeviceLiveState? = null
+
             stateFlow.update { state ->
                 val resolvedDeviceTime = snapshot.deviceTime
                     ?: state.deviceTime.takeIf {
@@ -258,6 +262,15 @@ object LightDeviceLiveRefreshManager {
                     isLiveDataFresh = snapshot.channels.isNotEmpty(),
                     lastUpdatedMillis = now,
                     errorMessage = snapshot.partialErrorMessage
+                ).also { state ->
+                    nextState = state
+                }
+            }
+
+            nextState?.let { state ->
+                LightManualRuntimeStore.syncFromLiveState(
+                    deviceId = deviceId,
+                    liveState = state
                 )
             }
         }.onFailure { error ->

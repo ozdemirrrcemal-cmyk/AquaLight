@@ -6,11 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.data.devices.light.runtime.LightActualDataPolicy
 import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+import com.aqua.aqualight.data.devices.light.runtime.LightDeviceDataCenter
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeState
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
-import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
@@ -46,8 +45,9 @@ class DeviceLightViewModel(
     private val lightProgramsDataStoreManager =
     LightProgramsDataStoreManager(appContext)
 
-    private val lightRuntimeRepository =
-    LightRuntimeRepository(appContext)
+    init {
+        LightDeviceDataCenter.configure(appContext)
+    }
 
     private val _uiState = MutableStateFlow(
         createDeviceTimeUnavailableState(
@@ -74,7 +74,7 @@ class DeviceLightViewModel(
             previousDeviceId > 0L &&
             previousDeviceId != deviceId
         ) {
-            LightDeviceLiveRefreshManager.stop(
+            LightDeviceDataCenter.stop(
                 deviceId = previousDeviceId,
                 ownerKey = liveRefreshOwnerKey
             )
@@ -94,7 +94,7 @@ class DeviceLightViewModel(
 
         DevicePresenceMonitor.start(appContext)
 
-        LightDeviceLiveRefreshManager.start(
+        LightDeviceDataCenter.start(
             context = appContext,
             deviceId = deviceId,
             ownerKey = liveRefreshOwnerKey
@@ -103,15 +103,13 @@ class DeviceLightViewModel(
         observeJob = viewModelScope.launch {
             combine(
                 lightProgramsDataStoreManager.programsFlow,
-                lightRuntimeRepository.observeManualRuntime(deviceId),
-                LightDeviceLiveRefreshManager.observe(deviceId),
+                LightDeviceDataCenter.observe(deviceId),
                 DevicePresenceMonitor.statuses
-            ) {
-                programs, manualRuntime, liveState, statuses ->
+            ) { programs, runtimeSnapshot, statuses ->
                 DashboardInputs(
                     programs = programs,
-                    manualRuntime = manualRuntime,
-                    liveState = liveState,
+                    manualRuntime = runtimeSnapshot.manualRuntime,
+                    liveState = runtimeSnapshot.liveState,
                     presenceState = statuses[this@DeviceLightViewModel.deviceId]
                 )
             }.collect { inputs ->
@@ -152,7 +150,7 @@ class DeviceLightViewModel(
             return
         }
 
-        LightDeviceLiveRefreshManager.refreshNow(
+        LightDeviceDataCenter.refreshNow(
             context = appContext,
             deviceId = deviceId
         )
@@ -428,8 +426,21 @@ class DeviceLightViewModel(
         presenceState: DeviceStatusState?,
         liveState: LightDeviceLiveState
     ): DeviceLightDashboardUiState {
-        val status = presenceState?.status ?: DeviceConnectionStatus.UNKNOWN
-        val isOnline = presenceState?.isOnline == true
+        val hasLiveContact = liveState.hasFreshLiveData || liveState.hasDeviceTime
+        val isOnline = presenceState?.isOnline == true || hasLiveContact
+        val status = when {
+            presenceState?.isOnline == true -> {
+                presenceState.status
+            }
+
+            hasLiveContact -> {
+                DeviceConnectionStatus.ONLINE
+            }
+
+            else -> {
+                presenceState?.status ?: DeviceConnectionStatus.UNKNOWN
+            }
+        }
         val statusText = connectionStatusTextFor(status)
 
         if (isOnline) {
@@ -440,10 +451,21 @@ class DeviceLightViewModel(
             )
         }
 
+        val isStillChecking = status == DeviceConnectionStatus.UNKNOWN ||
+            status == DeviceConnectionStatus.CHECKING
+
         return copy(
-            activeProgramName = "Device offline",
+            activeProgramName = if (isStillChecking) {
+                "Syncing device"
+            } else {
+                "Device offline"
+            },
             runStatus = statusText,
-            liveMode = LightDashboardMode.IDLE,
+            liveMode = if (isStillChecking) {
+                LightDashboardMode.SYNC
+            } else {
+                LightDashboardMode.IDLE
+            },
             currentWattText = "-- W",
             outputPercentText = "0%",
             redChannelText = "R --",
@@ -455,12 +477,20 @@ class DeviceLightViewModel(
             } else {
                 "--:--"
             },
-            nextEventText = "Reconnect the controller to continue",
+            nextEventText = if (isStillChecking) {
+                "Waiting for controller telemetry"
+            } else {
+                "Reconnect the controller to continue"
+            },
             healthTemperatureText = "-- °C",
             healthTemperatureStatusText = "Unavailable",
             healthFanText = "Unavailable",
             healthFanStatusText = "Unavailable",
-            timelineStatusText = "Live connection unavailable",
+            timelineStatusText = if (isStillChecking) {
+                "Live data sync in progress"
+            } else {
+                "Live connection unavailable"
+            },
             isDeviceOnline = false,
             controlsEnabled = false,
             connectionStatusText = statusText
@@ -963,7 +993,7 @@ private fun SavedLightProgram.maxOutputPercent(): Int {
         observeJob?.cancel()
 
         if (deviceId > 0L) {
-            LightDeviceLiveRefreshManager.stop(
+            LightDeviceDataCenter.stop(
                 deviceId = deviceId,
                 ownerKey = liveRefreshOwnerKey
             )
