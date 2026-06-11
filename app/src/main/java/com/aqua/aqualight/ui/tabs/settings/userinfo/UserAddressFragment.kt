@@ -669,28 +669,21 @@ class UserAddressFragment :
                 PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL
             )
 
-        val fullName =
-            "$firstName $lastName"
-
         setLoadingState(
             true
         )
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                userPrefs.update { prefs ->
-
-                    prefs.toBuilder()
-                        .setFirstName(firstName)
-                        .setLastName(lastName)
-                        .setFullName(fullName)
-                        .setCity(city)
-                        .setAddressLine(address)
-                        .setPostCode(postCode)
-                        .setCountry(countryIso)
-                        .setPhoneNumber(formattedPhone)
-                        .build()
-                }
+                userPrefs.saveAddress(
+                    firstName = firstName,
+                    lastName = lastName,
+                    city = city,
+                    addressLine = address,
+                    postCode = postCode,
+                    phoneNumber = formattedPhone,
+                    country = countryIso
+                )
 
                 if (
                     !isAdded ||

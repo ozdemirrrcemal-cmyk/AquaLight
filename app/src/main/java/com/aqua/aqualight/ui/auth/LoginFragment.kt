@@ -7,23 +7,25 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
 import com.aqua.aqualight.databinding.FragmentLoginBinding
+import com.aqua.aqualight.ui.auth.state.AuthActionState
+import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
+import com.aqua.aqualight.ui.auth.viewmodel.LoginViewModel
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.Firebase
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 
 class LoginFragment : Fragment() {
@@ -33,18 +35,12 @@ class LoginFragment : Fragment() {
 
     private lateinit var googleSignInClient: GoogleSignInClient
 
-    private val auth = Firebase.auth
+    private val viewModel: LoginViewModel by viewModels {
+        AuthViewModelFactory(requireContext())
+    }
 
     private val baseActivity
         get() = activity as? BaseActivity
-
-    private val authSessionManager by lazy {
-        AuthSessionManager.create(requireContext())
-    }
-
-    // ---------------------------------------------------
-    // GOOGLE SIGN IN RESULT
-    // ---------------------------------------------------
 
     private val googleSignInLauncher =
         registerForActivityResult(
@@ -57,51 +53,17 @@ class LoginFragment : Fragment() {
                 )
 
             try {
-
                 val account =
                     task.getResult(
                         ApiException::class.java
                     )
 
-                if (account != null) {
+                val token = account.idToken
 
-                    Log.d(
-                        "LoginFragment",
-                        "✅ Google Sign-In account: ${account.email}"
-                    )
-
-                    val token = account.idToken
-
-                    if (token.isNullOrBlank()) {
-                        baseActivity?.showLoading(false)
-
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.ERROR,
-                            title = getString(
-                                R.string.login_google_failed
-                            ),
-                            message = getString(
-                                R.string.login_google_account_not_selected
-                            )
-                        )
-
-                        return@googleResult
-                    }
-
-                    baseActivity?.showLoading(true)
-
-                    firebaseAuthWithGoogle(
-                        token
-                    )
-
-                } else {
-
-                    baseActivity?.showLoading(false)
-
+                if (token.isNullOrBlank()) {
                     DialogManager.showInfoDialog(
                         requireContext(),
-                        DialogType.WARNING,
+                        DialogType.ERROR,
                         title = getString(
                             R.string.login_google_failed
                         ),
@@ -109,17 +71,24 @@ class LoginFragment : Fragment() {
                             R.string.login_google_account_not_selected
                         )
                     )
+
+                    return@googleResult
                 }
 
-            } catch (e: Exception) {
-
-                Log.e(
+                Log.d(
                     "LoginFragment",
-                    "Google Sign-In failed ❌",
-                    e
+                    "Google Sign-In account: ${account.email}"
                 )
 
-                baseActivity?.showLoading(false)
+                viewModel.signInWithGoogleToken(
+                    idToken = token
+                )
+            } catch (e: Exception) {
+                Log.e(
+                    "LoginFragment",
+                    "Google Sign-In failed",
+                    e
+                )
 
                 DialogManager.showInfoDialog(
                     requireContext(),
@@ -135,16 +104,11 @@ class LoginFragment : Fragment() {
             }
         }
 
-    // ---------------------------------------------------
-    // ON CREATE VIEW
-    // ---------------------------------------------------
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         _binding =
             FragmentLoginBinding.inflate(
                 inflater,
@@ -152,16 +116,19 @@ class LoginFragment : Fragment() {
                 false
             )
 
-        setupGoogleSignIn()
-
-        setupButtonActions()
-
         return binding.root
     }
 
-    // ---------------------------------------------------
-    // GOOGLE CONFIG
-    // ---------------------------------------------------
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
+        setupGoogleSignIn()
+        setupButtonActions()
+        observeState()
+    }
 
     private fun setupGoogleSignIn() {
         googleSignInClient =
@@ -170,39 +137,39 @@ class LoginFragment : Fragment() {
             )
     }
 
-    // ---------------------------------------------------
-    // BUTTON ACTIONS
-    // ---------------------------------------------------
-
     private fun setupButtonActions() =
         with(binding) {
 
             btnGoogleLogin.setOnClickListener {
-
                 signInWithGoogle()
             }
 
             btnSignIn.setOnClickListener {
-
                 findNavController().navigate(
                     LoginFragmentDirections.actionLoginFragmentToSignInFragment()
                 )
             }
 
             btnRegister.setOnClickListener {
-
                 findNavController().navigate(
                     LoginFragmentDirections.actionLoginFragmentToRegisterFragment()
                 )
             }
         }
 
-    // ---------------------------------------------------
-    // START GOOGLE LOGIN
-    // ---------------------------------------------------
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.state.collect { state ->
+                    renderState(state)
+                }
+            }
+        }
+    }
 
     private fun signInWithGoogle() {
-
         val signInIntent =
             googleSignInClient.signInIntent
 
@@ -217,97 +184,50 @@ class LoginFragment : Fragment() {
             )
     }
 
-    // ---------------------------------------------------
-    // FIREBASE AUTH
-    // ---------------------------------------------------
-
-    private fun firebaseAuthWithGoogle(
-        idToken: String
+    private fun renderState(
+        state: AuthActionState
     ) {
+        val isLoading = state is AuthActionState.Loading
 
-        val credential =
-            GoogleAuthProvider.getCredential(
-                idToken,
-                null
-            )
+        baseActivity?.showLoading(isLoading)
+        binding.btnGoogleLogin.isEnabled = !isLoading
+        binding.btnSignIn.isEnabled = !isLoading
+        binding.btnRegister.isEnabled = !isLoading
 
-        auth.signInWithCredential(
-            credential
-        )
-            .addOnCompleteListener(
-                requireActivity()
-            ) { task ->
-
-                baseActivity?.showLoading(false)
-
-                if (task.isSuccessful) {
-
-                    val user =
-                        auth.currentUser
-
-                    if (user != null) {
-
-                        viewLifecycleOwner
-                            .lifecycleScope
-                            .launch {
-
-                                authSessionManager.completeLogin(
-                                    user = user
-                                )
-
-                                // ✅ Direkt uygulamaya geç
-                                navigateToAppGraph()
-                            }
-
-                    } else {
-
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.WARNING,
-                            title = getString(
-                                R.string.login_firebase_failed
-                            ),
-                            message = getString(
-                                R.string.login_user_info_unavailable
-                            )
-                        )
-                    }
-
-                } else {
-
-                    Log.e(
-                        "LoginFragment",
-                        "❌ Firebase auth failed",
-                        task.exception
-                    )
-
-                    DialogManager.showInfoDialog(
-                        requireContext(),
-                        DialogType.ERROR,
-                        title = getString(
-                            R.string.login_firebase_failed
-                        ),
-                        message = getString(
-                            R.string.login_auth_failed_with_reason,
-                            task.exception?.localizedMessage ?: ""
-                        )
-                    )
-                }
+        when (state) {
+            AuthActionState.Authenticated -> {
+                navigateToAppGraph()
             }
+
+            is AuthActionState.Message -> {
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    state.kind.toDialogType(),
+                    title = state.title.resolve(requireContext()),
+                    message = state.message.resolve(requireContext())
+                )
+                viewModel.resetState()
+            }
+
+            else -> Unit
+        }
     }
 
-    // ---------------------------------------------------
-    // NAVIGATE APP
-    // ---------------------------------------------------
+    private fun AuthActionState.Kind.toDialogType(): DialogType {
+        return when (this) {
+            AuthActionState.Kind.WARNING -> DialogType.WARNING
+            AuthActionState.Kind.ERROR -> DialogType.ERROR
+            AuthActionState.Kind.SUCCESS -> DialogType.SUCCESS
+        }
+    }
 
     private fun navigateToAppGraph() {
-
         val rootNav =
             (
                 requireActivity()
                     .supportFragmentManager
                     .findFragmentById(R.id.nav_host)
-                        as NavHostFragment
+                    as NavHostFragment
                 ).navController
 
         val opts =
@@ -329,12 +249,7 @@ class LoginFragment : Fragment() {
         )
     }
 
-    // ---------------------------------------------------
-    // CLEANUP
-    // ---------------------------------------------------
-
     override fun onDestroyView() {
-
         super.onDestroyView()
 
         _binding = null

@@ -4,7 +4,10 @@ import android.os.Bundle
 import android.util.Patterns
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
@@ -12,12 +15,12 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
+import com.aqua.aqualight.ui.auth.state.AuthActionState
+import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
+import com.aqua.aqualight.ui.auth.viewmodel.ChangeEmailViewModel
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.google.firebase.auth.EmailAuthProvider
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import kotlinx.coroutines.launch
 
 class ChangeEmailFragment :
@@ -26,7 +29,9 @@ class ChangeEmailFragment :
     private var _binding: FragmentChangeEmailBinding? = null
     private val binding get() = _binding!!
 
-    private val auth get() = FirebaseAuth.getInstance()
+    private val viewModel: ChangeEmailViewModel by viewModels {
+        AuthViewModelFactory(requireContext())
+    }
 
     private val logoutManager by lazy {
         LogoutManager.create(requireContext())
@@ -49,6 +54,7 @@ class ChangeEmailFragment :
 
         setupHeader()
         setupScreen()
+        observeState()
     }
 
     private fun setupHeader() {
@@ -58,10 +64,7 @@ class ChangeEmailFragment :
     }
 
     private fun setupScreen() {
-        val user =
-            auth.currentUser
-
-        if (user == null) {
+        if (viewModel.currentEmail().isBlank()) {
             DialogManager.showInfoDialog(
                 requireContext(),
                 DialogType.ERROR,
@@ -80,15 +83,14 @@ class ChangeEmailFragment :
             return
         }
 
-        val isGoogleUser =
-            user.providerData.any {
-                it.providerId == "google.com"
-            }
-
-        if (isGoogleUser) {
+        if (viewModel.isGoogleUser()) {
             showGoogleOnlyInfo()
             return
         }
+
+        binding.etCurrentEmail.setText(
+            viewModel.currentEmail()
+        )
 
         binding.btnSaveEmail.setOnClickListener {
             attemptEmailChange()
@@ -96,11 +98,8 @@ class ChangeEmailFragment :
     }
 
     private fun showGoogleOnlyInfo() {
-        val user =
-            auth.currentUser ?: return
-
         binding.etCurrentEmail.setText(
-            user.email ?: ""
+            viewModel.currentEmail()
         )
 
         binding.inputLayoutCurrentEmail.isEnabled =
@@ -136,24 +135,6 @@ class ChangeEmailFragment :
             binding.etPassword.text
                 .toString()
                 .trim()
-
-        val user =
-            auth.currentUser
-
-        if (user == null) {
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.ERROR,
-                title = getString(
-                    R.string.change_email_user_not_found_title
-                ),
-                message = getString(
-                    R.string.change_email_user_not_found_message
-                )
-            )
-
-            return
-        }
 
         clearErrors()
 
@@ -211,19 +192,10 @@ class ChangeEmailFragment :
             return
         }
 
-        if (currentEmail != user.email) {
-            binding.inputLayoutCurrentEmail.error =
-                getString(
-                    R.string.change_email_old_incorrect
-                )
-
-            return
-        }
-
-        checkNewEmailAvailabilityAndContinue(
-            currentEmail,
-            password,
-            newEmail
+        viewModel.requestEmailChange(
+            currentEmail = currentEmail,
+            newEmail = newEmail,
+            password = password
         )
     }
 
@@ -241,140 +213,28 @@ class ChangeEmailFragment :
             null
     }
 
-
-    private fun checkNewEmailAvailabilityAndContinue(
-        oldEmail: String,
-        password: String,
-        newEmail: String
-    ) {
-        baseActivity?.showLoading(
-            true
-        )
-
-        binding.btnSaveEmail.isEnabled =
-            false
-
-        auth.fetchSignInMethodsForEmail(
-            newEmail
-        )
-            .addOnSuccessListener { result ->
-                val existingMethods =
-                    result.signInMethods.orEmpty()
-
-                if (existingMethods.isNotEmpty()) {
-                    baseActivity?.showLoading(
-                        false
-                    )
-
-                    binding.btnSaveEmail.isEnabled =
-                        true
-
-                    binding.inputLayoutNewEmail.error =
-                        getString(
-                            R.string.change_email_error_email_already_in_use
-                        )
-
-                    DialogManager.showInfoDialog(
-                        requireContext(),
-                        DialogType.ERROR,
-                        title = getString(
-                            R.string.change_email_update_failed_title
-                        ),
-                        message = getString(
-                            R.string.change_email_error_email_already_in_use_message
-                        )
-                    )
-
-                    return@addOnSuccessListener
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.state.collect { state ->
+                    renderState(state)
                 }
-
-                baseActivity?.showLoading(
-                    false
-                )
-
-                reauthenticateAndVerifyBeforeUpdate(
-                    oldEmail,
-                    password,
-                    newEmail
-                )
             }
-            .addOnFailureListener {
-                // Best-effort pre-check. If Firebase cannot reveal sign-in methods
-                // because of project security settings, continue and let
-                // verifyBeforeUpdateEmail return the authoritative result.
-                baseActivity?.showLoading(
-                    false
-                )
-
-                reauthenticateAndVerifyBeforeUpdate(
-                    oldEmail,
-                    password,
-                    newEmail
-                )
-            }
+        }
     }
 
-    private fun reauthenticateAndVerifyBeforeUpdate(
-        oldEmail: String,
-        password: String,
-        newEmail: String
+    private fun renderState(
+        state: AuthActionState
     ) {
-        val user =
-            auth.currentUser ?: return
+        val isLoading = state is AuthActionState.Loading
 
-        baseActivity?.showLoading(
-            true
-        )
+        baseActivity?.showLoading(isLoading)
+        binding.btnSaveEmail.isEnabled = !isLoading
 
-        binding.btnSaveEmail.isEnabled =
-            false
-
-        val credential =
-            EmailAuthProvider.getCredential(
-                oldEmail,
-                password
-            )
-
-        user.reauthenticate(
-            credential
-        )
-            .addOnSuccessListener {
-                verifyBeforeUpdateEmail(
-                    newEmail
-                )
-            }
-            .addOnFailureListener {
-                baseActivity?.showLoading(
-                    false
-                )
-
-                binding.btnSaveEmail.isEnabled =
-                    true
-
-                binding.inputLayoutPassword.error =
-                    getString(
-                        R.string.change_email_error_incorrect_password
-                    )
-            }
-    }
-
-    private fun verifyBeforeUpdateEmail(
-        newEmail: String
-    ) {
-        val user =
-            auth.currentUser ?: return
-
-        user.verifyBeforeUpdateEmail(
-            newEmail
-        )
-            .addOnSuccessListener {
-                baseActivity?.showLoading(
-                    false
-                )
-
-                binding.btnSaveEmail.isEnabled =
-                    true
-
+        when (state) {
+            is AuthActionState.EmailVerificationSent -> {
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.SUCCESS,
@@ -383,53 +243,37 @@ class ChangeEmailFragment :
                     ),
                     message = getString(
                         R.string.change_email_verification_message,
-                        newEmail
+                        state.newEmail
                     ),
                     onDismiss = {
                         viewLifecycleOwner.lifecycleScope.launch {
                             logoutManager.cleanupAfterLocalSensitiveAction()
-
+                            viewModel.resetState()
                             navigateToLoginRoot()
                         }
                     }
                 )
             }
-            .addOnFailureListener { e ->
-                baseActivity?.showLoading(
-                    false
-                )
 
-                binding.btnSaveEmail.isEnabled =
-                    true
-
+            is AuthActionState.Message -> {
                 DialogManager.showInfoDialog(
                     requireContext(),
-                    DialogType.ERROR,
-                    title = getString(
-                        R.string.change_email_update_failed_title
-                    ),
-                    message = getChangeEmailFailureMessage(
-                        e
-                    )
+                    state.kind.toDialogType(),
+                    title = state.title.resolve(requireContext()),
+                    message = state.message.resolve(requireContext())
                 )
+                viewModel.resetState()
             }
+
+            else -> Unit
+        }
     }
 
-
-    private fun getChangeEmailFailureMessage(
-        error: Exception
-    ): String {
-        return when (error) {
-            is FirebaseAuthUserCollisionException ->
-                getString(
-                    R.string.change_email_error_email_already_in_use_message
-                )
-
-            else ->
-                error.localizedMessage
-                    ?: getString(
-                        R.string.change_email_update_failed
-                    )
+    private fun AuthActionState.Kind.toDialogType(): DialogType {
+        return when (this) {
+            AuthActionState.Kind.WARNING -> DialogType.WARNING
+            AuthActionState.Kind.ERROR -> DialogType.ERROR
+            AuthActionState.Kind.SUCCESS -> DialogType.SUCCESS
         }
     }
 

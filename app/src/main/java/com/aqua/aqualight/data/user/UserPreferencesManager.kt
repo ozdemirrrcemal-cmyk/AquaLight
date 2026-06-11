@@ -4,16 +4,17 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
+import java.io.IOException
+import java.time.LocalDate
+import java.time.temporal.WeekFields
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import java.io.IOException
-import java.time.LocalDate
-import java.time.temporal.WeekFields
-import java.util.Locale
 
 class UserPreferencesManager private constructor(
     private val dataStore: DataStore<UserPreferences>
@@ -197,6 +198,86 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    suspend fun restoreProfileForLogin(
+        ownerUid: String,
+        email: String,
+        fullName: String = "",
+        photoUrl: String = ""
+    ) {
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(
+            ownerUid
+        )
+
+        if (normalizedOwnerUid.isBlank()) {
+            return
+        }
+
+        dataStore.updateData { prefs ->
+            val existingCache = prefs.profileCacheFor(
+                ownerUid = normalizedOwnerUid
+            )
+            val legacyActiveProfile = if (
+                existingCache == null &&
+                UserDataScope.normalizeOwnerUid(prefs.uid) == normalizedOwnerUid &&
+                prefs.hasActiveProfileData()
+            ) {
+                prefs.toActiveProfileCache(
+                    ownerUid = normalizedOwnerUid
+                )
+            } else {
+                null
+            }
+            val source = existingCache ?: legacyActiveProfile
+            val restoredProfile = UserProfileCache.newBuilder()
+                .setOwnerUid(normalizedOwnerUid)
+                .setEmail(
+                    email.ifBlank {
+                        source?.email.orEmpty()
+                    }
+                )
+                .setUsername(
+                    source?.username.orEmpty()
+                )
+                .setFullName(
+                    source?.fullName?.ifBlank {
+                        fullName
+                    } ?: fullName
+                )
+                .setProfilePhotoUrl(
+                    source?.profilePhotoUrl?.ifBlank {
+                        photoUrl
+                    } ?: photoUrl
+                )
+                .setFirstName(
+                    source?.firstName.orEmpty()
+                )
+                .setLastName(
+                    source?.lastName.orEmpty()
+                )
+                .setCity(
+                    source?.city.orEmpty()
+                )
+                .setAddressLine(
+                    source?.addressLine.orEmpty()
+                )
+                .setPostCode(
+                    source?.postCode.orEmpty()
+                )
+                .setPhoneNumber(
+                    source?.phoneNumber.orEmpty()
+                )
+                .setCountry(
+                    source?.country.orEmpty()
+                )
+                .build()
+
+            prefs.toBuilder()
+                .applyActiveProfile(restoredProfile)
+                .replaceProfileCache(restoredProfile)
+                .build()
+        }
+    }
+
     suspend fun replaceProfile(
         email: String,
         username: String = "",
@@ -204,12 +285,25 @@ class UserPreferencesManager private constructor(
         photoUrl: String = ""
     ) {
         dataStore.updateData { prefs ->
-            prefs.toBuilder()
+            val builder = prefs.toBuilder()
                 .setEmail(email)
                 .setUsername(username)
                 .setFullName(fullName)
                 .setProfilePhotoUrl(photoUrl)
-                .build()
+
+            val ownerUid = UserDataScope.normalizeOwnerUid(
+                prefs.uid
+            )
+
+            if (ownerUid.isNotBlank()) {
+                builder.replaceProfileCache(
+                    builder.build().toActiveProfileCache(
+                        ownerUid = ownerUid
+                    )
+                )
+            }
+
+            builder.build()
         }
     }
 
@@ -238,6 +332,18 @@ class UserPreferencesManager private constructor(
                 builder.setProfilePhotoUrl(value)
             }
 
+            val ownerUid = UserDataScope.normalizeOwnerUid(
+                prefs.uid
+            )
+
+            if (ownerUid.isNotBlank()) {
+                builder.replaceProfileCache(
+                    builder.build().toActiveProfileCache(
+                        ownerUid = ownerUid
+                    )
+                )
+            }
+
             builder.build()
         }
     }
@@ -259,32 +365,41 @@ class UserPreferencesManager private constructor(
         )
     }
 
+    suspend fun updateUsername(
+        username: String
+    ) {
+        patchProfile(
+            username = username
+        )
+    }
+
     suspend fun updateProfilePhoto(
         photoUrl: String
     ) {
-        dataStore.updateData { prefs ->
-            prefs.toBuilder()
-                .setProfilePhotoUrl(photoUrl)
-                .build()
-        }
+        patchProfile(
+            photoUrl = photoUrl
+        )
     }
 
     suspend fun logout() {
         dataStore.updateData { prefs ->
-            prefs.toBuilder()
+            val ownerUid = UserDataScope.normalizeOwnerUid(
+                prefs.uid
+            )
+            val builder = prefs.toBuilder()
+
+            if (ownerUid.isNotBlank() && prefs.hasActiveProfileData()) {
+                builder.replaceProfileCache(
+                    prefs.toActiveProfileCache(
+                        ownerUid = ownerUid
+                    )
+                )
+            }
+
+            builder
                 .clearUid()
                 .setIsLoggedIn(false)
-                .clearEmail()
-                .clearUsername()
-                .clearFullName()
-                .clearProfilePhotoUrl()
-                .clearFirstName()
-                .clearLastName()
-                .clearCity()
-                .clearAddressLine()
-                .clearPostCode()
-                .clearPhoneNumber()
-                .clearCountry()
+                .clearActiveProfile()
                 .build()
         }
     }
@@ -431,7 +546,7 @@ class UserPreferencesManager private constructor(
             .joinToString(" ")
 
         dataStore.updateData { prefs ->
-            prefs.toBuilder()
+            val builder = prefs.toBuilder()
                 .setFirstName(firstName)
                 .setLastName(lastName)
                 .setCity(city)
@@ -440,7 +555,70 @@ class UserPreferencesManager private constructor(
                 .setPhoneNumber(phoneNumber)
                 .setCountry(country)
                 .setFullName(fullName)
-                .build()
+
+            val ownerUid = UserDataScope.normalizeOwnerUid(
+                prefs.uid
+            )
+
+            if (ownerUid.isNotBlank()) {
+                builder.replaceProfileCache(
+                    builder.build().toActiveProfileCache(
+                        ownerUid = ownerUid
+                    )
+                )
+            }
+
+            builder.build()
+        }
+    }
+
+    suspend fun profilePhotoUrlForOwner(
+        ownerUid: String
+    ): String {
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(
+            ownerUid
+        )
+
+        if (normalizedOwnerUid.isBlank()) {
+            return ""
+        }
+
+        val prefs = dataStore.data.first()
+
+        if (UserDataScope.normalizeOwnerUid(prefs.uid) == normalizedOwnerUid) {
+            return prefs.profilePhotoUrl
+        }
+
+        return prefs.profileCacheFor(
+            ownerUid = normalizedOwnerUid
+        )?.profilePhotoUrl.orEmpty()
+    }
+
+    suspend fun clearUserDataForOwner(
+        ownerUid: String
+    ) {
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(
+            ownerUid
+        )
+
+        if (normalizedOwnerUid.isBlank()) {
+            return
+        }
+
+        dataStore.updateData { prefs ->
+            val builder = prefs.toBuilder()
+                .removeProfileCache(
+                    ownerUid = normalizedOwnerUid
+                )
+
+            if (UserDataScope.normalizeOwnerUid(prefs.uid) == normalizedOwnerUid) {
+                builder
+                    .clearUid()
+                    .setIsLoggedIn(false)
+                    .clearActiveProfile()
+            }
+
+            builder.build()
         }
     }
 
@@ -448,5 +626,129 @@ class UserPreferencesManager private constructor(
         dataStore.updateData {
             UserPreferences.getDefaultInstance()
         }
+    }
+
+    private fun UserPreferences.profileCacheFor(
+        ownerUid: String
+    ): UserProfileCache? {
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(
+            ownerUid
+        )
+
+        if (normalizedOwnerUid.isBlank()) {
+            return null
+        }
+
+        return getProfileCachesList().firstOrNull { cache ->
+            UserDataScope.normalizeOwnerUid(
+                cache.ownerUid
+            ) == normalizedOwnerUid
+        }
+    }
+
+    private fun UserPreferences.hasActiveProfileData(): Boolean {
+        return listOf(
+            email,
+            username,
+            fullName,
+            profilePhotoUrl,
+            firstName,
+            lastName,
+            city,
+            addressLine,
+            postCode,
+            phoneNumber,
+            country
+        ).any { value ->
+            value.isNotBlank()
+        }
+    }
+
+    private fun UserPreferences.toActiveProfileCache(
+        ownerUid: String
+    ): UserProfileCache {
+        return UserProfileCache.newBuilder()
+            .setOwnerUid(ownerUid)
+            .setEmail(email)
+            .setUsername(username)
+            .setFullName(fullName)
+            .setProfilePhotoUrl(profilePhotoUrl)
+            .setFirstName(firstName)
+            .setLastName(lastName)
+            .setCity(city)
+            .setAddressLine(addressLine)
+            .setPostCode(postCode)
+            .setPhoneNumber(phoneNumber)
+            .setCountry(country)
+            .build()
+    }
+
+    private fun UserPreferences.Builder.applyActiveProfile(
+        profile: UserProfileCache
+    ): UserPreferences.Builder {
+        return setEmail(profile.email)
+            .setUsername(profile.username)
+            .setFullName(profile.fullName)
+            .setProfilePhotoUrl(profile.profilePhotoUrl)
+            .setFirstName(profile.firstName)
+            .setLastName(profile.lastName)
+            .setCity(profile.city)
+            .setAddressLine(profile.addressLine)
+            .setPostCode(profile.postCode)
+            .setPhoneNumber(profile.phoneNumber)
+            .setCountry(profile.country)
+    }
+
+    private fun UserPreferences.Builder.clearActiveProfile(): UserPreferences.Builder {
+        return clearEmail()
+            .clearUsername()
+            .clearFullName()
+            .clearProfilePhotoUrl()
+            .clearFirstName()
+            .clearLastName()
+            .clearCity()
+            .clearAddressLine()
+            .clearPostCode()
+            .clearPhoneNumber()
+            .clearCountry()
+    }
+
+    private fun UserPreferences.Builder.replaceProfileCache(
+        profile: UserProfileCache
+    ): UserPreferences.Builder {
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(
+            profile.ownerUid
+        )
+
+        if (normalizedOwnerUid.isBlank()) {
+            return this
+        }
+
+        return removeProfileCache(
+            ownerUid = normalizedOwnerUid
+        ).addProfileCaches(profile)
+    }
+
+    private fun UserPreferences.Builder.removeProfileCache(
+        ownerUid: String
+    ): UserPreferences.Builder {
+        val normalizedOwnerUid = UserDataScope.normalizeOwnerUid(
+            ownerUid
+        )
+
+        if (normalizedOwnerUid.isBlank()) {
+            return this
+        }
+
+        val retainedProfiles = getProfileCachesList().filterNot { cache ->
+            UserDataScope.normalizeOwnerUid(
+                cache.ownerUid
+            ) == normalizedOwnerUid
+        }
+
+        clearProfileCaches()
+        addAllProfileCaches(retainedProfiles)
+
+        return this
     }
 }

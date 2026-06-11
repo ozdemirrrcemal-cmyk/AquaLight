@@ -75,9 +75,7 @@ class LogoutFragment :
     private fun setupNavigationRows() {
         binding.rowChangePassword.setOnClickListener {
             findNavController().navigate(
-                LogoutFragmentDirections.actionLogoutFragmentToReAuthenticateFragment(
-                    argAction = ReAuthenticateFragment.ACTION_CHANGE_PASSWORD
-                )
+                LogoutFragmentDirections.actionLogoutFragmentToChangePasswordFragment()
             )
         }
 

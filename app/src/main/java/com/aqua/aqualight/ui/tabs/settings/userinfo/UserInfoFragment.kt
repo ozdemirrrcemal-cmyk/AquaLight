@@ -209,11 +209,9 @@ class UserInfoFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                userPrefs.update { prefs ->
-                    prefs.toBuilder()
-                        .setUsername(username)
-                        .build()
-                }
+                userPrefs.updateUsername(
+                    username
+                )
 
                 if (
                     !isAdded ||

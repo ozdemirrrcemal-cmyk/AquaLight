@@ -1,24 +1,25 @@
 package com.aqua.aqualight.ui.auth
 
 import android.os.Bundle
-import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.databinding.FragmentRegisterBinding
+import com.aqua.aqualight.ui.auth.state.AuthActionState
+import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
+import com.aqua.aqualight.ui.auth.viewmodel.RegisterViewModel
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 
 class RegisterFragment : Fragment() {
@@ -26,10 +27,8 @@ class RegisterFragment : Fragment() {
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
 
-    private val auth = Firebase.auth
-
-    private val authSessionManager by lazy {
-        AuthSessionManager.create(requireContext())
+    private val viewModel: RegisterViewModel by viewModels {
+        AuthViewModelFactory(requireContext())
     }
 
     private val baseActivity
@@ -47,16 +46,34 @@ class RegisterFragment : Fragment() {
                 false
             )
 
-        setupUI()
-
         return binding.root
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
+        setupUI()
+        observeState()
     }
 
     private fun setupUI() =
         with(binding) {
 
             btnRegister.setOnClickListener {
-                handleRegister()
+                viewModel.register(
+                    email = emailEditText.text
+                        ?.toString()
+                        .orEmpty(),
+                    password = passwordEditText.text
+                        ?.toString()
+                        .orEmpty(),
+                    repeatPassword = etPasswordRepeat.text
+                        ?.toString()
+                        .orEmpty()
+                )
             }
 
             btnReturnToSignIn.setOnClickListener {
@@ -64,158 +81,57 @@ class RegisterFragment : Fragment() {
             }
         }
 
-    private fun handleRegister() {
-        val email =
-            binding.emailEditText.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
-
-        val password =
-            binding.passwordEditText.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
-
-        val repeatPassword =
-            binding.etPasswordRepeat.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
-
-        baseActivity?.showLoading(true)
-
-        lifecycleScope.launch {
-
-            val warning = when {
-
-                email.isEmpty() ||
-                    password.isEmpty() ||
-                    repeatPassword.isEmpty() -> {
-                    R.string.register_empty_fields_message to
-                        R.string.register_empty_fields_title
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.state.collect { state ->
+                    renderState(state)
                 }
-
-                !Patterns.EMAIL_ADDRESS
-                    .matcher(email)
-                    .matches() -> {
-                    R.string.invalid_email to
-                        R.string.invalid_email_title
-                }
-
-                password.length < 6 -> {
-                    R.string.invalid_password to
-                        R.string.invalid_password_title
-                }
-
-                password != repeatPassword -> {
-                    R.string.passwords_do_not_match to
-                        R.string.passwords_do_not_match_title
-                }
-
-                else -> null
             }
-
-            if (warning != null) {
-                baseActivity?.showLoading(false)
-
-                DialogManager.showInfoDialog(
-                    requireContext(),
-                    DialogType.WARNING,
-                    title = getString(warning.second),
-                    message = getString(warning.first)
-                )
-
-                return@launch
-            }
-
-            binding.btnRegister.isEnabled = false
-
-            binding.btnRegister.text =
-                getString(R.string.register_loading)
-
-            auth.createUserWithEmailAndPassword(
-                email,
-                password
-            )
-                .addOnCompleteListener { task ->
-
-                    baseActivity?.showLoading(false)
-
-                    binding.btnRegister.isEnabled = true
-
-                    binding.btnRegister.text =
-                        getString(R.string.register_button)
-
-                    if (task.isSuccessful) {
-                        val user =
-                            task.result?.user
-
-                        if (user != null) {
-                            lifecycleScope.launch {
-                                try {
-                                    authSessionManager.completeLogin(
-                                        user = user
-                                    )
-
-                                    navigateToAppGraph()
-                                } catch (e: Exception) {
-                                    DialogManager.showInfoDialog(
-                                        requireContext(),
-                                        DialogType.ERROR,
-                                        title = getString(
-                                            R.string.session_save_error_title
-                                        ),
-                                        message =
-                                            e.localizedMessage
-                                                ?: getString(
-                                                    R.string.register_failed_message
-                                                )
-                                    )
-                                }
-                            }
-                        } else {
-                            DialogManager.showInfoDialog(
-                                requireContext(),
-                                DialogType.ERROR,
-                                title = getString(
-                                    R.string.register_failed_title
-                                ),
-                                message = getString(
-                                    R.string.login_user_info_unavailable
-                                )
-                            )
-                        }
-                    } else {
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.ERROR,
-                            title = getString(
-                                R.string.register_failed_title
-                            ),
-                            message = getRegisterFailureMessage(
-                                task.exception
-                            )
-                        )
-                    }
-                }
         }
     }
 
-    private fun getRegisterFailureMessage(
-        error: Exception?
-    ): String {
-        return when (error) {
-            is FirebaseAuthUserCollisionException ->
-                getString(
-                    R.string.register_failed_email_already_in_use_friendly
-                )
+    private fun renderState(
+        state: AuthActionState
+    ) {
+        val isLoading = state is AuthActionState.Loading
 
-            else ->
-                error?.localizedMessage
-                    ?: getString(
-                        R.string.register_failed_message
-                    )
+        baseActivity?.showLoading(isLoading)
+        binding.btnRegister.isEnabled = !isLoading
+        binding.btnRegister.text = getString(
+            if (isLoading) {
+                R.string.register_loading
+            } else {
+                R.string.register_button
+            }
+        )
+
+        when (state) {
+            AuthActionState.Authenticated -> {
+                navigateToAppGraph()
+            }
+
+            is AuthActionState.Message -> {
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    state.kind.toDialogType(),
+                    title = state.title.resolve(requireContext()),
+                    message = state.message.resolve(requireContext())
+                )
+                viewModel.resetState()
+            }
+
+            else -> Unit
+        }
+    }
+
+    private fun AuthActionState.Kind.toDialogType(): DialogType {
+        return when (this) {
+            AuthActionState.Kind.WARNING -> DialogType.WARNING
+            AuthActionState.Kind.ERROR -> DialogType.ERROR
+            AuthActionState.Kind.SUCCESS -> DialogType.SUCCESS
         }
     }
 

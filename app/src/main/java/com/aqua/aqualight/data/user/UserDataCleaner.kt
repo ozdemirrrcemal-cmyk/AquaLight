@@ -13,7 +13,6 @@ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceSnapshotCache
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
 import java.io.File
-import kotlinx.coroutines.flow.first
 
 /**
  * Clears local data that belongs to the active user account.
@@ -83,9 +82,12 @@ class UserDataCleaner private constructor(
             .mapNotNull { tank ->
                 tank.photoUri
             }
-        val profilePhotoUri = UserPreferencesManager.create(
+        val userPreferencesManager = UserPreferencesManager.create(
             appContext
-        ).userPrefsFlow.first().profilePhotoUrl
+        )
+        val profilePhotoUri = userPreferencesManager.profilePhotoUrlForOwner(
+            ownerUid = targetOwnerUid
+        )
 
         suspend fun runStep(
             step: Step,
@@ -190,9 +192,9 @@ class UserDataCleaner private constructor(
             runStep(
                 step = Step.USER_PREFERENCES
             ) {
-                UserPreferencesManager.create(
-                    appContext
-                ).clearAllUserData()
+                userPreferencesManager.clearUserDataForOwner(
+                    ownerUid = targetOwnerUid
+                )
             }
         }
 

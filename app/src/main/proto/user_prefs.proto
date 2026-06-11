@@ -3,6 +3,22 @@ syntax = "proto3";
 option java_package = "com.aqua.aqualight.data.user";
 option java_multiple_files = true;
 
+
+message UserProfileCache {
+  string ownerUid = 1;
+  string email = 2;
+  string username = 3;
+  string profilePhotoUrl = 4;
+  string fullName = 5;
+  string firstName = 6;
+  string lastName = 7;
+  string city = 8;
+  string addressLine = 9;
+  string postCode = 10;
+  string phoneNumber = 11;
+  string country = 12;
+}
+
 message UserPreferences {
   string uid = 1;
   string email = 2;
@@ -39,6 +55,9 @@ message UserPreferences {
   string lastEventDescription = 25;
   string lastUsageDayKey = 26;
   string lastUsageWeekKey = 27;
+
+  // Per-user profile/address cache. Active fields above are only the current session projection.
+  repeated UserProfileCache profileCaches = 101;
 
   // Devices were moved to devices_preferences.proto.
   reserved 100;

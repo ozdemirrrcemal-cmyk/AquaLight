@@ -4,14 +4,20 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentChangePasswordBinding
+import com.aqua.aqualight.ui.auth.state.AuthActionState
+import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
+import com.aqua.aqualight.ui.auth.viewmodel.ChangePasswordViewModel
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.google.firebase.auth.EmailAuthProvider
-import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 class ChangePasswordFragment :
     Fragment(R.layout.fragment_change_password) {
@@ -19,8 +25,8 @@ class ChangePasswordFragment :
     private var _binding: FragmentChangePasswordBinding? = null
     private val binding get() = _binding!!
 
-    private val auth: FirebaseAuth by lazy {
-        FirebaseAuth.getInstance()
+    private val viewModel: ChangePasswordViewModel by viewModels {
+        AuthViewModelFactory(requireContext())
     }
 
     private val baseActivity
@@ -39,15 +45,8 @@ class ChangePasswordFragment :
             FragmentChangePasswordBinding.bind(view)
 
         setupHeader()
-
-        if (!hasPasswordProvider()) {
-            showGoogleOnlyInfo()
-            return
-        }
-
-        binding.btnSavePassword.setOnClickListener {
-            changePassword()
-        }
+        setupScreen()
+        observeState()
     }
 
     private fun setupHeader() {
@@ -56,12 +55,14 @@ class ChangePasswordFragment :
         )
     }
 
-    private fun hasPasswordProvider(): Boolean {
-        val user =
-            auth.currentUser ?: return false
+    private fun setupScreen() {
+        if (!viewModel.hasPasswordProvider()) {
+            showGoogleOnlyInfo()
+            return
+        }
 
-        return user.providerData.any {
-            it.providerId == EmailAuthProvider.PROVIDER_ID
+        binding.btnSavePassword.setOnClickListener {
+            changePassword()
         }
     }
 
@@ -94,194 +95,125 @@ class ChangePasswordFragment :
     }
 
     private fun changePassword() {
-        if (!hasPasswordProvider()) {
-            showGoogleOnlyInfo()
-            return
-        }
-
         clearErrors()
 
         val currentPassword =
             binding.etCurrentPassword.text
                 ?.toString()
-                ?.trim()
                 .orEmpty()
 
         val newPassword =
             binding.etNewPassword.text
                 ?.toString()
-                ?.trim()
                 .orEmpty()
 
         val confirmPassword =
             binding.etConfirmPassword.text
                 ?.toString()
-                ?.trim()
                 .orEmpty()
 
-        var hasError =
-            false
+        var hasError = false
 
-        if (currentPassword.isEmpty()) {
+        if (currentPassword.trim().isEmpty()) {
             binding.inputLayoutCurrentPassword.error =
                 getString(
                     R.string.change_password_error_current_empty
                 )
 
-            hasError =
-                true
+            hasError = true
         }
 
-        if (newPassword.length < 6) {
+        if (newPassword.trim().length < 6) {
             binding.inputLayoutNewPassword.error =
                 getString(
                     R.string.change_password_error_new_short
                 )
 
-            hasError =
-                true
+            hasError = true
         }
 
-        if (newPassword != confirmPassword) {
+        if (newPassword.trim() != confirmPassword.trim()) {
             binding.inputLayoutConfirmPassword.error =
                 getString(
                     R.string.change_password_error_not_match
                 )
 
-            hasError =
-                true
+            hasError = true
         }
 
-        if (currentPassword == newPassword) {
+        if (
+            currentPassword.trim().isNotEmpty() &&
+            currentPassword.trim() == newPassword.trim()
+        ) {
             binding.inputLayoutNewPassword.error =
                 getString(
                     R.string.change_password_error_same_password
                 )
 
-            hasError =
-                true
+            hasError = true
         }
 
         if (hasError) return
 
-        val user =
-            auth.currentUser
-
-        if (user == null) {
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.ERROR,
-                title = getString(
-                    R.string.change_password_error_title
-                ),
-                message = getString(
-                    R.string.change_password_error_not_logged_in
-                )
-            )
-
-            return
-        }
-
-        val email =
-            user.email
-
-        if (email.isNullOrEmpty()) {
-            DialogManager.showInfoDialog(
-                requireContext(),
-                DialogType.ERROR,
-                title = getString(
-                    R.string.change_password_error_title
-                ),
-                message = getString(
-                    R.string.change_password_error_no_email
-                )
-            )
-
-            return
-        }
-
-        baseActivity?.showLoading(
-            true
+        viewModel.changePassword(
+            currentPassword = currentPassword,
+            newPassword = newPassword,
+            confirmPassword = confirmPassword
         )
+    }
 
-        setLoading(
-            true
-        )
-
-        val credential =
-            EmailAuthProvider.getCredential(
-                email,
-                currentPassword
-            )
-
-        user.reauthenticate(
-            credential
-        )
-            .addOnCompleteListener { reauthTask ->
-
-                if (!reauthTask.isSuccessful) {
-                    baseActivity?.showLoading(
-                        false
-                    )
-
-                    setLoading(
-                        false
-                    )
-
-                    binding.inputLayoutCurrentPassword.error =
-                        getString(
-                            R.string.change_password_error_current_wrong
-                        )
-
-                    return@addOnCompleteListener
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                viewModel.state.collect { state ->
+                    renderState(state)
                 }
-
-                user.updatePassword(
-                    newPassword
-                )
-                    .addOnCompleteListener { updateTask ->
-
-                        baseActivity?.showLoading(
-                            false
-                        )
-
-                        setLoading(
-                            false
-                        )
-
-                        if (updateTask.isSuccessful) {
-                            baseActivity?.showSnackBar(
-                                getString(
-                                    R.string.change_password_success
-                                )
-                            )
-
-                            binding.etCurrentPassword.text
-                                ?.clear()
-
-                            binding.etNewPassword.text
-                                ?.clear()
-
-                            binding.etConfirmPassword.text
-                                ?.clear()
-
-                        } else {
-                            DialogManager.showInfoDialog(
-                                requireContext(),
-                                DialogType.ERROR,
-                                title = getString(
-                                    R.string.change_password_error_title
-                                ),
-                                message =
-                                    updateTask.exception
-                                        ?.localizedMessage
-                                        ?: getString(
-                                            R.string.change_password_error_generic
-                                        )
-                            )
-                        }
-                    }
             }
+        }
+    }
+
+    private fun renderState(
+        state: AuthActionState
+    ) {
+        val isLoading = state is AuthActionState.Loading
+
+        baseActivity?.showLoading(isLoading)
+        setLoading(isLoading)
+
+        when (state) {
+            AuthActionState.PasswordChanged -> {
+                baseActivity?.showSnackBar(
+                    getString(
+                        R.string.change_password_success
+                    )
+                )
+
+                binding.etCurrentPassword.text
+                    ?.clear()
+
+                binding.etNewPassword.text
+                    ?.clear()
+
+                binding.etConfirmPassword.text
+                    ?.clear()
+
+                viewModel.resetState()
+            }
+
+            is AuthActionState.Message -> {
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    state.kind.toDialogType(),
+                    title = state.title.resolve(requireContext()),
+                    message = state.message.resolve(requireContext())
+                )
+                viewModel.resetState()
+            }
+
+            else -> Unit
+        }
     }
 
     private fun clearErrors() {
@@ -315,6 +247,14 @@ class ChangePasswordFragment :
 
         binding.btnSavePassword.alpha =
             if (isLoading) 0.6f else 1f
+    }
+
+    private fun AuthActionState.Kind.toDialogType(): DialogType {
+        return when (this) {
+            AuthActionState.Kind.WARNING -> DialogType.WARNING
+            AuthActionState.Kind.ERROR -> DialogType.ERROR
+            AuthActionState.Kind.SUCCESS -> DialogType.SUCCESS
+        }
     }
 
     override fun onDestroyView() {

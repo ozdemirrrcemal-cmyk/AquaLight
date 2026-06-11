@@ -37,6 +37,11 @@
     <string name="signin_failed_title">Sign-in Failed</string>
     <string name="signin_failed_default">An unexpected error occurred during sign-in.</string>
     <string name="signin_failed_invalid_credentials_friendly">Email or password is incorrect. If you recently requested an email change, first confirm the verification link sent to your new email. Until that link is confirmed, sign in with your current email.</string>
+    <string name="auth_error_invalid_credentials">The credentials could not be verified. Please check your information and try again.</string>
+    <string name="auth_error_email_already_in_use">This email address is already registered.</string>
+    <string name="auth_error_network">Could not connect to the authentication service. Check your internet connection and try again.</string>
+    <string name="auth_error_too_many_requests">Too many attempts were made. Please wait a moment and try again.</string>
+    <string name="auth_error_google_sign_in">Google authentication could not be completed. Please try again.</string>
 
     <!-- 📥 Sign-In Screen: Labels & Buttons -->
     <string name="signin_email_hint">Email address</string>

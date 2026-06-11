@@ -71,6 +71,7 @@ class AuthSessionManager private constructor(
         }
 
         syncLocalSession(user)
+        restoreCachedProfile(user)
         ownershipMigrator.migrateLegacyRecordsToOwner(
             ownerUid = user.uid
         )
@@ -84,10 +85,10 @@ class AuthSessionManager private constructor(
         user: FirebaseUser
     ): Session {
         syncLocalSession(user)
+        restoreCachedProfile(user)
         ownershipMigrator.migrateLegacyRecordsToOwner(
             ownerUid = user.uid
         )
-        replaceCachedProfile(user)
         return user.toSession()
     }
 
@@ -104,12 +105,12 @@ class AuthSessionManager private constructor(
         )
     }
 
-    private suspend fun replaceCachedProfile(
+    private suspend fun restoreCachedProfile(
         user: FirebaseUser
     ) {
-        userPrefs.replaceProfile(
+        userPrefs.restoreProfileForLogin(
+            ownerUid = user.uid,
             email = user.email.orEmpty(),
-            username = "",
             fullName = user.displayName.orEmpty(),
             photoUrl = user.photoUrl?.toString().orEmpty()
         )

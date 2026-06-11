@@ -1,24 +1,25 @@
 package com.aqua.aqualight.ui.auth
 
 import android.os.Bundle
-import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.databinding.FragmentSigninBinding
+import com.aqua.aqualight.ui.auth.state.AuthActionState
+import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
+import com.aqua.aqualight.ui.auth.viewmodel.SignInViewModel
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 
 class SignInFragment : Fragment() {
@@ -26,12 +27,8 @@ class SignInFragment : Fragment() {
     private var _binding: FragmentSigninBinding? = null
     private val binding get() = _binding!!
 
-    private val auth = Firebase.auth
-
-    private val authSessionManager by lazy {
-        AuthSessionManager.create(
-            requireContext()
-        )
+    private val viewModel: SignInViewModel by viewModels {
+        AuthViewModelFactory(requireContext())
     }
 
     private val baseActivity
@@ -49,16 +46,31 @@ class SignInFragment : Fragment() {
                 false
             )
 
-        setupUI()
-
         return binding.root
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
+        setupUI()
+        observeState()
     }
 
     private fun setupUI() =
         with(binding) {
 
             btnLogin.setOnClickListener {
-                handleSignIn()
+                viewModel.signIn(
+                    email = emailEditText.text
+                        ?.toString()
+                        .orEmpty(),
+                    password = passwordEditText.text
+                        ?.toString()
+                        .orEmpty()
+                )
             }
 
             tvForgotPassword.setOnClickListener {
@@ -72,161 +84,58 @@ class SignInFragment : Fragment() {
             }
         }
 
-    private fun handleSignIn() {
-        val email =
-            binding.emailEditText.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
-
-        val password =
-            binding.passwordEditText.text
-                ?.toString()
-                ?.trim()
-                .orEmpty()
-
-        baseActivity?.showLoading(true)
-
-        lifecycleScope.launch {
-
-            if (
-                email.isEmpty() ||
-                password.isEmpty()
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
             ) {
-                baseActivity?.showLoading(false)
-
-                showWarning(
-                    R.string.signin_empty_fields_title,
-                    R.string.signin_empty_fields_message
-                )
-
-                return@launch
-            }
-
-            if (
-                !Patterns.EMAIL_ADDRESS
-                    .matcher(email)
-                    .matches()
-            ) {
-                baseActivity?.showLoading(false)
-
-                showWarning(
-                    R.string.invalid_email_title,
-                    R.string.invalid_email
-                )
-
-                return@launch
-            }
-
-            binding.btnLogin.isEnabled =
-                false
-
-            binding.btnLogin.text =
-                getString(
-                    R.string.signin_loading
-                )
-
-            auth.signInWithEmailAndPassword(
-                email,
-                password
-            )
-                .addOnCompleteListener { task ->
-
-                    baseActivity?.showLoading(false)
-
-                    binding.btnLogin.isEnabled =
-                        true
-
-                    binding.btnLogin.text =
-                        getString(
-                            R.string.signin_login_button
-                        )
-
-                    if (task.isSuccessful) {
-                        val user =
-                            task.result?.user
-
-                        if (user != null) {
-                            viewLifecycleOwner
-                                .lifecycleScope
-                                .launch {
-
-                                    try {
-                                        authSessionManager.completeLogin(
-                                            user = user
-                                        )
-
-                                        navigateToAppGraph()
-                                    } catch (e: Exception) {
-                                        DialogManager.showInfoDialog(
-                                            requireContext(),
-                                            DialogType.ERROR,
-                                            title = getString(
-                                                R.string.session_save_error_title
-                                            ),
-                                            message =
-                                                e.localizedMessage
-                                                    ?: getString(
-                                                        R.string.session_save_error_fallback
-                                                    )
-                                        )
-                                    }
-                                }
-                        } else {
-                            DialogManager.showInfoDialog(
-                                requireContext(),
-                                DialogType.ERROR,
-                                title = getString(
-                                    R.string.signin_failed_title
-                                ),
-                                message = getString(
-                                    R.string.login_user_info_unavailable
-                                )
-                            )
-                        }
-                    } else {
-                        DialogManager.showInfoDialog(
-                            requireContext(),
-                            DialogType.ERROR,
-                            title = getString(
-                                R.string.signin_failed_title
-                            ),
-                            message = getSignInFailureMessage(
-                                task.exception
-                            )
-                        )
-                    }
+                viewModel.state.collect { state ->
+                    renderState(state)
                 }
+            }
         }
     }
 
-    private fun getSignInFailureMessage(
-        error: Exception?
-    ): String {
-        return when (error) {
-            is FirebaseAuthInvalidCredentialsException ->
-                getString(
-                    R.string.signin_failed_invalid_credentials_friendly
-                )
-
-            else ->
-                error?.localizedMessage
-                    ?: getString(
-                        R.string.signin_failed_default
-                    )
-        }
-    }
-
-    private fun showWarning(
-        titleRes: Int,
-        msgRes: Int
+    private fun renderState(
+        state: AuthActionState
     ) {
-        DialogManager.showInfoDialog(
-            requireContext(),
-            DialogType.WARNING,
-            title = getString(titleRes),
-            message = getString(msgRes)
+        val isLoading = state is AuthActionState.Loading
+
+        baseActivity?.showLoading(isLoading)
+        binding.btnLogin.isEnabled = !isLoading
+        binding.btnLogin.text = getString(
+            if (isLoading) {
+                R.string.signin_loading
+            } else {
+                R.string.signin_login_button
+            }
         )
+
+        when (state) {
+            AuthActionState.Authenticated -> {
+                navigateToAppGraph()
+            }
+
+            is AuthActionState.Message -> {
+                DialogManager.showInfoDialog(
+                    requireContext(),
+                    state.kind.toDialogType(),
+                    title = state.title.resolve(requireContext()),
+                    message = state.message.resolve(requireContext())
+                )
+                viewModel.resetState()
+            }
+
+            else -> Unit
+        }
+    }
+
+    private fun AuthActionState.Kind.toDialogType(): DialogType {
+        return when (this) {
+            AuthActionState.Kind.WARNING -> DialogType.WARNING
+            AuthActionState.Kind.ERROR -> DialogType.ERROR
+            AuthActionState.Kind.SUCCESS -> DialogType.SUCCESS
+        }
     }
 
     private fun navigateToAppGraph() {
