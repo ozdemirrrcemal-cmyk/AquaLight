@@ -2,7 +2,10 @@ package com.aqua.aqualight.data.devices.discovery
 
 import android.content.Context
 import android.os.SystemClock
+import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager.DeviceInfo
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -11,6 +14,7 @@ import kotlinx.coroutines.withContext
 object DeviceDiscoveryService {
 
     private val scanMutex = Mutex()
+    private val liveCheckRequested = AtomicBoolean(false)
 
     data class ScanResult(
         val devices: List<DiscoveredAquaDevice>,
@@ -37,8 +41,7 @@ object DeviceDiscoveryService {
                 )
             }
 
-            DeviceScanReason.MANUAL_SCAN,
-            DeviceScanReason.LIVE_CHECK -> {
+            DeviceScanReason.MANUAL_SCAN -> {
                 scanMutex.withLock {
                     executeScan(
                         context = appContext,
@@ -47,6 +50,67 @@ object DeviceDiscoveryService {
                     )
                 }
             }
+
+            DeviceScanReason.LIVE_CHECK -> {
+                scanForLiveCheck(
+                    context = appContext,
+                    timeoutMs = timeoutMs,
+                    reason = reason
+                )
+            }
+        }
+    }
+
+    suspend fun scanForDevice(
+        context: Context,
+        timeoutMs: Long,
+        savedDevice: DeviceInfo
+    ): ScanResult {
+        val appContext = context.applicationContext
+
+        liveCheckRequested.set(true)
+
+        return scanMutex.withLock {
+            liveCheckRequested.set(false)
+
+            val result = executeScan(
+                context = appContext,
+                timeoutMs = timeoutMs,
+                reason = DeviceScanReason.LIVE_CHECK,
+                stopWhen = { discoveredDevice ->
+                    DeviceIdentityMatcher.samePhysicalDevice(
+                        savedDevice = savedDevice,
+                        discoveredDevice = discoveredDevice
+                    )
+                }
+            )
+
+            result.copy(
+                devices = result.devices.filter { discoveredDevice ->
+                    DeviceIdentityMatcher.samePhysicalDevice(
+                        savedDevice = savedDevice,
+                        discoveredDevice = discoveredDevice
+                    )
+                }
+            )
+        }
+    }
+
+    private suspend fun scanForLiveCheck(
+        context: Context,
+        timeoutMs: Long,
+        reason: DeviceScanReason
+    ): ScanResult {
+        liveCheckRequested.set(true)
+
+        return scanMutex.withLock {
+            liveCheckRequested.set(false)
+
+            executeScan(
+                context = context,
+                timeoutMs = timeoutMs,
+                reason = reason
+            )
         }
     }
 
@@ -68,11 +132,26 @@ object DeviceDiscoveryService {
         }
 
         return try {
-            executeScan(
+            val result = executeScan(
                 context = context,
                 timeoutMs = timeoutMs,
-                reason = reason
+                reason = reason,
+                shouldStopEarly = {
+                    liveCheckRequested.get()
+                }
             )
+
+            if (liveCheckRequested.get()) {
+                ScanResult(
+                    devices = emptyList(),
+                    startedAtMillis = result.startedAtMillis,
+                    finishedAtMillis = SystemClock.elapsedRealtime(),
+                    reason = reason,
+                    skippedBecauseBusy = true
+                )
+            } else {
+                result
+            }
         } finally {
             scanMutex.unlock()
         }
@@ -81,14 +160,18 @@ object DeviceDiscoveryService {
     private suspend fun executeScan(
         context: Context,
         timeoutMs: Long,
-        reason: DeviceScanReason
+        reason: DeviceScanReason,
+        stopWhen: ((DiscoveredAquaDevice) -> Boolean)? = null,
+        shouldStopEarly: (() -> Boolean)? = null
     ): ScanResult = withContext(Dispatchers.IO) {
         val startedAt = SystemClock.elapsedRealtime()
 
         try {
             val devices = UdpDeviceDiscovery.discover(
                 context = context,
-                timeoutMs = timeoutMs
+                timeoutMs = timeoutMs,
+                stopWhen = stopWhen,
+                shouldStopEarly = shouldStopEarly
             )
                 .filter { device ->
                     isValidDevice(device) && device.isSupported

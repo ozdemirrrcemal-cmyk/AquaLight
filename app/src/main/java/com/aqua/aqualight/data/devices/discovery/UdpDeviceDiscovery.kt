@@ -39,7 +39,9 @@ object UdpDeviceDiscovery {
 
     suspend fun discover(
         context: Context,
-        timeoutMs: Long = 3_000L
+        timeoutMs: Long = 3_000L,
+        stopWhen: ((DiscoveredAquaDevice) -> Boolean)? = null,
+        shouldStopEarly: (() -> Boolean)? = null
     ): List<DiscoveredAquaDevice> = withContext(Dispatchers.IO) {
         val appContext = context.applicationContext
         val resultMap = linkedMapOf<Long, DiscoveredAquaDevice>()
@@ -71,7 +73,8 @@ object UdpDeviceDiscovery {
 
             while (
                 coroutineContext.isActive &&
-                SystemClock.elapsedRealtime() - startTime < timeoutMs
+                SystemClock.elapsedRealtime() - startTime < timeoutMs &&
+                shouldStopEarly?.invoke() != true
             ) {
                 coroutineContext.ensureActive()
 
@@ -103,6 +106,10 @@ object UdpDeviceDiscovery {
                     ) ?: continue
 
                     resultMap[discoveredDevice.id] = discoveredDevice
+
+                    if (stopWhen?.invoke(discoveredDevice) == true) {
+                        break
+                    }
                 } catch (_: SocketTimeoutException) {
                     // Normal.
                 } catch (exception: Exception) {

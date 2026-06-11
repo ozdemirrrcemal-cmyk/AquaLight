@@ -38,7 +38,7 @@ object DevicePresenceMonitor {
     )
 
     val statuses: StateFlow<Map<Long, DeviceStatusState>> =
-        _statuses.asStateFlow()
+    _statuses.asStateFlow()
 
     private val missedChecks = mutableMapOf<Long, Int>()
 
@@ -87,10 +87,11 @@ object DevicePresenceMonitor {
         )
 
         val savedDevice = devicesStore.devicesFlow
-            .first()
-            .firstOrNull { device ->
-                device.id == deviceId
-            } ?: return null
+        .first()
+        .firstOrNull {
+            device ->
+            device.id == deviceId
+        } ?: return null
 
         val now = System.currentTimeMillis()
 
@@ -111,10 +112,10 @@ object DevicePresenceMonitor {
             now = now
         )
 
-        val result = DeviceDiscoveryService.scan(
+        val result = DeviceDiscoveryService.scanForDevice(
             context = appContext,
             timeoutMs = LIVE_CHECK_TIMEOUT_MS,
-            reason = DeviceScanReason.LIVE_CHECK
+            savedDevice = savedDevice
         )
 
         val latestNow = System.currentTimeMillis()
@@ -279,14 +280,16 @@ object DevicePresenceMonitor {
     ) {
         val now = System.currentTimeMillis()
 
-        val matchedByDeviceId = savedDevices.associate { savedDevice ->
+        val matchedByDeviceId = savedDevices.associate {
+            savedDevice ->
             savedDevice.id to findMatchingDiscoveredDevice(
                 savedDevice = savedDevice,
                 discoveredDevices = discoveredDevices
             )
         }
 
-        val updates = matchedByDeviceId.mapNotNull { entry ->
+        val updates = matchedByDeviceId.mapNotNull {
+            entry ->
             val savedDeviceId = entry.key
             val discoveredDevice = entry.value ?: return@mapNotNull null
 
@@ -321,7 +324,8 @@ object DevicePresenceMonitor {
             )
         }
 
-        val states = savedDevices.associate { savedDevice ->
+        val states = savedDevices.associate {
+            savedDevice ->
             val matchedDevice = matchedByDeviceId[savedDevice.id]
 
             val missedCount = if (matchedDevice != null) {
@@ -362,7 +366,8 @@ object DevicePresenceMonitor {
 
         val currentStates = _statuses.value
 
-        val states = savedDevices.associate { savedDevice ->
+        val states = savedDevices.associate {
+            savedDevice ->
             val previousState = currentStates[savedDevice.id]
 
             savedDevice.id to (previousState?.copy(
@@ -416,9 +421,7 @@ object DevicePresenceMonitor {
 
             previousState != null -> {
                 previousState.lastSeenMillis
-            }
-
-            else -> {
+            } else -> {
                 device.lastSeenMillis
             }
         }
@@ -434,9 +437,7 @@ object DevicePresenceMonitor {
 
             missedCount < OFFLINE_AFTER_MISSED_CHECKS -> {
                 DeviceConnectionStatus.STALE
-            }
-
-            else -> {
+            } else -> {
                 DeviceConnectionStatus.OFFLINE
             }
         }
@@ -492,7 +493,8 @@ object DevicePresenceMonitor {
         savedDevice: DeviceInfo,
         discoveredDevices: List<DiscoveredAquaDevice>
     ): DiscoveredAquaDevice? {
-        return discoveredDevices.firstOrNull { discoveredDevice ->
+        return discoveredDevices.firstOrNull {
+            discoveredDevice ->
             DeviceIdentityMatcher.samePhysicalDevice(
                 savedDevice = savedDevice,
                 discoveredDevice = discoveredDevice
@@ -526,7 +528,8 @@ object DevicePresenceMonitor {
     private fun upsertStatus(
         state: DeviceStatusState
     ) {
-        _statuses.update { current ->
+        _statuses.update {
+            current ->
             current + (state.deviceId to state)
         }
     }
