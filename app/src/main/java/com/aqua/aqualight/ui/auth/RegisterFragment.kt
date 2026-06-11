@@ -12,12 +12,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.databinding.FragmentRegisterBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 
@@ -28,8 +27,8 @@ class RegisterFragment : Fragment() {
 
     private val auth = Firebase.auth
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
+    private val authSessionManager by lazy {
+        AuthSessionManager.create(requireContext())
     }
 
     private val baseActivity
@@ -154,7 +153,9 @@ class RegisterFragment : Fragment() {
                         if (user != null) {
                             lifecycleScope.launch {
                                 try {
-                                    saveSession(user)
+                                    authSessionManager.completeLogin(
+                                        user = user
+                                    )
 
                                     navigateToAppGraph()
                                 } catch (e: Exception) {
@@ -202,22 +203,6 @@ class RegisterFragment : Fragment() {
                     }
                 }
         }
-    }
-
-    private suspend fun saveSession(
-        user: FirebaseUser
-    ) {
-        userPrefs.saveUserSession(
-            idToken = user.uid,
-            isLoggedIn = true
-        )
-
-        userPrefs.saveProfile(
-            email = user.email ?: "",
-            username = null,
-            fullName = null,
-            photoUrl = user.photoUrl?.toString()
-        )
     }
 
     private fun navigateToAppGraph() {

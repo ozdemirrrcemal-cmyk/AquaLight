@@ -4,7 +4,7 @@ option java_package = "com.aqua.aqualight.data.user";
 option java_multiple_files = true;
 
 message UserPreferences {
-  string idToken = 1;
+  string uid = 1;
   string email = 2;
   string username = 3;
   string profilePhotoUrl = 4;

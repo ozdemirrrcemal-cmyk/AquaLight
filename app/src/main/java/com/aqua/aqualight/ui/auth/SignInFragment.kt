@@ -12,12 +12,11 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.databinding.FragmentSigninBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 
@@ -28,8 +27,8 @@ class SignInFragment : Fragment() {
 
     private val auth = Firebase.auth
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(
+    private val authSessionManager by lazy {
+        AuthSessionManager.create(
             requireContext()
         )
     }
@@ -152,7 +151,9 @@ class SignInFragment : Fragment() {
                                 .launch {
 
                                     try {
-                                        saveSession(user)
+                                        authSessionManager.completeLogin(
+                                            user = user
+                                        )
 
                                         navigateToAppGraph()
                                     } catch (e: Exception) {
@@ -212,22 +213,6 @@ class SignInFragment : Fragment() {
             DialogType.WARNING,
             title = getString(titleRes),
             message = getString(msgRes)
-        )
-    }
-
-    private suspend fun saveSession(
-        user: FirebaseUser
-    ) {
-        userPrefs.saveUserSession(
-            idToken = user.uid,
-            isLoggedIn = true
-        )
-
-        userPrefs.saveProfile(
-            email = user.email ?: "",
-            username = null,
-            fullName = null,
-            photoUrl = null
         )
     }
 

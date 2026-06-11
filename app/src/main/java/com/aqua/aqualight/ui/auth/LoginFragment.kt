@@ -13,7 +13,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.databinding.FragmentLoginBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -38,8 +38,8 @@ class LoginFragment : Fragment() {
     private val baseActivity
         get() = activity as? BaseActivity
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
+    private val authSessionManager by lazy {
+        AuthSessionManager.create(requireContext())
     }
 
     // ---------------------------------------------------
@@ -49,7 +49,7 @@ class LoginFragment : Fragment() {
     private val googleSignInLauncher =
         registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
-        ) { result ->
+        ) googleResult@{ result ->
 
             val task =
                 GoogleSignIn.getSignedInAccountFromIntent(
@@ -70,10 +70,29 @@ class LoginFragment : Fragment() {
                         "✅ Google Sign-In account: ${account.email}"
                     )
 
+                    val token = account.idToken
+
+                    if (token.isNullOrBlank()) {
+                        baseActivity?.showLoading(false)
+
+                        DialogManager.showInfoDialog(
+                            requireContext(),
+                            DialogType.ERROR,
+                            title = getString(
+                                R.string.login_google_failed
+                            ),
+                            message = getString(
+                                R.string.login_google_account_not_selected
+                            )
+                        )
+
+                        return@googleResult
+                    }
+
                     baseActivity?.showLoading(true)
 
                     firebaseAuthWithGoogle(
-                        account.idToken!!
+                        token
                     )
 
                 } else {
@@ -246,34 +265,8 @@ class LoginFragment : Fragment() {
                             .lifecycleScope
                             .launch {
 
-                                // 🔐 Session
-                                userPrefs.saveUserSession(
-                                    user.uid,
-                                    true
-                                )
-
-                                // 👤 Profile
-                                val email =
-                                    user.email ?: ""
-
-                                val displayName =
-                                    user.displayName ?: ""
-
-                                val photoUrl =
-                                    user.photoUrl?.toString()
-
-                                userPrefs.saveProfile(
-                                    email = email,
-                                    username = null,
-                                    fullName =
-                                        if (
-                                            displayName.isNotBlank()
-                                        ) {
-                                            displayName
-                                        } else {
-                                            null
-                                        },
-                                    photoUrl = photoUrl
+                                authSessionManager.completeLogin(
+                                    user = user
                                 )
 
                                 // ✅ Direkt uygulamaya geç

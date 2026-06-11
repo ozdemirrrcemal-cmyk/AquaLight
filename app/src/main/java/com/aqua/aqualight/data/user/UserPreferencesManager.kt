@@ -75,9 +75,15 @@ class UserPreferencesManager private constructor(
         prefs.isLoggedIn
     }
 
-    val idToken: Flow<String> = userPrefsFlow.map { prefs ->
-        prefs.idToken
+    val uid: Flow<String> = userPrefsFlow.map { prefs ->
+        prefs.uid
     }
+
+    @Deprecated(
+        message = "Use uid instead. This value was never a Firebase ID token.",
+        replaceWith = ReplaceWith("uid")
+    )
+    val idToken: Flow<String> = uid
 
     val email: Flow<String> = userPrefsFlow.map { prefs ->
         prefs.email
@@ -180,22 +186,38 @@ class UserPreferencesManager private constructor(
     }
 
     suspend fun saveUserSession(
-        idToken: String,
+        uid: String,
         isLoggedIn: Boolean
     ) {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
-                .setIdToken(idToken)
+                .setUid(uid)
                 .setIsLoggedIn(isLoggedIn)
                 .build()
         }
     }
 
-    suspend fun saveProfile(
-        email: String?,
-        username: String?,
-        fullName: String?,
-        photoUrl: String?
+    suspend fun replaceProfile(
+        email: String,
+        username: String = "",
+        fullName: String = "",
+        photoUrl: String = ""
+    ) {
+        dataStore.updateData { prefs ->
+            prefs.toBuilder()
+                .setEmail(email)
+                .setUsername(username)
+                .setFullName(fullName)
+                .setProfilePhotoUrl(photoUrl)
+                .build()
+        }
+    }
+
+    suspend fun patchProfile(
+        email: String? = null,
+        username: String? = null,
+        fullName: String? = null,
+        photoUrl: String? = null
     ) {
         dataStore.updateData { prefs ->
             val builder = prefs.toBuilder()
@@ -220,6 +242,23 @@ class UserPreferencesManager private constructor(
         }
     }
 
+    @Deprecated(
+        message = "Use replaceProfile for login/session replacement or patchProfile for profile edits."
+    )
+    suspend fun saveProfile(
+        email: String?,
+        username: String?,
+        fullName: String?,
+        photoUrl: String?
+    ) {
+        patchProfile(
+            email = email,
+            username = username,
+            fullName = fullName,
+            photoUrl = photoUrl
+        )
+    }
+
     suspend fun updateProfilePhoto(
         photoUrl: String
     ) {
@@ -233,7 +272,7 @@ class UserPreferencesManager private constructor(
     suspend fun logout() {
         dataStore.updateData { prefs ->
             prefs.toBuilder()
-                .clearIdToken()
+                .clearUid()
                 .setIsLoggedIn(false)
                 .build()
         }
