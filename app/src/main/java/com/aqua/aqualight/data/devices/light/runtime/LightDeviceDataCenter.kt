@@ -60,6 +60,11 @@ object LightDeviceDataCenter {
         )
     }
 
+    fun stopAll() {
+        LightDeviceLiveRefreshManager.stopAll()
+        LightManualRuntimeStore.clearAll()
+    }
+
     fun refreshNow(
         context: Context,
         deviceId: Long

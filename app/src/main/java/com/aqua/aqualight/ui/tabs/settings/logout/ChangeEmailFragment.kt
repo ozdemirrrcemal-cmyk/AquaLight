@@ -17,6 +17,7 @@ import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import kotlinx.coroutines.launch
 
 class ChangeEmailFragment :
@@ -219,7 +220,7 @@ class ChangeEmailFragment :
             return
         }
 
-        reauthenticateAndVerifyBeforeUpdate(
+        checkNewEmailAvailabilityAndContinue(
             currentEmail,
             password,
             newEmail
@@ -238,6 +239,79 @@ class ChangeEmailFragment :
 
         binding.inputLayoutCurrentEmail.helperText =
             null
+    }
+
+
+    private fun checkNewEmailAvailabilityAndContinue(
+        oldEmail: String,
+        password: String,
+        newEmail: String
+    ) {
+        baseActivity?.showLoading(
+            true
+        )
+
+        binding.btnSaveEmail.isEnabled =
+            false
+
+        auth.fetchSignInMethodsForEmail(
+            newEmail
+        )
+            .addOnSuccessListener { result ->
+                val existingMethods =
+                    result.signInMethods.orEmpty()
+
+                if (existingMethods.isNotEmpty()) {
+                    baseActivity?.showLoading(
+                        false
+                    )
+
+                    binding.btnSaveEmail.isEnabled =
+                        true
+
+                    binding.inputLayoutNewEmail.error =
+                        getString(
+                            R.string.change_email_error_email_already_in_use
+                        )
+
+                    DialogManager.showInfoDialog(
+                        requireContext(),
+                        DialogType.ERROR,
+                        title = getString(
+                            R.string.change_email_update_failed_title
+                        ),
+                        message = getString(
+                            R.string.change_email_error_email_already_in_use_message
+                        )
+                    )
+
+                    return@addOnSuccessListener
+                }
+
+                baseActivity?.showLoading(
+                    false
+                )
+
+                reauthenticateAndVerifyBeforeUpdate(
+                    oldEmail,
+                    password,
+                    newEmail
+                )
+            }
+            .addOnFailureListener {
+                // Best-effort pre-check. If Firebase cannot reveal sign-in methods
+                // because of project security settings, continue and let
+                // verifyBeforeUpdateEmail return the authoritative result.
+                baseActivity?.showLoading(
+                    false
+                )
+
+                reauthenticateAndVerifyBeforeUpdate(
+                    oldEmail,
+                    password,
+                    newEmail
+                )
+            }
     }
 
     private fun reauthenticateAndVerifyBeforeUpdate(
@@ -334,13 +408,29 @@ class ChangeEmailFragment :
                     title = getString(
                         R.string.change_email_update_failed_title
                     ),
-                    message =
-                        e.localizedMessage
-                            ?: getString(
-                                R.string.change_email_update_failed
-                            )
+                    message = getChangeEmailFailureMessage(
+                        e
+                    )
                 )
             }
+    }
+
+
+    private fun getChangeEmailFailureMessage(
+        error: Exception
+    ): String {
+        return when (error) {
+            is FirebaseAuthUserCollisionException ->
+                getString(
+                    R.string.change_email_error_email_already_in_use_message
+                )
+
+            else ->
+                error.localizedMessage
+                    ?: getString(
+                        R.string.change_email_update_failed
+                    )
+        }
     }
 
     private fun navigateToLoginRoot() {

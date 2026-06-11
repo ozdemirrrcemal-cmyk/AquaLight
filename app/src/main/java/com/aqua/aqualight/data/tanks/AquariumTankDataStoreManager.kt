@@ -114,6 +114,14 @@ class AquariumTankDataStoreManager(
     }
   }
 
+  suspend fun clearAllTanks() {
+    context.aquariumTanksDataStore.updateData { currentStore ->
+      currentStore.toBuilder()
+        .clearTanks()
+        .build()
+    }
+  }
+
   suspend fun updateTankPhoto(
     tankId: Long,
     photoUri: String?

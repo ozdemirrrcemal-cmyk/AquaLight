@@ -17,6 +17,7 @@ import com.aqua.aqualight.databinding.FragmentRegisterBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 
@@ -186,22 +187,35 @@ class RegisterFragment : Fragment() {
                             )
                         }
                     } else {
-                        val errorMsg =
-                            task.exception?.localizedMessage
-                                ?: getString(
-                                    R.string.register_failed_message
-                                )
-
                         DialogManager.showInfoDialog(
                             requireContext(),
                             DialogType.ERROR,
                             title = getString(
                                 R.string.register_failed_title
                             ),
-                            message = errorMsg
+                            message = getRegisterFailureMessage(
+                                task.exception
+                            )
                         )
                     }
                 }
+        }
+    }
+
+    private fun getRegisterFailureMessage(
+        error: Exception?
+    ): String {
+        return when (error) {
+            is FirebaseAuthUserCollisionException ->
+                getString(
+                    R.string.register_failed_email_already_in_use_friendly
+                )
+
+            else ->
+                error?.localizedMessage
+                    ?: getString(
+                        R.string.register_failed_message
+                    )
         }
     }
 

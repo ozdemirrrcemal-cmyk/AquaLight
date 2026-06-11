@@ -719,6 +719,34 @@ class CareTaskDataStoreManager private constructor(
     }
   }
 
+  suspend fun clearAllTasks(
+    cancelReminders: Boolean = true
+  ) {
+    val taskIds = if (cancelReminders) {
+      context.careTasksDataStore.data
+        .first()
+        .tasksList
+        .map { storedTask ->
+          storedTask.id
+        }
+    } else {
+      emptyList()
+    }
+
+    context.careTasksDataStore.updateData { currentStore ->
+      currentStore.toBuilder()
+        .clearTasks()
+        .build()
+    }
+
+    taskIds.forEach { taskId ->
+      CareTaskReminderScheduler.cancel(
+        context = context,
+        taskId = taskId
+      )
+    }
+  }
+
   suspend fun cancelPendingRemindersForTank(
     tankId: Long
   ) {

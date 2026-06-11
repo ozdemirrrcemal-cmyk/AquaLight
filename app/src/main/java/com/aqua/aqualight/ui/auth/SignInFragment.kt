@@ -17,6 +17,7 @@ import com.aqua.aqualight.databinding.FragmentSigninBinding
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 
@@ -184,23 +185,35 @@ class SignInFragment : Fragment() {
                             )
                         }
                     } else {
-                        val errorMsg =
-                            task.exception
-                                ?.localizedMessage
-                                ?: getString(
-                                    R.string.signin_failed_default
-                                )
-
                         DialogManager.showInfoDialog(
                             requireContext(),
                             DialogType.ERROR,
                             title = getString(
                                 R.string.signin_failed_title
                             ),
-                            message = errorMsg
+                            message = getSignInFailureMessage(
+                                task.exception
+                            )
                         )
                     }
                 }
+        }
+    }
+
+    private fun getSignInFailureMessage(
+        error: Exception?
+    ): String {
+        return when (error) {
+            is FirebaseAuthInvalidCredentialsException ->
+                getString(
+                    R.string.signin_failed_invalid_credentials_friendly
+                )
+
+            else ->
+                error?.localizedMessage
+                    ?: getString(
+                        R.string.signin_failed_default
+                    )
         }
     }
 

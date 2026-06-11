@@ -123,6 +123,23 @@ object LightDeviceLiveRefreshManager {
         }
     }
 
+    fun stopAll() {
+        synchronized(lock) {
+            refreshJobs.values.forEach { job ->
+                job.cancel()
+            }
+
+            refreshJobs.clear()
+            activeConsumers.clear()
+
+            states.forEach { (deviceId, state) ->
+                state.value = LightDeviceLiveState.initial(
+                    deviceId = deviceId
+                )
+            }
+        }
+    }
+
     fun refreshNow(
         context: Context,
         deviceId: Long

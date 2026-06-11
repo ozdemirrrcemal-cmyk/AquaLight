@@ -13,8 +13,7 @@ import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
-import com.aqua.aqualight.data.auth.SessionBoundServiceManager
-import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.data.auth.AccountDeletionManager
 import com.aqua.aqualight.databinding.FragmentReAuthenticateBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogManager
@@ -50,8 +49,8 @@ class ReAuthenticateFragment :
 
     private val auth get() = FirebaseAuth.getInstance()
 
-    private val userPrefs by lazy {
-        UserPreferencesManager.create(requireContext())
+    private val accountDeletionManager by lazy {
+        AccountDeletionManager.create(requireContext())
     }
 
     private val baseActivity get() = activity as? BaseActivity
@@ -366,82 +365,61 @@ class ReAuthenticateFragment :
     }
 
     private fun deleteAccount() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = accountDeletionManager.deleteCurrentAccount()
 
-        val user =
-            auth.currentUser ?: return
+            baseActivity?.showLoading(false)
+            setLoadingState(false)
 
-        user.delete()
-            .addOnSuccessListener {
+            val accountDeleteError = result.accountDeleteError
 
-                lifecycleScope.launch {
-
-                    SessionBoundServiceManager.stop(
-                        context = requireContext(),
-                        cancelNotifications = true
-                    )
-
-                    userPrefs.clearAllUserData()
-
-                    auth.signOut()
-
-                    googleSignInClient
-                        .revokeAccess()
-                        .addOnCompleteListener {
-
-                            baseActivity?.showLoading(false)
-
-                            setLoadingState(false)
-
-                            baseActivity?.showSnackBar(
-                                getString(
-                                    R.string.re_auth_delete_success_message
-                                )
-                            )
-
-                            binding.root.postDelayed({
-
-                                navigateToLogin()
-
-                            }, 500)
-                        }
-                }
-            }
-            .addOnFailureListener { exception ->
-
-                baseActivity?.showLoading(false)
-
-                setLoadingState(false)
-
-                val errorMessage = when {
-
-                    exception.localizedMessage
-                        ?.contains(
-                            "requires recent authentication",
-                            ignoreCase = true
-                        ) == true -> {
-
-                        getString(
-                            R.string.re_auth_session_expired
-                        )
-                    }
-
-                    else -> {
-
-                        getString(
-                            R.string.re_auth_delete_failed_message
-                        )
-                    }
-                }
-
+            if (accountDeleteError != null) {
                 DialogManager.showInfoDialog(
                     requireContext(),
                     DialogType.ERROR,
                     title = getString(
                         R.string.re_auth_delete_failed_title
                     ),
-                    message = errorMessage
+                    message = getAccountDeleteFailureMessage(
+                        accountDeleteError
+                    )
+                )
+
+                return@launch
+            }
+
+            baseActivity?.showSnackBar(
+                getString(
+                    R.string.re_auth_delete_success_message
+                )
+            )
+
+            binding.root.postDelayed({
+                navigateToLogin()
+            }, 500)
+        }
+    }
+
+    private fun getAccountDeleteFailureMessage(
+        error: Throwable
+    ): String {
+        return when {
+            error.localizedMessage
+                ?.contains(
+                    "requires recent authentication",
+                    ignoreCase = true
+                ) == true -> {
+                getString(
+                    R.string.re_auth_session_expired
                 )
             }
+
+            else -> {
+                getString(
+                    R.string.re_auth_delete_failed_message
+                )
+            }
+        }
     }
 
     private fun setLoadingState(

@@ -96,6 +96,12 @@ object LightDeviceSnapshotCache {
             ?.apply()
     }
 
+    fun clearAll() {
+        prefs?.edit()
+            ?.clear()
+            ?.apply()
+    }
+
     private fun parseState(
         deviceId: Long,
         root: JSONObject,

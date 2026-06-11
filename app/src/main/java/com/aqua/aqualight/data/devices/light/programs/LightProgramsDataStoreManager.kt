@@ -68,4 +68,12 @@ class LightProgramsDataStoreManager(
                 .build()
         }
     }
+
+    suspend fun clearAllPrograms() {
+        context.lightProgramsDataStore.updateData { preferences ->
+            preferences.toBuilder()
+                .clearPrograms()
+                .build()
+        }
+    }
 }

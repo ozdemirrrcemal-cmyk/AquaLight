@@ -36,6 +36,7 @@
     <string name="login_success_message">You have successfully signed in.</string>
     <string name="signin_failed_title">Sign-in Failed</string>
     <string name="signin_failed_default">An unexpected error occurred during sign-in.</string>
+    <string name="signin_failed_invalid_credentials_friendly">Email or password is incorrect. If you recently requested an email change, first confirm the verification link sent to your new email. Until that link is confirmed, sign in with your current email.</string>
 
     <!-- 📥 Sign-In Screen: Labels & Buttons -->
     <string name="signin_email_hint">Email address</string>
@@ -100,6 +101,7 @@
     <string name="register_success_message">Your account has been created successfully!</string>
     <string name="register_failed_title">Registration Failed</string>
     <string name="register_failed_message">An error occurred while creating your account. Please try again later.</string>
+    <string name="register_failed_email_already_in_use_friendly">This email address is already registered. Sign in instead, or use password reset if this is your email/password account. If you recently requested an email change, confirm the verification link instead of creating a new account.</string>
 
     <!-- 🟦 Login Main Screen -->
     <string name="login_google">Sign in with Google</string>
@@ -804,11 +806,13 @@ Delete Failed
     <string name="change_email_error_incorrect_password">Incorrect password.</string>
 
     <!-- Doğrulama maili gönderildi dialogu (YENİ) -->
-    <string name="change_email_verification_title">Verification sent</string>
+    <string name="change_email_verification_title">Check your new email</string>
     <string name="change_email_verification_message">
-    We have sent a verification link to %1$s.
-    Please confirm it from your inbox, then sign in again with your new email.
+    We have sent a verification link to %1$s. Your account email will not change until you open that link. Until verification is completed, sign in with your current email. Do not create a new account with the new email.
 </string>
+
+    <string name="change_email_error_email_already_in_use">This email is already registered.</string>
+    <string name="change_email_error_email_already_in_use_message">This email address already belongs to another account. Choose a different email, or sign in with the account that already uses this email.</string>
 
     <!-- Email update fail title (YENİ, mesajı zaten var: change_email_update_failed) -->
     <string name="change_email_update_failed_title">Email update failed</string>

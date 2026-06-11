@@ -48,6 +48,10 @@ object LightManualRuntimeStore {
         }
     }
 
+    fun clearAll() {
+        runtimeStates.value = emptyMap()
+    }
+
     fun applyManualScene(
         deviceId: Long,
         sceneName: String,

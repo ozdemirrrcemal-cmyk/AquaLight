@@ -61,4 +61,12 @@ class LightPresetDataStoreManager(
                 .build()
         }
     }
+
+    suspend fun clearAllPresets() {
+        context.lightPresetDataStore.updateData { preferences ->
+            preferences.toBuilder()
+                .clearPresets()
+                .build()
+        }
+    }
 }
