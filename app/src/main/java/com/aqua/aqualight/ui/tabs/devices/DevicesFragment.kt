@@ -14,15 +14,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
+import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -39,7 +39,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DevicesListAdapter
 
-    private var latestDevices: List<DevicesDataStoreManager.DeviceInfoUi> = emptyList()
+    private val deviceCardStateMapper =
+        DeviceCardStateMapper()
+
+    private var latestDevices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
     private var latestTanks: List<SavedAquariumTank> = emptyList()
     private var latestStatuses: Map<Long, DeviceStatusState> = emptyMap()
 
@@ -193,54 +196,25 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         binding.rvSelectedDevices.visibility =
             View.VISIBLE
 
-        val now =
-            System.currentTimeMillis()
-
         val uiList =
-            latestDevices.map { device ->
-                val presenceState =
-                    latestStatuses[device.id]
-
-                val online =
-                    presenceState?.isOnline ?: (
-                        device.lastSeenMillis > 0L &&
-                            now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
-                        )
-
-                val definition =
-                    AquaDeviceCatalog.findByType(
-                        type = device.deviceType
-                    )
-
-                val displayName =
-                    definition?.displayName
-                        ?: device.name.ifBlank {
-                            device.productModel.ifBlank {
-                                "Device"
-                            }
-                        }
-
-                val familyName =
-                    definition?.family?.displayName
-                        ?: device.productFamily.ifBlank {
-                            device.aquaName.ifBlank {
-                                "Unknown"
-                            }
-                        }
-
+            deviceCardStateMapper.mapAll(
+                devices = latestDevices,
+                statuses = latestStatuses,
+                tanks = latestTanks,
+                unassignedTankText = "",
+                unknownTankText = "Unknown aquarium"
+            ).map { cardState ->
                 DeviceCardUi(
-                    id = device.id,
-                    displayName = displayName,
-                    familyName = familyName,
-                    tankName = getTankNameForDevice(
-                        device = device
-                    ),
-                    ip = presenceState?.ip ?: device.ip,
-                    serial = device.serial,
-                    firmwareBuild = device.firmwareBuild,
-                    isOnline = online,
-                    lastSeenText = "",
-                    deviceType = device.deviceType
+                    id = cardState.deviceId,
+                    displayName = cardState.title,
+                    familyName = cardState.familyName,
+                    tankName = cardState.tankName,
+                    ip = cardState.ip,
+                    serial = cardState.serial,
+                    firmwareBuild = cardState.firmwareBuild,
+                    isOnline = cardState.isOnline,
+                    lastSeenText = cardState.lastSeenText,
+                    deviceType = cardState.deviceType
                 )
             }
 
@@ -249,97 +223,21 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         )
     }
 
-    private fun getTankNameForDevice(
-        device: DevicesDataStoreManager.DeviceInfoUi
-    ): String {
-        val connectedTankId =
-            device.tankId ?: return ""
-
-        return latestTanks.firstOrNull { tank ->
-            tank.id == connectedTankId
-        }?.name ?: "Unknown aquarium"
-    }
-
     private fun openAddDeviceScreen() {
         findNavController().navigate(
-            R.id.action_devicesFragment_to_deviceAddFragment
+            DevicesFragmentDirections.actionDevicesFragmentToDeviceAddFragment()
         )
     }
 
     private fun openDeviceMenu(
         device: DeviceCardUi
     ) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            showGlobalLoading(
-                show = true
+        findNavController().navigate(
+            DevicesFragmentDirections.actionDevicesFragmentToDeviceRouterFragment(
+                deviceId = device.id,
+                deviceIp = device.ip
             )
-
-            val status =
-                try {
-                    DevicePresenceMonitor.checkDeviceNow(
-                        context = requireContext(),
-                        deviceId = device.id,
-                        knownIp = device.ip
-                    )
-                } finally {
-                    showGlobalLoading(
-                        show = false
-                    )
-                }
-
-            if (status?.isOnline != true) {
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.WARNING,
-                    title = getString(
-                        R.string.device_offline_title
-                    ),
-                    message = getString(
-                        R.string.device_offline_message
-                    )
-                )
-
-                return@launch
-            }
-
-            val args =
-                Bundle().apply {
-                    putLong(
-                        "deviceId",
-                        device.id
-                    )
-
-                    putString(
-                        "deviceName",
-                        device.displayName
-                    )
-
-                    putString(
-                        "deviceAquaName",
-                        device.familyName
-                    )
-
-                    putString(
-                        "deviceIp",
-                        status.ip
-                    )
-
-                    putString(
-                        "deviceSerial",
-                        device.serial
-                    )
-
-                    putBoolean(
-                        "deviceOnline",
-                        true
-                    )
-                }
-
-            findNavController().navigate(
-                R.id.action_devicesFragment_to_deviceRouterFragment,
-                args
-            )
-        }
+        )
     }
 
     private fun enterSelectionMode() {
@@ -535,9 +433,5 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             null
 
         super.onDestroyView()
-    }
-
-    private companion object {
-        const val ONLINE_TIMEOUT_MS = 90_000L
     }
 }

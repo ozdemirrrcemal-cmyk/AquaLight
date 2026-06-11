@@ -6,23 +6,20 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentUnsupportedDeviceBinding
+import androidx.navigation.fragment.navArgs
 
 class UnsupportedDeviceFragment : Fragment(R.layout.fragment_unsupported_device) {
+
+    private val args: UnsupportedDeviceFragmentArgs by navArgs()
 
     private var _binding: FragmentUnsupportedDeviceBinding? = null
     private val binding get() = _binding!!
 
     private val deviceTitle: String
-        get() = requireArguments()
-            .getString(ARG_DEVICE_TITLE)
-            .orEmpty()
-            .ifBlank { DEFAULT_DEVICE_TITLE }
+        get() = args.deviceTitle.ifBlank { DEFAULT_DEVICE_TITLE }
 
     private val message: String
-        get() = requireArguments()
-            .getString(ARG_MESSAGE)
-            .orEmpty()
-            .ifBlank { DEFAULT_MESSAGE }
+        get() = args.message.ifBlank { DEFAULT_MESSAGE }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

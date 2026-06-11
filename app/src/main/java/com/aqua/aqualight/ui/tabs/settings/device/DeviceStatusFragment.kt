@@ -11,17 +11,16 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentDeviceStatusBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
 
 class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
 
@@ -33,7 +32,10 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
     private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DeviceStatusAdapter
 
-    private var latestDevices: List<DevicesDataStoreManager.DeviceInfoUi> = emptyList()
+    private val deviceCardStateMapper =
+        DeviceCardStateMapper()
+
+    private var latestDevices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
     private var latestTanks: List<SavedAquariumTank> = emptyList()
     private var latestStatuses: Map<Long, DeviceStatusState> = emptyMap()
 
@@ -133,110 +135,32 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
             return
         }
 
-        val now =
-            System.currentTimeMillis()
-
         val uiList =
-            latestDevices.map { device ->
-                val statusState =
-                    latestStatuses[device.id]
-
-                val lastSeenMillis =
-                    statusState?.lastSeenMillis
-                        ?: device.lastSeenMillis
-
-                val online =
-                    statusState?.isOnline ?: (
-                        lastSeenMillis > 0L &&
-                            now - lastSeenMillis <= ONLINE_TIMEOUT_MS
-                        )
-
-                val lastSeenText =
-                    if (lastSeenMillis > 0L) {
-                        formatElapsedTime(
-                            deltaMs = now - lastSeenMillis
-                        )
-                    } else {
-                        "Never"
-                    }
-
-                val definition =
-                    AquaDeviceCatalog.findByType(
-                        type = device.deviceType
-                    )
-
-                val displayName =
-                    definition?.displayName
-                        ?: device.name.ifBlank {
-                            device.productModel.ifBlank {
-                                "Device"
-                            }
-                        }
-
-                val familyName =
-                    definition?.family?.displayName
-                        ?: device.productFamily.ifBlank {
-                            device.aquaName.ifBlank {
-                                "Unknown"
-                            }
-                        }
-
+            deviceCardStateMapper.mapAll(
+                devices = latestDevices,
+                statuses = latestStatuses,
+                tanks = latestTanks,
+                unassignedTankText = "Not connected",
+                unknownTankText = "Unknown aquarium",
+                includeLastSeenText = true
+            ).map { cardState ->
                 DeviceCardUi(
-                    id = device.id,
-                    displayName = displayName,
-                    familyName = familyName,
-                    tankName = getTankNameForDevice(
-                        device
-                    ),
-                    ip = statusState?.ip ?: device.ip,
-                    serial = device.serial,
-                    firmwareBuild = device.firmwareBuild,
-                    isOnline = online,
-                    lastSeenText = lastSeenText,
-                    deviceType = device.deviceType
+                    id = cardState.deviceId,
+                    displayName = cardState.title,
+                    familyName = cardState.familyName,
+                    tankName = cardState.tankName,
+                    ip = cardState.ip,
+                    serial = cardState.serial,
+                    firmwareBuild = cardState.firmwareBuild,
+                    isOnline = cardState.isOnline,
+                    lastSeenText = cardState.lastSeenText,
+                    deviceType = cardState.deviceType
                 )
             }
 
         adapter.submitList(
             uiList
         )
-    }
-
-    private fun getTankNameForDevice(
-        device: DevicesDataStoreManager.DeviceInfoUi
-    ): String {
-        val connectedTankId =
-            device.tankId ?: return "Not connected"
-
-        return latestTanks.firstOrNull { tank ->
-            tank.id == connectedTankId
-        }?.name ?: "Unknown aquarium"
-    }
-
-    private fun formatElapsedTime(
-        deltaMs: Long
-    ): String {
-        val minutes =
-            TimeUnit.MILLISECONDS.toMinutes(
-                deltaMs
-            )
-
-        val hours =
-            TimeUnit.MILLISECONDS.toHours(
-                deltaMs
-            )
-
-        val days =
-            TimeUnit.MILLISECONDS.toDays(
-                deltaMs
-            )
-
-        return when {
-            minutes < 1 -> "Just now"
-            minutes < 60 -> "$minutes min ago"
-            hours < 24 -> "$hours h ago"
-            else -> "$days d ago"
-        }
     }
 
     override fun onDestroyView() {
@@ -247,9 +171,5 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
             null
 
         super.onDestroyView()
-    }
-
-    private companion object {
-        const val ONLINE_TIMEOUT_MS = 90_000L
     }
 }

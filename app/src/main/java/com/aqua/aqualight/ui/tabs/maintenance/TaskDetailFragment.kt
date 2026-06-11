@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -20,8 +19,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
+import com.aqua.aqualight.data.care.model.CareTaskSource
+import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -29,9 +28,12 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.navigation.fragment.navArgs
 
 class TaskDetailFragment :
   Fragment(R.layout.fragment_task_detail) {
+
+  private val args: TaskDetailFragmentArgs by navArgs()
 
   private var _binding: FragmentTaskDetailBinding? = null
   private val binding get() = _binding!!
@@ -53,10 +55,7 @@ class TaskDetailFragment :
 
     _binding = FragmentTaskDetailBinding.bind(view)
 
-    taskId = requireArguments().getLong(
-      "taskId",
-      -1L
-    )
+    taskId = args.taskId
 
     if (taskId <= 0L) {
       findNavController().popBackStack()
@@ -302,9 +301,8 @@ class TaskDetailFragment :
     task: CareTaskUi
   ) {
     findNavController().navigate(
-      R.id.action_taskDetailFragment_to_addCareTaskFragment,
-      bundleOf(
-        "taskId" to task.id
+      TaskDetailFragmentDirections.actionTaskDetailFragmentToAddCareTaskFragment(
+        taskId = task.id
       )
     )
   }

@@ -11,6 +11,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
@@ -22,10 +23,13 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
+import androidx.navigation.fragment.navArgs
 
 class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
+
+    private val args: TankDetailFragmentArgs by navArgs()
 
     private var _binding: FragmentTankDetailBinding? = null
     private val binding get() = _binding!!
@@ -42,7 +46,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     ) {
         super.onCreate(savedInstanceState)
 
-        tankId = requireArguments().getLong(ARG_TANK_ID)
+        tankId = args.tankId
     }
 
     override fun onViewCreated(
@@ -221,10 +225,10 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     private fun openTankSettings() {
         navigateFromTankDetail(
-            actionId = R.id.action_tankDetailFragment_to_tankSettingsFragment,
-            args = Bundle().apply {
-                putLong("tankId", tankId)
-            }
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
+                tankId = tankId,
+                startTab = ""
+            )
         )
     }
 
@@ -232,26 +236,23 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         livestockId: Long = 0L
     ) {
         navigateFromTankDetail(
-            actionId = R.id.action_tankDetailFragment_to_tankDetailLivestockFormFragment,
-            args = Bundle().apply {
-                putLong("tankId", tankId)
-                putLong("livestockId", livestockId)
-            }
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailLivestockFormFragment(
+                tankId = tankId,
+                livestockId = livestockId
+            )
         )
     }
 
     private fun openPlantTagScreen() {
         navigateFromTankDetail(
-            actionId = R.id.action_tankDetailFragment_to_tankDetailPlantTagFragment,
-            args = Bundle().apply {
-                putLong("tankId", tankId)
-            }
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailPlantTagFragment(
+                tankId = tankId
+            )
         )
     }
 
     private fun navigateFromTankDetail(
-        actionId: Int,
-        args: Bundle
+        directions: NavDirections
     ) {
         val navController = findNavController()
 
@@ -260,8 +261,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         }
 
         navController.navigate(
-            actionId,
-            args
+            directions
         )
     }
 

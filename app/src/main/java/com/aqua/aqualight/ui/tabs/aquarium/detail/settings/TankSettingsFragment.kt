@@ -8,7 +8,6 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -25,13 +24,17 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlin.math.roundToInt
+import androidx.navigation.NavDirections
+import androidx.navigation.fragment.navArgs
 
 class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
+
+    private val args: TankSettingsFragmentArgs by navArgs()
 
     private var _binding: FragmentTankSettingsBinding? = null
     private val binding get() = _binding!!
@@ -48,7 +51,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     ) {
         super.onCreate(savedInstanceState)
 
-        tankId = requireArguments().getLong(ARG_TANK_ID)
+        tankId = args.tankId
     }
 
     override fun onViewCreated(
@@ -324,7 +327,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     private fun getInitialTab(): SettingsTab {
-        val startTab = arguments?.getString(ARG_START_TAB)
+        val startTab = args.startTab
 
         return when (startTab) {
             START_TAB_DETAILS -> SettingsTab.DETAILS
@@ -612,9 +615,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         }
 
         navController.navigate(
-            R.id.action_tankSettingsFragment_to_tankDetailFragment,
-            bundleOf(
-                "tankId" to tankId
+            TankSettingsFragmentDirections.actionTankSettingsFragmentToTankDetailFragment(
+                tankId = tankId
             )
         )
 
@@ -633,31 +635,17 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         selectTab(SettingsTab.DETAILS)
 
         navigateFromTankSettings(
-            actionId = R.id.action_tankSettingsFragment_to_materialPickerFragment,
-            args = Bundle().apply {
-                putString(
-                    MaterialPickerFragment.ARG_MODE,
-                    MaterialPickerFragment.MODE_SETTINGS
-                )
-                putLong(
-                    MaterialPickerFragment.ARG_TANK_ID,
-                    tankId
-                )
-                putString(
-                    MaterialPickerFragment.ARG_CATEGORY_KEY,
-                    categoryKey
-                )
-                putString(
-                    MaterialPickerFragment.ARG_CATEGORY_TITLE,
-                    categoryTitle
-                )
-            }
+            TankSettingsFragmentDirections.actionTankSettingsFragmentToMaterialPickerFragment(
+                argMode = MaterialPickerFragment.MODE_SETTINGS,
+                argTankId = tankId,
+                argCategoryKey = categoryKey,
+                argCategoryTitle = categoryTitle
+            )
         )
     }
 
     private fun navigateFromTankSettings(
-        actionId: Int,
-        args: Bundle
+        directions: NavDirections
     ) {
         val navController = findNavController()
 
@@ -668,8 +656,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         saveSelectedTabState(selectedTab)
 
         navController.navigate(
-            actionId,
-            args
+            directions
         )
     }
 

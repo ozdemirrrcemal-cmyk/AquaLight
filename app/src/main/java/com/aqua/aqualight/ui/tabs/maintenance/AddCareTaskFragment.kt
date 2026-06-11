@@ -31,11 +31,11 @@ import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskSource
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskStatus
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.care.model.CareTaskSource
+import com.aqua.aqualight.data.care.model.CareTaskStatus
+import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.settings.app.NotificationsBottomSheet
 import com.aqua.aqualight.utils.NotificationHelper
@@ -46,9 +46,12 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import androidx.navigation.fragment.navArgs
 
 class AddCareTaskFragment :
     Fragment(R.layout.fragment_add_care_task) {
+
+    private val args: AddCareTaskFragmentArgs by navArgs()
 
     private var _binding: FragmentAddCareTaskBinding? = null
     private val binding get() = _binding!!
@@ -118,10 +121,7 @@ class AddCareTaskFragment :
 
         _binding = FragmentAddCareTaskBinding.bind(view)
 
-        taskId = requireArguments().getLong(
-            "taskId",
-            -1L
-        )
+        taskId = args.taskId
 
         setupInitialUi()
         setupClickListeners()

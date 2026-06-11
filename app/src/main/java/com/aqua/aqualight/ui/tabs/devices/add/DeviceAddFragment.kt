@@ -356,29 +356,24 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     private fun openSetupFlow(
         candidate: DeviceAddCandidate
     ) {
-        val args = Bundle().apply {
-            putString("setupSsid", candidate.setupSsid.orEmpty())
-            putString("displayName", candidate.displayName)
-            putString("familyName", candidate.familyName)
-            putString("deviceType", candidate.deviceType.storageKey)
-        }
-
         findNavController().navigate(
-            R.id.action_deviceAddFragment_to_deviceSetupFragment,
-            args
+            DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceSetupFragment(
+                setupSsid = candidate.setupSsid.orEmpty(),
+                displayName = candidate.displayName,
+                familyName = candidate.familyName,
+                deviceType = candidate.deviceType.storageKey
+            )
         )
     }
 
     private fun openDeviceMenu(
         deviceId: Long
     ) {
-        val args = Bundle().apply {
-            putLong("deviceId", deviceId)
-        }
-
         findNavController().navigate(
-            R.id.action_deviceAddFragment_to_deviceRouterFragment,
-            args
+            DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceRouterFragment(
+                deviceId = deviceId,
+                deviceIp = ""
+            )
         )
     }
 

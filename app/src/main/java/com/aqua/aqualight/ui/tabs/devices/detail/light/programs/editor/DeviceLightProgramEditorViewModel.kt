@@ -8,23 +8,21 @@ import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandMana
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudSimulationSettings
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramDraft
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightSettings
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.PreviewSpeed
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.validation.LightProgramDraftValidator
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.validation.LightProgramValidationResult
+import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramDraftValidator
+import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramValidationResult
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper.LightProgramDraftMapper
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineEvaluator
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
+import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelineBuilder
+import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelineEvaluator
+import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramScheduleConflictValidator
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -217,9 +215,7 @@ class DeviceLightProgramEditorViewModel(
                     channelValues = program.draft.channelValues.normalized(),
                     repeatMode = program.draft.repeatMode,
                     selectedDays = program.draft.selectedDays,
-                    moonlightSettings = program.draft.moonlightSettings,
-                    cloudSimulationSettings = program.draft.cloudSimulationSettings,
-                    transitionMode = program.draft.transitionMode
+                    transitionMode = LightCurveTransitionMode.NATURAL
                 )
             }
         }
@@ -319,22 +315,6 @@ class DeviceLightProgramEditorViewModel(
                 repeatMode = RepeatMode.CUSTOM,
                 selectedDays = safeDays
             )
-        }
-    }
-
-    fun updateMoonlight(
-        settings: MoonlightSettings
-    ) {
-        _uiState.update { state ->
-            state.copy(moonlightSettings = settings)
-        }
-    }
-
-    fun updateCloudSimulation(
-        settings: CloudSimulationSettings
-    ) {
-        _uiState.update { state ->
-            state.copy(cloudSimulationSettings = settings)
         }
     }
 

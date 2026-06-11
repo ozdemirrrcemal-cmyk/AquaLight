@@ -14,7 +14,7 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentAppSettingsBinding
 import com.aqua.aqualight.ui.common.bottomsheet.ThemeBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.maintenance.reminder.CareTaskReminderScheduler
+import com.aqua.aqualight.data.care.reminder.CareTaskReminderScheduler
 import com.aqua.aqualight.utils.NotificationHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -130,13 +130,13 @@ class AppSettingsFragment : Fragment(R.layout.fragment_app_settings) {
 
             cardLanguage.setOnClickListener {
                 findNavController().navigate(
-                    R.id.action_appSettingsFragment_to_languageSettingsFragment
+                    AppSettingsFragmentDirections.actionAppSettingsFragmentToLanguageSettingsFragment()
                 )
             }
 
             cardAbout.setOnClickListener {
                 findNavController().navigate(
-                    R.id.action_appSettingsFragment_to_aboutAppFragment
+                    AppSettingsFragmentDirections.actionAppSettingsFragmentToAboutAppFragment()
                 )
             }
         }

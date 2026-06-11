@@ -24,5 +24,9 @@ data class DeviceLightSettingsUiState(
     val coolingModeEnabled: Boolean = false,
     val coolingFanCount: Int = 0,
     val fanStartTemperatureCelsius: Int = 30,
-    val fanFullSpeedTemperatureCelsius: Int = 50
+    val fanFullSpeedTemperatureCelsius: Int = 50,
+
+    val isDeviceOnline: Boolean = false,
+    val controlsEnabled: Boolean = false,
+    val connectionStatusText: String = "Checking device connection"
 )

@@ -59,12 +59,15 @@ class DevicesDataStoreManager private constructor(
         }
     }
 
-    data class DeviceInfoUi(
+    data class DeviceInfo(
         val id: Long,
         val aquaName: String,
         val name: String,
         val ip: String,
         val serial: String,
+        val deviceUid: String = "",
+        val macAddress: String = "",
+        val firmwareSerial: String = "",
         val firmwareBuild: String,
         val lastSeenMillis: Long,
         val tankId: Long? = null,
@@ -94,6 +97,9 @@ class DevicesDataStoreManager private constructor(
         val id: Long,
         val ip: String,
         val firmwareBuild: String = "",
+        val deviceUid: String? = null,
+        val macAddress: String? = null,
+        val firmwareSerial: String? = null,
 
         val deviceType: AquaDeviceType? = null,
 
@@ -125,13 +131,13 @@ class DevicesDataStoreManager private constructor(
             }
         }
 
-    val devicesFlow: Flow<List<DeviceInfoUi>> = devicesPrefsFlow.map { prefs ->
+    val devicesFlow: Flow<List<DeviceInfo>> = devicesPrefsFlow.map { prefs ->
         prefs.devicesList.map { device ->
-            device.toUi()
+            device.toDeviceInfo()
         }
     }
 
-    val unassignedDevicesFlow: Flow<List<DeviceInfoUi>> = devicesFlow.map { devices ->
+    val unassignedDevicesFlow: Flow<List<DeviceInfo>> = devicesFlow.map { devices ->
         devices.filter { device ->
             device.tankId == null
         }
@@ -139,7 +145,7 @@ class DevicesDataStoreManager private constructor(
 
     fun devicesForTankFlow(
         tankId: Long
-    ): Flow<List<DeviceInfoUi>> {
+    ): Flow<List<DeviceInfo>> {
         return devicesFlow.map { devices ->
             devices.filter { device ->
                 device.tankId == tankId
@@ -157,6 +163,29 @@ class DevicesDataStoreManager private constructor(
             }
     }
 
+    suspend fun findStoredDeviceIdForIdentity(
+        id: Long,
+        deviceUid: String?,
+        macAddress: String?,
+        firmwareSerial: String?
+    ): Long? {
+        return devicesPrefsFlow.first()
+            .devicesList
+            .map { device ->
+                device.toDeviceInfo()
+            }
+            .firstOrNull { savedDevice ->
+                DeviceIdentityMatcher.matchesStoredIdentity(
+                    savedDevice = savedDevice,
+                    id = id,
+                    deviceUid = deviceUid,
+                    macAddress = macAddress,
+                    firmwareSerial = firmwareSerial
+                )
+            }
+            ?.id
+    }
+
     suspend fun addDevice(
         id: Long,
         aquaName: String,
@@ -164,6 +193,9 @@ class DevicesDataStoreManager private constructor(
         ip: String,
         serial: String,
         firmwareBuild: String,
+        deviceUid: String = "",
+        macAddress: String = "",
+        firmwareSerial: String = "",
 
         deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN,
 
@@ -206,6 +238,9 @@ class DevicesDataStoreManager private constructor(
                 .setIp(ip)
                 .setSerial(serial)
                 .setFirmwareBuild(firmwareBuild)
+                .setDeviceUid(deviceUid)
+                .setMacAddress(macAddress)
+                .setFirmwareSerial(firmwareSerial)
                 .setLastSeenMillis(now)
                 .setTankId(0L)
                 .setDeviceType(resolvedType.storageKey)
@@ -395,9 +430,13 @@ class DevicesDataStoreManager private constructor(
 
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
+                val savedDevice = device.toDeviceInfo()
+
                 val match = discovered.firstOrNull { discoveredDevice ->
-                    discoveredDevice.id == device.id ||
-                        discoveredDevice.ip == device.ip
+                    DeviceIdentityMatcher.samePhysicalDevice(
+                        savedDevice = savedDevice,
+                        update = discoveredDevice
+                    )
                 }
 
                 if (match != null) {
@@ -407,6 +446,24 @@ class DevicesDataStoreManager private constructor(
 
                         if (match.firmwareBuild.isNotBlank()) {
                             setFirmwareBuild(match.firmwareBuild)
+                        }
+
+                        match.deviceUid?.takeIf { value ->
+                            value.isNotBlank()
+                        }?.let { value ->
+                            setDeviceUid(value)
+                        }
+
+                        match.macAddress?.takeIf { value ->
+                            value.isNotBlank()
+                        }?.let { value ->
+                            setMacAddress(value)
+                        }
+
+                        match.firmwareSerial?.takeIf { value ->
+                            value.isNotBlank()
+                        }?.let { value ->
+                            setFirmwareSerial(value)
                         }
 
                         match.deviceType?.let { value ->
@@ -483,7 +540,7 @@ class DevicesDataStoreManager private constructor(
         }
     }
 
-    private fun SavedDeviceInfo.toUi(): DeviceInfoUi {
+    private fun SavedDeviceInfo.toDeviceInfo(): DeviceInfo {
         val fallbackType = AquaDeviceCatalog.resolveTypeByLegacyIdentity(
             aquaName = aquaName,
             name = name
@@ -499,12 +556,15 @@ class DevicesDataStoreManager private constructor(
             fallbackType
         }
 
-        return DeviceInfoUi(
+        return DeviceInfo(
             id = id,
             aquaName = aquaName,
             name = name,
             ip = ip,
             serial = serial,
+            deviceUid = deviceUid,
+            macAddress = macAddress,
+            firmwareSerial = firmwareSerial,
             firmwareBuild = firmwareBuild,
             lastSeenMillis = lastSeenMillis,
             tankId = tankId.takeIf { value ->

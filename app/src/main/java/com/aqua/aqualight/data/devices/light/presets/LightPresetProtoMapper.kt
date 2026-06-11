@@ -1,6 +1,6 @@
 package com.aqua.aqualight.data.devices.light.presets
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.SavedLightPreset
+import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 
 object LightPresetProtoMapper {
 

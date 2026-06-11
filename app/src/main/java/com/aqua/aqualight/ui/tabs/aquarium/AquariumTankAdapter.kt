@@ -13,7 +13,7 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemAquariumTankBinding
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.TankCareSummaryUi
 import java.text.SimpleDateFormat
 import java.util.Date

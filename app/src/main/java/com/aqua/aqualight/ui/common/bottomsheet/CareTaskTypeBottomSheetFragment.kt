@@ -17,9 +17,9 @@ import androidx.core.os.bundleOf
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskType
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeCatalog
-import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskTypeUi
+import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
+import com.aqua.aqualight.data.care.catalog.CareTaskTypeDefinition
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -182,7 +182,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
   }
 
   private fun createTaskTypeCard(
-    item: CareTaskTypeUi,
+    item: CareTaskTypeDefinition,
     itemIndex: Int
   ): View {
     val selected = item.type == selectedType
@@ -317,7 +317,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
   }
 
   private fun publishSelectedTaskType(
-    item: CareTaskTypeUi
+    item: CareTaskTypeDefinition
   ) {
     parentFragmentManager.setFragmentResult(
       resultRequestKey,

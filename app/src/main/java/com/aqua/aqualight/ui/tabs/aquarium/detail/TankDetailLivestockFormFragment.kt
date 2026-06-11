@@ -19,8 +19,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.model.LivestockCategories
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -35,10 +35,14 @@ import android.text.TextWatcher
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import androidx.navigation.fragment.navArgs
 
 
 class TankDetailLivestockFormFragment :
 Fragment(R.layout.fragment_tank_livestock_form) {
+
+    private val args: TankDetailLivestockFormFragmentArgs by navArgs()
+
 
     private var _binding: FragmentTankLivestockFormBinding? = null
     private val binding get() = _binding!!
@@ -78,10 +82,8 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun readArguments() {
-        val args = requireArguments()
-
-        tankId = args.getLong(ARG_TANK_ID)
-        editingLivestockId = args.getLong(ARG_LIVESTOCK_ID, 0L)
+        tankId = args.tankId
+        editingLivestockId = args.livestockId
 
         selectedCategory = LivestockCategories.FISH
         selectedQuantity = 1

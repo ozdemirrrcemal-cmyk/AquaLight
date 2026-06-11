@@ -6,7 +6,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
 import com.aqua.aqualight.data.devices.catalog.ModuleVisibility
 
@@ -27,7 +27,7 @@ object CoolingProductCatalog {
             displayName = "CoolPro",
 
             mainModule = AquaDeviceModule.COOLING,
-            uiController = AquaDeviceUiController.GENERIC_COOLING,
+            controllerType = AquaDeviceControllerType.GENERIC_COOLING,
             firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
 
             moduleVisibility = mapOf(

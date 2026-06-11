@@ -212,7 +212,8 @@ class Esp32LightDeviceCommandManager(
         return when (
             val result = addressResolver.resolve(
                 deviceId = deviceId,
-                requireOnline = false
+                requireOnline = true,
+                forceLiveCheck = false
             )
         ) {
             is LightDeviceAddressResolver.Result.Success -> result

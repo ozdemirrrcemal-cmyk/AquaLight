@@ -11,7 +11,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -35,7 +34,7 @@ import com.aqua.aqualight.ui.common.timeline.TimelineDayResolver
 import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.aqua.aqualight.utils.DialogManager
@@ -256,9 +255,9 @@ class AquariumMaintenanceFragment :
         }
 
         findNavController().navigate(
-            R.id.action_aquariumMaintenanceFragment_to_tankSettingsFragment,
-            bundleOf(
-                "tankId" to careProfileTargetTankId
+            AquariumMaintenanceFragmentDirections.actionAquariumMaintenanceFragmentToTankSettingsFragment(
+                tankId = careProfileTargetTankId,
+                startTab = ""
             )
         )
     }
@@ -750,7 +749,7 @@ class AquariumMaintenanceFragment :
 
     private fun openAddCareTaskScreen() {
         findNavController().navigate(
-            R.id.action_aquariumMaintenanceFragment_to_addCareTaskFragment
+            AquariumMaintenanceFragmentDirections.actionAquariumMaintenanceFragmentToAddCareTaskFragment()
         )
     }
 
@@ -758,9 +757,8 @@ class AquariumMaintenanceFragment :
         task: CareTaskUi
     ) {
         findNavController().navigate(
-            R.id.action_aquariumMaintenanceFragment_to_taskDetailFragment,
-            bundleOf(
-                "taskId" to task.id
+            AquariumMaintenanceFragmentDirections.actionAquariumMaintenanceFragmentToTaskDetailFragment(
+                taskId = task.id
             )
         )
     }

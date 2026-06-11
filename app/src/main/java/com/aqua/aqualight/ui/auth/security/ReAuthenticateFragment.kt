@@ -25,9 +25,13 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class ReAuthenticateFragment :
     Fragment(R.layout.fragment_re_authenticate) {
+
+    private val args: ReAuthenticateFragmentArgs by navArgs()
+
 
     companion object {
 
@@ -141,8 +145,7 @@ class ReAuthenticateFragment :
             FragmentReAuthenticateBinding.bind(view)
 
         currentAction =
-            arguments?.getString(ARG_ACTION)
-                ?: ACTION_DELETE_ACCOUNT
+            args.argAction
 
         setupGoogle()
 

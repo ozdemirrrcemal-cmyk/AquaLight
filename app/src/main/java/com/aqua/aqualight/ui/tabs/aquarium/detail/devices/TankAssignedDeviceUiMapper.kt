@@ -3,56 +3,59 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 import android.graphics.Color
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
 import com.aqua.aqualight.data.devices.catalog.light.LightChannelColor
 import com.aqua.aqualight.data.devices.catalog.light.LightProductCatalog
+import com.aqua.aqualight.data.devices.light.runtime.LightActualDataPolicy
 import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
+import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import java.util.Calendar
 import kotlin.math.roundToInt
 
 class TankAssignedDeviceUiMapper {
 
+    private val deviceCardStateMapper =
+        DeviceCardStateMapper()
+
     fun isLightDeviceForObserver(
-        device: DevicesDataStoreManager.DeviceInfoUi
+        device: DevicesDataStoreManager.DeviceInfo
     ): Boolean {
         return device.isLightDevice()
     }
 
     fun map(
-        device: DevicesDataStoreManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfo,
         statuses: Map<Long, DeviceStatusState>,
         programs: List<SavedLightProgram>,
         lightState: LightDeviceLiveState?,
         now: Long,
         modeOverride: TankLightModeOverride? = null
     ): TankAssignedDeviceUi {
-        val title =
-            getDeviceTitle(
-                device = device
-            )
-
-        val subtitle =
-            getDeviceTypeText(
-                device = device
-            )
-
-        val online =
-            isDeviceOnline(
+        val commonCardState =
+            deviceCardStateMapper.map(
                 device = device,
                 statuses = statuses,
-                now = now
+                nowMillis = now,
+                unknownTankText = "Unknown aquarium"
             )
+
+        val title =
+            commonCardState.title
+
+        val subtitle =
+            commonCardState.familyName
+
+        val online =
+            commonCardState.isOnline
 
         val iconRes =
             DeviceIconMapper.iconFor(
-                device.deviceType
+                commonCardState.deviceType
             )
 
         return if (device.isLightDevice()) {
@@ -78,7 +81,7 @@ class TankAssignedDeviceUiMapper {
     }
 
     private fun mapLightDevice(
-        device: DevicesDataStoreManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfo,
         title: String,
         subtitle: String,
         iconRes: Int,
@@ -142,36 +145,17 @@ class TankAssignedDeviceUiMapper {
                 ?: todayPrograms.firstOrNull()
                 ?: activePrograms.firstOrNull()
 
-        val moonlightOverride =
-            if (modeOverride == null) {
-                buildMoonlightOverride(
-                    programs = todayPrograms.ifEmpty {
-                        activePrograms
-                    },
-                    currentMinute = currentMinute
-                )
-            } else {
-                null
-            }
-
         val effectiveModeOverride =
-            modeOverride ?: moonlightOverride
+            if (online) modeOverride else null
 
         val outputPercent =
             when {
-                effectiveModeOverride?.outputPercent != null -> {
+                online && liveState.hasLiveChannels -> {
+                    LightActualDataPolicy.actualOutputPercent(liveState)
+                }
+
+                online && effectiveModeOverride?.outputPercent != null -> {
                     effectiveModeOverride.outputPercent
-                }
-
-                liveState.hasLiveChannels -> {
-                    liveState.actualOutputPercent
-                }
-
-                runningProgram != null -> {
-                    calculateCurrentOutputPercent(
-                        program = runningProgram,
-                        currentMinute = currentMinute
-                    )
                 }
 
                 else -> {
@@ -217,178 +201,8 @@ class TankAssignedDeviceUiMapper {
         )
     }
 
-    private fun buildMoonlightOverride(
-        programs: List<SavedLightProgram>,
-        currentMinute: Int
-    ): TankLightModeOverride? {
-        return programs.firstNotNullOfOrNull { program ->
-            buildMoonlightOverrideForProgram(
-                program = program,
-                currentMinute = currentMinute
-            )
-        }
-    }
-
-    private fun buildMoonlightOverrideForProgram(
-        program: SavedLightProgram,
-        currentMinute: Int
-    ): TankLightModeOverride? {
-        val settings =
-            program.draft.moonlightSettings
-
-        if (!settings.enabled) {
-            return null
-        }
-
-        val startPoint =
-            if (settings.followProgramEnd) {
-                program.draft.end
-            } else {
-                settings.startTime
-            }
-
-        val endPoint =
-            settings.endTime
-
-        val startMinute =
-            normalizeMinute(
-                minute = startPoint.totalMinutes
-            )
-
-        val endMinute =
-            normalizeMinute(
-                minute = endPoint.totalMinutes
-            )
-
-        val safeCurrentMinute =
-            normalizeMinute(
-                minute = currentMinute
-            )
-
-        if (
-            !isMinuteInRange(
-                currentMinute = safeCurrentMinute,
-                startMinute = startMinute,
-                endMinute = endMinute
-            )
-        ) {
-            return null
-        }
-
-        val intensity =
-            settings.intensityPercent.coerceIn(
-                0,
-                100
-            )
-
-        val blue =
-            when (settings.channel) {
-                MoonlightChannel.BLUE,
-                MoonlightChannel.BLUE_WHITE -> {
-                    intensity
-                }
-
-                MoonlightChannel.WHITE -> {
-                    0
-                }
-            }
-
-        val white =
-            when (settings.channel) {
-                MoonlightChannel.WHITE,
-                MoonlightChannel.BLUE_WHITE -> {
-                    intensity
-                }
-
-                MoonlightChannel.BLUE -> {
-                    0
-                }
-            }
-
-        return TankLightModeOverride(
-            mode = TankLightCardMode.MOONLIGHT,
-            title = "Moonlight Mode",
-            outputPercent = intensity,
-            red = 0,
-            green = 0,
-            blue = blue,
-            white = white,
-            leftText = startPoint.label,
-            rightText = endPoint.label,
-            timelineProgressPercent = moonlightProgressPercent(
-                currentMinute = safeCurrentMinute,
-                startMinute = startMinute,
-                endMinute = endMinute
-            )
-        )
-    }
-
-    private fun isMinuteInRange(
-        currentMinute: Int,
-        startMinute: Int,
-        endMinute: Int
-    ): Boolean {
-        if (startMinute == endMinute) {
-            return false
-        }
-
-        return if (startMinute < endMinute) {
-            currentMinute >= startMinute && currentMinute < endMinute
-        } else {
-            currentMinute >= startMinute || currentMinute < endMinute
-        }
-    }
-
-    private fun moonlightProgressPercent(
-        currentMinute: Int,
-        startMinute: Int,
-        endMinute: Int
-    ): Int {
-        if (startMinute == endMinute) {
-            return 0
-        }
-
-        val duration =
-            if (endMinute > startMinute) {
-                endMinute - startMinute
-            } else {
-                (MINUTES_PER_DAY - startMinute) + endMinute
-            }
-
-        if (duration <= 0) {
-            return 0
-        }
-
-        val elapsed =
-            if (currentMinute >= startMinute) {
-                currentMinute - startMinute
-            } else {
-                (MINUTES_PER_DAY - startMinute) + currentMinute
-            }
-
-        return ((elapsed.toDouble() / duration.toDouble()) * 100.0)
-            .roundToInt()
-            .coerceIn(
-                0,
-                100
-            )
-    }
-
-    private fun normalizeMinute(
-        minute: Int
-    ): Int {
-        val value =
-            minute % MINUTES_PER_DAY
-
-        return if (value < 0) {
-            value + MINUTES_PER_DAY
-        } else {
-            value
-        }
-    }
-
     private fun buildLightChannels(
-        device: DevicesDataStoreManager.DeviceInfoUi,
+        device: DevicesDataStoreManager.DeviceInfo,
         liveState: LightDeviceLiveState,
         runningProgram: SavedLightProgram?,
         displayProgram: SavedLightProgram?,
@@ -428,29 +242,20 @@ class TankAssignedDeviceUiMapper {
         currentMinute: Int,
         modeOverride: TankLightModeOverride?
     ): Int {
-        overrideChannelPercent(
-            semantic = channel.semantic,
-            modeOverride = modeOverride
-        )?.let { percent ->
-            return percent
-        }
-
         if (liveState.hasLiveChannels) {
             return when (channel.semantic) {
                 LightChannelSemantic.RED,
                 LightChannelSemantic.GREEN,
                 LightChannelSemantic.BLUE,
                 LightChannelSemantic.WHITE -> {
-                    liveState.channelFor(
+                    LightActualDataPolicy.actualChannelPercent(
+                        liveState = liveState,
                         semantic = channel.semantic
-                    )?.valuePercent?.coerceIn(
-                        0,
-                        100
-                    ) ?: 0
+                    )
                 }
 
                 LightChannelSemantic.UNKNOWN -> {
-                    liveState.actualOutputPercent.coerceIn(
+                    LightActualDataPolicy.actualOutputPercent(liveState).coerceIn(
                         0,
                         100
                     )
@@ -458,15 +263,14 @@ class TankAssignedDeviceUiMapper {
             }
         }
 
-        if (runningProgram == null) {
-            return 0
+        overrideChannelPercent(
+            semantic = channel.semantic,
+            modeOverride = modeOverride
+        )?.let { percent ->
+            return percent
         }
 
-        return calculateChannelOutputPercent(
-            program = runningProgram,
-            currentMinute = currentMinute,
-            semantic = channel.semantic
-        )
+        return 0
     }
 
     private fun overrideChannelPercent(
@@ -515,152 +319,6 @@ class TankAssignedDeviceUiMapper {
         )
     }
 
-    private fun calculateChannelOutputPercent(
-        program: SavedLightProgram,
-        currentMinute: Int,
-        semantic: LightChannelSemantic
-    ): Int {
-        if (
-            !isProgramRunningAt(
-                program = program,
-                minute = currentMinute
-            )
-        ) {
-            return 0
-        }
-
-        val peakPercent =
-            targetLightChannelPercent(
-                channel = LightChannelConfig(
-                    key = TankLightChannelKey.INTENSITY,
-                    label = "Intensity",
-                    semantic = semantic,
-                    colorInt = Color.parseColor("#8EB8FF")
-                ),
-                program = program
-            )
-
-        if (peakPercent <= 0) {
-            return 0
-        }
-
-        return calculateCurvePercent(
-            program = program,
-            currentMinute = currentMinute,
-            peakPercent = peakPercent
-        )
-    }
-
-    private fun calculateCurrentOutputPercent(
-        program: SavedLightProgram,
-        currentMinute: Int
-    ): Int {
-        val peakPercent =
-            LightOutputMath.outputPercent(
-                red = program.draft.channelValues.red,
-                green = program.draft.channelValues.green,
-                blue = program.draft.channelValues.blue,
-                white = program.draft.channelValues.white
-            )
-
-        if (peakPercent <= 0) {
-            return 0
-        }
-
-        return calculateCurvePercent(
-            program = program,
-            currentMinute = currentMinute,
-            peakPercent = peakPercent
-        )
-    }
-
-    private fun calculateCurvePercent(
-        program: SavedLightProgram,
-        currentMinute: Int,
-        peakPercent: Int
-    ): Int {
-        if (
-            !isProgramRunningAt(
-                program = program,
-                minute = currentMinute
-            )
-        ) {
-            return 0
-        }
-
-        val points =
-            LightCurveInterpolator.buildCurvePoints(
-                startMinute = program.draft.start.totalMinutes,
-                peakStartMinute = program.draft.peakStart.totalMinutes,
-                peakEndMinute = program.draft.peakEnd.totalMinutes,
-                endMinute = LightProgramTimeMath.endMinutes(
-                    program.draft.end
-                ),
-                peakPercent = peakPercent,
-                transitionMode = program.draft.transitionMode
-            ).sortedBy { point ->
-                point.x
-            }
-
-        if (points.isEmpty()) {
-            return 0
-        }
-
-        val current =
-            currentMinute.toDouble()
-
-        val previous =
-            points.lastOrNull { point ->
-                point.x.toDouble() <= current
-            }
-
-        val next =
-            points.firstOrNull { point ->
-                point.x.toDouble() >= current
-            }
-
-        val value =
-            when {
-                previous == null -> {
-                    points.first().y.toDouble()
-                }
-
-                next == null -> {
-                    points.last().y.toDouble()
-                }
-
-                previous.x == next.x -> {
-                    previous.y.toDouble()
-                }
-
-                else -> {
-                    val previousX =
-                        previous.x.toDouble()
-
-                    val nextX =
-                        next.x.toDouble()
-
-                    val previousY =
-                        previous.y.toDouble()
-
-                    val nextY =
-                        next.y.toDouble()
-
-                    val progress =
-                        (current - previousX) / (nextX - previousX)
-
-                    previousY + ((nextY - previousY) * progress)
-                }
-            }
-
-        return value
-            .roundToInt()
-            .coerceIn(
-                0,
-                100
-            )
-    }
-
     private fun calculateTimelineProgressPercent(
         program: SavedLightProgram?,
         currentMinute: Int
@@ -701,7 +359,7 @@ class TankAssignedDeviceUiMapper {
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.supportedLightChannels(): List<LightChannelConfig> {
+    private fun DevicesDataStoreManager.DeviceInfo.supportedLightChannels(): List<LightChannelConfig> {
         val catalogDefinition =
             LightProductCatalog.findByType(
                 type = deviceType
@@ -732,7 +390,7 @@ class TankAssignedDeviceUiMapper {
         return fallbackLightChannelsByChannelCount()
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.isLightDevice(): Boolean {
+    private fun DevicesDataStoreManager.DeviceInfo.isLightDevice(): Boolean {
         val catalogDefinition =
             LightProductCatalog.findByType(
                 type = deviceType
@@ -857,7 +515,7 @@ class TankAssignedDeviceUiMapper {
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.fallbackLightChannelsByChannelCount(): List<LightChannelConfig> {
+    private fun DevicesDataStoreManager.DeviceInfo.fallbackLightChannelsByChannelCount(): List<LightChannelConfig> {
         return when (channelCount) {
             4 -> {
                 listOf(
@@ -952,7 +610,7 @@ class TankAssignedDeviceUiMapper {
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfoUi.lightSearchText(): String {
+    private fun DevicesDataStoreManager.DeviceInfo.lightSearchText(): String {
         val definition =
             AquaDeviceCatalog.findByType(
                 type = deviceType
@@ -971,52 +629,6 @@ class TankAssignedDeviceUiMapper {
                 separator = " "
             )
             .lowercase()
-    }
-
-    private fun getDeviceTitle(
-        device: DevicesDataStoreManager.DeviceInfoUi
-    ): String {
-        val definition =
-            AquaDeviceCatalog.findByType(
-                type = device.deviceType
-            )
-
-        return definition?.displayName
-            ?: device.name.ifBlank {
-                device.productModel.ifBlank {
-                    "Device"
-                }
-            }
-    }
-
-    private fun getDeviceTypeText(
-        device: DevicesDataStoreManager.DeviceInfoUi
-    ): String {
-        val definition =
-            AquaDeviceCatalog.findByType(
-                type = device.deviceType
-            )
-
-        return definition?.family?.displayName
-            ?: device.productFamily.ifBlank {
-                device.aquaName.ifBlank {
-                    "Device"
-                }
-            }
-    }
-
-    private fun isDeviceOnline(
-        device: DevicesDataStoreManager.DeviceInfoUi,
-        statuses: Map<Long, DeviceStatusState>,
-        now: Long
-    ): Boolean {
-        val statusState =
-            statuses[device.id]
-
-        return statusState?.isOnline ?: (
-            device.lastSeenMillis > 0L &&
-                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
-            )
     }
 
     private fun isProgramRunningAt(
@@ -1181,9 +793,6 @@ class TankAssignedDeviceUiMapper {
     )
 
     private companion object {
-        private const val ONLINE_TIMEOUT_MS =
-            90_000L
-
         private const val MINUTES_PER_DAY =
             24 * 60
     }

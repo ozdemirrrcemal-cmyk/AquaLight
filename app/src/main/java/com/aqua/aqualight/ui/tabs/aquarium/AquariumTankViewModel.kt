@@ -7,11 +7,11 @@ import androidx.lifecycle.asLiveData
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
-import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
-import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
-import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.model.TankDraft
+import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
+import com.aqua.aqualight.data.aquarium.model.TankPlantTag
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 
 class AquariumTankViewModel(
   application: Application

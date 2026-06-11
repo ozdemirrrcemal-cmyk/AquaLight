@@ -24,11 +24,14 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
+import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.navArgs
 
 class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
+
+    private val args: TankDetailPlantTagFragmentArgs by navArgs()
 
     private var _binding: FragmentPlantTagBinding? = null
     private val binding get() = _binding!!
@@ -51,7 +54,7 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     ) {
         super.onCreate(savedInstanceState)
 
-        tankId = requireArguments().getLong(ARG_TANK_ID)
+        tankId = args.tankId
     }
 
     override fun onViewCreated(
@@ -197,9 +200,8 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
     private fun openPlantPickerScreen() {
         findNavController().navigate(
-            R.id.action_tankDetailPlantTagFragment_to_plantPickerFragment,
-            bundleOf(
-                PlantPickerFragment.ARG_USE_NAV_RESULT to true
+            TankDetailPlantTagFragmentDirections.actionTankDetailPlantTagFragmentToPlantPickerFragment(
+                useNavResult = true
             )
         )
     }

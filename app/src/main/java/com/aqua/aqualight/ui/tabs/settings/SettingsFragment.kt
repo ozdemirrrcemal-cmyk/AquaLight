@@ -102,15 +102,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 }.collectLatest { pair ->
                     val devices = pair.first
                     val statuses = pair.second
-                    val now = System.currentTimeMillis()
-
                     val activeDeviceCount = devices.count { device ->
-                        val statusState = statuses[device.id]
-
-                        statusState?.isOnline ?: (
-                            device.lastSeenMillis > 0L &&
-                                now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
-                            )
+                        statuses[device.id]?.isOnline == true
                     }
 
                     updateActiveDevices(
@@ -147,55 +140,55 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun setupClickListeners() = with(binding) {
     ivProfilePhoto.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_editProfileFragment
+            SettingsFragmentDirections.actionSettingsFragmentToEditProfileFragment()
         )
     }
 
     rowUserInfo.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_userInfoFragment
+            SettingsFragmentDirections.actionSettingsFragmentToUserInfoFragment()
         )
     }
 
     rowDeviceStatus.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_deviceStatusFragment
+            SettingsFragmentDirections.actionSettingsFragmentToDeviceStatusFragment()
         )
     }
 
     rowNetwork.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_networkFragment
+            SettingsFragmentDirections.actionSettingsFragmentToNetworkFragment()
         )
     }
 
     rowSettings.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_appSettingsFragment
+            SettingsFragmentDirections.actionSettingsFragmentToAppSettingsFragment()
         )
     }
 
     rowUsage.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_usageFragment
+            SettingsFragmentDirections.actionSettingsFragmentToUsageFragment()
         )
     }
 
     rowPrivacy.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_privacyFragment
+            SettingsFragmentDirections.actionSettingsFragmentToPrivacyFragment()
         )
     }
 
     rowFeedback.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_feedbackFragment
+            SettingsFragmentDirections.actionSettingsFragmentToFeedbackFragment()
         )
     }
 
     rowLogout.setOnClickListener {
         findNavController().navigate(
-            R.id.action_settingsFragment_to_logoutFragment
+            SettingsFragmentDirections.actionSettingsFragmentToLogoutFragment()
         )
     }
 }
@@ -332,8 +325,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private companion object {
-        const val ONLINE_TIMEOUT_MS = 60_000L
-
         const val URL_WEBSITE = "https://aqualight.example.com"
         const val URL_FACEBOOK = "https://www.facebook.com/aqualight"
         const val URL_INSTAGRAM = "https://www.instagram.com/aqualight"

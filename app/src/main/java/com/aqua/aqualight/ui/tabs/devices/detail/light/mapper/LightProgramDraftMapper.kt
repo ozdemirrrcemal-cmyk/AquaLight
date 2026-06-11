@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.mapper
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramDraft
-import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
+import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import java.util.UUID
 
 object LightProgramDraftMapper {
