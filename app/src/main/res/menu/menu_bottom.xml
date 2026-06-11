@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@id/nav_aquarium"
+        android:id="@id/aquariumFragment"
         android:title="Aquarium"
         android:icon="@drawable/ic_aquarium" />
 	<item
-        android:id="@id/nav_maintenance"
+        android:id="@id/aquariumMaintenanceFragment"
         android:title="Maintenance"
         android:icon="@drawable/ic_aquarium_maintenance" />
     <item
-        android:id="@id/nav_devices"
+        android:id="@id/devicesFragment"
         android:title="Devices"
         android:icon="@drawable/ic_devices" />
     <item
-        android:id="@id/nav_settings"
+        android:id="@id/settingsFragment"
         android:title="Settings"
         android:icon="@drawable/ic_settings" />
 </menu>
