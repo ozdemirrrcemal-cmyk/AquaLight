@@ -21,8 +21,14 @@ object LightDeviceDataCenter {
     fun configure(
         context: Context
     ) {
+        val appContext = context.applicationContext
+
         LightManualRuntimeStore.configure(
-            context = context.applicationContext
+            context = appContext
+        )
+
+        LightDeviceSnapshotCache.configure(
+            context = appContext
         )
     }
 
@@ -101,4 +107,13 @@ object LightDeviceDataCenter {
             deviceId = deviceId
         )
     }
+
+    fun currentManualRuntime(
+        deviceId: Long
+    ): LightManualRuntimeState {
+        return LightManualRuntimeStore.current(
+            deviceId = deviceId
+        )
+    }
 }
+

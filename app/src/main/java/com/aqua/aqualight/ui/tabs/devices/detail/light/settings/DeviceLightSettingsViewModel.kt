@@ -185,9 +185,9 @@ class DeviceLightSettingsViewModel(
                         isApplyingSettings
 
                     val hasLiveContact =
-                        liveState.hasFreshLiveData || liveState.hasDeviceTime
+                        liveState.hasAuthoritativeContact
 
-                    if (!state.isDeviceOnline && !hasLiveContact) {
+                    if (!state.isDeviceOnline && !hasLiveContact && !liveState.hasCachedDisplayData) {
                         return@update state.copy(
                             deviceTime = "--:--",
                             thermalProtectionStatusText = "Unavailable",
@@ -206,6 +206,8 @@ class DeviceLightSettingsViewModel(
                         controlsEnabled = state.controlsEnabled || hasLiveContact,
                         connectionStatusText = if (hasLiveContact) {
                             connectionStatusTextFor(DeviceConnectionStatus.ONLINE)
+                        } else if (liveState.hasCachedDisplayData) {
+                            "Syncing live data"
                         } else {
                             state.connectionStatusText
                         },
@@ -335,7 +337,7 @@ class DeviceLightSettingsViewModel(
                         formatEnumName(device.deviceType.name)
                     }
 
-                val hasLiveContact = liveState.hasFreshLiveData || liveState.hasDeviceTime
+                val hasLiveContact = liveState.hasAuthoritativeContact
                 val isOnline = status?.isOnline == true || hasLiveContact
                 val effectiveStatus = when {
                     status?.isOnline == true -> {

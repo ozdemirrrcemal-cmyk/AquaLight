@@ -15,7 +15,8 @@ data class LightDeviceLiveState(
     val liveDataUpdatedMillis: Long = 0L,
     val isLiveDataFresh: Boolean = false,
     val lastUpdatedMillis: Long = 0L,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val dataSource: LightLiveDataSource = LightLiveDataSource.EMPTY
 ) {
 
     val deviceTimeText: String
@@ -41,6 +42,58 @@ data class LightDeviceLiveState(
                 System.currentTimeMillis() - deviceTimeUpdatedMillis
 
             return ageMillis <= DEVICE_TIME_FRESHNESS_MS
+        }
+
+    val hasAuthoritativeDeviceTime: Boolean
+        get() = hasDeviceTime && dataSource == LightLiveDataSource.LIVE
+
+    val hasAuthoritativeContact: Boolean
+        get() = hasFreshLiveData || hasAuthoritativeDeviceTime
+
+    val hasDisplayChannels: Boolean
+        get() = channels.isNotEmpty()
+
+    val hasCachedDisplayData: Boolean
+        get() = dataSource == LightLiveDataSource.CACHE && channels.isNotEmpty()
+
+    val isShowingCachedData: Boolean
+        get() = hasCachedDisplayData && !hasFreshLiveData
+
+    val displayOutputPercent: Int
+        get() {
+            if (!hasDisplayChannels) {
+                return 0
+            }
+
+            return channels
+                .mapNotNull { channel ->
+                    channel.valuePercent
+                }
+                .maxOrNull() ?: 0
+        }
+
+    val displayPowerWatts: Double?
+        get() {
+            if (!hasDisplayChannels) {
+                return null
+            }
+
+            val values = channels.mapNotNull { channel ->
+                channel.actualWatts
+            }
+
+            if (values.isEmpty()) {
+                return null
+            }
+
+            return values.sum()
+        }
+
+    val displayPowerText: String
+        get() {
+            val watts = displayPowerWatts ?: return "-- W"
+
+            return "${watts.roundToOneDecimal()}W"
         }
 
     val actualOutputPercent: Int
@@ -125,6 +178,14 @@ data class LightDeviceLiveState(
             return null
         }
 
+        return displayChannelFor(
+            semantic = semantic
+        )
+    }
+
+    fun displayChannelFor(
+        semantic: LightChannelSemantic
+    ): LightDeviceLiveChannelState? {
         return channels.firstOrNull { channel ->
             channel.semantic == semantic
         }
@@ -153,7 +214,8 @@ data class LightDeviceLiveState(
                 liveDataUpdatedMillis = 0L,
                 isLiveDataFresh = false,
                 lastUpdatedMillis = 0L,
-                errorMessage = null
+                errorMessage = null,
+                dataSource = LightLiveDataSource.EMPTY
             )
         }
     }

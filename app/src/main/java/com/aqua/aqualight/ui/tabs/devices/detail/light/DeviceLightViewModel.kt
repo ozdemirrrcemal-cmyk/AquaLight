@@ -50,10 +50,7 @@ class DeviceLightViewModel(
     }
 
     private val _uiState = MutableStateFlow(
-        createDeviceTimeUnavailableState(
-            programs = emptyList(),
-            liveState = LightDeviceLiveState.initial(0L)
-        )
+        DeviceLightDashboardUiState()
     )
 
     val uiState: StateFlow<DeviceLightDashboardUiState> =
@@ -85,10 +82,7 @@ class DeviceLightViewModel(
         observeJob?.cancel()
 
         if (deviceId <= 0L) {
-            _uiState.value = createDeviceTimeUnavailableState(
-                programs = emptyList(),
-                liveState = LightDeviceLiveState.initial(0L)
-            )
+            _uiState.value = DeviceLightDashboardUiState()
             return
         }
 
@@ -171,7 +165,7 @@ class DeviceLightViewModel(
             }
         }
 
-        val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
+        val outputPercent = LightActualDataPolicy.displayOutputPercent(liveState)
 
         val pausedGraphState = baseState.todayPlanGraphState.copy(
             showPausedOverlay = true,
@@ -190,8 +184,8 @@ class DeviceLightViewModel(
             } else {
                 "Manual Mode Active"
             },
-            currentWattText = liveState.actualPowerText,
-            outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
+            currentWattText = liveState.displayPowerText,
+            outputPercentText = if (LightActualDataPolicy.hasDisplayData(liveState)) {
                 "$outputPercent%"
             } else {
                 "--%"
@@ -214,13 +208,7 @@ class DeviceLightViewModel(
         liveState: LightDeviceLiveState
     ): DeviceLightDashboardUiState {
         val deviceTime = liveState.deviceTime
-
-        if (!liveState.hasDeviceTime || deviceTime == null) {
-            return createDeviceTimeUnavailableState(
-                programs = programs,
-                liveState = liveState
-            )
-        }
+            ?: phoneFallbackDeviceTime()
 
         val currentTime = deviceTime.curvePoint
         val currentMinute = currentTime.totalMinutes
@@ -262,17 +250,17 @@ class DeviceLightViewModel(
             }
 
             if (currentMoonlightSegment != null) {
-                val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
+                val outputPercent = LightActualDataPolicy.displayOutputPercent(liveState)
 
                 return DeviceLightDashboardUiState(
                     activeProgramName = "Moonlight",
-                    runStatus = if (liveState.hasLiveChannels) {
+                    runStatus = if (liveState.hasDisplayChannels) {
                         "Moonlight active"
                     } else {
                         "Moonlight scheduled · waiting for live data"
                     },
-                    currentWattText = liveState.actualPowerText,
-                    outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
+                    currentWattText = liveState.displayPowerText,
+                    outputPercentText = if (LightActualDataPolicy.hasDisplayData(liveState)) {
                 "$outputPercent%"
             } else {
                 "--%"
@@ -293,8 +281,8 @@ class DeviceLightViewModel(
             return DeviceLightDashboardUiState(
                 activeProgramName = "No program today",
                 runStatus = "Active schedules are not planned for today",
-                currentWattText = liveState.actualPowerText,
-                outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
+                currentWattText = liveState.displayPowerText,
+                outputPercentText = LightActualDataPolicy.displayOutputText(liveState),
                 deviceTimeText = liveState.deviceTimeText,
                 nextEventText = "Next scheduled day",
                 timelineStatusText = "No active plan today",
@@ -303,7 +291,7 @@ class DeviceLightViewModel(
                 )
             ).withLiveIndicators(
                 liveState = liveState,
-                mode = if (liveState.actualOutputPercent > 0) {
+                mode = if (liveState.displayOutputPercent > 0) {
                     LightDashboardMode.AUTO
                 } else {
                     LightDashboardMode.IDLE
@@ -345,7 +333,7 @@ class DeviceLightViewModel(
         val isMoonlightActive =
         currentTimelineSegment?.type == TodayLightPlanGraphSegmentType.MOONLIGHT
 
-        val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
+        val outputPercent = LightActualDataPolicy.displayOutputPercent(liveState)
 
         return DeviceLightDashboardUiState(
             activeProgramName = if (isMoonlightActive) {
@@ -354,7 +342,7 @@ class DeviceLightViewModel(
                 displayProgram?.name ?: "No active program"
             },
             runStatus = when {
-                isMoonlightActive && liveState.hasLiveChannels -> {
+                isMoonlightActive && liveState.hasDisplayChannels -> {
                     "Moonlight active"
                 }
 
@@ -362,7 +350,7 @@ class DeviceLightViewModel(
                     "Moonlight scheduled · waiting for live data"
                 }
 
-                runningProgram != null && !liveState.hasLiveChannels -> {
+                runningProgram != null && !liveState.hasDisplayChannels -> {
                     "Program scheduled · waiting for live data"
                 }
 
@@ -373,8 +361,8 @@ class DeviceLightViewModel(
                     )
                 }
             },
-            currentWattText = liveState.actualPowerText,
-            outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
+            currentWattText = liveState.displayPowerText,
+            outputPercentText = if (LightActualDataPolicy.hasDisplayData(liveState)) {
                 "$outputPercent%"
             } else {
                 "--%"
@@ -426,7 +414,7 @@ class DeviceLightViewModel(
         presenceState: DeviceStatusState?,
         liveState: LightDeviceLiveState
     ): DeviceLightDashboardUiState {
-        val hasLiveContact = liveState.hasFreshLiveData || liveState.hasDeviceTime
+        val hasLiveContact = liveState.hasAuthoritativeContact
         val isOnline = presenceState?.isOnline == true || hasLiveContact
         val status = when {
             presenceState?.isOnline == true -> {
@@ -454,12 +442,20 @@ class DeviceLightViewModel(
         val isStillChecking = status == DeviceConnectionStatus.UNKNOWN ||
             status == DeviceConnectionStatus.CHECKING
 
+        if (liveState.hasCachedDisplayData || isStillChecking) {
+            return copy(
+                isDeviceOnline = false,
+                controlsEnabled = false,
+                connectionStatusText = if (isStillChecking) {
+                    "Syncing live data"
+                } else {
+                    statusText
+                }
+            )
+        }
+
         return copy(
-            activeProgramName = if (isStillChecking) {
-                "Syncing device"
-            } else {
-                "Device offline"
-            },
+            activeProgramName = "Device offline",
             runStatus = statusText,
             liveMode = if (isStillChecking) {
                 LightDashboardMode.SYNC
@@ -660,45 +656,6 @@ class DeviceLightViewModel(
         )
     }
 
-    private fun createDeviceTimeUnavailableState(
-        programs: List<SavedLightProgram>,
-        liveState: LightDeviceLiveState
-    ): DeviceLightDashboardUiState {
-        val hasPrograms = programs.isNotEmpty()
-
-        return DeviceLightDashboardUiState(
-            activeProgramName = if (hasPrograms) {
-                "Device time unavailable"
-            } else {
-                "No active program"
-            },
-            runStatus = if (hasPrograms) {
-                "Reading ESP32 time"
-            } else {
-                "Create or load a light program"
-            },
-            currentWattText = liveState.actualPowerText,
-            outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
-            deviceTimeText = "--:--",
-            nextEventText = if (hasPrograms) {
-                "Waiting for ESP32 time"
-            } else {
-                "No event"
-            },
-            timelineStatusText = if (hasPrograms) {
-                "Device time unavailable"
-            } else {
-                "No active plan"
-            },
-            todayPlanGraphState = TodayLightPlanGraphState.empty(
-                currentTime = LightCurvePoint.of(0, 0)
-            )
-        ).withLiveIndicators(
-            liveState = liveState,
-            mode = LightDashboardMode.SYNC
-        )
-    }
-
     private fun createEmptyState(
         currentTime: LightCurvePoint,
         liveState: LightDeviceLiveState
@@ -706,8 +663,8 @@ class DeviceLightViewModel(
         return DeviceLightDashboardUiState(
             activeProgramName = "No active program",
             runStatus = "Create or load a light program",
-            currentWattText = liveState.actualPowerText,
-            outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
+            currentWattText = liveState.displayPowerText,
+            outputPercentText = LightActualDataPolicy.displayOutputText(liveState),
             deviceTimeText = liveState.deviceTimeText,
             nextEventText = "No event",
             timelineStatusText = "No active plan",
@@ -716,7 +673,7 @@ class DeviceLightViewModel(
             )
         ).withLiveIndicators(
             liveState = liveState,
-            mode = if (liveState.actualOutputPercent > 0) {
+            mode = if (liveState.displayOutputPercent > 0) {
                 LightDashboardMode.AUTO
             } else {
                 LightDashboardMode.IDLE
@@ -895,7 +852,7 @@ private fun SavedLightProgram.maxOutputPercent(): Int {
         liveState: LightDeviceLiveState,
         semantic: LightChannelSemantic
     ): String {
-        val value = liveState.channelFor(
+        val value = liveState.displayChannelFor(
             semantic = semantic
         )?.valuePercent
 
@@ -959,7 +916,7 @@ private fun SavedLightProgram.maxOutputPercent(): Int {
                 LightDashboardMode.AUTO
             }
 
-            liveState.actualOutputPercent > 0 -> {
+            liveState.displayOutputPercent > 0 -> {
                 LightDashboardMode.AUTO
             }
 
@@ -969,6 +926,21 @@ private fun SavedLightProgram.maxOutputPercent(): Int {
                 LightDashboardMode.IDLE
             }
         }
+    }
+
+    private fun phoneFallbackDeviceTime(): LightDeviceTimeState {
+        val calendar = Calendar.getInstance()
+
+        return LightDeviceTimeState(
+            year = calendar.get(Calendar.YEAR),
+            month = calendar.get(Calendar.MONTH) + 1,
+            day = calendar.get(Calendar.DAY_OF_MONTH),
+            weekDay = todayAppDay(),
+            hour = calendar.get(Calendar.HOUR_OF_DAY),
+            minute = calendar.get(Calendar.MINUTE),
+            second = calendar.get(Calendar.SECOND),
+            source = LightDeviceTimeState.Source.PHONE_FALLBACK
+        )
     }
 
     private fun todayAppDay(): Int {

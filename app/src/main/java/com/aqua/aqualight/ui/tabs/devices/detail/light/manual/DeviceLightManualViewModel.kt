@@ -132,7 +132,7 @@ class DeviceLightManualViewModel(
                 )
             }.collect { inputs ->
                 val hasLiveContact =
-                    inputs.liveState.hasFreshLiveData || inputs.liveState.hasDeviceTime
+                    inputs.liveState.hasAuthoritativeContact
                 val isOnline =
                     inputs.presenceState?.isOnline == true || hasLiveContact
                 val effectiveStatus = when {
@@ -165,7 +165,8 @@ class DeviceLightManualViewModel(
 
                     if (!isOnline) {
                         return@update runtimeState.toOfflineState(
-                            presenceState = inputs.presenceState
+                            presenceState = inputs.presenceState,
+                            hasCachedDisplayData = inputs.liveState.hasCachedDisplayData
                         )
                     }
 
@@ -875,16 +876,23 @@ class DeviceLightManualViewModel(
     }
 
     private fun ManualLightUiState.toOfflineState(
-        presenceState: DeviceStatusState?
+        presenceState: DeviceStatusState?,
+        hasCachedDisplayData: Boolean = false
     ): ManualLightUiState {
+        val status = presenceState?.status ?: DeviceConnectionStatus.UNKNOWN
+        val isStillChecking = status == DeviceConnectionStatus.UNKNOWN ||
+            status == DeviceConnectionStatus.CHECKING
+
         return recalculateOutput(
             state = this
         ).withCalculatedPowerText().copy(
             isDeviceOnline = false,
             controlsEnabled = false,
-            connectionStatusText = connectionStatusTextFor(
-                presenceState?.status ?: DeviceConnectionStatus.UNKNOWN
-            )
+            connectionStatusText = if (hasCachedDisplayData && isStillChecking) {
+                "Syncing live data"
+            } else {
+                connectionStatusTextFor(status)
+            }
         )
     }
 

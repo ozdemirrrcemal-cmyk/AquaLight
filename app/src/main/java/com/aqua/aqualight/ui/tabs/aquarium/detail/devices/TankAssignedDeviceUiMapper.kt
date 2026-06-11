@@ -55,7 +55,7 @@ class TankAssignedDeviceUiMapper {
                 (
                     device.isLightDevice() &&
                         lightState?.let { state ->
-                            state.hasFreshLiveData || state.hasDeviceTime
+                            state.hasAuthoritativeContact
                         } == true
                     )
 
@@ -153,8 +153,12 @@ class TankAssignedDeviceUiMapper {
 
         val waitingForFirstRuntimeEmission =
             lightState == null
+        val hasStoredPresentation =
+            modeOverride != null || activePrograms.isNotEmpty()
+
         val shouldSuppressStoredRuntime =
-            waitingForFirstRuntimeEmission || !liveState.hasLiveChannels
+            waitingForFirstRuntimeEmission ||
+                (!liveState.hasDisplayChannels && !hasStoredPresentation)
 
         val displayProgramForCard = if (shouldSuppressStoredRuntime) {
             null
@@ -163,7 +167,7 @@ class TankAssignedDeviceUiMapper {
         }
 
         val effectiveModeOverride =
-            if (online && !shouldSuppressStoredRuntime) modeOverride else null
+            if (!shouldSuppressStoredRuntime) modeOverride else null
 
         val outputPercent =
             when {
@@ -171,12 +175,12 @@ class TankAssignedDeviceUiMapper {
                     0
                 }
 
-                online && effectiveModeOverride?.outputPercent != null -> {
+                effectiveModeOverride?.outputPercent != null -> {
                     effectiveModeOverride.outputPercent
                 }
 
-                liveState.hasLiveChannels -> {
-                    LightActualDataPolicy.actualOutputPercent(liveState)
+                liveState.hasDisplayChannels -> {
+                    LightActualDataPolicy.displayOutputPercent(liveState)
                 }
 
                 else -> {
@@ -269,7 +273,7 @@ class TankAssignedDeviceUiMapper {
         currentMinute: Int,
         modeOverride: TankLightModeOverride?
     ): Int {
-        if (liveState.hasLiveChannels) {
+        if (liveState.hasDisplayChannels || modeOverride != null) {
             overrideChannelPercent(
                 semantic = channel.semantic,
                 modeOverride = modeOverride
@@ -282,14 +286,14 @@ class TankAssignedDeviceUiMapper {
                 LightChannelSemantic.GREEN,
                 LightChannelSemantic.BLUE,
                 LightChannelSemantic.WHITE -> {
-                    LightActualDataPolicy.actualChannelPercent(
+                    LightActualDataPolicy.displayChannelPercent(
                         liveState = liveState,
                         semantic = channel.semantic
                     )
                 }
 
                 LightChannelSemantic.UNKNOWN -> {
-                    LightActualDataPolicy.actualOutputPercent(liveState).coerceIn(
+                    LightActualDataPolicy.displayOutputPercent(liveState).coerceIn(
                         0,
                         100
                     )

@@ -219,6 +219,28 @@ class TankDetailDevicesViewModel(
                 ownerKey = liveRefreshOwnerKey
             )
 
+            lightStatesFlow.update { current ->
+                current + (
+                    deviceId to LightDeviceDataCenter.observeLiveState(
+                        deviceId = deviceId
+                    ).value
+                )
+            }
+
+            lightModeOverridesFlow.update { current ->
+                val initialOverride = buildModeOverrideFromManualRuntime(
+                    runtime = LightDeviceDataCenter.currentManualRuntime(
+                        deviceId = deviceId
+                    )
+                )
+
+                if (initialOverride == null) {
+                    current - deviceId
+                } else {
+                    current + (deviceId to initialOverride)
+                }
+            }
+
             LightDeviceDataCenter.refreshNow(
                 context = appContext,
                 deviceId = deviceId
