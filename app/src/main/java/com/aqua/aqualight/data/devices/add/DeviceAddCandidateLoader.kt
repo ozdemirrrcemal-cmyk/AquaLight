@@ -1,7 +1,6 @@
 package com.aqua.aqualight.data.devices.add
 
 import android.content.Context
-import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
@@ -39,8 +38,12 @@ class DeviceAddCandidateLoader(
     }
 
     private suspend fun loadLocalNetworkCandidates(
-        savedDevices: List<DevicesDataStoreManager.DeviceInfo>
+        savedDevices: List<DevicesDataStoreManager.DeviceInfoUi>
     ): List<DeviceAddCandidate> {
+        val savedDeviceIds = savedDevices
+            .map { device -> device.id }
+            .toSet()
+
         val result = DeviceDiscoveryService.scan(
             context = context,
             timeoutMs = LOCAL_DISCOVERY_TIMEOUT_MS,
@@ -53,12 +56,7 @@ class DeviceAddCandidateLoader(
 
         return result.devices
             .filter { device ->
-                savedDevices.none { savedDevice ->
-                    DeviceIdentityMatcher.samePhysicalDevice(
-                        savedDevice = savedDevice,
-                        discoveredDevice = device
-                    )
-                }
+                device.id !in savedDeviceIds
             }
             .mapNotNull { device ->
                 val definition = AquaDeviceCatalog.findByType(
@@ -81,8 +79,33 @@ class DeviceAddCandidateLoader(
     private fun mergeCandidates(
         setupCandidates: List<DeviceAddCandidate>,
         localCandidates: List<DeviceAddCandidate>,
-        savedDevices: List<DevicesDataStoreManager.DeviceInfo>
+        savedDevices: List<DevicesDataStoreManager.DeviceInfoUi>
     ): List<DeviceAddCandidate> {
+        val savedShortIds = savedDevices
+            .flatMap { device ->
+                buildList {
+                    add(device.id.toString())
+
+                    val serialSuffix = device.serial
+                        .substringAfterLast(
+                            delimiter = "-",
+                            missingDelimiterValue = ""
+                        )
+                        .trim()
+
+                    if (serialSuffix.isNotBlank()) {
+                        add(serialSuffix)
+                    }
+                }
+            }
+            .toSet()
+
+        val localDeviceIds = localCandidates
+            .mapNotNull { candidate ->
+                candidate.localDevice?.id?.toString()
+            }
+            .toSet()
+
         val filteredSetupCandidates = setupCandidates.filter { candidate ->
             val shortId = candidate.setupShortId?.trim().orEmpty()
 
@@ -90,23 +113,8 @@ class DeviceAddCandidateLoader(
                 return@filter true
             }
 
-            val alreadySaved = savedDevices.any { savedDevice ->
-                DeviceIdentityMatcher.matchesSetupShortId(
-                    savedDevice = savedDevice,
-                    setupShortId = shortId
-                )
-            }
-
-            val alreadyVisibleAsLocalDevice = localCandidates.any { localCandidate ->
-                localCandidate.localDevice?.let { localDevice ->
-                    DeviceIdentityMatcher.matchesSetupShortId(
-                        discoveredDevice = localDevice,
-                        setupShortId = shortId
-                    )
-                } == true
-            }
-
-            !alreadySaved && !alreadyVisibleAsLocalDevice
+            shortId !in savedShortIds &&
+                shortId !in localDeviceIds
         }
 
         return buildList {

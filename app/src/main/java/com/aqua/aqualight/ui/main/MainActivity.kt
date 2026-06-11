@@ -2,11 +2,11 @@ package com.aqua.aqualight.ui.main
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.aqua.aqualight.NavAppDirections
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
@@ -116,8 +116,9 @@ class MainActivity : BaseActivity() {
         binding.navHost.post {
             runCatching {
                 navController.navigate(
-                    NavAppDirections.actionGlobalTaskDetailFragment(
-                        taskId = taskId
+                    R.id.taskDetailFragment,
+                    bundleOf(
+                        "taskId" to taskId
                     )
                 )
             }

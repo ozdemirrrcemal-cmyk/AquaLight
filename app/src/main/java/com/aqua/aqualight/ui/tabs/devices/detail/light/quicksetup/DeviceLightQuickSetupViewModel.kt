@@ -7,9 +7,9 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
 import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramScheduleConflictValidator
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.engine.SmartLightRecommendationEngine
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.mapper.QuickSetupTankProfileMapper
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.DeviceLightQuickSetupEvent

@@ -6,13 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
-import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
-import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramScheduleConflictValidator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
 import java.util.UUID
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

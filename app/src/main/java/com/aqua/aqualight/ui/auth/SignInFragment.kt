@@ -63,7 +63,7 @@ class SignInFragment : Fragment() {
 
             tvForgotPassword.setOnClickListener {
                 findNavController().navigate(
-                    SignInFragmentDirections.actionSignInFragmentToResetPasswordFragment()
+                    R.id.action_signInFragment_to_resetPasswordFragment
                 )
             }
 

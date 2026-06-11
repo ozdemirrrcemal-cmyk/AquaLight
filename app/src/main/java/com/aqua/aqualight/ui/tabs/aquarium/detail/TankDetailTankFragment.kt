@@ -15,9 +15,9 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -90,19 +90,20 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
     private fun openTankSettings() {
         findNavController().navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
-                tankId = tankId,
-                startTab = ""
-            )
+            R.id.action_tankDetailFragment_to_tankSettingsFragment,
+            Bundle().apply {
+                putLong("tankId", tankId)
+            }
         )
     }
 
     private fun openTankSettingsDetails() {
         findNavController().navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
-                tankId = tankId,
-                startTab = "details"
-            )
+            R.id.action_tankDetailFragment_to_tankSettingsFragment,
+            Bundle().apply {
+                putLong("tankId", tankId)
+                putString("startTab", "details")
+            }
         )
     }
 

@@ -6,7 +6,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
 import com.aqua.aqualight.data.devices.catalog.ModuleVisibility
 
@@ -27,7 +27,7 @@ object DosingProductCatalog {
             displayName = "DosePro 4",
 
             mainModule = AquaDeviceModule.DOSING,
-            controllerType = AquaDeviceControllerType.CUSTOM_DOSING_4CH,
+            uiController = AquaDeviceUiController.CUSTOM_DOSING_4CH,
             firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
 
             moduleVisibility = mapOf(

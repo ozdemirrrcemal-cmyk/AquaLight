@@ -14,7 +14,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
-import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
@@ -31,13 +30,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.sheet.LightPreset
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightPresetsFragment :
     Fragment(R.layout.fragment_device_light_presets) {
-
-    private val args: DeviceLightPresetsFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceLightPresetsBinding? = null
     private val binding get() = _binding!!
@@ -51,7 +46,7 @@ class DeviceLightPresetsFragment :
     private var activePreset: LightPresetItem? = null
 
     private val deviceId: Long
-        get() = args.deviceId
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     override fun onViewCreated(
         view: View,
@@ -119,7 +114,7 @@ class DeviceLightPresetsFragment :
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.presetsFlow.collect { savedPresets ->
                     val customPresets = savedPresets.map { preset ->
-                        toCustomPresetItem(preset)
+                        preset.toListItem()
                     }
 
                     allPresets = BuiltInLightPresets.presets + customPresets
@@ -129,22 +124,6 @@ class DeviceLightPresetsFragment :
                 }
             }
         }
-    }
-
-
-    private fun toCustomPresetItem(
-        preset: SavedLightPreset
-    ): LightPresetItem {
-        return LightPresetItem(
-            id = preset.id,
-            title = preset.name,
-            subtitle = "Custom saved preset",
-            category = LightPresetCategory.CUSTOM,
-            red = preset.red,
-            green = preset.green,
-            blue = preset.blue,
-            white = preset.white
-        )
     }
 
     private fun observeEvents() {
@@ -358,6 +337,10 @@ class DeviceLightPresetsFragment :
     }
 
     private fun navigateToManualControl() {
+        val bundle = Bundle().apply {
+            putLong(ARG_DEVICE_ID, deviceId)
+        }
+
         val navOptions = NavOptions.Builder()
             .setPopUpTo(
                 R.id.deviceLightPresetsFragment,
@@ -366,9 +349,8 @@ class DeviceLightPresetsFragment :
             .build()
 
         findNavController().navigate(
-            DeviceLightPresetsFragmentDirections.actionDeviceLightPresetsFragmentToDeviceLightManualFragment(
-                deviceId = deviceId
-            ),
+            R.id.action_deviceLightPresetsFragment_to_deviceLightManualFragment,
+            bundle,
             navOptions
         )
     }

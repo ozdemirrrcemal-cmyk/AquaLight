@@ -67,8 +67,7 @@ class LightDeviceTimeRepository(
             val address = when (
                 val result = addressResolver.resolve(
                     deviceId = deviceId,
-                    requireOnline = true,
-                    forceLiveCheck = true
+                    requireOnline = true
                 )
             ) {
                 is LightDeviceAddressResolver.Result.Success -> result

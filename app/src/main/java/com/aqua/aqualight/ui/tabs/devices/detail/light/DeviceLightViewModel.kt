@@ -4,29 +4,25 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
-import com.aqua.aqualight.data.devices.light.runtime.LightActualDataPolicy
 import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeState
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
-import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
-import com.aqua.aqualight.data.devices.presence.DeviceStatusState
-import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegment
-import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegmentType
-import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphSegment
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphSegmentType
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightDashboardMode
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
-import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramPhaseType
-import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelineBuilder
-import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelinePhase
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramPhaseType
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelinePhase
 import java.util.Calendar
 import java.util.Locale
 import kotlinx.coroutines.Job
@@ -92,8 +88,6 @@ class DeviceLightViewModel(
             return
         }
 
-        DevicePresenceMonitor.start(appContext)
-
         LightDeviceLiveRefreshManager.start(
             context = appContext,
             deviceId = deviceId,
@@ -104,18 +98,17 @@ class DeviceLightViewModel(
             combine(
                 lightProgramsDataStoreManager.programsFlow,
                 lightRuntimeRepository.observeManualRuntime(deviceId),
-                LightDeviceLiveRefreshManager.observe(deviceId),
-                DevicePresenceMonitor.statuses
+                LightDeviceLiveRefreshManager.observe(deviceId)
             ) {
-                programs, manualRuntime, liveState, statuses ->
-                DashboardInputs(
-                    programs = programs,
-                    manualRuntime = manualRuntime,
-                    liveState = liveState,
-                    presenceState = statuses[this@DeviceLightViewModel.deviceId]
+                programs, manualRuntime, liveState ->
+                Triple(
+                    programs,
+                    manualRuntime,
+                    liveState
                 )
-            }.collect { inputs ->
-                val activeProgramsForDevice = inputs.programs.filter {
+            }.collect {
+                (programs, manualRuntime, liveState) ->
+                val activeProgramsForDevice = programs.filter {
                     program ->
                     program.deviceId == this@DeviceLightViewModel.deviceId &&
                     program.isActive
@@ -123,26 +116,23 @@ class DeviceLightViewModel(
 
                 val baseState = createStateFromPrograms(
                     programs = activeProgramsForDevice,
-                    liveState = inputs.liveState
+                    liveState = liveState
                 )
 
                 val finalState = if (
-                    inputs.manualRuntime.isManualMode ||
-                    inputs.manualRuntime.isManualScene
+                    manualRuntime.isManualMode ||
+                    manualRuntime.isManualScene
                 ) {
                     createManualRuntimeState(
                         baseState = baseState,
-                        manualRuntime = inputs.manualRuntime,
-                        liveState = inputs.liveState
+                        manualRuntime = manualRuntime,
+                        liveState = liveState
                     )
                 } else {
                     baseState
                 }
 
-                _uiState.value = finalState.withConnectionState(
-                    presenceState = inputs.presenceState,
-                    liveState = inputs.liveState
-                )
+                _uiState.value = finalState
             }
         }
     }
@@ -173,7 +163,13 @@ class DeviceLightViewModel(
             }
         }
 
-        val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
+        val outputPercent = if (liveState.hasLiveChannels) {
+            liveState.actualOutputPercent
+        } else if (manualRuntime.isPowerOn) {
+            manualRuntime.masterOutputPercent
+        } else {
+            0
+        }
 
         val pausedGraphState = baseState.todayPlanGraphState.copy(
             showPausedOverlay = true,
@@ -193,11 +189,7 @@ class DeviceLightViewModel(
                 "Manual Mode Active"
             },
             currentWattText = liveState.actualPowerText,
-            outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
-                "$outputPercent%"
-            } else {
-                "--%"
-            },
+            outputPercentText = "$outputPercent%",
             nextEventText = "Auto paused",
             timelineStatusText = "Paused · Today plan below",
             todayPlanGraphState = pausedGraphState
@@ -264,21 +256,17 @@ class DeviceLightViewModel(
             }
 
             if (currentMoonlightSegment != null) {
-                val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
+                val outputPercent = if (liveState.hasLiveChannels) {
+                    liveState.actualOutputPercent
+                } else {
+                    currentMoonlightSegment.outputPercent
+                }
 
                 return DeviceLightDashboardUiState(
                     activeProgramName = "Moonlight",
-                    runStatus = if (liveState.hasLiveChannels) {
-                        "Moonlight active"
-                    } else {
-                        "Moonlight scheduled · waiting for live data"
-                    },
+                    runStatus = "Moonlight active",
                     currentWattText = liveState.actualPowerText,
-                    outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
-                "$outputPercent%"
-            } else {
-                "--%"
-            },
+                    outputPercentText = "$outputPercent%",
                     deviceTimeText = liveState.deviceTimeText,
                     nextEventText = "Moonlight until ${labelForMinute(currentMoonlightSegment.endMinute)}",
                     timelineStatusText = "Moonlight phase active",
@@ -296,7 +284,7 @@ class DeviceLightViewModel(
                 activeProgramName = "No program today",
                 runStatus = "Active schedules are not planned for today",
                 currentWattText = liveState.actualPowerText,
-                outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
+                outputPercentText = "${liveState.actualOutputPercent}%",
                 deviceTimeText = liveState.deviceTimeText,
                 nextEventText = "Next scheduled day",
                 timelineStatusText = "No active plan today",
@@ -347,7 +335,26 @@ class DeviceLightViewModel(
         val isMoonlightActive =
         currentTimelineSegment?.type == TodayLightPlanGraphSegmentType.MOONLIGHT
 
-        val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
+        val expectedOutput = when {
+            isMoonlightActive && currentTimelineSegment != null -> {
+                currentTimelineSegment.outputPercent
+            }
+
+            runningProgram != null -> {
+                calculateCurrentOutputPercent(
+                    program = runningProgram,
+                    currentMinute = currentMinute
+                )
+            } else -> {
+                0
+            }
+        }
+
+        val outputPercent = if (liveState.hasLiveChannels) {
+            liveState.actualOutputPercent
+        } else {
+            expectedOutput
+        }
 
         return DeviceLightDashboardUiState(
             activeProgramName = if (isMoonlightActive) {
@@ -355,32 +362,16 @@ class DeviceLightViewModel(
             } else {
                 displayProgram?.name ?: "No active program"
             },
-            runStatus = when {
-                isMoonlightActive && liveState.hasLiveChannels -> {
-                    "Moonlight active"
-                }
-
-                isMoonlightActive -> {
-                    "Moonlight scheduled · waiting for live data"
-                }
-
-                runningProgram != null && !liveState.hasLiveChannels -> {
-                    "Program scheduled · waiting for live data"
-                }
-
-                else -> {
-                    buildRunStatus(
-                        runningProgram = runningProgram,
-                        nextProgramToday = nextProgramToday
-                    )
-                }
+            runStatus = if (isMoonlightActive) {
+                "Moonlight active"
+            } else {
+                buildRunStatus(
+                    runningProgram = runningProgram,
+                    nextProgramToday = nextProgramToday
+                )
             },
             currentWattText = liveState.actualPowerText,
-            outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
-                "$outputPercent%"
-            } else {
-                "--%"
-            },
+            outputPercentText = "$outputPercent%",
             deviceTimeText = liveState.deviceTimeText,
             nextEventText = if (
                 isMoonlightActive &&
@@ -424,61 +415,6 @@ class DeviceLightViewModel(
         )
     }
 
-    private fun DeviceLightDashboardUiState.withConnectionState(
-        presenceState: DeviceStatusState?,
-        liveState: LightDeviceLiveState
-    ): DeviceLightDashboardUiState {
-        val status = presenceState?.status ?: DeviceConnectionStatus.UNKNOWN
-        val isOnline = presenceState?.isOnline == true
-        val statusText = connectionStatusTextFor(status)
-
-        if (isOnline) {
-            return copy(
-                isDeviceOnline = true,
-                controlsEnabled = true,
-                connectionStatusText = statusText
-            )
-        }
-
-        return copy(
-            activeProgramName = "Device offline",
-            runStatus = statusText,
-            liveMode = LightDashboardMode.IDLE,
-            currentWattText = "-- W",
-            outputPercentText = "0%",
-            redChannelText = "R --",
-            greenChannelText = "G --",
-            blueChannelText = "B --",
-            whiteChannelText = "W --",
-            deviceTimeText = if (liveState.hasDeviceTime) {
-                liveState.deviceTimeText
-            } else {
-                "--:--"
-            },
-            nextEventText = "Reconnect the controller to continue",
-            healthTemperatureText = "-- °C",
-            healthTemperatureStatusText = "Unavailable",
-            healthFanText = "Unavailable",
-            healthFanStatusText = "Unavailable",
-            timelineStatusText = "Live connection unavailable",
-            isDeviceOnline = false,
-            controlsEnabled = false,
-            connectionStatusText = statusText
-        )
-    }
-
-    private fun connectionStatusTextFor(
-        status: DeviceConnectionStatus
-    ): String {
-        return when (status) {
-            DeviceConnectionStatus.ONLINE -> "Online"
-            DeviceConnectionStatus.CHECKING -> "Checking device connection"
-            DeviceConnectionStatus.STALE -> "Connection is unstable · controls disabled"
-            DeviceConnectionStatus.OFFLINE -> "Device offline · controls disabled"
-            DeviceConnectionStatus.UNKNOWN -> "Waiting for device connection"
-        }
-    }
-
     private fun buildTodayGraphSegments(
         programs: List<SavedLightProgram>,
         deviceTime: LightDeviceTimeState,
@@ -514,14 +450,39 @@ class DeviceLightViewModel(
                 appDay = previousAppDay
             )
 
-            timeline.phases.forEach { phase ->
-                if (phase.type == LightProgramPhaseType.MAIN_CURVE && scheduledToday) {
-                    result += buildMainProgramGraphSegment(
-                        program = program,
-                        phase = phase,
-                        runningProgram = runningProgram,
-                        nextProgramToday = nextProgramToday
-                    )
+            timeline.phases.forEach {
+                phase ->
+                when (phase.type) {
+                    LightProgramPhaseType.MAIN_CURVE -> {
+                        if (scheduledToday) {
+                            result += buildMainProgramGraphSegment(
+                                program = program,
+                                phase = phase,
+                                runningProgram = runningProgram,
+                                nextProgramToday = nextProgramToday
+                            )
+                        }
+                    }
+
+                    LightProgramPhaseType.MOONLIGHT -> {
+                        if (scheduledToday) {
+                            result += buildMoonlightEveningSegments(
+                                program = program,
+                                phase = phase,
+                                currentMinute = currentMinute
+                            )
+                        }
+
+                        if (scheduledYesterday) {
+                            result += buildMoonlightEarlyMorningSegments(
+                                program = program,
+                                phase = phase,
+                                currentMinute = currentMinute
+                            )
+                        }
+                    }
+
+                    LightProgramPhaseType.CLOUD_OVERLAY -> Unit
                 }
             }
         }
@@ -574,6 +535,86 @@ class DeviceLightViewModel(
             peakEndMinute = (phase.peakEndMinute ?: phase.endMinute)
             .coerceIn(0, MINUTES_PER_DAY),
             endMinute = phase.endMinute.coerceIn(0, MINUTES_PER_DAY)
+        )
+    }
+
+    private fun buildMoonlightEveningSegments(
+        program: SavedLightProgram,
+        phase: LightProgramTimelinePhase,
+        currentMinute: Int
+    ): List<TodayLightPlanGraphSegment> {
+        val start = phase.startMinute.coerceIn(0, MINUTES_PER_DAY)
+        val end = phase.endMinute.coerceIn(0, MINUTES_PER_DAY)
+
+        if (end <= start) {
+            return emptyList()
+        }
+
+        return listOf(
+            buildMoonlightGraphSegment(
+                id = "${program.id}_moon_evening",
+                startMinute = start,
+                endMinute = end,
+                outputPercent = phase.outputPercent,
+                currentMinute = currentMinute
+            )
+        )
+    }
+
+    private fun buildMoonlightEarlyMorningSegments(
+        program: SavedLightProgram,
+        phase: LightProgramTimelinePhase,
+        currentMinute: Int
+    ): List<TodayLightPlanGraphSegment> {
+        if (phase.endMinute <= MINUTES_PER_DAY) {
+            return emptyList()
+        }
+
+        val end = (phase.endMinute - MINUTES_PER_DAY)
+        .coerceIn(0, MINUTES_PER_DAY)
+
+        if (end <= 0) {
+            return emptyList()
+        }
+
+        return listOf(
+            buildMoonlightGraphSegment(
+                id = "${program.id}_moon_morning",
+                startMinute = 0,
+                endMinute = end,
+                outputPercent = phase.outputPercent,
+                currentMinute = currentMinute
+            )
+        )
+    }
+
+    private fun buildMoonlightGraphSegment(
+        id: String,
+        startMinute: Int,
+        endMinute: Int,
+        outputPercent: Int,
+        currentMinute: Int
+    ): TodayLightPlanGraphSegment {
+        val isCurrent =
+        currentMinute >= startMinute &&
+        currentMinute < endMinute
+
+        return TodayLightPlanGraphSegment(
+            id = id,
+            name = "Moonlight",
+            start = pointFromMinuteForGraph(startMinute),
+            peakStart = pointFromMinuteForGraph(startMinute),
+            peakEnd = pointFromMinuteForGraph(endMinute),
+            end = pointFromMinuteForGraph(endMinute),
+            outputPercent = outputPercent.coerceIn(1, 30),
+            transitionMode = LightCurveTransitionMode.LINEAR,
+            isCurrent = isCurrent,
+            isNext = false,
+            type = TodayLightPlanGraphSegmentType.MOONLIGHT,
+            startMinute = startMinute,
+            peakStartMinute = startMinute,
+            peakEndMinute = endMinute,
+            endMinute = endMinute
         )
     }
 
@@ -648,7 +689,7 @@ class DeviceLightViewModel(
                 "Create or load a light program"
             },
             currentWattText = liveState.actualPowerText,
-            outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
+            outputPercentText = "${liveState.actualOutputPercent}%",
             deviceTimeText = "--:--",
             nextEventText = if (hasPrograms) {
                 "Waiting for ESP32 time"
@@ -677,7 +718,7 @@ class DeviceLightViewModel(
             activeProgramName = "No active program",
             runStatus = "Create or load a light program",
             currentWattText = liveState.actualPowerText,
-            outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
+            outputPercentText = "${liveState.actualOutputPercent}%",
             deviceTimeText = liveState.deviceTimeText,
             nextEventText = "No event",
             timelineStatusText = "No active plan",
@@ -780,7 +821,80 @@ class DeviceLightViewModel(
         return minute >= startMinutes && minute < endMinutes
     }
 
-private fun SavedLightProgram.maxOutputPercent(): Int {
+    private fun calculateCurrentOutputPercent(
+        program: SavedLightProgram,
+        currentMinute: Int
+    ): Int {
+        val draft = program.draft
+
+        if (!isProgramRunningAt(program, currentMinute)) {
+            return 0
+        }
+
+        val peakPercent = program.maxOutputPercent()
+
+        if (peakPercent <= 0) {
+            return 0
+        }
+
+        val points = LightCurveInterpolator.buildCurvePoints(
+            startMinute = draft.start.totalMinutes,
+            peakStartMinute = draft.peakStart.totalMinutes,
+            peakEndMinute = draft.peakEnd.totalMinutes,
+            endMinute = LightProgramTimeMath.endMinutes(draft.end),
+            peakPercent = peakPercent,
+            transitionMode = draft.transitionMode
+        ).sortedBy {
+            point ->
+            point.x
+        }
+
+        if (points.isEmpty()) {
+            return 0
+        }
+
+        val current = currentMinute.toDouble()
+
+        val previous = points.lastOrNull {
+            point ->
+            point.x.toDouble() <= current
+        }
+
+        val next = points.firstOrNull {
+            point ->
+            point.x.toDouble() >= current
+        }
+
+        val output = when {
+            previous == null -> {
+                points.first().y
+            }
+
+            next == null -> {
+                points.last().y
+            }
+
+            previous.x == next.x -> {
+                previous.y
+            } else -> {
+                val previousX = previous.x.toDouble()
+                val nextX = next.x.toDouble()
+                val previousY = previous.y.toDouble()
+                val nextY = next.y.toDouble()
+
+                val progress =
+                (current - previousX) / (nextX - previousX)
+
+                previousY + ((nextY - previousY) * progress)
+            }
+        }
+
+        return output
+        .toInt()
+        .coerceIn(0, 100)
+    }
+
+    private fun SavedLightProgram.maxOutputPercent(): Int {
         return maxOf(
             draft.channelValues.red,
             draft.channelValues.green,
@@ -951,13 +1065,6 @@ private fun SavedLightProgram.maxOutputPercent(): Int {
             dayOfWeek - 1
         }
     }
-
-    private data class DashboardInputs(
-        val programs: List<SavedLightProgram>,
-        val manualRuntime: LightManualRuntimeState,
-        val liveState: LightDeviceLiveState,
-        val presenceState: DeviceStatusState?
-    )
 
     override fun onCleared() {
         observeJob?.cancel()

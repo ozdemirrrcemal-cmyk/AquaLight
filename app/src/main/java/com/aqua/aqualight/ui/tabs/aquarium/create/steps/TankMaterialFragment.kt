@@ -14,8 +14,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankMaterialBinding
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategory
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategory
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.google.android.material.card.MaterialCardView
 
@@ -292,18 +292,14 @@ class TankMaterialFragment :
             )
 
         if (materials.isEmpty()) {
-            return getString(R.string.material_picker_not_selected)
+            return "Not selected"
         }
 
         if (materials.size == 1) {
             return materials.first().name
         }
 
-        return getString(
-            R.string.material_picker_more_count,
-            materials.first().name,
-            materials.size - 1
-        )
+        return "${materials.first().name} +${materials.size - 1} more"
     }
 
     private fun openMaterialPicker(

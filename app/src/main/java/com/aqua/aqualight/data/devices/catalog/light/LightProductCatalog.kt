@@ -6,7 +6,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
 import com.aqua.aqualight.data.devices.catalog.ModuleVisibility
 
@@ -27,7 +27,7 @@ object LightProductCatalog {
             displayName = "WRGB Pro2",
 
             mainModule = AquaDeviceModule.LIGHT,
-            controllerType = AquaDeviceControllerType.GENERIC_LIGHT,
+            uiController = AquaDeviceUiController.GENERIC_LIGHT,
             firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
 
             moduleVisibility = mapOf(
@@ -116,7 +116,7 @@ object LightProductCatalog {
             displayName = "RGB Pro Elite",
 
             mainModule = AquaDeviceModule.LIGHT,
-            controllerType = AquaDeviceControllerType.GENERIC_LIGHT,
+            uiController = AquaDeviceUiController.GENERIC_LIGHT,
             firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
 
             moduleVisibility = mapOf(

@@ -1,7 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 
-import com.aqua.aqualight.data.aquarium.catalog.plant.PlantCatalog
-import com.aqua.aqualight.data.aquarium.catalog.plant.AquariumPlant
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -17,15 +15,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.google.android.material.card.MaterialCardView
-import androidx.navigation.fragment.navArgs
 
 class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
-
-    interface PlantPickerHost {
-        fun closePlantPickerFlow()
-    }
-
-    private val args: PlantPickerFragmentArgs by navArgs()
 
     private var _binding: FragmentPlantPickerBinding? = null
     private val binding get() = _binding!!
@@ -55,7 +46,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     closePicker()
                 },
                 searchField = AquaHeaderSearchField(
-                    hint = getString(R.string.catalog_search_hint),
+                    hint = "Type here to search...",
                     onTextChanged = { query ->
                         filterPlants(query)
                     },
@@ -97,9 +88,9 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         val title = TextView(requireContext()).apply {
             text = if (plantList.size == plants.size) {
-                getString(R.string.plant_picker_title)
+                "Aquarium Plants"
             } else {
-                getString(R.string.plant_picker_found, plantList.size)
+                "${plantList.size} plants found"
             }
 
             setTextColor(Color.parseColor("#8FA4BE"))
@@ -130,7 +121,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
     private fun showEmptySearchResult() {
         val emptyText = TextView(requireContext()).apply {
-            text = getString(R.string.plant_picker_empty)
+            text = "No plants found"
             setTextColor(Color.parseColor("#8FA4BE"))
             textSize = 15f
             gravity = Gravity.CENTER
@@ -244,7 +235,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             resultBundle
         )
 
-        closeEmbeddedPicker()
+        parentFragmentManager.popBackStack()
     }
 
     private fun closePicker() {
@@ -253,17 +244,14 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             return
         }
 
-        closeEmbeddedPicker()
-    }
-
-    private fun closeEmbeddedPicker() {
-        (parentFragment as? PlantPickerHost)
-            ?.closePlantPickerFlow()
-            ?: parentFragmentManager.popBackStack()
+        parentFragmentManager.popBackStack()
     }
 
     private fun usesNavigationResult(): Boolean {
-        return args.useNavResult
+        return arguments?.getBoolean(
+            ARG_USE_NAV_RESULT,
+            false
+        ) == true
     }
 
     private fun Int.dp(): Int {
@@ -283,13 +271,5 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         const val RESULT_PLANT_NAME = "plant_name"
         const val RESULT_PLANT_CATEGORY = "plant_category"
-
-        fun newCreateInstance(): PlantPickerFragment {
-            return PlantPickerFragment().apply {
-                arguments = bundleOf(
-                    ARG_USE_NAV_RESULT to false
-                )
-            }
-        }
     }
 }

@@ -21,13 +21,9 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class TankDeviceSelectFragment :
     Fragment(R.layout.fragment_tank_device_select) {
-
-    private val args: TankDeviceSelectFragmentArgs by navArgs()
-
 
     private var _binding: FragmentTankDeviceSelectBinding? = null
     private val binding get() = _binding!!
@@ -44,7 +40,9 @@ class TankDeviceSelectFragment :
         false
 
     private val tankId: Long
-        get() = args.tankId
+        get() = requireArguments().getLong(
+            ARG_TANK_ID
+        )
 
     override fun onViewCreated(
         view: View,
@@ -113,10 +111,14 @@ class TankDeviceSelectFragment :
                     val statuses =
                         pair.second
 
+                    val now =
+                        System.currentTimeMillis()
+
                     val items =
                         devices.map { device ->
                             device.toSelectItem(
-                                statuses = statuses
+                                statuses = statuses,
+                                now = now
                             )
                         }
 
@@ -128,11 +130,18 @@ class TankDeviceSelectFragment :
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfo.toSelectItem(
-        statuses: Map<Long, DeviceStatusState>
+    private fun DevicesDataStoreManager.DeviceInfoUi.toSelectItem(
+        statuses: Map<Long, DeviceStatusState>,
+        now: Long
     ): TankDeviceSelectItem {
+        val presenceState =
+            statuses[id]
+
         val online =
-            statuses[id]?.isOnline == true
+            presenceState?.isOnline ?: (
+                lastSeenMillis > 0L &&
+                    now - lastSeenMillis <= ONLINE_TIMEOUT_MS
+                )
 
         return TankDeviceSelectItem(
             deviceId = id,
@@ -145,7 +154,7 @@ class TankDeviceSelectFragment :
         )
     }
 
-    private fun DevicesDataStoreManager.DeviceInfo.buildDeviceTitle(): String {
+    private fun DevicesDataStoreManager.DeviceInfoUi.buildDeviceTitle(): String {
         val catalogName =
             AquaDeviceCatalog.findByType(
                 type = deviceType
@@ -251,5 +260,8 @@ class TankDeviceSelectFragment :
 
         const val RESULT_SELECTED_TANK_ID =
             "tankDeviceSelectResultTankId"
+
+        private const val ONLINE_TIMEOUT_MS =
+            90_000L
     }
 }

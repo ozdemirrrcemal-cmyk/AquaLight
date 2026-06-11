@@ -23,13 +23,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.sheet.QuickSetupInfoBottomSheet
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightQuickSetupFragment :
     Fragment(R.layout.fragment_device_light_quick_setup) {
-
-    private val args: DeviceLightQuickSetupFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceLightQuickSetupBinding? = null
     private val binding get() = _binding!!
@@ -37,7 +33,7 @@ class DeviceLightQuickSetupFragment :
     private val viewModel: DeviceLightQuickSetupViewModel by viewModels()
 
     private val deviceId: Long
-        get() = args.deviceId
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     override fun onViewCreated(
         view: View,

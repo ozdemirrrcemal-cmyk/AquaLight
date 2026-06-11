@@ -4,28 +4,37 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
-import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
-import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.databinding.FragmentNetworkBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.Inet4Address
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.net.SocketTimeoutException
 
 class NetworkFragment : Fragment(R.layout.fragment_network) {
 
     private var _binding: FragmentNetworkBinding? = null
     private val binding get() = _binding!!
+
+    private var udpListenJob: Job? = null
+
+    private val tag = "NetworkFragment"
 
     override fun onViewCreated(
         view: View,
@@ -41,7 +50,7 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
 
         setupHeader()
         bindConnectionStatus()
-        observeDiscoveredDevices()
+        startUdpScanLoop()
     }
 
     private fun setupHeader() {
@@ -111,87 +120,334 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
             typeText
     }
 
-    private fun observeDiscoveredDevices() {
-        val appContext =
-            requireContext().applicationContext
+    data class UdpDeviceUi(
+        val ip: String,
+        val name: String,
+        val aquaName: String?,
+        val cloneName: String?,
+        val firmware: String?,
+        val hasLight: Boolean,
+        val hasTimer: Boolean,
+        val hasTemperature: Boolean,
+        val lastSeenMillis: Long
+    )
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-                var isFirstScan =
-                    true
-
-                while (isActive) {
-                    if (isFirstScan) {
-                        showScanMessage(
-                            getString(
-                                R.string.network_devices_scanning
-                            )
-                        )
-                    }
-
-                    val result =
-                        DeviceDiscoveryService.scan(
-                            context = appContext,
-                            timeoutMs = NETWORK_SCAN_TIMEOUT_MS,
-                            reason = DeviceScanReason.MANUAL_SCAN
-                        )
-
-                    if (result.error != null) {
-                        showScanMessage(
-                            getString(
-                                R.string.network_devices_empty
-                            )
-                        )
-                    } else {
-                        bindDevicesToUi(
-                            result.devices.sortedWith(
-                                compareBy<DiscoveredAquaDevice> {
-                                    it.productModel.orEmpty().ifBlank {
-                                        it.aquaName.ifBlank {
-                                            it.name
-                                        }
-                                    }
-                                }.thenBy {
-                                    it.id
-                                }
-                            )
-                        )
-                    }
-
-                    isFirstScan =
-                        false
-
-                    delay(
-                        NETWORK_SCAN_INTERVAL_MS
-                    )
-                }
-            }
-        }
-    }
-
-    private fun showScanMessage(
-        message: String
-    ) {
+    private fun startUdpScanLoop() {
         binding.deviceListContainer.removeAllViews()
 
         binding.tvNoDevices.visibility =
             View.VISIBLE
 
         binding.tvNoDevices.text =
-            message
+            getString(
+                R.string.network_devices_scanning
+            )
+
+        udpListenJob?.cancel()
+
+        udpListenJob =
+            viewLifecycleOwner.lifecycleScope.launch(
+                Dispatchers.IO
+            ) {
+                val devicesMap =
+                    LinkedHashMap<String, UdpDeviceUi>()
+
+                val port =
+                    10888
+
+                val listenTimeoutMs =
+                    1000
+
+                val staleTimeoutMs =
+                    3 * 60_000L
+
+                var lastRefreshSend =
+                    0L
+
+                while (isActive) {
+                    val nowLoop =
+                        System.currentTimeMillis()
+
+                    if (
+                        nowLoop - lastRefreshSend >
+                        5000
+                    ) {
+                        sendUdpRefreshBroadcast(
+                            port
+                        )
+
+                        lastRefreshSend =
+                            nowLoop
+                    }
+
+                    val newDevices =
+                        listenForUdpBroadcasts(
+                            port = port,
+                            timeoutMillis = listenTimeoutMs
+                        )
+
+                    val now =
+                        System.currentTimeMillis()
+
+                    newDevices.forEach { device ->
+                        devicesMap[device.ip] =
+                            device.copy(
+                                lastSeenMillis = now
+                            )
+                    }
+
+                    val visibleDevices =
+                        devicesMap.values
+                            .filter {
+                                now - it.lastSeenMillis <= staleTimeoutMs
+                            }
+                            .sortedBy {
+                                it.aquaName ?: it.name
+                            }
+
+                    withContext(
+                        Dispatchers.Main
+                    ) {
+                        bindDevicesToUi(
+                            visibleDevices
+                        )
+                    }
+                }
+            }
+    }
+
+    private fun sendUdpRefreshBroadcast(
+        port: Int
+    ) {
+        try {
+            DatagramSocket().use { socket ->
+                socket.broadcast =
+                    true
+
+                val data =
+                    """{"Command":"RefreshUDP"}"""
+                        .toByteArray(
+                            Charsets.UTF_8
+                        )
+
+                val packet =
+                    DatagramPacket(
+                        data,
+                        data.size,
+                        InetAddress.getByName("255.255.255.255"),
+                        port
+                    )
+
+                socket.send(
+                    packet
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(
+                tag,
+                "UDP RefreshUDP send failed",
+                e
+            )
+        }
+    }
+
+    private fun listenForUdpBroadcasts(
+        port: Int,
+        timeoutMillis: Int
+    ): List<UdpDeviceUi> {
+        val result =
+            LinkedHashMap<String, UdpDeviceUi>()
+
+        try {
+            DatagramSocket(port).use { socket ->
+                socket.soTimeout =
+                    timeoutMillis
+
+                val buffer =
+                    ByteArray(4096)
+
+                while (true) {
+                    val packet =
+                        DatagramPacket(
+                            buffer,
+                            buffer.size
+                        )
+
+                    try {
+                        socket.receive(
+                            packet
+                        )
+                    } catch (_: SocketTimeoutException) {
+                        break
+                    }
+
+                    val senderIp =
+                        packet.address
+                            ?.hostAddress
+                            ?: continue
+
+                    val length =
+                        packet.length
+
+                    val payload =
+                        buffer.copyOf(
+                            length
+                        )
+                            .toString(
+                                Charsets.UTF_8
+                            )
+                            .trim()
+
+                    try {
+                        val device =
+                            parseEsp32UdpJson(
+                                senderIp,
+                                payload
+                            )
+
+                        if (device != null) {
+                            result[senderIp] =
+                                device
+                        } else {
+                            result[senderIp] =
+                                UdpDeviceUi(
+                                    ip = senderIp,
+                                    name = "Aqua device",
+                                    aquaName = null,
+                                    cloneName = null,
+                                    firmware = null,
+                                    hasLight = false,
+                                    hasTimer = false,
+                                    hasTemperature = false,
+                                    lastSeenMillis = System.currentTimeMillis()
+                                )
+                        }
+                    } catch (e: Exception) {
+                        Log.e(
+                            tag,
+                            "UDP JSON parse failed: $payload",
+                            e
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(
+                tag,
+                "UDP listen failed",
+                e
+            )
+        }
+
+        return result.values.toList()
+    }
+
+    private fun parseEsp32UdpJson(
+        senderIp: String,
+        payload: String
+    ): UdpDeviceUi? {
+        val root =
+            try {
+                JSONObject(
+                    payload
+                )
+            } catch (_: Exception) {
+                return null
+            }
+
+        val dataObj =
+            root.optJSONObject(
+                "Data"
+            ) ?: return null
+
+        val dev0 =
+            dataObj.optJSONObject(
+                "0"
+            ) ?: return null
+
+        val name =
+            dev0.optString(
+                "Name",
+                ""
+            )
+
+        val aquaName =
+            dev0.optString(
+                "AquaName",
+                null
+            )
+
+        val cloneName =
+            dev0.optString(
+                "CloneName",
+                null
+            )
+
+        val firmware =
+            dev0.optString(
+                "FirmwareBuild",
+                null
+            )
+
+        val ipFromJson =
+            dev0.optString(
+                "IP",
+                null
+            )
+
+        val finalIp =
+            if (
+                !ipFromJson.isNullOrBlank()
+            ) {
+                ipFromJson
+            } else {
+                senderIp
+            }
+
+        val hasLight =
+            dev0.optInt(
+                "TabLight",
+                0
+            ) != 0
+
+        val hasTimer =
+            dev0.optInt(
+                "TabTimer",
+                0
+            ) != 0
+
+        val hasTemperature =
+            dev0.optInt(
+                "TabTemperature",
+                0
+            ) != 0
+
+        return UdpDeviceUi(
+            ip = finalIp,
+            name = name.ifBlank {
+                "Aqua device"
+            },
+            aquaName = aquaName,
+            cloneName = cloneName,
+            firmware = firmware,
+            hasLight = hasLight,
+            hasTimer = hasTimer,
+            hasTemperature = hasTemperature,
+            lastSeenMillis = System.currentTimeMillis()
+        )
     }
 
     private fun bindDevicesToUi(
-        devices: List<DiscoveredAquaDevice>
+        devices: List<UdpDeviceUi>
     ) {
         val container =
             binding.deviceListContainer
 
         container.removeAllViews()
 
-        if (devices.isEmpty()) {
+        if (
+            devices.isEmpty()
+        ) {
             binding.tvNoDevices.visibility =
                 View.VISIBLE
 
@@ -229,11 +485,44 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
                     R.id.tvDeviceInfo
                 )
 
+            val mainName =
+                when {
+                    !device.aquaName.isNullOrBlank() -> {
+                        device.aquaName
+                    }
+
+                    device.name.isNotBlank() -> {
+                        device.name
+                    }
+
+                    else -> {
+                        getString(
+                            R.string.network_device_default_name
+                        )
+                    }
+                }
+
             tvName.text =
-                resolveDeviceName(device)
+                mainName
 
             tvInfo.text =
-                buildDeviceInfo(device)
+                buildString {
+                    append(
+                        device.ip
+                    )
+
+                    if (
+                        device.name.isNotBlank()
+                    ) {
+                        append(
+                            " • "
+                        )
+
+                        append(
+                            device.name
+                        )
+                    }
+                }
 
             container.addView(
                 row
@@ -241,80 +530,44 @@ class NetworkFragment : Fragment(R.layout.fragment_network) {
         }
     }
 
-    private fun resolveDeviceName(
-        device: DiscoveredAquaDevice
-    ): String {
-        return device.productModel
-            .orEmpty()
-            .ifBlank {
-                device.aquaName.ifBlank {
-                    device.name.ifBlank {
-                        getString(
-                            R.string.network_device_default_name
-                        )
+    @Suppress("unused")
+    private fun getLocalIpv4(): String? {
+        return try {
+            val interfaces =
+                NetworkInterface.getNetworkInterfaces()
+
+            for (
+                networkInterface in interfaces
+            ) {
+                val addresses =
+                    networkInterface.inetAddresses
+
+                for (
+                    address in addresses
+                ) {
+                    if (
+                        !address.isLoopbackAddress &&
+                        address is Inet4Address
+                    ) {
+                        return address.hostAddress
                     }
                 }
             }
-    }
 
-    private fun buildDeviceInfo(
-        device: DiscoveredAquaDevice
-    ): String {
-        return buildString {
-            append(
-                device.ip
-            )
-
-            append(
-                " • ID: "
-            )
-            append(
-                device.id
-            )
-
-            device.macAddress
-                ?.takeIf { it.isNotBlank() }
-                ?.let { macAddress ->
-                    append(
-                        " • MAC: "
-                    )
-                    append(
-                        macAddress
-                    )
-                }
-
-            device.firmwareVersion
-                ?.takeIf { it.isNotBlank() }
-                ?.let { firmwareVersion ->
-                    append(
-                        " • FW: "
-                    )
-                    append(
-                        firmwareVersion
-                    )
-                }
-                ?: device.firmwareBuild
-                    .takeIf { it.isNotBlank() }
-                    ?.let { firmwareBuild ->
-                        append(
-                            " • FW: "
-                        )
-                        append(
-                            firmwareBuild
-                        )
-                    }
+            null
+        } catch (_: Exception) {
+            null
         }
     }
 
     override fun onDestroyView() {
+        udpListenJob?.cancel()
+        udpListenJob =
+            null
+
         _binding =
             null
 
         super.onDestroyView()
-    }
-
-    companion object {
-        private const val NETWORK_SCAN_TIMEOUT_MS = 1_500L
-        private const val NETWORK_SCAN_INTERVAL_MS = 5_000L
     }
 }

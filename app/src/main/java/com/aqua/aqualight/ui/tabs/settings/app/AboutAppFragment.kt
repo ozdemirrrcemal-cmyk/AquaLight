@@ -97,19 +97,19 @@ class AboutAppFragment : Fragment(R.layout.fragment_about_app) {
 
             rowPrivacy.setOnClickListener {
                 findNavController().navigate(
-                    AboutAppFragmentDirections.actionAboutAppFragmentToPrivacyFragment()
+                    R.id.action_aboutAppFragment_to_privacyFragment
                 )
             }
 
             rowTerms.setOnClickListener {
                 findNavController().navigate(
-                    AboutAppFragmentDirections.actionAboutAppFragmentToTermsOfUseFragment()
+                    R.id.action_aboutAppFragment_to_termsOfUseFragment
                 )
             }
 
             rowLicenses.setOnClickListener {
                 findNavController().navigate(
-                    AboutAppFragmentDirections.actionAboutAppFragmentToOpenSourceLicensesFragment()
+                    R.id.action_aboutAppFragment_to_openSourceLicensesFragment
                 )
             }
         }

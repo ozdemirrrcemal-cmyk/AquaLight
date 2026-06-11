@@ -17,24 +17,26 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.CloudFrequency
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.DeviceLightProgramEditorUiState
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
-import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.common.sheet.LightCurveTimePickerSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.LightProgramTimeMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.MoonlightChannel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model.RepeatMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCloudSimulationSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCurveTimePickerSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightCustomDaysSheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightMoonlightSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightPreviewDaySheet
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.sheet.LightTransitionVariantSheet
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
 import com.google.android.material.slider.Slider
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightProgramEditorFragment :
     Fragment(R.layout.fragment_device_light_program_editor) {
-
-    private val args: DeviceLightProgramEditorFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceLightProgramEditorBinding? = null
     private val binding get() = _binding!!
@@ -45,10 +47,10 @@ class DeviceLightProgramEditorFragment :
     private var previewDaySheet: LightPreviewDaySheet? = null
 
     private val deviceId: Long
-        get() = args.deviceId
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val programId: String?
-        get() = args.programId
+        get() = arguments?.getString(ARG_PROGRAM_ID)
 
     override fun onViewCreated(
         view: View,
@@ -82,10 +84,24 @@ class DeviceLightProgramEditorFragment :
 
     private fun setupProgramSettingsRows() {
         bindActionRow(
+            row = binding.actionMoonlight.root,
+            iconRes = R.drawable.ic_light_moon_24,
+            title = "Moonlight",
+            subtitle = "Soft output after sunset"
+        )
+
+        bindActionRow(
+            row = binding.actionCloudSimulation.root,
+            iconRes = R.drawable.ic_light_cloud_24,
+            title = "Cloud Simulation",
+            subtitle = "Natural light variation"
+        )
+
+        bindActionRow(
             row = binding.actionTransitionSmoothing.root,
             iconRes = R.drawable.ic_light_waves_24,
-            title = "Natural Transition",
-            subtitle = "Sunrise-like natural ramp"
+            title = "Transition Variant",
+            subtitle = "Make ramps feel more natural"
         )
     }
 
@@ -206,6 +222,8 @@ class DeviceLightProgramEditorFragment :
             )
 
             renderRepeatMode(state)
+            renderMoonlightSummary(state)
+            renderCloudSimulationSummary(state)
             renderTransitionSummary(state)
         } finally {
             isRendering = false
@@ -305,7 +323,41 @@ class DeviceLightProgramEditorFragment :
                 }
         }
 
-        binding.actionTransitionSmoothing.root.setOnClickListener(null)
+        binding.actionMoonlight.root.setOnClickListener {
+            val state = viewModel.uiState.value
+
+            LightMoonlightSheet
+                .create(requireContext())
+                .show(
+                    initialSettings = state.moonlightSettings
+                ) { settings ->
+                    viewModel.updateMoonlight(settings)
+                }
+        }
+
+        binding.actionCloudSimulation.root.setOnClickListener {
+            val state = viewModel.uiState.value
+
+            LightCloudSimulationSheet
+                .create(requireContext())
+                .show(
+                    initialSettings = state.cloudSimulationSettings
+                ) { settings ->
+                    viewModel.updateCloudSimulation(settings)
+                }
+        }
+
+        binding.actionTransitionSmoothing.root.setOnClickListener {
+            val state = viewModel.uiState.value
+
+            LightTransitionVariantSheet
+                .create(requireContext())
+                .show(
+                    initialMode = state.transitionMode
+                ) { mode ->
+                    viewModel.updateTransitionMode(mode)
+                }
+        }
 
         binding.btnLoadToDevice.setOnClickListener {
             val isEditing = viewModel.isEditingExistingProgram()
@@ -506,12 +558,62 @@ class DeviceLightProgramEditorFragment :
         )
     }
 
+    private fun renderMoonlightSummary(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        val settings = state.moonlightSettings
+
+        val subtitle = if (settings.enabled) {
+            val channelText = when (settings.channel) {
+                MoonlightChannel.BLUE -> "Blue"
+                MoonlightChannel.WHITE -> "White"
+                MoonlightChannel.BLUE_WHITE -> "Blue + White"
+            }
+
+            "$channelText • ${settings.intensityPercent}% • Until ${settings.endTime.label}"
+        } else {
+            "Soft output after sunset"
+        }
+
+        binding.actionMoonlight.root
+            .findViewById<TextView>(R.id.tvActionSubtitle)
+            ?.text = subtitle
+    }
+
+    private fun renderCloudSimulationSummary(
+        state: DeviceLightProgramEditorUiState
+    ) {
+        val settings = state.cloudSimulationSettings
+
+        val subtitle = if (settings.enabled) {
+            val frequencyText = when (settings.frequency) {
+                CloudFrequency.RARE -> "Rare"
+                CloudFrequency.NORMAL -> "Normal"
+                CloudFrequency.FREQUENT -> "Frequent"
+            }
+
+            "Coverage ${settings.coveragePercent}% • $frequencyText"
+        } else {
+            "Natural light variation"
+        }
+
+        binding.actionCloudSimulation.root
+            .findViewById<TextView>(R.id.tvActionSubtitle)
+            ?.text = subtitle
+    }
+
     private fun renderTransitionSummary(
         state: DeviceLightProgramEditorUiState
     ) {
+        val subtitle = when (state.transitionMode) {
+            LightCurveTransitionMode.LINEAR -> "Linear ramp curve"
+            LightCurveTransitionMode.SMOOTH -> "Smooth start and finish"
+            LightCurveTransitionMode.NATURAL -> "Sunrise-like natural ramp"
+        }
+
         binding.actionTransitionSmoothing.root
             .findViewById<TextView>(R.id.tvActionSubtitle)
-            ?.text = "Sunrise-like natural ramp"
+            ?.text = subtitle
     }
 
     override fun onDestroyView() {

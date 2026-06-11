@@ -17,15 +17,7 @@ data class DiscoveredAquaDevice(
     val name: String,
 
     /**
-     * Ticari cihaz kimliği.
-     * IP değişebilir; bu alanlar cihazın kalıcı kimliğini taşır.
-     */
-    val deviceUid: String? = null,
-    val macAddress: String? = null,
-    val firmwareSerial: String? = null,
-
-    /**
-     * ESP32 firmware tarafındaki profesyonel ürün/capability alanları.
+     * İleride ESP32 firmware tarafına eklenecek profesyonel kimlik alanları.
      */
     val productId: String? = null,
     val productFamily: String? = null,

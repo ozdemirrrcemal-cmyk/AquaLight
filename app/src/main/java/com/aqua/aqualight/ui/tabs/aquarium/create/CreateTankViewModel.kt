@@ -1,9 +1,8 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import androidx.lifecycle.ViewModel
-import com.aqua.aqualight.data.aquarium.model.TankDraft
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
-import com.aqua.aqualight.data.aquarium.model.TankPlantTag
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
+import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
 
 class CreateTankViewModel : ViewModel() {
 

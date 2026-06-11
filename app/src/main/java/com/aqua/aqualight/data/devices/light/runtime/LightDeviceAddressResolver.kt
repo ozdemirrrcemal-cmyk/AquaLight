@@ -17,8 +17,7 @@ class LightDeviceAddressResolver(
 
     suspend fun resolve(
         deviceId: Long,
-        requireOnline: Boolean = false,
-        forceLiveCheck: Boolean = false
+        requireOnline: Boolean = false
     ): Result {
         if (deviceId <= 0L) {
             return Result.Failure("Device information is missing")
@@ -27,7 +26,6 @@ class LightDeviceAddressResolver(
         val presenceState = DevicePresenceMonitor.statuses.value[deviceId]
 
         if (
-            !forceLiveCheck &&
             presenceState != null &&
             presenceState.ip.isNotBlank() &&
             (!requireOnline || presenceState.isOnline)
@@ -66,8 +64,7 @@ class LightDeviceAddressResolver(
         val checkedState = DevicePresenceMonitor.checkDeviceNow(
             context = appContext,
             deviceId = deviceId,
-            knownIp = savedIp,
-            allowRecentOnlineCache = !forceLiveCheck
+            knownIp = savedIp
         )
 
         if (checkedState == null) {

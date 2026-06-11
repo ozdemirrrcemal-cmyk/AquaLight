@@ -10,7 +10,6 @@ import com.aqua.aqualight.data.devices.light.runtime.Esp32LightThermalProtection
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceAddressResolver
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeRepository
-import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
@@ -178,20 +177,6 @@ class DeviceLightSettingsViewModel(
                     val preserveEditableSettings =
                         isApplyingSettings
 
-                    if (!state.isDeviceOnline) {
-                        return@update state.copy(
-                            deviceTime = "--:--",
-                            thermalProtectionStatusText = "Unavailable",
-                            currentTemperatureText = "-- °C",
-                            temperatureSensorCount = 0,
-                            coolingStatusText = "Unavailable",
-                            coolingFansText = "—",
-                            coolingMode = "Unavailable",
-                            coolingModeEnabled = false,
-                            coolingFanCount = 0
-                        )
-                    }
-
                     state.copy(
                         deviceTime = if (liveState.hasDeviceTime) {
                             liveState.deviceTimeText
@@ -275,10 +260,7 @@ class DeviceLightSettingsViewModel(
                             deviceType = "—",
                             firmwareVersion = "—",
                             deviceIp = "—",
-                            serialNumber = "—",
-                            isDeviceOnline = false,
-                            controlsEnabled = false,
-                            connectionStatusText = "Device profile not found"
+                            serialNumber = "—"
                         )
                     }
                     return@collect
@@ -332,13 +314,7 @@ class DeviceLightSettingsViewModel(
                         serialNumber = device.serial
                             .ifBlank {
                                 "—"
-                            },
-
-                        isDeviceOnline = status?.isOnline == true,
-                        controlsEnabled = status?.isOnline == true,
-                        connectionStatusText = connectionStatusTextFor(
-                            status?.status ?: DeviceConnectionStatus.UNKNOWN
-                        )
+                            }
                     )
                 }
             }
@@ -693,17 +669,6 @@ class DeviceLightSettingsViewModel(
     private fun launchSettingsOperation(
         block: suspend () -> Unit
     ) {
-        if (!_uiState.value.controlsEnabled) {
-            viewModelScope.launch {
-                eventsChannel.send(
-                    DeviceLightSettingsEvent.ShowError(
-                        _uiState.value.connectionStatusText
-                    )
-                )
-            }
-            return
-        }
-
         if (isApplyingSettings) {
             return
         }
@@ -757,21 +722,8 @@ class DeviceLightSettingsViewModel(
     ): LightDeviceAddressResolver.Result {
         return addressResolver.resolve(
             deviceId = deviceId,
-            requireOnline = requireOnline,
-            forceLiveCheck = requireOnline
+            requireOnline = requireOnline
         )
-    }
-
-    private fun connectionStatusTextFor(
-        status: DeviceConnectionStatus
-    ): String {
-        return when (status) {
-            DeviceConnectionStatus.ONLINE -> "Online"
-            DeviceConnectionStatus.CHECKING -> "Checking device connection"
-            DeviceConnectionStatus.STALE -> "Connection is unstable · settings disabled"
-            DeviceConnectionStatus.OFFLINE -> "Device offline · settings disabled"
-            DeviceConnectionStatus.UNKNOWN -> "Waiting for device connection"
-        }
     }
 
     private fun currentPhoneTimeText(): String {

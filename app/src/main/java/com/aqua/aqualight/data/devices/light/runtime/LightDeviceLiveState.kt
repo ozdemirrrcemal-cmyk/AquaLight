@@ -12,8 +12,6 @@ data class LightDeviceLiveState(
         LightThermalProtectionState(),
     val cooling: LightCoolingState =
         LightCoolingState(),
-    val liveDataUpdatedMillis: Long = 0L,
-    val isLiveDataFresh: Boolean = false,
     val lastUpdatedMillis: Long = 0L,
     val errorMessage: String? = null
 ) {
@@ -44,24 +42,14 @@ data class LightDeviceLiveState(
         }
 
     val actualOutputPercent: Int
-        get() {
-            if (!hasFreshLiveData) {
-                return 0
+        get() = channels
+            .mapNotNull { channel ->
+                channel.valuePercent
             }
-
-            return channels
-                .mapNotNull { channel ->
-                    channel.valuePercent
-                }
-                .maxOrNull() ?: 0
-        }
+            .maxOrNull() ?: 0
 
     val actualPowerWatts: Double?
         get() {
-            if (!hasFreshLiveData) {
-                return null
-            }
-
             val values = channels.mapNotNull { channel ->
                 channel.actualWatts
             }
@@ -81,31 +69,11 @@ data class LightDeviceLiveState(
         }
 
     val hasLiveChannels: Boolean
-        get() = hasFreshLiveData && channels.isNotEmpty()
-
-    val hasFreshLiveData: Boolean
-        get() {
-            if (!isLiveDataFresh) {
-                return false
-            }
-
-            if (liveDataUpdatedMillis <= 0L) {
-                return false
-            }
-
-            val ageMillis =
-                System.currentTimeMillis() - liveDataUpdatedMillis
-
-            return ageMillis <= LIVE_DATA_FRESHNESS_MS
-        }
+        get() = channels.isNotEmpty()
 
     fun channelFor(
         semantic: LightChannelSemantic
     ): LightDeviceLiveChannelState? {
-        if (!hasFreshLiveData) {
-            return null
-        }
-
         return channels.firstOrNull { channel ->
             channel.semantic == semantic
         }
@@ -118,7 +86,6 @@ data class LightDeviceLiveState(
     companion object {
 
         private const val DEVICE_TIME_FRESHNESS_MS = 30_000L
-        private const val LIVE_DATA_FRESHNESS_MS = 12_000L
 
         fun initial(
             deviceId: Long
@@ -131,8 +98,6 @@ data class LightDeviceLiveState(
                 channels = emptyList(),
                 thermalProtection = LightThermalProtectionState(),
                 cooling = LightCoolingState(),
-                liveDataUpdatedMillis = 0L,
-                isLiveDataFresh = false,
                 lastUpdatedMillis = 0L,
                 errorMessage = null
             )

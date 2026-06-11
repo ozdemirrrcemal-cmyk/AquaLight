@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.model
 
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.TodayLightPlanGraphState
 
 data class DeviceLightDashboardUiState(
     val activeProgramName: String = "No active program",
@@ -29,9 +29,5 @@ data class DeviceLightDashboardUiState(
     val todayPlanGraphState: TodayLightPlanGraphState =
         TodayLightPlanGraphState.empty(
             LightCurvePoint.of(0, 0)
-        ),
-
-    val isDeviceOnline: Boolean = false,
-    val controlsEnabled: Boolean = false,
-    val connectionStatusText: String = "Checking device connection"
+        )
 )

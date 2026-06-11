@@ -1,9 +1,8 @@
 package com.aqua.aqualight.data.devices.presence
 
 import android.content.Context
-import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager.DeviceInfo
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager.DeviceInfoUi
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
@@ -27,6 +26,8 @@ object DevicePresenceMonitor {
     private const val LIVE_CHECK_TIMEOUT_MS = 900L
 
     private const val RECENT_ONLINE_STATUS_VALID_MS = 20_000L
+    private const val ONLINE_TIMEOUT_MS = 90_000L
+    private const val STALE_TIMEOUT_MS = 180_000L
     private const val OFFLINE_AFTER_MISSED_CHECKS = 4
 
     private val scope = CoroutineScope(
@@ -78,8 +79,7 @@ object DevicePresenceMonitor {
     suspend fun checkDeviceNow(
         context: Context,
         deviceId: Long,
-        knownIp: String,
-        allowRecentOnlineCache: Boolean = true
+        knownIp: String
     ): DeviceStatusState? {
         val appContext = context.applicationContext
         val devicesStore = DevicesDataStoreManager.create(
@@ -97,13 +97,38 @@ object DevicePresenceMonitor {
         val currentState = _statuses.value[deviceId]
 
         if (
-            allowRecentOnlineCache &&
             isRecentOnlineState(
                 state = currentState,
                 now = now
             )
         ) {
             return currentState
+        }
+
+        if (
+            currentState == null &&
+            isRecentlySeenDevice(
+                device = savedDevice,
+                now = now
+            )
+        ) {
+            val state = buildState(
+                device = savedDevice,
+                now = now,
+                missedCount = missedChecks.getOrDefault(
+                    savedDevice.id,
+                    0
+                ),
+                ipOverride = knownIp.ifBlank {
+                    savedDevice.ip
+                }
+            )
+
+            upsertStatus(
+                state = state
+            )
+
+            return state
         }
 
         setCheckingState(
@@ -123,30 +148,17 @@ object DevicePresenceMonitor {
             result.skippedBecauseBusy ||
             result.error != null
         ) {
-            val fallbackState = if (allowRecentOnlineCache) {
-                currentState ?: buildUnknownState(
-                    device = savedDevice,
-                    now = latestNow,
-                    ipOverride = knownIp.ifBlank {
-                        savedDevice.ip
-                    }
-                )
-            } else {
-                buildOfflineState(
-                    device = savedDevice,
-                    now = latestNow,
-                    missedCount = missedChecks.getOrDefault(
-                        savedDevice.id,
-                        0
-                    ) + 1,
-                    previousState = currentState,
-                    ipOverride = knownIp.ifBlank {
-                        savedDevice.ip
-                    }
-                )
-            }
-
-            missedChecks[savedDevice.id] = fallbackState.missedChecks
+            val fallbackState = currentState ?: buildState(
+                device = savedDevice,
+                now = latestNow,
+                missedCount = missedChecks.getOrDefault(
+                    savedDevice.id,
+                    0
+                ),
+                ipOverride = knownIp.ifBlank {
+                    savedDevice.ip
+                }
+            )
 
             upsertStatus(
                 state = fallbackState
@@ -155,10 +167,11 @@ object DevicePresenceMonitor {
             return fallbackState
         }
 
-        val matchedDevice = findMatchingDiscoveredDevice(
-            savedDevice = savedDevice,
-            discoveredDevices = result.devices
-        )
+        val matchedDevice = result.devices.firstOrNull { discoveredDevice ->
+            discoveredDevice.id == deviceId ||
+                discoveredDevice.ip == knownIp ||
+                discoveredDevice.ip == savedDevice.ip
+        }
 
         return if (matchedDevice != null) {
             devicesStore.updateDevicesLastSeen(
@@ -166,25 +179,7 @@ object DevicePresenceMonitor {
                     DevicesDataStoreManager.DeviceLastSeenUpdate(
                         id = savedDevice.id,
                         ip = matchedDevice.ip,
-                        firmwareBuild = matchedDevice.firmwareBuild,
-                        deviceUid = matchedDevice.deviceUid,
-                        macAddress = matchedDevice.macAddress,
-                        firmwareSerial = matchedDevice.firmwareSerial,
-                        deviceType = matchedDevice.deviceType,
-                        udpVersion = matchedDevice.udpVersion,
-                        tabLight = matchedDevice.tabLight,
-                        tabTimer = matchedDevice.tabTimer,
-                        tabTemperature = matchedDevice.tabTemperature,
-                        productId = matchedDevice.productId,
-                        productFamily = matchedDevice.productFamily,
-                        productModel = matchedDevice.productModel,
-                        hardwareRevision = matchedDevice.hardwareRevision,
-                        firmwareVersion = matchedDevice.firmwareVersion,
-                        apiVersion = matchedDevice.apiVersion,
-                        channelCount = matchedDevice.channelCount,
-                        sensorCount = matchedDevice.sensorCount,
-                        supportedFeatures = matchedDevice.supportedFeatures,
-                        supportedScreens = matchedDevice.supportedScreens
+                        firmwareBuild = matchedDevice.firmwareBuild
                     )
                 )
             )
@@ -196,9 +191,7 @@ object DevicePresenceMonitor {
                 now = latestNow,
                 missedCount = 0,
                 lastSeenOverride = latestNow,
-                ipOverride = matchedDevice.ip,
-                confirmedOnline = true,
-                previousState = currentState
+                ipOverride = matchedDevice.ip
             )
 
             upsertStatus(
@@ -224,9 +217,7 @@ object DevicePresenceMonitor {
                     }
                 } ?: knownIp.ifBlank {
                     savedDevice.ip
-                },
-                confirmedOnline = false,
-                previousState = currentState
+                }
             )
 
             upsertStatus(
@@ -274,7 +265,7 @@ object DevicePresenceMonitor {
 
     private suspend fun applyDiscoveryResult(
         devicesStore: DevicesDataStoreManager,
-        savedDevices: List<DeviceInfo>,
+        savedDevices: List<DeviceInfoUi>,
         discoveredDevices: List<DiscoveredAquaDevice>
     ) {
         val now = System.currentTimeMillis()
@@ -293,25 +284,7 @@ object DevicePresenceMonitor {
             DevicesDataStoreManager.DeviceLastSeenUpdate(
                 id = savedDeviceId,
                 ip = discoveredDevice.ip,
-                firmwareBuild = discoveredDevice.firmwareBuild,
-                deviceUid = discoveredDevice.deviceUid,
-                macAddress = discoveredDevice.macAddress,
-                firmwareSerial = discoveredDevice.firmwareSerial,
-                deviceType = discoveredDevice.deviceType,
-                udpVersion = discoveredDevice.udpVersion,
-                tabLight = discoveredDevice.tabLight,
-                tabTimer = discoveredDevice.tabTimer,
-                tabTemperature = discoveredDevice.tabTemperature,
-                productId = discoveredDevice.productId,
-                productFamily = discoveredDevice.productFamily,
-                productModel = discoveredDevice.productModel,
-                hardwareRevision = discoveredDevice.hardwareRevision,
-                firmwareVersion = discoveredDevice.firmwareVersion,
-                apiVersion = discoveredDevice.apiVersion,
-                channelCount = discoveredDevice.channelCount,
-                sensorCount = discoveredDevice.sensorCount,
-                supportedFeatures = discoveredDevice.supportedFeatures,
-                supportedScreens = discoveredDevice.supportedScreens
+                firmwareBuild = discoveredDevice.firmwareBuild
             )
         }
 
@@ -335,8 +308,6 @@ object DevicePresenceMonitor {
 
             missedChecks[savedDevice.id] = missedCount
 
-            val previousState = _statuses.value[savedDevice.id]
-
             savedDevice.id to buildState(
                 device = savedDevice,
                 now = now,
@@ -346,9 +317,7 @@ object DevicePresenceMonitor {
                 } else {
                     null
                 },
-                ipOverride = matchedDevice?.ip,
-                confirmedOnline = matchedDevice != null,
-                previousState = previousState
+                ipOverride = matchedDevice?.ip
             )
         }
 
@@ -356,37 +325,40 @@ object DevicePresenceMonitor {
     }
 
     private fun emitPassiveStates(
-        savedDevices: List<DeviceInfo>
+        savedDevices: List<DeviceInfoUi>
     ) {
         val now = System.currentTimeMillis()
 
-        val currentStates = _statuses.value
-
         val states = savedDevices.associate { savedDevice ->
-            val previousState = currentStates[savedDevice.id]
+            val missedCount = missedChecks.getOrDefault(
+                savedDevice.id,
+                0
+            )
 
-            savedDevice.id to (previousState?.copy(
-                lastCheckedMillis = now
-            ) ?: buildUnknownState(
+            savedDevice.id to buildState(
                 device = savedDevice,
-                now = now
-            ))
+                now = now,
+                missedCount = missedCount
+            )
         }
 
         _statuses.value = states
     }
 
     private fun setCheckingState(
-        device: DeviceInfo,
+        device: DeviceInfoUi,
         now: Long
     ) {
         val previousState = _statuses.value[device.id]
+
+        val fallbackOnline = device.lastSeenMillis > 0L &&
+            now - device.lastSeenMillis <= ONLINE_TIMEOUT_MS
 
         val state = DeviceStatusState(
             deviceId = device.id,
             ip = previousState?.ip ?: device.ip,
             status = DeviceConnectionStatus.CHECKING,
-            isOnline = previousState?.isOnline == true,
+            isOnline = previousState?.isOnline ?: fallbackOnline,
             lastSeenMillis = previousState?.lastSeenMillis ?: device.lastSeenMillis,
             lastCheckedMillis = now,
             missedChecks = missedChecks.getOrDefault(
@@ -401,38 +373,31 @@ object DevicePresenceMonitor {
     }
 
     private fun buildState(
-        device: DeviceInfo,
+        device: DeviceInfoUi,
         now: Long,
         missedCount: Int,
         lastSeenOverride: Long? = null,
-        ipOverride: String? = null,
-        confirmedOnline: Boolean = false,
-        previousState: DeviceStatusState? = null
+        ipOverride: String? = null
     ): DeviceStatusState {
-        val lastSeen = when {
-            confirmedOnline -> {
-                lastSeenOverride ?: now
-            }
+        val lastSeen = lastSeenOverride ?: device.lastSeenMillis
 
-            previousState != null -> {
-                previousState.lastSeenMillis
-            }
-
-            else -> {
-                device.lastSeenMillis
-            }
+        val age = if (lastSeen > 0L) {
+            now - lastSeen
+        } else {
+            Long.MAX_VALUE
         }
 
         val status = when {
-            confirmedOnline -> {
-                DeviceConnectionStatus.ONLINE
-            }
-
-            lastSeen <= 0L && missedCount <= 0 -> {
+            lastSeen <= 0L -> {
                 DeviceConnectionStatus.UNKNOWN
             }
 
-            missedCount < OFFLINE_AFTER_MISSED_CHECKS -> {
+            age <= ONLINE_TIMEOUT_MS -> {
+                DeviceConnectionStatus.ONLINE
+            }
+
+            age <= STALE_TIMEOUT_MS &&
+                missedCount < OFFLINE_AFTER_MISSED_CHECKS -> {
                 DeviceConnectionStatus.STALE
             }
 
@@ -443,60 +408,22 @@ object DevicePresenceMonitor {
 
         return DeviceStatusState(
             deviceId = device.id,
-            ip = ipOverride ?: previousState?.ip ?: device.ip,
+            ip = ipOverride ?: device.ip,
             status = status,
-            isOnline = confirmedOnline,
+            isOnline = status == DeviceConnectionStatus.ONLINE,
             lastSeenMillis = lastSeen,
             lastCheckedMillis = now,
             missedChecks = missedCount
         )
     }
 
-    private fun buildUnknownState(
-        device: DeviceInfo,
-        now: Long,
-        ipOverride: String? = null
-    ): DeviceStatusState {
-        return DeviceStatusState(
-            deviceId = device.id,
-            ip = ipOverride ?: device.ip,
-            status = DeviceConnectionStatus.UNKNOWN,
-            isOnline = false,
-            lastSeenMillis = device.lastSeenMillis,
-            lastCheckedMillis = now,
-            missedChecks = missedChecks.getOrDefault(
-                device.id,
-                0
-            )
-        )
-    }
-
-    private fun buildOfflineState(
-        device: DeviceInfo,
-        now: Long,
-        missedCount: Int,
-        previousState: DeviceStatusState?,
-        ipOverride: String? = null
-    ): DeviceStatusState {
-        return buildState(
-            device = device,
-            now = now,
-            missedCount = missedCount,
-            ipOverride = ipOverride,
-            confirmedOnline = false,
-            previousState = previousState
-        )
-    }
-
     private fun findMatchingDiscoveredDevice(
-        savedDevice: DeviceInfo,
+        savedDevice: DeviceInfoUi,
         discoveredDevices: List<DiscoveredAquaDevice>
     ): DiscoveredAquaDevice? {
         return discoveredDevices.firstOrNull { discoveredDevice ->
-            DeviceIdentityMatcher.samePhysicalDevice(
-                savedDevice = savedDevice,
-                discoveredDevice = discoveredDevice
-            )
+            discoveredDevice.id == savedDevice.id ||
+                discoveredDevice.ip == savedDevice.ip
         }
     }
 
@@ -521,6 +448,21 @@ object DevicePresenceMonitor {
         }
 
         return now - state.lastCheckedMillis <= RECENT_ONLINE_STATUS_VALID_MS
+    }
+
+    private fun isRecentlySeenDevice(
+        device: DeviceInfoUi,
+        now: Long
+    ): Boolean {
+        if (device.ip.isBlank()) {
+            return false
+        }
+
+        if (device.lastSeenMillis <= 0L) {
+            return false
+        }
+
+        return now - device.lastSeenMillis <= RECENT_ONLINE_STATUS_VALID_MS
     }
 
     private fun upsertStatus(

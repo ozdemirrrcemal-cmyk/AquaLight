@@ -18,7 +18,7 @@ import com.aqua.aqualight.databinding.FragmentAquariumBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -84,7 +84,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                             showDeleteConfirmDialog()
                         } else {
                             findNavController().navigate(
-                                AquariumFragmentDirections.actionAquariumFragmentToCreateTankFragment()
+                                R.id.action_aquariumFragment_to_createTankFragment
                             )
                         }
                     }
@@ -176,9 +176,13 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
             )
         } else {
             findNavController().navigate(
-                AquariumFragmentDirections.actionAquariumFragmentToTankDetailFragment(
-                    tankId = tank.id
-                )
+                R.id.action_aquariumFragment_to_tankDetailFragment,
+                Bundle().apply {
+                    putLong(
+                        "tankId",
+                        tank.id
+                    )
+                }
             )
         }
     }

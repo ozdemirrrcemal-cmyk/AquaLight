@@ -192,7 +192,7 @@ object LightDeviceLiveRefreshManager {
         val address = when (
             val result = addressResolver.resolve(
                 deviceId = deviceId,
-                requireOnline = true
+                requireOnline = false
             )
         ) {
             is LightDeviceAddressResolver.Result.Success -> {
@@ -203,11 +203,6 @@ object LightDeviceLiveRefreshManager {
                 stateFlow.update { state ->
                     state.copy(
                         isRefreshing = false,
-                        channels = emptyList(),
-                        thermalProtection = LightThermalProtectionState(),
-                        cooling = LightCoolingState(),
-                        liveDataUpdatedMillis = 0L,
-                        isLiveDataFresh = false,
                         errorMessage = result.message
                     )
                 }
@@ -245,17 +240,15 @@ object LightDeviceLiveRefreshManager {
                             0L
                         }
                     },
-                    channels = snapshot.channels,
-                    thermalProtection = snapshot.thermalProtection
-                        ?: LightThermalProtectionState(),
-                    cooling = snapshot.cooling
-                        ?: LightCoolingState(),
-                    liveDataUpdatedMillis = if (snapshot.channels.isNotEmpty()) {
-                        now
+                    channels = if (snapshot.channels.isNotEmpty()) {
+                        snapshot.channels
                     } else {
-                        0L
+                        state.channels
                     },
-                    isLiveDataFresh = snapshot.channels.isNotEmpty(),
+                    thermalProtection = snapshot.thermalProtection
+                        ?: state.thermalProtection,
+                    cooling = snapshot.cooling
+                        ?: state.cooling,
                     lastUpdatedMillis = now,
                     errorMessage = snapshot.partialErrorMessage
                 )
@@ -264,11 +257,6 @@ object LightDeviceLiveRefreshManager {
             stateFlow.update { state ->
                 state.copy(
                     isRefreshing = false,
-                    channels = emptyList(),
-                    thermalProtection = LightThermalProtectionState(),
-                    cooling = LightCoolingState(),
-                    liveDataUpdatedMillis = 0L,
-                    isLiveDataFresh = false,
                     errorMessage = error.message
                         ?: "Live device data could not be read"
                 )

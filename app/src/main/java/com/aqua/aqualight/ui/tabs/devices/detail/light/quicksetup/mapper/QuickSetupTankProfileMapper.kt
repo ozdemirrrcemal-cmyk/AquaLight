@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.mapper
 
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupAlgaeRisk
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupPlantDemand
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupPlantDensity

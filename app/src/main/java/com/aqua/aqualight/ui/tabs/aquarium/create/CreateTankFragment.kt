@@ -28,8 +28,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment
 import kotlinx.coroutines.launch
 
 class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
-    MaterialPickerFragment.MaterialPickerHost,
-    PlantPickerFragment.PlantPickerHost {
+    MaterialPickerFragment.MaterialPickerHost {
 
     private var _binding: FragmentCreateTankBinding? = null
     private val binding get() = _binding!!
@@ -356,7 +355,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
 
             add(
                 R.id.plantFlowContainer,
-                PlantPickerFragment.newCreateInstance(),
+                PlantPickerFragment(),
                 TAG_PLANT_PICKER_FRAGMENT
             )
         }
@@ -389,7 +388,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
             false
     }
 
-    override fun closePlantPickerFlow() {
+    private fun closePlantPickerFlow() {
         val plantPickerFragment =
             childFragmentManager.findFragmentByTag(
                 TAG_PLANT_PICKER_FRAGMENT

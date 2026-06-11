@@ -58,7 +58,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     }
 
     private fun bindUsageToUi(
-        usage: UserPreferencesManager.UsageAnalytics
+        usage: UserPreferencesManager.UsageAnalyticsUi
     ) {
         binding.tvTotalSessionsValue.text =
             usage.weeklyAutomationCount.toString()

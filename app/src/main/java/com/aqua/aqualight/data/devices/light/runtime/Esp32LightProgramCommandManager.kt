@@ -1,14 +1,14 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
 import android.content.Context
-import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramPhaseType
-import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelineBuilder
-import com.aqua.aqualight.data.devices.light.programs.timeline.LightProgramTimelinePhase
-import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramScheduleConflictValidator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.SavedLightProgram
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramPhaseType
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelineBuilder
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.timeline.LightProgramTimelinePhase
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.validation.LightProgramScheduleConflictValidator
 import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
@@ -190,8 +190,7 @@ class Esp32LightProgramCommandManager(
         return when (
             val result = addressResolver.resolve(
                 deviceId = deviceId,
-                requireOnline = true,
-                forceLiveCheck = true
+                requireOnline = false
             )
         ) {
             is LightDeviceAddressResolver.Result.Success -> result
@@ -329,14 +328,27 @@ class Esp32LightProgramCommandManager(
                 draft = program.draft
             )
 
-            timeline.phases.forEach { phase ->
-                if (phase.type == LightProgramPhaseType.MAIN_CURVE) {
-                    addMainCurvePointsForChannel(
-                        points = points,
-                        phase = phase,
-                        semantic = semantic,
-                        transitionMode = program.draft.transitionMode
-                    )
+            timeline.phases.forEach {
+                phase ->
+                when (phase.type) {
+                    LightProgramPhaseType.MAIN_CURVE -> {
+                        addMainCurvePointsForChannel(
+                            points = points,
+                            phase = phase,
+                            semantic = semantic,
+                            transitionMode = program.draft.transitionMode
+                        )
+                    }
+
+                    LightProgramPhaseType.MOONLIGHT -> {
+                        addMoonlightPointsForChannel(
+                            points = points,
+                            phase = phase,
+                            semantic = semantic
+                        )
+                    }
+
+                    LightProgramPhaseType.CLOUD_OVERLAY -> Unit
                 }
             }
         }
@@ -577,6 +589,182 @@ class Esp32LightProgramCommandManager(
         return value
         .roundToInt()
         .coerceIn(0, 100)
+    }
+
+    private fun addMoonlightPointsForChannel(
+        points: MutableList<SchedulePoint>,
+        phase: LightProgramTimelinePhase,
+        semantic: LightChannelSemantic
+    ) {
+        val value = percentToEsp32Value(
+            valuePercent = valueForSemantic(
+                values = phase.channelValues,
+                semantic = semantic
+            )
+        )
+
+        if (value <= 0.0) {
+            addMoonlightOffPointsForUnusedChannel(
+                points = points,
+                phase = phase
+            )
+            return
+        }
+
+        val start = phase.startMinute
+        val end = phase.endMinute
+
+        when {
+            start < MINUTES_PER_DAY && end <= MINUTES_PER_DAY -> {
+                addFlatSegmentPoints(
+                    points = points,
+                    startMinute = start,
+                    endMinute = end,
+                    value = value
+                )
+            }
+
+            start < MINUTES_PER_DAY && end > MINUTES_PER_DAY -> {
+                addFlatSegmentPoints(
+                    points = points,
+                    startMinute = start,
+                    endMinute = MINUTES_PER_DAY,
+                    value = value
+                )
+
+                val morningEnd = (end - MINUTES_PER_DAY)
+                .coerceIn(
+                    0,
+                    MINUTES_PER_DAY
+                )
+
+                if (morningEnd > 0) {
+                    addFlatSegmentPoints(
+                        points = points,
+                        startMinute = 0,
+                        endMinute = morningEnd,
+                        value = value
+                    )
+                }
+            }
+
+            start >= MINUTES_PER_DAY -> {
+                val normalizedStart = (start - MINUTES_PER_DAY)
+                .coerceIn(
+                    0,
+                    MINUTES_PER_DAY
+                )
+
+                val normalizedEnd = (end - MINUTES_PER_DAY)
+                .coerceIn(
+                    0,
+                    MINUTES_PER_DAY
+                )
+
+                if (normalizedEnd > normalizedStart) {
+                    addFlatSegmentPoints(
+                        points = points,
+                        startMinute = normalizedStart,
+                        endMinute = normalizedEnd,
+                        value = value
+                    )
+                }
+            }
+        }
+    }
+
+    private fun addMoonlightOffPointsForUnusedChannel(
+        points: MutableList<SchedulePoint>,
+        phase: LightProgramTimelinePhase
+    ) {
+        val start = phase.startMinute
+        val end = phase.endMinute
+
+        when {
+            start < MINUTES_PER_DAY && end <= MINUTES_PER_DAY -> {
+                addOrReplacePoint(
+                    points = points,
+                    minute = start.coerceIn(0, MINUTES_PER_DAY),
+                    label = labelForMinute(start),
+                    value = 0.0
+                )
+
+                addOrReplacePoint(
+                    points = points,
+                    minute = end.coerceIn(0, MINUTES_PER_DAY),
+                    label = labelForMinute(end),
+                    value = 0.0
+                )
+            }
+
+            start < MINUTES_PER_DAY && end > MINUTES_PER_DAY -> {
+                addOrReplacePoint(
+                    points = points,
+                    minute = start.coerceIn(0, MINUTES_PER_DAY),
+                    label = labelForMinute(start),
+                    value = 0.0
+                )
+
+                addOrReplacePoint(
+                    points = points,
+                    minute = MINUTES_PER_DAY,
+                    label = labelForMinute(MINUTES_PER_DAY),
+                    value = 0.0
+                )
+
+                val morningEnd = (end - MINUTES_PER_DAY)
+                .coerceIn(
+                    0,
+                    MINUTES_PER_DAY
+                )
+
+                if (morningEnd > 0) {
+                    addOrReplacePoint(
+                        points = points,
+                        minute = 0,
+                        label = labelForMinute(0),
+                        value = 0.0
+                    )
+
+                    addOrReplacePoint(
+                        points = points,
+                        minute = morningEnd,
+                        label = labelForMinute(morningEnd),
+                        value = 0.0
+                    )
+                }
+            }
+
+            start >= MINUTES_PER_DAY -> {
+                val normalizedStart = (start - MINUTES_PER_DAY)
+                .coerceIn(
+                    0,
+                    MINUTES_PER_DAY
+                )
+
+                val normalizedEnd = (end - MINUTES_PER_DAY)
+                .coerceIn(
+                    0,
+                    MINUTES_PER_DAY
+                )
+
+                if (normalizedEnd > normalizedStart) {
+                    addOrReplacePoint(
+                        points = points,
+                        minute = normalizedStart,
+                        label = labelForMinute(normalizedStart),
+                        value = 0.0
+                    )
+
+                    addOrReplacePoint(
+                        points = points,
+                        minute = normalizedEnd,
+                        label = labelForMinute(normalizedEnd),
+                        value = 0.0
+                    )
+                }
+            }
+        }
     }
 
     private fun addFlatSegmentPoints(

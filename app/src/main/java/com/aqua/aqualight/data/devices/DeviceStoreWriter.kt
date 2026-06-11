@@ -10,23 +10,18 @@ class DeviceStoreWriter(
     suspend fun saveDiscoveredDevice(
         device: DiscoveredAquaDevice
     ): Long {
-        val existingDeviceId = devicesStore.findStoredDeviceIdForIdentity(
-            id = device.id,
-            deviceUid = device.deviceUid,
-            macAddress = device.macAddress,
-            firmwareSerial = device.firmwareSerial
+        val alreadyExists = devicesStore.deviceExists(
+            id = device.id
         )
 
-        if (existingDeviceId != null) {
+        if (alreadyExists) {
             devicesStore.updateDevicesLastSeen(
                 discovered = listOf(
-                    device.toLastSeenUpdate(
-                        storedDeviceId = existingDeviceId
-                    )
+                    device.toLastSeenUpdate()
                 )
             )
 
-            return existingDeviceId
+            return device.id
         }
 
         val definition = AquaDeviceCatalog.findByType(
@@ -39,10 +34,7 @@ class DeviceStoreWriter(
         val serial = DeviceSerialFormatter.buildSerial(
             aquaName = savedAquaName,
             name = savedName,
-            id = device.id,
-            firmwareSerial = device.firmwareSerial.orEmpty(),
-            deviceUid = device.deviceUid.orEmpty(),
-            macAddress = device.macAddress.orEmpty()
+            id = device.id
         )
 
         devicesStore.addDevice(
@@ -52,9 +44,6 @@ class DeviceStoreWriter(
             ip = device.ip,
             serial = serial,
             firmwareBuild = device.firmwareBuild,
-            deviceUid = device.deviceUid.orEmpty(),
-            macAddress = device.macAddress.orEmpty(),
-            firmwareSerial = device.firmwareSerial.orEmpty(),
 
             deviceType = device.deviceType,
 
@@ -86,16 +75,11 @@ class DeviceStoreWriter(
         return device.id
     }
 
-    private fun DiscoveredAquaDevice.toLastSeenUpdate(
-        storedDeviceId: Long = id
-    ): DevicesDataStoreManager.DeviceLastSeenUpdate {
+    private fun DiscoveredAquaDevice.toLastSeenUpdate(): DevicesDataStoreManager.DeviceLastSeenUpdate {
         return DevicesDataStoreManager.DeviceLastSeenUpdate(
-            id = storedDeviceId,
+            id = id,
             ip = ip,
             firmwareBuild = firmwareBuild,
-            deviceUid = deviceUid,
-            macAddress = macAddress,
-            firmwareSerial = firmwareSerial,
 
             deviceType = deviceType,
 

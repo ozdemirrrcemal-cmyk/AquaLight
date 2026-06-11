@@ -21,13 +21,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLigh
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.sheet.LightSettingValueSheet
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightSettingsFragment :
     Fragment(R.layout.fragment_device_light_settings) {
-
-    private val args: DeviceLightSettingsFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceLightSettingsBinding? = null
     private val binding get() = _binding!!
@@ -37,7 +33,7 @@ class DeviceLightSettingsFragment :
     private var hasResumedOnce = false
 
     private val deviceId: Long
-        get() = args.deviceId
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     override fun onViewCreated(
         view: View,
@@ -341,42 +337,6 @@ class DeviceLightSettingsFragment :
 
         binding.tvFanFullSpeedValue.text =
             "${state.fanFullSpeedTemperatureCelsius}°C"
-
-        renderControlAvailability(
-            state
-        )
-    }
-
-    private fun renderControlAvailability(
-        state: DeviceLightSettingsUiState
-    ) {
-        val enabled = state.controlsEnabled
-        val alpha = if (enabled) {
-            1f
-        } else {
-            0.52f
-        }
-
-        binding.btnSyncTime.isEnabled = enabled
-        binding.btnUpdateFirmware.isEnabled = enabled
-        binding.rowLimitTemperature.isEnabled = enabled
-        binding.rowLightReduction.isEnabled = enabled
-        binding.rowRecoveryInterval.isEnabled = enabled
-        binding.rowCoolingMode.isEnabled = enabled
-        binding.rowFanStart.isEnabled = enabled
-        binding.rowFanFullSpeed.isEnabled = enabled
-
-        binding.rowLimitTemperature.alpha = alpha
-        binding.rowLightReduction.alpha = alpha
-        binding.rowRecoveryInterval.alpha = alpha
-        binding.rowCoolingMode.alpha = alpha
-        binding.rowFanStart.alpha = alpha
-        binding.rowFanFullSpeed.alpha = alpha
-
-        if (!enabled) {
-            binding.tvThermalProtectionStatus.text = state.connectionStatusText
-            binding.tvCoolingStatus.text = state.connectionStatusText
-        }
     }
 
     override fun onResume() {

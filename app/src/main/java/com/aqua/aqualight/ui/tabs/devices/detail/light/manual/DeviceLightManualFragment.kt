@@ -21,13 +21,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightU
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.sheet.SaveLightPresetBottomSheet
 import com.google.android.material.slider.Slider
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightManualFragment :
     Fragment(R.layout.fragment_device_light_manual) {
-
-    private val args: DeviceLightManualFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceLightManualBinding? = null
     private val binding get() = _binding!!
@@ -37,7 +33,7 @@ class DeviceLightManualFragment :
     private var isRendering = false
 
     private val deviceId: Long
-        get() = args.deviceId
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val sceneButtons: List<View>
         get() = listOf(
@@ -164,10 +160,6 @@ class DeviceLightManualFragment :
                     "Live RGBW control active"
                 }
 
-                !state.controlsEnabled -> {
-                    state.connectionStatusText
-                }
-
                 else -> {
                     "Automatic schedule is running"
                 }
@@ -234,20 +226,17 @@ class DeviceLightManualFragment :
     private fun renderControlAvailability(
         state: ManualLightUiState
     ) {
-        val controlsEnabled = state.controlsEnabled
         val isManualActive =
-            controlsEnabled &&
-                (
-                    state.isPowerOn ||
-                        state.isManualMode ||
-                        state.isManualScene
-                )
+            state.isPowerOn ||
+                state.isManualMode ||
+                state.isManualScene
 
-        val controlAlpha = when {
-            !controlsEnabled -> 0.48f
-            isManualActive -> 1f
-            else -> 0.82f
-        }
+        val controlAlpha =
+            if (isManualActive) {
+                1f
+            } else {
+                0.82f
+            }
 
         binding.cardMasterOutput.alpha =
             controlAlpha
@@ -255,21 +244,8 @@ class DeviceLightManualFragment :
         binding.cardQuickScenes.alpha =
             controlAlpha
 
-        binding.switchManualPower.isEnabled = controlsEnabled
-        binding.sliderRed.isEnabled = controlsEnabled
-        binding.sliderGreen.isEnabled = controlsEnabled
-        binding.sliderBlue.isEnabled = controlsEnabled
-        binding.sliderWhite.isEnabled = controlsEnabled
-
-        sceneButtons.forEach { button ->
-            button.isEnabled = controlsEnabled
-        }
-
         binding.btnResumeAuto.isEnabled =
-            controlsEnabled && (state.isManualMode || state.isManualScene)
-
-        binding.btnSavePreset.isEnabled =
-            controlsEnabled
+            state.isManualMode || state.isManualScene
     }
 
     private fun setSliderValueIfNeeded(

@@ -1,6 +1,6 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.curve.model.LightCurvePoint
 
 data class LightDeviceTimeState(
     val year: Int,

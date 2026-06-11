@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.careprofile
 
-import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialCategoryCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import java.util.Locale
 import kotlin.math.roundToInt
 

@@ -16,12 +16,13 @@ import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.ui.tabs.aquarium.model.LivestockCategories
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
 import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 
 class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
@@ -62,9 +63,10 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         livestockId: Long = 0L
     ) {
         findNavController().navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailLivestockFormFragment(
-                tankId = tankId,
-                livestockId = livestockId
+            R.id.action_tankDetailFragment_to_tankDetailLivestockFormFragment,
+            bundleOf(
+                "tankId" to tankId,
+                "livestockId" to livestockId
             )
         )
     }

@@ -11,7 +11,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
 import com.aqua.aqualight.data.devices.DeviceStoreWriter
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
@@ -29,11 +28,8 @@ import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
-
-    private val args: DeviceSetupFragmentArgs by navArgs()
 
     private var _binding: FragmentDeviceSetupBinding? = null
     private val binding get() = _binding!!
@@ -107,13 +103,25 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private fun readArgs() {
-        displayName = args.displayName
+        displayName = requireArguments().getString(
+            "displayName",
+            "Device"
+        )
 
-        familyName = args.familyName
+        familyName = requireArguments().getString(
+            "familyName",
+            "Aqua device"
+        )
 
-        setupSsid = args.setupSsid
+        setupSsid = requireArguments().getString(
+            "setupSsid",
+            ""
+        )
 
-        val deviceTypeKey = args.deviceType
+        val deviceTypeKey = requireArguments().getString(
+            "deviceType",
+            ""
+        )
 
         expectedDeviceType = AquaDeviceType.entries.firstOrNull { type ->
             type.storageKey == deviceTypeKey
@@ -609,10 +617,14 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             return true
         }
 
-        return DeviceIdentityMatcher.matchesSetupShortId(
-            discoveredDevice = device,
-            setupShortId = setupShortId
-        )
+        val normalizedShortId = setupShortId.trimStart('0')
+        val deviceIdText = device.id.toString()
+
+        return deviceIdText.endsWith(setupShortId) ||
+            (
+                normalizedShortId.isNotBlank() &&
+                    deviceIdText.endsWith(normalizedShortId)
+                )
     }
 
     private fun showWifiNetworksBottomSheet(
@@ -712,11 +724,13 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private fun openDeviceMenu(
         deviceId: Long
     ) {
+        val args = Bundle().apply {
+            putLong("deviceId", deviceId)
+        }
+
         findNavController().navigate(
-            DeviceSetupFragmentDirections.actionDeviceSetupFragmentToDeviceRouterFragment(
-                deviceId = deviceId,
-                deviceIp = ""
-            )
+            R.id.action_deviceSetupFragment_to_deviceRouterFragment,
+            args
         )
     }
 

@@ -1,7 +1,7 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
 class LightRuntimeRepository(
-    private val commandManager: LightDeviceCommandManager = FailingLightDeviceCommandManager()
+    private val commandManager: LightDeviceCommandManager = NoOpLightDeviceCommandManager()
 ) {
 
     suspend fun applyManualScene(

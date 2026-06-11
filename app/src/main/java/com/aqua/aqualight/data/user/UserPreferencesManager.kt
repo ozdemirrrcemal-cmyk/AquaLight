@@ -151,7 +151,7 @@ class UserPreferencesManager private constructor(
         prefs.country
     }
 
-    data class UsageAnalytics(
+    data class UsageAnalyticsUi(
         val weeklyAutomationCount: Int,
         val weeklyAlertCount: Int,
         val todayAutomationCount: Int,
@@ -160,8 +160,8 @@ class UserPreferencesManager private constructor(
         val lastEventDescription: String
     )
 
-    val usageAnalyticsFlow: Flow<UsageAnalytics> = userPrefsFlow.map { prefs ->
-        UsageAnalytics(
+    val usageAnalyticsFlow: Flow<UsageAnalyticsUi> = userPrefsFlow.map { prefs ->
+        UsageAnalyticsUi(
             weeklyAutomationCount = prefs.weeklyAutomationCount,
             weeklyAlertCount = prefs.weeklyAlertCount,
             todayAutomationCount = prefs.todayAutomationCount,

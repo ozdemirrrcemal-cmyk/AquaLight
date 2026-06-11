@@ -6,7 +6,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceUiController
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
 import com.aqua.aqualight.data.devices.catalog.ModuleVisibility
 
@@ -27,7 +27,7 @@ object TimerProductCatalog {
             displayName = "TimerPro",
 
             mainModule = AquaDeviceModule.TIMER,
-            controllerType = AquaDeviceControllerType.GENERIC_TIMER,
+            uiController = AquaDeviceUiController.GENERIC_TIMER,
             firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
 
             moduleVisibility = mapOf(
@@ -91,7 +91,7 @@ object TimerProductCatalog {
             displayName = "Multi control",
 
             mainModule = AquaDeviceModule.TIMER,
-            controllerType = AquaDeviceControllerType.GENERIC_TIMER,
+            uiController = AquaDeviceUiController.GENERIC_TIMER,
             firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
 
             moduleVisibility = mapOf(

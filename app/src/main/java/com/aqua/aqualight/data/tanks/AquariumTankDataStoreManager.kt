@@ -3,13 +3,13 @@ package com.aqua.aqualight.data.tanks
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
-import com.aqua.aqualight.data.aquarium.model.TankDraft
-import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
-import com.aqua.aqualight.data.aquarium.model.TankPlantTag
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.aquarium.create.TankDraft
+import com.aqua.aqualight.ui.tabs.aquarium.create.materials.TankMaterialSelection
+import com.aqua.aqualight.ui.tabs.aquarium.create.plants.TankPlantTag
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumMaterial
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumTank
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

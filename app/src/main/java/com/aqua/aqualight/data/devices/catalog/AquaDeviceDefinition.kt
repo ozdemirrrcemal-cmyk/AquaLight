@@ -30,7 +30,7 @@ data class AquaDeviceDefinition(
     val displayName: String,
 
     val mainModule: AquaDeviceModule,
-    val controllerType: AquaDeviceControllerType,
+    val uiController: AquaDeviceUiController,
     val firmwareProtocol: FirmwareProtocol,
 
     val moduleVisibility: Map<AquaDeviceModule, ModuleVisibility>,

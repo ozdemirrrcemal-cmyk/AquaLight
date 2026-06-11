@@ -9,15 +9,11 @@ import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
-import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
 import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
-import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
-import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
-import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.SavedLightPreset
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -39,10 +35,6 @@ class DeviceLightManualViewModel(
 
     private val appContext =
         application.applicationContext
-
-    init {
-        LightManualRuntimeStore.configure(appContext)
-    }
 
     private val lightPresetDataStoreManager =
         LightPresetDataStoreManager(appContext)
@@ -112,8 +104,6 @@ class DeviceLightManualViewModel(
             return
         }
 
-        DevicePresenceMonitor.start(appContext)
-
         LightDeviceLiveRefreshManager.start(
             context = appContext,
             deviceId = deviceId,
@@ -123,62 +113,39 @@ class DeviceLightManualViewModel(
         observeRuntimeJob = viewModelScope.launch {
             combine(
                 lightRuntimeRepository.observeManualRuntime(deviceId),
-                LightDeviceLiveRefreshManager.observe(deviceId),
-                DevicePresenceMonitor.statuses
-            ) { runtime, liveState, statuses ->
-                ManualRuntimeInputs(
-                    runtime = runtime,
-                    liveState = liveState,
-                    presenceState = statuses[this@DeviceLightManualViewModel.deviceId]
-                )
-            }.collect { inputs ->
-                val isOnline = inputs.presenceState?.isOnline == true
-
-                if (!isOnline) {
-                    cancelPendingManualChannelSends()
-                }
-
+                LightDeviceLiveRefreshManager.observe(deviceId)
+            ) { runtime, liveState ->
+                runtime to liveState
+            }.collect { (runtime, liveState) ->
                 _uiState.update { current ->
                     val preservePreviewValues =
-                        isOnline && isManualLiveEditing()
+                        isManualLiveEditing()
 
                     val runtimeState = applyRuntimeState(
                         current = current,
-                        runtime = inputs.runtime,
+                        runtime = runtime,
                         preservePreviewValues = preservePreviewValues
                     )
 
-                    if (!isOnline) {
-                        return@update runtimeState.toOfflineState(
-                            presenceState = inputs.presenceState
-                        )
-                    }
-
                     applyLiveDeviceState(
                         state = runtimeState,
-                        liveState = inputs.liveState,
+                        liveState = liveState,
                         preservePreviewValues = preservePreviewValues
-                    ).copy(
-                        isDeviceOnline = true,
-                        controlsEnabled = true,
-                        connectionStatusText = connectionStatusTextFor(
-                            inputs.presenceState?.status ?: DeviceConnectionStatus.ONLINE
-                        )
                     )
                 }
             }
         }
+
+        LightDeviceLiveRefreshManager.refreshNow(
+            context = appContext,
+            deviceId = deviceId
+        )
     }
 
     fun setPowerOn(
         enabled: Boolean
     ) {
         val currentState = _uiState.value
-
-        if (!currentState.controlsEnabled) {
-            sendOfflineWarning()
-            return
-        }
 
         if (
             !enabled &&
@@ -267,11 +234,6 @@ class DeviceLightManualViewModel(
         blue: Int? = null,
         white: Int? = null
     ) {
-        if (!_uiState.value.controlsEnabled) {
-            sendOfflineWarning()
-            return
-        }
-
         val wasManualOverrideActive =
             _uiState.value.isManualMode || _uiState.value.isManualScene
 
@@ -482,11 +444,6 @@ class DeviceLightManualViewModel(
     fun applyScene(
         scene: ManualLightScene
     ) {
-        if (!_uiState.value.controlsEnabled) {
-            sendOfflineWarning()
-            return
-        }
-
         cancelPendingManualChannelSends()
 
         val sceneName =
@@ -529,11 +486,6 @@ class DeviceLightManualViewModel(
     }
 
     fun resumeAuto() {
-        if (!_uiState.value.controlsEnabled) {
-            sendOfflineWarning()
-            return
-        }
-
         if (isResumeAutoRunning) {
             return
         }
@@ -586,11 +538,6 @@ class DeviceLightManualViewModel(
     }
 
     fun saveAs() {
-        if (!_uiState.value.controlsEnabled) {
-            sendOfflineWarning()
-            return
-        }
-
         viewModelScope.launch {
             val state =
                 _uiState.value
@@ -622,11 +569,6 @@ class DeviceLightManualViewModel(
     fun savePreset(
         name: String
     ) {
-        if (!_uiState.value.controlsEnabled) {
-            sendOfflineWarning()
-            return
-        }
-
         viewModelScope.launch {
             val cleanName =
                 name.trim()
@@ -769,23 +711,13 @@ class DeviceLightManualViewModel(
         val isManualOverrideActive =
             state.isManualMode || state.isManualScene
 
-        val shouldRestoreManualFromDevice =
-            liveState.hasLiveChannels &&
-                !preservePreviewValues &&
-                !isManualOverrideActive &&
-                liveState.looksLikeManualOutput()
-
         val shouldApplyLiveToManualControls =
             liveState.hasLiveChannels &&
                 !preservePreviewValues &&
-                (isManualOverrideActive || shouldRestoreManualFromDevice)
+                isManualOverrideActive
 
         val liveChannelState = if (shouldApplyLiveToManualControls) {
             state.copy(
-                isManualMode = true,
-                isManualScene = false,
-                activeSceneName = null,
-                activeSceneSource = null,
                 isPowerOn = liveState.actualPowerWatts
                     ?.let { watts ->
                         watts > 0.0
@@ -846,74 +778,6 @@ class DeviceLightManualViewModel(
             )
         } else {
             calculatedState.withCalculatedPowerText()
-        }
-    }
-
-    private fun ManualLightUiState.toOfflineState(
-        presenceState: DeviceStatusState?
-    ): ManualLightUiState {
-        return copy(
-            isManualMode = false,
-            isManualScene = false,
-            isPowerOn = false,
-            activeSceneName = null,
-            activeSceneSource = null,
-            masterOutputPercent = 0,
-            red = 0,
-            green = 0,
-            blue = 0,
-            white = 0,
-            estimatedPowerWatts = 0.0,
-            powerText = "-- W",
-            isDeviceOnline = false,
-            controlsEnabled = false,
-            connectionStatusText = connectionStatusTextFor(
-                presenceState?.status ?: DeviceConnectionStatus.UNKNOWN
-            )
-        )
-    }
-
-    private fun sendOfflineWarning() {
-        viewModelScope.launch {
-            eventsChannel.send(
-                ManualLightEvent.ShowError(
-                    _uiState.value.connectionStatusText
-                )
-            )
-        }
-    }
-
-    private fun connectionStatusTextFor(
-        status: DeviceConnectionStatus
-    ): String {
-        return when (status) {
-            DeviceConnectionStatus.ONLINE -> "Online"
-            DeviceConnectionStatus.CHECKING -> "Checking device connection"
-            DeviceConnectionStatus.STALE -> "Connection is unstable · controls disabled"
-            DeviceConnectionStatus.OFFLINE -> "Device offline · controls disabled"
-            DeviceConnectionStatus.UNKNOWN -> "Waiting for device connection"
-        }
-    }
-
-    private fun LightDeviceLiveState.looksLikeManualOutput(): Boolean {
-        val hasAnyOutput = channels.any { channel ->
-            (channel.valuePercent ?: 0) > 0
-        }
-
-        if (!hasAnyOutput) {
-            return false
-        }
-
-        val regimes = channels.map { channel ->
-            channel.regime.trim().lowercase()
-        }
-
-        return regimes.any { regime ->
-            regime.contains("manual") ||
-                regime.contains("vmanual") ||
-                regime == "1" ||
-                regime == "m" ||
-                regime.contains("scene")
         }
     }
 
@@ -1096,12 +960,6 @@ class DeviceLightManualViewModel(
             ManualLightScene.FULL_SPECTRUM -> "Full Spectrum"
         }
     }
-
-    private data class ManualRuntimeInputs(
-        val runtime: LightManualRuntimeState,
-        val liveState: LightDeviceLiveState,
-        val presenceState: DeviceStatusState?
-    )
 
     override fun onCleared() {
         observeRuntimeJob?.cancel()

@@ -8,13 +8,14 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailPlantsBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
+import com.aqua.aqualight.ui.tabs.aquarium.model.SavedAquariumPlant
 import com.google.android.material.card.MaterialCardView
 
 class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) {
@@ -76,8 +77,9 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         isOpeningPlantTagScreen = true
 
         navController.navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailPlantTagFragment(
-                tankId = tankId
+            R.id.action_tankDetailFragment_to_tankDetailPlantTagFragment,
+            bundleOf(
+                "tankId" to tankId
             )
         )
     }

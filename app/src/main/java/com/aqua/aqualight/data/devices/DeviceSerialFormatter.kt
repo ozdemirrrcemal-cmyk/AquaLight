@@ -5,18 +5,12 @@ object DeviceSerialFormatter {
     fun buildSerial(
         aquaName: String,
         name: String,
-        id: Long,
-        firmwareSerial: String = "",
-        deviceUid: String = "",
-        macAddress: String = ""
+        id: Long
     ): String {
         return buildSerial(
             aquaName = aquaName,
             name = name,
-            rawId = firmwareSerial
-                .ifBlank { deviceUid }
-                .ifBlank { macAddress }
-                .ifBlank { id.toString() }
+            rawId = id.toString()
         )
     }
 
@@ -67,10 +61,8 @@ object DeviceSerialFormatter {
     ): String {
         return rawId
             .filter { char ->
-                char.isLetterOrDigit()
+                char.isDigit()
             }
-            .uppercase()
-            .takeLast(12)
             .ifBlank {
                 "0000"
             }

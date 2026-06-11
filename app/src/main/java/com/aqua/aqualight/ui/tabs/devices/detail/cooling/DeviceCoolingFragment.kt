@@ -3,35 +3,26 @@ package com.aqua.aqualight.ui.tabs.devices.detail.cooling
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
-import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentDeviceCoolingBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
-
-    private val args: DeviceCoolingFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceCoolingBinding? = null
     private val binding get() = _binding!!
 
     private val deviceId: Long
-        get() = args.deviceId
+        get() = requireArguments().getLong(ARG_DEVICE_ID)
 
     private val deviceTitle: String
-        get() = args.deviceTitle.ifBlank {
-            "Cooling"
-        }
+        get() = requireArguments()
+            .getString(ARG_DEVICE_TITLE)
+            .orEmpty()
+            .ifBlank {
+                "Cooling"
+            }
 
     override fun onViewCreated(
         view: View,
@@ -46,7 +37,7 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
             FragmentDeviceCoolingBinding.bind(view)
 
         setupHeader()
-        observeDeviceStatus()
+        bindEmptyState()
     }
 
     private fun setupHeader() {
@@ -58,76 +49,12 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
         )
     }
 
-    private fun observeDeviceStatus() {
-        DevicePresenceMonitor.start(
-            requireContext().applicationContext
-        )
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(
-                Lifecycle.State.STARTED
-            ) {
-                DevicePresenceMonitor.statuses.collectLatest { statuses ->
-                    bindDeviceStatus(
-                        statuses[deviceId]
-                    )
-                }
-            }
-        }
-    }
-
-    private fun bindDeviceStatus(
-        statusState: DeviceStatusState?
-    ) {
+    private fun bindEmptyState() {
         binding.tvEmptyTitle.text =
             deviceTitle
 
         binding.tvEmptyMessage.text =
-            buildStatusMessage(
-                statusState
-            )
-    }
-
-    private fun buildStatusMessage(
-        statusState: DeviceStatusState?
-    ): String {
-        val status =
-            statusState?.status ?: DeviceConnectionStatus.UNKNOWN
-
-        val statusText =
-            when (status) {
-                DeviceConnectionStatus.ONLINE -> "Online"
-                DeviceConnectionStatus.CHECKING -> "Checking connection"
-                DeviceConnectionStatus.STALE -> "Connection is stale"
-                DeviceConnectionStatus.OFFLINE -> "Offline"
-                DeviceConnectionStatus.UNKNOWN -> "Unknown"
-            }
-
-        val resolvedIp =
-            statusState?.ip.orEmpty().ifBlank {
-                args.deviceIp
-            }
-
-        return buildString {
-            append("Device ID: ")
-            append(deviceId)
-            append("\n")
-            append("Status: ")
-            append(statusText)
-
-            if (resolvedIp.isNotBlank()) {
-                append("\nIP: ")
-                append(resolvedIp)
-            }
-
-            append("\n\n")
-
-            if (status == DeviceConnectionStatus.ONLINE) {
-                append("The cooling controller screen will be built here. Live commands remain protected by the central connection guard.")
-            } else {
-                append("This device is not ready for live control. Keep it powered on and connected to the same network.")
-            }
-        }
+            "Device ID: $deviceId\nCooling controller screen will be built here."
     }
 
     override fun onDestroyView() {
@@ -139,7 +66,6 @@ class DeviceCoolingFragment : Fragment(R.layout.fragment_device_cooling) {
 
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
-        const val ARG_DEVICE_IP = "deviceIp"
         const val ARG_DEVICE_TITLE = "deviceTitle"
     }
 }

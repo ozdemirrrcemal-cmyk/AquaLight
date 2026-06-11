@@ -31,7 +31,5 @@ data class ManualLightUiState(
 
     val savedPresets: List<ManualLightPreset> = emptyList(),
 
-    val isDeviceOnline: Boolean = false,
-    val controlsEnabled: Boolean = false,
-    val connectionStatusText: String = "Checking device connection"
+    val isDeviceOnline: Boolean = true
 )

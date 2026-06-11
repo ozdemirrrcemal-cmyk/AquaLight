@@ -18,26 +18,24 @@ import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.renderLightModeChip
 import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
-
-    private val args: DeviceLightFragmentArgs by navArgs()
 
     private var _binding: FragmentDeviceLightBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: DeviceLightViewModel by viewModels()
 
-    private var latestState: DeviceLightDashboardUiState = DeviceLightDashboardUiState()
-
     private val deviceId: Long
-        get() = args.deviceId
+        get() = arguments?.getLong(ARG_DEVICE_ID, 0L) ?: 0L
 
     private val deviceTitle: String
-        get() = args.deviceTitle.ifBlank {
-            "WRGB Pro"
-        }
+        get() = arguments
+            ?.getString(ARG_DEVICE_TITLE)
+            .orEmpty()
+            .ifBlank {
+                "WRGB Pro"
+            }
 
     override fun onViewCreated(
         view: View,
@@ -87,63 +85,78 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun setupClicks() {
         binding.cardManual.setOnClickListener {
-            if (!ensureControlsEnabled()) {
-                return@setOnClickListener
-            }
+            val bundle =
+                Bundle().apply {
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
+                }
 
             findNavController().navigate(
-                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightManualFragment(
-                    deviceId = deviceId
-                )
+                R.id.action_deviceLightFragment_to_deviceLightManualFragment,
+                bundle
             )
         }
 
         binding.cardPrograms.setOnClickListener {
-            if (!ensureControlsEnabled()) {
-                return@setOnClickListener
-            }
+            val bundle =
+                Bundle().apply {
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
+                }
 
             findNavController().navigate(
-                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightProgramsFragment(
-                    deviceId = deviceId
-                )
+                R.id.action_deviceLightFragment_to_deviceLightProgramsFragment,
+                bundle
             )
         }
 
         binding.cardQuickSetup.setOnClickListener {
-            if (!ensureControlsEnabled()) {
-                return@setOnClickListener
-            }
+            val bundle =
+                Bundle().apply {
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
+                }
 
             findNavController().navigate(
-                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightQuickSetupFragment(
-                    deviceId = deviceId
-                )
+                R.id.action_deviceLightFragment_to_deviceLightQuickSetupFragment,
+                bundle
             )
         }
 
         binding.cardPresets.setOnClickListener {
-            if (!ensureControlsEnabled()) {
-                return@setOnClickListener
-            }
+            val bundle =
+                Bundle().apply {
+                    putLong(
+                        ARG_DEVICE_ID,
+                        deviceId
+                    )
+                }
 
             findNavController().navigate(
-                DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightPresetsFragment(
-                    deviceId = deviceId
-                )
+                R.id.action_deviceLightFragment_to_deviceLightPresetsFragment,
+                bundle
             )
         }
     }
 
     private fun openSettings() {
-        if (!ensureControlsEnabled()) {
-            return
-        }
+        val bundle =
+            Bundle().apply {
+                putLong(
+                    ARG_DEVICE_ID,
+                    deviceId
+                )
+            }
 
         findNavController().navigate(
-            DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightSettingsFragment(
-                deviceId = deviceId
-            )
+            R.id.action_deviceLightFragment_to_deviceLightSettingsFragment,
+            bundle
         )
     }
 
@@ -164,8 +177,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private fun renderUiState(
         state: DeviceLightDashboardUiState
     ) {
-        latestState = state
-
         binding.tvActiveProgramName.text =
             state.activeProgramName
 
@@ -218,44 +229,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         binding.todayLightPlanGraphView.setState(
             state.todayPlanGraphState
         )
-
-        renderControlAvailability(
-            state
-        )
-    }
-
-    private fun renderControlAvailability(
-        state: DeviceLightDashboardUiState
-    ) {
-        val enabled = state.controlsEnabled
-        val alpha = if (enabled) {
-            1f
-        } else {
-            0.55f
-        }
-
-        binding.cardManual.isEnabled = enabled
-        binding.cardPrograms.isEnabled = enabled
-        binding.cardQuickSetup.isEnabled = enabled
-        binding.cardPresets.isEnabled = enabled
-
-        binding.cardManual.alpha = alpha
-        binding.cardPrograms.alpha = alpha
-        binding.cardQuickSetup.alpha = alpha
-        binding.cardPresets.alpha = alpha
-    }
-
-    private fun ensureControlsEnabled(): Boolean {
-        if (latestState.controlsEnabled) {
-            return true
-        }
-
-        showDeviceSnack(
-            message = latestState.connectionStatusText,
-            type = DeviceFeedbackType.WARNING
-        )
-
-        return false
     }
 
     private fun refreshDeviceStatus() {
