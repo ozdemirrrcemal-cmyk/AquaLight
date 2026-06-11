@@ -5,28 +5,22 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
-import com.aqua.aqualight.data.devices.presence.DeviceStatusState
-import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class DevicesFragment : Fragment(R.layout.fragment_devices) {
@@ -34,20 +28,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private var _binding: FragmentDevicesBinding? = null
     private val binding get() = _binding!!
 
-    private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val viewModel: DevicesViewModel by viewModels()
 
-    private lateinit var devicesStore: DevicesDataStoreManager
     private lateinit var adapter: DevicesListAdapter
 
-    private val deviceCardStateMapper =
-        DeviceCardStateMapper()
-
-    private var latestDevices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
-    private var latestTanks: List<SavedAquariumTank> = emptyList()
-    private var latestStatuses: Map<Long, DeviceStatusState> = emptyMap()
-
-    private var selectionMode: Boolean = false
-    private var isDeletingDevices: Boolean = false
+    private var currentUiState =
+        DevicesViewModel.DevicesUiState()
 
     override fun onViewCreated(
         view: View,
@@ -61,19 +47,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         _binding =
             FragmentDevicesBinding.bind(view)
 
-        devicesStore =
-            DevicesDataStoreManager.create(
-                requireContext()
-            )
-
-        DevicePresenceMonitor.start(
-            context = requireContext()
-        )
-
         setupHeader()
         setupRecyclerView()
-        observeTanks()
-        observeDevicesList()
+        observeViewModel()
     }
 
     private fun setupHeader() {
@@ -82,12 +58,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             config = AquaHeaderConfig(
                 showBackButton = false,
                 primaryAction = AquaHeaderPrimaryAction(
-                    text = if (selectionMode) {
+                    text = if (currentUiState.selectionMode) {
                         "Delete"
                     } else {
                         "+ Add"
                     },
-                    contentDescription = if (selectionMode) {
+                    contentDescription = if (currentUiState.selectionMode) {
                         "Delete selected devices"
                     } else {
                         getString(
@@ -95,7 +71,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                         )
                     },
                     onClick = {
-                        if (selectionMode) {
+                        if (currentUiState.selectionMode) {
                             showDeleteConfirmDialog()
                         } else {
                             openAddDeviceScreen()
@@ -112,12 +88,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         adapter =
             DevicesListAdapter(
                 onSelectionModeStart = {
-                    enterSelectionMode()
+                    viewModel.enterSelectionMode()
                 },
                 onSelectionChanged = { count ->
-                    if (count == 0) {
-                        exitSelectionMode()
-                    }
+                    viewModel.onSelectionChanged(
+                        selectedCount = count
+                    )
                 },
                 onDeviceClick = { device ->
                     openDeviceMenu(
@@ -135,96 +111,131 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             adapter
     }
 
-    private fun observeTanks() {
-        aquariumTankViewModel.tanks.observe(
-            viewLifecycleOwner
-        ) { tanks ->
-            latestTanks =
-                tanks
-
-            renderDevices()
-        }
-    }
-
-    private fun observeDevicesList() {
+    private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(
                 Lifecycle.State.STARTED
             ) {
-                combine(
-                    devicesStore.devicesFlow,
-                    DevicePresenceMonitor.statuses
-                ) { devices, statuses ->
-                    devices to statuses
-                }.collect { pair ->
-                    latestDevices =
-                        pair.first
+                launch {
+                    viewModel.uiState.collect { state ->
+                        renderState(
+                            state = state
+                        )
+                    }
+                }
 
-                    latestStatuses =
-                        pair.second
-
-                    renderDevices()
+                launch {
+                    viewModel.events.collect { event ->
+                        handleEvent(
+                            event = event
+                        )
+                    }
                 }
             }
         }
     }
 
-    private fun renderDevices() {
+    private fun renderState(
+        state: DevicesViewModel.DevicesUiState
+    ) {
         if (_binding == null) {
             return
         }
 
-        if (latestDevices.isEmpty()) {
-            exitSelectionMode()
+        val wasSelectionMode =
+            currentUiState.selectionMode
 
-            binding.tvEmptyState.visibility =
-                View.VISIBLE
+        currentUiState =
+            state
 
-            binding.rvSelectedDevices.visibility =
-                View.GONE
-
-            adapter.submitList(
-                emptyList()
-            )
-
-            return
+        if (
+            wasSelectionMode &&
+            !state.selectionMode
+        ) {
+            adapter.exitSelectionMode()
         }
 
         binding.tvEmptyState.visibility =
-            View.GONE
+            if (state.isEmpty) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
 
         binding.rvSelectedDevices.visibility =
-            View.VISIBLE
-
-        val uiList =
-            deviceCardStateMapper.mapAll(
-                devices = latestDevices,
-                statuses = latestStatuses,
-                tanks = latestTanks,
-                unassignedTankText = "",
-                unknownTankText = "Unknown aquarium"
-            ).map { cardState ->
-                DeviceCardUi(
-                    id = cardState.deviceId,
-                    displayName = cardState.title,
-                    familyName = cardState.familyName,
-                    tankName = cardState.tankName,
-                    ip = cardState.ip,
-                    serial = cardState.serial,
-                    firmwareBuild = cardState.firmwareBuild,
-                    isOnline = cardState.isOnline,
-                    lastSeenText = cardState.lastSeenText,
-                    deviceType = cardState.deviceType
-                )
+            if (state.isEmpty) {
+                View.GONE
+            } else {
+                View.VISIBLE
             }
 
         adapter.submitList(
-            uiList
+            state.devices
+        )
+
+        setupHeader()
+
+        showGlobalLoading(
+            show = state.isOpeningDevice || state.isDeletingDevices
         )
     }
 
+    private fun handleEvent(
+        event: DevicesViewModel.DevicesEvent
+    ) {
+        if (!isAdded || _binding == null) {
+            return
+        }
+
+        when (event) {
+            is DevicesViewModel.DevicesEvent.NavigateToDeviceRouter -> {
+                navigateFromDevices(
+                    DevicesFragmentDirections.actionDevicesFragmentToDeviceRouterFragment(
+                        deviceId = event.deviceId,
+                        deviceIp = event.deviceIp,
+                        deviceTitle = event.deviceTitle
+                    )
+                )
+            }
+
+            DevicesViewModel.DevicesEvent.ShowOffline -> {
+                showDeviceOfflineDialog()
+            }
+
+            DevicesViewModel.DevicesEvent.ShowNotFound -> {
+                showDeviceInfoDialog(
+                    title = "Device Not Found",
+                    message = "This device is no longer available."
+                )
+            }
+
+            DevicesViewModel.DevicesEvent.ShowUnsupported -> {
+                showDeviceInfoDialog(
+                    title = "Unsupported Device",
+                    message = "This device is not supported by this app version."
+                )
+            }
+
+            DevicesViewModel.DevicesEvent.ShowOpenFailed -> {
+                showDeviceInfoDialog(
+                    title = "Open Failed",
+                    message = "The device could not be opened. Please try again."
+                )
+            }
+
+            DevicesViewModel.DevicesEvent.ShowDeleteFailed -> {
+                DialogManager.showInfoDialog(
+                    context = requireContext(),
+                    type = DialogType.ERROR,
+                    title = "Delete Failed",
+                    message = "Selected devices could not be deleted."
+                )
+            }
+        }
+    }
+
     private fun openAddDeviceScreen() {
-        findNavController().navigate(
+        navigateFromDevices(
             DevicesFragmentDirections.actionDevicesFragmentToDeviceAddFragment()
         )
     }
@@ -232,85 +243,53 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun openDeviceMenu(
         device: DeviceCardUi
     ) {
-        findNavController().navigate(
-            DevicesFragmentDirections.actionDevicesFragmentToDeviceRouterFragment(
-                deviceId = device.id,
-                deviceIp = device.ip
+        viewModel.openDevice(
+            device = device
+        )
+    }
+
+    private fun showDeviceOfflineDialog() {
+        showDeviceInfoDialog(
+            title = "Device Offline",
+            message = getString(
+                R.string.device_offline_message
             )
         )
     }
 
-    private fun enterSelectionMode() {
-        if (!selectionMode) {
-            selectionMode =
-                true
-
-            updateActionButtonUi()
-        }
-    }
-
-    private fun exitSelectionMode() {
-        if (selectionMode) {
-            selectionMode =
-                false
-
-            adapter.exitSelectionMode()
-
-            updateActionButtonUi()
-        }
-    }
-
-    private fun updateActionButtonUi() {
-        if (_binding == null) {
+    private fun showDeviceInfoDialog(
+        title: String,
+        message: String
+    ) {
+        if (!isAdded || _binding == null) {
             return
         }
 
-        setupHeader()
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = title,
+            message = message
+        )
     }
 
-    private fun applyPrimaryActionStyle() {
-        val button =
-            binding.appHeader.btnPrimaryAction
+    private fun navigateFromDevices(
+        directions: NavDirections
+    ) {
+        val navController =
+            findNavController()
 
-        if (selectionMode) {
-            button.setTextColor(
-                Color.parseColor("#FF8A8A")
-            )
-
-            button.backgroundTintList =
-                ColorStateList.valueOf(
-                    Color.parseColor("#321E2A")
-                )
-
-            button.strokeWidth =
-                1.dp()
-
-            button.strokeColor =
-                ColorStateList.valueOf(
-                    Color.parseColor("#7A3344")
-                )
-        } else {
-            button.setTextColor(
-                Color.WHITE
-            )
-
-            button.backgroundTintList =
-                ColorStateList.valueOf(
-                    Color.parseColor("#1C3252")
-                )
-
-            button.strokeWidth =
-                0
-
-            button.strokeColor =
-                ColorStateList.valueOf(
-                    Color.TRANSPARENT
-                )
+        if (navController.currentDestination?.id != R.id.devicesFragment) {
+            return
         }
+
+        navController.navigate(
+            directions
+        )
     }
 
     private fun showDeleteConfirmDialog() {
-        if (isDeletingDevices) {
+        if (currentUiState.isDeletingDevices) {
             return
         }
 
@@ -318,7 +297,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             adapter.getSelectedIds()
 
         if (ids.isEmpty()) {
-            exitSelectionMode()
+            viewModel.exitSelectionMode()
             return
         }
 
@@ -355,59 +334,54 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             title = title,
             message = message,
             onConfirm = {
-                deleteSelectedDevices(
+                viewModel.deleteSelectedDevices(
                     ids = ids
                 )
             },
             onCancel = {
-                exitSelectionMode()
+                viewModel.exitSelectionMode()
             }
         )
     }
 
-    private fun deleteSelectedDevices(
-        ids: Set<Long>
-    ) {
-        if (isDeletingDevices) {
-            return
-        }
+    private fun applyPrimaryActionStyle() {
+        val button =
+            binding.appHeader.btnPrimaryAction
 
-        if (ids.isEmpty()) {
-            exitSelectionMode()
-            return
-        }
+        if (currentUiState.selectionMode) {
+            button.setTextColor(
+                Color.parseColor("#FF8A8A")
+            )
 
-        isDeletingDevices =
-            true
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                showGlobalLoading(
-                    show = true
+            button.backgroundTintList =
+                ColorStateList.valueOf(
+                    Color.parseColor("#321E2A")
                 )
 
-                devicesStore.deleteDevices(
-                    ids = ids
+            button.strokeWidth =
+                1.dp()
+
+            button.strokeColor =
+                ColorStateList.valueOf(
+                    Color.parseColor("#7A3344")
+                )
+        } else {
+            button.setTextColor(
+                Color.WHITE
+            )
+
+            button.backgroundTintList =
+                ColorStateList.valueOf(
+                    Color.parseColor("#1C3252")
                 )
 
-                exitSelectionMode()
-            } catch (exception: Exception) {
-                exception.printStackTrace()
+            button.strokeWidth =
+                0
 
-                DialogManager.showInfoDialog(
-                    context = requireContext(),
-                    type = DialogType.ERROR,
-                    title = "Delete Failed",
-                    message = "Selected devices could not be deleted."
+            button.strokeColor =
+                ColorStateList.valueOf(
+                    Color.TRANSPARENT
                 )
-            } finally {
-                isDeletingDevices =
-                    false
-
-                showGlobalLoading(
-                    show = false
-                )
-            }
         }
     }
 
@@ -422,10 +396,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun Int.dp(): Int {
         return (
             this * resources.displayMetrics.density
-            ).toInt()
+        ).toInt()
     }
 
     override fun onDestroyView() {
+        showGlobalLoading(
+            show = false
+        )
+
         binding.rvSelectedDevices.adapter =
             null
 

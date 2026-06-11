@@ -155,26 +155,6 @@
 
     </action>
 	
-	<action
-    android:id="@+id/action_tankDetailFragment_to_unsupportedDeviceFragment"
-    app:destination="@id/unsupportedDeviceFragment"
-    app:enterAnim="@anim/nav_slide_in_right"
-    app:exitAnim="@anim/nav_slide_out_left"
-    app:popEnterAnim="@anim/nav_slide_in_left"
-    app:popExitAnim="@anim/nav_slide_out_right">
-
-    <argument
-        android:name="deviceTitle"
-        app:argType="string"
-        android:defaultValue="" />
-
-    <argument
-        android:name="message"
-        app:argType="string"
-        android:defaultValue="" />
-
-</action>
-
   </fragment>
 
   <fragment

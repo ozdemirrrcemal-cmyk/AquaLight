@@ -11,7 +11,10 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -20,9 +23,8 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.data.devices.access.DeviceAccessGuard
-import com.aqua.aqualight.data.devices.access.DeviceOpenResult
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -30,7 +32,8 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class TankDetailFragment :
@@ -42,13 +45,17 @@ class TankDetailFragment :
     private var _binding: FragmentTankDetailBinding? = null
     private val binding get() = _binding!!
 
+    private val viewModel: TankDetailViewModel by viewModels()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
     private var tankId: Long = 0L
-    private var selectedTab: TankDetailTab = TankDetailTab.DEVICES
     private var currentTank: SavedAquariumTank? = null
-    private var isOpeningDevice: Boolean = false
+
+    private var currentUiState =
+        TankDetailViewModel.TankDetailUiState()
+
+    private var hasRenderedTab: Boolean = false
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -69,17 +76,119 @@ class TankDetailFragment :
 
         _binding = FragmentTankDetailBinding.bind(view)
 
-        selectedTab = restoreSelectedTab(savedInstanceState)
-
         setupHeader(
             title = "Aquarium"
         )
         setupClickListeners()
         setupSystemBackButton()
         setupSwipeBetweenTabs()
+        observeViewModel()
         observeCareProfileActions()
         observeTank()
-        selectTab(selectedTab)
+
+        viewModel.selectTab(
+            restoreSelectedTab(
+                savedInstanceState = savedInstanceState
+            )
+        )
+    }
+
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(
+                Lifecycle.State.STARTED
+            ) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        renderState(
+                            state = state
+                        )
+                    }
+                }
+
+                launch {
+                    viewModel.events.collect { event ->
+                        handleEvent(
+                            event = event
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun renderState(
+        state: TankDetailViewModel.TankDetailUiState
+    ) {
+        if (_binding == null) {
+            return
+        }
+
+        val previousTab =
+            currentUiState.selectedTab
+
+        currentUiState =
+            state
+
+        if (
+            !hasRenderedTab ||
+            previousTab != state.selectedTab
+        ) {
+            hasRenderedTab = true
+
+            renderSelectedTab(
+                tab = state.selectedTab
+            )
+        }
+
+        showGlobalLoading(
+            show = state.isOpeningDevice
+        )
+    }
+
+    private fun handleEvent(
+        event: TankDetailViewModel.TankDetailEvent
+    ) {
+        if (!isAdded || _binding == null) {
+            return
+        }
+
+        when (event) {
+            is TankDetailViewModel.TankDetailEvent.NavigateToDeviceRouter -> {
+                navigateFromTankDetail(
+                    TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
+                        deviceId = event.deviceId,
+                        deviceIp = event.deviceIp,
+                        deviceTitle = event.deviceTitle
+                    )
+                )
+            }
+
+            TankDetailViewModel.TankDetailEvent.ShowOffline -> {
+                showDeviceOfflineDialog()
+            }
+
+            TankDetailViewModel.TankDetailEvent.ShowNotFound -> {
+                showDeviceInfoDialog(
+                    title = "Device Not Found",
+                    message = "This device is no longer available."
+                )
+            }
+
+            TankDetailViewModel.TankDetailEvent.ShowUnsupported -> {
+                showDeviceInfoDialog(
+                    title = "Unsupported Device",
+                    message = "This device is not supported by this app version."
+                )
+            }
+
+            TankDetailViewModel.TankDetailEvent.ShowOpenFailed -> {
+                showDeviceInfoDialog(
+                    title = "Open Failed",
+                    message = "The device could not be opened. Please try again."
+                )
+            }
+        }
     }
 
     private fun setupHeader(
@@ -114,28 +223,38 @@ class TankDetailFragment :
                 runCatching {
                     TankDetailTab.valueOf(tabName)
                 }.getOrNull()
-            } ?: selectedTab
+            } ?: currentUiState.selectedTab
     }
 
     private fun setupClickListeners() {
         binding.tabDevices.setOnClickListener {
-            selectTab(TankDetailTab.DEVICES)
+            viewModel.selectTab(
+                TankDetailTab.DEVICES
+            )
         }
 
         binding.tabActivity.setOnClickListener {
-            selectTab(TankDetailTab.ACTIVITY)
+            viewModel.selectTab(
+                TankDetailTab.ACTIVITY
+            )
         }
 
         binding.tabTank.setOnClickListener {
-            selectTab(TankDetailTab.TANK)
+            viewModel.selectTab(
+                TankDetailTab.TANK
+            )
         }
 
         binding.tabPlants.setOnClickListener {
-            selectTab(TankDetailTab.PLANTS)
+            viewModel.selectTab(
+                TankDetailTab.PLANTS
+            )
         }
 
         binding.tabTankLife.setOnClickListener {
-            selectTab(TankDetailTab.TANK_LIFE)
+            viewModel.selectTab(
+                TankDetailTab.TANK_LIFE
+            )
         }
     }
 
@@ -159,49 +278,60 @@ class TankDetailFragment :
             binding.tankLifeFragmentContainer
         ).forEach { container ->
             container.setOnSwipeLeftListener {
-                moveTabBy(offset = 1)
+                moveTabBy(
+                    offset = 1
+                )
             }
 
             container.setOnSwipeRightListener {
-                moveTabBy(offset = -1)
+                moveTabBy(
+                    offset = -1
+                )
             }
         }
     }
-	
-	private fun showGlobalLoading(
-    show: Boolean
-) {
-    (activity as? BaseActivity)?.showLoading(
-        show
-    )
-}
+
+    private fun showGlobalLoading(
+        show: Boolean
+    ) {
+        (activity as? BaseActivity)?.showLoading(
+            show
+        )
+    }
 
     private fun moveTabBy(
         offset: Int
     ) {
-        val currentIndex = TAB_ORDER.indexOf(selectedTab)
+        val currentIndex =
+            TAB_ORDER.indexOf(
+                currentUiState.selectedTab
+            )
 
         if (currentIndex == -1) {
             return
         }
 
-        val targetIndex = (currentIndex + offset).coerceIn(
-            0,
-            TAB_ORDER.lastIndex
-        )
+        val targetIndex =
+            (currentIndex + offset).coerceIn(
+                0,
+                TAB_ORDER.lastIndex
+            )
 
         if (targetIndex == currentIndex) {
             return
         }
 
-        selectTab(TAB_ORDER[targetIndex])
+        viewModel.selectTab(
+            TAB_ORDER[targetIndex]
+        )
     }
 
     private fun observeCareProfileActions() {
-        val savedStateHandle = findNavController()
-            .currentBackStackEntry
-            ?.savedStateHandle
-            ?: return
+        val savedStateHandle =
+            findNavController()
+                .currentBackStackEntry
+                ?.savedStateHandle
+                ?: return
 
         savedStateHandle.getLiveData<String>(
             KEY_CARE_PROFILE_ACTION
@@ -217,12 +347,18 @@ class TankDetailFragment :
             binding.root.post {
                 when (action) {
                     CARE_PROFILE_ACTION_PLANTS -> {
-                        selectTab(TankDetailTab.PLANTS)
+                        viewModel.selectTab(
+                            TankDetailTab.PLANTS
+                        )
+
                         openPlantTagScreen()
                     }
 
                     CARE_PROFILE_ACTION_LIVESTOCK -> {
-                        selectTab(TankDetailTab.TANK_LIFE)
+                        viewModel.selectTab(
+                            TankDetailTab.TANK_LIFE
+                        )
+
                         openLivestockFormIfNeeded()
                     }
                 }
@@ -231,9 +367,10 @@ class TankDetailFragment :
     }
 
     private fun openLivestockFormIfNeeded() {
-        val hasLivestock = currentTank
-            ?.livestock
-            ?.isNotEmpty() == true
+        val hasLivestock =
+            currentTank
+                ?.livestock
+                ?.isNotEmpty() == true
 
         if (!hasLivestock) {
             openLivestockFormScreen()
@@ -283,98 +420,44 @@ class TankDetailFragment :
     }
 
     override fun onTankDetailDeviceClicked(
-    device: TankAssignedDeviceUi
-) {
-    if (device.deviceId <= 0L || isOpeningDevice) {
-        return
+        device: TankAssignedDeviceUi
+    ) {
+        viewModel.openDevice(
+            deviceId = device.deviceId,
+            deviceTitle = device.title
+        )
     }
 
-    isOpeningDevice = true
-
-    viewLifecycleOwner.lifecycleScope.launch {
-        try {
-            showGlobalLoading(
-                show = true
+    private fun showDeviceOfflineDialog() {
+        showDeviceInfoDialog(
+            title = "Device Offline",
+            message = getString(
+                R.string.device_offline_message
             )
-
-            val result =
-                DeviceAccessGuard(
-                    context = requireContext()
-                ).resolveForOpen(
-                    deviceId = device.deviceId
-                )
-
-            if (!isAdded || _binding == null) {
-                return@launch
-            }
-
-            when (result) {
-                is DeviceOpenResult.Allowed -> {
-                    navigateFromTankDetail(
-                        TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
-                            deviceId = result.device.id,
-                            deviceIp = result.ip,
-                            deviceTitle = device.title
-                        )
-                    )
-                }
-
-                DeviceOpenResult.NotFound -> {
-                    openUnsupportedDeviceScreen(
-                        title = "Device Not Found",
-                        message = "This device is no longer available."
-                    )
-                }
-
-                is DeviceOpenResult.Unsupported -> {
-                    openUnsupportedDeviceScreen(
-                        title = result.device.productModel.ifBlank {
-                            "Unsupported Device"
-                        },
-                        message = "This device is not supported by this app version."
-                    )
-                }
-
-                is DeviceOpenResult.Offline -> {
-                    openUnsupportedDeviceScreen(
-                        title = result.device.productModel.ifBlank {
-                            result.device.name.ifBlank {
-                                device.title.ifBlank {
-                                    DEFAULT_DEVICE_TITLE
-                                }
-                            }
-                        },
-                        message = getString(
-                            R.string.device_offline_message
-                        )
-                    )
-                }
-            }
-        } finally {
-            isOpeningDevice = false
-
-            showGlobalLoading(
-                show = false
-            )
-        }
+        )
     }
-}
-    private fun openUnsupportedDeviceScreen(
+
+    private fun showDeviceInfoDialog(
         title: String,
         message: String
     ) {
-        navigateFromTankDetail(
-            TankDetailFragmentDirections.actionTankDetailFragmentToUnsupportedDeviceFragment(
-                deviceTitle = title,
-                message = message
-            )
+        if (!isAdded || _binding == null) {
+            return
+        }
+
+        DialogManager.showInfoDialog(
+            context = requireContext(),
+            type = DialogType.WARNING,
+            title = title,
+            message = message
         )
     }
 
     private fun navigateFromTankDetail(
         directions: NavDirections
     ) {
-        val navController = findNavController()
+        val navController =
+            findNavController()
 
         if (navController.currentDestination?.id != R.id.tankDetailFragment) {
             return
@@ -389,23 +472,27 @@ class TankDetailFragment :
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             maintenanceViewModel.setTanks(tanks)
 
-            val tank = tanks.firstOrNull { tank ->
-                tank.id == tankId
-            }
+            val tank =
+                tanks.firstOrNull { tank ->
+                    tank.id == tankId
+                }
 
             if (tank == null) {
                 findNavController().navigateUp()
                 return@observe
             }
 
-            bindTank(tank)
+            bindTank(
+                tank = tank
+            )
         }
     }
 
     private fun bindTank(
         tank: SavedAquariumTank
     ) {
-        currentTank = tank
+        currentTank =
+            tank
 
         setupHeader(
             title = tank.name
@@ -418,22 +505,33 @@ class TankDetailFragment :
                 crossfade(true)
             }
         } else {
-            binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
+            binding.imgTankPhoto.setImageResource(
+                R.drawable.nature_aquarium
+            )
         }
 
         binding.markerContainer.removeAllViews()
-        binding.markerContainer.isVisible = false
+        binding.markerContainer.isVisible =
+            false
     }
 
-    private fun selectTab(
+    private fun renderSelectedTab(
         tab: TankDetailTab
     ) {
-        selectedTab = tab
-
         resetTabs()
-        activateTab(tabViewFor(tab))
-        moveTabUnderline(tabViewFor(tab))
-        showContentForTab(tab)
+        activateTab(
+            tabViewFor(
+                tab = tab
+            )
+        )
+        moveTabUnderline(
+            tabViewFor(
+                tab = tab
+            )
+        )
+        showContentForTab(
+            tab = tab
+        )
 
         binding.contentScrollView.post {
             binding.contentScrollView.scrollTo(
@@ -446,62 +544,80 @@ class TankDetailFragment :
     private fun showContentForTab(
         tab: TankDetailTab
     ) {
-        binding.contentScrollView.isVisible = false
-        binding.tvEmptyTab.isVisible = false
+        binding.contentScrollView.isVisible =
+            false
+
+        binding.tvEmptyTab.isVisible =
+            false
 
         when (tab) {
             TankDetailTab.DEVICES -> {
-                binding.devicesFragmentContainer.isVisible = true
+                binding.devicesFragmentContainer.isVisible =
+                    true
 
                 showFragmentIfNeeded(
                     containerId = R.id.devicesFragmentContainer,
                     tag = TAG_DEVICES_FRAGMENT
                 ) {
-                    TankDetailDevicesFragment.newInstance(tankId)
+                    TankDetailDevicesFragment.newInstance(
+                        tankId
+                    )
                 }
             }
 
             TankDetailTab.ACTIVITY -> {
-                binding.activityFragmentContainer.isVisible = true
+                binding.activityFragmentContainer.isVisible =
+                    true
 
                 showFragmentIfNeeded(
                     containerId = R.id.activityFragmentContainer,
                     tag = TAG_ACTIVITY_FRAGMENT
                 ) {
-                    TankDetailActivityFragment.newInstance(tankId)
+                    TankDetailActivityFragment.newInstance(
+                        tankId
+                    )
                 }
             }
 
             TankDetailTab.TANK -> {
-                binding.tankFragmentContainer.isVisible = true
+                binding.tankFragmentContainer.isVisible =
+                    true
 
                 showFragmentIfNeeded(
                     containerId = R.id.tankFragmentContainer,
                     tag = TAG_TANK_FRAGMENT
                 ) {
-                    TankDetailTankFragment.newInstance(tankId)
+                    TankDetailTankFragment.newInstance(
+                        tankId
+                    )
                 }
             }
 
             TankDetailTab.PLANTS -> {
-                binding.plantsFragmentContainer.isVisible = true
+                binding.plantsFragmentContainer.isVisible =
+                    true
 
                 showFragmentIfNeeded(
                     containerId = R.id.plantsFragmentContainer,
                     tag = TAG_PLANTS_FRAGMENT
                 ) {
-                    TankDetailPlantsFragment.newInstance(tankId)
+                    TankDetailPlantsFragment.newInstance(
+                        tankId
+                    )
                 }
             }
 
             TankDetailTab.TANK_LIFE -> {
-                binding.tankLifeFragmentContainer.isVisible = true
+                binding.tankLifeFragmentContainer.isVisible =
+                    true
 
                 showFragmentIfNeeded(
                     containerId = R.id.tankLifeFragmentContainer,
                     tag = TAG_TANK_LIFE_FRAGMENT
                 ) {
-                    TankDetailLifeFragment.newInstance(tankId)
+                    TankDetailLifeFragment.newInstance(
+                        tankId
+                    )
                 }
             }
         }
@@ -512,7 +628,10 @@ class TankDetailFragment :
         tag: String,
         fragmentFactory: () -> Fragment
     ) {
-        val existingFragment = childFragmentManager.findFragmentByTag(tag)
+        val existingFragment =
+            childFragmentManager.findFragmentByTag(
+                tag
+            )
 
         if (existingFragment != null) {
             return
@@ -542,26 +661,39 @@ class TankDetailFragment :
     private fun activateTab(
         tabView: TextView
     ) {
-        tabView.setTextColor(Color.WHITE)
-        tabView.setTypeface(null, Typeface.BOLD)
+        tabView.setTextColor(
+            Color.WHITE
+        )
+
+        tabView.setTypeface(
+            null,
+            Typeface.BOLD
+        )
     }
 
     private fun moveTabUnderline(
         tabView: TextView
     ) {
         binding.tabsContainer.post {
-            val underlineWidth = (tabView.width * 0.58f)
-                .toInt()
-                .coerceIn(
-                    34.dp(),
-                    68.dp()
-                )
+            val underlineWidth =
+                (tabView.width * 0.58f)
+                    .toInt()
+                    .coerceIn(
+                        34.dp(),
+                        68.dp()
+                    )
 
-            val params = binding.tabUnderline.layoutParams
-            params.width = underlineWidth
-            binding.tabUnderline.layoutParams = params
+            val params =
+                binding.tabUnderline.layoutParams
 
-            val targetX = tabView.x + ((tabView.width - underlineWidth) / 2f)
+            params.width =
+                underlineWidth
+
+            binding.tabUnderline.layoutParams =
+                params
+
+            val targetX =
+                tabView.x + ((tabView.width - underlineWidth) / 2f)
 
             binding.tabUnderline.animate()
                 .translationX(targetX)
@@ -571,12 +703,21 @@ class TankDetailFragment :
     }
 
     private fun resetTabs() {
-        val inactiveColor = Color.parseColor("#8FA4BE")
+        val inactiveColor =
+            Color.parseColor("#8FA4BE")
 
         TankDetailTab.values().forEach { tab ->
-            tabViewFor(tab).apply {
-                setTextColor(inactiveColor)
-                setTypeface(null, Typeface.NORMAL)
+            tabViewFor(
+                tab = tab
+            ).apply {
+                setTextColor(
+                    inactiveColor
+                )
+
+                setTypeface(
+                    null,
+                    Typeface.NORMAL
+                )
             }
         }
 
@@ -584,13 +725,26 @@ class TankDetailFragment :
     }
 
     private fun hideAllTabContainers() {
-        binding.contentScrollView.isVisible = true
-        binding.devicesFragmentContainer.isVisible = false
-        binding.activityFragmentContainer.isVisible = false
-        binding.tankFragmentContainer.isVisible = false
-        binding.plantsFragmentContainer.isVisible = false
-        binding.tankLifeFragmentContainer.isVisible = false
-        binding.tvEmptyTab.isVisible = false
+        binding.contentScrollView.isVisible =
+            true
+
+        binding.devicesFragmentContainer.isVisible =
+            false
+
+        binding.activityFragmentContainer.isVisible =
+            false
+
+        binding.tankFragmentContainer.isVisible =
+            false
+
+        binding.plantsFragmentContainer.isVisible =
+            false
+
+        binding.tankLifeFragmentContainer.isVisible =
+            false
+
+        binding.tvEmptyTab.isVisible =
+            false
     }
 
     private fun Int.dp(): Int {
@@ -600,32 +754,30 @@ class TankDetailFragment :
     override fun onSaveInstanceState(
         outState: Bundle
     ) {
-        super.onSaveInstanceState(outState)
+        super.onSaveInstanceState(
+            outState
+        )
 
         outState.putString(
             KEY_SELECTED_TAB,
-            selectedTab.name
+            currentUiState.selectedTab.name
         )
     }
 
     override fun onDestroyView() {
+        showGlobalLoading(
+            show = false
+        )
+
+        _binding =
+            null
+
         super.onDestroyView()
-
-        _binding = null
-    }
-
-    private enum class TankDetailTab {
-        DEVICES,
-        ACTIVITY,
-        TANK,
-        PLANTS,
-        TANK_LIFE
     }
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
         private const val KEY_SELECTED_TAB = "selectedTab"
-        private const val DEFAULT_DEVICE_TITLE = "Device"
 
         private const val TAG_DEVICES_FRAGMENT = "TankDetailDevicesFragment"
         private const val TAG_ACTIVITY_FRAGMENT = "TankDetailActivityFragment"
