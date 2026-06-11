@@ -17,7 +17,7 @@ class LightDeviceTimeRepository(
 
     suspend fun readDeviceTime(
         deviceId: Long,
-        fallbackToPhone: Boolean = true
+        fallbackToPhone: Boolean = false
     ): LightDeviceTimeState {
         return withContext(Dispatchers.IO) {
             if (deviceId <= 0L) {

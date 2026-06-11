@@ -9,13 +9,12 @@ import com.aqua.aqualight.data.devices.catalog.light.LightProductCatalog
 import com.aqua.aqualight.data.devices.light.runtime.LightActualDataPolicy
 import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
+import com.aqua.aqualight.data.devices.light.runtime.LightProgramRuntimeEvaluator
 import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
-import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
+import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
-import java.util.Calendar
-import kotlin.math.roundToInt
 
 class TankAssignedDeviceUiMapper {
 
@@ -51,13 +50,7 @@ class TankAssignedDeviceUiMapper {
             commonCardState.familyName
 
         val online =
-            commonCardState.isOnline ||
-                (
-                    device.isLightDevice() &&
-                        lightState?.let { state ->
-                            state.hasAuthoritativeContact
-                        } == true
-                    )
+            commonCardState.isOnline
 
         val iconRes =
             DeviceIconMapper.iconFor(
@@ -101,104 +94,38 @@ class TankAssignedDeviceUiMapper {
                 deviceId = device.id
             )
 
-        val activePrograms =
-            programs
-                .filter { program ->
-                    program.deviceId == device.id && program.isActive
+        val runtimeEvaluation =
+            LightProgramRuntimeEvaluator.evaluate(
+                deviceId = device.id,
+                programs = programs,
+                deviceTime = liveState.deviceTime.takeIf {
+                    online && liveState.hasDeviceTime
                 }
-                .sortedBy { program ->
-                    program.draft.start.totalMinutes
-                }
-
-        val deviceTime =
-            liveState.deviceTime
-
-        val currentMinute =
-            deviceTime?.curvePoint?.totalMinutes ?: currentPhoneMinute()
-
-        val todayPrograms =
-            activePrograms
-                .filter { program ->
-                    if (deviceTime == null) {
-                        true
-                    } else {
-                        isScheduledToday(
-                            program = program,
-                            weekDay = deviceTime.weekDay
-                        )
-                    }
-                }
-                .sortedBy { program ->
-                    program.draft.start.totalMinutes
-                }
-
-        val runningProgram =
-            todayPrograms.firstOrNull { program ->
-                isProgramRunningAt(
-                    program = program,
-                    minute = currentMinute
-                )
-            }
-
-        val nextProgram =
-            todayPrograms.firstOrNull { program ->
-                program.draft.start.totalMinutes > currentMinute
-            }
-
-        val displayProgram =
-            runningProgram
-                ?: nextProgram
-                ?: todayPrograms.firstOrNull()
-                ?: activePrograms.firstOrNull()
-
-        val waitingForFirstRuntimeEmission =
-            lightState == null
-        val hasStoredPresentation =
-            modeOverride != null || activePrograms.isNotEmpty()
-
-        val shouldSuppressStoredRuntime =
-            waitingForFirstRuntimeEmission ||
-                (!liveState.hasDisplayChannels && !hasStoredPresentation)
-
-        val displayProgramForCard = if (shouldSuppressStoredRuntime) {
-            null
-        } else {
-            displayProgram
-        }
+            )
 
         val effectiveModeOverride =
-            if (!shouldSuppressStoredRuntime) modeOverride else null
+            if (online) modeOverride else null
+
+        val hasActualLiveData =
+            LightActualDataPolicy.hasActualData(
+                isOnline = online,
+                liveState = liveState
+            )
 
         val outputPercent =
-            when {
-                shouldSuppressStoredRuntime -> {
-                    0
-                }
-
-                effectiveModeOverride?.outputPercent != null -> {
-                    effectiveModeOverride.outputPercent
-                }
-
-                liveState.hasDisplayChannels -> {
-                    LightActualDataPolicy.displayOutputPercent(liveState)
-                }
-
-                else -> {
-                    0
-                }
-            }
+            LightActualDataPolicy.actualOutputPercent(
+                isOnline = online,
+                liveState = liveState
+            )
 
         val modeContent =
-            if (shouldSuppressStoredRuntime) {
-                buildLiveSyncingContent(
-                    online = online || waitingForFirstRuntimeEmission
-                )
-            } else {
-                buildModeContent(
-                    displayProgram = displayProgramForCard,
-                    modeOverride = effectiveModeOverride
-                )
-            }
+            buildModeContent(
+                isOnline = online,
+                hasDeviceTime = runtimeEvaluation.hasDeviceTime,
+                hasActualLiveData = hasActualLiveData,
+                displayProgram = runtimeEvaluation.displayProgram,
+                modeOverride = effectiveModeOverride
+            )
 
         return TankAssignedDeviceUi.Light(
             deviceId = device.id,
@@ -216,38 +143,32 @@ class TankAssignedDeviceUiMapper {
                 100
             ),
             timelineProgressPercent = modeContent.timelineProgressPercent
-                ?: calculateTimelineProgressPercent(
-                    program = displayProgram,
-                    currentMinute = currentMinute
+                ?: LightProgramRuntimeEvaluator.progressPercent(
+                    program = runtimeEvaluation.displayProgram,
+                    currentMinute = runtimeEvaluation.currentMinute
                 ),
             accentColorInt = modeContent.accentColorInt,
             channels = buildLightChannels(
                 device = device,
+                isOnline = online,
                 liveState = liveState,
-                runningProgram = runningProgram,
-                displayProgram = displayProgramForCard,
-                currentMinute = currentMinute,
-                modeOverride = effectiveModeOverride
+                displayProgram = runtimeEvaluation.displayProgram
             )
         )
     }
 
     private fun buildLightChannels(
         device: DevicesDataStoreManager.DeviceInfo,
+        isOnline: Boolean,
         liveState: LightDeviceLiveState,
-        runningProgram: SavedLightProgram?,
-        displayProgram: SavedLightProgram?,
-        currentMinute: Int,
-        modeOverride: TankLightModeOverride?
+        displayProgram: SavedLightProgram?
     ): List<TankLightChannelUi> {
         return device.supportedLightChannels().map { channel ->
             val currentPercent =
                 currentLightChannelPercent(
                     channel = channel,
-                    liveState = liveState,
-                    runningProgram = runningProgram,
-                    currentMinute = currentMinute,
-                    modeOverride = modeOverride
+                    isOnline = isOnline,
+                    liveState = liveState
                 )
 
             val targetPercent =
@@ -268,59 +189,13 @@ class TankAssignedDeviceUiMapper {
 
     private fun currentLightChannelPercent(
         channel: LightChannelConfig,
-        liveState: LightDeviceLiveState,
-        runningProgram: SavedLightProgram?,
-        currentMinute: Int,
-        modeOverride: TankLightModeOverride?
+        isOnline: Boolean,
+        liveState: LightDeviceLiveState
     ): Int {
-        if (liveState.hasDisplayChannels || modeOverride != null) {
-            overrideChannelPercent(
-                semantic = channel.semantic,
-                modeOverride = modeOverride
-            )?.let { percent ->
-                return percent
-            }
-
-            return when (channel.semantic) {
-                LightChannelSemantic.RED,
-                LightChannelSemantic.GREEN,
-                LightChannelSemantic.BLUE,
-                LightChannelSemantic.WHITE -> {
-                    LightActualDataPolicy.displayChannelPercent(
-                        liveState = liveState,
-                        semantic = channel.semantic
-                    )
-                }
-
-                LightChannelSemantic.UNKNOWN -> {
-                    LightActualDataPolicy.displayOutputPercent(liveState).coerceIn(
-                        0,
-                        100
-                    )
-                }
-            }
-        }
-
-        return 0
-    }
-
-    private fun overrideChannelPercent(
-        semantic: LightChannelSemantic,
-        modeOverride: TankLightModeOverride?
-    ): Int? {
-        if (modeOverride == null) {
-            return null
-        }
-
-        return when (semantic) {
-            LightChannelSemantic.RED -> modeOverride.red
-            LightChannelSemantic.GREEN -> modeOverride.green
-            LightChannelSemantic.BLUE -> modeOverride.blue
-            LightChannelSemantic.WHITE -> modeOverride.white
-            LightChannelSemantic.UNKNOWN -> modeOverride.outputPercent
-        }?.coerceIn(
-            0,
-            100
+        return LightActualDataPolicy.actualChannelPercent(
+            isOnline = isOnline,
+            liveState = liveState,
+            semantic = channel.semantic
         )
     }
 
@@ -348,46 +223,6 @@ class TankAssignedDeviceUiMapper {
             0,
             100
         )
-    }
-
-    private fun calculateTimelineProgressPercent(
-        program: SavedLightProgram?,
-        currentMinute: Int
-    ): Int {
-        if (program == null) {
-            return 0
-        }
-
-        val start =
-            program.draft.start.totalMinutes
-
-        val end =
-            LightProgramTimeMath.endMinutes(
-                program.draft.end
-            )
-
-        if (end <= start) {
-            return 0
-        }
-
-        return when {
-            currentMinute <= start -> {
-                0
-            }
-
-            currentMinute >= end -> {
-                100
-            }
-
-            else -> {
-                (((currentMinute - start).toDouble() / (end - start).toDouble()) * 100.0)
-                    .roundToInt()
-                    .coerceIn(
-                        0,
-                        100
-                    )
-            }
-        }
     }
 
     private fun DevicesDataStoreManager.DeviceInfo.supportedLightChannels(): List<LightChannelConfig> {
@@ -662,103 +497,49 @@ class TankAssignedDeviceUiMapper {
             .lowercase()
     }
 
-    private fun isProgramRunningAt(
-        program: SavedLightProgram,
-        minute: Int
-    ): Boolean {
-        val start =
-            program.draft.start.totalMinutes
-
-        val end =
-            LightProgramTimeMath.endMinutes(
-                program.draft.end
-            )
-
-        return minute >= start && minute < end
-    }
-
-    private fun isScheduledToday(
-        program: SavedLightProgram,
-        weekDay: Int
-    ): Boolean {
-        val selectedDays =
-            program.draft.selectedDays
-
-        if (selectedDays.isEmpty()) {
-            return true
-        }
-
-        return selectedDays.contains(
-            appDayFromDeviceWeekDay(
-                weekDay = weekDay
-            )
-        )
-    }
-
-    private fun appDayFromDeviceWeekDay(
-        weekDay: Int
-    ): Int {
-        return when (weekDay) {
-            in 1..7 -> {
-                weekDay
-            }
-
-            else -> {
-                todayAppDay()
-            }
-        }
-    }
-
-    private fun todayAppDay(): Int {
-        val dayOfWeek =
-            Calendar.getInstance()
-                .get(Calendar.DAY_OF_WEEK)
-
-        return if (dayOfWeek == Calendar.SUNDAY) {
-            7
-        } else {
-            dayOfWeek - 1
-        }
-    }
-
-    private fun currentPhoneMinute(): Int {
-        val calendar =
-            Calendar.getInstance()
-
-        return calendar.get(Calendar.HOUR_OF_DAY) * 60 +
-            calendar.get(Calendar.MINUTE)
-    }
-
-    private fun buildLiveSyncingContent(
-        online: Boolean
-    ): LightModeContent {
-        return LightModeContent(
-            mode = TankLightCardMode.NO_PROGRAM,
-            label = if (online) {
-                "SYNCING LIVE DATA"
-            } else {
-                "DEVICE OFFLINE"
-            },
-            title = if (online) {
-                "Reading device"
-            } else {
-                "Waiting for connection"
-            },
-            leftText = if (online) {
-                "Live"
-            } else {
-                "Offline"
-            },
-            rightText = "--",
-            accentColorInt = Color.parseColor("#90A1B5"),
-            timelineProgressPercent = 0
-        )
-    }
-
     private fun buildModeContent(
+        isOnline: Boolean,
+        hasDeviceTime: Boolean,
+        hasActualLiveData: Boolean,
         displayProgram: SavedLightProgram?,
         modeOverride: TankLightModeOverride?
     ): LightModeContent {
+        if (!isOnline) {
+            return LightModeContent(
+                mode = TankLightCardMode.OFFLINE,
+                label = "OFFLINE",
+                title = "No live data",
+                leftText = "--:--",
+                rightText = "--:--",
+                accentColorInt = Color.parseColor("#90A1B5"),
+                timelineProgressPercent = 0
+            )
+        }
+
+        if (!hasDeviceTime) {
+            return LightModeContent(
+                mode = TankLightCardMode.NO_PROGRAM,
+                label = "SYNCING",
+                title = "Waiting for ESP32 time",
+                leftText = "--:--",
+                rightText = "--:--",
+                accentColorInt = Color.parseColor("#90A1B5"),
+                timelineProgressPercent = 0
+            )
+        }
+
+        if (!hasActualLiveData && displayProgram == null) {
+            return LightModeContent(
+                mode = TankLightCardMode.NO_PROGRAM,
+                label = "WAITING",
+                title = "Waiting for live data",
+                leftText = "--:--",
+                rightText = "--:--",
+                accentColorInt = Color.parseColor("#90A1B5"),
+                timelineProgressPercent = 0
+            )
+        }
+
         when (modeOverride?.mode) {
             TankLightCardMode.MANUAL -> {
                 return LightModeContent(
@@ -802,6 +583,7 @@ class TankAssignedDeviceUiMapper {
 
             TankLightCardMode.AUTO,
             TankLightCardMode.NO_PROGRAM,
+            TankLightCardMode.OFFLINE,
             null -> {
                 // Continue below.
             }
@@ -821,7 +603,11 @@ class TankAssignedDeviceUiMapper {
 
         return LightModeContent(
             mode = TankLightCardMode.AUTO,
-            label = "ACTIVE PROGRAM",
+            label = if (hasActualLiveData) {
+                "ACTIVE PROGRAM"
+            } else {
+                "SCHEDULED"
+            },
             title = displayProgram.name,
             leftText = displayProgram.draft.start.label,
             rightText = LightProgramTimeMath.endLabel(
@@ -849,8 +635,4 @@ class TankAssignedDeviceUiMapper {
         val colorInt: Int
     )
 
-    private companion object {
-        private const val MINUTES_PER_DAY =
-            24 * 60
-    }
 }

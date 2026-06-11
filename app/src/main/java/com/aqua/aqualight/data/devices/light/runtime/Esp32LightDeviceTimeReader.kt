@@ -212,7 +212,7 @@ class Esp32LightDeviceTimeReader(
     ): Int {
         return when (weekDay) {
             in 1..7 -> weekDay
-            else -> phoneFallback().weekDay
+            else -> 1
         }
     }
 

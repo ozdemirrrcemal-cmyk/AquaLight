@@ -1,38 +1,61 @@
 package com.aqua.aqualight.data.devices.light.runtime
 
 /**
- * Single policy for values that are allowed to be presented as real device output.
+ * Central gate for every value that is allowed to be presented as real device output.
  *
- * Scheduled program calculations are targets/previews only. They must never be
- * promoted to actual output when the device is offline or live telemetry is stale.
+ * A fresh telemetry packet is not enough. UI may present actual/live values only when
+ * the device is confirmed online and the telemetry packet is still fresh. Scheduled
+ * programs, local automation settings and manual runtime state are targets or modes;
+ * they must never be promoted to actual output by themselves.
  */
 object LightActualDataPolicy {
 
+    fun hasActualData(
+        isOnline: Boolean,
+        liveState: LightDeviceLiveState?
+    ): Boolean {
+        return isOnline && liveState?.hasLiveChannels == true
+    }
+
     fun actualOutputPercent(
-        liveState: LightDeviceLiveState
+        isOnline: Boolean,
+        liveState: LightDeviceLiveState?
     ): Int {
-        return if (liveState.hasLiveChannels) {
-            liveState.actualOutputPercent.coerceIn(0, 100)
-        } else {
-            0
+        if (!hasActualData(isOnline, liveState)) {
+            return 0
         }
+
+        return liveState?.actualOutputPercent?.coerceIn(0, 100) ?: 0
     }
 
     fun actualOutputText(
-        liveState: LightDeviceLiveState
+        isOnline: Boolean,
+        liveState: LightDeviceLiveState?
     ): String {
-        return if (liveState.hasLiveChannels) {
-            "${actualOutputPercent(liveState)}%"
+        return if (hasActualData(isOnline, liveState)) {
+            "${actualOutputPercent(isOnline, liveState)}%"
         } else {
-            "--%"
+            "0%"
+        }
+    }
+
+    fun actualPowerText(
+        isOnline: Boolean,
+        liveState: LightDeviceLiveState?
+    ): String {
+        return if (hasActualData(isOnline, liveState)) {
+            liveState?.actualPowerText ?: "-- W"
+        } else {
+            "-- W"
         }
     }
 
     fun actualChannelPercent(
-        liveState: LightDeviceLiveState,
+        isOnline: Boolean,
+        liveState: LightDeviceLiveState?,
         semantic: LightChannelSemantic
     ): Int {
-        if (!liveState.hasLiveChannels) {
+        if (!hasActualData(isOnline, liveState)) {
             return 0
         }
 
@@ -41,72 +64,32 @@ object LightActualDataPolicy {
             LightChannelSemantic.GREEN,
             LightChannelSemantic.BLUE,
             LightChannelSemantic.WHITE -> {
-                liveState.channelFor(semantic)
+                liveState
+                    ?.channelFor(semantic)
                     ?.valuePercent
                     ?.coerceIn(0, 100)
                     ?: 0
             }
 
             LightChannelSemantic.UNKNOWN -> {
-                actualOutputPercent(liveState)
+                actualOutputPercent(
+                    isOnline = isOnline,
+                    liveState = liveState
+                )
             }
         }
     }
 
-    fun hasActualData(
-        liveState: LightDeviceLiveState
-    ): Boolean {
-        return liveState.hasLiveChannels
-    }
-
-    fun displayOutputPercent(
-        liveState: LightDeviceLiveState
-    ): Int {
-        return if (liveState.hasDisplayChannels) {
-            liveState.displayOutputPercent.coerceIn(0, 100)
-        } else {
-            0
-        }
-    }
-
-    fun displayOutputText(
-        liveState: LightDeviceLiveState
+    fun channelText(
+        prefix: String,
+        isOnline: Boolean,
+        liveState: LightDeviceLiveState?,
+        semantic: LightChannelSemantic
     ): String {
-        return if (liveState.hasDisplayChannels) {
-            "${displayOutputPercent(liveState)}%"
-        } else {
-            "--%"
-        }
-    }
-
-    fun displayChannelPercent(
-        liveState: LightDeviceLiveState,
-        semantic: LightChannelSemantic
-    ): Int {
-        if (!liveState.hasDisplayChannels) {
-            return 0
+        if (!hasActualData(isOnline, liveState)) {
+            return "$prefix --"
         }
 
-        return when (semantic) {
-            LightChannelSemantic.RED,
-            LightChannelSemantic.GREEN,
-            LightChannelSemantic.BLUE,
-            LightChannelSemantic.WHITE -> {
-                liveState.displayChannelFor(semantic)
-                    ?.valuePercent
-                    ?.coerceIn(0, 100)
-                    ?: 0
-            }
-
-            LightChannelSemantic.UNKNOWN -> {
-                displayOutputPercent(liveState)
-            }
-        }
-    }
-
-    fun hasDisplayData(
-        liveState: LightDeviceLiveState
-    ): Boolean {
-        return liveState.hasDisplayChannels
+        return "$prefix ${actualChannelPercent(isOnline, liveState, semantic)}%"
     }
 }

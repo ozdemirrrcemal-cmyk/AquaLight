@@ -1,0 +1,2151 @@
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightChannelMappingReader.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightChannelMappingReader.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightChannelMappingReader.kt	2026-06-10 17:39:54.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightChannelMappingReader.kt	2026-06-11 07:14:34.287568476 +0000
+@@ -7,24 +7,9 @@
+     private val httpClient: Esp32HttpJsonClient = Esp32HttpJsonClient()
+ ) {
+ 
+-    private val cache = mutableMapOf<String, CachedMapping>()
+-
+     suspend fun readMapping(
+-        ip: String,
+-        forceRefresh: Boolean = false
++        ip: String
+     ): Result<LightDeviceChannelMapping> {
+-        val now = System.currentTimeMillis()
+-
+-        val cached = cache[ip]
+-
+-        if (
+-            !forceRefresh &&
+-            cached != null &&
+-            now - cached.createdAtMillis <= CACHE_VALID_MS
+-        ) {
+-            return Result.success(cached.mapping)
+-        }
+-
+         val queryJson = JSONObject()
+             .put(
+                 "LPWMChanelLED",
+@@ -84,11 +69,6 @@
+             )
+         }
+ 
+-        cache[ip] = CachedMapping(
+-            mapping = mapping,
+-            createdAtMillis = now
+-        )
+-
+         return Result.success(mapping)
+     }
+ 
+@@ -260,13 +240,4 @@
+ 
+         return r > 180 && g > 180 && b > 180
+     }
+-
+-    private data class CachedMapping(
+-        val mapping: LightDeviceChannelMapping,
+-        val createdAtMillis: Long
+-    )
+-
+-    companion object {
+-        private const val CACHE_VALID_MS = 60_000L
+-    }
+ }
+\ No newline at end of file
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightDeviceCommandManager.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightDeviceCommandManager.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightDeviceCommandManager.kt	2026-06-10 23:17:36.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightDeviceCommandManager.kt	2026-06-11 07:14:13.870416846 +0000
+@@ -14,9 +14,6 @@
+     Esp32LightChannelMappingReader(httpClient)
+ ) : LightDeviceCommandManager {
+ 
+-    private val mappingCacheLock = Any()
+-    private val mappingCache = mutableMapOf<String, LightDeviceChannelMapping>()
+-
+     override suspend fun applyManualScene(
+         deviceId: Long,
+         sceneName: String,
+@@ -48,7 +45,7 @@
+         val address = resolveAddress(deviceId)
+         ?: return LightCommandResult.failure("Device address could not be resolved")
+ 
+-        val mapping = getCachedMapping(
++        val mapping = getFreshMapping(
+             ip = address.ip
+         ).getOrElse {
+             error ->
+@@ -115,9 +112,8 @@
+         val address = resolveAddress(deviceId)
+         ?: return LightCommandResult.failure("Device address could not be resolved")
+ 
+-        val mapping = getCachedMapping(
+-            ip = address.ip,
+-            forceRefresh = true
++        val mapping = getFreshMapping(
++            ip = address.ip
+         ).getOrElse {
+             error ->
+             return LightCommandResult.failure(
+@@ -149,7 +145,7 @@
+         val address = resolveAddress(deviceId)
+         ?: return LightCommandResult.failure("Device address could not be resolved")
+ 
+-        val mapping = getCachedMapping(
++        val mapping = getFreshMapping(
+             ip = address.ip
+         ).getOrElse {
+             error ->
+@@ -176,34 +172,12 @@
+         )
+     }
+ 
+-    private suspend fun getCachedMapping(
+-        ip: String,
+-        forceRefresh: Boolean = false
++    private suspend fun getFreshMapping(
++        ip: String
+     ): Result<LightDeviceChannelMapping> {
+-        if (!forceRefresh) {
+-            val cached = synchronized(mappingCacheLock) {
+-                mappingCache[ip]
+-            }
+-
+-            if (cached != null) {
+-                return Result.success(cached)
+-            }
+-        }
+-
+-        val result = mappingReader.readMapping(
+-            ip = ip,
+-            forceRefresh = forceRefresh
++        return mappingReader.readMapping(
++            ip = ip
+         )
+-
+-        val mapping = result.getOrNull()
+-
+-        if (mapping != null) {
+-            synchronized(mappingCacheLock) {
+-                mappingCache[ip] = mapping
+-            }
+-        }
+-
+-        return result
+     }
+ 
+     private suspend fun resolveAddress(
+@@ -213,7 +187,7 @@
+             val result = addressResolver.resolve(
+                 deviceId = deviceId,
+                 requireOnline = true,
+-                forceLiveCheck = false
++                forceLiveCheck = true
+             )
+         ) {
+             is LightDeviceAddressResolver.Result.Success -> result
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightDeviceTimeReader.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightDeviceTimeReader.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightDeviceTimeReader.kt	2026-06-10 17:39:54.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightDeviceTimeReader.kt	2026-06-11 07:17:00.343509157 +0000
+@@ -212,7 +212,7 @@
+     ): Int {
+         return when (weekDay) {
+             in 1..7 -> weekDay
+-            else -> phoneFallback().weekDay
++            else -> 1
+         }
+     }
+ 
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightProgramCommandManager.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightProgramCommandManager.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightProgramCommandManager.kt	2026-06-10 22:25:53.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/Esp32LightProgramCommandManager.kt	2026-06-11 07:14:51.217557582 +0000
+@@ -62,8 +62,7 @@
+         ?: return LightCommandResult.failure("Device address could not be resolved")
+ 
+         val mapping = mappingReader.readMapping(
+-            ip = address.ip,
+-            forceRefresh = true
++            ip = address.ip
+         ).getOrElse {
+             error ->
+             return LightCommandResult.failure(
+@@ -99,8 +98,7 @@
+         ?: return LightCommandResult.failure("Device address could not be resolved")
+ 
+         val mapping = mappingReader.readMapping(
+-            ip = address.ip,
+-            forceRefresh = true
++            ip = address.ip
+         ).getOrElse {
+             error ->
+             return LightCommandResult.failure(
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightActualDataPolicy.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightActualDataPolicy.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightActualDataPolicy.kt	2026-06-10 17:39:54.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightActualDataPolicy.kt	2026-06-11 07:08:08.591440919 +0000
+@@ -1,38 +1,61 @@
+ package com.aqua.aqualight.data.devices.light.runtime
+ 
+ /**
+- * Single policy for values that are allowed to be presented as real device output.
++ * Central gate for every value that is allowed to be presented as real device output.
+  *
+- * Scheduled program calculations are targets/previews only. They must never be
+- * promoted to actual output when the device is offline or live telemetry is stale.
++ * A fresh telemetry packet is not enough. UI may present actual/live values only when
++ * the device is confirmed online and the telemetry packet is still fresh. Scheduled
++ * programs, local automation settings and manual runtime state are targets or modes;
++ * they must never be promoted to actual output by themselves.
+  */
+ object LightActualDataPolicy {
+ 
++    fun hasActualData(
++        isOnline: Boolean,
++        liveState: LightDeviceLiveState?
++    ): Boolean {
++        return isOnline && liveState?.hasLiveChannels == true
++    }
++
+     fun actualOutputPercent(
+-        liveState: LightDeviceLiveState
++        isOnline: Boolean,
++        liveState: LightDeviceLiveState?
+     ): Int {
+-        return if (liveState.hasLiveChannels) {
+-            liveState.actualOutputPercent.coerceIn(0, 100)
+-        } else {
+-            0
++        if (!hasActualData(isOnline, liveState)) {
++            return 0
+         }
++
++        return liveState?.actualOutputPercent?.coerceIn(0, 100) ?: 0
+     }
+ 
+     fun actualOutputText(
+-        liveState: LightDeviceLiveState
++        isOnline: Boolean,
++        liveState: LightDeviceLiveState?
++    ): String {
++        return if (hasActualData(isOnline, liveState)) {
++            "${actualOutputPercent(isOnline, liveState)}%"
++        } else {
++            "0%"
++        }
++    }
++
++    fun actualPowerText(
++        isOnline: Boolean,
++        liveState: LightDeviceLiveState?
+     ): String {
+-        return if (liveState.hasLiveChannels) {
+-            "${actualOutputPercent(liveState)}%"
++        return if (hasActualData(isOnline, liveState)) {
++            liveState?.actualPowerText ?: "-- W"
+         } else {
+-            "--%"
++            "-- W"
+         }
+     }
+ 
+     fun actualChannelPercent(
+-        liveState: LightDeviceLiveState,
++        isOnline: Boolean,
++        liveState: LightDeviceLiveState?,
+         semantic: LightChannelSemantic
+     ): Int {
+-        if (!liveState.hasLiveChannels) {
++        if (!hasActualData(isOnline, liveState)) {
+             return 0
+         }
+ 
+@@ -41,21 +64,32 @@
+             LightChannelSemantic.GREEN,
+             LightChannelSemantic.BLUE,
+             LightChannelSemantic.WHITE -> {
+-                liveState.channelFor(semantic)
++                liveState
++                    ?.channelFor(semantic)
+                     ?.valuePercent
+                     ?.coerceIn(0, 100)
+                     ?: 0
+             }
+ 
+             LightChannelSemantic.UNKNOWN -> {
+-                actualOutputPercent(liveState)
++                actualOutputPercent(
++                    isOnline = isOnline,
++                    liveState = liveState
++                )
+             }
+         }
+     }
+ 
+-    fun hasActualData(
+-        liveState: LightDeviceLiveState
+-    ): Boolean {
+-        return liveState.hasLiveChannels
++    fun channelText(
++        prefix: String,
++        isOnline: Boolean,
++        liveState: LightDeviceLiveState?,
++        semantic: LightChannelSemantic
++    ): String {
++        if (!hasActualData(isOnline, liveState)) {
++            return "$prefix --"
++        }
++
++        return "$prefix ${actualChannelPercent(isOnline, liveState, semantic)}%"
+     }
+ }
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceAddressResolver.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceAddressResolver.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceAddressResolver.kt	2026-06-10 17:39:54.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceAddressResolver.kt	2026-06-11 07:15:14.496239192 +0000
+@@ -27,10 +27,9 @@
+         val presenceState = DevicePresenceMonitor.statuses.value[deviceId]
+ 
+         if (
+-            !forceLiveCheck &&
++            !requireOnline &&
+             presenceState != null &&
+-            presenceState.ip.isNotBlank() &&
+-            (!requireOnline || presenceState.isOnline)
++            presenceState.ip.isNotBlank()
+         ) {
+             return Result.Success(
+                 deviceId = deviceId,
+@@ -67,7 +66,7 @@
+             context = appContext,
+             deviceId = deviceId,
+             knownIp = savedIp,
+-            allowRecentOnlineCache = !forceLiveCheck
++            allowRecentOnlineCache = false
+         )
+ 
+         if (checkedState == null) {
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceLiveRefreshManager.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceLiveRefreshManager.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceLiveRefreshManager.kt	2026-06-10 17:39:54.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceLiveRefreshManager.kt	2026-06-11 07:14:58.049575967 +0000
+@@ -17,7 +17,6 @@
+ object LightDeviceLiveRefreshManager {
+ 
+     private const val DEFAULT_REFRESH_INTERVAL_MS = 4_000L
+-    private const val DEVICE_TIME_KEEP_MS = 30_000L
+ 
+     private val scope = CoroutineScope(
+         SupervisorJob() + Dispatchers.IO
+@@ -117,11 +116,10 @@
+             activeConsumers.remove(deviceId)
+             refreshJobs.remove(deviceId)?.cancel()
+ 
+-            stateFor(deviceId).update { state ->
+-                state.copy(
+-                    isRefreshing = false
++            stateFor(deviceId).value =
++                LightDeviceLiveState.initial(
++                    deviceId = deviceId
+                 )
+-            }
+         }
+     }
+ 
+@@ -152,11 +150,10 @@
+         showRefreshing: Boolean
+     ) {
+         if (!LightAppVisibilityMonitor.isForeground.value) {
+-            stateFor(deviceId).update { state ->
+-                state.copy(
+-                    isRefreshing = false
++            stateFor(deviceId).value =
++                LightDeviceLiveState.initial(
++                    deviceId = deviceId
+                 )
+-            }
+             return
+         }
+ 
+@@ -192,7 +189,8 @@
+         val address = when (
+             val result = addressResolver.resolve(
+                 deviceId = deviceId,
+-                requireOnline = true
++                requireOnline = true,
++                forceLiveCheck = true
+             )
+         ) {
+             is LightDeviceAddressResolver.Result.Success -> {
+@@ -200,17 +198,11 @@
+             }
+ 
+             is LightDeviceAddressResolver.Result.Failure -> {
+-                stateFlow.update { state ->
+-                    state.copy(
+-                        isRefreshing = false,
+-                        channels = emptyList(),
+-                        thermalProtection = LightThermalProtectionState(),
+-                        cooling = LightCoolingState(),
+-                        liveDataUpdatedMillis = 0L,
+-                        isLiveDataFresh = false,
+-                        errorMessage = result.message
+-                    )
+-                }
++                stateFlow.value = LightDeviceLiveState.initial(
++                    deviceId = deviceId
++                ).copy(
++                    errorMessage = result.message
++                )
+                 return
+             }
+         }
+@@ -222,57 +214,36 @@
+         ).onSuccess { snapshot ->
+             val now = System.currentTimeMillis()
+ 
+-            stateFlow.update { state ->
+-                val resolvedDeviceTime = snapshot.deviceTime
+-                    ?: state.deviceTime.takeIf {
+-                        state.deviceTimeUpdatedMillis > 0L &&
+-                            now - state.deviceTimeUpdatedMillis <= DEVICE_TIME_KEEP_MS
+-                    }
+-
+-                state.copy(
+-                    isRefreshing = false,
+-                    deviceTime = resolvedDeviceTime,
+-                    deviceTimeUpdatedMillis = when {
+-                        snapshot.deviceTime != null -> {
+-                            now
+-                        }
+-
+-                        resolvedDeviceTime != null -> {
+-                            state.deviceTimeUpdatedMillis
+-                        }
+-
+-                        else -> {
+-                            0L
+-                        }
+-                    },
+-                    channels = snapshot.channels,
+-                    thermalProtection = snapshot.thermalProtection
+-                        ?: LightThermalProtectionState(),
+-                    cooling = snapshot.cooling
+-                        ?: LightCoolingState(),
+-                    liveDataUpdatedMillis = if (snapshot.channels.isNotEmpty()) {
+-                        now
+-                    } else {
+-                        0L
+-                    },
+-                    isLiveDataFresh = snapshot.channels.isNotEmpty(),
+-                    lastUpdatedMillis = now,
+-                    errorMessage = snapshot.partialErrorMessage
+-                )
+-            }
++            stateFlow.value = LightDeviceLiveState(
++                deviceId = deviceId,
++                isRefreshing = false,
++                deviceTime = snapshot.deviceTime,
++                deviceTimeUpdatedMillis = if (snapshot.deviceTime != null) {
++                    now
++                } else {
++                    0L
++                },
++                channels = snapshot.channels,
++                thermalProtection = snapshot.thermalProtection
++                    ?: LightThermalProtectionState(),
++                cooling = snapshot.cooling
++                    ?: LightCoolingState(),
++                liveDataUpdatedMillis = if (snapshot.channels.isNotEmpty()) {
++                    now
++                } else {
++                    0L
++                },
++                isLiveDataFresh = snapshot.channels.isNotEmpty(),
++                lastUpdatedMillis = now,
++                errorMessage = snapshot.partialErrorMessage
++            )
+         }.onFailure { error ->
+-            stateFlow.update { state ->
+-                state.copy(
+-                    isRefreshing = false,
+-                    channels = emptyList(),
+-                    thermalProtection = LightThermalProtectionState(),
+-                    cooling = LightCoolingState(),
+-                    liveDataUpdatedMillis = 0L,
+-                    isLiveDataFresh = false,
+-                    errorMessage = error.message
+-                        ?: "Live device data could not be read"
+-                )
+-            }
++            stateFlow.value = LightDeviceLiveState.initial(
++                deviceId = deviceId
++            ).copy(
++                errorMessage = error.message
++                    ?: "Live device data could not be read"
++            )
+         }
+     }
+ 
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceTimeRepository.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceTimeRepository.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceTimeRepository.kt	2026-06-10 17:39:54.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightDeviceTimeRepository.kt	2026-06-11 07:17:00.343004292 +0000
+@@ -17,7 +17,7 @@
+ 
+     suspend fun readDeviceTime(
+         deviceId: Long,
+-        fallbackToPhone: Boolean = true
++        fallbackToPhone: Boolean = false
+     ): LightDeviceTimeState {
+         return withContext(Dispatchers.IO) {
+             if (deviceId <= 0L) {
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightManualRuntimeStore.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightManualRuntimeStore.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightManualRuntimeStore.kt	2026-06-10 23:17:50.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightManualRuntimeStore.kt	2026-06-11 07:10:05.761130660 +0000
+@@ -1,39 +1,21 @@
+ package com.aqua.aqualight.data.devices.light.runtime
+ 
+-import android.content.Context
+-import android.content.SharedPreferences
+ import kotlinx.coroutines.flow.Flow
+ import kotlinx.coroutines.flow.MutableStateFlow
+ import kotlinx.coroutines.flow.distinctUntilChanged
+ import kotlinx.coroutines.flow.map
+ import kotlinx.coroutines.flow.update
+ 
++/**
++ * In-memory command runtime only.
++ *
++ * This store intentionally does not use SharedPreferences/DataStore. Manual mode is a
++ * live command/session state, not a source of truth for actual device output. If the
++ * process restarts or the device goes offline, the UI must rebuild from confirmed
++ * device telemetry instead of resurrecting old cached manual values.
++ */
+ object LightManualRuntimeStore {
+ 
+-    private const val PREFS_NAME = "light_manual_runtime"
+-    private const val KEY_MODE = "mode"
+-    private const val KEY_SCENE = "scene"
+-    private const val KEY_RED = "red"
+-    private const val KEY_GREEN = "green"
+-    private const val KEY_BLUE = "blue"
+-    private const val KEY_WHITE = "white"
+-    private const val KEY_POWER = "power"
+-    private const val KEY_UPDATED_AT = "updated_at"
+-
+-    @Volatile
+-    private var prefs: SharedPreferences? = null
+-
+-    fun configure(context: Context) {
+-        if (prefs != null) {
+-            return
+-        }
+-
+-        prefs = context.applicationContext.getSharedPreferences(
+-            PREFS_NAME,
+-            Context.MODE_PRIVATE
+-        )
+-    }
+-
+     private val runtimeStates =
+         MutableStateFlow<Map<Long, LightManualRuntimeState>>(emptyMap())
+ 
+@@ -42,7 +24,7 @@
+     ): Flow<LightManualRuntimeState> {
+         return runtimeStates
+             .map { states ->
+-                states[deviceId] ?: readPersistedState(deviceId) ?: LightManualRuntimeState.auto(deviceId)
++                states[deviceId] ?: LightManualRuntimeState.auto(deviceId)
+             }
+             .distinctUntilChanged()
+     }
+@@ -51,10 +33,21 @@
+         deviceId: Long
+     ): LightManualRuntimeState {
+         return runtimeStates.value[deviceId]
+-            ?: readPersistedState(deviceId)
+             ?: LightManualRuntimeState.auto(deviceId)
+     }
+ 
++    fun clear(
++        deviceId: Long
++    ) {
++        if (deviceId <= 0L) {
++            return
++        }
++
++        runtimeStates.update { states ->
++            states - deviceId
++        }
++    }
++
+     fun applyManualScene(
+         deviceId: Long,
+         sceneName: String,
+@@ -163,54 +156,8 @@
+     private fun updateState(
+         state: LightManualRuntimeState
+     ) {
+-        persistState(state)
+-
+         runtimeStates.update { states ->
+             states + (state.deviceId to state)
+         }
+     }
+-
+-    private fun persistState(state: LightManualRuntimeState) {
+-        val preferences = prefs ?: return
+-        val prefix = keyPrefix(state.deviceId)
+-
+-        preferences.edit()
+-            .putString(prefix + KEY_MODE, state.mode.name)
+-            .putString(prefix + KEY_SCENE, state.activeSceneName)
+-            .putInt(prefix + KEY_RED, state.red)
+-            .putInt(prefix + KEY_GREEN, state.green)
+-            .putInt(prefix + KEY_BLUE, state.blue)
+-            .putInt(prefix + KEY_WHITE, state.white)
+-            .putBoolean(prefix + KEY_POWER, state.isPowerOn)
+-            .putLong(prefix + KEY_UPDATED_AT, state.updatedAt)
+-            .apply()
+-    }
+-
+-    private fun readPersistedState(deviceId: Long): LightManualRuntimeState? {
+-        val preferences = prefs ?: return null
+-        val prefix = keyPrefix(deviceId)
+-
+-        val modeName = preferences.getString(prefix + KEY_MODE, null)
+-            ?: return null
+-
+-        val mode = runCatching {
+-            LightControlMode.valueOf(modeName)
+-        }.getOrDefault(LightControlMode.AUTO)
+-
+-        return LightManualRuntimeState(
+-            deviceId = deviceId,
+-            mode = mode,
+-            activeSceneName = preferences.getString(prefix + KEY_SCENE, null),
+-            red = preferences.getInt(prefix + KEY_RED, 0).coerceIn(0, 100),
+-            green = preferences.getInt(prefix + KEY_GREEN, 0).coerceIn(0, 100),
+-            blue = preferences.getInt(prefix + KEY_BLUE, 0).coerceIn(0, 100),
+-            white = preferences.getInt(prefix + KEY_WHITE, 0).coerceIn(0, 100),
+-            isPowerOn = preferences.getBoolean(prefix + KEY_POWER, false),
+-            updatedAt = preferences.getLong(prefix + KEY_UPDATED_AT, 0L)
+-        )
+-    }
+-
+-    private fun keyPrefix(deviceId: Long): String {
+-        return "manual_" + deviceId + "_"
+-    }
+-}
+\ No newline at end of file
++}
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightProgramRuntimeEvaluator.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightProgramRuntimeEvaluator.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightProgramRuntimeEvaluator.kt	1970-01-01 00:00:00.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/LightProgramRuntimeEvaluator.kt	2026-06-11 07:04:19.346857932 +0000
+@@ -0,0 +1,174 @@
++package com.aqua.aqualight.data.devices.light.runtime
++
++import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
++import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
++import java.util.Calendar
++import kotlin.math.roundToInt
++
++/**
++ * Single evaluator for light schedule runtime.
++ *
++ * It never uses phone time as a fake device-time fallback. If ESP32 time is not
++ * fresh, schedule runtime is unavailable and the UI must show a waiting/offline
++ * state instead of pretending that a program is currently running.
++ */
++object LightProgramRuntimeEvaluator {
++
++    fun evaluate(
++        deviceId: Long,
++        programs: List<SavedLightProgram>,
++        deviceTime: LightDeviceTimeState?
++    ): LightProgramRuntimeEvaluation {
++        val activePrograms = programs
++            .filter { program ->
++                program.deviceId == deviceId && program.isActive
++            }
++            .sortedBy { program ->
++                program.draft.start.totalMinutes
++            }
++
++        if (deviceTime == null) {
++            return LightProgramRuntimeEvaluation(
++                hasDeviceTime = false,
++                currentMinute = 0,
++                deviceWeekDay = null,
++                activePrograms = activePrograms,
++                todayPrograms = emptyList(),
++                runningProgram = null,
++                nextProgram = null,
++                displayProgram = null
++            )
++        }
++
++        val currentMinute = deviceTime.curvePoint.totalMinutes
++
++        val todayPrograms = activePrograms
++            .filter { program ->
++                isScheduledToday(
++                    program = program,
++                    deviceWeekDay = deviceTime.weekDay
++                )
++            }
++            .sortedBy { program ->
++                program.draft.start.totalMinutes
++            }
++
++        val runningProgram = todayPrograms.firstOrNull { program ->
++            isProgramRunningAt(
++                program = program,
++                minute = currentMinute
++            )
++        }
++
++        val nextProgram = todayPrograms.firstOrNull { program ->
++            program.draft.start.totalMinutes > currentMinute
++        }
++
++        return LightProgramRuntimeEvaluation(
++            hasDeviceTime = true,
++            currentMinute = currentMinute,
++            deviceWeekDay = deviceTime.weekDay,
++            activePrograms = activePrograms,
++            todayPrograms = todayPrograms,
++            runningProgram = runningProgram,
++            nextProgram = nextProgram,
++            displayProgram = runningProgram
++                ?: nextProgram
++                ?: todayPrograms.firstOrNull()
++        )
++    }
++
++    fun isProgramRunningAt(
++        program: SavedLightProgram,
++        minute: Int
++    ): Boolean {
++        val start = program.draft.start.totalMinutes
++        val end = LightProgramTimeMath.endMinutes(program.draft.end)
++
++        return minute >= start && minute < end
++    }
++
++    fun progressPercent(
++        program: SavedLightProgram?,
++        currentMinute: Int
++    ): Int {
++        if (program == null) {
++            return 0
++        }
++
++        val start = program.draft.start.totalMinutes
++        val end = LightProgramTimeMath.endMinutes(program.draft.end)
++
++        if (end <= start) {
++            return 0
++        }
++
++        return when {
++            currentMinute <= start -> 0
++            currentMinute >= end -> 100
++            else -> {
++                (((currentMinute - start).toDouble() / (end - start).toDouble()) * 100.0)
++                    .roundToInt()
++                    .coerceIn(0, 100)
++            }
++        }
++    }
++
++    fun isScheduledToday(
++        program: SavedLightProgram,
++        deviceWeekDay: Int
++    ): Boolean {
++        val selectedDays = program.draft.selectedDays
++
++        if (selectedDays.isEmpty()) {
++            return true
++        }
++
++        return selectedDays.contains(
++            appDayFromDeviceWeekDay(deviceWeekDay)
++        )
++    }
++
++    fun appDayFromDeviceWeekDay(
++        weekDay: Int
++    ): Int {
++        return when (weekDay) {
++            in 1..7 -> weekDay
++            else -> todayAppDay()
++        }
++    }
++
++    fun labelForMinute(
++        minute: Int
++    ): String {
++        val normalized = ((minute % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY
++        val hour = normalized / 60
++        val min = normalized % 60
++
++        return "%02d:%02d".format(hour, min)
++    }
++
++    private fun todayAppDay(): Int {
++        val dayOfWeek = Calendar.getInstance()
++            .get(Calendar.DAY_OF_WEEK)
++
++        return if (dayOfWeek == Calendar.SUNDAY) {
++            7
++        } else {
++            dayOfWeek - 1
++        }
++    }
++
++    private const val MINUTES_PER_DAY = 24 * 60
++}
++
++data class LightProgramRuntimeEvaluation(
++    val hasDeviceTime: Boolean,
++    val currentMinute: Int,
++    val deviceWeekDay: Int?,
++    val activePrograms: List<SavedLightProgram>,
++    val todayPrograms: List<SavedLightProgram>,
++    val runningProgram: SavedLightProgram?,
++    val nextProgram: SavedLightProgram?,
++    val displayProgram: SavedLightProgram?
++)
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/NoOpLightDeviceCommandManager.kt AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/NoOpLightDeviceCommandManager.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/NoOpLightDeviceCommandManager.kt	2026-06-10 17:39:54.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/data/devices/light/runtime/NoOpLightDeviceCommandManager.kt	1970-01-01 00:00:00.000000000 +0000
+@@ -1,40 +0,0 @@
+-package com.aqua.aqualight.data.devices.light.runtime
+-
+-class NoOpLightDeviceCommandManager : LightDeviceCommandManager {
+-
+-    override suspend fun applyManualScene(
+-        deviceId: Long,
+-        sceneName: String,
+-        output: LightRgbwOutput
+-    ): LightCommandResult {
+-        return LightCommandResult.success()
+-    }
+-
+-    override suspend fun updateManualOutput(
+-        deviceId: Long,
+-        output: LightRgbwOutput
+-    ): LightCommandResult {
+-        return LightCommandResult.success()
+-    }
+-
+-    override suspend fun setManualPower(
+-        deviceId: Long,
+-        isPowerOn: Boolean
+-    ): LightCommandResult {
+-        return LightCommandResult.success()
+-    }
+-
+-    override suspend fun resumeAuto(
+-        deviceId: Long
+-    ): LightCommandResult {
+-        return LightCommandResult.success()
+-    }
+-	
+-	override suspend fun updateManualChannel(
+-    deviceId: Long,
+-    semantic: LightChannelSemantic,
+-    valuePercent: Int
+-    ): LightCommandResult {
+-    return LightCommandResult.success("OK")
+-}
+-}
+\ No newline at end of file
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankAssignedDeviceUiMapper.kt AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankAssignedDeviceUiMapper.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankAssignedDeviceUiMapper.kt	2026-06-11 06:33:38.414595744 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankAssignedDeviceUiMapper.kt	2026-06-11 07:17:32.658910762 +0000
+@@ -9,13 +9,12 @@
+ import com.aqua.aqualight.data.devices.light.runtime.LightActualDataPolicy
+ import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
+ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
++import com.aqua.aqualight.data.devices.light.runtime.LightProgramRuntimeEvaluator
+ import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
+-import com.aqua.aqualight.data.devices.presence.DeviceStatusState
+ import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
++import com.aqua.aqualight.data.devices.presence.DeviceStatusState
+ import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
+ import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+-import java.util.Calendar
+-import kotlin.math.roundToInt
+ 
+ class TankAssignedDeviceUiMapper {
+ 
+@@ -95,81 +94,36 @@
+                 deviceId = device.id
+             )
+ 
+-        val activePrograms =
+-            programs
+-                .filter { program ->
+-                    program.deviceId == device.id && program.isActive
+-                }
+-                .sortedBy { program ->
+-                    program.draft.start.totalMinutes
+-                }
+-
+-        val deviceTime =
+-            liveState.deviceTime
+-
+-        val currentMinute =
+-            deviceTime?.curvePoint?.totalMinutes ?: currentPhoneMinute()
+-
+-        val todayPrograms =
+-            activePrograms
+-                .filter { program ->
+-                    if (deviceTime == null) {
+-                        true
+-                    } else {
+-                        isScheduledToday(
+-                            program = program,
+-                            weekDay = deviceTime.weekDay
+-                        )
+-                    }
+-                }
+-                .sortedBy { program ->
+-                    program.draft.start.totalMinutes
++        val runtimeEvaluation =
++            LightProgramRuntimeEvaluator.evaluate(
++                deviceId = device.id,
++                programs = programs,
++                deviceTime = liveState.deviceTime.takeIf {
++                    online && liveState.hasDeviceTime
+                 }
+-
+-        val runningProgram =
+-            todayPrograms.firstOrNull { program ->
+-                isProgramRunningAt(
+-                    program = program,
+-                    minute = currentMinute
+-                )
+-            }
+-
+-        val nextProgram =
+-            todayPrograms.firstOrNull { program ->
+-                program.draft.start.totalMinutes > currentMinute
+-            }
+-
+-        val displayProgram =
+-            runningProgram
+-                ?: nextProgram
+-                ?: todayPrograms.firstOrNull()
+-                ?: activePrograms.firstOrNull()
++            )
+ 
+         val effectiveModeOverride =
+             if (online) modeOverride else null
+ 
+         val hasActualLiveData =
+-            online && liveState.hasLiveChannels
++            LightActualDataPolicy.hasActualData(
++                isOnline = online,
++                liveState = liveState
++            )
+ 
+         val outputPercent =
+-            when {
+-                online && effectiveModeOverride?.outputPercent != null -> {
+-                    effectiveModeOverride.outputPercent
+-                }
+-
+-                hasActualLiveData -> {
+-                    LightActualDataPolicy.actualOutputPercent(liveState)
+-                }
+-
+-                else -> {
+-                    0
+-                }
+-            }
++            LightActualDataPolicy.actualOutputPercent(
++                isOnline = online,
++                liveState = liveState
++            )
+ 
+         val modeContent =
+             buildModeContent(
+                 isOnline = online,
+-                displayProgram = displayProgram,
++                hasDeviceTime = runtimeEvaluation.hasDeviceTime,
++                hasActualLiveData = hasActualLiveData,
++                displayProgram = runtimeEvaluation.displayProgram,
+                 modeOverride = effectiveModeOverride
+             )
+ 
+@@ -189,19 +143,16 @@
+                 100
+             ),
+             timelineProgressPercent = modeContent.timelineProgressPercent
+-                ?: calculateTimelineProgressPercent(
+-                    program = displayProgram,
+-                    currentMinute = currentMinute
++                ?: LightProgramRuntimeEvaluator.progressPercent(
++                    program = runtimeEvaluation.displayProgram,
++                    currentMinute = runtimeEvaluation.currentMinute
+                 ),
+             accentColorInt = modeContent.accentColorInt,
+             channels = buildLightChannels(
+                 device = device,
+                 isOnline = online,
+                 liveState = liveState,
+-                runningProgram = runningProgram,
+-                displayProgram = displayProgram,
+-                currentMinute = currentMinute,
+-                modeOverride = effectiveModeOverride
++                displayProgram = runtimeEvaluation.displayProgram
+             )
+         )
+     }
+@@ -210,20 +161,14 @@
+         device: DevicesDataStoreManager.DeviceInfo,
+         isOnline: Boolean,
+         liveState: LightDeviceLiveState,
+-        runningProgram: SavedLightProgram?,
+-        displayProgram: SavedLightProgram?,
+-        currentMinute: Int,
+-        modeOverride: TankLightModeOverride?
++        displayProgram: SavedLightProgram?
+     ): List<TankLightChannelUi> {
+         return device.supportedLightChannels().map { channel ->
+             val currentPercent =
+                 currentLightChannelPercent(
+                     channel = channel,
+                     isOnline = isOnline,
+-                    liveState = liveState,
+-                    runningProgram = runningProgram,
+-                    currentMinute = currentMinute,
+-                    modeOverride = modeOverride
++                    liveState = liveState
+                 )
+ 
+             val targetPercent =
+@@ -245,63 +190,12 @@
+     private fun currentLightChannelPercent(
+         channel: LightChannelConfig,
+         isOnline: Boolean,
+-        liveState: LightDeviceLiveState,
+-        runningProgram: SavedLightProgram?,
+-        currentMinute: Int,
+-        modeOverride: TankLightModeOverride?
++        liveState: LightDeviceLiveState
+     ): Int {
+-        if (!isOnline) {
+-            return 0
+-        }
+-
+-        if (liveState.hasLiveChannels) {
+-            overrideChannelPercent(
+-                semantic = channel.semantic,
+-                modeOverride = modeOverride
+-            )?.let { percent ->
+-                return percent
+-            }
+-
+-            return when (channel.semantic) {
+-                LightChannelSemantic.RED,
+-                LightChannelSemantic.GREEN,
+-                LightChannelSemantic.BLUE,
+-                LightChannelSemantic.WHITE -> {
+-                    LightActualDataPolicy.actualChannelPercent(
+-                        liveState = liveState,
+-                        semantic = channel.semantic
+-                    )
+-                }
+-
+-                LightChannelSemantic.UNKNOWN -> {
+-                    LightActualDataPolicy.actualOutputPercent(liveState).coerceIn(
+-                        0,
+-                        100
+-                    )
+-                }
+-            }
+-        }
+-
+-        return 0
+-    }
+-
+-    private fun overrideChannelPercent(
+-        semantic: LightChannelSemantic,
+-        modeOverride: TankLightModeOverride?
+-    ): Int? {
+-        if (modeOverride == null) {
+-            return null
+-        }
+-
+-        return when (semantic) {
+-            LightChannelSemantic.RED -> modeOverride.red
+-            LightChannelSemantic.GREEN -> modeOverride.green
+-            LightChannelSemantic.BLUE -> modeOverride.blue
+-            LightChannelSemantic.WHITE -> modeOverride.white
+-            LightChannelSemantic.UNKNOWN -> modeOverride.outputPercent
+-        }?.coerceIn(
+-            0,
+-            100
++        return LightActualDataPolicy.actualChannelPercent(
++            isOnline = isOnline,
++            liveState = liveState,
++            semantic = channel.semantic
+         )
+     }
+ 
+@@ -331,46 +225,6 @@
+         )
+     }
+ 
+-    private fun calculateTimelineProgressPercent(
+-        program: SavedLightProgram?,
+-        currentMinute: Int
+-    ): Int {
+-        if (program == null) {
+-            return 0
+-        }
+-
+-        val start =
+-            program.draft.start.totalMinutes
+-
+-        val end =
+-            LightProgramTimeMath.endMinutes(
+-                program.draft.end
+-            )
+-
+-        if (end <= start) {
+-            return 0
+-        }
+-
+-        return when {
+-            currentMinute <= start -> {
+-                0
+-            }
+-
+-            currentMinute >= end -> {
+-                100
+-            }
+-
+-            else -> {
+-                (((currentMinute - start).toDouble() / (end - start).toDouble()) * 100.0)
+-                    .roundToInt()
+-                    .coerceIn(
+-                        0,
+-                        100
+-                    )
+-            }
+-        }
+-    }
+-
+     private fun DevicesDataStoreManager.DeviceInfo.supportedLightChannels(): List<LightChannelConfig> {
+         val catalogDefinition =
+             LightProductCatalog.findByType(
+@@ -643,75 +497,10 @@
+             .lowercase()
+     }
+ 
+-    private fun isProgramRunningAt(
+-        program: SavedLightProgram,
+-        minute: Int
+-    ): Boolean {
+-        val start =
+-            program.draft.start.totalMinutes
+-
+-        val end =
+-            LightProgramTimeMath.endMinutes(
+-                program.draft.end
+-            )
+-
+-        return minute >= start && minute < end
+-    }
+-
+-    private fun isScheduledToday(
+-        program: SavedLightProgram,
+-        weekDay: Int
+-    ): Boolean {
+-        val selectedDays =
+-            program.draft.selectedDays
+-
+-        if (selectedDays.isEmpty()) {
+-            return true
+-        }
+-
+-        return selectedDays.contains(
+-            appDayFromDeviceWeekDay(
+-                weekDay = weekDay
+-            )
+-        )
+-    }
+-
+-    private fun appDayFromDeviceWeekDay(
+-        weekDay: Int
+-    ): Int {
+-        return when (weekDay) {
+-            in 1..7 -> {
+-                weekDay
+-            }
+-
+-            else -> {
+-                todayAppDay()
+-            }
+-        }
+-    }
+-
+-    private fun todayAppDay(): Int {
+-        val dayOfWeek =
+-            Calendar.getInstance()
+-                .get(Calendar.DAY_OF_WEEK)
+-
+-        return if (dayOfWeek == Calendar.SUNDAY) {
+-            7
+-        } else {
+-            dayOfWeek - 1
+-        }
+-    }
+-
+-    private fun currentPhoneMinute(): Int {
+-        val calendar =
+-            Calendar.getInstance()
+-
+-        return calendar.get(Calendar.HOUR_OF_DAY) * 60 +
+-            calendar.get(Calendar.MINUTE)
+-    }
+-
+     private fun buildModeContent(
+         isOnline: Boolean,
++        hasDeviceTime: Boolean,
++        hasActualLiveData: Boolean,
+         displayProgram: SavedLightProgram?,
+         modeOverride: TankLightModeOverride?
+     ): LightModeContent {
+@@ -727,6 +516,30 @@
+             )
+         }
+ 
++        if (!hasDeviceTime) {
++            return LightModeContent(
++                mode = TankLightCardMode.NO_PROGRAM,
++                label = "SYNCING",
++                title = "Waiting for ESP32 time",
++                leftText = "--:--",
++                rightText = "--:--",
++                accentColorInt = Color.parseColor("#90A1B5"),
++                timelineProgressPercent = 0
++            )
++        }
++
++        if (!hasActualLiveData && displayProgram == null) {
++            return LightModeContent(
++                mode = TankLightCardMode.NO_PROGRAM,
++                label = "WAITING",
++                title = "Waiting for live data",
++                leftText = "--:--",
++                rightText = "--:--",
++                accentColorInt = Color.parseColor("#90A1B5"),
++                timelineProgressPercent = 0
++            )
++        }
++
+         when (modeOverride?.mode) {
+             TankLightCardMode.MANUAL -> {
+                 return LightModeContent(
+@@ -790,7 +603,11 @@
+ 
+         return LightModeContent(
+             mode = TankLightCardMode.AUTO,
+-            label = "ACTIVE PROGRAM",
++            label = if (hasActualLiveData) {
++                "ACTIVE PROGRAM"
++            } else {
++                "SCHEDULED"
++            },
+             title = displayProgram.name,
+             leftText = displayProgram.draft.start.label,
+             rightText = LightProgramTimeMath.endLabel(
+@@ -818,8 +635,4 @@
+         val colorInt: Int
+     )
+ 
+-    private companion object {
+-        private const val MINUTES_PER_DAY =
+-            24 * 60
+-    }
+ }
+\ No newline at end of file
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt	2026-06-10 22:27:34.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt	2026-06-11 07:18:39.686091921 +0000
+@@ -6,12 +6,12 @@
+ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+ import com.aqua.aqualight.data.devices.light.automation.LightAutomationDataStoreManager
+ import com.aqua.aqualight.data.devices.light.automation.model.LightAutomationSettings
+-import com.aqua.aqualight.data.devices.light.automation.model.MoonlightChannel
+ import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
+ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
+ import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
+-import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
++import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
++import com.aqua.aqualight.data.devices.light.runtime.LightProgramRuntimeEvaluator
+ import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
+ import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+ import com.aqua.aqualight.data.devices.presence.DeviceStatusState
+@@ -235,16 +235,27 @@
+                         ),
+                         lightAutomationStore.observeSettings(
+                             deviceId = deviceId
+-                        )
+-                    ) { liveState, manualRuntime, automationSettings ->
++                        ),
++                        DevicePresenceMonitor.statuses
++                    ) { liveState, manualRuntime, automationSettings, statuses ->
+                         LightRuntimeSource(
+                             liveState = liveState,
+                             manualRuntime = manualRuntime,
+-                            automationSettings = automationSettings
++                            automationSettings = automationSettings,
++                            presenceState = statuses[deviceId]
+                         )
+                     }.collect { source ->
++                        val isOnline =
++                            source.presenceState?.isOnline == true
++
+                         val liveState =
+-                            source.liveState
++                            if (isOnline) {
++                                source.liveState
++                            } else {
++                                LightDeviceLiveState.initial(
++                                    deviceId = deviceId
++                                )
++                            }
+ 
+                         val manualRuntime =
+                             source.manualRuntime
+@@ -252,6 +263,12 @@
+                         val automationSettings =
+                             source.automationSettings
+ 
++                        if (!isOnline) {
++                            LightManualRuntimeStore.clear(
++                                deviceId = deviceId
++                            )
++                        }
++
+                         lightStatesFlow.update { current ->
+                             current + (
+                                 deviceId to liveState
+@@ -259,17 +276,25 @@
+                         }
+ 
+                         lightModeOverridesFlow.update { current ->
++                            if (!isOnline) {
++                                return@update current - deviceId
++                            }
++
+                             val currentMinute =
+-                                liveState.deviceTime?.curvePoint?.totalMinutes
+-                                    ?: currentPhoneMinute()
++                                liveState.deviceTime
++                                    ?.takeIf { liveState.hasDeviceTime }
++                                    ?.curvePoint
++                                    ?.totalMinutes
+ 
+                             val modeOverride =
+                                 buildModeOverrideFromManualRuntime(
+                                     runtime = manualRuntime
+-                                ) ?: buildModeOverrideFromAutomation(
+-                                    settings = automationSettings,
+-                                    currentMinute = currentMinute
+-                                )
++                                ) ?: currentMinute?.let { minute ->
++                                    buildModeOverrideFromAutomation(
++                                        settings = automationSettings,
++                                        currentMinute = minute
++                                    )
++                                }
+ 
+                             if (modeOverride == null) {
+                                 current - deviceId
+@@ -311,36 +336,11 @@
+             return null
+         }
+ 
+-        val intensity = moonlight.intensityPercent.coerceIn(1, 15)
+-        val softWhite = (intensity / 2).coerceAtLeast(1)
+-        val red = 0
+-        val green = 0
+-        val blue = when (moonlight.channel) {
+-            MoonlightChannel.BLUE,
+-            MoonlightChannel.BLUE_WHITE -> intensity
+-            MoonlightChannel.WHITE -> 0
+-        }
+-        val white = when (moonlight.channel) {
+-            MoonlightChannel.WHITE -> intensity
+-            MoonlightChannel.BLUE_WHITE -> softWhite
+-            MoonlightChannel.BLUE -> 0
+-        }
+-
+         return TankLightModeOverride(
+             mode = TankLightCardMode.MOONLIGHT,
+             title = "Moonlight Mode",
+-            outputPercent = LightOutputMath.outputPercent(
+-                red = red,
+-                green = green,
+-                blue = blue,
+-                white = white
+-            ),
+-            red = red,
+-            green = green,
+-            blue = blue,
+-            white = white,
+-            leftText = labelForMinute(startMinute),
+-            rightText = labelForMinute(endMinute),
++            leftText = LightProgramRuntimeEvaluator.labelForMinute(startMinute),
++            rightText = LightProgramRuntimeEvaluator.labelForMinute(endMinute),
+             timelineProgressPercent = moonlightProgressPercent(
+                 currentMinute = currentMinute,
+                 startMinute = startMinute,
+@@ -407,35 +407,6 @@
+             return null
+         }
+ 
+-        val outputPercent =
+-            manualOutputPercent(
+-                runtime = runtime
+-            )
+-
+-        val red =
+-            manualChannelPercent(
+-                isPowerOn = runtime.isPowerOn,
+-                value = runtime.red
+-            )
+-
+-        val green =
+-            manualChannelPercent(
+-                isPowerOn = runtime.isPowerOn,
+-                value = runtime.green
+-            )
+-
+-        val blue =
+-            manualChannelPercent(
+-                isPowerOn = runtime.isPowerOn,
+-                value = runtime.blue
+-            )
+-
+-        val white =
+-            manualChannelPercent(
+-                isPowerOn = runtime.isPowerOn,
+-                value = runtime.white
+-            )
+-
+         if (runtime.isManualScene) {
+             val sceneName =
+                 runtime.activeSceneName.orEmpty()
+@@ -445,74 +416,20 @@
+ 
+             return TankLightModeOverride(
+                 mode = TankLightCardMode.SCENE,
+-                title = sceneName,
+-                outputPercent = outputPercent,
+-                red = red,
+-                green = green,
+-                blue = blue,
+-                white = white
++                title = sceneName
+             )
+         }
+ 
+         if (runtime.isManualMode) {
+             return TankLightModeOverride(
+                 mode = TankLightCardMode.MANUAL,
+-                title = "Manual Control",
+-                outputPercent = outputPercent,
+-                red = red,
+-                green = green,
+-                blue = blue,
+-                white = white
++                title = "Manual Control"
+             )
+         }
+ 
+         return null
+     }
+ 
+-    private fun currentPhoneMinute(): Int {
+-        val calendar = java.util.Calendar.getInstance()
+-        return calendar.get(java.util.Calendar.HOUR_OF_DAY) * 60 +
+-            calendar.get(java.util.Calendar.MINUTE)
+-    }
+-
+-    private fun labelForMinute(
+-        minute: Int
+-    ): String {
+-        val normalized = ((minute % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY
+-        val hour = normalized / 60
+-        val min = normalized % 60
+-        return "%02d:%02d".format(hour, min)
+-    }
+-
+-    private fun manualOutputPercent(
+-        runtime: LightManualRuntimeState
+-    ): Int {
+-        if (!runtime.isPowerOn) {
+-            return 0
+-        }
+-
+-        return LightOutputMath.outputPercent(
+-            red = runtime.red,
+-            green = runtime.green,
+-            blue = runtime.blue,
+-            white = runtime.white
+-        )
+-    }
+-
+-    private fun manualChannelPercent(
+-        isPowerOn: Boolean,
+-        value: Int
+-    ): Int {
+-        if (!isPowerOn) {
+-            return 0
+-        }
+-
+-        return value.coerceIn(
+-            0,
+-            100
+-        )
+-    }
+-
+     private fun clearLightObservers() {
+         lightLiveJobs.forEach { entry ->
+             entry.value.cancel()
+@@ -547,7 +464,8 @@
+     private data class LightRuntimeSource(
+         val liveState: LightDeviceLiveState,
+         val manualRuntime: LightManualRuntimeState,
+-        val automationSettings: LightAutomationSettings
++        val automationSettings: LightAutomationSettings,
++        val presenceState: DeviceStatusState?
+     )
+ 
+     private data class SourceState(
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankLightModeOverride.kt AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankLightModeOverride.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankLightModeOverride.kt	2026-06-10 17:39:54.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankLightModeOverride.kt	2026-06-11 07:10:20.414174149 +0000
+@@ -3,12 +3,7 @@
+ data class TankLightModeOverride(
+     val mode: TankLightCardMode,
+     val title: String = "",
+-    val outputPercent: Int? = null,
+-    val red: Int? = null,
+-    val green: Int? = null,
+-    val blue: Int? = null,
+-    val white: Int? = null,
+     val leftText: String? = null,
+     val rightText: String? = null,
+     val timelineProgressPercent: Int? = null
+-)
+\ No newline at end of file
++)
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightViewModel.kt AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightViewModel.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightViewModel.kt	2026-06-10 22:25:43.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightViewModel.kt	2026-06-11 07:17:55.168063385 +0000
+@@ -10,6 +10,8 @@
+ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
+ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceTimeState
+ import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeState
++import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
++import com.aqua.aqualight.data.devices.light.runtime.LightProgramRuntimeEvaluator
+ import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
+ import com.aqua.aqualight.data.devices.presence.DeviceConnectionStatus
+ import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+@@ -52,7 +54,8 @@
+     private val _uiState = MutableStateFlow(
+         createDeviceTimeUnavailableState(
+             programs = emptyList(),
+-            liveState = LightDeviceLiveState.initial(0L)
++            liveState = LightDeviceLiveState.initial(0L),
++            isOnline = false
+         )
+     )
+ 
+@@ -87,7 +90,8 @@
+         if (deviceId <= 0L) {
+             _uiState.value = createDeviceTimeUnavailableState(
+                 programs = emptyList(),
+-                liveState = LightDeviceLiveState.initial(0L)
++                liveState = LightDeviceLiveState.initial(0L),
++                isOnline = false
+             )
+             return
+         }
+@@ -115,6 +119,15 @@
+                     presenceState = statuses[this@DeviceLightViewModel.deviceId]
+                 )
+             }.collect { inputs ->
++                val isOnline =
++                    inputs.presenceState?.isOnline == true
++
++                if (!isOnline) {
++                    LightManualRuntimeStore.clear(
++                        deviceId = this@DeviceLightViewModel.deviceId
++                    )
++                }
++
+                 val activeProgramsForDevice = inputs.programs.filter {
+                     program ->
+                     program.deviceId == this@DeviceLightViewModel.deviceId &&
+@@ -123,7 +136,8 @@
+ 
+                 val baseState = createStateFromPrograms(
+                     programs = activeProgramsForDevice,
+-                    liveState = inputs.liveState
++                    liveState = inputs.liveState,
++                    isOnline = isOnline
+                 )
+ 
+                 val finalState = if (
+@@ -133,15 +147,15 @@
+                     createManualRuntimeState(
+                         baseState = baseState,
+                         manualRuntime = inputs.manualRuntime,
+-                        liveState = inputs.liveState
++                        liveState = inputs.liveState,
++                        isOnline = isOnline
+                     )
+                 } else {
+                     baseState
+                 }
+ 
+                 _uiState.value = finalState.withConnectionState(
+-                    presenceState = inputs.presenceState,
+-                    liveState = inputs.liveState
++                    presenceState = inputs.presenceState
+                 )
+             }
+         }
+@@ -161,7 +175,8 @@
+     private fun createManualRuntimeState(
+         baseState: DeviceLightDashboardUiState,
+         manualRuntime: LightManualRuntimeState,
+-        liveState: LightDeviceLiveState
++        liveState: LightDeviceLiveState,
++        isOnline: Boolean
+     ): DeviceLightDashboardUiState {
+         val sceneName = manualRuntime.activeSceneName
+         .orEmpty()
+@@ -173,7 +188,7 @@
+             }
+         }
+ 
+-        val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
++        val outputPercent = LightActualDataPolicy.actualOutputPercent(isOnline = isOnline, liveState = liveState)
+ 
+         val pausedGraphState = baseState.todayPlanGraphState.copy(
+             showPausedOverlay = true,
+@@ -192,8 +207,8 @@
+             } else {
+                 "Manual Mode Active"
+             },
+-            currentWattText = liveState.actualPowerText,
+-            outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
++            currentWattText = LightActualDataPolicy.actualPowerText(isOnline = isOnline, liveState = liveState),
++            outputPercentText = if (LightActualDataPolicy.hasActualData(isOnline = isOnline, liveState = liveState)) {
+                 "$outputPercent%"
+             } else {
+                 "--%"
+@@ -203,6 +218,7 @@
+             todayPlanGraphState = pausedGraphState
+         ).withLiveIndicators(
+             liveState = liveState,
++            isOnline = isOnline,
+             mode = if (manualRuntime.isManualScene) {
+                 LightDashboardMode.SCENE
+             } else {
+@@ -213,39 +229,41 @@
+ 
+     private fun createStateFromPrograms(
+         programs: List<SavedLightProgram>,
+-        liveState: LightDeviceLiveState
++        liveState: LightDeviceLiveState,
++        isOnline: Boolean
+     ): DeviceLightDashboardUiState {
+         val deviceTime = liveState.deviceTime
+ 
+-        if (!liveState.hasDeviceTime || deviceTime == null) {
++        if (!isOnline || !liveState.hasDeviceTime || deviceTime == null) {
+             return createDeviceTimeUnavailableState(
+                 programs = programs,
+-                liveState = liveState
++                liveState = liveState,
++                isOnline = isOnline
+             )
+         }
+ 
+         val currentTime = deviceTime.curvePoint
+-        val currentMinute = currentTime.totalMinutes
+ 
+         if (programs.isEmpty()) {
+             return createEmptyState(
+                 currentTime = currentTime,
+-                liveState = liveState
++                liveState = liveState,
++                isOnline = isOnline
+             )
+         }
+ 
+-        val todayPrograms = programs
+-        .filter {
+-            program ->
+-            isScheduledToday(
+-                program = program,
++        val runtimeEvaluation =
++            LightProgramRuntimeEvaluator.evaluate(
++                deviceId = this.deviceId,
++                programs = programs,
+                 deviceTime = deviceTime
+             )
+-        }
+-        .sortedBy {
+-            program ->
+-            program.draft.start.totalMinutes
+-        }
++
++        val currentMinute =
++            runtimeEvaluation.currentMinute
++
++        val todayPrograms =
++            runtimeEvaluation.todayPrograms
+ 
+         if (todayPrograms.isEmpty()) {
+             val graphSegments = buildTodayGraphSegments(
+@@ -264,17 +282,17 @@
+             }
+ 
+             if (currentMoonlightSegment != null) {
+-                val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
++                val outputPercent = LightActualDataPolicy.actualOutputPercent(isOnline = isOnline, liveState = liveState)
+ 
+                 return DeviceLightDashboardUiState(
+                     activeProgramName = "Moonlight",
+-                    runStatus = if (liveState.hasLiveChannels) {
++                    runStatus = if (LightActualDataPolicy.hasActualData(isOnline = isOnline, liveState = liveState)) {
+                         "Moonlight active"
+                     } else {
+                         "Moonlight scheduled · waiting for live data"
+                     },
+-                    currentWattText = liveState.actualPowerText,
+-                    outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
++                    currentWattText = LightActualDataPolicy.actualPowerText(isOnline = isOnline, liveState = liveState),
++                    outputPercentText = if (LightActualDataPolicy.hasActualData(isOnline = isOnline, liveState = liveState)) {
+                 "$outputPercent%"
+             } else {
+                 "--%"
+@@ -288,6 +306,7 @@
+                     )
+                 ).withLiveIndicators(
+                     liveState = liveState,
++                    isOnline = isOnline,
+                     mode = LightDashboardMode.MOON
+                 )
+             }
+@@ -295,8 +314,8 @@
+             return DeviceLightDashboardUiState(
+                 activeProgramName = "No program today",
+                 runStatus = "Active schedules are not planned for today",
+-                currentWattText = liveState.actualPowerText,
+-                outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
++                currentWattText = LightActualDataPolicy.actualPowerText(isOnline = isOnline, liveState = liveState),
++                outputPercentText = LightActualDataPolicy.actualOutputText(isOnline = isOnline, liveState = liveState),
+                 deviceTimeText = liveState.deviceTimeText,
+                 nextEventText = "Next scheduled day",
+                 timelineStatusText = "No active plan today",
+@@ -305,7 +324,8 @@
+                 )
+             ).withLiveIndicators(
+                 liveState = liveState,
+-                mode = if (liveState.actualOutputPercent > 0) {
++                isOnline = isOnline,
++                mode = if (LightActualDataPolicy.actualOutputPercent(isOnline = isOnline, liveState = liveState) > 0) {
+                     LightDashboardMode.AUTO
+                 } else {
+                     LightDashboardMode.IDLE
+@@ -313,22 +333,14 @@
+             )
+         }
+ 
+-        val runningProgram = todayPrograms.firstOrNull {
+-            program ->
+-            isProgramRunningAt(
+-                program = program,
+-                minute = currentMinute
+-            )
+-        }
++        val runningProgram =
++            runtimeEvaluation.runningProgram
+ 
+-        val nextProgramToday = todayPrograms.firstOrNull {
+-            program ->
+-            program.draft.start.totalMinutes > currentMinute
+-        }
++        val nextProgramToday =
++            runtimeEvaluation.nextProgram
+ 
+-        val displayProgram = runningProgram
+-        ?: nextProgramToday
+-        ?: todayPrograms.firstOrNull()
++        val displayProgram =
++            runtimeEvaluation.displayProgram
+ 
+         val graphSegments = buildTodayGraphSegments(
+             programs = programs,
+@@ -347,7 +359,7 @@
+         val isMoonlightActive =
+         currentTimelineSegment?.type == TodayLightPlanGraphSegmentType.MOONLIGHT
+ 
+-        val outputPercent = LightActualDataPolicy.actualOutputPercent(liveState)
++        val outputPercent = LightActualDataPolicy.actualOutputPercent(isOnline = isOnline, liveState = liveState)
+ 
+         return DeviceLightDashboardUiState(
+             activeProgramName = if (isMoonlightActive) {
+@@ -356,7 +368,7 @@
+                 displayProgram?.name ?: "No active program"
+             },
+             runStatus = when {
+-                isMoonlightActive && liveState.hasLiveChannels -> {
++                isMoonlightActive && LightActualDataPolicy.hasActualData(isOnline = isOnline, liveState = liveState) -> {
+                     "Moonlight active"
+                 }
+ 
+@@ -364,7 +376,7 @@
+                     "Moonlight scheduled · waiting for live data"
+                 }
+ 
+-                runningProgram != null && !liveState.hasLiveChannels -> {
++                runningProgram != null && !LightActualDataPolicy.hasActualData(isOnline = isOnline, liveState = liveState) -> {
+                     "Program scheduled · waiting for live data"
+                 }
+ 
+@@ -375,8 +387,8 @@
+                     )
+                 }
+             },
+-            currentWattText = liveState.actualPowerText,
+-            outputPercentText = if (LightActualDataPolicy.hasActualData(liveState)) {
++            currentWattText = LightActualDataPolicy.actualPowerText(isOnline = isOnline, liveState = liveState),
++            outputPercentText = if (LightActualDataPolicy.hasActualData(isOnline = isOnline, liveState = liveState)) {
+                 "$outputPercent%"
+             } else {
+                 "--%"
+@@ -412,10 +424,12 @@
+             )
+         ).withLiveIndicators(
+             liveState = liveState,
++            isOnline = isOnline,
+             mode = if (isMoonlightActive) {
+                 LightDashboardMode.MOON
+             } else {
+                 buildAutoMode(
++                    isOnline = isOnline,
+                     liveState = liveState,
+                     runningProgram = runningProgram,
+                     nextProgramToday = nextProgramToday
+@@ -425,8 +439,7 @@
+     }
+ 
+     private fun DeviceLightDashboardUiState.withConnectionState(
+-        presenceState: DeviceStatusState?,
+-        liveState: LightDeviceLiveState
++        presenceState: DeviceStatusState?
+     ): DeviceLightDashboardUiState {
+         val status = presenceState?.status ?: DeviceConnectionStatus.UNKNOWN
+         val isOnline = presenceState?.isOnline == true
+@@ -450,17 +463,16 @@
+             greenChannelText = "G --",
+             blueChannelText = "B --",
+             whiteChannelText = "W --",
+-            deviceTimeText = if (liveState.hasDeviceTime) {
+-                liveState.deviceTimeText
+-            } else {
+-                "--:--"
+-            },
++            deviceTimeText = "--:--",
+             nextEventText = "Reconnect the controller to continue",
+             healthTemperatureText = "-- °C",
+             healthTemperatureStatusText = "Unavailable",
+             healthFanText = "Unavailable",
+             healthFanStatusText = "Unavailable",
+             timelineStatusText = "Live connection unavailable",
++            todayPlanGraphState = TodayLightPlanGraphState.empty(
++                currentTime = LightCurvePoint.of(0, 0)
++            ),
+             isDeviceOnline = false,
+             controlsEnabled = false,
+             connectionStatusText = statusText
+@@ -632,7 +644,8 @@
+ 
+     private fun createDeviceTimeUnavailableState(
+         programs: List<SavedLightProgram>,
+-        liveState: LightDeviceLiveState
++        liveState: LightDeviceLiveState,
++        isOnline: Boolean
+     ): DeviceLightDashboardUiState {
+         val hasPrograms = programs.isNotEmpty()
+ 
+@@ -647,8 +660,8 @@
+             } else {
+                 "Create or load a light program"
+             },
+-            currentWattText = liveState.actualPowerText,
+-            outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
++            currentWattText = LightActualDataPolicy.actualPowerText(isOnline = isOnline, liveState = liveState),
++            outputPercentText = LightActualDataPolicy.actualOutputText(isOnline = isOnline, liveState = liveState),
+             deviceTimeText = "--:--",
+             nextEventText = if (hasPrograms) {
+                 "Waiting for ESP32 time"
+@@ -665,19 +678,21 @@
+             )
+         ).withLiveIndicators(
+             liveState = liveState,
++            isOnline = isOnline,
+             mode = LightDashboardMode.SYNC
+         )
+     }
+ 
+     private fun createEmptyState(
+         currentTime: LightCurvePoint,
+-        liveState: LightDeviceLiveState
++        liveState: LightDeviceLiveState,
++        isOnline: Boolean
+     ): DeviceLightDashboardUiState {
+         return DeviceLightDashboardUiState(
+             activeProgramName = "No active program",
+             runStatus = "Create or load a light program",
+-            currentWattText = liveState.actualPowerText,
+-            outputPercentText = LightActualDataPolicy.actualOutputText(liveState),
++            currentWattText = LightActualDataPolicy.actualPowerText(isOnline = isOnline, liveState = liveState),
++            outputPercentText = LightActualDataPolicy.actualOutputText(isOnline = isOnline, liveState = liveState),
+             deviceTimeText = liveState.deviceTimeText,
+             nextEventText = "No event",
+             timelineStatusText = "No active plan",
+@@ -686,7 +701,8 @@
+             )
+         ).withLiveIndicators(
+             liveState = liveState,
+-            mode = if (liveState.actualOutputPercent > 0) {
++            isOnline = isOnline,
++            mode = if (LightActualDataPolicy.actualOutputPercent(isOnline = isOnline, liveState = liveState) > 0) {
+                 LightDashboardMode.AUTO
+             } else {
+                 LightDashboardMode.IDLE
+@@ -768,42 +784,6 @@
+         return "Tomorrow"
+     }
+ 
+-    private fun isProgramRunningAt(
+-        program: SavedLightProgram,
+-        minute: Int
+-    ): Boolean {
+-        val draft = program.draft
+-
+-        val startMinutes = draft.start.totalMinutes
+-        val endMinutes = LightProgramTimeMath.endMinutes(draft.end)
+-
+-        return minute >= startMinutes && minute < endMinutes
+-    }
+-
+-private fun SavedLightProgram.maxOutputPercent(): Int {
+-        return maxOf(
+-            draft.channelValues.red,
+-            draft.channelValues.green,
+-            draft.channelValues.blue,
+-            draft.channelValues.white
+-        ).coerceIn(0, 100)
+-    }
+-
+-    private fun isScheduledToday(
+-        program: SavedLightProgram,
+-        deviceTime: LightDeviceTimeState
+-    ): Boolean {
+-        val selectedDays = program.draft.selectedDays
+-
+-        if (selectedDays.isEmpty()) {
+-            return true
+-        }
+-
+-        return selectedDays.contains(
+-            appDayFromDeviceWeekDay(deviceTime.weekDay)
+-        )
+-    }
+-
+     private fun appDayFromDeviceWeekDay(
+         weekDay: Int
+     ): Int {
+@@ -815,6 +795,7 @@
+ 
+     private fun DeviceLightDashboardUiState.withLiveIndicators(
+         liveState: LightDeviceLiveState,
++        isOnline: Boolean,
+         mode: LightDashboardMode
+     ): DeviceLightDashboardUiState {
+         return copy(
+@@ -822,24 +803,28 @@
+ 
+             redChannelText = buildChannelText(
+                 prefix = "R",
++                isOnline = isOnline,
+                 liveState = liveState,
+                 semantic = LightChannelSemantic.RED
+             ),
+ 
+             greenChannelText = buildChannelText(
+                 prefix = "G",
++                isOnline = isOnline,
+                 liveState = liveState,
+                 semantic = LightChannelSemantic.GREEN
+             ),
+ 
+             blueChannelText = buildChannelText(
+                 prefix = "B",
++                isOnline = isOnline,
+                 liveState = liveState,
+                 semantic = LightChannelSemantic.BLUE
+             ),
+ 
+             whiteChannelText = buildChannelText(
+                 prefix = "W",
++                isOnline = isOnline,
+                 liveState = liveState,
+                 semantic = LightChannelSemantic.WHITE
+             ),
+@@ -862,18 +847,16 @@
+ 
+     private fun buildChannelText(
+         prefix: String,
++        isOnline: Boolean,
+         liveState: LightDeviceLiveState,
+         semantic: LightChannelSemantic
+     ): String {
+-        val value = liveState.channelFor(
++        return LightActualDataPolicy.channelText(
++            prefix = prefix,
++            isOnline = isOnline,
++            liveState = liveState,
+             semantic = semantic
+-        )?.valuePercent
+-
+-        return if (value == null) {
+-            "$prefix --"
+-        } else {
+-            "$prefix $value%"
+-        }
++        )
+     }
+ 
+     private fun normalizeHealthStatus(
+@@ -920,6 +903,7 @@
+     }
+ 
+     private fun buildAutoMode(
++        isOnline: Boolean,
+         liveState: LightDeviceLiveState,
+         runningProgram: SavedLightProgram?,
+         nextProgramToday: SavedLightProgram?
+@@ -929,7 +913,7 @@
+                 LightDashboardMode.AUTO
+             }
+ 
+-            liveState.actualOutputPercent > 0 -> {
++            LightActualDataPolicy.actualOutputPercent(isOnline = isOnline, liveState = liveState) > 0 -> {
+                 LightDashboardMode.AUTO
+             }
+ 
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/manual/DeviceLightManualViewModel.kt AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/manual/DeviceLightManualViewModel.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/manual/DeviceLightManualViewModel.kt	2026-06-10 23:17:50.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/manual/DeviceLightManualViewModel.kt	2026-06-11 07:16:34.052953803 +0000
+@@ -5,6 +5,7 @@
+ import androidx.lifecycle.viewModelScope
+ import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
+ import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
++import com.aqua.aqualight.data.devices.light.runtime.LightActualDataPolicy
+ import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
+ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveRefreshManager
+ import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
+@@ -40,9 +41,6 @@
+     private val appContext =
+         application.applicationContext
+ 
+-    init {
+-        LightManualRuntimeStore.configure(appContext)
+-    }
+ 
+     private val lightPresetDataStoreManager =
+         LightPresetDataStoreManager(appContext)
+@@ -136,6 +134,9 @@
+ 
+                 if (!isOnline) {
+                     cancelPendingManualChannelSends()
++                    LightManualRuntimeStore.clear(
++                        deviceId = this@DeviceLightManualViewModel.deviceId
++                    )
+                 }
+ 
+                 _uiState.update { current ->
+@@ -770,13 +771,19 @@
+             state.isManualMode || state.isManualScene
+ 
+         val shouldRestoreManualFromDevice =
+-            liveState.hasLiveChannels &&
++            LightActualDataPolicy.hasActualData(
++                isOnline = true,
++                liveState = liveState
++            ) &&
+                 !preservePreviewValues &&
+                 !isManualOverrideActive &&
+                 liveState.looksLikeManualOutput()
+ 
+         val shouldApplyLiveToManualControls =
+-            liveState.hasLiveChannels &&
++            LightActualDataPolicy.hasActualData(
++                isOnline = true,
++                liveState = liveState
++            ) &&
+                 !preservePreviewValues &&
+                 (isManualOverrideActive || shouldRestoreManualFromDevice)
+ 
+@@ -790,7 +797,12 @@
+                     ?.let { watts ->
+                         watts > 0.0
+                     }
+-                    ?: (liveState.actualOutputPercent > 0),
++                    ?: (
++                        LightActualDataPolicy.actualOutputPercent(
++                            isOnline = true,
++                            liveState = liveState
++                        ) > 0
++                    ),
+ 
+                 red = liveState.channelValuePercent(
+                     LightChannelSemantic.RED
+diff -ruN AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presets/DeviceLightPresetsViewModel.kt AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presets/DeviceLightPresetsViewModel.kt
+--- AquaLight_before_light_centralization/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presets/DeviceLightPresetsViewModel.kt	2026-06-10 23:17:36.000000000 +0000
++++ AquaLight/app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presets/DeviceLightPresetsViewModel.kt	2026-06-11 07:10:05.762396048 +0000
+@@ -6,7 +6,6 @@
+ import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
+ import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
+ import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
+-import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
+ import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
+ import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
+ import kotlinx.coroutines.channels.Channel
+@@ -17,9 +16,6 @@
+     application: Application
+ ) : AndroidViewModel(application) {
+ 
+-    init {
+-        LightManualRuntimeStore.configure(application.applicationContext)
+-    }
+ 
+     private val lightPresetDataStoreManager =
+         LightPresetDataStoreManager(application.applicationContext)

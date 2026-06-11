@@ -14,9 +14,6 @@ class Esp32LightDeviceCommandManager(
     Esp32LightChannelMappingReader(httpClient)
 ) : LightDeviceCommandManager {
 
-    private val mappingCacheLock = Any()
-    private val mappingCache = mutableMapOf<String, LightDeviceChannelMapping>()
-
     override suspend fun applyManualScene(
         deviceId: Long,
         sceneName: String,
@@ -48,7 +45,7 @@ class Esp32LightDeviceCommandManager(
         val address = resolveAddress(deviceId)
         ?: return LightCommandResult.failure("Device address could not be resolved")
 
-        val mapping = getCachedMapping(
+        val mapping = getFreshMapping(
             ip = address.ip
         ).getOrElse {
             error ->
@@ -115,9 +112,8 @@ class Esp32LightDeviceCommandManager(
         val address = resolveAddress(deviceId)
         ?: return LightCommandResult.failure("Device address could not be resolved")
 
-        val mapping = getCachedMapping(
-            ip = address.ip,
-            forceRefresh = true
+        val mapping = getFreshMapping(
+            ip = address.ip
         ).getOrElse {
             error ->
             return LightCommandResult.failure(
@@ -149,7 +145,7 @@ class Esp32LightDeviceCommandManager(
         val address = resolveAddress(deviceId)
         ?: return LightCommandResult.failure("Device address could not be resolved")
 
-        val mapping = getCachedMapping(
+        val mapping = getFreshMapping(
             ip = address.ip
         ).getOrElse {
             error ->
@@ -176,34 +172,12 @@ class Esp32LightDeviceCommandManager(
         )
     }
 
-    private suspend fun getCachedMapping(
-        ip: String,
-        forceRefresh: Boolean = false
+    private suspend fun getFreshMapping(
+        ip: String
     ): Result<LightDeviceChannelMapping> {
-        if (!forceRefresh) {
-            val cached = synchronized(mappingCacheLock) {
-                mappingCache[ip]
-            }
-
-            if (cached != null) {
-                return Result.success(cached)
-            }
-        }
-
-        val result = mappingReader.readMapping(
-            ip = ip,
-            forceRefresh = forceRefresh
+        return mappingReader.readMapping(
+            ip = ip
         )
-
-        val mapping = result.getOrNull()
-
-        if (mapping != null) {
-            synchronized(mappingCacheLock) {
-                mappingCache[ip] = mapping
-            }
-        }
-
-        return result
     }
 
     private suspend fun resolveAddress(
@@ -213,7 +187,7 @@ class Esp32LightDeviceCommandManager(
             val result = addressResolver.resolve(
                 deviceId = deviceId,
                 requireOnline = true,
-                forceLiveCheck = false
+                forceLiveCheck = true
             )
         ) {
             is LightDeviceAddressResolver.Result.Success -> result

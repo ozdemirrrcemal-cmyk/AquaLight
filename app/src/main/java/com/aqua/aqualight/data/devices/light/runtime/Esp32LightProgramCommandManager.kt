@@ -62,8 +62,7 @@ class Esp32LightProgramCommandManager(
         ?: return LightCommandResult.failure("Device address could not be resolved")
 
         val mapping = mappingReader.readMapping(
-            ip = address.ip,
-            forceRefresh = true
+            ip = address.ip
         ).getOrElse {
             error ->
             return LightCommandResult.failure(
@@ -99,8 +98,7 @@ class Esp32LightProgramCommandManager(
         ?: return LightCommandResult.failure("Device address could not be resolved")
 
         val mapping = mappingReader.readMapping(
-            ip = address.ip,
-            forceRefresh = true
+            ip = address.ip
         ).getOrElse {
             error ->
             return LightCommandResult.failure(

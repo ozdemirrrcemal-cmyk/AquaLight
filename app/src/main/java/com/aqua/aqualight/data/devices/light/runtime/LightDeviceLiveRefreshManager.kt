@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 object LightDeviceLiveRefreshManager {
 
     private const val DEFAULT_REFRESH_INTERVAL_MS = 4_000L
-    private const val DEVICE_TIME_KEEP_MS = 30_000L
 
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO
@@ -54,8 +53,6 @@ object LightDeviceLiveRefreshManager {
 
         val appContext = context.applicationContext
 
-        LightManualRuntimeStore.configure(appContext)
-        LightDeviceSnapshotCache.configure(appContext)
         LightAppVisibilityMonitor.register(appContext)
         DevicePresenceMonitor.start(appContext)
 
@@ -119,11 +116,10 @@ object LightDeviceLiveRefreshManager {
             activeConsumers.remove(deviceId)
             refreshJobs.remove(deviceId)?.cancel()
 
-            stateFor(deviceId).update { state ->
-                state.copy(
-                    isRefreshing = false
+            stateFor(deviceId).value =
+                LightDeviceLiveState.initial(
+                    deviceId = deviceId
                 )
-            }
         }
     }
 
@@ -137,8 +133,6 @@ object LightDeviceLiveRefreshManager {
 
         val appContext = context.applicationContext
 
-        LightManualRuntimeStore.configure(appContext)
-        LightDeviceSnapshotCache.configure(appContext)
         LightAppVisibilityMonitor.register(appContext)
 
         scope.launch {
@@ -156,11 +150,10 @@ object LightDeviceLiveRefreshManager {
         showRefreshing: Boolean
     ) {
         if (!LightAppVisibilityMonitor.isForeground.value) {
-            stateFor(deviceId).update { state ->
-                state.copy(
-                    isRefreshing = false
+            stateFor(deviceId).value =
+                LightDeviceLiveState.initial(
+                    deviceId = deviceId
                 )
-            }
             return
         }
 
@@ -196,7 +189,8 @@ object LightDeviceLiveRefreshManager {
         val address = when (
             val result = addressResolver.resolve(
                 deviceId = deviceId,
-                requireOnline = true
+                requireOnline = true,
+                forceLiveCheck = true
             )
         ) {
             is LightDeviceAddressResolver.Result.Success -> {
@@ -204,13 +198,11 @@ object LightDeviceLiveRefreshManager {
             }
 
             is LightDeviceAddressResolver.Result.Failure -> {
-                stateFlow.update { state ->
-                    cachedFallbackState(
-                        deviceId = deviceId,
-                        currentState = state,
-                        message = result.message
-                    )
-                }
+                stateFlow.value = LightDeviceLiveState.initial(
+                    deviceId = deviceId
+                ).copy(
+                    errorMessage = result.message
+                )
                 return
             }
         }
@@ -222,160 +214,37 @@ object LightDeviceLiveRefreshManager {
         ).onSuccess { snapshot ->
             val now = System.currentTimeMillis()
 
-            var nextState: LightDeviceLiveState? = null
-
-            stateFlow.update { state ->
-                val cachedState = if (snapshot.channels.isEmpty()) {
-                    LightDeviceSnapshotCache.read(
-                        deviceId = deviceId
-                    )
+            stateFlow.value = LightDeviceLiveState(
+                deviceId = deviceId,
+                isRefreshing = false,
+                deviceTime = snapshot.deviceTime,
+                deviceTimeUpdatedMillis = if (snapshot.deviceTime != null) {
+                    now
                 } else {
-                    null
-                }
-
-                val hasAuthoritativeChannels = snapshot.channels.isNotEmpty()
-
-                val displayChannels = when {
-                    hasAuthoritativeChannels -> {
-                        snapshot.channels
-                    }
-
-                    cachedState?.channels?.isNotEmpty() == true -> {
-                        cachedState?.channels.orEmpty()
-                    }
-
-                    state.channels.isNotEmpty() -> {
-                        state.channels
-                    }
-
-                    else -> {
-                        emptyList()
-                    }
-                }
-
-                val resolvedDeviceTime = snapshot.deviceTime
-                    ?: state.deviceTime.takeIf {
-                        state.deviceTimeUpdatedMillis > 0L &&
-                            now - state.deviceTimeUpdatedMillis <= DEVICE_TIME_KEEP_MS
-                    }
-                    ?: cachedState?.deviceTime
-
-                state.copy(
-                    isRefreshing = false,
-                    deviceTime = resolvedDeviceTime,
-                    deviceTimeUpdatedMillis = when {
-                        snapshot.deviceTime != null -> {
-                            now
-                        }
-
-                        resolvedDeviceTime != null && resolvedDeviceTime == cachedState?.deviceTime -> {
-                            cachedState?.deviceTimeUpdatedMillis ?: 0L
-                        }
-
-                        resolvedDeviceTime != null -> {
-                            state.deviceTimeUpdatedMillis
-                        }
-
-                        else -> {
-                            0L
-                        }
-                    },
-                    channels = displayChannels,
-                    thermalProtection = snapshot.thermalProtection
-                        ?: cachedState?.thermalProtection
-                        ?: state.thermalProtection.takeIf { current -> current.hasData }
-                        ?: LightThermalProtectionState(),
-                    cooling = snapshot.cooling
-                        ?: cachedState?.cooling
-                        ?: state.cooling.takeIf { current -> current.hasData }
-                        ?: LightCoolingState(),
-                    liveDataUpdatedMillis = if (hasAuthoritativeChannels) {
-                        now
-                    } else {
-                        cachedState?.liveDataUpdatedMillis
-                            ?: state.liveDataUpdatedMillis
-                    },
-                    isLiveDataFresh = hasAuthoritativeChannels,
-                    lastUpdatedMillis = now,
-                    errorMessage = snapshot.partialErrorMessage,
-                    dataSource = when {
-                        hasAuthoritativeChannels -> {
-                            LightLiveDataSource.LIVE
-                        }
-
-                        displayChannels.isNotEmpty() -> {
-                            LightLiveDataSource.CACHE
-                        }
-
-                        else -> {
-                            LightLiveDataSource.EMPTY
-                        }
-                    }
-                ).also { state ->
-                    nextState = state
-                }
-            }
-
-            nextState?.let { state ->
-                LightDeviceSnapshotCache.save(
-                    deviceId = deviceId,
-                    liveState = state
-                )
-
-                LightManualRuntimeStore.syncFromLiveState(
-                    deviceId = deviceId,
-                    liveState = state
-                )
-            }
+                    0L
+                },
+                channels = snapshot.channels,
+                thermalProtection = snapshot.thermalProtection
+                    ?: LightThermalProtectionState(),
+                cooling = snapshot.cooling
+                    ?: LightCoolingState(),
+                liveDataUpdatedMillis = if (snapshot.channels.isNotEmpty()) {
+                    now
+                } else {
+                    0L
+                },
+                isLiveDataFresh = snapshot.channels.isNotEmpty(),
+                lastUpdatedMillis = now,
+                errorMessage = snapshot.partialErrorMessage
+            )
         }.onFailure { error ->
-            val message = error.message
-                ?: "Live device data could not be read"
-
-            stateFlow.update { state ->
-                cachedFallbackState(
-                    deviceId = deviceId,
-                    currentState = state,
-                    message = message
-                )
-            }
-        }
-    }
-
-    private fun cachedFallbackState(
-        deviceId: Long,
-        currentState: LightDeviceLiveState,
-        message: String
-    ): LightDeviceLiveState {
-        val cachedState = LightDeviceSnapshotCache.read(
-            deviceId = deviceId
-        )
-
-        if (cachedState != null) {
-            return cachedState.copy(
-                isRefreshing = false,
-                errorMessage = message
+            stateFlow.value = LightDeviceLiveState.initial(
+                deviceId = deviceId
+            ).copy(
+                errorMessage = error.message
+                    ?: "Live device data could not be read"
             )
         }
-
-        if (currentState.hasDisplayChannels) {
-            return currentState.copy(
-                isRefreshing = false,
-                isLiveDataFresh = false,
-                errorMessage = message,
-                dataSource = LightLiveDataSource.CACHE
-            )
-        }
-
-        return currentState.copy(
-            isRefreshing = false,
-            channels = emptyList(),
-            thermalProtection = LightThermalProtectionState(),
-            cooling = LightCoolingState(),
-            liveDataUpdatedMillis = 0L,
-            isLiveDataFresh = false,
-            errorMessage = message,
-            dataSource = LightLiveDataSource.EMPTY
-        )
     }
 
     private fun stateFor(
@@ -384,9 +253,7 @@ object LightDeviceLiveRefreshManager {
         return synchronized(lock) {
             states.getOrPut(deviceId) {
                 MutableStateFlow(
-                    LightDeviceSnapshotCache.read(
-                        deviceId = deviceId
-                    ) ?: LightDeviceLiveState.initial(
+                    LightDeviceLiveState.initial(
                         deviceId = deviceId
                     )
                 )

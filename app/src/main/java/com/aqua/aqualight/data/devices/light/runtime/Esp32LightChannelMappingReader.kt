@@ -7,24 +7,9 @@ class Esp32LightChannelMappingReader(
     private val httpClient: Esp32HttpJsonClient = Esp32HttpJsonClient()
 ) {
 
-    private val cache = mutableMapOf<String, CachedMapping>()
-
     suspend fun readMapping(
-        ip: String,
-        forceRefresh: Boolean = false
+        ip: String
     ): Result<LightDeviceChannelMapping> {
-        val now = System.currentTimeMillis()
-
-        val cached = cache[ip]
-
-        if (
-            !forceRefresh &&
-            cached != null &&
-            now - cached.createdAtMillis <= CACHE_VALID_MS
-        ) {
-            return Result.success(cached.mapping)
-        }
-
         val queryJson = JSONObject()
             .put(
                 "LPWMChanelLED",
@@ -83,11 +68,6 @@ class Esp32LightChannelMappingReader(
                 IllegalStateException("Light channel mapping missing")
             )
         }
-
-        cache[ip] = CachedMapping(
-            mapping = mapping,
-            createdAtMillis = now
-        )
 
         return Result.success(mapping)
     }
@@ -259,14 +239,5 @@ class Esp32LightChannelMappingReader(
         val b = color and 0xFF
 
         return r > 180 && g > 180 && b > 180
-    }
-
-    private data class CachedMapping(
-        val mapping: LightDeviceChannelMapping,
-        val createdAtMillis: Long
-    )
-
-    companion object {
-        private const val CACHE_VALID_MS = 60_000L
     }
 }
