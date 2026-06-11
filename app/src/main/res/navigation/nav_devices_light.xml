@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_devices_light"
+    app:startDestination="@id/deviceLightFragment">
+
+<fragment
+    android:id="@+id/deviceLightFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightFragment"
+    android:label="@string/screen_title_lighting"
+    tools:layout="@layout/fragment_device_light">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    <action
+        android:id="@+id/action_deviceLightFragment_to_deviceLightProgramsFragment"
+        app:destination="@id/deviceLightProgramsFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+    <action
+        android:id="@+id/action_deviceLightFragment_to_deviceLightManualFragment"
+        app:destination="@id/deviceLightManualFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+    <action
+        android:id="@+id/action_deviceLightFragment_to_deviceLightPresetsFragment"
+        app:destination="@id/deviceLightPresetsFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+    <action
+        android:id="@+id/action_deviceLightFragment_to_deviceLightSettingsFragment"
+        app:destination="@id/deviceLightSettingsFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+    <action
+        android:id="@+id/action_deviceLightFragment_to_deviceLightQuickSetupFragment"
+        app:destination="@id/deviceLightQuickSetupFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightProgramsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.programs.DeviceLightProgramsFragment"
+    android:label="@string/screen_title_light_programs"
+    tools:layout="@layout/fragment_device_light_programs">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+    <action
+        android:id="@+id/action_deviceLightProgramsFragment_to_deviceLightProgramEditorFragment"
+        app:destination="@id/deviceLightProgramEditorFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightProgramEditorFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.DeviceLightProgramEditorFragment"
+    android:label="@string/screen_title_light_program_editor"
+	tools:layout="@layout/fragment_device_light_program_editör">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+    <argument
+        android:name="programId"
+        app:argType="string"
+        app:nullable="true"
+        android:defaultValue="@null" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightManualFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.manual.DeviceLightManualFragment"
+    android:label="@string/screen_title_light_manual_control"
+	tools:layout="@layout/fragment_device_light_manual">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightPresetsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presets.DeviceLightPresetsFragment"
+    android:label="@string/screen_title_light_presets"
+	tools:layout="@layout/fragment_device_light_presets">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+    <action
+        android:id="@+id/action_deviceLightPresetsFragment_to_deviceLightManualFragment"
+        app:destination="@id/deviceLightManualFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.settings.DeviceLightSettingsFragment"
+    android:label="@string/screen_title_light_settings"
+	tools:layout="@layout/fragment_device_light_settings">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceLightQuickSetupFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.DeviceLightQuickSetupFragment"
+    android:label="@string/screen_title_light_quick_setup"
+	tools:layout="@layout/fragment_device_light_quick_setup">
+
+    <argument
+        android:name="deviceId"
+        app:argType="long"
+        android:defaultValue="0L" />
+
+</fragment>
+
+</navigation>

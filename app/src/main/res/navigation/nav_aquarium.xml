@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_aquarium"
+    app:startDestination="@id/aquariumFragment">
+
+<!-- 🐠 Aquarium Tab -->
+  <fragment
+    android:id="@+id/aquariumFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment"
+    android:label="@string/screen_title_aquarium"
+    tools:layout="@layout/fragment_aquarium">
+
+    <action
+      android:id="@+id/action_aquariumFragment_to_createTankFragment"
+      app:destination="@id/createTankFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+    <action
+      android:id="@+id/action_aquariumFragment_to_tankDetailFragment"
+      app:destination="@id/tankDetailFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/createTankFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment"
+    android:label="@string/screen_title_create_tank"
+    tools:layout="@layout/fragment_create_tank" />
+
+  <fragment
+    android:id="@+id/tankDetailFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment"
+    android:label="@string/screen_title_tank_detail"
+    tools:layout="@layout/fragment_tank_detail">
+
+    <argument
+      android:name="tankId"
+      app:argType="long" />
+
+    <action
+      android:id="@+id/action_tankDetailFragment_to_tankSettingsFragment"
+      app:destination="@id/tankSettingsFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+    <action
+      android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
+      app:destination="@id/tankDetailLivestockFormFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+    <action
+      android:id="@+id/action_tankDetailFragment_to_tankDetailPlantTagFragment"
+      app:destination="@id/tankDetailPlantTagFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+		
+	<action
+    android:id="@+id/action_tankDetailFragment_to_tankDeviceSelectFragment"
+    app:destination="@id/tankDeviceSelectFragment"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/materialPickerFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment"
+    android:label="@string/screen_title_material_picker"
+    tools:layout="@layout/fragment_material_picker">
+
+    <argument
+      android:name="arg_mode"
+      app:argType="string"
+      android:defaultValue="mode_create" />
+
+    <argument
+      android:name="arg_tank_id"
+      app:argType="long"
+      android:defaultValue="0L" />
+
+    <argument
+      android:name="arg_category_key"
+      app:argType="string" />
+
+    <argument
+      android:name="arg_category_title"
+      app:argType="string" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/tankSettingsFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.settings.TankSettingsFragment"
+    android:label="@string/screen_title_tank_settings"
+    tools:layout="@layout/fragment_tank_settings">
+
+    <argument
+      android:name="tankId"
+      app:argType="long" />
+
+    <action
+      android:id="@+id/action_tankSettingsFragment_to_materialPickerFragment"
+      app:destination="@id/materialPickerFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+		
+	<action
+    android:id="@+id/action_tankSettingsFragment_to_tankDetailFragment"
+    app:destination="@id/tankDetailFragment"
+    app:popUpTo="@id/tankSettingsFragment"
+    app:popUpToInclusive="true"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+<action
+    android:id="@+id/action_tankSettingsFragment_to_aquariumFragment"
+    app:destination="@id/aquariumFragment"
+    app:popUpTo="@id/aquariumFragment"
+    app:popUpToInclusive="false"
+    app:launchSingleTop="true"
+    app:enterAnim="@anim/nav_slide_in_right"
+    app:exitAnim="@anim/nav_slide_out_left"
+    app:popEnterAnim="@anim/nav_slide_in_left"
+    app:popExitAnim="@anim/nav_slide_out_right" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/tankDetailLivestockFormFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailLivestockFormFragment"
+    android:label="@string/screen_title_livestock_form"
+    tools:layout="@layout/fragment_tank_livestock_form">
+
+    <argument
+      android:name="tankId"
+      app:argType="long" />
+
+    <argument
+      android:name="livestockId"
+      app:argType="long"
+      android:defaultValue="0L" />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/tankDetailPlantTagFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailPlantTagFragment"
+    android:label="@string/screen_title_plant_tags"
+    tools:layout="@layout/fragment_plant_tag">
+
+    <argument
+      android:name="tankId"
+      app:argType="long" />
+
+    <action
+      android:id="@+id/action_tankDetailPlantTagFragment_to_plantPickerFragment"
+      app:destination="@id/plantPickerFragment" 
+        app:enterAnim="@anim/nav_slide_in_right"
+        app:exitAnim="@anim/nav_slide_out_left"
+        app:popEnterAnim="@anim/nav_slide_in_left"
+        app:popExitAnim="@anim/nav_slide_out_right"
+        />
+
+  </fragment>
+
+  <fragment
+    android:id="@+id/plantPickerFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment"
+    android:label="@string/screen_title_plant_picker"
+    tools:layout="@layout/fragment_plant_picker">
+
+    <argument
+      android:name="useNavResult"
+      app:argType="boolean"
+      android:defaultValue="false" />
+
+  </fragment>
+  
+  <fragment
+    android:id="@+id/tankDeviceSelectFragment"
+    android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectFragment"
+    android:label="@string/screen_title_tank_device_select"
+	tools:layout="@layout/fragment_tank_device_select">
+
+    <argument
+        android:name="tankId"
+        app:argType="long" />
+
+</fragment>
+
+</navigation>
