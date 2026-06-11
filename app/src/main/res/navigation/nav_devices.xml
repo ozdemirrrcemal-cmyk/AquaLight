@@ -27,8 +27,23 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+      <argument
+        android:name="deviceIp"
+        app:argType="string"
+        android:defaultValue="" />
+
+      <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
   </fragment>
 
@@ -44,8 +59,29 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="setupSsid"
+        app:argType="string"
+        android:defaultValue="" />
+
+      <argument
+        android:name="displayName"
+        app:argType="string"
+        android:defaultValue="Device" />
+
+      <argument
+        android:name="familyName"
+        app:argType="string"
+        android:defaultValue="Aqua device" />
+
+      <argument
+        android:name="deviceType"
+        app:argType="string"
+        android:defaultValue="unknown" />
+
+    </action>
 
     <action
       android:id="@+id/action_deviceAddFragment_to_deviceRouterFragment"
@@ -56,8 +92,23 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+      <argument
+        android:name="deviceIp"
+        app:argType="string"
+        android:defaultValue="" />
+
+      <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
   </fragment>
 
@@ -96,7 +147,23 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right" />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+      <argument
+        android:name="deviceIp"
+        app:argType="string"
+        android:defaultValue="" />
+
+      <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
 </fragment>
 
@@ -115,6 +182,11 @@
         app:argType="string"
         android:defaultValue="" />
 
+    <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
     <action
         android:id="@+id/action_deviceRouterFragment_to_deviceLightFragment"
         app:destination="@id/deviceLightFragment"
@@ -123,7 +195,18 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right" />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+      <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceRouterFragment_to_deviceDosingFragment"
@@ -133,7 +216,23 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right" />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+      <argument
+        android:name="deviceIp"
+        app:argType="string"
+        android:defaultValue="" />
+
+      <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceRouterFragment_to_deviceTimerFragment"
@@ -143,7 +242,23 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right" />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+      <argument
+        android:name="deviceIp"
+        app:argType="string"
+        android:defaultValue="" />
+
+      <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceRouterFragment_to_deviceCoolingFragment"
@@ -153,7 +268,23 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right" />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="deviceId"
+        app:argType="long" />
+
+      <argument
+        android:name="deviceIp"
+        app:argType="string"
+        android:defaultValue="" />
+
+      <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceRouterFragment_to_unsupportedDeviceFragment"
@@ -163,7 +294,19 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right" />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="deviceTitle"
+        app:argType="string"
+        android:defaultValue="Device" />
+
+      <argument
+        android:name="message"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
 </fragment>
 
@@ -186,9 +329,42 @@
   </fragment>
 
   <include app:graph="@navigation/nav_device_light" />
-  <include app:graph="@navigation/nav_device_light" />
-  <include app:graph="@navigation/nav_device_dosing" />
-  <include app:graph="@navigation/nav_device_timer" />
-  <include app:graph="@navigation/nav_device_cooling" />
+
+<fragment
+    android:id="@+id/deviceDosingFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingFragment"
+    android:label="@string/screen_title_dosing"
+    tools:layout="@layout/fragment_device_dosing">
+
+    <argument android:name="deviceId" app:argType="long" />
+    <argument android:name="deviceIp" app:argType="string" android:defaultValue="" />
+    <argument android:name="deviceTitle" app:argType="string" android:defaultValue="" />
+
+</fragment>
+
+
+<fragment
+    android:id="@+id/deviceTimerFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerFragment"
+    android:label="@string/screen_title_timer"
+    tools:layout="@layout/fragment_device_timer">
+
+    <argument android:name="deviceId" app:argType="long" />
+    <argument android:name="deviceIp" app:argType="string" android:defaultValue="" />
+    <argument android:name="deviceTitle" app:argType="string" android:defaultValue="" />
+
+</fragment>
+
+<fragment
+    android:id="@+id/deviceCoolingFragment"
+    android:name="com.aqua.aqualight.ui.tabs.devices.detail.cooling.DeviceCoolingFragment"
+    android:label="@string/screen_title_cooling"
+    tools:layout="@layout/fragment_device_cooling">
+
+    <argument android:name="deviceId" app:argType="long" />
+    <argument android:name="deviceIp" app:argType="string" android:defaultValue="" />
+    <argument android:name="deviceTitle" app:argType="string" android:defaultValue="" />
+
+</fragment>
 
 </navigation>

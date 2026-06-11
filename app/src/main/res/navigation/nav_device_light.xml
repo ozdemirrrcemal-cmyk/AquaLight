@@ -27,8 +27,14 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightManualFragment"
@@ -36,8 +42,14 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightPresetsFragment"
@@ -45,8 +57,14 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightSettingsFragment"
@@ -54,8 +72,14 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceLightFragment_to_deviceLightQuickSetupFragment"
@@ -63,8 +87,14 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </action>
 
 </fragment>
 
@@ -85,8 +115,20 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+        <argument
+            android:name="programId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+    </action>
 
     <action
         android:id="@+id/action_deviceLightProgramsFragment_to_deviceLightAutomationFragment"
@@ -94,8 +136,14 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </action>
 
 </fragment>
 
@@ -161,8 +209,14 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+        <argument
+            android:name="deviceId"
+            app:argType="long"
+            android:defaultValue="0L" />
+
+    </action>
 
 </fragment>
 

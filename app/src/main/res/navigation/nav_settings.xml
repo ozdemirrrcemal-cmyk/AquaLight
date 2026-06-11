@@ -202,13 +202,20 @@
         app:popExitAnim="@anim/nav_slide_out_right"
         />
 		
-	<action
-    android:id="@+id/action_logoutFragment_to_reAuthenticateFragment"
-    app:destination="@id/reAuthenticateFragment"
-    app:enterAnim="@anim/nav_slide_in_right"
-    app:exitAnim="@anim/nav_slide_out_left"
-    app:popEnterAnim="@anim/nav_slide_in_left"
-    app:popExitAnim="@anim/nav_slide_out_right" />
+		<action
+	    android:id="@+id/action_logoutFragment_to_reAuthenticateFragment"
+	    app:destination="@id/reAuthenticateFragment"
+	    app:enterAnim="@anim/nav_slide_in_right"
+	    app:exitAnim="@anim/nav_slide_out_left"
+	    app:popEnterAnim="@anim/nav_slide_in_left"
+	    app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="arg_action"
+        app:argType="string"
+        android:defaultValue="delete_account" />
+
+    </action>
 
   </fragment>
 

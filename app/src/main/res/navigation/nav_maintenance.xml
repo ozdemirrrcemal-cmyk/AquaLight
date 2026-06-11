@@ -27,16 +27,32 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="taskId"
+        app:argType="long" />
+
+    </action>
 		
-	<action
-    android:id="@+id/action_aquariumMaintenanceFragment_to_tankSettingsFragment"
-    app:destination="@id/tankSettingsFragment"
-    app:enterAnim="@anim/nav_slide_in_right"
-    app:exitAnim="@anim/nav_slide_out_left"
-    app:popEnterAnim="@anim/nav_slide_in_left"
-    app:popExitAnim="@anim/nav_slide_out_right" />
+		<action
+	    android:id="@+id/action_aquariumMaintenanceFragment_to_tankSettingsFragment"
+	    app:destination="@id/tankSettingsFragment"
+	    app:enterAnim="@anim/nav_slide_in_right"
+	    app:exitAnim="@anim/nav_slide_out_left"
+	    app:popEnterAnim="@anim/nav_slide_in_left"
+	    app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="tankId"
+        app:argType="long" />
+
+      <argument
+        android:name="startTab"
+        app:argType="string"
+        android:defaultValue="" />
+
+    </action>
 
   </fragment>
 
@@ -56,8 +72,14 @@
         app:enterAnim="@anim/nav_slide_in_right"
         app:exitAnim="@anim/nav_slide_out_left"
         app:popEnterAnim="@anim/nav_slide_in_left"
-        app:popExitAnim="@anim/nav_slide_out_right"
-        />
+        app:popExitAnim="@anim/nav_slide_out_right">
+
+      <argument
+        android:name="taskId"
+        app:argType="long"
+        android:defaultValue="-1L" />
+
+    </action>
 
   </fragment>
 
