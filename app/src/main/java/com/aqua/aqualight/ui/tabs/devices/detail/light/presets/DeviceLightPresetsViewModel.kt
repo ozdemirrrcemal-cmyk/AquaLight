@@ -16,13 +16,17 @@ class DeviceLightPresetsViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val appContext =
+        application.applicationContext
+
     private val lightPresetDataStoreManager =
-        LightPresetDataStoreManager(application.applicationContext)
+        LightPresetDataStoreManager(appContext)
 
     private val lightRuntimeRepository =
         LightRuntimeRepository(
+            context = appContext,
             commandManager = Esp32LightDeviceCommandManager(
-                context = application.applicationContext
+                context = appContext
             )
         )
 

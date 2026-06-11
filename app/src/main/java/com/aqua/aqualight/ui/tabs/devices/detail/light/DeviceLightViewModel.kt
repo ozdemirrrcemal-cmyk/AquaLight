@@ -47,7 +47,7 @@ class DeviceLightViewModel(
     LightProgramsDataStoreManager(appContext)
 
     private val lightRuntimeRepository =
-    LightRuntimeRepository()
+    LightRuntimeRepository(appContext)
 
     private val _uiState = MutableStateFlow(
         createDeviceTimeUnavailableState(

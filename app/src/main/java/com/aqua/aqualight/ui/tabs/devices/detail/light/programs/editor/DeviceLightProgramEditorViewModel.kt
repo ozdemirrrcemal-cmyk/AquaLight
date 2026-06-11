@@ -55,6 +55,7 @@ class DeviceLightProgramEditorViewModel(
 
     private val lightRuntimeRepository =
         LightRuntimeRepository(
+            context = appContext,
             commandManager = Esp32LightDeviceCommandManager(
                 context = appContext
             )

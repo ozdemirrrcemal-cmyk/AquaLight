@@ -44,6 +44,7 @@ class DeviceLightManualViewModel(
 
     private val lightRuntimeRepository =
         LightRuntimeRepository(
+            context = appContext,
             commandManager = Esp32LightDeviceCommandManager(
                 context = appContext
             )
@@ -830,8 +831,9 @@ class DeviceLightManualViewModel(
                 state = calibratedState
             )
 
-        return if (liveState.hasLiveChannels) {
+        return if (shouldApplyLiveToManualControls) {
             calculatedState.copy(
+                masterOutputPercent = calculatedState.masterOutputPercent,
                 powerText = liveState.actualPowerWatts
                     ?.let { watts ->
                         formatWatts(watts)
