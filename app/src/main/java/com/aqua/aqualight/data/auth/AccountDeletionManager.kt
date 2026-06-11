@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.auth
 
 import android.content.Context
+import com.aqua.aqualight.data.user.CloudUserDataCleaner
 import com.aqua.aqualight.data.user.UserDataCleaner
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
@@ -13,23 +14,30 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 /**
  * Single account deletion path for the app.
  *
- * Deleting a Firebase account and cleaning local user data must stay together;
+ * Deleting a Firebase account and cleaning user data must stay together;
  * fragments should not individually clear random stores after account deletion.
  */
 class AccountDeletionManager private constructor(
     private val appContext: Context,
     private val firebaseAuth: FirebaseAuth,
-    private val userDataCleaner: UserDataCleaner
+    private val userDataCleaner: UserDataCleaner,
+    private val cloudUserDataCleaner: CloudUserDataCleaner
 ) {
 
     data class DeleteResult(
         val accountDeleteError: Throwable? = null,
-        val localCleanupResult: UserDataCleaner.CleanupResult = UserDataCleaner.CleanupResult.Success,
+        val cloudCleanupResult: CloudUserDataCleaner.CleanupResult =
+            CloudUserDataCleaner.CleanupResult.Success,
+        val localCleanupResult: UserDataCleaner.CleanupResult =
+            UserDataCleaner.CleanupResult.Success,
         val googleRevokeError: Throwable? = null,
         val firebaseSignOutError: Throwable? = null
     ) {
         val isAccountDeleted: Boolean
             get() = accountDeleteError == null
+
+        val hasCloudCleanupError: Boolean
+            get() = cloudCleanupResult.hasError
 
         val hasLocalCleanupErrors: Boolean
             get() = localCleanupResult.hasErrors
@@ -39,14 +47,16 @@ class AccountDeletionManager private constructor(
         fun create(
             context: Context
         ): AccountDeletionManager {
-            val appContext = context.applicationContext
+            val appContext =
+                context.applicationContext
 
             return AccountDeletionManager(
                 appContext = appContext,
                 firebaseAuth = Firebase.auth,
                 userDataCleaner = UserDataCleaner.create(
                     context = appContext
-                )
+                ),
+                cloudUserDataCleaner = CloudUserDataCleaner.create()
             )
         }
     }
@@ -59,35 +69,59 @@ class AccountDeletionManager private constructor(
                 )
             )
 
-        val ownerUid = user.uid
+        val ownerUid =
+            user.uid
 
-        val accountDeleteError = runCatching {
-            user.delete().awaitCompletion()
-        }.exceptionOrNull()
+        val cloudCleanupResult =
+            cloudUserDataCleaner.clearCloudUserData(
+                ownerUid = ownerUid
+            )
 
-        if (accountDeleteError != null) {
+        if (cloudCleanupResult.hasError) {
             return DeleteResult(
-                accountDeleteError = accountDeleteError
+                accountDeleteError = cloudCleanupResult.error
+                    ?: IllegalStateException(
+                        "Cloud user data cleanup failed."
+                    ),
+                cloudCleanupResult = cloudCleanupResult
             )
         }
 
-        val localCleanupResult = userDataCleaner.clearLocalUserData(
-            ownerUid = ownerUid,
-            clearUserPreferences = true,
-            stopSessionBoundServices = true
-        )
+        val accountDeleteError =
+            runCatching {
+                user.delete()
+                    .awaitCompletion()
+            }.exceptionOrNull()
 
-        val googleRevokeError = runCatching {
-            GoogleSignInClientFactory.create(
-                appContext
-            ).revokeAccess().awaitCompletion()
-        }.exceptionOrNull()
+        if (accountDeleteError != null) {
+            return DeleteResult(
+                accountDeleteError = accountDeleteError,
+                cloudCleanupResult = cloudCleanupResult
+            )
+        }
 
-        val firebaseSignOutError = runCatching {
-            firebaseAuth.signOut()
-        }.exceptionOrNull()
+        val localCleanupResult =
+            userDataCleaner.clearLocalUserData(
+                ownerUid = ownerUid,
+                clearUserPreferences = true,
+                stopSessionBoundServices = true
+            )
+
+        val googleRevokeError =
+            runCatching {
+                GoogleSignInClientFactory.create(
+                    appContext
+                ).revokeAccess()
+                    .awaitCompletion()
+            }.exceptionOrNull()
+
+        val firebaseSignOutError =
+            runCatching {
+                firebaseAuth.signOut()
+            }.exceptionOrNull()
 
         return DeleteResult(
+            cloudCleanupResult = cloudCleanupResult,
             localCleanupResult = localCleanupResult,
             googleRevokeError = googleRevokeError,
             firebaseSignOutError = firebaseSignOutError
@@ -101,12 +135,17 @@ class AccountDeletionManager private constructor(
                     return@addOnCompleteListener
                 }
 
-                val exception = task.exception
+                val exception =
+                    task.exception
 
-                if (task.isSuccessful || exception == null) {
+                if (task.isSuccessful && exception == null) {
                     continuation.resume(Unit)
                 } else {
-                    continuation.resumeWithException(exception)
+                    continuation.resumeWithException(
+                        exception ?: IllegalStateException(
+                            "Firebase task failed."
+                        )
+                    )
                 }
             }
         }

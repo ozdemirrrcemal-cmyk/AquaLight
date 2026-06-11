@@ -11,23 +11,30 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.devices.access.DeviceAccessGuard
+import com.aqua.aqualight.data.devices.access.DeviceOpenResult
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
-import androidx.navigation.fragment.navArgs
+import kotlinx.coroutines.launch
 
-class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
+class TankDetailFragment :
+    Fragment(R.layout.fragment_tank_detail),
+    TankDetailDevicesFragment.Host {
 
     private val args: TankDetailFragmentArgs by navArgs()
 
@@ -40,6 +47,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     private var tankId: Long = 0L
     private var selectedTab: TankDetailTab = TankDetailTab.DEVICES
     private var currentTank: SavedAquariumTank? = null
+    private var isOpeningDevice: Boolean = false
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -247,6 +255,102 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
         navigateFromTankDetail(
             TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailPlantTagFragment(
                 tankId = tankId
+            )
+        )
+    }
+
+    override fun onTankDetailAddDeviceClicked(
+        tankId: Long
+    ) {
+        if (tankId != this.tankId) {
+            return
+        }
+
+        navigateFromTankDetail(
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankDeviceSelectFragment(
+                tankId = this.tankId
+            )
+        )
+    }
+
+    override fun onTankDetailDeviceClicked(
+        device: TankAssignedDeviceUi
+    ) {
+        if (device.deviceId <= 0L || isOpeningDevice) {
+            return
+        }
+
+        isOpeningDevice = true
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val result =
+                    DeviceAccessGuard(
+                        context = requireContext()
+                    ).resolveForOpen(
+                        deviceId = device.deviceId
+                    )
+
+                if (!isAdded || _binding == null) {
+                    return@launch
+                }
+
+                when (result) {
+                    is DeviceOpenResult.Allowed -> {
+                        navigateFromTankDetail(
+                            TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
+                                deviceId = result.device.id,
+                                deviceIp = result.ip,
+                                deviceTitle = device.title
+                            )
+                        )
+                    }
+
+                    DeviceOpenResult.NotFound -> {
+                        openUnsupportedDeviceScreen(
+                            title = "Device Not Found",
+                            message = "This device is no longer available."
+                        )
+                    }
+
+                    is DeviceOpenResult.Unsupported -> {
+                        openUnsupportedDeviceScreen(
+                            title = result.device.productModel.ifBlank {
+                                "Unsupported Device"
+                            },
+                            message = "This device is not supported by this app version."
+                        )
+                    }
+
+                    is DeviceOpenResult.Offline -> {
+                        openUnsupportedDeviceScreen(
+                            title = result.device.productModel.ifBlank {
+                                result.device.name.ifBlank {
+                                    device.title.ifBlank {
+                                        DEFAULT_DEVICE_TITLE
+                                    }
+                                }
+                            },
+                            message = getString(
+                                R.string.device_offline_message
+                            )
+                        )
+                    }
+                }
+            } finally {
+                isOpeningDevice = false
+            }
+        }
+    }
+
+    private fun openUnsupportedDeviceScreen(
+        title: String,
+        message: String
+    ) {
+        navigateFromTankDetail(
+            TankDetailFragmentDirections.actionTankDetailFragmentToUnsupportedDeviceFragment(
+                deviceTitle = title,
+                message = message
             )
         )
     }
@@ -490,6 +594,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+
         _binding = null
     }
 
@@ -504,6 +609,7 @@ class TankDetailFragment : Fragment(R.layout.fragment_tank_detail) {
     companion object {
         private const val ARG_TANK_ID = "tankId"
         private const val KEY_SELECTED_TAB = "selectedTab"
+        private const val DEFAULT_DEVICE_TITLE = "Device"
 
         private const val TAG_DEVICES_FRAGMENT = "TankDetailDevicesFragment"
         private const val TAG_ACTIVITY_FRAGMENT = "TankDetailActivityFragment"

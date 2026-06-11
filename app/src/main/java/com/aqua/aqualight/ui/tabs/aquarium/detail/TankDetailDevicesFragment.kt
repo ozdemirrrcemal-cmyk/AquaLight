@@ -8,7 +8,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
@@ -21,6 +20,16 @@ import kotlinx.coroutines.launch
 
 class TankDetailDevicesFragment :
     Fragment(R.layout.fragment_tank_detail_devices) {
+
+    interface Host {
+        fun onTankDetailAddDeviceClicked(
+            tankId: Long
+        )
+
+        fun onTankDetailDeviceClicked(
+            device: TankAssignedDeviceUi
+        )
+    }
 
     private var _binding: FragmentTankDetailDevicesBinding? = null
     private val binding get() = _binding!!
@@ -92,7 +101,9 @@ class TankDetailDevicesFragment :
 
     private fun setupClickListeners() {
         binding.btnAddDevice.setOnClickListener {
-            openTankDeviceSelectScreen()
+            parentHost()?.onTankDetailAddDeviceClicked(
+                tankId = tankId
+            )
         }
     }
 
@@ -119,55 +130,40 @@ class TankDetailDevicesFragment :
     private fun handleDeviceClick(
         device: TankAssignedDeviceUi
     ) {
-        openDeviceMenuScreen(
+        parentHost()?.onTankDetailDeviceClicked(
             device = device
         )
     }
 
     private fun handleDeviceLongClick(
-    device: TankAssignedDeviceUi
-) {
-    showRemoveDeviceFromTankSheet(
-        device = device
-    )
-}
-
-private fun showRemoveDeviceFromTankSheet(
-    device: TankAssignedDeviceUi
-) {
-    DeviceConfirmBottomSheet
-        .create(requireContext())
-        .show(
-            title = "Remove device from tank?",
-            message = "${device.title} will remain saved, but it will no longer be assigned to this tank.",
-            confirmText = "Remove",
-            cancelText = "Cancel",
-            tone = DeviceConfirmTone.DANGER,
-            onConfirm = {
-                viewModel.removeDeviceFromTank(
-                    deviceId = device.deviceId
-                )
-            }
-        )
-}
-
-    private fun openTankDeviceSelectScreen() {
-        findNavController().navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankDeviceSelectFragment(
-                tankId = tankId
-            )
+        device: TankAssignedDeviceUi
+    ) {
+        showRemoveDeviceFromTankSheet(
+            device = device
         )
     }
 
-    private fun openDeviceMenuScreen(
+    private fun showRemoveDeviceFromTankSheet(
         device: TankAssignedDeviceUi
     ) {
-        findNavController().navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
-                deviceId = device.deviceId,
-                deviceIp = ""
+        DeviceConfirmBottomSheet
+            .create(requireContext())
+            .show(
+                title = "Remove device from tank?",
+                message = "${device.title} will remain saved, but it will no longer be assigned to this tank.",
+                confirmText = "Remove",
+                cancelText = "Cancel",
+                tone = DeviceConfirmTone.DANGER,
+                onConfirm = {
+                    viewModel.removeDeviceFromTank(
+                        deviceId = device.deviceId
+                    )
+                }
             )
-        )
+    }
+
+    private fun parentHost(): Host? {
+        return parentFragment as? Host
     }
 
     override fun onDestroyView() {
@@ -184,15 +180,6 @@ private fun showRemoveDeviceFromTankSheet(
 
         private const val ARG_TANK_ID =
             "tankId"
-
-        private const val ARG_DEVICE_ID =
-            "deviceId"
-
-        private const val ARG_DEVICE_TITLE =
-            "deviceTitle"
-
-        private const val ARG_DEVICE_IP =
-            "deviceIp"
 
         fun newInstance(
             tankId: Long

@@ -73,12 +73,7 @@ class LoginFragment : Fragment() {
 
                     return@googleResult
                 }
-
-                Log.d(
-                    "LoginFragment",
-                    "Google Sign-In account: ${account.email}"
-                )
-
+				
                 viewModel.signInWithGoogleToken(
                     idToken = token
                 )
