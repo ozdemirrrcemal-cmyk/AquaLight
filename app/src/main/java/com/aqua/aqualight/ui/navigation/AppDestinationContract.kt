@@ -13,12 +13,18 @@ object AppDestinationContract {
         R.id.settingsFragment
     )
 
-    val topLevelGraphIds: Set<Int> = emptySet()
+    val topLevelGraphIds: Set<Int> = setOf(
+        R.id.nav_aquarium,
+        R.id.nav_maintenance,
+        R.id.nav_devices,
+        R.id.nav_settings
+    )
 
     fun isTopLevelDestination(
         destinationId: Int
     ): Boolean {
-        return destinationId in topLevelDestinationIds
+        return destinationId in topLevelDestinationIds ||
+            destinationId in topLevelGraphIds
     }
 
     fun isInsideAppGraph(
