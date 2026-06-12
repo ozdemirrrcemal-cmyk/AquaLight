@@ -10,10 +10,10 @@
   <fragment android:id="@+id/createTankFragment" android:name="com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment" android:label="@string/screen_title_create_tank" tools:layout="@layout/fragment_create_tank"/>
   <fragment android:id="@+id/tankDetailFragment" android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment" android:label="@string/screen_title_tank_detail" tools:layout="@layout/fragment_tank_detail">
     <argument android:name="tankId" app:argType="long"/>
-    <argument android:name="startTab" app:argType="string" android:defaultValue="general"/>
+    <argument android:name="startTab" app:argType="string" android:defaultValue="devices"/>
     <action android:id="@+id/action_tankDetailFragment_to_tankSettingsFragment" app:destination="@id/tankSettingsFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="tankId" app:argType="long"/>
-      <argument android:name="startTab" app:argType="string" android:defaultValue="general"/>
+      <argument android:name="startTab" app:argType="string" android:defaultValue="basic"/>
     </action>
     <action android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment" app:destination="@id/tankDetailLivestockFormFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="tankId" app:argType="long"/>
@@ -39,7 +39,7 @@
   </fragment>
   <fragment android:id="@+id/tankSettingsFragment" android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.settings.TankSettingsFragment" android:label="@string/screen_title_tank_settings" tools:layout="@layout/fragment_tank_settings">
     <argument android:name="tankId" app:argType="long"/>
-    <argument android:name="startTab" app:argType="string" android:defaultValue="general"/>
+    <argument android:name="startTab" app:argType="string" android:defaultValue="basic"/>
     <action android:id="@+id/action_tankSettingsFragment_to_materialPickerFragment" app:destination="@id/materialPickerFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="arg_mode" app:argType="string" android:defaultValue="mode_create"/>
       <argument android:name="arg_tank_id" app:argType="long" android:defaultValue="0L"/>
@@ -48,7 +48,7 @@
     </action>
     <action android:id="@+id/action_tankSettingsFragment_to_tankDetailFragment" app:destination="@id/tankDetailFragment" app:popUpTo="@id/tankSettingsFragment" app:popUpToInclusive="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="tankId" app:argType="long"/>
-      <argument android:name="startTab" app:argType="string" android:defaultValue="general"/>
+      <argument android:name="startTab" app:argType="string" android:defaultValue="devices"/>
     </action>
     <action android:id="@+id/action_tankSettingsFragment_to_aquariumFragment" app:destination="@id/aquariumFragment" app:popUpTo="@id/aquariumFragment" app:popUpToInclusive="false" app:launchSingleTop="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
   </fragment>

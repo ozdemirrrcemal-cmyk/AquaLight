@@ -24,6 +24,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -330,8 +331,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         val startTab = args.startTab
 
         return when (startTab) {
-            START_TAB_DETAILS -> SettingsTab.DETAILS
-            START_TAB_OTHERS -> SettingsTab.OTHERS
+            AquariumTabArgs.DETAILS -> SettingsTab.DETAILS
+            AquariumTabArgs.OTHERS -> SettingsTab.OTHERS
+            AquariumTabArgs.BASIC -> SettingsTab.BASIC
             else -> SettingsTab.BASIC
         }
     }
@@ -614,6 +616,10 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             return
         }
 
+        if (navController.currentDestination?.id != R.id.tankSettingsFragment) {
+            return
+        }
+
         navController.navigate(
             TankSettingsFragmentDirections.actionTankSettingsFragmentToTankDetailFragment(
                 tankId = tankId
@@ -732,12 +738,6 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     }
 
     companion object {
-        private const val ARG_TANK_ID = "tankId"
-        private const val ARG_START_TAB = "startTab"
-
-        private const val START_TAB_DETAILS = "details"
-        private const val START_TAB_OTHERS = "others"
-
         private const val KEY_SELECTED_TAB = "selectedTab"
 
         private const val TAG_BASIC_FRAGMENT = "TankSettingsBasicFragment"

@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.navigation.fragment.findNavController
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
@@ -32,6 +33,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private var tankId: Long = 0L
+    private var isOpeningLivestockForm: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +50,11 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         observeTank()
     }
 
+    override fun onResume() {
+        super.onResume()
+        isOpeningLivestockForm = false
+    }
+
     private fun setupClickListeners() {
         binding.btnAddLife.setOnClickListener {
             openLivestockForm()
@@ -61,12 +68,19 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     private fun openLivestockForm(
         livestockId: Long = 0L
     ) {
-        findNavController().navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailLivestockFormFragment(
+        if (isOpeningLivestockForm) {
+            return
+        }
+
+        val didNavigate = findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankDetailFragment,
+            directions = TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailLivestockFormFragment(
                 tankId = tankId,
                 livestockId = livestockId
             )
         )
+
+        isOpeningLivestockForm = didNavigate
     }
 
     private fun observeTank() {

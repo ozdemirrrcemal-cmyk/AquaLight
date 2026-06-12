@@ -12,6 +12,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -35,6 +37,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
     private var tankId: Long = 0L
     private var currentTank: SavedAquariumTank? = null
+    private var isOpeningSettings: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +52,11 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
         setupClickListeners()
         observeTank()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isOpeningSettings = false
     }
 
     private fun setupClickListeners() {
@@ -89,21 +97,33 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     }
 
     private fun openTankSettings() {
-        findNavController().navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
-                tankId = tankId,
-                startTab = ""
-            )
+        openTankSettings(
+            startTab = AquariumTabArgs.BASIC
         )
     }
 
     private fun openTankSettingsDetails() {
-        findNavController().navigate(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
+        openTankSettings(
+            startTab = AquariumTabArgs.DETAILS
+        )
+    }
+
+    private fun openTankSettings(
+        startTab: String
+    ) {
+        if (isOpeningSettings) {
+            return
+        }
+
+        val didNavigate = findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankDetailFragment,
+            directions = TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
                 tankId = tankId,
-                startTab = "details"
+                startTab = startTab
             )
         )
+
+        isOpeningSettings = didNavigate
     }
 
     private fun toggleTankVolumeUnit() {

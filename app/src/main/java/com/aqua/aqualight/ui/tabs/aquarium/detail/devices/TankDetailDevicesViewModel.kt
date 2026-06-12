@@ -151,25 +151,43 @@ class TankDetailDevicesViewModel(
 
                     _uiState.value =
                         TankDetailDevicesUiState(
-                            devices = items
+                            devices = items,
+                            errorMessage = _uiState.value.errorMessage
                         )
                 }
             }
     }
-	
-	fun removeDeviceFromTank(
-    deviceId: Long
-) {
-    if (deviceId <= 0L) {
-        return
+
+    fun removeDeviceFromTank(
+        deviceId: Long
+    ) {
+        if (deviceId <= 0L) {
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                devicesStore.removeDeviceFromTank(
+                    deviceId = deviceId
+                )
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+                _uiState.update { current ->
+                    current.copy(
+                        errorMessage = "Device could not be removed from this tank."
+                    )
+                }
+            }
+        }
     }
 
-    viewModelScope.launch {
-        devicesStore.removeDeviceFromTank(
-            deviceId = deviceId
-        )
+    fun consumeErrorMessage() {
+        _uiState.update { current ->
+            current.copy(
+                errorMessage = null
+            )
+        }
     }
-}
 
     private fun updateLightObservers(
         devices: List<DevicesDataStoreManager.DeviceInfo>

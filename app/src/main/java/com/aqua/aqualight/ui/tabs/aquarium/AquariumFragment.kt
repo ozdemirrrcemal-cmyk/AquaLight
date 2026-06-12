@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
@@ -34,6 +35,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
 
     private var isDeleteMode = false
     private var isDeletingTanks = false
+    private var isOpeningAquariumDestination = false
     private val selectedTankIds = mutableSetOf<Long>()
 
     private val tankAdapter = AquariumTankAdapter(
@@ -63,6 +65,11 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
         observeCareSummary()
     }
 
+    override fun onResume() {
+        super.onResume()
+        isOpeningAquariumDestination = false
+    }
+
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
             fragment = this,
@@ -83,7 +90,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                         if (isDeleteMode) {
                             showDeleteConfirmDialog()
                         } else {
-                            findNavController().navigate(
+                            navigateFromAquarium(
                                 AquariumFragmentDirections.actionAquariumFragmentToCreateTankFragment()
                             )
                         }
@@ -175,7 +182,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                 tank.id
             )
         } else {
-            findNavController().navigate(
+            navigateFromAquarium(
                 AquariumFragmentDirections.actionAquariumFragmentToTankDetailFragment(
                     tankId = tank.id
                 )
@@ -287,6 +294,23 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                     Color.TRANSPARENT
                 )
         }
+    }
+
+    private fun navigateFromAquarium(
+        directions: NavDirections
+    ) {
+        if (isOpeningAquariumDestination) {
+            return
+        }
+
+        val navController = findNavController()
+
+        if (navController.currentDestination?.id != R.id.aquariumFragment) {
+            return
+        }
+
+        isOpeningAquariumDestination = true
+        navController.navigate(directions)
     }
 
     private fun showDeleteConfirmDialog() {

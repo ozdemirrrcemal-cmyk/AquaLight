@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import com.aqua.aqualight.databinding.BottomSheetPhotoSourceBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -23,15 +24,19 @@ class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
 
         const val RESULT_CAMERA = "camera"
         const val RESULT_GALLERY = "gallery"
+        const val RESULT_REMOVE = "remove"
 
         private const val ARG_TITLE = "arg_title"
+        private const val ARG_SHOW_REMOVE = "arg_show_remove"
 
         fun newInstance(
-            title: String = "Profile photo"
+            title: String = "Profile photo",
+            showRemove: Boolean = false
         ): PhotoSourceBottomSheet {
             return PhotoSourceBottomSheet().apply {
                 arguments = bundleOf(
-                    ARG_TITLE to title
+                    ARG_TITLE to title,
+                    ARG_SHOW_REMOVE to showRemove
                 )
             }
         }
@@ -60,6 +65,9 @@ class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
     private fun setupTexts() {
         binding.tvSheetTitle.text =
             arguments?.getString(ARG_TITLE) ?: "Profile photo"
+
+        binding.btnRemove.isVisible =
+            arguments?.getBoolean(ARG_SHOW_REMOVE) == true
     }
 
     private fun setupClickListeners() {
@@ -75,6 +83,14 @@ class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
                 bundleOf(RESULT_KEY to RESULT_GALLERY)
+            )
+            dismiss()
+        }
+
+        binding.btnRemove.setOnClickListener {
+            parentFragmentManager.setFragmentResult(
+                REQUEST_KEY,
+                bundleOf(RESULT_KEY to RESULT_REMOVE)
             )
             dismiss()
         }

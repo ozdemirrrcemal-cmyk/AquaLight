@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import androidx.navigation.navGraphViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategory
@@ -28,6 +29,8 @@ class TankMaterialFragment :
 
     private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
 
+    private var isOpeningMaterialPicker: Boolean = false
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -44,27 +47,32 @@ class TankMaterialFragment :
         renderMaterialCategories()
     }
 
-    private fun setupMaterialPickerResultListener() {
-    val savedStateHandle = findNavController()
-        .currentBackStackEntry
-        ?.savedStateHandle
-        ?: return
-
-    savedStateHandle.getLiveData<String?>(
-        MaterialPickerFragment.RESULT_CATEGORY_KEY
-    ).observe(viewLifecycleOwner) { categoryKey ->
-        if (categoryKey == null) {
-            return@observe
-        }
-
-        savedStateHandle.set<String?>(
-            MaterialPickerFragment.RESULT_CATEGORY_KEY,
-            null
-        )
-
-        renderMaterialCategories()
+    override fun onResume() {
+        super.onResume()
+        isOpeningMaterialPicker = false
     }
-}
+
+    private fun setupMaterialPickerResultListener() {
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?: return
+
+        savedStateHandle.getLiveData<String?>(
+            MaterialPickerFragment.RESULT_CATEGORY_KEY
+        ).observe(viewLifecycleOwner) { categoryKey ->
+            if (categoryKey == null) {
+                return@observe
+            }
+
+            savedStateHandle.set<String?>(
+                MaterialPickerFragment.RESULT_CATEGORY_KEY,
+                null
+            )
+
+            renderMaterialCategories()
+        }
+    }
 
     private fun renderMaterialCategories() {
         binding.bioContainer.removeAllViews()
@@ -311,8 +319,13 @@ class TankMaterialFragment :
     private fun openMaterialPicker(
         item: MaterialCategory
     ) {
-        findNavController().navigate(
-            TankMaterialFragmentDirections
+        if (isOpeningMaterialPicker) {
+            return
+        }
+
+        val didNavigate = findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankMaterialStepFragment,
+            directions = TankMaterialFragmentDirections
                 .actionTankMaterialStepFragmentToCreateMaterialPickerFragment(
                     argMode = MaterialPickerFragment.MODE_CREATE,
                     argTankId = 0L,
@@ -320,6 +333,8 @@ class TankMaterialFragment :
                     argCategoryTitle = item.title
                 )
         )
+
+        isOpeningMaterialPicker = didNavigate
     }
 
     override fun validateAndSave(): Boolean {

@@ -31,6 +31,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -187,13 +189,34 @@ class TankDetailFragment :
     private fun restoreSelectedTab(
         savedInstanceState: Bundle?
     ): TankDetailTab {
-        return savedInstanceState
+        val savedTab = savedInstanceState
             ?.getString(KEY_SELECTED_TAB)
             ?.let { tabName ->
                 runCatching {
                     TankDetailTab.valueOf(tabName)
                 }.getOrNull()
-            } ?: selectedTab
+            }
+
+        if (savedTab != null) {
+            return savedTab
+        }
+
+        return tabFromStartArgument(
+            startTab = args.startTab
+        )
+    }
+
+    private fun tabFromStartArgument(
+        startTab: String
+    ): TankDetailTab {
+        return when (startTab) {
+            TankDetailTabArgs.ACTIVITY -> TankDetailTab.ACTIVITY
+            TankDetailTabArgs.TANK -> TankDetailTab.TANK
+            TankDetailTabArgs.PLANTS -> TankDetailTab.PLANTS
+            TankDetailTabArgs.TANK_LIFE -> TankDetailTab.TANK_LIFE
+            TankDetailTabArgs.DEVICES -> TankDetailTab.DEVICES
+            else -> TankDetailTab.DEVICES
+        }
     }
 
     private fun setupClickListeners() {
@@ -351,7 +374,7 @@ class TankDetailFragment :
         navigateFromTankDetail(
             TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
                 tankId = tankId,
-                startTab = ""
+                startTab = AquariumTabArgs.BASIC
             )
         )
     }
@@ -759,7 +782,6 @@ class TankDetailFragment :
     }
 
     companion object {
-        private const val ARG_TANK_ID = "tankId"
         private const val KEY_SELECTED_TAB = "selectedTab"
 
         private const val TAG_DEVICES_FRAGMENT = "TankDetailDevicesFragment"

@@ -1,7 +1,9 @@
 package com.aqua.aqualight.data.aquarium.model
 
+import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+
 data class TankPlantTag(
-    val id: Long = System.nanoTime(),
+    val id: Long = AquariumIdGenerator.newLong(),
     val plantName: String,
     val category: String,
     val markerX: Float = 0.5f,

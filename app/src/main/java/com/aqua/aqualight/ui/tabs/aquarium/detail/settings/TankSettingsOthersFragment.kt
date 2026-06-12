@@ -70,12 +70,9 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         binding.switchSmartCareSuggestions.setOnCheckedChangeListener {
             _, isChecked ->
             if (!isUpdatingSwitchesProgrammatically) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    aquariumTankViewModel.updateSmartCareEnabled(
-                        tankId = tankId,
-                        enabled = isChecked
-                    )
-                }
+                updateSmartCareEnabled(
+                    enabled = isChecked
+                )
             }
         }
 
@@ -87,12 +84,9 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         binding.switchCareReminderNotifications.setOnCheckedChangeListener {
             _, isChecked ->
             if (!isUpdatingSwitchesProgrammatically) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    aquariumTankViewModel.updateCareRemindersEnabled(
-                        tankId = tankId,
-                        enabled = isChecked
-                    )
-                }
+                updateCareRemindersEnabled(
+                    enabled = isChecked
+                )
             }
         }
 
@@ -152,6 +146,64 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         tank.careRemindersEnabled
 
         isUpdatingSwitchesProgrammatically = false
+    }
+
+    private fun updateSmartCareEnabled(
+        enabled: Boolean
+    ) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                aquariumTankViewModel.updateSmartCareEnabled(
+                    tankId = tankId,
+                    enabled = enabled
+                )
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                isUpdatingSwitchesProgrammatically = true
+                binding.switchSmartCareSuggestions.isChecked = !enabled
+                isUpdatingSwitchesProgrammatically = false
+
+                showSnackBar(
+                    message = "Smart care setting could not be saved.",
+                    type = BaseActivity.SnackType.ERROR
+                )
+            }
+        }
+    }
+
+    private fun updateCareRemindersEnabled(
+        enabled: Boolean
+    ) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                aquariumTankViewModel.updateCareRemindersEnabled(
+                    tankId = tankId,
+                    enabled = enabled
+                )
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                isUpdatingSwitchesProgrammatically = true
+                binding.switchCareReminderNotifications.isChecked = !enabled
+                isUpdatingSwitchesProgrammatically = false
+
+                showSnackBar(
+                    message = "Care reminder setting could not be saved.",
+                    type = BaseActivity.SnackType.ERROR
+                )
+            }
+        }
+    }
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = type
+        )
     }
 
     private fun showDuplicateTankConfirmationDialog() {

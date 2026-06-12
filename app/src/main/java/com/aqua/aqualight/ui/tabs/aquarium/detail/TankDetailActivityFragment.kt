@@ -105,6 +105,13 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
                         type = selectedType,
                         completedAtMillis = System.currentTimeMillis()
                     ).join()
+                } catch (exception: Exception) {
+                    exception.printStackTrace()
+
+                    showSnackBar(
+                        message = "Activity could not be added.",
+                        type = BaseActivity.SnackType.ERROR
+                    )
                 } finally {
                     showGlobalLoading(false)
                 }
@@ -298,6 +305,13 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
                             taskId = task.id,
                             completedAtMillis = calendar.timeInMillis
                         ).join()
+                    } catch (exception: Exception) {
+                        exception.printStackTrace()
+
+                        showSnackBar(
+                            message = "Activity date could not be updated.",
+                            type = BaseActivity.SnackType.ERROR
+                        )
                     } finally {
                         showGlobalLoading(false)
                     }
@@ -327,6 +341,13 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
                         maintenanceViewModel.deleteTask(
                             taskId = task.id
                         ).join()
+                    } catch (exception: Exception) {
+                        exception.printStackTrace()
+
+                        showSnackBar(
+                            message = "Activity could not be deleted.",
+                            type = BaseActivity.SnackType.ERROR
+                        )
                     } finally {
                         showGlobalLoading(false)
                     }
@@ -699,6 +720,16 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         show: Boolean
     ) {
         (activity as? BaseActivity)?.showLoading(show)
+    }
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = type
+        )
     }
 
     private fun Int.dp(): Int {

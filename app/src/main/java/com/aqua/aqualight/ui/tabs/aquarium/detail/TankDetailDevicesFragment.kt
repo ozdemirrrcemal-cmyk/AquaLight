@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesAdapter
@@ -122,6 +123,15 @@ class TankDetailDevicesFragment :
 
                     binding.rvTankDevices.isVisible =
                         state.devices.isNotEmpty()
+
+                    state.errorMessage?.let { message ->
+                        showSnackBar(
+                            message = message,
+                            type = BaseActivity.SnackType.ERROR
+                        )
+
+                        viewModel.consumeErrorMessage()
+                    }
                 }
             }
         }
@@ -160,6 +170,16 @@ class TankDetailDevicesFragment :
                     )
                 }
             )
+    }
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = type
+        )
     }
 
     private fun parentHost(): Host? {

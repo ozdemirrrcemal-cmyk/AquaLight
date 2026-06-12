@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.create.steps
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
@@ -14,7 +15,6 @@ import android.widget.TextView
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
@@ -23,6 +23,7 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.databinding.FragmentTankPhotoBinding
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
@@ -30,7 +31,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.yalantis.ucrop.UCrop
-import java.io.File
 
 class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragment {
 
@@ -40,7 +40,9 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
 
     private var cameraImageUri: Uri? = null
+    private var cropSourceUri: Uri? = null
     private var selectedPhotoUri: String? = null
+    private var isOpeningNextStep: Boolean = false
 
     private val requestCameraPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -62,6 +64,8 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
         if (success && uri != null) {
             openCropScreen(uri)
+        } else {
+            cleanupCameraImage()
         }
     }
 
@@ -81,9 +85,14 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         when {
             result.resultCode == Activity.RESULT_OK && data != null -> {
                 val croppedUri = UCrop.getOutput(data)
-                    ?: return@registerForActivityResult
+
+                if (croppedUri == null) {
+                    cleanupCropSource()
+                    return@registerForActivityResult
+                }
 
                 handleCroppedImage(croppedUri)
+                cleanupCropSource()
             }
 
             result.resultCode == UCrop.RESULT_ERROR && data != null -> {
@@ -95,6 +104,12 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
                     message = error?.localizedMessage
                         ?: "The aquarium photo could not be cropped."
                 )
+
+                cleanupCropSource()
+            }
+
+            result.resultCode != Activity.RESULT_OK -> {
+                cleanupCropSource()
             }
         }
     }
@@ -148,37 +163,47 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
                 PhotoSourceBottomSheet.RESULT_CAMERA -> {
                     checkCameraPermissionAndOpen()
                 }
+
+                PhotoSourceBottomSheet.RESULT_REMOVE -> {
+                    removeSelectedPhoto()
+                }
             }
         }
     }
 
     private fun setupPlantTagResultListener() {
-    val savedStateHandle = findNavController()
-        .currentBackStackEntry
-        ?.savedStateHandle
-        ?: return
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?: return
 
-    savedStateHandle.getLiveData<Boolean?>(
-        PlantTagFragment.RESULT_KEY
-    ).observe(viewLifecycleOwner) { updated ->
-        if (updated != true) {
-            return@observe
+        savedStateHandle.getLiveData<Boolean?>(
+            PlantTagFragment.RESULT_KEY
+        ).observe(viewLifecycleOwner) { updated ->
+            if (updated != true) {
+                return@observe
+            }
+
+            savedStateHandle.set<Boolean?>(
+                PlantTagFragment.RESULT_KEY,
+                null
+            )
+
+            renderSelectedPlants()
         }
-
-        savedStateHandle.set<Boolean?>(
-            PlantTagFragment.RESULT_KEY,
-            null
-        )
-
-        renderSelectedPlants()
     }
-}
+
+    override fun onResume() {
+        super.onResume()
+        isOpeningNextStep = false
+    }
 
     private fun setupClickListeners() {
         binding.btnCamera.setOnClickListener {
             PhotoSourceBottomSheet
                 .newInstance(
-                    title = "Aquarium Photo"
+                    title = "Aquarium Photo",
+                    showRemove = !selectedPhotoUri.isNullOrBlank()
                 )
                 .show(
                     childFragmentManager,
@@ -187,12 +212,22 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         }
 
         binding.btnAddPlant.setOnClickListener {
+            if (isOpeningNextStep) {
+                return@setOnClickListener
+            }
+
             viewModel.updateTankPhoto(selectedPhotoUri)
 
-            findNavController().navigate(
-                TankPhotoFragmentDirections
-                    .actionTankPhotoStepFragmentToCreatePlantTagFragment()
-            )
+            val navController = findNavController()
+
+            if (navController.currentDestination?.id == R.id.tankPhotoStepFragment) {
+                isOpeningNextStep = true
+
+                navController.navigate(
+                    TankPhotoFragmentDirections
+                        .actionTankPhotoStepFragmentToCreatePlantTagFragment()
+                )
+            }
         }
     }
 
@@ -218,7 +253,10 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private fun startCameraCapture() {
-        val uri = createCameraImageUri()
+        val uri = TankPhotoStorage.createCameraCaptureUri(
+            context = requireContext(),
+            ownerToken = "draft"
+        )
 
         if (uri == null) {
             showInfoDialog(
@@ -234,13 +272,21 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
     private fun openCropScreen(sourceUri: Uri) {
         val context = requireContext()
-
-        val destFile = File(
-            getTankPhotosDir(),
-            "tank_cropped_${System.currentTimeMillis()}.jpg"
+        val destUri = TankPhotoStorage.createCropOutputUri(
+            context = context,
+            ownerToken = "draft"
         )
 
-        val destUri = Uri.fromFile(destFile)
+        if (destUri == null) {
+            cleanupCameraImage()
+            showInfoDialog(
+                title = "Photo error",
+                message = "Temporary crop file could not be created."
+            )
+            return
+        }
+
+        cropSourceUri = sourceUri
 
         val options = UCrop.Options().apply {
             setCircleDimmedLayer(false)
@@ -260,23 +306,27 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
             setToolbarCancelDrawable(R.drawable.ic_back)
         }
 
-        UCrop.of(sourceUri, destUri)
+        val cropIntent = UCrop.of(sourceUri, destUri)
             .withAspectRatio(16f, 9f)
             .withMaxResultSize(1600, 900)
             .withOptions(options)
-            .start(context, uCropLauncher)
+            .getIntent(context)
+            .apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            }
+
+        uCropLauncher.launch(cropIntent)
     }
 
     private fun handleCroppedImage(croppedFileUri: Uri) {
         val context = requireContext()
+        val contentUri = TankPhotoStorage.toContentUriIfInternalFile(
+            context = context,
+            uri = croppedFileUri
+        ) ?: croppedFileUri
 
-        val file = File(croppedFileUri.path ?: return)
-
-        val contentUri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
+        val previousPhotoUri = selectedPhotoUri
 
         binding.imgAquariumPhoto.load(contentUri) {
             placeholder(R.drawable.nature_aquarium)
@@ -286,6 +336,26 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
         selectedPhotoUri = contentUri.toString()
         viewModel.updateTankPhoto(selectedPhotoUri)
+
+        if (previousPhotoUri != selectedPhotoUri) {
+            TankPhotoStorage.deleteInternalPhoto(
+                context = context,
+                uriString = previousPhotoUri
+            )
+        }
+    }
+
+    private fun removeSelectedPhoto() {
+        val previousPhotoUri = selectedPhotoUri
+
+        selectedPhotoUri = null
+        viewModel.updateTankPhoto(null)
+        binding.imgAquariumPhoto.setImageResource(R.drawable.nature_aquarium)
+
+        TankPhotoStorage.deleteInternalPhoto(
+            context = requireContext(),
+            uriString = previousPhotoUri
+        )
     }
 
     private fun renderSelectedPlants() {
@@ -410,31 +480,30 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         }
     }
 
-    private fun getTankPhotosDir(): File {
-        return File(requireContext().filesDir, "tank_photos").apply {
-            if (!exists()) {
-                mkdirs()
-            }
-        }
+    private fun cleanupCameraImage() {
+        TankPhotoStorage.deleteInternalPhoto(
+            context = requireContext(),
+            uriString = cameraImageUri?.toString()
+        )
+
+        cameraImageUri = null
     }
 
-    private fun createCameraImageUri(): Uri? {
-        return try {
-            val file = File.createTempFile(
-                "tank_camera_",
-                ".jpg",
-                getTankPhotosDir()
-            )
+    private fun cleanupCropSource() {
+        val sourceUri = cropSourceUri
 
-            FileProvider.getUriForFile(
-                requireContext(),
-                "${requireContext().packageName}.fileprovider",
-                file
+        if (sourceUri != null && sourceUri != Uri.parse(selectedPhotoUri.orEmpty())) {
+            TankPhotoStorage.deleteInternalPhoto(
+                context = requireContext(),
+                uriString = sourceUri.toString()
             )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
+
+        if (sourceUri == cameraImageUri) {
+            cameraImageUri = null
+        }
+
+        cropSourceUri = null
     }
 
     private fun showInfoDialog(

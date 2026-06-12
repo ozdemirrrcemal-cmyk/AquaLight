@@ -21,6 +21,7 @@ import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
+import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -57,6 +58,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     private var hasLoadedEditingLivestock: Boolean = false
     private var hasShownMissingDataDialog: Boolean = false
     private var isDeletingLivestock: Boolean = false
+    private var isSavingLivestock: Boolean = false
     private var isNavigatingBack: Boolean = false
 
     override fun onViewCreated(
@@ -371,6 +373,10 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun saveLivestock() {
+        if (isSavingLivestock) {
+            return
+        }
+
         val name = binding.etLifeName.text
         .toString()
         .trim()
@@ -387,7 +393,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             id = if (editingLivestockId > 0L) {
                 editingLivestockId
             } else {
-                System.currentTimeMillis()
+                AquariumIdGenerator.newLong()
             },
             name = name,
             category = selectedCategory,
@@ -398,20 +404,35 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             .trim()
         )
 
+        isSavingLivestock = true
+        binding.btnSaveLife.isEnabled = false
+
         viewLifecycleOwner.lifecycleScope.launch {
-            if (editingLivestockId > 0L) {
-                aquariumTankViewModel.updateLivestockInTank(
-                    tankId = tankId,
-                    livestock = livestock
-                )
-            } else {
-                aquariumTankViewModel.addLivestockToTank(
-                    tankId = tankId,
-                    livestock = livestock
+            try {
+                if (editingLivestockId > 0L) {
+                    aquariumTankViewModel.updateLivestockInTank(
+                        tankId = tankId,
+                        livestock = livestock
+                    )
+                } else {
+                    aquariumTankViewModel.addLivestockToTank(
+                        tankId = tankId,
+                        livestock = livestock
+                    )
+                }
+
+                closeForm()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                isSavingLivestock = false
+                binding.btnSaveLife.isEnabled = true
+
+                showSnackBar(
+                    message = "Livestock could not be saved.",
+                    type = BaseActivity.SnackType.ERROR
                 )
             }
-
-            closeForm()
         }
     }
 
@@ -437,12 +458,23 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         isDeletingLivestock = true
 
         viewLifecycleOwner.lifecycleScope.launch {
-            aquariumTankViewModel.removeLivestockFromTank(
-                tankId = tankId,
-                livestockId = editingLivestockId
-            )
+            try {
+                aquariumTankViewModel.removeLivestockFromTank(
+                    tankId = tankId,
+                    livestockId = editingLivestockId
+                )
 
-            closeForm()
+                closeForm()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                isDeletingLivestock = false
+
+                showSnackBar(
+                    message = "Livestock could not be deleted.",
+                    type = BaseActivity.SnackType.ERROR
+                )
+            }
         }
     }
 

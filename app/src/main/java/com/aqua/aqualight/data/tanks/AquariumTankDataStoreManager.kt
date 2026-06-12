@@ -10,6 +10,8 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
+import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -40,42 +42,55 @@ class AquariumTankDataStoreManager(
     draft: TankDraft
   ): Long {
     val ownerUid = UserDataScope.requireCurrentUid()
-    val nowMillis = System.currentTimeMillis()
-    val tankId = nowMillis
-
-    val storedTank = draft.toStoredTank(
-      tankId = tankId,
-      ownerUid = ownerUid,
-      createdAtMillis = nowMillis
-    )
+    var newTankId = 0L
 
     context.aquariumTanksDataStore.updateData { currentStore ->
+      val existingIds = currentStore.getTanksList()
+        .map { storedTank ->
+          storedTank.id
+        }
+        .toSet()
+
+      newTankId = AquariumIdGenerator.newLong(
+        existingIds = existingIds
+      )
+
+      val nowMillis = System.currentTimeMillis()
+
+      val storedTank = draft.toStoredTank(
+        tankId = newTankId,
+        ownerUid = ownerUid,
+        createdAtMillis = nowMillis
+      )
+
       currentStore.toBuilder()
         .addTanks(storedTank)
         .build()
     }
 
-    return tankId
+    return newTankId
   }
 
   suspend fun duplicateTank(
     tankId: Long
   ): Long {
     val ownerUid = UserDataScope.requireCurrentUid()
-    var newTankId = System.currentTimeMillis()
+    var newTankId = 0L
 
     context.aquariumTanksDataStore.updateData { currentStore ->
       val sourceTank = currentStore.getTanksList().firstOrNull { storedTank ->
         storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
       } ?: throw IllegalArgumentException("Tank not found.")
 
-      val existingIds = currentStore.getTanksList().map { storedTank ->
-        storedTank.id
-      }.toMutableSet()
+      val existingIds = currentStore.getTanksList()
+        .map { storedTank ->
+          storedTank.id
+        }
+        .toSet()
 
-      while (existingIds.contains(newTankId)) {
-        newTankId++
-      }
+      newTankId = AquariumIdGenerator.newLong(
+        existingIds = existingIds
+      )
 
       val existingNames = currentStore.getTanksList()
         .filter { storedTank ->
@@ -84,6 +99,12 @@ class AquariumTankDataStoreManager(
         .map { storedTank ->
           storedTank.name
         }.toSet()
+
+      val duplicatedPhotoUri = TankPhotoStorage.copyInternalPhotoForTank(
+        context = context,
+        sourceUriString = sourceTank.photoUri,
+        tankId = newTankId
+      )
 
       val duplicatedTank = sourceTank.toBuilder()
         .setId(newTankId)
@@ -94,6 +115,7 @@ class AquariumTankDataStoreManager(
             existingNames = existingNames
           )
         )
+        .setPhotoUri(duplicatedPhotoUri.orEmpty())
         .setCreatedAtMillis(System.currentTimeMillis())
         .build()
 
@@ -114,11 +136,19 @@ class AquariumTankDataStoreManager(
 
     val ownerUid = UserDataScope.requireCurrentUid()
     val idsToDelete = tankIds.toSet()
+    val photoUrisToDelete = mutableSetOf<String>()
 
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList()
         .filterNot { storedTank ->
-          storedTank.id in idsToDelete && storedTank.belongsToOwner(ownerUid)
+          val shouldDelete = storedTank.id in idsToDelete &&
+            storedTank.belongsToOwner(ownerUid)
+
+          if (shouldDelete && storedTank.photoUri.isNotBlank()) {
+            photoUrisToDelete.add(storedTank.photoUri)
+          }
+
+          shouldDelete
         }
 
       currentStore.toBuilder()
@@ -126,23 +156,59 @@ class AquariumTankDataStoreManager(
         .addAllTanks(updatedTanks)
         .build()
     }
+
+    TankPhotoStorage.deleteInternalPhotos(
+      context = context,
+      uriStrings = photoUrisToDelete
+    )
+
+    idsToDelete.forEach { deletedTankId ->
+      TankPhotoStorage.deleteTankOwnedTemporaryFiles(
+        context = context,
+        tankId = deletedTankId
+      )
+    }
   }
 
   suspend fun clearAllTanks(
     ownerUid: String? = null
   ) {
     val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
+    val deletedPhotoUris = mutableSetOf<String>()
+    val deletedTankIds = mutableSetOf<Long>()
 
     context.aquariumTanksDataStore.updateData { currentStore ->
       val remainingTanks = currentStore.getTanksList()
         .filterNot { storedTank ->
-          storedTank.belongsToOwner(targetOwnerUid)
+          val shouldDelete = storedTank.belongsToOwner(targetOwnerUid)
+
+          if (shouldDelete) {
+            deletedTankIds.add(storedTank.id)
+
+            if (storedTank.photoUri.isNotBlank()) {
+              deletedPhotoUris.add(storedTank.photoUri)
+            }
+          }
+
+          shouldDelete
         }
 
       currentStore.toBuilder()
         .clearTanks()
         .addAllTanks(remainingTanks)
         .build()
+    }
+
+    TankPhotoStorage.deleteInternalPhotos(
+      context = context,
+      uriStrings = deletedPhotoUris
+    )
+
+    deletedTankIds.forEach { deletedTankId ->
+      TankPhotoStorage.deleteTankOwnedTemporaryFiles(
+        context = context,
+        tankId = deletedTankId
+      )
     }
   }
 
@@ -199,11 +265,18 @@ class AquariumTankDataStoreManager(
     tankId: Long,
     photoUri: String?
   ) {
+    val normalizedPhotoUri = photoUri.orEmpty()
+    var previousPhotoUri: String? = null
+
     context.aquariumTanksDataStore.updateData { currentStore ->
       val updatedTanks = currentStore.getTanksList().map { storedTank ->
         if (storedTank.id == tankId && storedTank.belongsToCurrentUser()) {
+          previousPhotoUri = storedTank.photoUri.takeIf { uri ->
+            uri.isNotBlank() && uri != normalizedPhotoUri
+          }
+
           storedTank.toBuilder()
-            .setPhotoUri(photoUri.orEmpty())
+            .setPhotoUri(normalizedPhotoUri)
             .build()
         } else {
           storedTank
@@ -215,6 +288,11 @@ class AquariumTankDataStoreManager(
         .addAllTanks(updatedTanks)
         .build()
     }
+
+    TankPhotoStorage.deleteInternalPhoto(
+      context = context,
+      uriString = previousPhotoUri
+    )
   }
 
   suspend fun updateTankStyle(

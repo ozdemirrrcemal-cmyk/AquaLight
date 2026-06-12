@@ -14,6 +14,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import com.aqua.aqualight.base.BaseActivity
 import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
@@ -28,6 +29,7 @@ import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import androidx.navigation.fragment.navArgs
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
@@ -48,6 +50,7 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
     private var hasLoadedTankData: Boolean = false
     private var isSaving: Boolean = false
+    private var isOpeningPlantPicker: Boolean = false
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -72,6 +75,11 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         setupTankData()
         setupResultListener()
         setupClickListeners()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isOpeningPlantPicker = false
     }
 
     private fun setupHeader() {
@@ -199,11 +207,18 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun openPlantPickerScreen() {
-        findNavController().navigate(
-            TankDetailPlantTagFragmentDirections.actionTankDetailPlantTagFragmentToPlantPickerFragment(
+        if (isOpeningPlantPicker) {
+            return
+        }
+
+        val didNavigate = findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankDetailPlantTagFragment,
+            directions = TankDetailPlantTagFragmentDirections.actionTankDetailPlantTagFragmentToPlantPickerFragment(
                 useNavResult = true
             )
         )
+
+        isOpeningPlantPicker = didNavigate
     }
 
     private fun savePlantsAndClose() {
@@ -215,12 +230,24 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         setupHeader()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            aquariumTankViewModel.updateTankPlants(
-                tankId = tankId,
-                plants = selectedPlants
-            )
+            try {
+                aquariumTankViewModel.updateTankPlants(
+                    tankId = tankId,
+                    plants = selectedPlants
+                )
 
-            findNavController().navigateUp()
+                findNavController().navigateUp()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                isSaving = false
+                setupHeader()
+
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = "Plants could not be saved.",
+                    type = BaseActivity.SnackType.ERROR
+                )
+            }
         }
     }
 

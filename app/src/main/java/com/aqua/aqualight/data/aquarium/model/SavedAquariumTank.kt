@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.aquarium.model
 
+import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
+
 data class SavedAquariumTank(
     val id: Long,
     val ownerUid: String = "",
@@ -41,7 +43,7 @@ data class SavedAquariumMaterial(
 )
 
 data class SavedAquariumLivestock(
-    val id: Long = System.currentTimeMillis(),
+    val id: Long = AquariumIdGenerator.newLong(),
     val name: String = "",
     val category: String = "",
     val quantity: Int = 1,

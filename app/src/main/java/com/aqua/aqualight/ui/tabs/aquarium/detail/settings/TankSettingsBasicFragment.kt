@@ -1,13 +1,16 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -17,6 +20,7 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
 import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBasicBinding
@@ -30,7 +34,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.yalantis.ucrop.UCrop
-import java.io.File
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
@@ -50,6 +53,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private var tankId: Long = 0L
     private var currentTank: SavedAquariumTank? = null
     private var pendingCameraUri: Uri? = null
+    private var pendingCropSourceUri: Uri? = null
 
     private val sizeFormatter = DecimalFormat(
         "#0.##",
@@ -57,10 +61,23 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     )
 
     private val galleryLauncher = registerForActivityResult(
-        ActivityResultContracts.GetContent()
+        ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
             startImageCrop(uri)
+        }
+    }
+
+    private val cameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            openCamera()
+        } else {
+            showSnackBar(
+                message = "Camera permission is required to take an aquarium photo.",
+                type = BaseActivity.SnackType.WARNING
+            )
         }
     }
 
@@ -71,6 +88,8 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             pendingCameraUri?.let { uri ->
                 startImageCrop(uri)
             }
+        } else {
+            cleanupPendingCameraImage()
         }
     }
 
@@ -84,6 +103,8 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
             if (outputUri != null) {
                 saveTankPhoto(outputUri)
+            } else {
+                cleanupPendingCropSource()
             }
         } else if (result.resultCode == UCrop.RESULT_ERROR) {
             val error = result.data?.let { intent ->
@@ -94,6 +115,10 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                 message = error?.message ?: "Photo could not be cropped.",
                 type = BaseActivity.SnackType.ERROR
             )
+
+            cleanupPendingCropSource()
+        } else {
+            cleanupPendingCropSource()
         }
     }
 
@@ -162,11 +187,15 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         ) { _, bundle ->
             when (bundle.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
                 PhotoSourceBottomSheet.RESULT_CAMERA -> {
-                    openCamera()
+                    checkCameraPermissionAndOpen()
                 }
 
                 PhotoSourceBottomSheet.RESULT_GALLERY -> {
                     openGallery()
+                }
+
+                PhotoSourceBottomSheet.RESULT_REMOVE -> {
+                    removeTankPhoto()
                 }
             }
         }
@@ -273,7 +302,8 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private fun showPhotoSourceSheet() {
         PhotoSourceBottomSheet
             .newInstance(
-                title = "Aquarium Photo"
+                title = "Aquarium Photo",
+                showRemove = !currentTank?.photoUri.isNullOrBlank()
             )
             .show(
                 childFragmentManager,
@@ -282,11 +312,40 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun openGallery() {
-        galleryLauncher.launch("image/*")
+        galleryLauncher.launch(
+            PickVisualMediaRequest(
+                ActivityResultContracts.PickVisualMedia.ImageOnly
+            )
+        )
+    }
+
+    private fun checkCameraPermissionAndOpen() {
+        val granted = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (granted) {
+            openCamera()
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
 
     private fun openCamera() {
-        val cameraUri = createTankPhotoUri()
+        val cameraUri = TankPhotoStorage.createCameraCaptureUri(
+            context = requireContext(),
+            ownerToken = tankId.toString()
+        )
+
+        if (cameraUri == null) {
+            showSnackBar(
+                message = "Temporary image file could not be created.",
+                type = BaseActivity.SnackType.ERROR
+            )
+            return
+        }
+
         pendingCameraUri = cameraUri
         cameraLauncher.launch(cameraUri)
     }
@@ -294,7 +353,21 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private fun startImageCrop(
         sourceUri: Uri
     ) {
-        val destinationUri = createTankPhotoCropUri()
+        val destinationUri = TankPhotoStorage.createCropOutputUri(
+            context = requireContext(),
+            ownerToken = tankId.toString()
+        )
+
+        if (destinationUri == null) {
+            cleanupPendingCameraImage()
+            showSnackBar(
+                message = "Temporary crop file could not be created.",
+                type = BaseActivity.SnackType.ERROR
+            )
+            return
+        }
+
+        pendingCropSourceUri = sourceUri
 
         val options = UCrop.Options().apply {
             setToolbarTitle("Crop aquarium photo")
@@ -332,7 +405,13 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private fun saveTankPhoto(
         photoUri: Uri
     ) {
-        binding.imgTankPhoto.load(photoUri) {
+        val context = requireContext()
+        val contentUri = TankPhotoStorage.toContentUriIfInternalFile(
+            context = context,
+            uri = photoUri
+        ) ?: photoUri
+
+        binding.imgTankPhoto.load(contentUri) {
             placeholder(R.drawable.nature_aquarium)
             error(R.drawable.nature_aquarium)
             crossfade(true)
@@ -342,7 +421,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             try {
                 aquariumTankViewModel.updateTankPhoto(
                     tankId = tankId,
-                    photoUri = photoUri.toString()
+                    photoUri = contentUri.toString()
                 )
 
                 showSnackBar(
@@ -352,52 +431,101 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
+                TankPhotoStorage.deleteInternalPhoto(
+                    context = context,
+                    uriString = contentUri.toString()
+                )
+
+                currentTank?.let { tank ->
+                    bindTank(tank)
+                }
+
                 showSnackBar(
                     message = "Photo could not be saved.",
+                    type = BaseActivity.SnackType.ERROR
+                )
+            } finally {
+                cleanupPendingCropSource()
+            }
+        }
+    }
+
+    private fun removeTankPhoto() {
+        val tank = currentTank ?: return
+
+        if (tank.photoUri.isNullOrBlank()) {
+            binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
+            return
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                aquariumTankViewModel.updateTankPhoto(
+                    tankId = tankId,
+                    photoUri = null
+                )
+
+                binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
+
+                showSnackBar(
+                    message = "Photo removed.",
+                    type = BaseActivity.SnackType.SUCCESS
+                )
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                showSnackBar(
+                    message = "Photo could not be removed.",
                     type = BaseActivity.SnackType.ERROR
                 )
             }
         }
     }
 
-    private fun createTankPhotoUri(): Uri {
-        val directory = File(
-            requireContext().filesDir,
-            "tank_photos"
+    private fun cleanupPendingCameraImage() {
+        TankPhotoStorage.deleteInternalPhoto(
+            context = requireContext(),
+            uriString = pendingCameraUri?.toString()
         )
 
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-
-        val file = File(
-            directory,
-            "tank_camera_${tankId}_${System.currentTimeMillis()}.jpg"
-        )
-
-        return FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
-            file
-        )
+        pendingCameraUri = null
     }
 
-    private fun createTankPhotoCropUri(): Uri {
-        val directory = File(
-            requireContext().filesDir,
-            "tank_photos"
-        )
+    private fun cleanupPendingCropSource() {
+        val sourceUri = pendingCropSourceUri
 
-        if (!directory.exists()) {
-            directory.mkdirs()
+        if (sourceUri != null) {
+            TankPhotoStorage.deleteInternalPhoto(
+                context = requireContext(),
+                uriString = sourceUri.toString()
+            )
         }
 
-        val file = File(
-            directory,
-            "tank_crop_${tankId}_${System.currentTimeMillis()}.jpg"
-        )
+        if (sourceUri == pendingCameraUri) {
+            pendingCameraUri = null
+        }
 
-        return Uri.fromFile(file)
+        pendingCropSourceUri = null
+    }
+
+    private fun runTankUpdate(
+        errorMessage: String,
+        onSuccess: (() -> Unit)? = null,
+        update: suspend () -> Unit
+    ) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                update()
+                onSuccess?.invoke()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                showSnackBar(
+                    message = errorMessage,
+                    type = BaseActivity.SnackType.ERROR
+                )
+            }
+        }
     }
 
     private fun showTankNameSheet() {
@@ -430,13 +558,16 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                     return@setOnClickListener
                 }
 
-                viewLifecycleOwner.lifecycleScope.launch {
+                runTankUpdate(
+                    errorMessage = "Tank name could not be saved.",
+                    onSuccess = {
+                        dialog.dismiss()
+                    }
+                ) {
                     aquariumTankViewModel.updateTankName(
                         tankId = tankId,
                         name = newName
                     )
-
-                    dialog.dismiss()
                 }
             }
         }
@@ -449,13 +580,14 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             fragment = this,
             currentType = tank.tankType,
             onSave = { selectedType, dismiss ->
-                viewLifecycleOwner.lifecycleScope.launch {
+                runTankUpdate(
+                    errorMessage = "Tank type could not be saved.",
+                    onSuccess = dismiss
+                ) {
                     aquariumTankViewModel.updateTankType(
                         tankId = tankId,
                         tankType = selectedType
                     )
-
-                    dismiss()
                 }
             }
         )
@@ -478,7 +610,10 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                 )
             },
             onSave = { result, dismiss ->
-                viewLifecycleOwner.lifecycleScope.launch {
+                runTankUpdate(
+                    errorMessage = "Tank size could not be saved.",
+                    onSuccess = dismiss
+                ) {
                     aquariumTankViewModel.updateTankSize(
                         tankId = tankId,
                         widthCm = result.widthCm,
@@ -486,8 +621,6 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                         heightCm = result.heightCm,
                         sizeUnit = result.sizeUnit
                     )
-
-                    dismiss()
                 }
             }
         )
@@ -507,7 +640,9 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             "gal"
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        runTankUpdate(
+            errorMessage = "Volume unit could not be saved."
+        ) {
             aquariumTankViewModel.updateTankVolumeUnit(
                 tankId = tankId,
                 volumeUnit = newUnit
@@ -529,13 +664,14 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             maxYear = currentYear + 10,
             monthLocale = Locale.getDefault(),
             onSave = { selectedMillis, dismiss ->
-                viewLifecycleOwner.lifecycleScope.launch {
+                runTankUpdate(
+                    errorMessage = "Setup date could not be saved.",
+                    onSuccess = dismiss
+                ) {
                     aquariumTankViewModel.updateTankSetupDate(
                         tankId = tankId,
                         setupDateMillis = selectedMillis
                     )
-
-                    dismiss()
                 }
             }
         )
@@ -548,13 +684,14 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             fragment = this,
             currentStyle = tank.tankStyle,
             onSave = { selectedStyle, dismiss ->
-                viewLifecycleOwner.lifecycleScope.launch {
+                runTankUpdate(
+                    errorMessage = "Tank style could not be saved.",
+                    onSuccess = dismiss
+                ) {
                     aquariumTankViewModel.updateTankStyle(
                         tankId = tankId,
                         tankStyle = selectedStyle
                     )
-
-                    dismiss()
                 }
             }
         )
@@ -582,13 +719,16 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                     .toString()
                     .trim()
 
-                viewLifecycleOwner.lifecycleScope.launch {
+                runTankUpdate(
+                    errorMessage = "Idea could not be saved.",
+                    onSuccess = {
+                        dialog.dismiss()
+                    }
+                ) {
                     aquariumTankViewModel.updateTankDescription(
                         tankId = tankId,
                         description = newIdea
                     )
-
-                    dialog.dismiss()
                 }
             }
         }

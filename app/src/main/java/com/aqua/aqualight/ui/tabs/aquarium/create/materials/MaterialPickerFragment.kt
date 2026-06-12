@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.materials
 
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
 import android.graphics.Color
 import android.graphics.Typeface
@@ -30,11 +31,11 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
-import java.util.Locale
 import androidx.navigation.fragment.navArgs
 
 class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
@@ -71,6 +72,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     private var tankId: Long = 0L
     private var currentTank: SavedAquariumTank? = null
     private var hasLoadedSettingsSelections: Boolean = false
+    private var isSavingSelections: Boolean = false
 
     private var allProducts: List<AquariumMaterial> = emptyList()
     private val selectedProductIds = mutableSetOf<String>()
@@ -827,12 +829,10 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     private fun buildCustomMaterialId(
         materialName: String
     ): String {
-        val safeName = materialName
-            .lowercase(Locale.ENGLISH)
-            .replace(Regex("[^a-z0-9]+"), "_")
-            .trim('_')
-
-        return "custom_${categoryKey}_${safeName}_${System.currentTimeMillis()}"
+        return AquariumIdGenerator.newCustomProductId(
+            categoryKey = categoryKey,
+            materialName = materialName
+        )
     }
 
     private fun toggleSelection(
@@ -856,6 +856,13 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun saveSelections() {
+        if (isSavingSelections) {
+            return
+        }
+
+        isSavingSelections = true
+        binding.btnSave.isEnabled = false
+
         val currentSelections = getCurrentMaterialSelections()
 
         val selectedMaterials = allProducts
@@ -868,7 +875,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                 }
 
                 TankMaterialSelection(
-                    id = existingSelection?.id ?: System.nanoTime(),
+                    id = existingSelection?.id ?: AquariumIdGenerator.newLong(),
                     productId = product.id,
                     categoryKey = product.categoryKey,
                     categoryTitle = product.categoryTitle,
@@ -939,14 +946,36 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         selectedMaterials: List<TankMaterialSelection>
     ) {
         viewLifecycleOwner.lifecycleScope.launch {
-            aquariumTankViewModel.updateTankMaterialsForCategory(
-                tankId = tankId,
-                categoryKey = categoryKey,
-                materials = selectedMaterials
-            )
+            try {
+                aquariumTankViewModel.updateTankMaterialsForCategory(
+                    tankId = tankId,
+                    categoryKey = categoryKey,
+                    materials = selectedMaterials
+                )
 
-            closePicker()
+                closePicker()
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+
+                isSavingSelections = false
+                binding.btnSave.isEnabled = true
+
+                showSnackBar(
+                    message = "Components could not be saved.",
+                    type = BaseActivity.SnackType.ERROR
+                )
+            }
         }
+    }
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = type
+        )
     }
 
     private fun closePicker() {

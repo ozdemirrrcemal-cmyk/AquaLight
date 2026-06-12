@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import coil3.load
 import coil3.request.crossfade
 import com.aqua.aqualight.R
@@ -36,6 +37,7 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     private var pendingMarkerY: Float = 0.5f
 
     private var hasInitializedSelectedPlants: Boolean = false
+    private var isOpeningPlantPicker: Boolean = false
 
     override fun onViewCreated(
         view: View,
@@ -56,6 +58,11 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         setupClickListeners()
         renderPlants()
         renderMarkers()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isOpeningPlantPicker = false
     }
 
     private fun initializeSelectedPlantsIfNeeded() {
@@ -148,12 +155,17 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 pendingMarkerX = event.x / view.width.toFloat()
                 pendingMarkerY = event.y / view.height.toFloat()
 
-                findNavController().navigate(
-                    PlantTagFragmentDirections
-                        .actionCreatePlantTagFragmentToCreatePlantPickerFragment(
-                            useNavResult = true
-                        )
-                )
+                if (!isOpeningPlantPicker) {
+                    val didNavigate = findNavController().navigateSafelyFrom(
+                        sourceDestinationId = R.id.createPlantTagFragment,
+                        directions = PlantTagFragmentDirections
+                            .actionCreatePlantTagFragmentToCreatePlantPickerFragment(
+                                useNavResult = true
+                            )
+                    )
+
+                    isOpeningPlantPicker = didNavigate
+                }
 
                 true
             } else {

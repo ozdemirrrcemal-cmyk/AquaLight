@@ -14,6 +14,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.databinding.FragmentCreateTankBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -204,7 +205,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         }
 
         if (!::createTankNavController.isInitialized) {
-            findNavController().navigateUp()
+            closeCreateFlow()
             return
         }
 
@@ -212,7 +213,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
             createTankNavController.currentDestination?.id
 
         if (currentDestinationId == R.id.tankNameStepFragment) {
-            findNavController().navigateUp()
+            closeCreateFlow()
             return
         }
 
@@ -220,8 +221,28 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
             createTankNavController.navigateUp()
 
         if (!handledByCreateFlow) {
-            findNavController().navigateUp()
+            closeCreateFlow()
         }
+    }
+
+    private fun closeCreateFlow() {
+        cleanupDraftPhotoIfNotCompleted()
+        findNavController().navigateUp()
+    }
+
+    private fun cleanupDraftPhotoIfNotCompleted() {
+        if (isCompletingTank || !::createTankNavController.isInitialized) {
+            return
+        }
+
+        val draftPhotoUri = runCatching {
+            createTankViewModel().tankDraft.photoUri
+        }.getOrNull()
+
+        TankPhotoStorage.deleteInternalPhoto(
+            context = requireContext(),
+            uriString = draftPhotoUri
+        )
     }
 
     private fun completeTank() {
