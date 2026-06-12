@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import android.os.Bundle
 import android.view.View
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
@@ -436,6 +438,11 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
             return
         }
 
+        binding.materialFlowContainer.clearAnimation()
+
+        binding.materialFlowContainer.isEnabled =
+            true
+
         binding.materialFlowContainer.isVisible =
             true
 
@@ -459,28 +466,88 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     override fun closeMaterialPickerFlow() {
+        val currentBinding =
+            _binding ?: return
+
         val currentMaterialFragment =
             childFragmentManager.findFragmentByTag(
                 TAG_MATERIAL_PICKER_FRAGMENT
             )
 
-        if (currentMaterialFragment != null) {
-            childFragmentManager.commit {
-                setReorderingAllowed(true)
+        if (currentMaterialFragment == null) {
+            currentBinding.materialFlowContainer.clearAnimation()
 
-                setCustomAnimations(
-                    R.anim.nav_slide_in_left,
-                    R.anim.nav_slide_out_right
-                )
+            currentBinding.materialFlowContainer.isVisible =
+                false
 
-                remove(
-                    currentMaterialFragment
-                )
-            }
+            currentBinding.materialFlowContainer.isEnabled =
+                true
+
+            return
         }
 
-        binding.materialFlowContainer.isVisible =
+        if (currentBinding.materialFlowContainer.animation != null) {
+            return
+        }
+
+        currentBinding.materialFlowContainer.isEnabled =
             false
+
+        val closeAnimation =
+            AnimationUtils.loadAnimation(
+                requireContext(),
+                R.anim.nav_slide_out_right
+            )
+
+        closeAnimation.setAnimationListener(
+            object : Animation.AnimationListener {
+
+                override fun onAnimationStart(
+                    animation: Animation?
+                ) = Unit
+
+                override fun onAnimationRepeat(
+                    animation: Animation?
+                ) = Unit
+
+                override fun onAnimationEnd(
+                    animation: Animation?
+                ) {
+                    val bindingAfterAnimation =
+                        _binding ?: return
+
+                    val materialFragmentAfterAnimation =
+                        childFragmentManager.findFragmentByTag(
+                            TAG_MATERIAL_PICKER_FRAGMENT
+                        )
+
+                    if (
+                        materialFragmentAfterAnimation != null &&
+                        !childFragmentManager.isStateSaved
+                    ) {
+                        childFragmentManager.commit {
+                            setReorderingAllowed(true)
+
+                            remove(
+                                materialFragmentAfterAnimation
+                            )
+                        }
+                    }
+
+                    bindingAfterAnimation.materialFlowContainer.clearAnimation()
+
+                    bindingAfterAnimation.materialFlowContainer.isVisible =
+                        false
+
+                    bindingAfterAnimation.materialFlowContainer.isEnabled =
+                        true
+                }
+            }
+        )
+
+        currentBinding.materialFlowContainer.startAnimation(
+            closeAnimation
+        )
     }
 
     private fun handleMaterialFlowBack(): Boolean {
@@ -513,6 +580,9 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     override fun onDestroyView() {
+        binding.materialFlowContainer.clearAnimation()
+        binding.plantFlowContainer.clearAnimation()
+
         super.onDestroyView()
 
         _binding =

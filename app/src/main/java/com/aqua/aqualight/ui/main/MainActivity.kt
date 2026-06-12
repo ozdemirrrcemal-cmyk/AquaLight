@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.main
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -219,13 +220,31 @@ class MainActivity : BaseActivity() {
 
         binding.bottomNav.setupWithNavController(navController)
 
+        val exitFromTopLevelBackCallback =
+            object : OnBackPressedCallback(false) {
+
+                override fun handleOnBackPressed() {
+                    finish()
+                }
+            }
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            exitFromTopLevelBackCallback
+        )
+
         navController.addOnDestinationChangedListener { _, destination, _ ->
             val isTopLevelDestination =
                 AppDestinationContract.isTopLevelDestination(destination.id)
+
             val isInsideAppGraph =
                 AppDestinationContract.isInsideAppGraph(destination)
 
-            binding.bottomNav.isVisible = isTopLevelDestination
+            binding.bottomNav.isVisible =
+                isTopLevelDestination
+
+            exitFromTopLevelBackCallback.isEnabled =
+                isInsideAppGraph && isTopLevelDestination
 
             if (isInsideAppGraph) {
                 isAuthenticated = authSessionManager.isAuthenticated()
