@@ -5,6 +5,7 @@
   <include app:graph="@navigation/nav_devices_dosing"/>
   <include app:graph="@navigation/nav_devices_timer"/>
   <include app:graph="@navigation/nav_devices_cooling"/>
+  
   <fragment android:id="@+id/devicesFragment" android:name="com.aqua.aqualight.ui.tabs.devices.DevicesFragment" android:label="@string/screen_title_devices" tools:layout="@layout/fragment_devices">
     <action android:id="@+id/action_devicesFragment_to_deviceAddFragment" app:destination="@id/deviceAddFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right"/>
     <action android:id="@+id/action_devicesFragment_to_deviceRouterFragment" app:destination="@id/deviceRouterFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
@@ -13,6 +14,7 @@
       <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
     </action>
   </fragment>
+  
   <fragment android:id="@+id/deviceAddFragment" android:name="com.aqua.aqualight.ui.tabs.devices.add.DeviceAddFragment" android:label="@string/screen_title_add_device" tools:layout="@layout/fragment_device_add">
     <action android:id="@+id/action_deviceAddFragment_to_deviceSetupFragment" app:destination="@id/deviceSetupFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="setupSsid" app:argType="string" android:defaultValue=""/>
@@ -20,47 +22,56 @@
       <argument android:name="familyName" app:argType="string" android:defaultValue="Aqua device"/>
       <argument android:name="deviceType" app:argType="string" android:defaultValue=""/>
     </action>
+	
     <action android:id="@+id/action_deviceAddFragment_to_deviceRouterFragment" app:destination="@id/deviceRouterFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="deviceId" app:argType="long" android:defaultValue="0L"/>
       <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
       <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
     </action>
   </fragment>
+  
   <fragment android:id="@+id/deviceSetupFragment" android:name="com.aqua.aqualight.ui.tabs.devices.setup.DeviceSetupFragment" android:label="@string/screen_title_device_setup" tools:layout="@layout/fragment_device_setup">
     <argument android:name="setupSsid" app:argType="string" android:defaultValue=""/>
     <argument android:name="displayName" app:argType="string" android:defaultValue="Device"/>
     <argument android:name="familyName" app:argType="string" android:defaultValue="Aqua device"/>
     <argument android:name="deviceType" app:argType="string" android:defaultValue=""/>
+	
     <action android:id="@+id/action_deviceSetupFragment_to_deviceRouterFragment" app:destination="@id/deviceRouterFragment" app:popUpTo="@id/devicesFragment" app:popUpToInclusive="false" app:launchSingleTop="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="deviceId" app:argType="long" android:defaultValue="0L"/>
       <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
       <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
     </action>
   </fragment>
+  
   <fragment android:id="@+id/deviceRouterFragment" android:name="com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment" android:label="@string/screen_title_device" tools:layout="@layout/fragment_device_router">
     <argument android:name="deviceId" app:argType="long"/>
     <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
     <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
-    <action android:id="@+id/action_deviceRouterFragment_to_deviceLightFragment" app:destination="@id/deviceLightFragment" app:popUpTo="@id/deviceRouterFragment" app:popUpToInclusive="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
-      <argument android:name="deviceId" app:argType="long" android:defaultValue="0L"/>
-      <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
-      <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
-    </action>
-    <action android:id="@+id/action_deviceRouterFragment_to_deviceDosingFragment" app:destination="@id/deviceDosingFragment" app:popUpTo="@id/deviceRouterFragment" app:popUpToInclusive="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
-      <argument android:name="deviceId" app:argType="long" android:defaultValue="0L"/>
-      <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
-      <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
-    </action>
-    <action android:id="@+id/action_deviceRouterFragment_to_deviceTimerFragment" app:destination="@id/deviceTimerFragment" app:popUpTo="@id/deviceRouterFragment" app:popUpToInclusive="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
-      <argument android:name="deviceId" app:argType="long" android:defaultValue="0L"/>
-      <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
-      <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
-    </action>
-    <action android:id="@+id/action_deviceRouterFragment_to_deviceCoolingFragment" app:destination="@id/deviceCoolingFragment" app:popUpTo="@id/deviceRouterFragment" app:popUpToInclusive="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
-      <argument android:name="deviceId" app:argType="long" android:defaultValue="0L"/>
-      <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
-      <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
-    </action>
+	
+    <action
+    android:id="@+id/action_deviceRouterFragment_to_deviceLightFragment"
+    app:destination="@id/nav_devices_light"
+    app:popUpTo="@id/deviceRouterFragment"
+    app:popUpToInclusive="true" />
+
+   <action
+    android:id="@+id/action_deviceRouterFragment_to_deviceDosingFragment"
+    app:destination="@id/nav_devices_dosing"
+    app:popUpTo="@id/deviceRouterFragment"
+    app:popUpToInclusive="true" />
+
+   <action
+    android:id="@+id/action_deviceRouterFragment_to_deviceTimerFragment"
+    app:destination="@id/nav_devices_timer"
+    app:popUpTo="@id/deviceRouterFragment"
+    app:popUpToInclusive="true" />
+
+    <action
+    android:id="@+id/action_deviceRouterFragment_to_deviceCoolingFragment"
+    app:destination="@id/nav_devices_cooling"
+    app:popUpTo="@id/deviceRouterFragment"
+    app:popUpToInclusive="true" />
+	
     <action android:id="@+id/action_deviceRouterFragment_to_unsupportedDeviceFragment" app:destination="@id/unsupportedDeviceFragment" app:popUpTo="@id/deviceRouterFragment" app:popUpToInclusive="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="deviceId" app:argType="long" android:defaultValue="0L"/>
       <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
@@ -68,6 +79,7 @@
       <argument android:name="message" app:argType="string" android:defaultValue=""/>
     </action>
   </fragment>
+  
   <fragment android:id="@+id/unsupportedDeviceFragment" android:name="com.aqua.aqualight.ui.tabs.devices.detail.UnsupportedDeviceFragment" android:label="@string/screen_title_unsupported_device" tools:layout="@layout/fragment_unsupported_device">
     <argument android:name="deviceTitle" app:argType="string" android:defaultValue="Device"/>
     <argument android:name="message" app:argType="string" android:defaultValue=""/>
