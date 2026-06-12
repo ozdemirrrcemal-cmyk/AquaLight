@@ -315,6 +315,15 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     fun openPlantTagFlow() {
+        if (binding.plantFlowContainer.isVisible) {
+            return
+        }
+
+        binding.plantFlowContainer.clearAnimation()
+
+        binding.plantFlowContainer.isEnabled =
+            true
+
         binding.plantFlowContainer.isVisible =
             true
 
@@ -335,7 +344,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     fun openPlantPickerFlow() {
-        if (!binding.plantFlowContainer.isVisible) {
+        if (
+            !binding.plantFlowContainer.isVisible ||
+            binding.plantFlowContainer.animation != null
+        ) {
             return
         }
 
@@ -365,30 +377,13 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     fun closePlantTagFlow() {
-        val plantPickerFragment =
-            childFragmentManager.findFragmentByTag(
-                TAG_PLANT_PICKER_FRAGMENT
-            )
-
-        val plantTagFragment =
-            childFragmentManager.findFragmentByTag(
+        closeOverlayContainerWithAnimation(
+            container = binding.plantFlowContainer,
+            fragmentTagsToRemove = listOf(
+                TAG_PLANT_PICKER_FRAGMENT,
                 TAG_PLANT_TAG_FRAGMENT
             )
-
-        childFragmentManager.commit {
-            setReorderingAllowed(true)
-
-            plantPickerFragment?.let { fragment ->
-                remove(fragment)
-            }
-
-            plantTagFragment?.let { fragment ->
-                remove(fragment)
-            }
-        }
-
-        binding.plantFlowContainer.isVisible =
-            false
+        )
     }
 
     override fun closePlantPickerFlow() {
@@ -397,18 +392,58 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
                 TAG_PLANT_PICKER_FRAGMENT
             ) ?: return
 
-        childFragmentManager.commit {
-            setReorderingAllowed(true)
+        val pickerView =
+            plantPickerFragment.view
 
-            setCustomAnimations(
-                R.anim.nav_slide_in_left,
+        if (pickerView == null) {
+            removeFragmentsByTags(
+                listOf(TAG_PLANT_PICKER_FRAGMENT)
+            )
+            return
+        }
+
+        if (
+            pickerView.animation != null ||
+            binding.plantFlowContainer.animation != null
+        ) {
+            return
+        }
+
+        pickerView.isEnabled =
+            false
+
+        val closeAnimation =
+            AnimationUtils.loadAnimation(
+                requireContext(),
                 R.anim.nav_slide_out_right
             )
 
-            remove(
-                plantPickerFragment
-            )
-        }
+        closeAnimation.setAnimationListener(
+            object : Animation.AnimationListener {
+
+                override fun onAnimationStart(
+                    animation: Animation?
+                ) = Unit
+
+                override fun onAnimationRepeat(
+                    animation: Animation?
+                ) = Unit
+
+                override fun onAnimationEnd(
+                    animation: Animation?
+                ) {
+                    pickerView.clearAnimation()
+
+                    removeFragmentsByTags(
+                        listOf(TAG_PLANT_PICKER_FRAGMENT)
+                    )
+                }
+            }
+        )
+
+        pickerView.startAnimation(
+            closeAnimation
+        )
     }
 
     private fun handlePlantFlowBack(): Boolean {
@@ -466,31 +501,31 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     override fun closeMaterialPickerFlow() {
-        val currentBinding =
-            _binding ?: return
-
-        val currentMaterialFragment =
-            childFragmentManager.findFragmentByTag(
+        closeOverlayContainerWithAnimation(
+            container = binding.materialFlowContainer,
+            fragmentTagsToRemove = listOf(
                 TAG_MATERIAL_PICKER_FRAGMENT
             )
+        )
+    }
 
-        if (currentMaterialFragment == null) {
-            currentBinding.materialFlowContainer.clearAnimation()
 
-            currentBinding.materialFlowContainer.isVisible =
-                false
-
-            currentBinding.materialFlowContainer.isEnabled =
-                true
-
+    private fun closeOverlayContainerWithAnimation(
+        container: View,
+        fragmentTagsToRemove: List<String>
+    ) {
+        if (!container.isVisible) {
+            removeFragmentsByTags(fragmentTagsToRemove)
+            container.clearAnimation()
+            container.isEnabled = true
             return
         }
 
-        if (currentBinding.materialFlowContainer.animation != null) {
+        if (container.animation != null) {
             return
         }
 
-        currentBinding.materialFlowContainer.isEnabled =
+        container.isEnabled =
             false
 
         val closeAnimation =
@@ -513,41 +548,56 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
                 override fun onAnimationEnd(
                     animation: Animation?
                 ) {
-                    val bindingAfterAnimation =
+                    val currentBinding =
                         _binding ?: return
 
-                    val materialFragmentAfterAnimation =
-                        childFragmentManager.findFragmentByTag(
-                            TAG_MATERIAL_PICKER_FRAGMENT
-                        )
+                    removeFragmentsByTags(
+                        fragmentTagsToRemove
+                    )
 
-                    if (
-                        materialFragmentAfterAnimation != null &&
-                        !childFragmentManager.isStateSaved
-                    ) {
-                        childFragmentManager.commit {
-                            setReorderingAllowed(true)
+                    container.clearAnimation()
+                    container.isVisible = false
+                    container.isEnabled = true
 
-                            remove(
-                                materialFragmentAfterAnimation
-                            )
-                        }
+                    if (container.id == R.id.plantFlowContainer) {
+                        currentBinding.plantFlowContainer.clearAnimation()
                     }
 
-                    bindingAfterAnimation.materialFlowContainer.clearAnimation()
-
-                    bindingAfterAnimation.materialFlowContainer.isVisible =
-                        false
-
-                    bindingAfterAnimation.materialFlowContainer.isEnabled =
-                        true
+                    if (container.id == R.id.materialFlowContainer) {
+                        currentBinding.materialFlowContainer.clearAnimation()
+                    }
                 }
             }
         )
 
-        currentBinding.materialFlowContainer.startAnimation(
+        container.startAnimation(
             closeAnimation
         )
+    }
+
+    private fun removeFragmentsByTags(
+        fragmentTags: List<String>
+    ) {
+        if (childFragmentManager.isStateSaved) {
+            return
+        }
+
+        val fragmentsToRemove =
+            fragmentTags.mapNotNull { tag ->
+                childFragmentManager.findFragmentByTag(tag)
+            }
+
+        if (fragmentsToRemove.isEmpty()) {
+            return
+        }
+
+        childFragmentManager.commit {
+            setReorderingAllowed(true)
+
+            fragmentsToRemove.forEach { fragment ->
+                remove(fragment)
+            }
+        }
     }
 
     private fun handleMaterialFlowBack(): Boolean {
@@ -580,8 +630,8 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     override fun onDestroyView() {
-        binding.materialFlowContainer.clearAnimation()
-        binding.plantFlowContainer.clearAnimation()
+        _binding?.plantFlowContainer?.clearAnimation()
+        _binding?.materialFlowContainer?.clearAnimation()
 
         super.onDestroyView()
 
