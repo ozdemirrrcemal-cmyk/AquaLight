@@ -17,7 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navGraphViewModels
+import androidx.navigation.navGraphViewModels
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error

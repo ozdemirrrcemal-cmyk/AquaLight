@@ -10,7 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navGraphViewModels
+import androidx.navigation.navGraphViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategory
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog

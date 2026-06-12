@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.navGraphViewModels
+import androidx.navigation.navGraphViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankNameBinding
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
