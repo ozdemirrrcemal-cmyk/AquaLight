@@ -1,16 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nav_devices_dosing"
-    app:startDestination="@id/deviceDosingFragment">
-
-<fragment
-    android:id="@+id/deviceDosingFragment"
-    android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingFragment"
-    android:label="@string/screen_title_dosing"
-    tools:layout="@layout/fragment_device_dosing">
-
-</fragment>
-
+<?xml version='1.0' encoding='utf-8'?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:id="@+id/nav_devices_dosing" app:startDestination="@id/deviceDosingFragment">
+  <fragment android:id="@+id/deviceDosingFragment" android:name="com.aqua.aqualight.ui.tabs.devices.detail.dosing.DeviceDosingFragment" android:label="@string/screen_title_dosing" tools:layout="@layout/fragment_device_dosing">
+    <argument android:name="deviceId" app:argType="long"/>
+    <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
+    <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
+  </fragment>
 </navigation>
