@@ -1,4 +1,4 @@
-package com.aqua.aqualight.data.tanks
+package com.aqua.aqualight.data.aquarium.store
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
