@@ -24,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="Describe the inspiration, mood, or story you want this aquarium to represent."
+            android:text="@string/aquarium_text_describe_the_inspiration_mood_or_story_you_want_this_aquariu"
             android:textColor="#8FA4BE"
             android:textSize="14sp"
             android:lineSpacingExtra="3dp" />
@@ -51,7 +51,7 @@
                     android:id="@+id/tvInputTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Aquarium Concept"
+                    android:text="@string/aquarium_concept_field_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -61,7 +61,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Example: A calm nature-inspired planted tank with a forest stream atmosphere."
+                    android:text="@string/aquarium_text_example_a_calm_nature_inspired_planted_tank_with_a_forest_st"
                     android:textColor="#7F91AA"
                     android:textSize="13sp"
                     android:lineSpacingExtra="2dp" />
@@ -125,7 +125,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:text="This concept will help keep your aquarium design consistent when choosing plants, hardscape, lighting, and livestock."
+                android:text="@string/aquarium_text_this_concept_will_help_keep_your_aquarium_design_consistent"
                 android:textColor="#8FA4BE"
                 android:textSize="13sp"
                 android:lineSpacingExtra="2dp" />

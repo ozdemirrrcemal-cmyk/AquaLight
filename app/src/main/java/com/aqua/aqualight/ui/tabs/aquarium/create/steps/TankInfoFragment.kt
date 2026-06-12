@@ -6,18 +6,16 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.navigation.navGraphViewModels
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankInfoBinding
 import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumMeasurementPolicy
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 
 class TankInfoFragment :
     Fragment(R.layout.fragment_tank_info),
@@ -27,18 +25,6 @@ class TankInfoFragment :
     private val binding get() = _binding!!
 
     private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
-
-    private val volumeFormatter =
-        DecimalFormat(
-            "#.##",
-            DecimalFormatSymbols(Locale.US)
-        )
-
-    private val sizeFormatter =
-        DecimalFormat(
-            "#0.##",
-            DecimalFormatSymbols(Locale.US)
-        )
 
     override fun onViewCreated(
         view: View,
@@ -105,11 +91,21 @@ class TankInfoFragment :
             formatVolume()
 
         binding.tvTankTypeValue.text =
-            draft.tankType
+            draft.tankType.ifBlank {
+                getString(R.string.aquarium_common_not_selected)
+            }
+
+        binding.tvTankTypeValue.setTextColor(
+            if (draft.tankType.isBlank()) {
+                Color.parseColor("#7F91AA")
+            } else {
+                Color.WHITE
+            }
+        )
 
         if (draft.tankStyle.isBlank()) {
             binding.tvStyleValue.text =
-                "Not selected"
+                getString(R.string.aquarium_common_not_selected)
 
             binding.tvStyleValue.setTextColor(
                 Color.parseColor("#7F91AA")
@@ -125,16 +121,12 @@ class TankInfoFragment :
     }
 
     private fun showSetupDateSheet() {
-        val currentYear =
-            Calendar.getInstance()
-                .get(Calendar.YEAR)
-
         SetupDateBottomSheet.show(
             fragment = this,
             currentMillis = viewModel.tankDraft.setupDateMillis,
-            minYear = 2000,
-            maxYear = currentYear + 10,
-            monthLocale = Locale.ENGLISH,
+            minYear = AquariumDatePolicy.minSetupYear(),
+            maxYear = AquariumDatePolicy.maxSetupYear(),
+            monthLocale = AquariumDatePolicy.setupDateLocale,
             onSave = { selectedMillis, dismiss ->
 
                 viewModel.updateSetupDate(
@@ -158,9 +150,12 @@ class TankInfoFragment :
             currentLengthCm = draft.lengthCm,
             currentHeightCm = draft.heightCm,
             currentUnit = draft.sizeUnit,
-            title = "Tank Size",
+            title = getString(R.string.aquarium_tank_size_title),
             onInvalidInput = {
-                // Create ekranında snackbar göstermiyoruz.
+                showSnackBar(
+                    message = getString(R.string.aquarium_validation_invalid_tank_size),
+                    type = BaseActivity.SnackType.WARNING
+                )
             },
             onSave = { result, dismiss ->
 
@@ -233,78 +228,76 @@ class TankInfoFragment :
     private fun formatSetupDate(
         millis: Long?
     ): String {
-        if (millis == null) {
-            return "Not selected"
-        }
-
-        return SimpleDateFormat(
-            "dd MMM yyyy",
-            Locale.ENGLISH
-        ).format(
-            Date(millis)
+        return AquariumDatePolicy.formatSetupDate(
+            millis = millis,
+            emptyText = getString(R.string.aquarium_common_not_selected)
         )
     }
 
     private fun formatSizeTitle(): String {
-        val draft =
-            viewModel.tankDraft
-
-        return if (
-            draft.sizeUnit.equals(
-                "in",
-                ignoreCase = true
-            )
-        ) {
-            "Size (in)"
-        } else {
-            "Size (cm)"
-        }
+        return AquariumDimensionFormatter.sizeTitle(
+            context = requireContext(),
+            sizeUnit = viewModel.tankDraft.sizeUnit
+        )
     }
 
     private fun formatSize(): String {
-        val draft =
-            viewModel.tankDraft
+        val draft = viewModel.tankDraft
 
-        return if (
-            draft.sizeUnit.equals(
-                "in",
-                ignoreCase = true
-            )
-        ) {
-            val widthIn =
-                draft.widthCm / 2.54
-
-            val lengthIn =
-                draft.lengthCm / 2.54
-
-            val heightIn =
-                draft.heightCm / 2.54
-
-            "${sizeFormatter.format(widthIn)} W × ${sizeFormatter.format(lengthIn)} L × ${sizeFormatter.format(heightIn)} H"
-        } else {
-            "${draft.widthCm} W × ${draft.lengthCm} L × ${draft.heightCm} H"
-        }
+        return AquariumDimensionFormatter.sizeText(
+            widthCm = draft.widthCm,
+            lengthCm = draft.lengthCm,
+            heightCm = draft.heightCm,
+            sizeUnit = draft.sizeUnit
+        )
     }
 
     private fun formatVolume(): String {
-        val draft =
-            viewModel.tankDraft
+        val draft = viewModel.tankDraft
 
-        val liters =
-            (
-                draft.widthCm *
-                    draft.lengthCm *
-                    draft.heightCm
-                ) / 1000.0
+        return AquariumDimensionFormatter.volumeText(
+            widthCm = draft.widthCm,
+            lengthCm = draft.lengthCm,
+            heightCm = draft.heightCm,
+            volumeUnit = draft.volumeUnit
+        )
+    }
 
-        return if (draft.volumeUnit == "gal") {
-            "${volumeFormatter.format(liters * 0.264172)} gal"
-        } else {
-            "${volumeFormatter.format(liters)} L"
-        }
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = type
+        )
     }
 
     override fun validateAndSave(): Boolean {
+        val draft = viewModel.tankDraft
+
+        val isValidSize = AquariumMeasurementPolicy.areValidDimensions(
+            widthCm = draft.widthCm,
+            lengthCm = draft.lengthCm,
+            heightCm = draft.heightCm
+        )
+
+        if (!isValidSize) {
+            showSnackBar(
+                message = getString(R.string.aquarium_validation_invalid_tank_size),
+                type = BaseActivity.SnackType.WARNING
+            )
+            return false
+        }
+
+        if (draft.tankType.isBlank()) {
+            showSnackBar(
+                message = getString(R.string.aquarium_validation_tank_type_required),
+                type = BaseActivity.SnackType.WARNING
+            )
+            return false
+        }
+
         return true
     }
 

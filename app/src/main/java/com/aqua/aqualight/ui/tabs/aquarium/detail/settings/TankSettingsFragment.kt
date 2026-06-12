@@ -11,7 +11,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.commit
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.DialogCareProfileBinding
@@ -24,6 +23,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumChildTabHost
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.utils.DialogManager
@@ -222,8 +222,8 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
-                    title = "Tank Not Found",
-                    message = "This tank no longer exists.",
+                    title = getString(R.string.aquarium_tank_not_found_title),
+                    message = getString(R.string.aquarium_tank_no_longer_exists_message),
                     onDismiss = {
                         findNavController().navigateUp()
                     }
@@ -312,19 +312,12 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         tag: String,
         fragmentFactory: () -> Fragment
     ) {
-        val existingFragment = childFragmentManager.findFragmentByTag(tag)
-
-        if (existingFragment != null) {
-            return
-        }
-
-        childFragmentManager.commit {
-            replace(
-                containerId,
-                fragmentFactory(),
-                tag
-            )
-        }
+        AquariumChildTabHost.showOnce(
+            fragmentManager = childFragmentManager,
+            containerId = containerId,
+            tag = tag,
+            fragmentFactory = fragmentFactory
+        )
     }
 
     private fun getInitialTab(): SettingsTab {
@@ -406,7 +399,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private fun renderCareProfileScore(
         tank: SavedAquariumTank
     ) {
-        val result = CareProfileCalculator.calculate(tank)
+        val result = CareProfileCalculator.calculate(requireContext(), tank)
         val color = getCareProfileColor(result.percent)
 
         setupHeader(
@@ -418,15 +411,21 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
     private fun showCareProfileSheet(
         tank: SavedAquariumTank
     ) {
-        val result = CareProfileCalculator.calculate(tank)
+        val result = CareProfileCalculator.calculate(requireContext(), tank)
         val dialog = BottomSheetDialog(requireContext())
         val sheetBinding = DialogCareProfileBinding.inflate(layoutInflater)
 
         val profileColor = getCareProfileColor(result.percent)
 
-        sheetBinding.tvCareProfilePercent.text = "${result.percent}%"
-        sheetBinding.tvCareProfileSummary.text =
-            "${result.completedCount} of ${result.totalCount} care details completed"
+        sheetBinding.tvCareProfilePercent.text = getString(
+            R.string.aquarium_care_profile_percent_format,
+            result.percent
+        )
+        sheetBinding.tvCareProfileSummary.text = getString(
+            R.string.aquarium_care_profile_summary_format,
+            result.completedCount,
+            result.totalCount
+        )
 
         sheetBinding.careProgressTrack.background = createRoundedDrawable(
             color = "#DDE3EA",

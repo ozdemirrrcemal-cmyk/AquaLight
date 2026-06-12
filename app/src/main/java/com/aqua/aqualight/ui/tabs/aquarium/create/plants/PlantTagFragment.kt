@@ -1,18 +1,14 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 
 import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Bundle
-import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import com.aqua.aqualight.ui.tabs.aquarium.plants.PlantTagUiRenderer
 import coil3.load
 import coil3.request.crossfade
 import com.aqua.aqualight.R
@@ -22,7 +18,6 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
-import com.google.android.material.card.MaterialCardView
 
 class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
@@ -79,13 +74,13 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "Tag your plants",
+                titleOverride = getString(R.string.aquarium_tag_plants_title),
                 onBackClick = {
                     closePlantTagFlow()
                 },
                 cardIconAction = AquaHeaderCardIconAction(
                     iconRes = R.drawable.ic_check_24,
-                    contentDescription = "Confirm",
+                    contentDescription = getString(R.string.aquarium_confirm),
                     backgroundColor = Color.parseColor("#1F6F4A"),
                     strokeColor = Color.parseColor("#2A8A5E"),
                     iconTintColor = Color.WHITE,
@@ -167,6 +162,7 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                     isOpeningPlantPicker = didNavigate
                 }
 
+                view.performClick()
                 true
             } else {
                 true
@@ -193,152 +189,22 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun renderPlants() {
-        binding.plantListContainer.removeAllViews()
-
-        selectedPlants.forEachIndexed { index, plant ->
-
-            val card = MaterialCardView(requireContext()).apply {
-                radius = 16.dp().toFloat()
-                strokeWidth = 1.dp()
-                strokeColor = Color.parseColor("#223A57")
-                setCardBackgroundColor(Color.parseColor("#10233A"))
-                useCompatPadding = false
-
-                val params = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                params.bottomMargin = 10.dp()
-                layoutParams = params
+        PlantTagUiRenderer.renderSelectedPlantList(
+            container = binding.plantListContainer,
+            plants = selectedPlants,
+            onRemoveAt = { index ->
+                selectedPlants.removeAt(index)
+                renderPlants()
+                renderMarkers()
             }
-
-            val row = LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(
-                    14.dp(),
-                    11.dp(),
-                    12.dp(),
-                    11.dp()
-                )
-            }
-
-            val number = TextView(requireContext()).apply {
-                text = "${index + 1}"
-                gravity = Gravity.CENTER
-                textSize = 13f
-                includeFontPadding = false
-                setTextColor(Color.WHITE)
-                setTypeface(null, Typeface.BOLD)
-                setBackgroundResource(R.drawable.bg_plant_number_circle)
-
-                layoutParams = LinearLayout.LayoutParams(
-                    34.dp(),
-                    34.dp()
-                )
-            }
-
-            val textBox = LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.VERTICAL
-
-                val params = LinearLayout.LayoutParams(
-                    0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    1f
-                )
-                params.marginStart = 14.dp()
-                layoutParams = params
-            }
-
-            val categoryText = TextView(requireContext()).apply {
-                text = plant.category
-                textSize = 12f
-                includeFontPadding = false
-                setTextColor(Color.parseColor("#8FA4BE"))
-            }
-
-            val nameText = TextView(requireContext()).apply {
-                text = plant.plantName
-                textSize = 14f
-                includeFontPadding = false
-                maxLines = 2
-                setTextColor(Color.WHITE)
-
-                val params = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                params.topMargin = 5.dp()
-                layoutParams = params
-            }
-
-            val delete = TextView(requireContext()).apply {
-                text = "×"
-                textSize = 23f
-                gravity = Gravity.CENTER
-                includeFontPadding = false
-                setTextColor(Color.parseColor("#8FA4BE"))
-
-                setOnClickListener {
-                    selectedPlants.removeAt(index)
-                    renderPlants()
-                    renderMarkers()
-                }
-
-                layoutParams = LinearLayout.LayoutParams(
-                    34.dp(),
-                    34.dp()
-                )
-            }
-
-            textBox.addView(categoryText)
-            textBox.addView(nameText)
-
-            row.addView(number)
-            row.addView(textBox)
-            row.addView(delete)
-
-            card.addView(row)
-            binding.plantListContainer.addView(card)
-        }
+        )
     }
 
     private fun renderMarkers() {
-        binding.markerContainer.post {
-            binding.markerContainer.removeAllViews()
-
-            val width = binding.markerContainer.width
-            val height = binding.markerContainer.height
-
-            selectedPlants.forEachIndexed { index, plant ->
-
-                val marker = TextView(requireContext()).apply {
-                    text = "${index + 1}"
-                    gravity = Gravity.CENTER
-                    textSize = 12f
-                    includeFontPadding = false
-                    setTextColor(Color.WHITE)
-                    setTypeface(null, Typeface.BOLD)
-                    setBackgroundResource(R.drawable.bg_plant_marker_circle)
-                }
-
-                val size = 28.dp()
-
-                val params = FrameLayout.LayoutParams(
-                    size,
-                    size
-                )
-
-                marker.x = (plant.markerX * width) - size / 2f
-                marker.y = (plant.markerY * height) - size / 2f
-
-                binding.markerContainer.addView(marker, params)
-            }
-        }
-    }
-
-    private fun Int.dp(): Int {
-        return (this * resources.displayMetrics.density).toInt()
+        PlantTagUiRenderer.renderMarkers(
+            container = binding.markerContainer,
+            plants = selectedPlants
+        )
     }
 
     override fun onDestroyView() {

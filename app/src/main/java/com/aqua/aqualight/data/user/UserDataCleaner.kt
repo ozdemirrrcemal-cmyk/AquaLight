@@ -11,7 +11,7 @@ import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreMana
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceDataCenter
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceSnapshotCache
 import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
-import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import java.io.File
 
 /**

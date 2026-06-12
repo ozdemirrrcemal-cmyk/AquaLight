@@ -6,7 +6,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.light.automation.LightAutomationDataStoreManager
 import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
-import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 
 /**
  * One-time migration bridge for records created before local stores had ownerUid.

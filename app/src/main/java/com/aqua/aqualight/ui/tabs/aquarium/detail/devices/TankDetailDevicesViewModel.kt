@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.light.automation.LightAutomationDataStoreManager
 import com.aqua.aqualight.data.devices.light.automation.model.LightAutomationSettings
@@ -174,7 +175,7 @@ class TankDetailDevicesViewModel(
                 exception.printStackTrace()
                 _uiState.update { current ->
                     current.copy(
-                        errorMessage = "Device could not be removed from this tank."
+                        errorMessage = appContext.getString(R.string.aquarium_error_device_remove_failed)
                     )
                 }
             }
@@ -356,7 +357,7 @@ class TankDetailDevicesViewModel(
 
         return TankLightModeOverride(
             mode = TankLightCardMode.MOONLIGHT,
-            title = "Moonlight Mode",
+            title = TankAssignedDeviceText.MOONLIGHT_MODE_TITLE,
             leftText = LightProgramRuntimeEvaluator.labelForMinute(startMinute),
             rightText = LightProgramRuntimeEvaluator.labelForMinute(endMinute),
             timelineProgressPercent = moonlightProgressPercent(
@@ -429,7 +430,7 @@ class TankDetailDevicesViewModel(
             val sceneName =
                 runtime.activeSceneName.orEmpty()
                     .ifBlank {
-                        "Scene Mode"
+                        TankAssignedDeviceText.SCENE_MODE_TITLE
                     }
 
             return TankLightModeOverride(
@@ -441,7 +442,7 @@ class TankDetailDevicesViewModel(
         if (runtime.isManualMode) {
             return TankLightModeOverride(
                 mode = TankLightCardMode.MANUAL,
-                title = "Manual Control"
+                title = TankAssignedDeviceText.MANUAL_CONTROL_TITLE
             )
         }
 

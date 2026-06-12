@@ -6,16 +6,12 @@ import com.aqua.aqualight.data.aquarium.catalog.material.AquariumMaterial
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.text.InputType
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
-import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
+import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -28,11 +24,11 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.materials.CustomMaterialSheet
+import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSelectionMapper
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCatalog
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
@@ -41,10 +37,6 @@ import androidx.navigation.fragment.navArgs
 class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
     private val args: MaterialPickerFragmentArgs by navArgs()
-
-    interface MaterialPickerHost {
-        fun closeMaterialPickerFlow()
-    }
 
     private var _binding: FragmentMaterialPickerBinding? = null
     private val binding get() = _binding!!
@@ -219,32 +211,10 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     private fun buildProductList(
         currentSelections: List<TankMaterialSelection>
     ): List<AquariumMaterial> {
-        val catalogProducts = MaterialCatalog.getByCategory(categoryKey)
-        val catalogIds = catalogProducts.map { product ->
-            product.id
-        }.toSet()
-
-        val customProducts = currentSelections
-            .filterNot { selection ->
-                catalogIds.contains(selection.productId)
-            }
-            .map { selection ->
-                AquariumMaterial(
-                    id = selection.productId,
-                    name = selection.name,
-                    brand = selection.brand,
-                    categoryKey = selection.categoryKey,
-                    categoryTitle = selection.categoryTitle,
-                    keywords = listOf(
-                        selection.categoryTitle,
-                        selection.name,
-                        selection.brand,
-                        "custom"
-                    )
-                )
-            }
-
-        return catalogProducts + customProducts
+        return MaterialSelectionMapper.productsForCategory(
+            categoryKey = categoryKey,
+            currentSelections = currentSelections
+        )
     }
 
     private fun setupClickListeners() {
@@ -535,265 +505,14 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun showNewMaterialSheet() {
-        val dialog = BottomSheetDialog(requireContext())
-
-        val root = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(
-                24.dp(),
-                22.dp(),
-                24.dp(),
-                24.dp()
-            )
-            background = ContextCompat.getDrawable(
-                requireContext(),
-                R.drawable.bg_aqua_bottom_sheet
-            )
-        }
-
-        addSheetHeader(
-            root = root,
-            title = getString(R.string.material_picker_new_material),
-            dialog = dialog
-        )
-
-        val labelName = TextView(requireContext()).apply {
-            text = getString(R.string.material_picker_material_name)
-            setTextColor(Color.WHITE)
-            textSize = 14f
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.topMargin = 18.dp()
-            layoutParams = params
-        }
-
-        root.addView(labelName)
-
-        val nameInputCard = MaterialCardView(requireContext()).apply {
-            radius = 14.dp().toFloat()
-            strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#16314D"))
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                56.dp()
-            )
-            params.topMargin = 10.dp()
-            layoutParams = params
-        }
-
-        val currentSearchText = searchQuery.trim()
-
-        val nameInput = EditText(requireContext()).apply {
-            setText(currentSearchText)
-
-            if (currentSearchText.isNotBlank()) {
-                setSelection(currentSearchText.length)
-            }
-
-            hint = getString(R.string.material_picker_enter_material_name)
-            setHintTextColor(Color.parseColor("#7F91AA"))
-            setTextColor(Color.WHITE)
-            textSize = 15f
-            setSingleLine(true)
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
-            background = null
-            setPadding(
-                16.dp(),
-                0,
-                16.dp(),
-                0
-            )
-        }
-
-        nameInputCard.addView(
-            nameInput,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
-        )
-
-        root.addView(nameInputCard)
-
-        val labelCategory = TextView(requireContext()).apply {
-            text = getString(R.string.material_picker_category)
-            setTextColor(Color.WHITE)
-            textSize = 14f
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.topMargin = 22.dp()
-            layoutParams = params
-        }
-
-        root.addView(labelCategory)
-
-        val categoryInputCard = MaterialCardView(requireContext()).apply {
-            radius = 14.dp().toFloat()
-            strokeWidth = 1.dp()
-            strokeColor = Color.parseColor("#223A57")
-            setCardBackgroundColor(Color.parseColor("#16314D"))
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                56.dp()
-            )
-            params.topMargin = 10.dp()
-            layoutParams = params
-        }
-
-        val categoryText = TextView(requireContext()).apply {
-            text = categoryTitle
-            gravity = Gravity.CENTER_VERTICAL
-            setTextColor(Color.parseColor("#D6E2F0"))
-            textSize = 15f
-            setTypeface(null, Typeface.NORMAL)
-            setPadding(
-                16.dp(),
-                0,
-                16.dp(),
-                0
-            )
-            includeFontPadding = false
-        }
-
-        categoryInputCard.addView(
-            categoryText,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
-        )
-
-        root.addView(categoryInputCard)
-
-        val saveButton = MaterialButton(requireContext()).apply {
-            text = getString(R.string.material_picker_save)
-            textSize = 16f
-            setTextColor(Color.WHITE)
-            setTypeface(null, Typeface.BOLD)
-            setAllCaps(false)
-            cornerRadius = 16.dp()
-            setBackgroundColor(Color.parseColor("#2196F3"))
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                56.dp()
-            )
-            params.topMargin = 28.dp()
-            layoutParams = params
-
-            setOnClickListener {
-                val materialName = nameInput.text
-                    ?.toString()
-                    ?.trim()
-                    .orEmpty()
-
-                if (materialName.isBlank()) {
-                    nameInput.error = getString(R.string.material_picker_required)
-                    return@setOnClickListener
-                }
-
+        CustomMaterialSheet.show(
+            fragment = this,
+            categoryTitle = categoryTitle,
+            initialName = searchQuery.trim(),
+            onSave = { materialName ->
                 addCustomMaterial(materialName)
-                dialog.dismiss()
             }
-        }
-
-        root.addView(saveButton)
-
-        val cancel = TextView(requireContext()).apply {
-            text = getString(R.string.material_picker_cancel)
-            gravity = Gravity.CENTER
-            setTextColor(Color.parseColor("#8FA4BE"))
-            textSize = 15f
-            setPadding(
-                0,
-                18.dp(),
-                0,
-                0
-            )
-
-            setOnClickListener {
-                dialog.dismiss()
-            }
-        }
-
-        root.addView(
-            cancel,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
         )
-
-        dialog.setContentView(root)
-
-        dialog.setOnShowListener {
-            val bottomSheet = dialog.findViewById<View>(
-                com.google.android.material.R.id.design_bottom_sheet
-            )
-
-            bottomSheet?.setBackgroundColor(Color.TRANSPARENT)
-        }
-
-        dialog.show()
-    }
-
-    private fun addSheetHeader(
-        root: LinearLayout,
-        title: String,
-        dialog: BottomSheetDialog
-    ) {
-        val header = FrameLayout(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                46.dp()
-            )
-        }
-
-        val titleView = TextView(requireContext()).apply {
-            text = title
-            setTextColor(Color.WHITE)
-            textSize = 18f
-            gravity = Gravity.CENTER
-            setTypeface(null, Typeface.BOLD)
-
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-        }
-
-        val closeView = TextView(requireContext()).apply {
-            text = "×"
-            setTextColor(Color.WHITE)
-            textSize = 34f
-            gravity = Gravity.CENTER
-            includeFontPadding = false
-
-            setOnClickListener {
-                dialog.dismiss()
-            }
-
-            val params = FrameLayout.LayoutParams(
-                44.dp(),
-                44.dp(),
-                Gravity.END or Gravity.CENTER_VERTICAL
-            )
-            layoutParams = params
-        }
-
-        header.addView(titleView)
-        header.addView(closeView)
-
-        root.addView(header)
     }
 
     private fun addCustomMaterial(
@@ -803,17 +522,10 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
             product.name.equals(materialName, ignoreCase = true)
         }
 
-        val productToSelect = existingProduct ?: AquariumMaterial(
-            id = buildCustomMaterialId(materialName),
-            name = materialName,
-            brand = "",
+        val productToSelect = existingProduct ?: MaterialSelectionMapper.customMaterial(
             categoryKey = categoryKey,
             categoryTitle = categoryTitle,
-            keywords = listOf(
-                categoryTitle,
-                materialName,
-                "custom"
-            )
+            materialName = materialName
         )
 
         if (existingProduct == null) {
@@ -824,15 +536,6 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         updateSearchQuery("")
         updateSelectedCount()
-    }
-
-    private fun buildCustomMaterialId(
-        materialName: String
-    ): String {
-        return AquariumIdGenerator.newCustomProductId(
-            categoryKey = categoryKey,
-            materialName = materialName
-        )
     }
 
     private fun toggleSelection(
@@ -865,25 +568,11 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         val currentSelections = getCurrentMaterialSelections()
 
-        val selectedMaterials = allProducts
-            .filter { product ->
-                selectedProductIds.contains(product.id)
-            }
-            .map { product ->
-                val existingSelection = currentSelections.firstOrNull { selection ->
-                    selection.productId == product.id
-                }
-
-                TankMaterialSelection(
-                    id = existingSelection?.id ?: AquariumIdGenerator.newLong(),
-                    productId = product.id,
-                    categoryKey = product.categoryKey,
-                    categoryTitle = product.categoryTitle,
-                    name = product.name,
-                    brand = product.brand,
-                    note = existingSelection?.note.orEmpty()
-                )
-            }
+        val selectedMaterials = MaterialSelectionMapper.selectedMaterials(
+            products = allProducts,
+            selectedProductIds = selectedProductIds,
+            currentSelections = currentSelections
+        )
 
         if (pickerMode == MODE_SETTINGS) {
             saveSettingsSelections(selectedMaterials)
@@ -932,13 +621,6 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                 categoryKey
             )
 
-        parentFragmentManager.setFragmentResult(
-            RESULT_KEY,
-            bundleOf(
-                RESULT_CATEGORY_KEY to categoryKey
-            )
-        )
-
         closePicker()
     }
 
@@ -961,7 +643,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
                 binding.btnSave.isEnabled = true
 
                 showSnackBar(
-                    message = "Components could not be saved.",
+                    message = getString(R.string.aquarium_error_components_save_failed),
                     type = BaseActivity.SnackType.ERROR
                 )
             }
@@ -1002,43 +684,5 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         const val RESULT_KEY = "material_picker_result"
         const val RESULT_CATEGORY_KEY = "material_category_key"
-
-        fun newCreateInstance(
-            categoryKey: String,
-            categoryTitle: String
-        ): MaterialPickerFragment {
-            return MaterialPickerFragment().apply {
-                arguments = bundleOf(
-                    ARG_MODE to MODE_CREATE,
-                    ARG_CATEGORY_KEY to categoryKey,
-                    ARG_CATEGORY_TITLE to categoryTitle
-                )
-            }
-        }
-
-        fun newSettingsInstance(
-            tankId: Long,
-            categoryKey: String,
-            categoryTitle: String
-        ): MaterialPickerFragment {
-            return MaterialPickerFragment().apply {
-                arguments = bundleOf(
-                    ARG_MODE to MODE_SETTINGS,
-                    ARG_TANK_ID to tankId,
-                    ARG_CATEGORY_KEY to categoryKey,
-                    ARG_CATEGORY_TITLE to categoryTitle
-                )
-            }
-        }
-
-        fun newInstance(
-            categoryKey: String,
-            categoryTitle: String
-        ): MaterialPickerFragment {
-            return newCreateInstance(
-                categoryKey = categoryKey,
-                categoryTitle = categoryTitle
-            )
-        }
     }
 }

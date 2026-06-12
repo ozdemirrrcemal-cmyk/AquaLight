@@ -28,7 +28,7 @@
       android:layout_height="match_parent"
       android:gravity="center"
       android:includeFontPadding="false"
-      android:text="Care Profile"
+      android:text="@string/aquarium_text_care_profile"
       android:textColor="@android:color/white"
       android:textSize="18sp"
       android:textStyle="bold" />
@@ -40,7 +40,7 @@
       android:layout_gravity="end|center_vertical"
       android:gravity="center"
       android:includeFontPadding="false"
-      android:text="×"
+      android:text="@string/common_close"
       android:textColor="@android:color/white"
       android:textSize="30sp" />
 
@@ -57,7 +57,7 @@
       android:layout_height="wrap_content"
       android:layout_weight="1"
       android:includeFontPadding="false"
-      android:text="Progress"
+      android:text="@string/aquarium_text_progress"
       android:textColor="@android:color/white"
       android:textSize="15sp"
       android:textStyle="bold" />
@@ -67,7 +67,7 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:includeFontPadding="false"
-      android:text="0%"
+      android:text="@string/aquarium_text_0percent"
       android:textColor="@android:color/white"
       android:textSize="15sp"
       android:textStyle="bold" />
@@ -93,7 +93,7 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="12dp"
     android:includeFontPadding="false"
-    android:text="0 of 0 care details completed"
+    android:text="@string/aquarium_text_0_of_0_care_details_completed"
     android:textColor="#8FA4BE"
     android:textSize="13sp" />
 
@@ -104,7 +104,7 @@
     android:layout_marginTop="20dp"
     android:includeFontPadding="false"
     android:lineSpacingExtra="3dp"
-    android:text="Complete your aquarium profile to get more accurate automatic care tasks."
+    android:text="@string/aquarium_text_complete_your_aquarium_profile_to_get_more_accurate_automati"
     android:textColor="#C8D3E0"
     android:textSize="13sp" />
 

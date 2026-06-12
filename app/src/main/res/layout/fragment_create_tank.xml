@@ -58,7 +58,7 @@
             style="@style/Widget.Aqua.PrimaryButton"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:text="Next" />
+            android:text="@string/aquarium_action_next" />
 
     </LinearLayout>
 

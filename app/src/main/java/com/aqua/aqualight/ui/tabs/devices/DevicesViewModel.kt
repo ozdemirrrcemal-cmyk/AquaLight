@@ -9,7 +9,7 @@ import com.aqua.aqualight.data.devices.access.DeviceAccessGuard
 import com.aqua.aqualight.data.devices.access.DeviceOpenResult
 import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
-import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

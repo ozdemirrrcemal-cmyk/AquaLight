@@ -12,7 +12,7 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerRoute
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 import com.aqua.aqualight.data.devices.catalog.toControllerRoute
-import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 

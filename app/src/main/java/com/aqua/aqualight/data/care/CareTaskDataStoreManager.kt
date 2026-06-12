@@ -7,7 +7,7 @@ import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.care.CareTasksStore
 import com.aqua.aqualight.data.care.StoredCareTask
-import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.care.model.CareTask

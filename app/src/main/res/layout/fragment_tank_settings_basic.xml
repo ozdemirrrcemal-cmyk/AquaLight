@@ -102,7 +102,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Tank Name"
+                    android:text="@string/aquarium_tank_name_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -114,7 +114,7 @@
                     android:ellipsize="end"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:text="Aquarium"
+                    android:text="@string/aquarium_text_aquarium"
                     android:textColor="#8FA4BE"
                     android:textSize="13sp" />
 
@@ -157,7 +157,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Tank Type"
+                    android:text="@string/aquarium_tank_type_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -167,7 +167,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="Fish"
+                    android:text="@string/aquarium_tank_type_fish"
                     android:textColor="#8FA4BE"
                     android:textSize="13sp" />
 
@@ -211,7 +211,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Tank Size (cm)"
+                    android:text="@string/aquarium_tank_size_cm_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -221,7 +221,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="10 W x 10 L x 10 H"
+                    android:text="@string/aquarium_text_10_w_x_10_l_x_10_h_2"
                     android:textColor="#8FA4BE"
                     android:textSize="13sp" />
 
@@ -264,7 +264,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Volume"
+                    android:text="@string/aquarium_volume_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -274,7 +274,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="1 L"
+                    android:text="@string/aquarium_text_1_l"
                     android:textColor="#8FA4BE"
                     android:textSize="13sp" />
 
@@ -317,7 +317,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Setup Date"
+                    android:text="@string/aquarium_setup_date_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -327,7 +327,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="17 May 2026"
+                    android:text="@string/aquarium_text_17_may_2026"
                     android:textColor="#8FA4BE"
                     android:textSize="13sp" />
 
@@ -370,7 +370,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Tank Style"
+                    android:text="@string/aquarium_tank_style_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -383,7 +383,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:maxWidth="190dp"
-                    android:text="Nature Aquarium"
+                    android:text="@string/aquarium_text_nature_aquarium"
                     android:textColor="#8FA4BE"
                     android:textSize="13sp" />
 
@@ -426,7 +426,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Tank Concept"
+                    android:text="@string/aquarium_tank_concept_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -439,7 +439,7 @@
                     android:includeFontPadding="false"
                     android:maxLines="1"
                     android:maxWidth="190dp"
-                    android:text="No idea added"
+                    android:text="@string/aquarium_no_idea_added"
                     android:textColor="#8FA4BE"
                     android:textSize="13sp" />
 

@@ -11,24 +11,20 @@ import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentPlantPickerBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.google.android.material.card.MaterialCardView
-import androidx.navigation.fragment.navArgs
 
 class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
-    interface PlantPickerHost {
-        fun closePlantPickerFlow()
-    }
-
-    private val args: PlantPickerFragmentArgs by navArgs()
-
     private var _binding: FragmentPlantPickerBinding? = null
     private val binding get() = _binding!!
+
+    private val args: PlantPickerFragmentArgs by navArgs()
 
     private val plants: List<AquariumPlant> = PlantCatalog.plants
 
@@ -220,50 +216,24 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         plantName: String,
         category: String
     ) {
+        val navController = findNavController()
         val resultBundle = bundleOf(
             RESULT_PLANT_NAME to plantName,
             RESULT_PLANT_CATEGORY to category
         )
 
-        if (usesNavigationResult()) {
-            val navController = findNavController()
+        navController.previousBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                RESULT_BUNDLE_KEY,
+                resultBundle
+            )
 
-            navController.previousBackStackEntry
-                ?.savedStateHandle
-                ?.set(
-                    RESULT_BUNDLE_KEY,
-                    resultBundle
-                )
-
-            navController.navigateUp()
-            return
-        }
-
-        parentFragmentManager.setFragmentResult(
-            REQUEST_KEY,
-            resultBundle
-        )
-
-        closeEmbeddedPicker()
+        navController.navigateUp()
     }
 
     private fun closePicker() {
-        if (usesNavigationResult()) {
-            findNavController().navigateUp()
-            return
-        }
-
-        closeEmbeddedPicker()
-    }
-
-    private fun closeEmbeddedPicker() {
-        (parentFragment as? PlantPickerHost)
-            ?.closePlantPickerFlow()
-            ?: parentFragmentManager.popBackStack()
-    }
-
-    private fun usesNavigationResult(): Boolean {
-        return args.useNavResult
+        findNavController().navigateUp()
     }
 
     private fun Int.dp(): Int {
@@ -278,18 +248,9 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
     companion object {
         const val ARG_USE_NAV_RESULT = "useNavResult"
 
-        const val REQUEST_KEY = "plant_picker_result"
         const val RESULT_BUNDLE_KEY = "plant_picker_result_bundle"
 
         const val RESULT_PLANT_NAME = "plant_name"
         const val RESULT_PLANT_CATEGORY = "plant_category"
-
-        fun newCreateInstance(): PlantPickerFragment {
-            return PlantPickerFragment().apply {
-                arguments = bundleOf(
-                    ARG_USE_NAV_RESULT to false
-                )
-            }
-        }
     }
 }

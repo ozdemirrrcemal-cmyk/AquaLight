@@ -23,7 +23,7 @@
     android:layout_height="wrap_content"
     android:gravity="center"
     android:includeFontPadding="false"
-    android:text="Select Aquarium"
+    android:text="@string/aquarium_text_select_aquarium"
     android:textColor="@android:color/white"
     android:textSize="18sp"
     android:textStyle="bold" />

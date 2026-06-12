@@ -159,10 +159,10 @@ class TankDetailDevicesFragment :
         DeviceConfirmBottomSheet
             .create(requireContext())
             .show(
-                title = "Remove device from tank?",
-                message = "${device.title} will remain saved, but it will no longer be assigned to this tank.",
-                confirmText = "Remove",
-                cancelText = "Cancel",
+                title = getString(R.string.aquarium_remove_device_title),
+                message = getString(R.string.aquarium_remove_device_message, device.title),
+                confirmText = getString(R.string.aquarium_remove_action),
+                cancelText = getString(R.string.common_cancel),
                 tone = DeviceConfirmTone.DANGER,
                 onConfirm = {
                     viewModel.removeDeviceFromTank(

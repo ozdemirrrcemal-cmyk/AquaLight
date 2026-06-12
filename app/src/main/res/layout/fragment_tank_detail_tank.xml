@@ -56,7 +56,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Days"
+                        android:text="@string/aquarium_days_title"
                         android:textColor="#8FA4BE"
                         android:textSize="10.5sp" />
 
@@ -68,7 +68,7 @@
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="0 days"
+                        android:text="@string/aquarium_text_0_days"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -106,7 +106,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Volume"
+                        android:text="@string/aquarium_volume_title"
                         android:textColor="#8FA4BE"
                         android:textSize="10.5sp" />
 
@@ -118,7 +118,7 @@
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="79 gal"
+                        android:text="@string/aquarium_text_79_gal"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -155,7 +155,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Size"
+                        android:text="@string/aquarium_size_title"
                         android:textColor="#8FA4BE"
                         android:textSize="10.5sp" />
 
@@ -167,7 +167,7 @@
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="120×50×50"
+                        android:text="@string/aquarium_text_120x50x50"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -203,7 +203,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Type"
+                        android:text="@string/aquarium_type_title"
                         android:textColor="#8FA4BE"
                         android:textSize="10.5sp" />
 
@@ -215,7 +215,7 @@
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="Shrimp"
+                        android:text="@string/aquarium_tank_type_shrimp"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -252,7 +252,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Setup"
+                        android:text="@string/aquarium_setup_title"
                         android:textColor="#8FA4BE"
                         android:textSize="10.5sp" />
 
@@ -264,7 +264,7 @@
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="17 May 26"
+                        android:text="@string/aquarium_text_17_may_26"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -300,7 +300,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Style"
+                        android:text="@string/aquarium_style_title"
                         android:textColor="#8FA4BE"
                         android:textSize="10.5sp" />
 
@@ -312,7 +312,7 @@
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="Mountain"
+                        android:text="@string/aquarium_style_mountain"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -329,7 +329,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:includeFontPadding="false"
-            android:text="Components"
+            android:text="@string/aquarium_components_title"
             android:textColor="?attr/colorOnSurface"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -340,7 +340,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:includeFontPadding="false"
-            android:text="Bio"
+            android:text="@string/aquarium_material_group_bio"
             android:textColor="?attr/colorOnSurface"
             android:textSize="13sp" />
 
@@ -357,7 +357,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:includeFontPadding="false"
-            android:text="Hardware"
+            android:text="@string/aquarium_material_group_hardware"
             android:textColor="?attr/colorOnSurface"
             android:textSize="13sp" />
 

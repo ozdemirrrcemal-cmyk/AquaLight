@@ -119,8 +119,8 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
-                    title = "Tank Not Found",
-                    message = "This tank no longer exists.",
+                    title = getString(R.string.aquarium_tank_not_found_title),
+                    message = getString(R.string.aquarium_tank_no_longer_exists_message),
                     onDismiss = {
                         findNavController().navigateUp()
                     }
@@ -165,7 +165,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 isUpdatingSwitchesProgrammatically = false
 
                 showSnackBar(
-                    message = "Smart care setting could not be saved.",
+                    message = getString(R.string.aquarium_error_smart_care_save_failed),
                     type = BaseActivity.SnackType.ERROR
                 )
             }
@@ -189,7 +189,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 isUpdatingSwitchesProgrammatically = false
 
                 showSnackBar(
-                    message = "Care reminder setting could not be saved.",
+                    message = getString(R.string.aquarium_error_care_reminder_save_failed),
                     type = BaseActivity.SnackType.ERROR
                 )
             }
@@ -216,8 +216,8 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         DialogManager.showConfirmDialog(
             context = requireContext(),
             type = DialogType.INFO,
-            title = "Duplicate Tank?",
-            message = "This will create a copy of \"${tank.name}\" with the same tank data, plants and components.",
+            title = getString(R.string.aquarium_duplicate_tank_title),
+            message = getString(R.string.aquarium_duplicate_tank_message, tank.name),
             confirmTextResId = R.string.duplicate,
             cancelTextResId = R.string.cancel,
             onConfirm = {
@@ -263,8 +263,8 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
-                    title = "Duplicate Failed",
-                    message = "Tank could not be duplicated."
+                    title = getString(R.string.aquarium_duplicate_failed_title),
+                    message = getString(R.string.aquarium_error_tank_duplicate_failed)
                 )
             }
         }
@@ -315,8 +315,8 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
-                    title = "Export Failed",
-                    message = "Tank report could not be created."
+                    title = getString(R.string.aquarium_export_failed_title),
+                    message = getString(R.string.aquarium_error_tank_report_create_failed)
                 )
             }
         }
@@ -332,8 +332,8 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         DialogManager.showConfirmDialog(
             context = requireContext(),
             type = DialogType.WARNING,
-            title = "Delete Tank?",
-            message = "This will permanently delete \"${tank.name}\" and all saved tank data.",
+            title = getString(R.string.aquarium_delete_tank_title),
+            message = getString(R.string.aquarium_delete_tank_message, tank.name),
             confirmTextResId = R.string.delete,
             cancelTextResId = R.string.cancel,
             onConfirm = {
@@ -382,8 +382,8 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
-                    title = "Delete Failed",
-                    message = "Tank could not be deleted."
+                    title = getString(R.string.aquarium_delete_failed_title),
+                    message = getString(R.string.aquarium_error_tank_delete_failed)
                 )
             }
         }

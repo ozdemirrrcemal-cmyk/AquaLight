@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.BottomSheetPhotoSourceBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -30,7 +31,7 @@ class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
         private const val ARG_SHOW_REMOVE = "arg_show_remove"
 
         fun newInstance(
-            title: String = "Profile photo",
+            title: String = "",
             showRemove: Boolean = false
         ): PhotoSourceBottomSheet {
             return PhotoSourceBottomSheet().apply {
@@ -64,7 +65,9 @@ class PhotoSourceBottomSheet : BottomSheetDialogFragment() {
 
     private fun setupTexts() {
         binding.tvSheetTitle.text =
-            arguments?.getString(ARG_TITLE) ?: "Profile photo"
+            arguments?.getString(ARG_TITLE)
+                ?.takeIf { title -> title.isNotBlank() }
+                ?: getString(R.string.aquarium_photo_title)
 
         binding.btnRemove.isVisible =
             arguments?.getBoolean(ARG_SHOW_REMOVE) == true

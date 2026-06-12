@@ -36,7 +36,7 @@
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:text="Tank name"
+        android:text="@string/aquarium_care_profile_tank_name"
         android:textColor="@android:color/white"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -49,7 +49,7 @@
         android:ellipsize="end"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:text="Living Room"
+        android:text="@string/aquarium_no_value_placeholder"
         android:textColor="#8FA4BE"
         android:textSize="13sp" />
 
@@ -62,7 +62,7 @@
       android:layout_marginStart="12dp"
       android:gravity="center"
       android:includeFontPadding="false"
-      android:text="Complete"
+      android:text="@string/aquarium_action_complete"
       android:textSize="11sp"
       android:textStyle="bold" />
 

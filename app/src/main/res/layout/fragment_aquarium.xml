@@ -38,7 +38,7 @@
         android:gravity="center"
         android:paddingStart="32dp"
         android:paddingEnd="32dp"
-        android:text="No aquarium yet. Tap + Add to create your first tank."
+        android:text="@string/aquarium_empty_tank_list_message"
         android:textColor="#8FA4BE"
         android:textSize="14sp"
         android:visibility="gone"

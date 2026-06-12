@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/tankNameStepFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragment"
-        android:label="Step 1"
+        android:label="@string/aquarium_create_step_1"
         tools:layout="@layout/fragment_tank_name">
         <action
             android:id="@+id/action_tankNameStepFragment_to_tankDescriptionStepFragment"
@@ -22,7 +22,7 @@
     <fragment
         android:id="@+id/tankDescriptionStepFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankDescriptionFragment"
-        android:label="Step 2"
+        android:label="@string/aquarium_create_step_2"
         tools:layout="@layout/fragment_tank_description">
         <action
             android:id="@+id/action_tankDescriptionStepFragment_to_tankPhotoStepFragment"
@@ -36,7 +36,7 @@
     <fragment
         android:id="@+id/tankPhotoStepFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragment"
-        android:label="Step 3"
+        android:label="@string/aquarium_create_step_3"
         tools:layout="@layout/fragment_tank_photo">
         <action
             android:id="@+id/action_tankPhotoStepFragment_to_createPlantTagFragment"
@@ -57,7 +57,7 @@
     <fragment
         android:id="@+id/createPlantTagFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment"
-        android:label="Tag your plants"
+        android:label="@string/aquarium_tag_plants_title"
         tools:layout="@layout/fragment_plant_tag">
         <action
             android:id="@+id/action_createPlantTagFragment_to_createPlantPickerFragment"
@@ -87,7 +87,7 @@
     <fragment
         android:id="@+id/tankMaterialStepFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankMaterialFragment"
-        android:label="Step 4"
+        android:label="@string/aquarium_create_step_4"
         tools:layout="@layout/fragment_tank_material">
         <action
             android:id="@+id/action_tankMaterialStepFragment_to_createMaterialPickerFragment"
@@ -144,7 +144,7 @@
     <fragment
         android:id="@+id/tankInfoStepFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankInfoFragment"
-        android:label="Step 5"
+        android:label="@string/aquarium_create_step_5"
         tools:layout="@layout/fragment_tank_info" />
 
 </navigation>

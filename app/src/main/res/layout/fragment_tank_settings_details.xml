@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:includeFontPadding="false"
-            android:text="Bio"
+            android:text="@string/aquarium_material_group_bio"
             android:textColor="?attr/colorOnSurface"
             android:textSize="14sp" />
 
@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
             android:includeFontPadding="false"
-            android:text="Hardware"
+            android:text="@string/aquarium_material_group_hardware"
             android:textColor="?attr/colorOnSurface"
             android:textSize="14sp" />
 

@@ -1,21 +1,16 @@
 package com.aqua.aqualight.data.aquarium.util
 
 import java.util.UUID
-import kotlin.math.abs
 
 object AquariumIdGenerator {
 
     fun newLong(
         existingIds: Set<Long> = emptySet()
     ): Long {
-        var id = abs(UUID.randomUUID().mostSignificantBits)
+        var id = nextPositiveUuidLong()
 
-        if (id == 0L) {
-            id = System.currentTimeMillis()
-        }
-
-        while (existingIds.contains(id) || id <= 0L) {
-            id = abs(UUID.randomUUID().mostSignificantBits)
+        while (id <= 0L || existingIds.contains(id)) {
+            id = nextPositiveUuidLong()
         }
 
         return id
@@ -34,5 +29,9 @@ object AquariumIdGenerator {
             }
 
         return "custom_${categoryKey}_${safeName}_${UUID.randomUUID()}"
+    }
+
+    private fun nextPositiveUuidLong(): Long {
+        return UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
     }
 }

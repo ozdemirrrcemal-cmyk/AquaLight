@@ -2,9 +2,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.settings
 
 import android.Manifest
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -20,7 +18,6 @@ import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
 import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
 import com.aqua.aqualight.databinding.FragmentTankSettingsBasicBinding
@@ -31,16 +28,12 @@ import com.aqua.aqualight.ui.common.bottomsheet.TankSizeBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankStyleBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TankTypeBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.photo.TankPhotoFlowCoordinator
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.yalantis.ucrop.UCrop
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic) {
@@ -52,13 +45,13 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
     private var tankId: Long = 0L
     private var currentTank: SavedAquariumTank? = null
-    private var pendingCameraUri: Uri? = null
-    private var pendingCropSourceUri: Uri? = null
 
-    private val sizeFormatter = DecimalFormat(
-        "#0.##",
-        DecimalFormatSymbols(Locale.US)
-    )
+    private val photoFlowCoordinator by lazy(LazyThreadSafetyMode.NONE) {
+        TankPhotoFlowCoordinator(
+            contextProvider = { requireContext() },
+            ownerTokenProvider = { tankId.toString() }
+        )
+    }
 
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -75,7 +68,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             openCamera()
         } else {
             showSnackBar(
-                message = "Camera permission is required to take an aquarium photo.",
+                message = getString(R.string.aquarium_camera_permission_required),
                 type = BaseActivity.SnackType.WARNING
             )
         }
@@ -85,11 +78,11 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            pendingCameraUri?.let { uri ->
+            photoFlowCoordinator.currentCameraUri()?.let { uri ->
                 startImageCrop(uri)
             }
         } else {
-            cleanupPendingCameraImage()
+            photoFlowCoordinator.cleanupPendingCameraImage()
         }
     }
 
@@ -104,7 +97,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             if (outputUri != null) {
                 saveTankPhoto(outputUri)
             } else {
-                cleanupPendingCropSource()
+                photoFlowCoordinator.cleanupPendingCropSource()
             }
         } else if (result.resultCode == UCrop.RESULT_ERROR) {
             val error = result.data?.let { intent ->
@@ -112,13 +105,13 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             }
 
             showSnackBar(
-                message = error?.message ?: "Photo could not be cropped.",
+                message = error?.message ?: getString(R.string.aquarium_photo_crop_failed),
                 type = BaseActivity.SnackType.ERROR
             )
 
-            cleanupPendingCropSource()
+            photoFlowCoordinator.cleanupPendingCropSource()
         } else {
-            cleanupPendingCropSource()
+            photoFlowCoordinator.cleanupPendingCropSource()
         }
     }
 
@@ -229,7 +222,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         binding.tvSettingTankName.text = tank.name
 
         binding.tvSettingTankType.text = tank.tankType.ifBlank {
-            "-"
+            getString(R.string.aquarium_no_value_placeholder)
         }
 
         binding.tvSettingSizeTitle.text = getSizeTitleText(tank)
@@ -242,11 +235,11 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         )
 
         binding.tvSettingStyle.text = tank.tankStyle.ifBlank {
-            "-"
+            getString(R.string.aquarium_no_value_placeholder)
         }
 
         binding.tvSettingIdea.text = tank.description.ifBlank {
-            "No idea added"
+            getString(R.string.aquarium_no_idea_added)
         }
     }
 
@@ -302,7 +295,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private fun showPhotoSourceSheet() {
         PhotoSourceBottomSheet
             .newInstance(
-                title = "Aquarium Photo",
+                title = getString(R.string.aquarium_photo_title),
                 showRemove = !currentTank?.photoUri.isNullOrBlank()
             )
             .show(
@@ -333,83 +326,48 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     }
 
     private fun openCamera() {
-        val cameraUri = TankPhotoStorage.createCameraCaptureUri(
-            context = requireContext(),
-            ownerToken = tankId.toString()
-        )
+        val cameraUri = photoFlowCoordinator.createCameraUri()
 
         if (cameraUri == null) {
             showSnackBar(
-                message = "Temporary image file could not be created.",
+                message = getString(R.string.aquarium_photo_temp_file_failed),
                 type = BaseActivity.SnackType.ERROR
             )
             return
         }
 
-        pendingCameraUri = cameraUri
         cameraLauncher.launch(cameraUri)
     }
 
     private fun startImageCrop(
         sourceUri: Uri
     ) {
-        val destinationUri = TankPhotoStorage.createCropOutputUri(
-            context = requireContext(),
-            ownerToken = tankId.toString()
-        )
+        val destinationUri = photoFlowCoordinator.createCropOutputUri()
 
         if (destinationUri == null) {
-            cleanupPendingCameraImage()
+            photoFlowCoordinator.cleanupPendingCameraImage()
             showSnackBar(
-                message = "Temporary crop file could not be created.",
+                message = getString(R.string.aquarium_photo_temp_crop_failed),
                 type = BaseActivity.SnackType.ERROR
             )
             return
         }
 
-        pendingCropSourceUri = sourceUri
+        photoFlowCoordinator.markCropSource(sourceUri)
 
-        val options = UCrop.Options().apply {
-            setToolbarTitle("Crop aquarium photo")
-            setToolbarColor(Color.parseColor("#081B31"))
-            setToolbarWidgetColor(Color.WHITE)
-            setRootViewBackgroundColor(Color.parseColor("#081B31"))
-            setActiveControlsWidgetColor(Color.parseColor("#2196F3"))
-            setCompressionQuality(90)
-            setFreeStyleCropEnabled(false)
-            setHideBottomControls(true)
-        }
-
-        val cropIntent = UCrop.of(
-            sourceUri,
-            destinationUri
+        cropLauncher.launch(
+            photoFlowCoordinator.buildCropIntent(
+                sourceUri = sourceUri,
+                destinationUri = destinationUri,
+                title = getString(R.string.aquarium_photo_crop_title)
+            )
         )
-            .withAspectRatio(
-                16f,
-                9f
-            )
-            .withMaxResultSize(
-                1600,
-                900
-            )
-            .withOptions(options)
-            .getIntent(requireContext())
-            .apply {
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            }
-
-        cropLauncher.launch(cropIntent)
     }
 
     private fun saveTankPhoto(
         photoUri: Uri
     ) {
-        val context = requireContext()
-        val contentUri = TankPhotoStorage.toContentUriIfInternalFile(
-            context = context,
-            uri = photoUri
-        ) ?: photoUri
+        val contentUri = photoFlowCoordinator.toContentUri(photoUri)
 
         binding.imgTankPhoto.load(contentUri) {
             placeholder(R.drawable.nature_aquarium)
@@ -425,27 +383,26 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                 )
 
                 showSnackBar(
-                    message = "Photo updated.",
+                    message = getString(R.string.aquarium_photo_updated),
                     type = BaseActivity.SnackType.SUCCESS
                 )
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
-                TankPhotoStorage.deleteInternalPhoto(
-                    context = context,
-                    uriString = contentUri.toString()
-                )
+                photoFlowCoordinator.deleteInternalPhoto(contentUri.toString())
 
                 currentTank?.let { tank ->
                     bindTank(tank)
                 }
 
                 showSnackBar(
-                    message = "Photo could not be saved.",
+                    message = getString(R.string.aquarium_photo_save_failed),
                     type = BaseActivity.SnackType.ERROR
                 )
             } finally {
-                cleanupPendingCropSource()
+                photoFlowCoordinator.cleanupPendingCropSource(
+                    keepUriString = contentUri.toString()
+                )
             }
         }
     }
@@ -468,44 +425,18 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                 binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
 
                 showSnackBar(
-                    message = "Photo removed.",
+                    message = getString(R.string.aquarium_photo_removed),
                     type = BaseActivity.SnackType.SUCCESS
                 )
             } catch (exception: Exception) {
                 exception.printStackTrace()
 
                 showSnackBar(
-                    message = "Photo could not be removed.",
+                    message = getString(R.string.aquarium_photo_remove_failed),
                     type = BaseActivity.SnackType.ERROR
                 )
             }
         }
-    }
-
-    private fun cleanupPendingCameraImage() {
-        TankPhotoStorage.deleteInternalPhoto(
-            context = requireContext(),
-            uriString = pendingCameraUri?.toString()
-        )
-
-        pendingCameraUri = null
-    }
-
-    private fun cleanupPendingCropSource() {
-        val sourceUri = pendingCropSourceUri
-
-        if (sourceUri != null) {
-            TankPhotoStorage.deleteInternalPhoto(
-                context = requireContext(),
-                uriString = sourceUri.toString()
-            )
-        }
-
-        if (sourceUri == pendingCameraUri) {
-            pendingCameraUri = null
-        }
-
-        pendingCropSourceUri = null
     }
 
     private fun runTankUpdate(
@@ -538,7 +469,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         contentBinding.inputTankName.setText(tank.name)
 
         showSettingsBottomSheet(
-            title = "Tank Name",
+            title = getString(R.string.aquarium_tank_name_title),
             contentView = contentBinding.root
         ) { dialog ->
             contentBinding.btnCancel.setOnClickListener {
@@ -552,14 +483,14 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
 
                 if (newName.length < 2) {
                     showSnackBar(
-                        message = "Tank name must be at least 2 characters.",
+                        message = getString(R.string.aquarium_validation_tank_name_min),
                         type = BaseActivity.SnackType.WARNING
                     )
                     return@setOnClickListener
                 }
 
                 runTankUpdate(
-                    errorMessage = "Tank name could not be saved.",
+                    errorMessage = getString(R.string.aquarium_error_tank_name_save_failed),
                     onSuccess = {
                         dialog.dismiss()
                     }
@@ -581,7 +512,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             currentType = tank.tankType,
             onSave = { selectedType, dismiss ->
                 runTankUpdate(
-                    errorMessage = "Tank type could not be saved.",
+                    errorMessage = getString(R.string.aquarium_error_tank_type_save_failed),
                     onSuccess = dismiss
                 ) {
                     aquariumTankViewModel.updateTankType(
@@ -602,16 +533,16 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             currentLengthCm = tank.lengthCm,
             currentHeightCm = tank.heightCm,
             currentUnit = tank.sizeUnit,
-            title = "Size",
+            title = getString(R.string.aquarium_tank_size_title),
             onInvalidInput = {
                 showSnackBar(
-                    message = "Please enter valid tank size.",
+                    message = getString(R.string.aquarium_validation_invalid_tank_size),
                     type = BaseActivity.SnackType.WARNING
                 )
             },
             onSave = { result, dismiss ->
                 runTankUpdate(
-                    errorMessage = "Tank size could not be saved.",
+                    errorMessage = getString(R.string.aquarium_error_tank_size_save_failed),
                     onSuccess = dismiss
                 ) {
                     aquariumTankViewModel.updateTankSize(
@@ -641,7 +572,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         }
 
         runTankUpdate(
-            errorMessage = "Volume unit could not be saved."
+            errorMessage = getString(R.string.aquarium_error_volume_unit_save_failed)
         ) {
             aquariumTankViewModel.updateTankVolumeUnit(
                 tankId = tankId,
@@ -653,19 +584,15 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private fun showSetupDateSheet() {
         val tank = currentTank ?: return
 
-        val currentYear = Calendar.getInstance().get(
-            Calendar.YEAR
-        )
-
         SetupDateBottomSheet.show(
             fragment = this,
             currentMillis = tank.setupDateMillis,
-            minYear = currentYear - 10,
-            maxYear = currentYear + 10,
-            monthLocale = Locale.getDefault(),
+            minYear = AquariumDatePolicy.minSetupYear(),
+            maxYear = AquariumDatePolicy.maxSetupYear(),
+            monthLocale = AquariumDatePolicy.setupDateLocale,
             onSave = { selectedMillis, dismiss ->
                 runTankUpdate(
-                    errorMessage = "Setup date could not be saved.",
+                    errorMessage = getString(R.string.aquarium_error_setup_date_save_failed),
                     onSuccess = dismiss
                 ) {
                     aquariumTankViewModel.updateTankSetupDate(
@@ -685,7 +612,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
             currentStyle = tank.tankStyle,
             onSave = { selectedStyle, dismiss ->
                 runTankUpdate(
-                    errorMessage = "Tank style could not be saved.",
+                    errorMessage = getString(R.string.aquarium_error_tank_style_save_failed),
                     onSuccess = dismiss
                 ) {
                     aquariumTankViewModel.updateTankStyle(
@@ -707,7 +634,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
         contentBinding.inputIdea.setText(tank.description)
 
         showSettingsBottomSheet(
-            title = "Idea",
+            title = getString(R.string.aquarium_idea_title),
             contentView = contentBinding.root
         ) { dialog ->
             contentBinding.btnCancel.setOnClickListener {
@@ -720,7 +647,7 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
                     .trim()
 
                 runTankUpdate(
-                    errorMessage = "Idea could not be saved.",
+                    errorMessage = getString(R.string.aquarium_error_idea_save_failed),
                     onSuccess = {
                         dialog.dismiss()
                     }
@@ -737,56 +664,47 @@ class TankSettingsBasicFragment : Fragment(R.layout.fragment_tank_settings_basic
     private fun getSizeTitleText(
         tank: SavedAquariumTank
     ): String {
-        return if (tank.sizeUnit.equals("in", ignoreCase = true)) {
-            "Size (in)"
-        } else {
-            "Size (cm)"
-        }
+        return AquariumDimensionFormatter.sizeTitle(
+            context = requireContext(),
+            sizeUnit = tank.sizeUnit
+        )
     }
 
     private fun getSizeText(
         tank: SavedAquariumTank
     ): String {
-        return if (tank.sizeUnit.equals("in", ignoreCase = true)) {
-            val widthIn = tank.widthCm / 2.54
-            val lengthIn = tank.lengthCm / 2.54
-            val heightIn = tank.heightCm / 2.54
-
-            "${sizeFormatter.format(widthIn)} W x ${sizeFormatter.format(lengthIn)} L x ${sizeFormatter.format(heightIn)} H"
-        } else {
-            "${tank.widthCm} W x ${tank.lengthCm} L x ${tank.heightCm} H"
-        }
+        return AquariumDimensionFormatter.sizeText(
+            widthCm = tank.widthCm,
+            lengthCm = tank.lengthCm,
+            heightCm = tank.heightCm,
+            sizeUnit = tank.sizeUnit,
+            separator = " x "
+        )
     }
 
     private fun getVolumeText(
         tank: SavedAquariumTank
     ): String {
-        val liter = (tank.widthCm * tank.lengthCm * tank.heightCm) / 1000.0
-
-        return if (tank.volumeUnit.equals("gal", ignoreCase = true)) {
-            val gallon = liter * 0.264172
-            "${gallon.roundToInt()} gal"
-        } else {
-            "${liter.roundToInt()} L"
-        }
+        return AquariumDimensionFormatter.volumeText(
+            widthCm = tank.widthCm,
+            lengthCm = tank.lengthCm,
+            heightCm = tank.heightCm,
+            volumeUnit = tank.volumeUnit,
+            rounded = true
+        )
     }
 
     private fun getSetupDateText(
         setupDateMillis: Long?
     ): String {
-        if (setupDateMillis == null) {
-            return "-"
-        }
-
-        val formatter = SimpleDateFormat(
-            "dd MMM yyyy",
-            Locale.getDefault()
+        return AquariumDatePolicy.formatSetupDate(
+            millis = setupDateMillis,
+            emptyText = getString(R.string.aquarium_no_value_placeholder)
         )
-
-        return formatter.format(Date(setupDateMillis))
     }
 
     override fun onDestroyView() {
+        photoFlowCoordinator.cleanupAllPending()
         super.onDestroyView()
         _binding = null
     }

@@ -210,7 +210,7 @@ class AquariumMaintenanceFragment :
 
         val incompleteProfiles = latestTanks
             .map { tank ->
-                tank to CareProfileCalculator.calculate(tank)
+                tank to CareProfileCalculator.calculate(requireContext(), tank)
             }
             .filter { (_, result) ->
                 result.percent < 100

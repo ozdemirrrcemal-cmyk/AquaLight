@@ -78,7 +78,7 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
-            android:text="Devices"
+            android:text="@string/aquarium_detail_tab_devices"
             android:textColor="#8FA4BE"
             android:textSize="12sp" />
 
@@ -90,7 +90,7 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
-            android:text="Activity"
+            android:text="@string/aquarium_detail_tab_activity"
             android:textColor="#8FA4BE"
             android:textSize="12sp" />
 
@@ -102,7 +102,7 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
-            android:text="Tank"
+            android:text="@string/aquarium_detail_tab_tank"
             android:textColor="?attr/colorOnSurface"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -115,7 +115,7 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
-            android:text="Plants"
+            android:text="@string/aquarium_detail_tab_plants"
             android:textColor="#8FA4BE"
             android:textSize="12sp" />
 
@@ -127,7 +127,7 @@
             android:ellipsize="end"
             android:gravity="center"
             android:maxLines="1"
-            android:text="Tank Life"
+            android:text="@string/aquarium_tank_life_title"
             android:textColor="#8FA4BE"
             android:textSize="12sp" />
 
@@ -170,7 +170,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="44dp"
                 android:gravity="center"
-                android:text="This section will be available soon."
+                android:text="@string/aquarium_text_this_section_will_be_available_soon"
                 android:textColor="#8FA4BE"
                 android:textSize="14sp"
                 android:visibility="gone" />

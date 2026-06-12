@@ -16,6 +16,6 @@ data class TankDraft(
     val heightCm: Int = 10,
     val sizeUnit: String = "cm",
     val volumeUnit: String = "L",
-    val tankType: String = "Fish",
+    val tankType: String = "",
     val tankStyle: String = ""
 )

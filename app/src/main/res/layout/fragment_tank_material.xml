@@ -24,7 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Add the biological materials and hardware used in this aquarium setup."
+            android:text="@string/aquarium_text_add_the_biological_materials_and_hardware_used_in_this_aquar"
             android:textColor="#8FA4BE"
             android:textSize="14sp"
             android:lineSpacingExtra="3dp" />
@@ -34,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="26dp"
-            android:text="Bio"
+            android:text="@string/aquarium_material_group_bio"
             android:textColor="?attr/colorOnSurface"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -51,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="26dp"
-            android:text="Hardware"
+            android:text="@string/aquarium_material_group_hardware"
             android:textColor="?attr/colorOnSurface"
             android:textSize="15sp"
             android:textStyle="bold" />

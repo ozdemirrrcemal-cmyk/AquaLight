@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:includeFontPadding="false"
-            android:text="Automation &amp; Reminders"
+            android:text="@string/aquarium_text_automation_reminders"
             android:textColor="?attr/colorOnSurface"
             android:textSize="14sp" />
 
@@ -67,7 +67,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Smart Care Suggestions"
+                        android:text="@string/aquarium_text_smart_care_suggestions"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -79,7 +79,7 @@
                         android:layout_marginTop="6dp"
                         android:includeFontPadding="false"
                         android:lineSpacingExtra="2dp"
-                        android:text="Automatically create smart care tasks for this tank."
+                        android:text="@string/aquarium_text_automatically_create_smart_care_tasks_for_this_tank"
                         android:textColor="#8FA4BE"
                         android:textSize="12sp" />
 
@@ -131,7 +131,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="Care Reminder Notifications"
+                        android:text="@string/aquarium_text_care_reminder_notifications"
                         android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -143,7 +143,7 @@
                         android:layout_marginTop="6dp"
                         android:includeFontPadding="false"
                         android:lineSpacingExtra="2dp"
-                        android:text="Send reminder notifications for this tank's care tasks."
+                        android:text="@string/aquarium_text_send_reminder_notifications_for_this_tank_s_care_tasks"
                         android:textColor="#8FA4BE"
                         android:textSize="12sp" />
 
@@ -165,7 +165,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="26dp"
             android:includeFontPadding="false"
-            android:text="Data Management"
+            android:text="@string/aquarium_text_data_management"
             android:textColor="?attr/colorOnSurface"
             android:textSize="14sp" />
 
@@ -195,7 +195,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Duplicate Tank"
+                    android:text="@string/aquarium_text_duplicate_tank"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -238,7 +238,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:includeFontPadding="false"
-                    android:text="Export Tank Data"
+                    android:text="@string/aquarium_text_export_tank_data"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -261,7 +261,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="26dp"
             android:includeFontPadding="false"
-            android:text="Danger Zone"
+            android:text="@string/aquarium_text_danger_zone"
             android:textColor="#E06A6A"
             android:textSize="14sp" />
 
@@ -275,7 +275,7 @@
             android:insetBottom="0dp"
             android:minWidth="0dp"
             android:minHeight="0dp"
-            android:text="Delete Tank"
+            android:text="@string/aquarium_text_delete_tank"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textSize="14sp"

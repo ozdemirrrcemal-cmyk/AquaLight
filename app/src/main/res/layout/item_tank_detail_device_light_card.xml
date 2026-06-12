@@ -139,7 +139,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="ACTIVE PROGRAM"
+                    android:text="@string/aquarium_active_program_label"
                     android:textColor="#6F8197"
                     android:textSize="9.5sp"
                     android:textStyle="bold"

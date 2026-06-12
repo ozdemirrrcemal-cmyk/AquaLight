@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.careprofile
 
+import android.content.Context
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import java.util.Locale
@@ -23,33 +25,39 @@ object CareProfileCalculator {
   )
 
   fun calculate(
+    context: Context,
     tank: SavedAquariumTank
   ): Result {
     val items = mutableListOf<Item>()
 
     items.add(
       Item(
-        title = "Tank name",
-        subtitle = if (tank.name.isNotBlank()) tank.name else "Missing tank name",
+        title = context.getString(R.string.aquarium_care_profile_tank_name),
+        subtitle = if (tank.name.isNotBlank()) tank.name else context.getString(R.string.aquarium_care_profile_missing_tank_name),
         completed = tank.name.isNotBlank()
       )
     )
 
     items.add(
       Item(
-        title = "Tank type",
-        subtitle = if (tank.tankType.isNotBlank()) tank.tankType else "Missing tank type",
+        title = context.getString(R.string.aquarium_care_profile_tank_type),
+        subtitle = if (tank.tankType.isNotBlank()) tank.tankType else context.getString(R.string.aquarium_care_profile_missing_tank_type),
         completed = tank.tankType.isNotBlank()
       )
     )
 
     items.add(
       Item(
-        title = "Tank size",
+        title = context.getString(R.string.aquarium_care_profile_tank_size),
         subtitle = if (hasValidTankSize(tank)) {
-          "${tank.widthCm} W x ${tank.lengthCm} L x ${tank.heightCm} H"
+          context.getString(
+            R.string.tank_pdf_size_format,
+            tank.widthCm,
+            tank.lengthCm,
+            tank.heightCm
+          )
         } else {
-          "Missing tank dimensions"
+          context.getString(R.string.aquarium_care_profile_missing_tank_dimensions)
         },
         completed = hasValidTankSize(tank)
       )
@@ -57,27 +65,27 @@ object CareProfileCalculator {
 
     items.add(
       Item(
-        title = "Setup date",
-        subtitle = if (tank.setupDateMillis != null) "Selected" else "Missing setup date",
+        title = context.getString(R.string.aquarium_care_profile_setup_date),
+        subtitle = if (tank.setupDateMillis != null) context.getString(R.string.aquarium_care_profile_selected) else context.getString(R.string.aquarium_care_profile_missing_setup_date),
         completed = tank.setupDateMillis != null
       )
     )
 
     items.add(
       Item(
-        title = "Tank style",
-        subtitle = if (tank.tankStyle.isNotBlank()) tank.tankStyle else "Missing tank style",
+        title = context.getString(R.string.aquarium_care_profile_tank_style),
+        subtitle = if (tank.tankStyle.isNotBlank()) tank.tankStyle else context.getString(R.string.aquarium_care_profile_missing_tank_style),
         completed = tank.tankStyle.isNotBlank()
       )
     )
 
     items.add(
       Item(
-        title = "Plants",
+        title = context.getString(R.string.aquarium_care_profile_plants),
         subtitle = if (tank.plants.isNotEmpty()) {
-          "${tank.plants.size} plants selected"
+          context.resources.getQuantityString(R.plurals.aquarium_care_profile_plants_selected, tank.plants.size, tank.plants.size)
         } else {
-          "Missing plant information"
+          context.getString(R.string.aquarium_care_profile_missing_plants)
         },
         completed = tank.plants.isNotEmpty()
       )
@@ -85,11 +93,11 @@ object CareProfileCalculator {
 
     items.add(
       Item(
-        title = "Livestock",
+        title = context.getString(R.string.aquarium_care_profile_livestock),
         subtitle = if (tank.livestock.isNotEmpty()) {
-          "${tank.livestock.size} livestock selected"
+          context.resources.getQuantityString(R.plurals.aquarium_care_profile_livestock_selected, tank.livestock.size, tank.livestock.size)
         } else {
-          "Missing fish / shrimp information"
+          context.getString(R.string.aquarium_care_profile_missing_livestock)
         },
         completed = tank.livestock.isNotEmpty()
       )
@@ -97,8 +105,9 @@ object CareProfileCalculator {
 
     items.add(
       createMaterialItem(
-        title = "Lighting",
-        missingSubtitle = "Missing lighting information",
+        context = context,
+        title = context.getString(R.string.aquarium_care_profile_lighting),
+        missingSubtitle = context.getString(R.string.aquarium_care_profile_missing_lighting),
         tank = tank,
         keywords = arrayOf(
           "light",
@@ -112,8 +121,9 @@ object CareProfileCalculator {
 
     items.add(
       createMaterialItem(
-        title = "Filter",
-        missingSubtitle = "Missing filter information",
+        context = context,
+        title = context.getString(R.string.aquarium_care_profile_filter),
+        missingSubtitle = context.getString(R.string.aquarium_care_profile_missing_filter),
         tank = tank,
         keywords = arrayOf(
           "filter",
@@ -124,8 +134,9 @@ object CareProfileCalculator {
 
     items.add(
       createMaterialItem(
-        title = "Substrate / soil",
-        missingSubtitle = "Missing substrate or soil information",
+        context = context,
+        title = context.getString(R.string.aquarium_care_profile_substrate),
+        missingSubtitle = context.getString(R.string.aquarium_care_profile_missing_substrate),
         tank = tank,
         keywords = arrayOf(
           "substrate",
@@ -142,8 +153,9 @@ object CareProfileCalculator {
 
     items.add(
       createMaterialItem(
-        title = "CO₂",
-        missingSubtitle = "Missing CO₂ information",
+        context = context,
+        title = context.getString(R.string.aquarium_care_profile_co2),
+        missingSubtitle = context.getString(R.string.aquarium_care_profile_missing_co2),
         tank = tank,
         keywords = arrayOf(
           "co2",
@@ -155,8 +167,9 @@ object CareProfileCalculator {
 
     items.add(
       createMaterialItem(
-        title = "Fertilizer",
-        missingSubtitle = "Missing fertilizer information",
+        context = context,
+        title = context.getString(R.string.aquarium_care_profile_fertilizer),
+        missingSubtitle = context.getString(R.string.aquarium_care_profile_missing_fertilizer),
         tank = tank,
         keywords = arrayOf(
           "fertilizer",
@@ -189,6 +202,7 @@ object CareProfileCalculator {
   }
 
   private fun createMaterialItem(
+    context: Context,
     title: String,
     missingSubtitle: String,
     tank: SavedAquariumTank,
@@ -207,6 +221,7 @@ object CareProfileCalculator {
       title = title,
       subtitle = if (completed) {
         getMaterialMatchSummary(
+          context = context,
           tank = tank,
           keywords = keywords
         )
@@ -240,6 +255,7 @@ object CareProfileCalculator {
   }
 
   private fun getMaterialMatchSummary(
+    context: Context,
     tank: SavedAquariumTank,
     keywords: Array<String>
   ): String {
@@ -251,14 +267,14 @@ object CareProfileCalculator {
     }
 
     if (matchedMaterials.isEmpty()) {
-      return "Selected"
+      return context.getString(R.string.aquarium_care_profile_selected)
     }
 
     if (matchedMaterials.size == 1) {
       return matchedMaterials.first().name
     }
 
-    return "${matchedMaterials.first().name} +${matchedMaterials.size - 1} more"
+    return context.getString(R.string.material_picker_more_count, matchedMaterials.first().name, matchedMaterials.size - 1)
   }
 
   private fun findMaterialCategory(

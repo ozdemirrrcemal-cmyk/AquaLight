@@ -30,7 +30,7 @@
     android:layout_marginTop="18dp"
     android:includeFontPadding="false"
     android:lineSpacingExtra="2dp"
-    android:text="Choose a style or write your own aquarium concept."
+    android:text="@string/aquarium_text_choose_a_style_or_write_your_own_aquarium_concept"
     android:textColor="#8FA4BE"
     android:textSize="13sp" />
 
@@ -57,7 +57,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Nature&#10;Aquarium"
+        android:text="@string/aquarium_style_nature_aquarium"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -73,7 +73,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Iwagumi"
+        android:text="@string/aquarium_style_iwagumi"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -89,7 +89,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Dutch"
+        android:text="@string/aquarium_style_dutch"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -113,7 +113,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Jungle"
+        android:text="@string/aquarium_style_jungle"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -129,7 +129,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Biotope"
+        android:text="@string/aquarium_style_biotope"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -145,7 +145,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Blackwater"
+        android:text="@string/aquarium_style_blackwater"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -169,7 +169,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Forest"
+        android:text="@string/aquarium_style_forest"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -185,7 +185,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Mountain"
+        android:text="@string/aquarium_style_mountain"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -201,7 +201,7 @@
         android:includeFontPadding="false"
         android:lineSpacingExtra="0dp"
         android:maxLines="2"
-        android:text="Island"
+        android:text="@string/aquarium_style_island"
         android:textAlignment="center"
         android:textColor="@android:color/white"
         android:textSize="14sp" />
@@ -219,7 +219,7 @@
     android:insetBottom="0dp"
     android:minWidth="0dp"
     android:minHeight="0dp"
-    android:text="Save"
+    android:text="@string/common_save"
     android:textAllCaps="false"
     android:textColor="@android:color/white"
     android:textSize="14sp"
@@ -234,7 +234,7 @@
     android:layout_marginTop="10dp"
     android:gravity="center"
     android:includeFontPadding="false"
-    android:text="Cancel"
+    android:text="@string/common_cancel"
     android:textColor="#8FA4BE"
     android:textSize="14sp" />
 

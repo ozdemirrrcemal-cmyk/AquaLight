@@ -12,21 +12,22 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
-import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
-import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
+import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSummaryFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.math.roundToInt
 
 class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
@@ -38,16 +39,15 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private var tankId: Long = 0L
     private var currentTank: SavedAquariumTank? = null
     private var isOpeningSettings: Boolean = false
+    private var isUpdatingVolumeUnit: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         tankId = requireArguments().getLong(ARG_TANK_ID)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         _binding = FragmentTankDetailTankBinding.bind(view)
 
         setupClickListeners()
@@ -97,20 +97,14 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     }
 
     private fun openTankSettings() {
-        openTankSettings(
-            startTab = AquariumTabArgs.BASIC
-        )
+        openTankSettings(startTab = AquariumTabArgs.BASIC)
     }
 
     private fun openTankSettingsDetails() {
-        openTankSettings(
-            startTab = AquariumTabArgs.DETAILS
-        )
+        openTankSettings(startTab = AquariumTabArgs.DETAILS)
     }
 
-    private fun openTankSettings(
-        startTab: String
-    ) {
+    private fun openTankSettings(startTab: String) {
         if (isOpeningSettings) {
             return
         }
@@ -127,61 +121,52 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     }
 
     private fun toggleTankVolumeUnit() {
+        if (isUpdatingVolumeUnit) {
+            return
+        }
+
         val tank = currentTank ?: return
-
-        val currentUnit = tank.volumeUnit.ifBlank {
-            "L"
-        }
-
-        val newUnit = if (currentUnit.equals("gal", ignoreCase = true)) {
-            "L"
+        val currentUnit = tank.volumeUnit.ifBlank { DEFAULT_VOLUME_UNIT }
+        val newUnit = if (currentUnit.equals(VOLUME_UNIT_GALLON, ignoreCase = true)) {
+            DEFAULT_VOLUME_UNIT
         } else {
-            "gal"
+            VOLUME_UNIT_GALLON
         }
 
-        binding.tvTankVolumeValue.text = getTankVolumeText(
-            tank = tank,
-            volumeUnit = newUnit
-        )
+        isUpdatingVolumeUnit = true
+        binding.tvTankVolumeValue.text = getTankVolumeText(tank, newUnit)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            aquariumTankViewModel.updateTankVolumeUnit(
-                tankId = tankId,
-                volumeUnit = newUnit
-            )
+            try {
+                aquariumTankViewModel.updateTankVolumeUnit(
+                    tankId = tankId,
+                    volumeUnit = newUnit
+                )
+            } catch (exception: Exception) {
+                exception.printStackTrace()
+                binding.tvTankVolumeValue.text = getTankVolumeText(tank, currentUnit)
+                showSnackBar(
+                    message = getString(R.string.aquarium_error_volume_unit_save_failed),
+                    type = BaseActivity.SnackType.ERROR
+                )
+            } finally {
+                isUpdatingVolumeUnit = false
+            }
         }
     }
 
-    private fun renderTankSection(
-        tank: SavedAquariumTank
-    ) {
+    private fun renderTankSection(tank: SavedAquariumTank) {
         binding.tvTankDaysValue.text = getTankDaysText(tank.setupDateMillis)
-
-        binding.tvTankVolumeValue.text = getTankVolumeText(
-            tank = tank,
-            volumeUnit = tank.volumeUnit
-        )
-
+        binding.tvTankVolumeValue.text = getTankVolumeText(tank, tank.volumeUnit)
         binding.tvTankSizeValue.text = getTankSizeText(tank)
-
-        binding.tvTankTypeValue.text = tank.tankType.ifBlank {
-            "-"
-        }
-
-        binding.tvTankSetupDateValue.text = getTankSetupDateText(
-            tank.setupDateMillis
-        )
-
-        binding.tvTankStyleValue.text = tank.tankStyle.ifBlank {
-            "-"
-        }
+        binding.tvTankTypeValue.text = tank.tankType.ifBlank { VALUE_EMPTY }
+        binding.tvTankSetupDateValue.text = getTankSetupDateText(tank.setupDateMillis)
+        binding.tvTankStyleValue.text = tank.tankStyle.ifBlank { VALUE_EMPTY }
 
         renderTankComponents(tank)
     }
 
-    private fun renderTankComponents(
-        tank: SavedAquariumTank
-    ) {
+    private fun renderTankComponents(tank: SavedAquariumTank) {
         binding.tankBioComponentsContainer.removeAllViews()
         binding.tankHardwareComponentsContainer.removeAllViews()
 
@@ -228,14 +213,12 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
             useCompatPadding = false
             isClickable = true
             isFocusable = true
-
-            val params = LinearLayout.LayoutParams(
+            layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.bottomMargin = 10.dp()
-            layoutParams = params
-
+            ).apply {
+                bottomMargin = 10.dp()
+            }
             setOnClickListener {
                 openTankSettingsDetails()
             }
@@ -244,13 +227,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
         val row = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-
-            setPadding(
-                14.dp(),
-                12.dp(),
-                14.dp(),
-                12.dp()
-            )
+            setPadding(14.dp(), 12.dp(), 14.dp(), 12.dp())
         }
 
         val iconBox = TextView(requireContext()).apply {
@@ -261,23 +238,18 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
             setTypeface(null, Typeface.BOLD)
             setBackgroundResource(R.drawable.bg_material_icon_box)
             includeFontPadding = false
-
-            layoutParams = LinearLayout.LayoutParams(
-                42.dp(),
-                42.dp()
-            )
+            layoutParams = LinearLayout.LayoutParams(42.dp(), 42.dp())
         }
 
         val textBox = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
-
-            val params = LinearLayout.LayoutParams(
+            layoutParams = LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 1f
-            )
-            params.marginStart = 14.dp()
-            layoutParams = params
+            ).apply {
+                marginStart = 14.dp()
+            }
         }
 
         val titleText = TextView(requireContext()).apply {
@@ -294,95 +266,87 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
             text = getComponentSummary(materials)
             textSize = 12f
             setTextColor(Color.parseColor("#8FA4BE"))
-
-            setLineSpacing(
-                2.dp().toFloat(),
-                1.0f
-            )
-
+            setLineSpacing(2.dp().toFloat(), 1.0f)
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
-
-            val params = LinearLayout.LayoutParams(
+            layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            params.topMargin = 6.dp()
-            layoutParams = params
+            ).apply {
+                topMargin = 6.dp()
+            }
         }
 
         textBox.addView(titleText)
         textBox.addView(summaryText)
-
         row.addView(iconBox)
         row.addView(textBox)
-
         card.addView(row)
 
         return card
     }
 
-    private fun getComponentSummary(
-        materials: List<SavedAquariumMaterial>
-    ): String {
-        if (materials.isEmpty()) {
-            return "Not selected"
-        }
-
-        if (materials.size == 1) {
-            return materials.first().name
-        }
-
-        return "${materials.first().name} +${materials.size - 1} more"
+    private fun getComponentSummary(materials: List<SavedAquariumMaterial>): String {
+        return MaterialSummaryFormatter.summaryForSavedMaterials(
+            context = requireContext(),
+            materials = materials
+        )
     }
 
-    private fun getTankDaysText(
-        setupDateMillis: Long?
-    ): String {
+    private fun getTankDaysText(setupDateMillis: Long?): String {
         if (setupDateMillis == null) {
-            return "-"
+            return VALUE_EMPTY
         }
 
         val day = TimeUnit.MILLISECONDS
             .toDays(System.currentTimeMillis() - setupDateMillis)
             .coerceAtLeast(0)
 
-        return "$day days"
+        return resources.getQuantityString(
+            R.plurals.aquarium_tank_age_days,
+            day.toInt(),
+            day
+        )
     }
 
     private fun getTankVolumeText(
         tank: SavedAquariumTank,
         volumeUnit: String
     ): String {
-        val liter = (tank.widthCm * tank.lengthCm * tank.heightCm) / 1000.0
-
-        return if (volumeUnit.equals("gal", ignoreCase = true)) {
-            val gallon = liter * 0.264172
-            "${gallon.roundToInt()} gal"
-        } else {
-            "${liter.roundToInt()} L"
-        }
-    }
-
-    private fun getTankSizeText(
-        tank: SavedAquariumTank
-    ): String {
-        return "${tank.widthCm}×${tank.lengthCm}×${tank.heightCm}"
-    }
-
-    private fun getTankSetupDateText(
-        setupDateMillis: Long?
-    ): String {
-        if (setupDateMillis == null) {
-            return "-"
-        }
-
-        val formatter = SimpleDateFormat(
-            "dd MMM yy",
-            Locale.getDefault()
+        return AquariumDimensionFormatter.volumeText(
+            widthCm = tank.widthCm,
+            lengthCm = tank.lengthCm,
+            heightCm = tank.heightCm,
+            volumeUnit = volumeUnit,
+            rounded = true
         )
+    }
 
-        return formatter.format(Date(setupDateMillis))
+    private fun getTankSizeText(tank: SavedAquariumTank): String {
+        return AquariumDimensionFormatter.sizeText(
+            widthCm = tank.widthCm,
+            lengthCm = tank.lengthCm,
+            heightCm = tank.heightCm,
+            sizeUnit = tank.sizeUnit,
+            separator = "×"
+        )
+    }
+
+    private fun getTankSetupDateText(setupDateMillis: Long?): String {
+        return AquariumDatePolicy.formatSetupDate(
+            millis = setupDateMillis,
+            emptyText = VALUE_EMPTY
+        )
+    }
+
+    private fun showSnackBar(
+        message: String,
+        type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
+    ) {
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = type
+        )
     }
 
     private fun Int.dp(): Int {
@@ -396,10 +360,11 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
+        private const val DEFAULT_VOLUME_UNIT = "L"
+        private const val VOLUME_UNIT_GALLON = "gal"
+        private const val VALUE_EMPTY = "-"
 
-        fun newInstance(
-            tankId: Long
-        ): TankDetailTankFragment {
+        fun newInstance(tankId: Long): TankDetailTankFragment {
             return TankDetailTankFragment().apply {
                 arguments = Bundle().apply {
                     putLong(ARG_TANK_ID, tankId)

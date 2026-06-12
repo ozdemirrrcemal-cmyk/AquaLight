@@ -47,30 +47,37 @@ object TankPdfExporter {
     devices: List<DevicesDataStoreManager.DeviceInfo> = emptyList()
   ): Uri {
     val document = PdfDocument()
-    val writer = PdfWriter(document)
+    val texts = TankPdfTexts.from(context)
+    val writer = PdfWriter(
+      document = document,
+      texts = texts
+    )
 
     writer.drawReportHeader(
       tankName = tank.name,
       generatedDate = getGeneratedDateText()
     )
 
-    writer.drawSectionTitle("1. Tank Summary")
+    writer.drawSectionTitle(texts.sectionTankSummary)
 
-    writer.drawLabelValue("Tank Name", tank.name)
-    writer.drawLabelValue("Tank Type", tank.tankType.ifBlank {
-      "-"
+    writer.drawLabelValue(texts.labelTankName, tank.name)
+    writer.drawLabelValue(texts.labelTankType, tank.tankType.ifBlank {
+      texts.noValue
     })
-    writer.drawLabelValue("Size", getSizeText(tank))
-    writer.drawLabelValue("Volume", getVolumeText(tank))
-    writer.drawLabelValue("Setup Date", getSetupDateText(tank.setupDateMillis))
-    writer.drawLabelValue("Tank Style", tank.tankStyle.ifBlank {
-      "-"
+    writer.drawLabelValue(texts.labelSize, getSizeText(context, tank))
+    writer.drawLabelValue(texts.labelVolume, getVolumeText(tank))
+    writer.drawLabelValue(texts.labelSetupDate, getSetupDateText(
+      setupDateMillis = tank.setupDateMillis,
+      noValue = texts.noValue
+    ))
+    writer.drawLabelValue(texts.labelTankStyle, tank.tankStyle.ifBlank {
+      texts.noValue
     })
-    writer.drawLabelValue("Idea", tank.description.ifBlank {
-      "-"
+    writer.drawLabelValue(texts.labelIdea, tank.description.ifBlank {
+      texts.noValue
     })
 
-    writer.drawSectionTitle("2. Tank Photo")
+    writer.drawSectionTitle(texts.sectionTankPhoto)
 
     writer.drawTankPhoto(
       bitmap = getTankPhotoBitmap(
@@ -79,26 +86,32 @@ object TankPdfExporter {
       )
     )
 
-    writer.drawSectionTitle("3. Devices")
+    writer.drawSectionTitle(texts.sectionDevices)
 
     if (devices.isEmpty()) {
-      writer.drawMutedText("No devices connected.")
+      writer.drawMutedText(texts.noDevices)
     } else {
       devices.forEachIndexed {
         index, device ->
         writer.drawDeviceInfo(
           number = index + 1,
-          type = getDeviceTypeText(device),
+          type = getDeviceTypeText(
+            device = device,
+            fallbackText = texts.device
+          ),
           serial = device.serial,
-          firmware = getDeviceFirmwareText(device)
+          firmware = getDeviceFirmwareText(
+            device = device,
+            noValue = texts.noValue
+          )
         )
       }
     }
 
-    writer.drawSectionTitle("4. Tank Life")
+    writer.drawSectionTitle(texts.sectionTankLife)
 
     if (tank.livestock.isEmpty()) {
-      writer.drawMutedText("No livestock added.")
+      writer.drawMutedText(texts.noLivestock)
     } else {
       tank.livestock.forEachIndexed {
         index, livestock ->
@@ -106,15 +119,18 @@ object TankPdfExporter {
           number = index + 1,
           name = livestock.name,
           category = livestock.category,
-          quantity = getLivestockQuantityText(livestock.quantity)
+          quantity = getLivestockQuantityText(
+            context = context,
+            quantity = livestock.quantity
+          )
         )
       }
     }
 
-    writer.drawSectionTitle("5. Plants")
+    writer.drawSectionTitle(texts.sectionPlants)
 
     if (tank.plants.isEmpty()) {
-      writer.drawMutedText("No plants selected.")
+      writer.drawMutedText(texts.noPlants)
     } else {
       tank.plants.forEachIndexed {
         index, plant ->
@@ -126,7 +142,7 @@ object TankPdfExporter {
       }
     }
 
-    writer.drawSectionTitle("6. Bio Components")
+    writer.drawSectionTitle(texts.sectionBioComponents)
 
     MaterialCategoryCatalog.bioCategories.forEach {
       category ->
@@ -141,7 +157,7 @@ object TankPdfExporter {
       )
     }
 
-    writer.drawSectionTitle("7. Hardware Components")
+    writer.drawSectionTitle(texts.sectionHardwareComponents)
 
     MaterialCategoryCatalog.hardwareCategories.forEach {
       category ->
@@ -194,13 +210,13 @@ object TankPdfExporter {
     val shareIntent = Intent(Intent.ACTION_SEND).apply {
       type = "application/pdf"
       putExtra(Intent.EXTRA_STREAM, pdfUri)
-      putExtra(Intent.EXTRA_SUBJECT, "AquaLight Tank Report - $tankName")
+      putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.tank_pdf_share_subject, tankName))
       addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
     val chooser = Intent.createChooser(
       shareIntent,
-      "Export Tank Data"
+      context.getString(R.string.tank_pdf_share_chooser)
     )
 
     if (context !is Activity) {
@@ -210,43 +226,38 @@ object TankPdfExporter {
     context.startActivity(chooser)
   }
 
-  private fun getDeviceNameText(
-    device: DevicesDataStoreManager.DeviceInfo
-  ): String {
-    return device.name.ifBlank {
-      "Device"
-    }
-  }
-
   private fun getDeviceTypeText(
-    device: DevicesDataStoreManager.DeviceInfo
+    device: DevicesDataStoreManager.DeviceInfo,
+    fallbackText: String
   ): String {
     return device.aquaName.ifBlank {
-      "Device"
+      fallbackText
     }
   }
 
 
   private fun getDeviceFirmwareText(
-    device: DevicesDataStoreManager.DeviceInfo
+    device: DevicesDataStoreManager.DeviceInfo,
+    noValue: String
   ): String {
     return device.firmwareBuild
     .substringBefore(" (")
     .ifBlank {
-      "-"
+      noValue
     }
   }
 
   private fun getLivestockQuantityText(
+    context: Context,
     quantity: Int
   ): String {
     val safeQuantity = quantity.coerceAtLeast(1)
 
-    return if (safeQuantity == 1) {
-      "1 pc"
-    } else {
-      "$safeQuantity pcs"
-    }
+    return context.resources.getQuantityString(
+      R.plurals.tank_pdf_livestock_quantity_piece,
+      safeQuantity,
+      safeQuantity
+    )
   }
 
   private fun getTankPhotoBitmap(
@@ -289,10 +300,11 @@ object TankPdfExporter {
   }
 
   private fun getSetupDateText(
-    setupDateMillis: Long?
+    setupDateMillis: Long?,
+    noValue: String
   ): String {
     if (setupDateMillis == null) {
-      return "-"
+      return noValue
     }
 
     return SimpleDateFormat(
@@ -302,9 +314,15 @@ object TankPdfExporter {
   }
 
   private fun getSizeText(
+    context: Context,
     tank: SavedAquariumTank
   ): String {
-    return "${tank.widthCm} W x ${tank.lengthCm} L x ${tank.heightCm} H"
+    return context.getString(
+      R.string.tank_pdf_size_format,
+      tank.widthCm,
+      tank.lengthCm,
+      tank.heightCm
+    )
   }
 
   private fun getVolumeText(
@@ -338,10 +356,11 @@ object TankPdfExporter {
   }
 
   private fun formatMaterial(
-    material: SavedAquariumMaterial
+    material: SavedAquariumMaterial,
+    unnamedMaterialText: String
   ): String {
     val name = material.name.ifBlank {
-      "Unnamed material"
+      unnamedMaterialText
     }
 
     val brandText = material.brand.ifBlank {
@@ -368,8 +387,97 @@ object TankPdfExporter {
     }
   }
 
+  private data class TankPdfTexts(
+    val reportTitle: String,
+    val sectionTankSummary: String,
+    val sectionTankPhoto: String,
+    val sectionDevices: String,
+    val sectionTankLife: String,
+    val sectionPlants: String,
+    val sectionBioComponents: String,
+    val sectionHardwareComponents: String,
+    val labelTankName: String,
+    val labelTankType: String,
+    val labelSize: String,
+    val labelVolume: String,
+    val labelSetupDate: String,
+    val labelTankStyle: String,
+    val labelIdea: String,
+    val labelType: String,
+    val labelSerial: String,
+    val labelFirmware: String,
+    val labelCategory: String,
+    val labelQuantity: String,
+    val labelGenerated: String,
+    val noDevices: String,
+    val noLivestock: String,
+    val noPlants: String,
+    val noTankPhoto: String,
+    val notSelected: String,
+    val device: String,
+    val unnamedLivestock: String,
+    val unnamedPlant: String,
+    val unnamedMaterial: String,
+    val generatedBy: String,
+    val pageFormat: String,
+    val noValue: String
+  ) {
+    fun pageText(
+      pageNumber: Int
+    ): String {
+      return String.format(
+        Locale.getDefault(),
+        pageFormat,
+        pageNumber
+      )
+    }
+
+    companion object {
+      fun from(
+        context: Context
+      ): TankPdfTexts {
+        return TankPdfTexts(
+          reportTitle = context.getString(R.string.tank_pdf_report_title),
+          sectionTankSummary = context.getString(R.string.tank_pdf_section_tank_summary),
+          sectionTankPhoto = context.getString(R.string.tank_pdf_section_tank_photo),
+          sectionDevices = context.getString(R.string.tank_pdf_section_devices),
+          sectionTankLife = context.getString(R.string.tank_pdf_section_tank_life),
+          sectionPlants = context.getString(R.string.tank_pdf_section_plants),
+          sectionBioComponents = context.getString(R.string.tank_pdf_section_bio_components),
+          sectionHardwareComponents = context.getString(R.string.tank_pdf_section_hardware_components),
+          labelTankName = context.getString(R.string.tank_pdf_label_tank_name),
+          labelTankType = context.getString(R.string.tank_pdf_label_tank_type),
+          labelSize = context.getString(R.string.tank_pdf_label_size),
+          labelVolume = context.getString(R.string.tank_pdf_label_volume),
+          labelSetupDate = context.getString(R.string.tank_pdf_label_setup_date),
+          labelTankStyle = context.getString(R.string.tank_pdf_label_tank_style),
+          labelIdea = context.getString(R.string.tank_pdf_label_idea),
+          labelType = context.getString(R.string.tank_pdf_label_type),
+          labelSerial = context.getString(R.string.tank_pdf_label_serial),
+          labelFirmware = context.getString(R.string.tank_pdf_label_firmware),
+          labelCategory = context.getString(R.string.tank_pdf_label_category),
+          labelQuantity = context.getString(R.string.tank_pdf_label_quantity),
+          labelGenerated = context.getString(R.string.tank_pdf_label_generated),
+          noDevices = context.getString(R.string.tank_pdf_no_devices),
+          noLivestock = context.getString(R.string.tank_pdf_no_livestock),
+          noPlants = context.getString(R.string.tank_pdf_no_plants),
+          noTankPhoto = context.getString(R.string.tank_pdf_no_tank_photo),
+          notSelected = context.getString(R.string.tank_pdf_not_selected),
+          device = context.getString(R.string.tank_pdf_device),
+          unnamedLivestock = context.getString(R.string.tank_pdf_unnamed_livestock),
+          unnamedPlant = context.getString(R.string.tank_pdf_unnamed_plant),
+          unnamedMaterial = context.getString(R.string.tank_pdf_unnamed_material),
+          generatedBy = context.getString(R.string.tank_pdf_generated_by),
+          pageFormat = context.getString(R.string.tank_pdf_page_format),
+          noValue = context.getString(R.string.aquarium_no_value_placeholder)
+        )
+      }
+    }
+  }
+
   private class PdfWriter(
-    private val document: PdfDocument
+    private val document: PdfDocument,
+    private val texts: TankPdfTexts
   ) {
 
     private var pageNumber = 0
@@ -474,7 +582,7 @@ object TankPdfExporter {
       ensureSpace(66f)
 
       canvas.drawText(
-        "AquaLight Tank Report",
+        texts.reportTitle,
         PAGE_MARGIN,
         y,
         titlePaint
@@ -483,7 +591,7 @@ object TankPdfExporter {
       y += 23f
 
       canvas.drawText(
-        "Tank Name: ${tankName.ifBlank { "-" }}",
+        "${texts.labelTankName}: ${tankName.ifBlank { texts.noValue }}",
         PAGE_MARGIN,
         y,
         subtitlePaint
@@ -492,7 +600,7 @@ object TankPdfExporter {
       y += 15f
 
       canvas.drawText(
-        "Generated: $generatedDate",
+        "${texts.labelGenerated}: $generatedDate",
         PAGE_MARGIN,
         y,
         subtitlePaint
@@ -547,7 +655,7 @@ object TankPdfExporter {
         }
 
         canvas.drawText(
-          "No tank photo available",
+          texts.noTankPhoto,
           photoRect.centerX(),
           photoRect.centerY(),
           noPhotoPaint
@@ -661,7 +769,7 @@ object TankPdfExporter {
       ensureSpace(70f)
 
       canvas.drawText(
-        "$number. Device",
+        "$number. ${texts.device}",
         PAGE_MARGIN,
         y,
         categoryPaint
@@ -670,20 +778,20 @@ object TankPdfExporter {
       y += 17f
 
       drawDeviceDetailLine(
-        label = "Type",
+        label = texts.labelType,
         value = type
       )
 
       if (serial.isNotBlank()) {
         drawDeviceDetailLine(
-          label = "Serial",
+          label = texts.labelSerial,
           value = serial
         )
       }
 
-      if (firmware.isNotBlank() && firmware != "-") {
+      if (firmware.isNotBlank() && firmware != texts.noValue) {
         drawDeviceDetailLine(
-          label = "Firmware",
+          label = texts.labelFirmware,
           value = firmware
         )
       }
@@ -700,7 +808,7 @@ object TankPdfExporter {
       ensureSpace(70f)
 
       canvas.drawText(
-        "$number. ${name.ifBlank { "Unnamed livestock" }}",
+        "$number. ${name.ifBlank { texts.unnamedLivestock }}",
         PAGE_MARGIN,
         y,
         categoryPaint
@@ -709,14 +817,14 @@ object TankPdfExporter {
       y += 17f
 
       drawDeviceDetailLine(
-        label = "Category",
+        label = texts.labelCategory,
         value = category.ifBlank {
-          "-"
+          texts.noValue
         }
       )
 
       drawDeviceDetailLine(
-        label = "Quantity",
+        label = texts.labelQuantity,
         value = quantity
       )
 
@@ -733,7 +841,7 @@ object TankPdfExporter {
 
       val lines = wrapText(
         text = value.ifBlank {
-          "-"
+          texts.noValue
         },
         paint = valuePaint,
         maxWidth = maxValueWidth
@@ -778,7 +886,7 @@ object TankPdfExporter {
 
       val nameLines = wrapText(
         text = name.ifBlank {
-          "Unnamed plant"
+          texts.unnamedPlant
         },
         paint = valuePaint,
         maxWidth = maxNameWidth
@@ -786,7 +894,7 @@ object TankPdfExporter {
 
       val categoryLines = wrapText(
         text = category.ifBlank {
-          "-"
+          texts.noValue
         },
         paint = mutedPaint,
         maxWidth = maxNameWidth
@@ -908,14 +1016,17 @@ object TankPdfExporter {
       y += 15f
 
       if (materials.isEmpty()) {
-        drawMutedText("Not selected")
+        drawMutedText(texts.notSelected)
         return
       }
 
       materials.forEach {
         material ->
         drawSimpleBulletText(
-          text = formatMaterial(material)
+          text = formatMaterial(
+            material = material,
+            unnamedMaterialText = texts.unnamedMaterial
+          )
         )
       }
 
@@ -958,8 +1069,8 @@ object TankPdfExporter {
     }
 
     private fun drawFooter() {
-      val footerText = "Generated by AquaLight"
-      val pageText = "Page $pageNumber"
+      val footerText = texts.generatedBy
+      val pageText = texts.pageText(pageNumber)
 
       canvas.drawLine(
         PAGE_MARGIN,
@@ -1033,7 +1144,7 @@ object TankPdfExporter {
       maxWidth: Float
     ): List<String> {
       if (text.isBlank()) {
-        return listOf("-")
+        return listOf(texts.noValue)
       }
 
       val safeMaxWidth = maxWidth.coerceAtLeast(80f)

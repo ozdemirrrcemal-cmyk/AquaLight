@@ -77,7 +77,7 @@
                     android:layout_weight="1"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text="Yatak Odası"
+                    android:text="@string/aquarium_text_yatak_odas"
                     android:textColor="#101820"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -93,7 +93,7 @@
                         android:id="@+id/tvTankDay"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Day 35"
+                        android:text="@string/aquarium_text_day_35"
                         android:textColor="#101820"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -116,7 +116,7 @@
                 android:layout_marginTop="7dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="Last Water Change: Today | Last Trim: Today"
+                android:text="@string/aquarium_text_last_water_change_today_last_trim_today"
                 android:textColor="#17202A"
                 android:textSize="11sp" />
 
@@ -135,7 +135,7 @@
                     android:layout_weight="1"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text="120W x 50L x 50H"
+                    android:text="@string/aquarium_text_120w_x_50l_x_50h"
                     android:textColor="#17202A"
                     android:textSize="10.5sp" />
 
@@ -145,7 +145,7 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text="Setup Date: 2026/04/12"
+                    android:text="@string/aquarium_text_setup_date_2026_04_12"
                     android:textColor="#17202A"
                     android:textSize="10.5sp" />
 

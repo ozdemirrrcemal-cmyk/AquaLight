@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategory
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.databinding.FragmentTankMaterialBinding
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSummaryFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.google.android.material.card.MaterialCardView
 
@@ -296,23 +297,11 @@ class TankMaterialFragment :
     private fun getSelectedMaterialsText(
         categoryKey: String
     ): String {
-        val materials =
-            viewModel.getMaterialsByCategory(
-                categoryKey
-            )
+        val materials = viewModel.getMaterialsByCategory(categoryKey)
 
-        if (materials.isEmpty()) {
-            return getString(R.string.material_picker_not_selected)
-        }
-
-        if (materials.size == 1) {
-            return materials.first().name
-        }
-
-        return getString(
-            R.string.material_picker_more_count,
-            materials.first().name,
-            materials.size - 1
+        return MaterialSummaryFormatter.summaryForSelections(
+            context = requireContext(),
+            selections = materials
         )
     }
 

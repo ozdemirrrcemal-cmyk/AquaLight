@@ -35,7 +35,7 @@
             android:layout_marginEnd="24dp"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="Basic"
+            android:text="@string/aquarium_settings_tab_basic"
             android:textColor="?attr/colorOnSurface"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -47,7 +47,7 @@
             android:layout_marginEnd="24dp"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="Details"
+            android:text="@string/aquarium_settings_tab_details"
             android:textColor="#8FA4BE"
             android:textSize="15sp" />
 
@@ -57,7 +57,7 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="Others"
+            android:text="@string/aquarium_settings_tab_others"
             android:textColor="#8FA4BE"
             android:textSize="15sp" />
 

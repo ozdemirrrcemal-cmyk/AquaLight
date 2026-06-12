@@ -208,7 +208,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
         val nameText = TextView(requireContext()).apply {
             text = livestock.name.ifBlank {
-                "Unnamed livestock"
+                getString(R.string.aquarium_unnamed_livestock)
             }
 
             textSize = 14.5f
@@ -220,7 +220,11 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         }
 
         val metaText = TextView(requireContext()).apply {
-            text = "${livestock.category.ifBlank { "Other" }} • ${getLivestockQuantityText(livestock.quantity)}"
+            text = getString(
+                R.string.aquarium_livestock_meta_format,
+                livestock.category.ifBlank { getString(R.string.aquarium_tank_type_other) },
+                getLivestockQuantityText(livestock.quantity)
+            )
             textSize = 12.5f
             setTextColor(Color.parseColor("#8FA4BE"))
             includeFontPadding = false

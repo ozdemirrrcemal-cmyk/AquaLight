@@ -10,7 +10,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -31,6 +30,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumChildTabHost
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
@@ -81,7 +81,7 @@ class TankDetailFragment :
             )
 
         setupHeader(
-            title = "Aquarium"
+            title = getString(R.string.screen_title_aquarium)
         )
         setupClickListeners()
         setupSystemBackButton()
@@ -142,22 +142,22 @@ class TankDetailFragment :
 
             TankDetailViewModel.TankDetailEvent.ShowNotFound -> {
                 showDeviceInfoDialog(
-                    title = "Device Not Found",
-                    message = "This device is no longer available."
+                    title = getString(R.string.aquarium_device_not_found_title),
+                    message = getString(R.string.aquarium_device_not_found_message)
                 )
             }
 
             TankDetailViewModel.TankDetailEvent.ShowUnsupported -> {
                 showDeviceInfoDialog(
-                    title = "Unsupported Device",
-                    message = "This device is not supported by this app version."
+                    title = getString(R.string.aquarium_unsupported_device_title),
+                    message = getString(R.string.aquarium_unsupported_device_message)
                 )
             }
 
             TankDetailViewModel.TankDetailEvent.ShowOpenFailed -> {
                 showDeviceInfoDialog(
-                    title = "Open Failed",
-                    message = "The device could not be opened. Please try again."
+                    title = getString(R.string.aquarium_device_open_failed_title),
+                    message = getString(R.string.aquarium_device_open_failed_message)
                 )
             }
         }
@@ -423,7 +423,7 @@ class TankDetailFragment :
 
     private fun showDeviceOfflineDialog() {
         showDeviceInfoDialog(
-            title = "Device Offline",
+            title = getString(R.string.aquarium_device_offline_title),
             message = getString(
                 R.string.device_offline_message
             )
@@ -624,22 +624,12 @@ class TankDetailFragment :
         tag: String,
         fragmentFactory: () -> Fragment
     ) {
-        val existingFragment =
-            childFragmentManager.findFragmentByTag(
-                tag
-            )
-
-        if (existingFragment != null) {
-            return
-        }
-
-        childFragmentManager.commit {
-            replace(
-                containerId,
-                fragmentFactory(),
-                tag
-            )
-        }
+        AquariumChildTabHost.showOnce(
+            fragmentManager = childFragmentManager,
+            containerId = containerId,
+            tag = tag,
+            fragmentFactory = fragmentFactory
+        )
     }
 
     private fun tabViewFor(

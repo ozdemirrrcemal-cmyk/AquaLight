@@ -76,7 +76,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     fun showAddActivitySheet() {
         CareTaskTypeBottomSheetFragment.show(
             fragmentManager = childFragmentManager,
-            title = "Add Activity",
+            title = getString(R.string.aquarium_add_activity_title),
             resultRequestKey = CareTaskTypeBottomSheetFragment.REQUEST_KEY_ADD_ACTIVITY
         )
     }
@@ -109,7 +109,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
                     exception.printStackTrace()
 
                     showSnackBar(
-                        message = "Activity could not be added.",
+                        message = getString(R.string.aquarium_error_activity_add_failed),
                         type = BaseActivity.SnackType.ERROR
                     )
                 } finally {
@@ -140,8 +140,8 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         binding.tvLastFilterValue.text = state.lastFilterMaintenanceText
 
         if (state.nextCareTask == null) {
-            binding.tvNextCareTaskTitle.text = "--"
-            binding.tvNextCareValue.text = "No upcoming care"
+            binding.tvNextCareTaskTitle.text = getString(R.string.aquarium_no_value_placeholder)
+            binding.tvNextCareValue.text = getString(R.string.aquarium_no_upcoming_care)
             binding.tvNextCareValue.setTextColor(
                 Color.parseColor("#8FA4BE")
             )
@@ -232,33 +232,33 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         GlobalActionBottomSheet.show(
             context = requireContext(),
             title = task.title,
-            message = "Completed activity record",
+            message = getString(R.string.aquarium_completed_activity_record),
             details = listOf(
                 BottomSheetDetailRow(
-                    label = "Completed at",
+                    label = getString(R.string.aquarium_completed_at_label),
                     value = formatActivityDateTime(completedAt)
                 ),
                 BottomSheetDetailRow(
-                    label = "Source",
+                    label = getString(R.string.aquarium_source_label),
                     value = task.sourceLabel.ifBlank {
                         "-"
                     }
                 ),
                 BottomSheetDetailRow(
-                    label = "Status",
-                    value = "Completed"
+                    label = getString(R.string.aquarium_status_label),
+                    value = getString(R.string.aquarium_completed_label)
                 )
             ),
             actions = listOf(
                 BottomSheetAction(
-                    text = "Change date",
+                    text = getString(R.string.aquarium_change_date_action),
                     style = BottomSheetActionStyle.PRIMARY,
                     onClick = {
                         showChangeActivityDatePicker(task)
                     }
                 ),
                 BottomSheetAction(
-                    text = "Delete",
+                    text = getString(R.string.common_delete),
                     style = BottomSheetActionStyle.DANGER,
                     onClick = {
                         showDeleteActivityTaskDialog(task)
@@ -309,7 +309,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
                         exception.printStackTrace()
 
                         showSnackBar(
-                            message = "Activity date could not be updated.",
+                            message = getString(R.string.aquarium_error_activity_date_update_failed),
                             type = BaseActivity.SnackType.ERROR
                         )
                     } finally {
@@ -329,8 +329,8 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         DialogManager.showConfirmDialog(
             context = requireContext(),
             type = DialogType.WARNING,
-            title = "Delete Activity?",
-            message = "\"${task.title}\" will be removed from this aquarium activity history.",
+            title = getString(R.string.aquarium_delete_activity_title),
+            message = getString(R.string.aquarium_delete_activity_message, task.title),
             confirmTextResId = R.string.confirm,
             cancelTextResId = R.string.cancel,
             onConfirm = {
@@ -345,7 +345,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
                         exception.printStackTrace()
 
                         showSnackBar(
-                            message = "Activity could not be deleted.",
+                            message = getString(R.string.aquarium_error_activity_delete_failed),
                             type = BaseActivity.SnackType.ERROR
                         )
                     } finally {
@@ -560,7 +560,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         }
 
         val completedText = TextView(requireContext()).apply {
-            text = "Completed"
+            text = getString(R.string.aquarium_completed_label)
             textSize = 11.8f
             setTextColor(Color.parseColor("#5FD6B4"))
             setTypeface(null, Typeface.BOLD)

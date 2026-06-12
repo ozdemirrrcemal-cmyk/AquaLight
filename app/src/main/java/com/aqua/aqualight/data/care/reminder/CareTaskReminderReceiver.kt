@@ -7,7 +7,7 @@ import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
 import com.aqua.aqualight.utils.NotificationHelper

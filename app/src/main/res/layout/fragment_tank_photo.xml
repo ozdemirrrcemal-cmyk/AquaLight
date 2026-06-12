@@ -22,7 +22,7 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginTop="10dp"
-      android:text="Add a visual reference for this aquarium. You can use a photo that represents the final look, inspiration, or current setup."
+      android:text="@string/aquarium_text_add_a_visual_reference_for_this_aquarium_you_can_use_a_photo"
       android:textColor="#8FA4BE"
       android:textSize="14sp"
       android:lineSpacingExtra="3dp" />
@@ -49,7 +49,7 @@
           android:id="@+id/tvInputTitle"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:text="Aquarium Photo"
+          android:text="@string/aquarium_photo_title_full"
           android:textColor="?attr/colorOnSurface"
           android:textSize="16sp"
           android:textStyle="bold" />
@@ -59,7 +59,7 @@
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:layout_marginTop="4dp"
-          android:text="Use a photo to make this aquarium easier to recognize later."
+          android:text="@string/aquarium_text_use_a_photo_to_make_this_aquarium_easier_to_recognize_later"
           android:textColor="#7F91AA"
           android:textSize="13sp"
           android:lineSpacingExtra="2dp" />
@@ -130,7 +130,7 @@
           android:layout_width="match_parent"
           android:layout_height="52dp"
           android:layout_marginTop="18dp"
-          android:text="Add Plant"
+          android:text="@string/aquarium_text_add_plant"
           android:textAllCaps="false"
           android:textSize="16sp"
           android:textStyle="bold" />

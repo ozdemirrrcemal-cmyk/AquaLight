@@ -23,7 +23,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="24dp"
         android:lineSpacingExtra="3dp"
-        android:text="Tap on the aquarium photo to select and tag the plants used in your layout."
+        android:text="@string/aquarium_text_tap_on_the_aquarium_photo_to_select_and_tag_the_plants_used"
         android:textColor="#8FA4BE"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"

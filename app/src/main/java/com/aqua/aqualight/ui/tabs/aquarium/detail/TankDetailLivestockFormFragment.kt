@@ -110,8 +110,8 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
             if (tank == null) {
                 showMissingDataDialogAndClose(
-                    title = "Tank Not Found",
-                    message = "This aquarium no longer exists."
+                    title = getString(R.string.aquarium_tank_not_found_title),
+                    message = getString(R.string.aquarium_tank_no_longer_exists_message)
                 )
                 return@observe
             }
@@ -124,8 +124,8 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             if (livestock == null) {
                 if (!hasLoadedEditingLivestock) {
                     showMissingDataDialogAndClose(
-                        title = "Livestock Not Found",
-                        message = "This livestock record no longer exists."
+                        title = getString(R.string.aquarium_livestock_not_found_title),
+                        message = getString(R.string.aquarium_livestock_no_longer_exists_message)
                     )
                 }
 
@@ -383,7 +383,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
         if (name.length < 2) {
             showSnackBar(
-                message = "Livestock name must be at least 2 characters.",
+                message = getString(R.string.aquarium_validation_livestock_name_min),
                 type = BaseActivity.SnackType.WARNING
             )
             return
@@ -429,7 +429,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
                 binding.btnSaveLife.isEnabled = true
 
                 showSnackBar(
-                    message = "Livestock could not be saved.",
+                    message = getString(R.string.aquarium_error_livestock_save_failed),
                     type = BaseActivity.SnackType.ERROR
                 )
             }
@@ -440,8 +440,8 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         DialogManager.showConfirmDialog(
             context = requireContext(),
             type = DialogType.WARNING,
-            title = "Delete Livestock?",
-            message = "This livestock record will be removed from this aquarium.",
+            title = getString(R.string.aquarium_delete_livestock_title),
+            message = getString(R.string.aquarium_delete_livestock_message),
             confirmTextResId = R.string.delete,
             cancelTextResId = R.string.cancel,
             onConfirm = {
@@ -471,7 +471,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
                 isDeletingLivestock = false
 
                 showSnackBar(
-                    message = "Livestock could not be deleted.",
+                    message = getString(R.string.aquarium_error_livestock_delete_failed),
                     type = BaseActivity.SnackType.ERROR
                 )
             }
@@ -500,7 +500,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         }
 
         val title = TextView(requireContext()).apply {
-            text = "Added Date"
+            text = getString(R.string.aquarium_added_date_label)
             gravity = Gravity.CENTER
             textSize = 16f
             setTextColor(Color.WHITE)
@@ -597,7 +597,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         val saveButton = com.google.android.material.button.MaterialButton(
             requireContext()
         ).apply {
-            text = "Save"
+            text = getString(R.string.common_save)
             textSize = 14f
             setTypeface(null, Typeface.BOLD)
             setAllCaps(false)

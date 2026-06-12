@@ -75,7 +75,7 @@
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:includeFontPadding="false"
-              android:text="Livestock"
+              android:text="@string/aquarium_text_livestock"
               android:textColor="?attr/colorOnSurface"
               android:textSize="16sp"
               android:textStyle="bold" />
@@ -86,7 +86,7 @@
               android:layout_height="wrap_content"
               android:layout_marginTop="7dp"
               android:includeFontPadding="false"
-              android:text="Fish"
+              android:text="@string/aquarium_tank_type_fish"
               android:textColor="#8FA4BE"
               android:textSize="13sp" />
 
@@ -101,7 +101,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
         android:includeFontPadding="false"
-        android:text="Name"
+        android:text="@string/aquarium_text_name"
         android:textColor="?attr/colorOnSurface"
         android:textSize="13sp"
         android:textStyle="bold" />
@@ -126,7 +126,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:includeFontPadding="false"
-        android:text="Category"
+        android:text="@string/aquarium_text_category"
         android:textColor="?attr/colorOnSurface"
         android:textSize="13sp"
         android:textStyle="bold" />
@@ -143,7 +143,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:includeFontPadding="false"
-        android:text="Quantity"
+        android:text="@string/aquarium_text_quantity"
         android:textColor="?attr/colorOnSurface"
         android:textSize="13sp"
         android:textStyle="bold" />
@@ -164,7 +164,7 @@
           android:layout_width="42dp"
           android:layout_height="42dp"
           android:gravity="center"
-          android:text="−"
+          android:text="@string/common_minus"
           android:textColor="?attr/colorOnSurface"
           android:textSize="24sp"
           android:textStyle="bold" />
@@ -176,7 +176,7 @@
           android:layout_weight="1"
           android:gravity="center"
           android:includeFontPadding="false"
-          android:text="1"
+          android:text="@string/aquarium_text_1"
           android:textColor="?attr/colorOnSurface"
           android:textSize="18sp"
           android:textStyle="bold" />
@@ -186,7 +186,7 @@
           android:layout_width="42dp"
           android:layout_height="42dp"
           android:gravity="center"
-          android:text="+"
+          android:text="@string/common_plus"
           android:textColor="?attr/colorOnSurface"
           android:textSize="22sp"
           android:textStyle="bold" />
@@ -198,7 +198,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:includeFontPadding="false"
-        android:text="Added Date"
+        android:text="@string/aquarium_text_added_date"
         android:textColor="?attr/colorOnSurface"
         android:textSize="13sp"
         android:textStyle="bold" />
@@ -222,7 +222,7 @@
           android:layout_height="wrap_content"
           android:layout_weight="1"
           android:includeFontPadding="false"
-          android:text="18 May 2026"
+          android:text="@string/aquarium_text_18_may_2026"
           android:textColor="?attr/colorOnSurface"
           android:textSize="14sp"
           android:textStyle="bold" />
@@ -240,7 +240,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:includeFontPadding="false"
-        android:text="Note"
+        android:text="@string/aquarium_text_note"
         android:textColor="?attr/colorOnSurface"
         android:textSize="13sp"
         android:textStyle="bold" />
@@ -271,7 +271,7 @@
         android:layout_marginTop="26dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        android:text="Save Livestock"
+        android:text="@string/aquarium_text_save_livestock"
         android:textAllCaps="false"
         android:textColor="@android:color/white"
         android:textSize="14sp"
@@ -286,7 +286,7 @@
         android:layout_marginTop="14dp"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:text="Delete Livestock"
+        android:text="@string/aquarium_text_delete_livestock"
         android:textColor="#D85C5C"
         android:textSize="14sp"
         android:textStyle="bold"

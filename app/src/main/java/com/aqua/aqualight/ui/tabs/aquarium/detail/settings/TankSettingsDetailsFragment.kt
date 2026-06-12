@@ -18,6 +18,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSummaryFormatter
 import com.google.android.material.card.MaterialCardView
 import java.util.Locale
 
@@ -221,15 +222,10 @@ class TankSettingsDetailsFragment : Fragment(R.layout.fragment_tank_settings_det
     private fun getMaterialSummary(
         materials: List<SavedAquariumMaterial>
     ): String {
-        if (materials.isEmpty()) {
-            return "Not selected"
-        }
-
-        if (materials.size == 1) {
-            return materials.first().name
-        }
-
-        return "${materials.first().name} +${materials.size - 1} more"
+        return MaterialSummaryFormatter.summaryForSavedMaterials(
+            context = requireContext(),
+            materials = materials
+        )
     }
 
     private fun Int.dp(): Int {

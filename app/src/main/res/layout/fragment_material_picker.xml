@@ -43,7 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
-                android:text="Popular keywords"
+                android:text="@string/material_picker_popular_keywords"
                 android:textColor="#8FA4BE"
                 android:textSize="13sp" />
 
@@ -94,7 +94,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
-            android:text="0 selected"
+            android:text="@string/material_picker_selected_zero"
             android:textColor="#8FA4BE"
             android:textSize="12.5sp" />
 
@@ -104,7 +104,7 @@
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="10dp"
-            android:text="Save"
+            android:text="@string/common_save"
             android:textAllCaps="false"
             android:textSize="15sp"
             android:textStyle="bold" />

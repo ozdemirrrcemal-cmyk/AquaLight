@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="52dp"
             android:layout_marginTop="14dp"
-            android:text="+  Add Plant"
+            android:text="@string/aquarium_action_add_plant"
             android:textAllCaps="false"
             android:textColor="#8FA4BE"
             android:textSize="15sp"

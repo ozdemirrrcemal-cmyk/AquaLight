@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+
+
+
+
+
+
+
 <string name="tank_device_select_title">Select Device</string>
 <string name="tank_device_select_info_title">Choose a saved device</string>
 <string name="tank_device_select_info_subtitle">Select one of your saved AquaLight devices to assign it to this tank.</string>

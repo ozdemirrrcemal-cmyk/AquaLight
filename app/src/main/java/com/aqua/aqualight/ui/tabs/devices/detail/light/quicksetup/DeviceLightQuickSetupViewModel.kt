@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightProgramCommandManager
-import com.aqua.aqualight.data.tanks.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.data.devices.light.programs.validation.LightProgramScheduleConflictValidator

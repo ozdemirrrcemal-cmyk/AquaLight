@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -38,6 +39,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     private var destinationChangedListener: NavController.OnDestinationChangedListener? = null
 
     private var isCompletingTank: Boolean = false
+    private var isNavigatingStep: Boolean = false
 
     override fun onViewCreated(
         view: View,
@@ -100,6 +102,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
     private fun renderChromeForDestination(
         destination: NavDestination
     ) {
+        isNavigatingStep = false
         val stepIndex = stepIndexOf(
             destination.id
         )
@@ -126,7 +129,10 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "Step ${safeStepIndex + 1}",
+                titleOverride = getString(
+                    R.string.aquarium_create_step_title,
+                    safeStepIndex + 1
+                ),
                 onBackClick = {
                     handleBackNavigation()
                 }
@@ -138,17 +144,17 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
         binding.btnNext.text =
             if (safeStepIndex == TOTAL_STEPS - 1) {
-                "Complete"
+                getString(R.string.aquarium_action_complete)
             } else {
-                "Next"
+                getString(R.string.aquarium_action_next)
             }
 
         binding.btnNext.isEnabled =
-            !isCompletingTank
+            !isCompletingTank && !isNavigatingStep
     }
 
     private fun handleNextClick() {
-        if (isCompletingTank) {
+        if (isCompletingTank || isNavigatingStep) {
             return
         }
 
@@ -166,29 +172,33 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
         when (createTankNavController.currentDestination?.id) {
             R.id.tankNameStepFragment -> {
-                createTankNavController.navigate(
-                    TankNameFragmentDirections
+                navigateToStepIfCurrent(
+                    sourceDestinationId = R.id.tankNameStepFragment,
+                    directions = TankNameFragmentDirections
                         .actionTankNameStepFragmentToTankDescriptionStepFragment()
                 )
             }
 
             R.id.tankDescriptionStepFragment -> {
-                createTankNavController.navigate(
-                    TankDescriptionFragmentDirections
+                navigateToStepIfCurrent(
+                    sourceDestinationId = R.id.tankDescriptionStepFragment,
+                    directions = TankDescriptionFragmentDirections
                         .actionTankDescriptionStepFragmentToTankPhotoStepFragment()
                 )
             }
 
             R.id.tankPhotoStepFragment -> {
-                createTankNavController.navigate(
-                    TankPhotoFragmentDirections
+                navigateToStepIfCurrent(
+                    sourceDestinationId = R.id.tankPhotoStepFragment,
+                    directions = TankPhotoFragmentDirections
                         .actionTankPhotoStepFragmentToTankMaterialStepFragment()
                 )
             }
 
             R.id.tankMaterialStepFragment -> {
-                createTankNavController.navigate(
-                    TankMaterialFragmentDirections
+                navigateToStepIfCurrent(
+                    sourceDestinationId = R.id.tankMaterialStepFragment,
+                    directions = TankMaterialFragmentDirections
                         .actionTankMaterialStepFragmentToTankInfoStepFragment()
                 )
             }
@@ -196,6 +206,27 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
             R.id.tankInfoStepFragment -> {
                 completeTank()
             }
+        }
+    }
+
+
+    private fun navigateToStepIfCurrent(
+        sourceDestinationId: Int,
+        directions: NavDirections
+    ) {
+        if (isNavigatingStep || createTankNavController.currentDestination?.id != sourceDestinationId) {
+            return
+        }
+
+        isNavigatingStep = true
+        binding.btnNext.isEnabled = false
+
+        runCatching {
+            createTankNavController.navigate(directions)
+        }.onFailure { exception ->
+            exception.printStackTrace()
+            isNavigatingStep = false
+            _binding?.btnNext?.isEnabled = !isCompletingTank
         }
     }
 
@@ -277,7 +308,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
                 Toast.makeText(
                     requireContext(),
-                    "Tank could not be saved.",
+                    getString(R.string.aquarium_error_tank_save_failed),
                     Toast.LENGTH_SHORT
                 ).show()
             }

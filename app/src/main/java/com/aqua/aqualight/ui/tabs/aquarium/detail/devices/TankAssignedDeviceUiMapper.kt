@@ -40,7 +40,7 @@ class TankAssignedDeviceUiMapper {
                 device = device,
                 statuses = statuses,
                 nowMillis = now,
-                unknownTankText = "Unknown aquarium"
+                unknownTankText = TankAssignedDeviceText.UNKNOWN_AQUARIUM
             )
 
         val title =
@@ -507,10 +507,10 @@ class TankAssignedDeviceUiMapper {
     if (!isOnline) {
         return LightModeContent(
             mode = TankLightCardMode.OFFLINE,
-            label = "OFFLINE",
-            title = "No live data",
-            leftText = "--:--",
-            rightText = "--:--",
+            label = TankAssignedDeviceText.OFFLINE_LABEL,
+            title = TankAssignedDeviceText.NO_LIVE_DATA_TITLE,
+            leftText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
+            rightText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
             accentColorInt = Color.parseColor("#90A1B5"),
             timelineProgressPercent = 0
         )
@@ -520,10 +520,10 @@ class TankAssignedDeviceUiMapper {
         TankLightCardMode.MANUAL -> {
             return LightModeContent(
                 mode = TankLightCardMode.MANUAL,
-                label = "MANUAL MODE",
-                title = "Manual Control",
-                leftText = "Manual",
-                rightText = "Resume",
+                label = TankAssignedDeviceText.MANUAL_LABEL,
+                title = TankAssignedDeviceText.MANUAL_CONTROL_TITLE,
+                leftText = TankAssignedDeviceText.MANUAL_LEFT_TEXT,
+                rightText = TankAssignedDeviceText.RESUME_RIGHT_TEXT,
                 accentColorInt = Color.parseColor("#C8A86B"),
                 timelineProgressPercent = 100
             )
@@ -532,12 +532,12 @@ class TankAssignedDeviceUiMapper {
         TankLightCardMode.SCENE -> {
             return LightModeContent(
                 mode = TankLightCardMode.SCENE,
-                label = "SCENE ACTIVE",
+                label = TankAssignedDeviceText.SCENE_LABEL,
                 title = modeOverride.title.ifBlank {
-                    "Scene Mode"
+                    TankAssignedDeviceText.SCENE_MODE_TITLE
                 },
-                leftText = "Scene",
-                rightText = "Resume",
+                leftText = TankAssignedDeviceText.SCENE_LEFT_TEXT,
+                rightText = TankAssignedDeviceText.RESUME_RIGHT_TEXT,
                 accentColorInt = Color.parseColor("#A37CFF"),
                 timelineProgressPercent = 100
             )
@@ -546,9 +546,9 @@ class TankAssignedDeviceUiMapper {
         TankLightCardMode.MOONLIGHT -> {
             return LightModeContent(
                 mode = TankLightCardMode.MOONLIGHT,
-                label = "MOONLIGHT",
+                label = TankAssignedDeviceText.MOONLIGHT_LABEL,
                 title = modeOverride.title.ifBlank {
-                    "Moonlight Mode"
+                    TankAssignedDeviceText.MOONLIGHT_MODE_TITLE
                 },
                 leftText = modeOverride.leftText ?: "--:--",
                 rightText = modeOverride.rightText ?: "--:--",
@@ -570,10 +570,10 @@ class TankAssignedDeviceUiMapper {
     if (!hasDeviceTime) {
         return LightModeContent(
             mode = TankLightCardMode.SYNCING,
-            label = "SYNCING",
-            title = "Waiting for ESP32 time",
-            leftText = "--:--",
-            rightText = "--:--",
+            label = TankAssignedDeviceText.SYNCING_LABEL,
+            title = TankAssignedDeviceText.WAITING_FOR_TIME_TITLE,
+            leftText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
+            rightText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
             accentColorInt = Color.parseColor("#90A1B5"),
             timelineProgressPercent = 0
         )
@@ -582,10 +582,10 @@ class TankAssignedDeviceUiMapper {
     if (displayProgram == null) {
         return LightModeContent(
             mode = TankLightCardMode.NO_PROGRAM,
-            label = "NO ACTIVE PROGRAM",
-            title = "Program not set",
-            leftText = "--:--",
-            rightText = "--:--",
+            label = TankAssignedDeviceText.NO_ACTIVE_PROGRAM_LABEL,
+            title = TankAssignedDeviceText.PROGRAM_NOT_SET_TITLE,
+            leftText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
+            rightText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
             accentColorInt = Color.parseColor("#90A1B5"),
             timelineProgressPercent = 0
         )
@@ -594,9 +594,9 @@ class TankAssignedDeviceUiMapper {
     return LightModeContent(
         mode = TankLightCardMode.AUTO,
         label = if (hasActualLiveData) {
-            "ACTIVE PROGRAM"
+            TankAssignedDeviceText.ACTIVE_PROGRAM_LABEL
         } else {
-            "SCHEDULED"
+            TankAssignedDeviceText.SCHEDULED_LABEL
         },
         title = displayProgram.name,
         leftText = displayProgram.draft.start.label,

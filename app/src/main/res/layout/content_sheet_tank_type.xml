@@ -10,47 +10,47 @@
   <TextView
     android:id="@+id/optionFish"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="Fish" />
+    android:text="@string/aquarium_tank_type_fish" />
 
   <TextView
     android:id="@+id/optionShrimp"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="Shrimp" />
+    android:text="@string/aquarium_tank_type_shrimp" />
 
   <TextView
     android:id="@+id/optionPlanted"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="Planted" />
+    android:text="@string/aquarium_tank_type_planted" />
 
   <TextView
     android:id="@+id/optionMarine"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="Marine" />
+    android:text="@string/aquarium_tank_type_marine" />
 
   <TextView
     android:id="@+id/optionSofties"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="Softies" />
+    android:text="@string/aquarium_tank_type_softies" />
 
   <TextView
     android:id="@+id/optionMixedReef"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="Mixed Reef" />
+    android:text="@string/aquarium_tank_type_mixed_reef" />
 
   <TextView
     android:id="@+id/optionSps"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="SPS" />
+    android:text="@string/aquarium_tank_type_sps" />
 
   <TextView
     android:id="@+id/optionCoral"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="Coral" />
+    android:text="@string/aquarium_tank_type_coral" />
 
   <TextView
     android:id="@+id/optionOther"
     style="@style/AquaSettingsSheetGridOption"
-    android:text="Other" />
+    android:text="@string/aquarium_tank_type_other" />
 
   <com.google.android.material.button.MaterialButton
     android:id="@+id/btnSave"
@@ -62,7 +62,7 @@
     android:insetBottom="0dp"
     android:minWidth="0dp"
     android:minHeight="0dp"
-    android:text="Save"
+    android:text="@string/common_save"
     android:textAllCaps="false"
     android:textColor="@android:color/white"
     android:textSize="14sp"
@@ -78,7 +78,7 @@
     android:layout_marginTop="10dp"
     android:gravity="center"
     android:includeFontPadding="false"
-    android:text="Cancel"
+    android:text="@string/common_cancel"
     android:textColor="#8FA4BE"
     android:textSize="14sp" />
 

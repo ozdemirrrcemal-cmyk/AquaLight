@@ -62,7 +62,7 @@
               android:layout_height="wrap_content"
               android:gravity="center"
               android:includeFontPadding="false"
-              android:text="Last Trim"
+              android:text="@string/aquarium_text_last_trim"
               android:textColor="#8FA4BE"
               android:textSize="12sp" />
 
@@ -73,7 +73,7 @@
               android:layout_marginTop="9dp"
               android:gravity="center"
               android:includeFontPadding="false"
-              android:text="-- days ago"
+              android:text="@string/aquarium_text_days_ago"
               android:textColor="#5FD6B4"
               android:textSize="12sp"
               android:textStyle="bold" />
@@ -107,7 +107,7 @@
               android:layout_height="wrap_content"
               android:gravity="center"
               android:includeFontPadding="false"
-              android:text="Last Water Change"
+              android:text="@string/aquarium_text_last_water_change"
               android:textColor="#8FA4BE"
               android:textSize="12sp" />
 
@@ -118,7 +118,7 @@
               android:layout_marginTop="9dp"
               android:gravity="center"
               android:includeFontPadding="false"
-              android:text="-- days ago"
+              android:text="@string/aquarium_text_days_ago"
               android:textColor="#5FD6B4"
               android:textSize="12sp"
               android:textStyle="bold" />
@@ -151,7 +151,7 @@
               android:layout_height="wrap_content"
               android:gravity="center"
               android:includeFontPadding="false"
-              android:text="Next Care"
+              android:text="@string/aquarium_text_next_care"
               android:textColor="#8FA4BE"
               android:textSize="11sp" />
 
@@ -164,7 +164,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:maxLines="1"
-              android:text="--"
+              android:text="@string/aquarium_text_value"
               android:textColor="#F2C94C"
               android:textSize="10.6sp"
               android:textStyle="bold" />
@@ -178,7 +178,7 @@
               android:gravity="center"
               android:includeFontPadding="false"
               android:maxLines="1"
-              android:text="--"
+              android:text="@string/aquarium_text_value"
               android:textColor="#8FA4BE"
               android:textSize="10.4sp" />
 
@@ -210,7 +210,7 @@
               android:layout_height="wrap_content"
               android:gravity="center"
               android:includeFontPadding="false"
-              android:text="Last Filter Main."
+              android:text="@string/aquarium_text_last_filter_main"
               android:textColor="#8FA4BE"
               android:textSize="12sp" />
 
@@ -221,7 +221,7 @@
               android:layout_marginTop="9dp"
               android:gravity="center"
               android:includeFontPadding="false"
-              android:text="-- days ago"
+              android:text="@string/aquarium_text_days_ago"
               android:textColor="#5FD6B4"
               android:textSize="12sp"
               android:textStyle="bold" />
@@ -238,7 +238,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:includeFontPadding="false"
-        android:text="Timeline"
+        android:text="@string/aquarium_text_timeline"
         android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -250,7 +250,7 @@
         android:layout_marginTop="14dp"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:text="No activity yet."
+        android:text="@string/aquarium_no_activity_yet"
         android:textColor="#8FA4BE"
         android:textSize="13sp"
         android:visibility="gone" />
@@ -316,7 +316,7 @@
         android:layout_marginStart="15dp"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
-        android:text="Add Activity"
+        android:text="@string/aquarium_text_add_activity"
         android:textColor="?attr/colorOnSurface"
         android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="parent"

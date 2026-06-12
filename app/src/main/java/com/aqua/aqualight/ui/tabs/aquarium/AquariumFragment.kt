@@ -77,14 +77,14 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                 showBackButton = false,
                 primaryAction = AquaHeaderPrimaryAction(
                     text = if (isDeleteMode) {
-                        "Delete"
+                        getString(R.string.common_delete)
                     } else {
-                        "+ Add"
+                        getString(R.string.aquarium_action_add)
                     },
                     contentDescription = if (isDeleteMode) {
-                        "Delete selected aquariums"
+                        getString(R.string.aquarium_action_delete_selected_aquariums)
                     } else {
-                        "Add Aquarium"
+                        getString(R.string.aquarium_action_add_aquarium)
                     },
                     onClick = {
                         if (isDeleteMode) {
@@ -396,8 +396,8 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                 DialogManager.showInfoDialog(
                     context = requireContext(),
                     type = DialogType.ERROR,
-                    title = "Delete Failed",
-                    message = "Selected aquariums could not be deleted."
+                    title = getString(R.string.aquarium_delete_failed_title),
+                    message = getString(R.string.aquarium_error_selected_tanks_delete_failed)
                 )
             } finally {
                 isDeletingTanks =
