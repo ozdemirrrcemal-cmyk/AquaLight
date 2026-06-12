@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- Screen titles -->
+    <string name="screen_title_material_picker">Material Picker</string>
+    <string name="screen_title_plant_picker">Plant Picker</string>
+
     <!-- Catalog picker shared UI -->
     <string name="catalog_search_hint">Type here to search...</string>
 
@@ -17,9 +22,12 @@
     <string name="material_picker_selected_count">%1$d selected</string>
     <string name="material_picker_not_selected">Not selected</string>
     <string name="material_picker_more_count">%1$s +%2$d more</string>
+    <string name="material_picker_popular_keywords">Popular keywords</string>
+    <string name="material_picker_selected_zero">0 selected</string>
 
     <!-- Plant catalog picker -->
     <string name="plant_picker_title">Aquarium Plants</string>
     <string name="plant_picker_found">%1$d plants found</string>
     <string name="plant_picker_empty">No plants found</string>
+
 </resources>

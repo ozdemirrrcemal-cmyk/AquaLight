@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Screen titles -->
+    <string name="screen_title_lighting">Lighting</string>
+    <string name="screen_title_light_programs">Programs</string>
+    <string name="screen_title_light_program_editor">Program Editor</string>
+    <string name="screen_title_light_manual_control">Manual Control</string>
+    <string name="screen_title_light_presets">Presets &amp; Scenes</string>
+    <string name="screen_title_light_settings">Light Settings</string>
+    <string name="screen_title_light_quick_setup">Smart Quick Setup</string>
+
+    <!-- Cloud simulation -->
     <string name="light_cloud_simulation_title">Cloud Simulation</string>
     <string name="light_cloud_simulation_description">Create short natural dimming events during the program.</string>
     <string name="light_cloud_simulation_enable">Enable Cloud Simulation</string>
@@ -11,26 +21,14 @@
     <string name="light_cloud_simulation_frequency_normal">Normal</string>
     <string name="light_cloud_simulation_frequency_frequent">Frequent</string>
 
-    <string name="common_cancel">Cancel</string>
-    <string name="common_apply">Apply</string>
-    <string name="common_delete">Delete</string>
-    <string name="common_selected">Selected</string>
-
+    <!-- Time and custom days -->
     <string name="light_time_picker_title_start">Start Time</string>
     <string name="light_time_picker_title_peak_start">Peak Start Time</string>
     <string name="light_time_picker_description">Set the schedule point time.</string>
-
     <string name="light_custom_days_title">Custom Days</string>
     <string name="light_custom_days_description">Choose the days this program should run.</string>
 
-    <string name="common_day_monday">Monday</string>
-    <string name="common_day_tuesday">Tuesday</string>
-    <string name="common_day_wednesday">Wednesday</string>
-    <string name="common_day_thursday">Thursday</string>
-    <string name="common_day_friday">Friday</string>
-    <string name="common_day_saturday">Saturday</string>
-    <string name="common_day_sunday">Sunday</string>
-
+    <!-- Moonlight -->
     <string name="light_moonlight_title">Moonlight</string>
     <string name="light_moonlight_description">Run soft night lighting after the main program.</string>
     <string name="light_moonlight_enable">Enable Moonlight</string>
@@ -43,10 +41,10 @@
     <string name="light_moonlight_start_picker_title">Moonlight Start</string>
     <string name="light_moonlight_end_picker_title">Moonlight End</string>
 
+    <!-- Channels and transitions -->
     <string name="light_channel_blue">Blue</string>
     <string name="light_channel_white">White</string>
     <string name="light_channel_blue_white">Blue + White</string>
-
     <string name="light_transition_variant_title">Transition Variant</string>
     <string name="light_transition_variant_description">Choose how sunrise and sunset ramps should feel.</string>
     <string name="light_transition_variant_linear">Linear</string>
@@ -55,6 +53,7 @@
     <string name="light_transition_variant_natural">Natural</string>
     <string name="light_transition_variant_natural_description">Sunrise-like ramp curve</string>
 
+    <!-- Preview and presets -->
     <string name="light_preview_day_title">Preview Day</string>
     <string name="light_preview_day_description">Simulate the full program on device.</string>
     <string name="light_preview_day_speed_label">SPEED</string>
@@ -66,7 +65,6 @@
     <string name="light_preview_day_start_button">Start Preview</string>
     <string name="light_preview_day_stop_button">Stop Preview</string>
     <string name="light_preview_day_start_again_button">Start Again</string>
-
     <string name="light_preset_options_apply_to_device">Apply to Device</string>
 
 </resources>
