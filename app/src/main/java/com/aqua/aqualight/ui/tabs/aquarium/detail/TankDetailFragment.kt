@@ -189,16 +189,44 @@ class TankDetailFragment :
     private fun restoreSelectedTab(
         savedInstanceState: Bundle?
     ): TankDetailTab {
-        val savedTab = savedInstanceState
-            ?.getString(KEY_SELECTED_TAB)
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+
+        val returnTab = savedStateHandle
+            ?.remove<String>(KEY_RETURN_TAB)
             ?.let { tabName ->
-                runCatching {
-                    TankDetailTab.valueOf(tabName)
-                }.getOrNull()
+                tabFromStoredValue(
+                    value = tabName
+                )
             }
 
-        if (savedTab != null) {
-            return savedTab
+        if (returnTab != null) {
+            return returnTab
+        }
+
+        val navSavedTab = savedStateHandle
+            ?.get<String>(KEY_SELECTED_TAB)
+            ?.let { tabName ->
+                tabFromStoredValue(
+                    value = tabName
+                )
+            }
+
+        if (navSavedTab != null) {
+            return navSavedTab
+        }
+
+        val instanceSavedTab = savedInstanceState
+            ?.getString(KEY_SELECTED_TAB)
+            ?.let { tabName ->
+                tabFromStoredValue(
+                    value = tabName
+                )
+            }
+
+        if (instanceSavedTab != null) {
+            return instanceSavedTab
         }
 
         return tabFromStartArgument(
@@ -209,14 +237,36 @@ class TankDetailFragment :
     private fun tabFromStartArgument(
         startTab: String
     ): TankDetailTab {
-        return when (startTab) {
+        return tabFromStoredValue(
+            value = startTab
+        ) ?: TankDetailTab.DEVICES
+    }
+
+    private fun tabFromStoredValue(
+        value: String
+    ): TankDetailTab? {
+        return runCatching {
+            TankDetailTab.valueOf(value)
+        }.getOrNull() ?: when (value) {
             TankDetailTabArgs.ACTIVITY -> TankDetailTab.ACTIVITY
             TankDetailTabArgs.TANK -> TankDetailTab.TANK
             TankDetailTabArgs.PLANTS -> TankDetailTab.PLANTS
             TankDetailTabArgs.TANK_LIFE -> TankDetailTab.TANK_LIFE
             TankDetailTabArgs.DEVICES -> TankDetailTab.DEVICES
-            else -> TankDetailTab.DEVICES
+            else -> null
         }
+    }
+
+    private fun saveSelectedTabState(
+        tab: TankDetailTab
+    ) {
+        findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                KEY_SELECTED_TAB,
+                tab.name
+            )
     }
 
     private fun setupClickListeners() {
@@ -382,6 +432,13 @@ class TankDetailFragment :
     private fun openLivestockFormScreen(
         livestockId: Long = 0L
     ) {
+        selectedTab =
+            TankDetailTab.TANK_LIFE
+
+        saveSelectedTabState(
+            tab = TankDetailTab.TANK_LIFE
+        )
+
         navigateFromTankDetail(
             TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailLivestockFormFragment(
                 tankId = tankId,
@@ -391,6 +448,13 @@ class TankDetailFragment :
     }
 
     private fun openPlantTagScreen() {
+        selectedTab =
+            TankDetailTab.PLANTS
+
+        saveSelectedTabState(
+            tab = TankDetailTab.PLANTS
+        )
+
         navigateFromTankDetail(
             TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailPlantTagFragment(
                 tankId = tankId
@@ -456,6 +520,10 @@ class TankDetailFragment :
             return
         }
 
+        saveSelectedTabState(
+            tab = selectedTab
+        )
+
         navController.navigate(
             directions
         )
@@ -513,6 +581,10 @@ class TankDetailFragment :
     ) {
         selectedTab =
             tab
+
+        saveSelectedTabState(
+            tab = tab
+        )
 
         resetTabs()
         activateTab(
@@ -772,7 +844,8 @@ class TankDetailFragment :
     }
 
     companion object {
-        private const val KEY_SELECTED_TAB = "selectedTab"
+        const val KEY_SELECTED_TAB = "tank_detail_selected_tab"
+        const val KEY_RETURN_TAB = "tank_detail_return_tab"
 
         private const val TAG_DEVICES_FRAGMENT = "TankDetailDevicesFragment"
         private const val TAG_ACTIVITY_FRAGMENT = "TankDetailActivityFragment"

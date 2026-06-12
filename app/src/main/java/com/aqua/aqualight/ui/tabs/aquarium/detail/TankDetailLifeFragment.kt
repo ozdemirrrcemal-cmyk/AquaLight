@@ -24,6 +24,7 @@ import java.util.Date
 import java.util.Locale
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 
 class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
@@ -72,7 +73,16 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             return
         }
 
-        val didNavigate = findNavController().navigateSafelyFrom(
+        val navController = findNavController()
+
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                TankDetailFragment.KEY_SELECTED_TAB,
+                TankDetailTabArgs.TANK_LIFE
+            )
+
+        val didNavigate = navController.navigateSafelyFrom(
             sourceDestinationId = R.id.tankDetailFragment,
             directions = TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailLivestockFormFragment(
                 tankId = tankId,

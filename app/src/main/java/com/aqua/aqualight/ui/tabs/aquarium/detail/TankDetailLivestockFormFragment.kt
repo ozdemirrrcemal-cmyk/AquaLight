@@ -11,6 +11,7 @@ import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -37,6 +38,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import androidx.navigation.fragment.navArgs
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 
 
 class TankDetailLivestockFormFragment :
@@ -75,6 +77,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         readArguments()
         setupInitialUi()
         setupClickListeners()
+        setupSystemBackButton()
         setupNamePreviewListener()
         renderCategoryOptions()
         updatePreview()
@@ -245,6 +248,17 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         binding.btnDeleteLife.setOnClickListener {
             showDeleteConfirmation()
         }
+    }
+
+    private fun setupSystemBackButton() {
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    closeForm()
+                }
+            }
+        )
     }
 
     private fun setupNamePreviewListener() {
@@ -667,7 +681,17 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         }
 
         isNavigatingBack = true
-        findNavController().navigateUp()
+
+        val navController = findNavController()
+
+        navController.previousBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                TankDetailFragment.KEY_RETURN_TAB,
+                TankDetailTabArgs.TANK_LIFE
+            )
+
+        navController.navigateUp()
     }
 
     private fun showSnackBar(
