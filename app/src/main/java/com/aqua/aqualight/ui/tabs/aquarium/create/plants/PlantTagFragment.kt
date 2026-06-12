@@ -35,6 +35,8 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     private var pendingMarkerX: Float = 0.5f
     private var pendingMarkerY: Float = 0.5f
 
+    private var hasInitializedSelectedPlants: Boolean = false
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?
@@ -46,8 +48,7 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
         _binding = FragmentPlantTagBinding.bind(view)
 
-        selectedPlants.clear()
-        selectedPlants.addAll(viewModel.tankDraft.plants)
+        initializeSelectedPlantsIfNeeded()
 
         setupHeader()
         setupImage()
@@ -55,6 +56,16 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
         setupClickListeners()
         renderPlants()
         renderMarkers()
+    }
+
+    private fun initializeSelectedPlantsIfNeeded() {
+        if (hasInitializedSelectedPlants) {
+            return
+        }
+
+        selectedPlants.clear()
+        selectedPlants.addAll(viewModel.tankDraft.plants)
+        hasInitializedSelectedPlants = true
     }
 
     private fun setupHeader() {
@@ -92,44 +103,44 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun setupResultListener() {
-    val savedStateHandle = findNavController()
-        .currentBackStackEntry
-        ?.savedStateHandle
-        ?: return
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?: return
 
-    savedStateHandle.getLiveData<Bundle?>(
-        PlantPickerFragment.RESULT_BUNDLE_KEY
-    ).observe(viewLifecycleOwner) { bundle ->
-        if (bundle == null) {
-            return@observe
-        }
+        savedStateHandle.getLiveData<Bundle?>(
+            PlantPickerFragment.RESULT_BUNDLE_KEY
+        ).observe(viewLifecycleOwner) { bundle ->
+            if (bundle == null) {
+                return@observe
+            }
 
-        savedStateHandle.set<Bundle?>(
-            PlantPickerFragment.RESULT_BUNDLE_KEY,
-            null
-        )
-
-        val plantName = bundle.getString(
-            PlantPickerFragment.RESULT_PLANT_NAME
-        ) ?: return@observe
-
-        val category = bundle.getString(
-            PlantPickerFragment.RESULT_PLANT_CATEGORY
-        ) ?: return@observe
-
-        selectedPlants.add(
-            TankPlantTag(
-                plantName = plantName,
-                category = category,
-                markerX = pendingMarkerX,
-                markerY = pendingMarkerY
+            savedStateHandle.set<Bundle?>(
+                PlantPickerFragment.RESULT_BUNDLE_KEY,
+                null
             )
-        )
 
-        renderPlants()
-        renderMarkers()
+            val plantName = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_NAME
+            ) ?: return@observe
+
+            val category = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_CATEGORY
+            ) ?: return@observe
+
+            selectedPlants.add(
+                TankPlantTag(
+                    plantName = plantName,
+                    category = category,
+                    markerX = pendingMarkerX,
+                    markerY = pendingMarkerY
+                )
+            )
+
+            renderPlants()
+            renderMarkers()
+        }
     }
-}
 
     private fun setupClickListeners() {
         binding.imageTouchArea.setOnTouchListener { view, event ->
