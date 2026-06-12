@@ -8,15 +8,14 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navGraphViewModels
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.FragmentTankMaterialBinding
-import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategory
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
+import com.aqua.aqualight.databinding.FragmentTankMaterialBinding
+import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
 import com.google.android.material.card.MaterialCardView
 
@@ -82,199 +81,192 @@ class TankMaterialFragment :
     private fun createMaterialRow(
         item: MaterialCategory
     ): View {
-        val card =
-            MaterialCardView(requireContext()).apply {
-                radius =
-                    18.dp().toFloat()
+        val card = MaterialCardView(requireContext()).apply {
+            radius =
+                18.dp().toFloat()
 
-                strokeWidth =
-                    1.dp()
+            strokeWidth =
+                1.dp()
 
-                strokeColor =
-                    Color.parseColor("#223A57")
+            strokeColor =
+                Color.parseColor("#223A57")
 
-                setCardBackgroundColor(
-                    Color.parseColor("#10233A")
-                )
+            setCardBackgroundColor(
+                Color.parseColor("#10233A")
+            )
 
-                cardElevation =
-                    0f
+            cardElevation =
+                0f
 
-                useCompatPadding =
-                    false
+            useCompatPadding =
+                false
 
-                isClickable =
-                    true
+            isClickable =
+                true
 
-                isFocusable =
-                    true
+            isFocusable =
+                true
 
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        82.dp()
-                    ).apply {
-                        bottomMargin =
-                            12.dp()
-                    }
-
-                setOnClickListener {
-                    openMaterialPicker(item)
+            layoutParams =
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    82.dp()
+                ).apply {
+                    bottomMargin =
+                        12.dp()
                 }
+
+            setOnClickListener {
+                openMaterialPicker(item)
             }
+        }
 
-        val row =
-            LinearLayout(requireContext()).apply {
-                orientation =
-                    LinearLayout.HORIZONTAL
+        val row = LinearLayout(requireContext()).apply {
+            orientation =
+                LinearLayout.HORIZONTAL
 
-                gravity =
-                    Gravity.CENTER_VERTICAL
+            gravity =
+                Gravity.CENTER_VERTICAL
 
-                setPadding(
-                    16.dp(),
+            setPadding(
+                16.dp(),
+                0,
+                14.dp(),
+                0
+            )
+        }
+
+        val iconBox = TextView(requireContext()).apply {
+            text =
+                item.shortCode
+
+            gravity =
+                Gravity.CENTER
+
+            textSize =
+                if (item.shortCode.length > 2) {
+                    11f
+                } else {
+                    13f
+                }
+
+            setTextColor(
+                Color.WHITE
+            )
+
+            setTypeface(
+                null,
+                Typeface.BOLD
+            )
+
+            setBackgroundResource(
+                R.drawable.bg_material_icon_box
+            )
+
+            layoutParams =
+                LinearLayout.LayoutParams(
+                    50.dp(),
+                    50.dp()
+                )
+        }
+
+        val textBox = LinearLayout(requireContext()).apply {
+            orientation =
+                LinearLayout.VERTICAL
+
+            gravity =
+                Gravity.CENTER_VERTICAL
+
+            layoutParams =
+                LinearLayout.LayoutParams(
                     0,
-                    14.dp(),
-                    0
-                )
-            }
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                ).apply {
+                    marginStart =
+                        18.dp()
+                }
+        }
 
-        val iconBox =
-            TextView(requireContext()).apply {
-                text =
-                    item.shortCode
+        val title = TextView(requireContext()).apply {
+            text =
+                item.title
 
-                gravity =
-                    Gravity.CENTER
+            setTextColor(
+                Color.WHITE
+            )
 
-                textSize =
-                    if (item.shortCode.length > 2) {
-                        11f
-                    } else {
-                        13f
-                    }
+            textSize =
+                15f
 
-                setTextColor(
-                    Color.WHITE
-                )
+            includeFontPadding =
+                false
+        }
 
-                setTypeface(
-                    null,
-                    Typeface.BOLD
-                )
-
-                setBackgroundResource(
-                    R.drawable.bg_material_icon_box
+        val selectedText = TextView(requireContext()).apply {
+            val selectedMaterials =
+                viewModel.getMaterialsByCategory(
+                    item.key
                 )
 
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        50.dp(),
-                        50.dp()
-                    )
-            }
-
-        val textBox =
-            LinearLayout(requireContext()).apply {
-                orientation =
-                    LinearLayout.VERTICAL
-
-                gravity =
-                    Gravity.CENTER_VERTICAL
-
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1f
-                    ).apply {
-                        marginStart =
-                            18.dp()
-                    }
-            }
-
-        val title =
-            TextView(requireContext()).apply {
-                text =
-                    item.title
-
-                setTextColor(
-                    Color.WHITE
+            text =
+                getSelectedMaterialsText(
+                    item.key
                 )
 
-                textSize =
-                    15f
-
-                includeFontPadding =
-                    false
-            }
-
-        val selectedText =
-            TextView(requireContext()).apply {
-                val selectedMaterials =
-                    viewModel.getMaterialsByCategory(
-                        item.key
-                    )
-
-                text =
-                    getSelectedMaterialsText(
-                        item.key
-                    )
-
-                setTextColor(
-                    if (selectedMaterials.isEmpty()) {
-                        Color.parseColor("#8FA4BE")
-                    } else {
-                        Color.parseColor("#B8C7D9")
-                    }
-                )
-
-                textSize =
-                    12f
-
-                includeFontPadding =
-                    false
-
-                maxLines =
-                    1
-
-                ellipsize =
-                    TextUtils.TruncateAt.END
-
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        topMargin =
-                            6.dp()
-                    }
-            }
-
-        val arrow =
-            TextView(requireContext()).apply {
-                text =
-                    "›"
-
-                gravity =
-                    Gravity.CENTER
-
-                textSize =
-                    32f
-
-                includeFontPadding =
-                    false
-
-                setTextColor(
+            setTextColor(
+                if (selectedMaterials.isEmpty()) {
                     Color.parseColor("#8FA4BE")
-                )
+                } else {
+                    Color.parseColor("#B8C7D9")
+                }
+            )
 
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        28.dp(),
-                        40.dp()
-                    )
-            }
+            textSize =
+                12f
+
+            includeFontPadding =
+                false
+
+            maxLines =
+                1
+
+            ellipsize =
+                TextUtils.TruncateAt.END
+
+            layoutParams =
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    topMargin =
+                        6.dp()
+                }
+        }
+
+        val arrow = TextView(requireContext()).apply {
+            text =
+                "›"
+
+            gravity =
+                Gravity.CENTER
+
+            textSize =
+                32f
+
+            includeFontPadding =
+                false
+
+            setTextColor(
+                Color.parseColor("#8FA4BE")
+            )
+
+            layoutParams =
+                LinearLayout.LayoutParams(
+                    28.dp(),
+                    40.dp()
+                )
+        }
 
         textBox.addView(title)
         textBox.addView(selectedText)
@@ -315,13 +307,13 @@ class TankMaterialFragment :
         item: MaterialCategory
     ) {
         findNavController().navigate(
-            R.id.action_tankMaterialStepFragment_to_createMaterialPickerFragment,
-            bundleOf(
-                MaterialPickerFragment.ARG_MODE to MaterialPickerFragment.MODE_CREATE,
-                MaterialPickerFragment.ARG_TANK_ID to 0L,
-                MaterialPickerFragment.ARG_CATEGORY_KEY to item.key,
-                MaterialPickerFragment.ARG_CATEGORY_TITLE to item.title
-            )
+            TankMaterialFragmentDirections
+                .actionTankMaterialStepFragmentToCreateMaterialPickerFragment(
+                    argMode = MaterialPickerFragment.MODE_CREATE,
+                    argTankId = 0L,
+                    argCategoryKey = item.key,
+                    argCategoryTitle = item.title
+                )
         )
     }
 
@@ -332,7 +324,7 @@ class TankMaterialFragment :
     private fun Int.dp(): Int {
         return (
             this * resources.displayMetrics.density
-            ).toInt()
+        ).toInt()
     }
 
     override fun onDestroyView() {

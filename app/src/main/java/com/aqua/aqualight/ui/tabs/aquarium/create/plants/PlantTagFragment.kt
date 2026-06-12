@@ -9,14 +9,13 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navGraphViewModels
 import coil3.load
 import coil3.request.crossfade
-import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.databinding.FragmentPlantTagBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -134,10 +133,10 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 pendingMarkerY = event.y / view.height.toFloat()
 
                 findNavController().navigate(
-                    R.id.action_createPlantTagFragment_to_createPlantPickerFragment,
-                    bundleOf(
-                        PlantPickerFragment.ARG_USE_NAV_RESULT to true
-                    )
+                    PlantTagFragmentDirections
+                        .actionCreatePlantTagFragmentToCreatePlantPickerFragment(
+                            useNavResult = true
+                        )
                 )
 
                 true

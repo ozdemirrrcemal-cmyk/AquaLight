@@ -18,6 +18,10 @@ import com.aqua.aqualight.databinding.FragmentCreateTankBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankDescriptionFragmentDirections
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankMaterialFragmentDirections
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragmentDirections
+import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragmentDirections
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment
 import kotlinx.coroutines.launch
 
@@ -162,25 +166,29 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
         when (createTankNavController.currentDestination?.id) {
             R.id.tankNameStepFragment -> {
                 createTankNavController.navigate(
-                    R.id.action_tankNameStepFragment_to_tankDescriptionStepFragment
+                    TankNameFragmentDirections
+                        .actionTankNameStepFragmentToTankDescriptionStepFragment()
                 )
             }
 
             R.id.tankDescriptionStepFragment -> {
                 createTankNavController.navigate(
-                    R.id.action_tankDescriptionStepFragment_to_tankPhotoStepFragment
+                    TankDescriptionFragmentDirections
+                        .actionTankDescriptionStepFragmentToTankPhotoStepFragment()
                 )
             }
 
             R.id.tankPhotoStepFragment -> {
                 createTankNavController.navigate(
-                    R.id.action_tankPhotoStepFragment_to_tankMaterialStepFragment
+                    TankPhotoFragmentDirections
+                        .actionTankPhotoStepFragmentToTankMaterialStepFragment()
                 )
             }
 
             R.id.tankMaterialStepFragment -> {
                 createTankNavController.navigate(
-                    R.id.action_tankMaterialStepFragment_to_tankInfoStepFragment
+                    TankMaterialFragmentDirections
+                        .actionTankMaterialStepFragmentToTankInfoStepFragment()
                 )
             }
 
