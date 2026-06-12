@@ -15,10 +15,7 @@ object AquariumTanksSerializer : Serializer<AquariumTanksStore> {
         return try {
             AquariumTanksStore.parseFrom(input)
         } catch (exception: InvalidProtocolBufferException) {
-            throw CorruptionException(
-                message = "Aquarium tanks DataStore could not be read.",
-                cause = exception
-            )
+            throw CorruptionException("Cannot read aquarium tanks proto.", exception)
         }
     }
 

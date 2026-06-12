@@ -12,11 +12,6 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.photo.TankPhotoStorage
 import com.aqua.aqualight.data.aquarium.util.AquariumIdGenerator
-import com.aqua.aqualight.data.tanks.AquariumTanksStore
-import com.aqua.aqualight.data.tanks.StoredLivestock
-import com.aqua.aqualight.data.tanks.StoredMaterial
-import com.aqua.aqualight.data.tanks.StoredPlantTag
-import com.aqua.aqualight.data.tanks.StoredTank
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
