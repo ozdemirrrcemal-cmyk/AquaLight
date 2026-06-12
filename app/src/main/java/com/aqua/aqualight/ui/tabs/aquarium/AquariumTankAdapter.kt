@@ -10,10 +10,9 @@ import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
-import coil3.request.placeholder
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.ItemAquariumTankBinding
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
+import com.aqua.aqualight.databinding.ItemAquariumTankBinding
 import com.aqua.aqualight.ui.tabs.maintenance.TankCareSummaryUi
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -99,15 +98,7 @@ class AquariumTankAdapter(
       binding.tvTankSize.text = getTankSizeText(tank)
       binding.tvSetupDate.text = getSetupDateText(tank.setupDateMillis)
 
-      if (!tank.photoUri.isNullOrBlank()) {
-        binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {
-          placeholder(R.drawable.nature_aquarium)
-          error(R.drawable.nature_aquarium)
-          crossfade(true)
-        }
-      } else {
-        binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
-      }
+      bindTankPhoto(tank)
 
       binding.selectionCircle.isVisible = isDeleteMode
 
@@ -140,6 +131,38 @@ class AquariumTankAdapter(
       binding.root.setOnLongClickListener {
         onTankLongClick(tank)
         true
+      }
+    }
+
+    private fun bindTankPhoto(
+      tank: SavedAquariumTank
+    ) {
+      val photoUri = tank.photoUri
+        ?.trim()
+        ?.takeIf { value ->
+          value.isNotEmpty()
+        }
+
+      val photoKey = photoUri ?: DEFAULT_TANK_PHOTO_KEY
+
+      if (binding.imgTankPhoto.tag == photoKey) {
+        return
+      }
+
+      binding.imgTankPhoto.tag = photoKey
+
+      if (photoUri == null) {
+        binding.imgTankPhoto.load(R.drawable.nature_aquarium) {
+          crossfade(false)
+        }
+        return
+      }
+
+      binding.imgTankPhoto.setImageDrawable(null)
+
+      binding.imgTankPhoto.load(Uri.parse(photoUri)) {
+        error(R.drawable.nature_aquarium)
+        crossfade(false)
       }
     }
 
@@ -184,6 +207,10 @@ class AquariumTankAdapter(
         .coerceAtLeast(0)
 
       return "Day $day"
+    }
+
+    companion object {
+      private const val DEFAULT_TANK_PHOTO_KEY = "default_tank_photo"
     }
   }
 

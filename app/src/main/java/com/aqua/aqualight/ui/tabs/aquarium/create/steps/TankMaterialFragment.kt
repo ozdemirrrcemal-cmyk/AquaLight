@@ -45,21 +45,26 @@ class TankMaterialFragment :
     }
 
     private fun setupMaterialPickerResultListener() {
-        val savedStateHandle = findNavController()
-            .currentBackStackEntry
-            ?.savedStateHandle
-            ?: return
+    val savedStateHandle = findNavController()
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?: return
 
-        savedStateHandle.getLiveData<String>(
-            MaterialPickerFragment.RESULT_CATEGORY_KEY
-        ).observe(viewLifecycleOwner) { _ ->
-            savedStateHandle.remove<String>(
-                MaterialPickerFragment.RESULT_CATEGORY_KEY
-            )
-
-            renderMaterialCategories()
+    savedStateHandle.getLiveData<String?>(
+        MaterialPickerFragment.RESULT_CATEGORY_KEY
+    ).observe(viewLifecycleOwner) { categoryKey ->
+        if (categoryKey == null) {
+            return@observe
         }
+
+        savedStateHandle.set<String?>(
+            MaterialPickerFragment.RESULT_CATEGORY_KEY,
+            null
+        )
+
+        renderMaterialCategories()
     }
+}
 
     private fun renderMaterialCategories() {
         binding.bioContainer.removeAllViews()

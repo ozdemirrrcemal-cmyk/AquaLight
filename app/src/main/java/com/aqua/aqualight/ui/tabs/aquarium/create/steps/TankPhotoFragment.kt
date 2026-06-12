@@ -153,23 +153,26 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private fun setupPlantTagResultListener() {
-        val savedStateHandle = findNavController()
-            .currentBackStackEntry
-            ?.savedStateHandle
-            ?: return
+    val savedStateHandle = findNavController()
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?: return
 
-        savedStateHandle.getLiveData<Boolean>(
-            PlantTagFragment.RESULT_KEY
-        ).observe(viewLifecycleOwner) { updated ->
-            savedStateHandle.remove<Boolean>(
-                PlantTagFragment.RESULT_KEY
-            )
-
-            if (updated) {
-                renderSelectedPlants()
-            }
+    savedStateHandle.getLiveData<Boolean?>(
+        PlantTagFragment.RESULT_KEY
+    ).observe(viewLifecycleOwner) { updated ->
+        if (updated != true) {
+            return@observe
         }
+
+        savedStateHandle.set<Boolean?>(
+            PlantTagFragment.RESULT_KEY,
+            null
+        )
+
+        renderSelectedPlants()
     }
+}
 
     private fun setupClickListeners() {
         binding.btnCamera.setOnClickListener {

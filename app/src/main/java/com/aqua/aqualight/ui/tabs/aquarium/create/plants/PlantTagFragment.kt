@@ -92,39 +92,44 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun setupResultListener() {
-        val savedStateHandle = findNavController()
-            .currentBackStackEntry
-            ?.savedStateHandle
-            ?: return
+    val savedStateHandle = findNavController()
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?: return
 
-        savedStateHandle.getLiveData<Bundle>(
-            PlantPickerFragment.RESULT_BUNDLE_KEY
-        ).observe(viewLifecycleOwner) { bundle ->
-            savedStateHandle.remove<Bundle>(
-                PlantPickerFragment.RESULT_BUNDLE_KEY
-            )
-
-            val plantName = bundle.getString(
-                PlantPickerFragment.RESULT_PLANT_NAME
-            ) ?: return@observe
-
-            val category = bundle.getString(
-                PlantPickerFragment.RESULT_PLANT_CATEGORY
-            ) ?: return@observe
-
-            selectedPlants.add(
-                TankPlantTag(
-                    plantName = plantName,
-                    category = category,
-                    markerX = pendingMarkerX,
-                    markerY = pendingMarkerY
-                )
-            )
-
-            renderPlants()
-            renderMarkers()
+    savedStateHandle.getLiveData<Bundle?>(
+        PlantPickerFragment.RESULT_BUNDLE_KEY
+    ).observe(viewLifecycleOwner) { bundle ->
+        if (bundle == null) {
+            return@observe
         }
+
+        savedStateHandle.set<Bundle?>(
+            PlantPickerFragment.RESULT_BUNDLE_KEY,
+            null
+        )
+
+        val plantName = bundle.getString(
+            PlantPickerFragment.RESULT_PLANT_NAME
+        ) ?: return@observe
+
+        val category = bundle.getString(
+            PlantPickerFragment.RESULT_PLANT_CATEGORY
+        ) ?: return@observe
+
+        selectedPlants.add(
+            TankPlantTag(
+                plantName = plantName,
+                category = category,
+                markerX = pendingMarkerX,
+                markerY = pendingMarkerY
+            )
+        )
+
+        renderPlants()
+        renderMarkers()
     }
+}
 
     private fun setupClickListeners() {
         binding.imageTouchArea.setOnTouchListener { view, event ->
