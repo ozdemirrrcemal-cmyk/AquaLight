@@ -18,7 +18,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -48,9 +48,19 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     private var _binding: FragmentMaterialPickerBinding? = null
     private val binding get() = _binding!!
 
-    private val createTankViewModel: CreateTankViewModel by viewModels(
-        ownerProducer = { requireParentFragment() }
-    )
+    private val createTankViewModel: CreateTankViewModel by lazy(
+        LazyThreadSafetyMode.NONE
+    ) {
+        val owner = runCatching {
+            findNavController().getViewModelStoreOwner(
+                R.id.nav_create_tank
+            )
+        }.getOrElse {
+            requireParentFragment()
+        }
+
+        ViewModelProvider(owner)[CreateTankViewModel::class.java]
+    }
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
@@ -907,6 +917,14 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
             materials = selectedMaterials
         )
 
+        findNavController()
+            .previousBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                RESULT_CATEGORY_KEY,
+                categoryKey
+            )
+
         parentFragmentManager.setFragmentResult(
             RESULT_KEY,
             bundleOf(
@@ -932,13 +950,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun closePicker() {
-        if (pickerMode == MODE_SETTINGS) {
-            findNavController().navigateUp()
-            return
-        }
-
-        (parentFragment as? MaterialPickerHost)
-            ?.closeMaterialPickerFlow()
+        findNavController().navigateUp()
     }
 
     private fun Int.dp(): Int {

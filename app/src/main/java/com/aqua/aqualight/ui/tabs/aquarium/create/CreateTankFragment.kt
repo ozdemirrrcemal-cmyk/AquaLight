@@ -2,59 +2,37 @@ package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import android.os.Bundle
 import android.view.View
-import android.view.animation.Animation
-import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.commit
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentCreateTankBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankDescriptionFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankInfoFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankMaterialFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragment
-import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankStepFragment
 import kotlinx.coroutines.launch
 
-class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
-    MaterialPickerFragment.MaterialPickerHost,
-    PlantPickerFragment.PlantPickerHost {
+class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
     private var _binding: FragmentCreateTankBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: CreateTankViewModel by viewModels()
-
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
-    private var currentStepIndex: Int = 0
+    private lateinit var createTankNavController: NavController
+
+    private var destinationChangedListener: NavController.OnDestinationChangedListener? = null
 
     private var isCompletingTank: Boolean = false
-
-    private val steps: List<() -> Fragment> =
-        listOf(
-            { TankNameFragment() },
-            { TankDescriptionFragment() },
-            { TankPhotoFragment() },
-            { TankMaterialFragment() },
-            { TankInfoFragment() }
-        )
-
-    private val totalSteps: Int
-        get() = steps.size
 
     override fun onViewCreated(
         view: View,
@@ -68,72 +46,31 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
         _binding =
             FragmentCreateTankBinding.bind(view)
 
-        currentStepIndex =
-            restoreCurrentStepIndex(savedInstanceState)
-
-        setupHeader()
+        setupCreateTankNavController()
         setupSystemBackButton()
         setupNextButton()
-
-        restoreCurrentStepIfNeeded()
-        restoreOverlayContainersIfNeeded()
     }
 
-    private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this,
-            config = AquaHeaderConfig(
-                titleOverride = "Step ${currentStepIndex + 1}",
-                onBackClick = {
-                    handleBackNavigation()
-                }
-            )
+    private fun setupCreateTankNavController() {
+        val navHostFragment = childFragmentManager.findFragmentById(
+            R.id.createTankNavHost
+        ) as NavHostFragment
+
+        createTankNavController =
+            navHostFragment.navController
+
+        destinationChangedListener =
+            NavController.OnDestinationChangedListener { _, destination, _ ->
+                renderChromeForDestination(destination)
+            }
+
+        createTankNavController.addOnDestinationChangedListener(
+            destinationChangedListener!!
         )
-    }
 
-    private fun restoreCurrentStepIndex(
-        savedInstanceState: Bundle?
-    ): Int {
-        val savedIndex =
-            savedInstanceState?.getInt(
-                KEY_CURRENT_STEP,
-                0
-            ) ?: 0
-
-        return savedIndex.coerceIn(
-            0,
-            steps.lastIndex
-        )
-    }
-
-    private fun restoreCurrentStepIfNeeded() {
-        val currentChild =
-            childFragmentManager.findFragmentById(
-                R.id.stepFragmentContainer
-            )
-
-        if (currentChild == null) {
-            showStep(
-                index = currentStepIndex,
-                animate = false
-            )
-        } else {
-            updateHeader()
-            updateProgress()
-            updateButton()
+        createTankNavController.currentDestination?.let { destination ->
+            renderChromeForDestination(destination)
         }
-    }
-
-    private fun restoreOverlayContainersIfNeeded() {
-        binding.plantFlowContainer.isVisible =
-            childFragmentManager.findFragmentById(
-                R.id.plantFlowContainer
-            ) != null
-
-        binding.materialFlowContainer.isVisible =
-            childFragmentManager.findFragmentById(
-                R.id.materialFlowContainer
-            ) != null
     }
 
     private fun setupSystemBackButton() {
@@ -142,20 +79,11 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
             .addCallback(
                 viewLifecycleOwner,
                 object : OnBackPressedCallback(true) {
-
                     override fun handleOnBackPressed() {
                         handleBackNavigation()
                     }
                 }
             )
-    }
-
-    private fun handleBackNavigation() {
-        when {
-            handleMaterialFlowBack() -> Unit
-            handlePlantFlowBack() -> Unit
-            else -> goBack()
-        }
     }
 
     private fun setupNextButton() {
@@ -164,98 +92,47 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
         }
     }
 
-    private fun handleNextClick() {
-        if (isCompletingTank) {
+    private fun renderChromeForDestination(
+        destination: NavDestination
+    ) {
+        val stepIndex = stepIndexOf(
+            destination.id
+        )
+
+        val isStepDestination =
+            stepIndex != null
+
+        binding.appHeader.root.isVisible =
+            isStepDestination
+
+        binding.progressBar.isVisible =
+            isStepDestination
+
+        binding.bottomContainer.isVisible =
+            isStepDestination
+
+        if (!isStepDestination) {
             return
         }
 
-        val currentFragment =
-            childFragmentManager.findFragmentById(
-                R.id.stepFragmentContainer
-            )
+        val safeStepIndex =
+            stepIndex ?: 0
 
-        if (currentFragment is TankStepFragment) {
-            val isValid =
-                currentFragment.validateAndSave()
-
-            if (!isValid) {
-                return
-            }
-        }
-
-        if (isLastStep()) {
-            completeTank()
-        } else {
-            showStep(
-                index = currentStepIndex + 1
-            )
-        }
-    }
-
-    private fun isLastStep(): Boolean {
-        return currentStepIndex == totalSteps - 1
-    }
-
-    private fun showStep(
-        index: Int,
-        animate: Boolean = true
-    ) {
-        val targetIndex =
-            index.coerceIn(
-                0,
-                steps.lastIndex
-            )
-
-        val isForward =
-            targetIndex > currentStepIndex
-
-        childFragmentManager.commit {
-            setReorderingAllowed(true)
-
-            if (animate) {
-                if (isForward) {
-                    setCustomAnimations(
-                        R.anim.nav_slide_in_right,
-                        R.anim.nav_slide_out_left
-                    )
-                } else {
-                    setCustomAnimations(
-                        R.anim.nav_slide_in_left,
-                        R.anim.nav_slide_out_right
-                    )
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = "Step ${safeStepIndex + 1}",
+                onBackClick = {
+                    handleBackNavigation()
                 }
-            }
-
-            replace(
-                R.id.stepFragmentContainer,
-                steps[targetIndex].invoke(),
-                stepTag(targetIndex)
             )
-        }
-
-        currentStepIndex =
-            targetIndex
-
-        updateHeader()
-        updateProgress()
-        updateButton()
-    }
-
-    private fun updateHeader() {
-        setupHeader()
-    }
-
-    private fun updateProgress() {
-        val progress =
-            ((currentStepIndex + 1) * 100) / totalSteps
+        )
 
         binding.progressBar.progress =
-            progress
-    }
+            ((safeStepIndex + 1) * 100) / TOTAL_STEPS
 
-    private fun updateButton() {
         binding.btnNext.text =
-            if (isLastStep()) {
+            if (safeStepIndex == TOTAL_STEPS - 1) {
                 "Complete"
             } else {
                 "Next"
@@ -265,12 +142,76 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
             !isCompletingTank
     }
 
-    private fun goBack() {
-        if (currentStepIndex > 0) {
-            showStep(
-                index = currentStepIndex - 1
-            )
-        } else {
+    private fun handleNextClick() {
+        if (isCompletingTank) {
+            return
+        }
+
+        val currentStepFragment =
+            currentCreateFlowFragment()
+
+        if (currentStepFragment is TankStepFragment) {
+            val isValid =
+                currentStepFragment.validateAndSave()
+
+            if (!isValid) {
+                return
+            }
+        }
+
+        when (createTankNavController.currentDestination?.id) {
+            R.id.tankNameStepFragment -> {
+                createTankNavController.navigate(
+                    R.id.action_tankNameStepFragment_to_tankDescriptionStepFragment
+                )
+            }
+
+            R.id.tankDescriptionStepFragment -> {
+                createTankNavController.navigate(
+                    R.id.action_tankDescriptionStepFragment_to_tankPhotoStepFragment
+                )
+            }
+
+            R.id.tankPhotoStepFragment -> {
+                createTankNavController.navigate(
+                    R.id.action_tankPhotoStepFragment_to_tankMaterialStepFragment
+                )
+            }
+
+            R.id.tankMaterialStepFragment -> {
+                createTankNavController.navigate(
+                    R.id.action_tankMaterialStepFragment_to_tankInfoStepFragment
+                )
+            }
+
+            R.id.tankInfoStepFragment -> {
+                completeTank()
+            }
+        }
+    }
+
+    private fun handleBackNavigation() {
+        if (isCompletingTank) {
+            return
+        }
+
+        if (!::createTankNavController.isInitialized) {
+            findNavController().navigateUp()
+            return
+        }
+
+        val currentDestinationId =
+            createTankNavController.currentDestination?.id
+
+        if (currentDestinationId == R.id.tankNameStepFragment) {
+            findNavController().navigateUp()
+            return
+        }
+
+        val handledByCreateFlow =
+            createTankNavController.navigateUp()
+
+        if (!handledByCreateFlow) {
             findNavController().navigateUp()
         }
     }
@@ -289,7 +230,7 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 aquariumTankViewModel.addTankFromDraft(
-                    viewModel.tankDraft
+                    createTankViewModel().tankDraft
                 )
 
                 findNavController().popBackStack(
@@ -314,324 +255,50 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
         }
     }
 
-    fun openPlantTagFlow() {
-        if (binding.plantFlowContainer.isVisible) {
-            return
-        }
-
-        binding.plantFlowContainer.clearAnimation()
-
-        binding.plantFlowContainer.isEnabled =
-            true
-
-        binding.plantFlowContainer.isVisible =
-            true
-
-        childFragmentManager.commit {
-            setReorderingAllowed(true)
-
-            setCustomAnimations(
-                R.anim.nav_slide_in_right,
-                R.anim.nav_slide_out_left
+    private fun createTankViewModel(): CreateTankViewModel {
+        val owner =
+            createTankNavController.getViewModelStoreOwner(
+                R.id.nav_create_tank
             )
 
-            replace(
-                R.id.plantFlowContainer,
-                PlantTagFragment(),
-                TAG_PLANT_TAG_FRAGMENT
-            )
-        }
+        return ViewModelProvider(owner)[CreateTankViewModel::class.java]
     }
 
-    fun openPlantPickerFlow() {
-        if (
-            !binding.plantFlowContainer.isVisible ||
-            binding.plantFlowContainer.animation != null
-        ) {
-            return
-        }
+    private fun currentCreateFlowFragment(): Fragment? {
+        val navHostFragment =
+            childFragmentManager.findFragmentById(
+                R.id.createTankNavHost
+            ) as? NavHostFragment
 
-        val existingPicker =
-            childFragmentManager.findFragmentByTag(
-                TAG_PLANT_PICKER_FRAGMENT
-            )
-
-        if (existingPicker != null) {
-            return
-        }
-
-        childFragmentManager.commit {
-            setReorderingAllowed(true)
-
-            setCustomAnimations(
-                R.anim.nav_slide_in_right,
-                R.anim.nav_slide_out_left
-            )
-
-            add(
-                R.id.plantFlowContainer,
-                PlantPickerFragment.newCreateInstance(),
-                TAG_PLANT_PICKER_FRAGMENT
-            )
-        }
+        return navHostFragment
+            ?.childFragmentManager
+            ?.primaryNavigationFragment
     }
 
-    fun closePlantTagFlow() {
-        closeOverlayContainerWithAnimation(
-            container = binding.plantFlowContainer,
-            fragmentTagsToRemove = listOf(
-                TAG_PLANT_PICKER_FRAGMENT,
-                TAG_PLANT_TAG_FRAGMENT
-            )
-        )
-    }
-
-    override fun closePlantPickerFlow() {
-        val plantPickerFragment =
-            childFragmentManager.findFragmentByTag(
-                TAG_PLANT_PICKER_FRAGMENT
-            ) ?: return
-
-        val pickerView =
-            plantPickerFragment.view
-
-        if (pickerView == null) {
-            removeFragmentsByTags(
-                listOf(TAG_PLANT_PICKER_FRAGMENT)
-            )
-            return
+    private fun stepIndexOf(
+        destinationId: Int
+    ): Int? {
+        return when (destinationId) {
+            R.id.tankNameStepFragment -> 0
+            R.id.tankDescriptionStepFragment -> 1
+            R.id.tankPhotoStepFragment -> 2
+            R.id.tankMaterialStepFragment -> 3
+            R.id.tankInfoStepFragment -> 4
+            else -> null
         }
-
-        if (
-            pickerView.animation != null ||
-            binding.plantFlowContainer.animation != null
-        ) {
-            return
-        }
-
-        pickerView.isEnabled =
-            false
-
-        val closeAnimation =
-            AnimationUtils.loadAnimation(
-                requireContext(),
-                R.anim.nav_slide_out_right
-            )
-
-        closeAnimation.setAnimationListener(
-            object : Animation.AnimationListener {
-
-                override fun onAnimationStart(
-                    animation: Animation?
-                ) = Unit
-
-                override fun onAnimationRepeat(
-                    animation: Animation?
-                ) = Unit
-
-                override fun onAnimationEnd(
-                    animation: Animation?
-                ) {
-                    pickerView.clearAnimation()
-
-                    removeFragmentsByTags(
-                        listOf(TAG_PLANT_PICKER_FRAGMENT)
-                    )
-                }
-            }
-        )
-
-        pickerView.startAnimation(
-            closeAnimation
-        )
-    }
-
-    private fun handlePlantFlowBack(): Boolean {
-        if (!binding.plantFlowContainer.isVisible) {
-            return false
-        }
-
-        val plantPickerFragment =
-            childFragmentManager.findFragmentByTag(
-                TAG_PLANT_PICKER_FRAGMENT
-            )
-
-        if (plantPickerFragment != null) {
-            closePlantPickerFlow()
-        } else {
-            closePlantTagFlow()
-        }
-
-        return true
-    }
-
-    fun openMaterialPickerFlow(
-        categoryKey: String,
-        categoryTitle: String
-    ) {
-        if (binding.materialFlowContainer.isVisible) {
-            return
-        }
-
-        binding.materialFlowContainer.clearAnimation()
-
-        binding.materialFlowContainer.isEnabled =
-            true
-
-        binding.materialFlowContainer.isVisible =
-            true
-
-        childFragmentManager.commit {
-            setReorderingAllowed(true)
-
-            setCustomAnimations(
-                R.anim.nav_slide_in_right,
-                R.anim.nav_slide_out_left
-            )
-
-            replace(
-                R.id.materialFlowContainer,
-                MaterialPickerFragment.newCreateInstance(
-                    categoryKey = categoryKey,
-                    categoryTitle = categoryTitle
-                ),
-                TAG_MATERIAL_PICKER_FRAGMENT
-            )
-        }
-    }
-
-    override fun closeMaterialPickerFlow() {
-        closeOverlayContainerWithAnimation(
-            container = binding.materialFlowContainer,
-            fragmentTagsToRemove = listOf(
-                TAG_MATERIAL_PICKER_FRAGMENT
-            )
-        )
-    }
-
-
-    private fun closeOverlayContainerWithAnimation(
-        container: View,
-        fragmentTagsToRemove: List<String>
-    ) {
-        if (!container.isVisible) {
-            removeFragmentsByTags(fragmentTagsToRemove)
-            container.clearAnimation()
-            container.isEnabled = true
-            return
-        }
-
-        if (container.animation != null) {
-            return
-        }
-
-        container.isEnabled =
-            false
-
-        val closeAnimation =
-            AnimationUtils.loadAnimation(
-                requireContext(),
-                R.anim.nav_slide_out_right
-            )
-
-        closeAnimation.setAnimationListener(
-            object : Animation.AnimationListener {
-
-                override fun onAnimationStart(
-                    animation: Animation?
-                ) = Unit
-
-                override fun onAnimationRepeat(
-                    animation: Animation?
-                ) = Unit
-
-                override fun onAnimationEnd(
-                    animation: Animation?
-                ) {
-                    val currentBinding =
-                        _binding ?: return
-
-                    removeFragmentsByTags(
-                        fragmentTagsToRemove
-                    )
-
-                    container.clearAnimation()
-                    container.isVisible = false
-                    container.isEnabled = true
-
-                    if (container.id == R.id.plantFlowContainer) {
-                        currentBinding.plantFlowContainer.clearAnimation()
-                    }
-
-                    if (container.id == R.id.materialFlowContainer) {
-                        currentBinding.materialFlowContainer.clearAnimation()
-                    }
-                }
-            }
-        )
-
-        container.startAnimation(
-            closeAnimation
-        )
-    }
-
-    private fun removeFragmentsByTags(
-        fragmentTags: List<String>
-    ) {
-        if (childFragmentManager.isStateSaved) {
-            return
-        }
-
-        val fragmentsToRemove =
-            fragmentTags.mapNotNull { tag ->
-                childFragmentManager.findFragmentByTag(tag)
-            }
-
-        if (fragmentsToRemove.isEmpty()) {
-            return
-        }
-
-        childFragmentManager.commit {
-            setReorderingAllowed(true)
-
-            fragmentsToRemove.forEach { fragment ->
-                remove(fragment)
-            }
-        }
-    }
-
-    private fun handleMaterialFlowBack(): Boolean {
-        if (!binding.materialFlowContainer.isVisible) {
-            return false
-        }
-
-        closeMaterialPickerFlow()
-
-        return true
-    }
-
-    private fun stepTag(
-        index: Int
-    ): String {
-        return "$TAG_STEP_PREFIX$index"
-    }
-
-    override fun onSaveInstanceState(
-        outState: Bundle
-    ) {
-        outState.putInt(
-            KEY_CURRENT_STEP,
-            currentStepIndex
-        )
-
-        super.onSaveInstanceState(
-            outState
-        )
     }
 
     override fun onDestroyView() {
-        _binding?.plantFlowContainer?.clearAnimation()
-        _binding?.materialFlowContainer?.clearAnimation()
+        if (::createTankNavController.isInitialized) {
+            destinationChangedListener?.let { listener ->
+                createTankNavController.removeOnDestinationChangedListener(
+                    listener
+                )
+            }
+        }
+
+        destinationChangedListener =
+            null
 
         super.onDestroyView()
 
@@ -640,20 +307,6 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank),
     }
 
     companion object {
-
-        private const val KEY_CURRENT_STEP =
-            "key_current_step"
-
-        private const val TAG_STEP_PREFIX =
-            "CreateTankStep_"
-
-        private const val TAG_PLANT_TAG_FRAGMENT =
-            "PlantTagFragment"
-
-        private const val TAG_PLANT_PICKER_FRAGMENT =
-            "PlantPickerFragment"
-
-        private const val TAG_MATERIAL_PICKER_FRAGMENT =
-            "MaterialPickerFragment"
+        private const val TOTAL_STEPS = 5
     }
 }

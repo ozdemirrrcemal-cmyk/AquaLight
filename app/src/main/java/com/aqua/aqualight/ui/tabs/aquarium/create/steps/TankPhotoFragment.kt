@@ -16,7 +16,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navGraphViewModels
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
@@ -24,7 +25,6 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankPhotoBinding
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
-import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
 import com.google.android.material.card.MaterialCardView
@@ -37,9 +37,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     private var _binding: FragmentTankPhotoBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: CreateTankViewModel by viewModels(
-        ownerProducer = { requireParentFragment() }
-    )
+    private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
 
     private var cameraImageUri: Uri? = null
     private var selectedPhotoUri: String? = null
@@ -154,11 +152,21 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     }
 
     private fun setupPlantTagResultListener() {
-        parentFragmentManager.setFragmentResultListener(
-            PlantTagFragment.RESULT_KEY,
-            viewLifecycleOwner
-        ) { _, _ ->
-            renderSelectedPlants()
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?: return
+
+        savedStateHandle.getLiveData<Boolean>(
+            PlantTagFragment.RESULT_KEY
+        ).observe(viewLifecycleOwner) { updated ->
+            savedStateHandle.remove<Boolean>(
+                PlantTagFragment.RESULT_KEY
+            )
+
+            if (updated) {
+                renderSelectedPlants()
+            }
         }
     }
 
@@ -177,8 +185,9 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         binding.btnAddPlant.setOnClickListener {
             viewModel.updateTankPhoto(selectedPhotoUri)
 
-            (requireParentFragment() as? CreateTankFragment)
-                ?.openPlantTagFlow()
+            findNavController().navigate(
+                R.id.action_tankPhotoStepFragment_to_createPlantTagFragment
+            )
         }
     }
 

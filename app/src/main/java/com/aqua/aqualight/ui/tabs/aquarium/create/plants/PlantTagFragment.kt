@@ -11,7 +11,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navGraphViewModels
 import coil3.load
 import coil3.request.crossfade
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
@@ -20,7 +21,6 @@ import com.aqua.aqualight.databinding.FragmentPlantTagBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderCardIconAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.google.android.material.card.MaterialCardView
 
@@ -29,9 +29,7 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     private var _binding: FragmentPlantTagBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: CreateTankViewModel by viewModels(
-        ownerProducer = { requireParentFragment() }
-    )
+    private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
 
     private val selectedPlants = mutableListOf<TankPlantTag>()
 
@@ -95,18 +93,25 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     }
 
     private fun setupResultListener() {
-        parentFragmentManager.setFragmentResultListener(
-            PlantPickerFragment.REQUEST_KEY,
-            viewLifecycleOwner
-        ) { _, bundle ->
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?: return
+
+        savedStateHandle.getLiveData<Bundle>(
+            PlantPickerFragment.RESULT_BUNDLE_KEY
+        ).observe(viewLifecycleOwner) { bundle ->
+            savedStateHandle.remove<Bundle>(
+                PlantPickerFragment.RESULT_BUNDLE_KEY
+            )
 
             val plantName = bundle.getString(
                 PlantPickerFragment.RESULT_PLANT_NAME
-            ) ?: return@setFragmentResultListener
+            ) ?: return@observe
 
             val category = bundle.getString(
                 PlantPickerFragment.RESULT_PLANT_CATEGORY
-            ) ?: return@setFragmentResultListener
+            ) ?: return@observe
 
             selectedPlants.add(
                 TankPlantTag(
@@ -128,8 +133,12 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
                 pendingMarkerX = event.x / view.width.toFloat()
                 pendingMarkerY = event.y / view.height.toFloat()
 
-                (requireParentFragment() as? CreateTankFragment)
-                    ?.openPlantPickerFlow()
+                findNavController().navigate(
+                    R.id.action_createPlantTagFragment_to_createPlantPickerFragment,
+                    bundleOf(
+                        PlantPickerFragment.ARG_USE_NAV_RESULT to true
+                    )
+                )
 
                 true
             } else {
@@ -141,17 +150,19 @@ class PlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
     private fun confirmPlantTags() {
         viewModel.updateTankPlants(selectedPlants)
 
-        parentFragmentManager.setFragmentResult(
-            RESULT_KEY,
-            bundleOf(RESULT_UPDATED to true)
-        )
+        findNavController()
+            .previousBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                RESULT_KEY,
+                true
+            )
 
         closePlantTagFlow()
     }
 
     private fun closePlantTagFlow() {
-        (requireParentFragment() as? CreateTankFragment)
-            ?.closePlantTagFlow()
+        findNavController().navigateUp()
     }
 
     private fun renderPlants() {

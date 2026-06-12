@@ -4,7 +4,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.navGraphViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankInfoBinding
 import com.aqua.aqualight.ui.common.bottomsheet.SetupDateBottomSheet
@@ -26,11 +26,7 @@ class TankInfoFragment :
     private var _binding: FragmentTankInfoBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: CreateTankViewModel by viewModels(
-        ownerProducer = {
-            requireParentFragment()
-        }
-    )
+    private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
 
     private val volumeFormatter =
         DecimalFormat(

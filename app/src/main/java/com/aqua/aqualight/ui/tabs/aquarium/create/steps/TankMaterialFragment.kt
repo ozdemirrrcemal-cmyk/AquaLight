@@ -8,11 +8,12 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navGraphViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankMaterialBinding
-import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankFragment
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategory
 import com.aqua.aqualight.data.aquarium.catalog.material.MaterialCategoryCatalog
@@ -26,11 +27,7 @@ class TankMaterialFragment :
     private var _binding: FragmentTankMaterialBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: CreateTankViewModel by viewModels(
-        ownerProducer = {
-            requireParentFragment()
-        }
-    )
+    private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
 
     override fun onViewCreated(
         view: View,
@@ -49,10 +46,18 @@ class TankMaterialFragment :
     }
 
     private fun setupMaterialPickerResultListener() {
-        parentFragmentManager.setFragmentResultListener(
-            MaterialPickerFragment.RESULT_KEY,
-            viewLifecycleOwner
-        ) { _, _ ->
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?: return
+
+        savedStateHandle.getLiveData<String>(
+            MaterialPickerFragment.RESULT_CATEGORY_KEY
+        ).observe(viewLifecycleOwner) { _ ->
+            savedStateHandle.remove<String>(
+                MaterialPickerFragment.RESULT_CATEGORY_KEY
+            )
+
             renderMaterialCategories()
         }
     }
@@ -309,11 +314,15 @@ class TankMaterialFragment :
     private fun openMaterialPicker(
         item: MaterialCategory
     ) {
-        (requireParentFragment() as? CreateTankFragment)
-            ?.openMaterialPickerFlow(
-                categoryKey = item.key,
-                categoryTitle = item.title
+        findNavController().navigate(
+            R.id.action_tankMaterialStepFragment_to_createMaterialPickerFragment,
+            bundleOf(
+                MaterialPickerFragment.ARG_MODE to MaterialPickerFragment.MODE_CREATE,
+                MaterialPickerFragment.ARG_TANK_ID to 0L,
+                MaterialPickerFragment.ARG_CATEGORY_KEY to item.key,
+                MaterialPickerFragment.ARG_CATEGORY_TITLE to item.title
             )
+        )
     }
 
     override fun validateAndSave(): Boolean {

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_create_tank"
+    app:startDestination="@id/tankNameStepFragment">
+
+    <fragment
+        android:id="@+id/tankNameStepFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankNameFragment"
+        android:label="Step 1"
+        tools:layout="@layout/fragment_tank_name">
+        <action
+            android:id="@+id/action_tankNameStepFragment_to_tankDescriptionStepFragment"
+            app:destination="@id/tankDescriptionStepFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankDescriptionStepFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankDescriptionFragment"
+        android:label="Step 2"
+        tools:layout="@layout/fragment_tank_description">
+        <action
+            android:id="@+id/action_tankDescriptionStepFragment_to_tankPhotoStepFragment"
+            app:destination="@id/tankPhotoStepFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankPhotoStepFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankPhotoFragment"
+        android:label="Step 3"
+        tools:layout="@layout/fragment_tank_photo">
+        <action
+            android:id="@+id/action_tankPhotoStepFragment_to_createPlantTagFragment"
+            app:destination="@id/createPlantTagFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_tankPhotoStepFragment_to_tankMaterialStepFragment"
+            app:destination="@id/tankMaterialStepFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/createPlantTagFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment"
+        android:label="Tag your plants"
+        tools:layout="@layout/fragment_plant_tag">
+        <action
+            android:id="@+id/action_createPlantTagFragment_to_createPlantPickerFragment"
+            app:destination="@id/createPlantPickerFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="useNavResult"
+                app:argType="boolean"
+                android:defaultValue="true" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/createPlantPickerFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment"
+        android:label="@string/screen_title_plant_picker"
+        tools:layout="@layout/fragment_plant_picker">
+        <argument
+            android:name="useNavResult"
+            app:argType="boolean"
+            android:defaultValue="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankMaterialStepFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankMaterialFragment"
+        android:label="Step 4"
+        tools:layout="@layout/fragment_tank_material">
+        <action
+            android:id="@+id/action_tankMaterialStepFragment_to_createMaterialPickerFragment"
+            app:destination="@id/createMaterialPickerFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="arg_mode"
+                app:argType="string"
+                android:defaultValue="mode_create" />
+            <argument
+                android:name="arg_tank_id"
+                app:argType="long"
+                android:defaultValue="0L" />
+            <argument
+                android:name="arg_category_key"
+                app:argType="string" />
+            <argument
+                android:name="arg_category_title"
+                app:argType="string" />
+        </action>
+        <action
+            android:id="@+id/action_tankMaterialStepFragment_to_tankInfoStepFragment"
+            app:destination="@id/tankInfoStepFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/createMaterialPickerFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.materials.MaterialPickerFragment"
+        android:label="@string/screen_title_material_picker"
+        tools:layout="@layout/fragment_material_picker">
+        <argument
+            android:name="arg_mode"
+            app:argType="string"
+            android:defaultValue="mode_create" />
+        <argument
+            android:name="arg_tank_id"
+            app:argType="long"
+            android:defaultValue="0L" />
+        <argument
+            android:name="arg_category_key"
+            app:argType="string" />
+        <argument
+            android:name="arg_category_title"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankInfoStepFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.create.steps.TankInfoFragment"
+        android:label="Step 5"
+        tools:layout="@layout/fragment_tank_info" />
+
+</navigation>
