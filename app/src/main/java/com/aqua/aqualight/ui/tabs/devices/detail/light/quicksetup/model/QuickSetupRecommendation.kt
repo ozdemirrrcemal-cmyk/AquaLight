@@ -1,8 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model
 
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramDraft
 
 data class QuickSetupRecommendation(
     val title: String,

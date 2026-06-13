@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.automation.model
 
-import com.aqua.aqualight.data.devices.light.automation.model.CloudSimulationSettings
-import com.aqua.aqualight.data.devices.light.automation.model.MoonlightSettings
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.automation.model.CloudSimulationSettings
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.automation.model.MoonlightSettings
 
 data class DeviceLightAutomationUiState(
     val moonlight: MoonlightSettings = MoonlightSettings(),

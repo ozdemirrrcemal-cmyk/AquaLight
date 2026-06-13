@@ -10,11 +10,11 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphState
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveMoonlightGraphSegment
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveMoonlightGraphSegment
 
 class LightCurveGraphView @JvmOverloads constructor(
     context: Context,

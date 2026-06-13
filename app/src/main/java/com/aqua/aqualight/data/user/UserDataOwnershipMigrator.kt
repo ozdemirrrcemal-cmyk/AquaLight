@@ -3,9 +3,6 @@ package com.aqua.aqualight.data.user
 import android.content.Context
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.light.automation.LightAutomationDataStoreManager
-import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
-import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 
 /**
@@ -53,24 +50,6 @@ class UserDataOwnershipMigrator private constructor(
         DevicesDataStoreManager.create(
             appContext
         ).assignLegacyDevicesToOwner(
-            ownerUid = targetOwnerUid
-        )
-
-        LightProgramsDataStoreManager(
-            appContext
-        ).assignLegacyProgramsToOwner(
-            ownerUid = targetOwnerUid
-        )
-
-        LightPresetDataStoreManager(
-            appContext
-        ).assignLegacyPresetsToOwner(
-            ownerUid = targetOwnerUid
-        )
-
-        LightAutomationDataStoreManager(
-            appContext
-        ).assignLegacySettingsToOwner(
             ownerUid = targetOwnerUid
         )
     }

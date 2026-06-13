@@ -1,0 +1,13 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.model
+
+data class SavedLightPreset(
+    val id: String,
+    val ownerUid: String = "",
+    val name: String,
+    val red: Int,
+    val green: Int,
+    val blue: Int,
+    val white: Int,
+    val createdAt: Long,
+    val updatedAt: Long
+)

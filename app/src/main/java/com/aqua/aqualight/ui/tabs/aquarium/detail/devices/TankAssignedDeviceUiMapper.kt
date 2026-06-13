@@ -1,628 +1,163 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
-import android.content.Context
-import android.graphics.Color
-import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.aquarium.devices.TankAssignedDeviceCardSnapshot
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceRuntimeChannelKind
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceRuntimeChannelSnapshot
+import com.aqua.aqualight.data.aquarium.devices.TankDeviceRuntimeSnapshot
+import com.aqua.aqualight.data.aquarium.devices.TankLightRuntimeMode
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
-import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
-import com.aqua.aqualight.data.devices.catalog.light.LightChannelColor
-import com.aqua.aqualight.data.devices.catalog.light.LightProductCatalog
-import com.aqua.aqualight.data.devices.light.runtime.LightActualDataPolicy
-import com.aqua.aqualight.data.devices.light.runtime.LightChannelSemantic
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceLiveState
-import com.aqua.aqualight.data.devices.light.runtime.LightProgramRuntimeEvaluator
-import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
-import com.aqua.aqualight.data.devices.presence.DeviceStatusState
-import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
 
-class TankAssignedDeviceUiMapper(
-    context: Context
-) {
-
-    private val appContext =
-        context.applicationContext
-
-    private val deviceCardStateMapper =
-        DeviceCardStateMapper()
-
-    fun isLightDeviceForObserver(
-        device: DevicesDataStoreManager.DeviceInfo
-    ): Boolean {
-        return device.isLightDevice()
-    }
+class TankAssignedDeviceUiMapper {
 
     fun map(
-        device: DevicesDataStoreManager.DeviceInfo,
-        statuses: Map<Long, DeviceStatusState>,
-        programs: List<SavedLightProgram>,
-        lightState: LightDeviceLiveState?,
-        now: Long,
-        modeOverride: TankLightModeOverride? = null
+        snapshot: TankAssignedDeviceCardSnapshot
     ): TankAssignedDeviceUi {
-        val commonCardState =
-            deviceCardStateMapper.map(
-                device = device,
-                statuses = statuses,
-                nowMillis = now,
-                unknownTankText = text(TankAssignedDeviceText.UNKNOWN_AQUARIUM)
-            )
+        val commonCard =
+            snapshot.commonCard
 
         val title =
-            commonCardState.title
+            commonCard.title
 
         val subtitle =
-            commonCardState.productMetaText.ifBlank {
-                commonCardState.familyName
+            commonCard.productMetaText.ifBlank {
+                commonCard.familyName
             }
-
-        val online =
-            commonCardState.isOnline
 
         val iconRes =
             DeviceCardIconMapper.iconFor(
-                commonCardState.category
+                commonCard.category
             )
 
-        return if (device.isLightDevice()) {
-            mapLightDevice(
-                device = device,
-                title = title,
-                subtitle = subtitle,
-                iconRes = iconRes,
-                online = online,
-                programs = programs,
-                lightState = lightState,
-                modeOverride = modeOverride
-            )
-        } else {
-            TankAssignedDeviceUi.Generic(
-                deviceId = device.id,
-                title = title,
-                subtitle = subtitle,
-                iconRes = iconRes,
-                isOnline = online
-            )
+        return when (val runtime = snapshot.runtime) {
+            is TankDeviceRuntimeSnapshot.Light -> {
+                mapLightDevice(
+                    runtime = runtime,
+                    title = title,
+                    subtitle = subtitle,
+                    iconRes = iconRes,
+                    isOnline = commonCard.isOnline
+                )
+            }
+
+            null -> {
+                if (commonCard.category == AquaDeviceCategory.LIGHT) {
+                    mapLightShell(
+                        deviceId = commonCard.deviceId,
+                        title = title,
+                        subtitle = subtitle,
+                        iconRes = iconRes,
+                        isOnline = commonCard.isOnline
+                    )
+                } else {
+                    mapGenericDevice(
+                        deviceId = commonCard.deviceId,
+                        title = title,
+                        subtitle = subtitle,
+                        iconRes = iconRes,
+                        isOnline = commonCard.isOnline
+                    )
+                }
+            }
         }
     }
 
-    private fun mapLightDevice(
-        device: DevicesDataStoreManager.DeviceInfo,
+    private fun mapGenericDevice(
+        deviceId: Long,
         title: String,
         subtitle: String,
         iconRes: Int,
-        online: Boolean,
-        programs: List<SavedLightProgram>,
-        lightState: LightDeviceLiveState?,
-        modeOverride: TankLightModeOverride?
-    ): TankAssignedDeviceUi.Light {
-        val liveState =
-            lightState ?: LightDeviceLiveState.initial(
-                deviceId = device.id
-            )
-
-        val runtimeEvaluation =
-            LightProgramRuntimeEvaluator.evaluate(
-                deviceId = device.id,
-                programs = programs,
-                deviceTime = liveState.deviceTime.takeIf {
-                    online && liveState.hasDeviceTime
-                }
-            )
-
-        val effectiveModeOverride =
-            if (online) modeOverride else null
-
-        val hasActualLiveData =
-            LightActualDataPolicy.hasActualData(
-                isOnline = online,
-                liveState = liveState
-            )
-
-        val outputPercent =
-            LightActualDataPolicy.actualOutputPercent(
-                isOnline = online,
-                liveState = liveState
-            )
-
-        val modeContent =
-            buildModeContent(
-                isOnline = online,
-                hasDeviceTime = runtimeEvaluation.hasDeviceTime,
-                hasActualLiveData = hasActualLiveData,
-                displayProgram = runtimeEvaluation.displayProgram,
-                modeOverride = effectiveModeOverride
-            )
-
-        return TankAssignedDeviceUi.Light(
-            deviceId = device.id,
+        isOnline: Boolean
+    ): TankAssignedDeviceUi.Generic {
+        return TankAssignedDeviceUi.Generic(
+            deviceId = deviceId,
             title = title,
             subtitle = subtitle,
             iconRes = iconRes,
-            isOnline = online,
-            mode = modeContent.mode,
-            modeLabel = modeContent.label,
-            programName = modeContent.title,
-            startTimeText = modeContent.leftText,
-            endTimeText = modeContent.rightText,
-            outputPercent = outputPercent.coerceIn(
+            isOnline = isOnline
+        )
+    }
+
+    private fun mapLightShell(
+        deviceId: Long,
+        title: String,
+        subtitle: String,
+        iconRes: Int,
+        isOnline: Boolean
+    ): TankAssignedDeviceUi.LightShell {
+        return TankAssignedDeviceUi.LightShell(
+            deviceId = deviceId,
+            title = title,
+            subtitle = subtitle,
+            iconRes = iconRes,
+            isOnline = isOnline
+        )
+    }
+
+    private fun mapLightDevice(
+        runtime: TankDeviceRuntimeSnapshot.Light,
+        title: String,
+        subtitle: String,
+        iconRes: Int,
+        isOnline: Boolean
+    ): TankAssignedDeviceUi.Light {
+        return TankAssignedDeviceUi.Light(
+            deviceId = runtime.deviceId,
+            title = title,
+            subtitle = subtitle,
+            iconRes = iconRes,
+            isOnline = isOnline,
+            mode = runtime.mode.toUiMode(),
+            modeLabel = runtime.modeLabel,
+            programName = runtime.programName,
+            startTimeText = runtime.startTimeText,
+            endTimeText = runtime.endTimeText,
+            outputPercent = runtime.outputPercent.coerceIn(
                 0,
                 100
             ),
-            timelineProgressPercent = modeContent.timelineProgressPercent
-                ?: LightProgramRuntimeEvaluator.progressPercent(
-                    program = runtimeEvaluation.displayProgram,
-                    currentMinute = runtimeEvaluation.currentMinute
-                ),
-            accentColorInt = modeContent.accentColorInt,
-            channels = buildLightChannels(
-                device = device,
-                isOnline = online,
-                liveState = liveState,
-                displayProgram = runtimeEvaluation.displayProgram
-            )
-        )
-    }
-
-    private fun buildLightChannels(
-        device: DevicesDataStoreManager.DeviceInfo,
-        isOnline: Boolean,
-        liveState: LightDeviceLiveState,
-        displayProgram: SavedLightProgram?
-    ): List<TankLightChannelUi> {
-        return device.supportedLightChannels().map { channel ->
-            val currentPercent =
-                currentLightChannelPercent(
-                    channel = channel,
-                    isOnline = isOnline,
-                    liveState = liveState
-                )
-
-            val targetPercent =
-                targetLightChannelPercent(
-                    channel = channel,
-                    program = displayProgram
-                )
-
-            TankLightChannelUi(
-                key = channel.key,
-                label = channel.label,
-                currentPercent = currentPercent,
-                targetPercent = targetPercent,
-                colorInt = channel.colorInt
-            )
-        }
-    }
-
-    private fun currentLightChannelPercent(
-        channel: LightChannelConfig,
-        isOnline: Boolean,
-        liveState: LightDeviceLiveState
-    ): Int {
-        return LightActualDataPolicy.actualChannelPercent(
-            isOnline = isOnline,
-            liveState = liveState,
-            semantic = channel.semantic
-        )
-    }
-
-    private fun targetLightChannelPercent(
-        channel: LightChannelConfig,
-        program: SavedLightProgram?
-    ): Int {
-        val values =
-            program?.draft?.channelValues ?: return 0
-
-        return when (channel.semantic) {
-            LightChannelSemantic.RED -> values.red
-            LightChannelSemantic.GREEN -> values.green
-            LightChannelSemantic.BLUE -> values.blue
-            LightChannelSemantic.WHITE -> values.white
-            LightChannelSemantic.UNKNOWN -> {
-                LightOutputMath.outputPercent(
-                    red = values.red,
-                    green = values.green,
-                    blue = values.blue,
-                    white = values.white
-                )
+            timelineProgressPercent = runtime.timelineProgressPercent.coerceIn(
+                0,
+                100
+            ),
+            accentColorInt = runtime.accentColorInt,
+            channels = runtime.channels.map { channel ->
+                channel.toUiChannel()
             }
-        }.coerceIn(
-            0,
-            100
         )
     }
 
-    private fun DevicesDataStoreManager.DeviceInfo.supportedLightChannels(): List<LightChannelConfig> {
-        val catalogDefinition =
-            LightProductCatalog.findByProductKey(
-                productKey = productKey
-            ) ?: LightProductCatalog.findByProductId(
-                productId = productId
-            )
-
-        val catalogChannels =
-            catalogDefinition
-                ?.channels
-                .orEmpty()
-                .sortedBy { channel ->
-                    channel.order
-                }
-                .mapNotNull { channel ->
-                    channel.color.toTankLightChannelConfig(
-                        displayName = channel.displayName
-                    )
-                }
-
-        if (catalogChannels.isNotEmpty()) {
-            return catalogChannels
-        }
-
-        return fallbackLightChannelsByChannelCount()
+    private fun TankDeviceRuntimeChannelSnapshot.toUiChannel(): TankLightChannelUi {
+        return TankLightChannelUi(
+            key = key.toUiKey(),
+            label = label,
+            currentPercent = currentPercent,
+            targetPercent = targetPercent,
+            colorInt = colorInt
+        )
     }
 
-    private fun DevicesDataStoreManager.DeviceInfo.isLightDevice(): Boolean {
-        val catalogDefinition =
-            LightProductCatalog.findByProductKey(
-                productKey = productKey
-            ) ?: LightProductCatalog.findByProductId(
-                productId = productId
-            )
-
-        return catalogDefinition != null || category == AquaDeviceCategory.LIGHT
-    }
-
-    private fun LightChannelColor.toTankLightChannelConfig(
-        displayName: String
-    ): LightChannelConfig? {
+    private fun TankLightRuntimeMode.toUiMode(): TankLightCardMode {
         return when (this) {
-            LightChannelColor.WHITE -> {
-                LightChannelConfig(
-                    key = TankLightChannelKey.WHITE,
-                    label = displayName.ifBlank {
-                        text(R.string.aquarium_light_channel_white)
-                    },
-                    semantic = LightChannelSemantic.WHITE,
-                    colorInt = Color.parseColor("#DDE2E8")
-                )
-            }
-
-            LightChannelColor.RED -> {
-                LightChannelConfig(
-                    key = TankLightChannelKey.RED,
-                    label = displayName.ifBlank {
-                        text(R.string.aquarium_light_channel_red)
-                    },
-                    semantic = LightChannelSemantic.RED,
-                    colorInt = Color.parseColor("#D86E72")
-                )
-            }
-
-            LightChannelColor.GREEN -> {
-                LightChannelConfig(
-                    key = TankLightChannelKey.GREEN,
-                    label = displayName.ifBlank {
-                        text(R.string.aquarium_light_channel_green)
-                    },
-                    semantic = LightChannelSemantic.GREEN,
-                    colorInt = Color.parseColor("#72C37F")
-                )
-            }
-
-            LightChannelColor.BLUE -> {
-                LightChannelConfig(
-                    key = TankLightChannelKey.BLUE,
-                    label = displayName.ifBlank {
-                        text(R.string.aquarium_light_channel_blue)
-                    },
-                    semantic = LightChannelSemantic.BLUE,
-                    colorInt = Color.parseColor("#6FA0E0")
-                )
-            }
-
-            LightChannelColor.WARM_WHITE -> {
-                LightChannelConfig(
-                    key = TankLightChannelKey.WHITE,
-                    label = displayName.ifBlank {
-                        text(R.string.aquarium_light_channel_warm_white)
-                    },
-                    semantic = LightChannelSemantic.WHITE,
-                    colorInt = Color.parseColor("#E2D0AA")
-                )
-            }
-
-            LightChannelColor.COOL_WHITE -> {
-                LightChannelConfig(
-                    key = TankLightChannelKey.WHITE,
-                    label = displayName.ifBlank {
-                        text(R.string.aquarium_light_channel_cool_white)
-                    },
-                    semantic = LightChannelSemantic.WHITE,
-                    colorInt = Color.parseColor("#DDE2E8")
-                )
-            }
-
-            LightChannelColor.UV -> {
-                LightChannelConfig(
-                    key = TankLightChannelKey.UV,
-                    label = displayName.ifBlank {
-                        text(R.string.aquarium_light_channel_uv)
-                    },
-                    semantic = LightChannelSemantic.UNKNOWN,
-                    colorInt = Color.parseColor("#A37CFF")
-                )
-            }
-
-            LightChannelColor.CUSTOM -> {
-                LightChannelConfig(
-                    key = TankLightChannelKey.INTENSITY,
-                    label = displayName.ifBlank {
-                        text(R.string.aquarium_light_channel_intensity)
-                    },
-                    semantic = LightChannelSemantic.UNKNOWN,
-                    colorInt = Color.parseColor("#8EB8FF")
-                )
-            }
+            TankLightRuntimeMode.AUTO -> TankLightCardMode.AUTO
+            TankLightRuntimeMode.MANUAL -> TankLightCardMode.MANUAL
+            TankLightRuntimeMode.SCENE -> TankLightCardMode.SCENE
+            TankLightRuntimeMode.MOONLIGHT -> TankLightCardMode.MOONLIGHT
+            TankLightRuntimeMode.NO_PROGRAM -> TankLightCardMode.NO_PROGRAM
+            TankLightRuntimeMode.OFFLINE -> TankLightCardMode.OFFLINE
+            TankLightRuntimeMode.SYNCING -> TankLightCardMode.SYNCING
+            TankLightRuntimeMode.WAITING -> TankLightCardMode.WAITING
         }
     }
 
-    private fun DevicesDataStoreManager.DeviceInfo.fallbackLightChannelsByChannelCount(): List<LightChannelConfig> {
-        return when (channelCount) {
-            4 -> {
-                listOf(
-                    LightChannelConfig(
-                        key = TankLightChannelKey.WHITE,
-                        label = text(R.string.aquarium_light_channel_white),
-                        semantic = LightChannelSemantic.WHITE,
-                        colorInt = Color.parseColor("#DDE2E8")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.RED,
-                        label = text(R.string.aquarium_light_channel_red),
-                        semantic = LightChannelSemantic.RED,
-                        colorInt = Color.parseColor("#D86E72")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.GREEN,
-                        label = text(R.string.aquarium_light_channel_green),
-                        semantic = LightChannelSemantic.GREEN,
-                        colorInt = Color.parseColor("#72C37F")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.BLUE,
-                        label = text(R.string.aquarium_light_channel_blue),
-                        semantic = LightChannelSemantic.BLUE,
-                        colorInt = Color.parseColor("#6FA0E0")
-                    )
-                )
-            }
-
-            3 -> {
-                listOf(
-                    LightChannelConfig(
-                        key = TankLightChannelKey.RED,
-                        label = text(R.string.aquarium_light_channel_red),
-                        semantic = LightChannelSemantic.RED,
-                        colorInt = Color.parseColor("#D86E72")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.GREEN,
-                        label = text(R.string.aquarium_light_channel_green),
-                        semantic = LightChannelSemantic.GREEN,
-                        colorInt = Color.parseColor("#72C37F")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.BLUE,
-                        label = text(R.string.aquarium_light_channel_blue),
-                        semantic = LightChannelSemantic.BLUE,
-                        colorInt = Color.parseColor("#6FA0E0")
-                    )
-                )
-            }
-
-            2 -> {
-                listOf(
-                    LightChannelConfig(
-                        key = TankLightChannelKey.WHITE,
-                        label = text(R.string.aquarium_light_channel_white),
-                        semantic = LightChannelSemantic.WHITE,
-                        colorInt = Color.parseColor("#DDE2E8")
-                    ),
-                    LightChannelConfig(
-                        key = TankLightChannelKey.BLUE,
-                        label = text(R.string.aquarium_light_channel_blue),
-                        semantic = LightChannelSemantic.BLUE,
-                        colorInt = Color.parseColor("#6FA0E0")
-                    )
-                )
-            }
-
-            1 -> {
-                listOf(
-                    LightChannelConfig(
-                        key = TankLightChannelKey.INTENSITY,
-                        label = text(R.string.aquarium_light_channel_intensity),
-                        semantic = LightChannelSemantic.UNKNOWN,
-                        colorInt = Color.parseColor("#8EB8FF")
-                    )
-                )
-            }
-
-            else -> {
-                listOf(
-                    LightChannelConfig(
-                        key = TankLightChannelKey.INTENSITY,
-                        label = text(R.string.aquarium_light_channel_intensity),
-                        semantic = LightChannelSemantic.UNKNOWN,
-                        colorInt = Color.parseColor("#8EB8FF")
-                    )
-                )
-            }
+    private fun TankDeviceRuntimeChannelKind.toUiKey(): TankLightChannelKey {
+        return when (this) {
+            TankDeviceRuntimeChannelKind.WHITE -> TankLightChannelKey.WHITE
+            TankDeviceRuntimeChannelKind.RED -> TankLightChannelKey.RED
+            TankDeviceRuntimeChannelKind.GREEN -> TankLightChannelKey.GREEN
+            TankDeviceRuntimeChannelKind.BLUE -> TankLightChannelKey.BLUE
+            TankDeviceRuntimeChannelKind.INTENSITY -> TankLightChannelKey.INTENSITY
+            TankDeviceRuntimeChannelKind.UV -> TankLightChannelKey.UV
         }
     }
-
-    private fun DevicesDataStoreManager.DeviceInfo.lightSearchText(): String {
-        val definition =
-            AquaDeviceCatalog.findDefinition(
-                productId = productId,
-                productKey = productKey,
-                category = category
-            )
-
-        return listOf(
-            productKey.storageKey,
-            category.storageKey,
-            definition?.displayName.orEmpty(),
-            definition?.productFamily.orEmpty(),
-            name,
-            productModel,
-            productFamily,
-            aquaName
-        )
-            .joinToString(
-                separator = " "
-            )
-            .lowercase()
-    }
-
-    private fun buildModeContent(
-    isOnline: Boolean,
-    hasDeviceTime: Boolean,
-    hasActualLiveData: Boolean,
-    displayProgram: SavedLightProgram?,
-    modeOverride: TankLightModeOverride?
-): LightModeContent {
-    if (!isOnline) {
-        return LightModeContent(
-            mode = TankLightCardMode.OFFLINE,
-            label = text(TankAssignedDeviceText.OFFLINE_LABEL),
-            title = text(TankAssignedDeviceText.NO_LIVE_DATA_TITLE),
-            leftText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
-            rightText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
-            accentColorInt = Color.parseColor("#90A1B5"),
-            timelineProgressPercent = 0
-        )
-    }
-
-    when (modeOverride?.mode) {
-        TankLightCardMode.MANUAL -> {
-            return LightModeContent(
-                mode = TankLightCardMode.MANUAL,
-                label = text(TankAssignedDeviceText.MANUAL_LABEL),
-                title = text(TankAssignedDeviceText.MANUAL_CONTROL_TITLE),
-                leftText = text(TankAssignedDeviceText.MANUAL_LEFT_TEXT),
-                rightText = text(TankAssignedDeviceText.RESUME_RIGHT_TEXT),
-                accentColorInt = Color.parseColor("#C8A86B"),
-                timelineProgressPercent = 100
-            )
-        }
-
-        TankLightCardMode.SCENE -> {
-            return LightModeContent(
-                mode = TankLightCardMode.SCENE,
-                label = text(TankAssignedDeviceText.SCENE_LABEL),
-                title = modeOverride.title.ifBlank {
-                    text(TankAssignedDeviceText.SCENE_MODE_TITLE)
-                },
-                leftText = text(TankAssignedDeviceText.SCENE_LEFT_TEXT),
-                rightText = text(TankAssignedDeviceText.RESUME_RIGHT_TEXT),
-                accentColorInt = Color.parseColor("#A37CFF"),
-                timelineProgressPercent = 100
-            )
-        }
-
-        TankLightCardMode.MOONLIGHT -> {
-            return LightModeContent(
-                mode = TankLightCardMode.MOONLIGHT,
-                label = text(TankAssignedDeviceText.MOONLIGHT_LABEL),
-                title = modeOverride.title.ifBlank {
-                    text(TankAssignedDeviceText.MOONLIGHT_MODE_TITLE)
-                },
-                leftText = modeOverride.leftText ?: text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
-                rightText = modeOverride.rightText ?: text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
-                accentColorInt = Color.parseColor("#7FA7FF"),
-                timelineProgressPercent = modeOverride.timelineProgressPercent ?: 0
-            )
-        }
-
-        TankLightCardMode.AUTO,
-        TankLightCardMode.NO_PROGRAM,
-        TankLightCardMode.OFFLINE,
-        TankLightCardMode.SYNCING,
-        TankLightCardMode.WAITING,
-        null -> {
-            // Continue with automatic card state.
-        }
-    }
-
-    if (!hasDeviceTime) {
-        return LightModeContent(
-            mode = TankLightCardMode.SYNCING,
-            label = text(TankAssignedDeviceText.SYNCING_LABEL),
-            title = text(TankAssignedDeviceText.WAITING_FOR_TIME_TITLE),
-            leftText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
-            rightText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
-            accentColorInt = Color.parseColor("#90A1B5"),
-            timelineProgressPercent = 0
-        )
-    }
-
-    if (displayProgram == null) {
-        return LightModeContent(
-            mode = TankLightCardMode.NO_PROGRAM,
-            label = text(TankAssignedDeviceText.NO_ACTIVE_PROGRAM_LABEL),
-            title = text(TankAssignedDeviceText.PROGRAM_NOT_SET_TITLE),
-            leftText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
-            rightText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
-            accentColorInt = Color.parseColor("#90A1B5"),
-            timelineProgressPercent = 0
-        )
-    }
-
-    return LightModeContent(
-        mode = TankLightCardMode.AUTO,
-        label = if (hasActualLiveData) {
-            text(TankAssignedDeviceText.ACTIVE_PROGRAM_LABEL)
-        } else {
-            text(TankAssignedDeviceText.SCHEDULED_LABEL)
-        },
-        title = displayProgram.name,
-        leftText = displayProgram.draft.start.label,
-        rightText = LightProgramTimeMath.endLabel(
-            displayProgram.draft.end
-        ),
-        accentColorInt = Color.parseColor("#8EB8FF"),
-        timelineProgressPercent = null
-    )
-}
-
-
-    private fun text(
-        resId: Int
-    ): String {
-        return TankAssignedDeviceText.resolve(
-            context = appContext,
-            resId = resId
-        )
-    }
-
-    private data class LightModeContent(
-        val mode: TankLightCardMode,
-        val label: String,
-        val title: String,
-        val leftText: String,
-        val rightText: String,
-        val accentColorInt: Int,
-        val timelineProgressPercent: Int?
-    )
-
-    private data class LightChannelConfig(
-        val key: TankLightChannelKey,
-        val label: String,
-        val semantic: LightChannelSemantic,
-        val colorInt: Int
-    )
-
 }

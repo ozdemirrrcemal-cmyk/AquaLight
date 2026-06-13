@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -24,6 +25,7 @@ class TankDetailDevicesAdapter(
     ): Int {
         return when (getItem(position)) {
             is TankAssignedDeviceUi.Light -> VIEW_TYPE_LIGHT
+            is TankAssignedDeviceUi.LightShell -> VIEW_TYPE_LIGHT
             is TankAssignedDeviceUi.Generic -> VIEW_TYPE_GENERIC
         }
     }
@@ -67,7 +69,7 @@ class TankDetailDevicesAdapter(
         when (holder) {
             is LightViewHolder -> {
                 holder.bind(
-                    item = getItem(position) as TankAssignedDeviceUi.Light
+                    item = getItem(position)
                 )
             }
 
@@ -86,7 +88,7 @@ class TankDetailDevicesAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
-            item: TankAssignedDeviceUi.Light
+            item: TankAssignedDeviceUi
         ) {
             binding.tvDeviceName.text =
             item.title
@@ -118,45 +120,58 @@ class TankDetailDevicesAdapter(
                 }
             )
 
-            binding.tvProgramLabel.text =
-            item.modeLabel
+            val runtimeItem =
+            item as? TankAssignedDeviceUi.Light
 
-            binding.tvProgramName.text =
-            item.programName
+            binding.programSummaryCard.isVisible =
+            runtimeItem != null
 
-            binding.tvStartTime.text =
-            item.startTimeText
+            binding.channelContainer.isVisible =
+            runtimeItem?.channels?.isNotEmpty() == true
 
-            binding.tvEndTime.text =
-            item.endTimeText
+            if (runtimeItem != null) {
+                binding.tvProgramLabel.text =
+                runtimeItem.modeLabel
 
-            binding.tvOutputPercent.text =
-            binding.root.context.getString(
-                R.string.aquarium_care_profile_percent_format,
-                item.outputPercent
-            )
+                binding.tvProgramName.text =
+                runtimeItem.programName
 
-            binding.tvOutputPercent.setTextColor(
-                item.accentColorInt
-            )
+                binding.tvStartTime.text =
+                runtimeItem.startTimeText
 
-            binding.ivRampDown.imageTintList =
-            android.content.res.ColorStateList.valueOf(
-                item.accentColorInt
-            )
+                binding.tvEndTime.text =
+                runtimeItem.endTimeText
 
-            binding.viewTimelineActive.backgroundTintList =
-            android.content.res.ColorStateList.valueOf(
-                item.accentColorInt
-            )
+                binding.tvOutputPercent.text =
+                binding.root.context.getString(
+                    R.string.aquarium_care_profile_percent_format,
+                    runtimeItem.outputPercent
+                )
 
-            bindTimelineProgress(
-                progressPercent = item.timelineProgressPercent
-            )
+                binding.tvOutputPercent.setTextColor(
+                    runtimeItem.accentColorInt
+                )
 
-            bindChannels(
-                channels = item.channels
-            )
+                binding.ivRampDown.imageTintList =
+                android.content.res.ColorStateList.valueOf(
+                    runtimeItem.accentColorInt
+                )
+
+                binding.viewTimelineActive.backgroundTintList =
+                android.content.res.ColorStateList.valueOf(
+                    runtimeItem.accentColorInt
+                )
+
+                bindTimelineProgress(
+                    progressPercent = runtimeItem.timelineProgressPercent
+                )
+
+                bindChannels(
+                    channels = runtimeItem.channels
+                )
+            } else {
+                clearRuntimeContent()
+            }
 
             binding.root.setOnClickListener {
                 onDeviceClick(item)
@@ -166,6 +181,21 @@ class TankDetailDevicesAdapter(
                 onDeviceLongClick(item)
                 true
             }
+        }
+
+        private fun clearRuntimeContent() {
+            val params =
+            binding.viewTimelineActive.layoutParams
+
+            params.width =
+            0
+
+            binding.viewTimelineActive.layoutParams =
+            params
+
+            bindChannels(
+                channels = emptyList()
+            )
         }
 
         private fun bindTimelineProgress(

@@ -3,178 +3,83 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presets
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
-import com.aqua.aqualight.data.devices.light.runtime.Esp32LightDeviceCommandManager
-import com.aqua.aqualight.data.devices.light.runtime.LightRuntimeRepository
+import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightViewModel.Companion.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * Temporary UI shell for presets.
+ *
+ * The previous preset persistence and device apply command are not connected.
+ * Custom presets are intentionally empty until the new Light data contract is defined.
+ */
 class DeviceLightPresetsViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val _presetsFlow = MutableStateFlow<List<SavedLightPreset>>(
+        emptyList()
+    )
+    val presetsFlow: StateFlow<List<SavedLightPreset>> =
+        _presetsFlow.asStateFlow()
 
-    private val lightPresetDataStoreManager =
-        LightPresetDataStoreManager(application.applicationContext)
-
-    private val lightRuntimeRepository =
-        LightRuntimeRepository(
-            commandManager = Esp32LightDeviceCommandManager(
-                context = application.applicationContext
-            )
-        )
-
-    val presetsFlow =
-        lightPresetDataStoreManager.presetsFlow
-
-    private val eventsChannel =
-        Channel<DeviceLightPresetsEvent>(Channel.BUFFERED)
-
-    val events =
-        eventsChannel.receiveAsFlow()
+    private val _events = MutableSharedFlow<DeviceLightPresetsEvent>()
+    val events: SharedFlow<DeviceLightPresetsEvent> =
+        _events.asSharedFlow()
 
     private var deviceId: Long = 0L
-    private var isOperationInProgress = false
 
     fun initialize(
         deviceId: Long
     ) {
         this.deviceId = deviceId
+        _presetsFlow.value = emptyList()
     }
 
-    fun currentManualRuntime() =
-        lightRuntimeRepository.currentManualRuntime(deviceId)
+    fun currentManualRuntime(): LightManualRuntimeSnapshot {
+        return LightManualRuntimeSnapshot(
+            deviceId = deviceId
+        )
+    }
 
     fun applyPresetToDevice(
         preset: LightPresetItem
     ) {
-        viewModelScope.launch {
-            if (deviceId <= 0L) {
-                eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowError(
-                        "Device information is missing"
-                    )
-                )
-                return@launch
-            }
-
-            if (!beginOperation()) {
-                return@launch
-            }
-
-            var successMessage: String? = null
-            var errorMessage: String? = null
-            var shouldNavigateToManual = false
-
-            try {
-                val result = lightRuntimeRepository.applyManualScene(
-                    deviceId = deviceId,
-                    sceneName = preset.title,
-                    red = preset.red,
-                    green = preset.green,
-                    blue = preset.blue,
-                    white = preset.white
-                )
-
-                if (result.isSuccess) {
-                    successMessage = "${preset.title} applied"
-                    shouldNavigateToManual = true
-                } else {
-                    errorMessage =
-                        result.message ?: "Preset could not be applied"
-                }
-            } catch (error: Exception) {
-                errorMessage =
-                    error.message ?: "Preset could not be applied"
-            } finally {
-                finishOperation()
-            }
-
-            successMessage?.let { message ->
-                eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowMessage(message)
-                )
-            }
-
-            errorMessage?.let { message ->
-                eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowError(message)
-                )
-            }
-
-            if (shouldNavigateToManual) {
-                eventsChannel.send(
-                    DeviceLightPresetsEvent.NavigateToManualControl
-                )
-            }
-        }
+        emitUnavailable()
     }
 
     fun deletePreset(
         preset: LightPresetItem
     ) {
-        if (!preset.isCustom) {
-            return
-        }
+        emitUnavailable()
+    }
 
+    private fun emitUnavailable() {
         viewModelScope.launch {
-            if (!beginOperation()) {
-                return@launch
-            }
-
-            var successMessage: String? = null
-            var errorMessage: String? = null
-
-            try {
-                lightPresetDataStoreManager.deletePreset(preset.id)
-                successMessage = "${preset.title} deleted"
-            } catch (error: Exception) {
-                errorMessage =
-                    error.message ?: "Preset could not be deleted"
-            } finally {
-                finishOperation()
-            }
-
-            successMessage?.let { message ->
-                eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowMessage(message)
+            _events.emit(
+                DeviceLightPresetsEvent.ShowError(
+                    LIGHT_DATA_LAYER_NOT_CONNECTED
                 )
-            }
-
-            errorMessage?.let { message ->
-                eventsChannel.send(
-                    DeviceLightPresetsEvent.ShowError(message)
-                )
-            }
+            )
         }
-    }
-
-    private suspend fun beginOperation(): Boolean {
-        if (isOperationInProgress) {
-            return false
-        }
-
-        isOperationInProgress = true
-
-        eventsChannel.send(
-            DeviceLightPresetsEvent.SetLoading(true)
-        )
-
-        return true
-    }
-
-    private suspend fun finishOperation() {
-        if (!isOperationInProgress) {
-            return
-        }
-
-        eventsChannel.send(
-            DeviceLightPresetsEvent.SetLoading(false)
-        )
-
-        isOperationInProgress = false
     }
 }
+
+data class LightManualRuntimeSnapshot(
+    val deviceId: Long,
+    val isManualScene: Boolean = false,
+    val activeSceneName: String? = null,
+    val activeSceneSource: String? = null,
+    val red: Int = 0,
+    val green: Int = 0,
+    val blue: Int = 0,
+    val white: Int = 0
+)

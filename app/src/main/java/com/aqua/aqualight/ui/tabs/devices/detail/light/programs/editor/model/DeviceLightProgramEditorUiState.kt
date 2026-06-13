@@ -1,11 +1,11 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor.model
 
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveGraphState
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
-import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
-import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.RepeatMode
 
 data class DeviceLightProgramEditorUiState(
     val start: LightCurvePoint,

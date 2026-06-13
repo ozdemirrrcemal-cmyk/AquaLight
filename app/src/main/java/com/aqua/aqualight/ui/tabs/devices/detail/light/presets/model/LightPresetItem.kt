@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model
 
-import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.runtime.LightOutputMath
 
 data class LightPresetItem(
     val id: String,

@@ -10,11 +10,11 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
-import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegment
-import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphState
-import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegmentType
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.TodayLightPlanGraphSegment
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.TodayLightPlanGraphState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.TodayLightPlanGraphSegmentType
 
 class TodayLightPlanGraphView @JvmOverloads constructor(
     context: Context,

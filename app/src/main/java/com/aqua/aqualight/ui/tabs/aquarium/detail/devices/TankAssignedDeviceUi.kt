@@ -13,6 +13,14 @@ sealed class TankAssignedDeviceUi {
 
     abstract val isOnline: Boolean
 
+    data class LightShell(
+        override val deviceId: Long,
+        override val title: String,
+        override val subtitle: String,
+        @DrawableRes override val iconRes: Int,
+        override val isOnline: Boolean
+    ) : TankAssignedDeviceUi()
+
     data class Light(
         override val deviceId: Long,
         override val title: String,

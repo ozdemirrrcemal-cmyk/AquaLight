@@ -5,12 +5,6 @@ import android.net.Uri
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.light.automation.LightAutomationDataStoreManager
-import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
-import com.aqua.aqualight.data.devices.light.programs.LightProgramsDataStoreManager
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceDataCenter
-import com.aqua.aqualight.data.devices.light.runtime.LightDeviceSnapshotCache
-import com.aqua.aqualight.data.devices.light.runtime.LightManualRuntimeStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import java.io.File
 
@@ -29,10 +23,6 @@ class UserDataCleaner private constructor(
         CARE_TASKS,
         AQUARIUM_TANKS,
         DEVICES,
-        LIGHT_PROGRAMS,
-        LIGHT_PRESETS,
-        LIGHT_AUTOMATION,
-        LIGHT_RUNTIME,
         APP_OWNED_FILES,
         USER_PREFERENCES
     }
@@ -115,12 +105,6 @@ class UserDataCleaner private constructor(
         }
 
         runStep(
-            step = Step.LIGHT_RUNTIME
-        ) {
-            clearLightRuntime()
-        }
-
-        runStep(
             step = Step.CARE_TASKS
         ) {
             CareTaskDataStoreManager.create(
@@ -145,36 +129,6 @@ class UserDataCleaner private constructor(
             DevicesDataStoreManager.create(
                 appContext
             ).clearAllDevices(
-                ownerUid = targetOwnerUid
-            )
-        }
-
-        runStep(
-            step = Step.LIGHT_PROGRAMS
-        ) {
-            LightProgramsDataStoreManager(
-                appContext
-            ).clearAllPrograms(
-                ownerUid = targetOwnerUid
-            )
-        }
-
-        runStep(
-            step = Step.LIGHT_PRESETS
-        ) {
-            LightPresetDataStoreManager(
-                appContext
-            ).clearAllPresets(
-                ownerUid = targetOwnerUid
-            )
-        }
-
-        runStep(
-            step = Step.LIGHT_AUTOMATION
-        ) {
-            LightAutomationDataStoreManager(
-                appContext
-            ).clearAllSettings(
                 ownerUid = targetOwnerUid
             )
         }
@@ -211,17 +165,6 @@ class UserDataCleaner private constructor(
         }
 
         return UserDataScope.currentUid()
-    }
-
-    private fun clearLightRuntime() {
-        LightDeviceDataCenter.stopAll()
-
-        LightDeviceSnapshotCache.configure(
-            context = appContext
-        )
-        LightDeviceSnapshotCache.clearAll()
-
-        LightManualRuntimeStore.clearAll()
     }
 
     private fun clearAppOwnedUserFiles(
