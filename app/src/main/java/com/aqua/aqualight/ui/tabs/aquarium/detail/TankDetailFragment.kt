@@ -34,6 +34,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumChildTabHost
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
+import com.aqua.aqualight.ui.tabs.devices.navigation.navigateToDeviceRouter
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
@@ -127,12 +128,10 @@ class TankDetailFragment :
 
         when (event) {
             is TankDetailViewModel.TankDetailEvent.NavigateToDeviceRouter -> {
-                navigateFromTankDetail(
-                    TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
-                        deviceId = event.deviceId,
-                        deviceIp = event.deviceIp,
-                        deviceTitle = event.deviceTitle
-                    )
+                openDeviceRouterFromTankDetail(
+                    deviceId = event.deviceId,
+                    deviceIp = event.deviceIp,
+                    deviceTitle = event.deviceTitle
                 )
             }
 
@@ -507,6 +506,29 @@ class TankDetailFragment :
             type = DialogType.WARNING,
             title = title,
             message = message
+        )
+    }
+
+    private fun openDeviceRouterFromTankDetail(
+        deviceId: Long,
+        deviceIp: String,
+        deviceTitle: String
+    ) {
+        val navController =
+            findNavController()
+
+        if (navController.currentDestination?.id != R.id.tankDetailFragment) {
+            return
+        }
+
+        saveSelectedTabState(
+            tab = selectedTab
+        )
+
+        navController.navigateToDeviceRouter(
+            deviceId = deviceId,
+            deviceIp = deviceIp,
+            deviceTitle = deviceTitle
         )
     }
 

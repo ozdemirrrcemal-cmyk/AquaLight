@@ -19,6 +19,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
+import com.aqua.aqualight.ui.tabs.devices.navigation.navigateToDeviceRouter
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
@@ -30,10 +31,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private val viewModel: DevicesViewModel by viewModels()
 
+    private var globalLoadingShown = false
+    
     private lateinit var adapter: DevicesListAdapter
 
     private var currentUiState =
-        DevicesViewModel.DevicesUiState()
+    DevicesViewModel.DevicesUiState()
 
     override fun onViewCreated(
         view: View,
@@ -45,7 +48,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         )
 
         _binding =
-            FragmentDevicesBinding.bind(view)
+        FragmentDevicesBinding.bind(view)
 
         setupHeader()
         setupRecyclerView()
@@ -86,29 +89,31 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private fun setupRecyclerView() {
         adapter =
-            DevicesListAdapter(
-                onSelectionModeStart = {
-                    viewModel.enterSelectionMode()
-                },
-                onSelectionChanged = { count ->
-                    viewModel.onSelectionChanged(
-                        selectedCount = count
-                    )
-                },
-                onDeviceClick = { device ->
-                    openDeviceMenu(
-                        device = device
-                    )
-                }
-            )
+        DevicesListAdapter(
+            onSelectionModeStart = {
+                viewModel.enterSelectionMode()
+            },
+            onSelectionChanged = {
+                count ->
+                viewModel.onSelectionChanged(
+                    selectedCount = count
+                )
+            },
+            onDeviceClick = {
+                device ->
+                openDeviceMenu(
+                    device = device
+                )
+            }
+        )
 
         binding.rvSelectedDevices.layoutManager =
-            LinearLayoutManager(
-                requireContext()
-            )
+        LinearLayoutManager(
+            requireContext()
+        )
 
         binding.rvSelectedDevices.adapter =
-            adapter
+        adapter
     }
 
     private fun observeViewModel() {
@@ -117,7 +122,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 Lifecycle.State.STARTED
             ) {
                 launch {
-                    viewModel.uiState.collect { state ->
+                    viewModel.uiState.collect {
+                        state ->
                         renderState(
                             state = state
                         )
@@ -125,7 +131,8 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 }
 
                 launch {
-                    viewModel.events.collect { event ->
+                    viewModel.events.collect {
+                        event ->
                         handleEvent(
                             event = event
                         )
@@ -143,10 +150,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
 
         val wasSelectionMode =
-            currentUiState.selectionMode
+        currentUiState.selectionMode
 
         currentUiState =
-            state
+        state
 
         if (
             wasSelectionMode &&
@@ -156,18 +163,18 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
 
         binding.tvEmptyState.visibility =
-            if (state.isEmpty) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
+        if (state.isEmpty) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
 
         binding.rvSelectedDevices.visibility =
-            if (state.isEmpty) {
-                View.GONE
-            } else {
-                View.VISIBLE
-            }
+        if (state.isEmpty) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
 
         adapter.submitList(
             state.devices
@@ -189,12 +196,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         when (event) {
             is DevicesViewModel.DevicesEvent.NavigateToDeviceRouter -> {
-                navigateFromDevices(
-                    DevicesFragmentDirections.actionDevicesFragmentToDeviceRouterFragment(
-                        deviceId = event.deviceId,
-                        deviceIp = event.deviceIp,
-                        deviceTitle = event.deviceTitle
-                    )
+                openDeviceRouterFromDevices(
+                    deviceId = event.deviceId,
+                    deviceIp = event.deviceIp,
+                    deviceTitle = event.deviceTitle
                 )
             }
 
@@ -273,11 +278,30 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         )
     }
 
+    private fun openDeviceRouterFromDevices(
+        deviceId: Long,
+        deviceIp: String,
+        deviceTitle: String
+    ) {
+        val navController =
+        findNavController()
+
+        if (navController.currentDestination?.id != R.id.devicesFragment) {
+            return
+        }
+
+        navController.navigateToDeviceRouter(
+            deviceId = deviceId,
+            deviceIp = deviceIp,
+            deviceTitle = deviceTitle
+        )
+    }
+
     private fun navigateFromDevices(
         directions: NavDirections
     ) {
         val navController =
-            findNavController()
+        findNavController()
 
         if (navController.currentDestination?.id != R.id.devicesFragment) {
             return
@@ -294,7 +318,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
 
         val ids =
-            adapter.getSelectedIds()
+        adapter.getSelectedIds()
 
         if (ids.isEmpty()) {
             viewModel.exitSelectionMode()
@@ -302,31 +326,31 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         }
 
         val count =
-            ids.size
+        ids.size
 
         val title =
-            if (count == 1) {
-                getString(
-                    R.string.devices_delete_title_single
-                )
-            } else {
-                getString(
-                    R.string.devices_delete_title_multi,
-                    count
-                )
-            }
+        if (count == 1) {
+            getString(
+                R.string.devices_delete_title_single
+            )
+        } else {
+            getString(
+                R.string.devices_delete_title_multi,
+                count
+            )
+        }
 
         val message =
-            if (count == 1) {
-                getString(
-                    R.string.devices_delete_message_single
-                )
-            } else {
-                getString(
-                    R.string.devices_delete_message_multi,
-                    count
-                )
-            }
+        if (count == 1) {
+            getString(
+                R.string.devices_delete_message_single
+            )
+        } else {
+            getString(
+                R.string.devices_delete_message_multi,
+                count
+            )
+        }
 
         DialogManager.showConfirmDialog(
             context = requireContext(),
@@ -346,7 +370,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private fun applyPrimaryActionStyle() {
         val button =
-            binding.appHeader.btnPrimaryAction
+        binding.appHeader.btnPrimaryAction
 
         if (currentUiState.selectionMode) {
             button.setTextColor(
@@ -354,40 +378,46 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             )
 
             button.backgroundTintList =
-                ColorStateList.valueOf(
-                    Color.parseColor("#321E2A")
-                )
+            ColorStateList.valueOf(
+                Color.parseColor("#321E2A")
+            )
 
             button.strokeWidth =
-                1.dp()
+            1.dp()
 
             button.strokeColor =
-                ColorStateList.valueOf(
-                    Color.parseColor("#7A3344")
-                )
+            ColorStateList.valueOf(
+                Color.parseColor("#7A3344")
+            )
         } else {
             button.setTextColor(
                 Color.WHITE
             )
 
             button.backgroundTintList =
-                ColorStateList.valueOf(
-                    Color.parseColor("#1C3252")
-                )
+            ColorStateList.valueOf(
+                Color.parseColor("#1C3252")
+            )
 
             button.strokeWidth =
-                0
+            0
 
             button.strokeColor =
-                ColorStateList.valueOf(
-                    Color.TRANSPARENT
-                )
+            ColorStateList.valueOf(
+                Color.TRANSPARENT
+            )
         }
     }
 
     private fun showGlobalLoading(
         show: Boolean
     ) {
+        if (globalLoadingShown == show) {
+            return
+        }
+
+        globalLoadingShown = show
+
         (activity as? BaseActivity)?.showLoading(
             show
         )
@@ -400,15 +430,19 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     }
 
     override fun onDestroyView() {
-        showGlobalLoading(
-            show = false
-        )
+        if (globalLoadingShown) {
+            globalLoadingShown = false
+
+            (activity as? BaseActivity)?.showLoading(
+                false
+            )
+        }
 
         binding.rvSelectedDevices.adapter =
-            null
+        null
 
         _binding =
-            null
+        null
 
         super.onDestroyView()
     }
