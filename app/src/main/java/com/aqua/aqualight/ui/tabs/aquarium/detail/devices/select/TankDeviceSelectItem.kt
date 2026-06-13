@@ -4,7 +4,7 @@ import androidx.annotation.DrawableRes
 
 data class TankDeviceSelectItem(
     val deviceId: Long,
-    val title: String,
+    val displayName: String,
     val productMetaText: String,
     val identityText: String,
     @DrawableRes val iconRes: Int,

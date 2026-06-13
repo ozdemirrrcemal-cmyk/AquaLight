@@ -21,11 +21,11 @@ class TankDeviceSelectAdapter(
         viewType: Int
     ): ViewHolder {
         val binding =
-        ItemTankDeviceSelectCardBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+            ItemTankDeviceSelectCardBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
 
         return ViewHolder(
             binding = binding,
@@ -38,7 +38,9 @@ class TankDeviceSelectAdapter(
         position: Int
     ) {
         holder.bind(
-            item = getItem(position)
+            item = getItem(
+                position
+            )
         )
     }
 
@@ -51,61 +53,61 @@ class TankDeviceSelectAdapter(
             item: TankDeviceSelectItem
         ) {
             val context =
-            binding.root.context
+                binding.root.context
 
             val deviceName =
-            item.title
-            .trim()
-            .ifBlank {
-                context.getString(
-                    R.string.tank_device_select_unknown_device
-                )
-            }
+                item.displayName
+                    .trim()
+                    .ifBlank {
+                        context.getString(
+                            R.string.tank_device_select_unknown_device
+                        )
+                    }
 
             val productMeta =
-            item.productMetaText
-            .trim()
+                item.productMetaText
+                    .trim()
 
             val identityText =
-            item.identityText
-            .trim()
-            .ifBlank {
-                context.getString(
-                    R.string.tank_device_select_serial_unavailable
-                )
-            }
+                item.identityText
+                    .trim()
+                    .ifBlank {
+                        context.getString(
+                            R.string.tank_device_select_serial_unavailable
+                        )
+                    }
 
             binding.tvDeviceName.text =
-            deviceName
+                deviceName
 
             binding.tvSerialNumber.text =
-            listOf(
-                productMeta,
-                identityText
-            ).filter { value ->
-                value.isNotBlank()
-            }.joinToString(
-                separator = " • "
-            )
+                listOf(
+                    productMeta,
+                    identityText
+                ).filter { value ->
+                    value.isNotBlank()
+                }.joinToString(
+                    separator = " • "
+                )
 
             binding.ivDeviceIcon.setImageResource(
                 item.iconRes
             )
 
             binding.ivDeviceIcon.imageTintList =
-            null
+                null
 
             binding.ivDeviceIcon.clearColorFilter()
 
             binding.ivDeviceIcon.contentDescription =
-            deviceName
+                deviceName
 
             val statusColorRes =
-            if (item.isOnline) {
-                R.color.dialog_icon_success
-            } else {
-                R.color.settings_text_secondary
-            }
+                if (item.isOnline) {
+                    R.color.dialog_icon_success
+                } else {
+                    R.color.settings_text_secondary
+                }
 
             binding.ivConnectionStatus.setColorFilter(
                 ContextCompat.getColor(
@@ -116,21 +118,23 @@ class TankDeviceSelectAdapter(
             )
 
             binding.root.contentDescription =
-            buildString {
-                append(deviceName)
-                append(", ")
-                append(identityText)
-                append(
-                    if (item.isOnline) {
-                        ", Online"
-                    } else {
-                        ", Offline"
-                    }
-                )
-            }
+                buildString {
+                    append(deviceName)
+                    append(", ")
+                    append(identityText)
+                    append(
+                        if (item.isOnline) {
+                            ", Online"
+                        } else {
+                            ", Offline"
+                        }
+                    )
+                }
 
             binding.root.setOnClickListener {
-                onDeviceClick(item)
+                onDeviceClick(
+                    item
+                )
             }
         }
     }
