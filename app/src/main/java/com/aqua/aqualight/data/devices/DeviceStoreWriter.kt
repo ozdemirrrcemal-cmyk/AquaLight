@@ -29,11 +29,13 @@ class DeviceStoreWriter(
             return existingDeviceId
         }
 
-        val definition = AquaDeviceCatalog.findByType(
+        val definition = AquaDeviceCatalog.findByProductId(
+            productId = device.productId
+        ) ?: AquaDeviceCatalog.findByType(
             type = device.deviceType
         ) ?: error("Unsupported device")
 
-        val savedAquaName = definition.family.displayName
+        val savedAquaName = definition.productFamily
         val savedName = definition.displayName
 
         val serial = DeviceSerialFormatter.buildSerial(
@@ -63,9 +65,9 @@ class DeviceStoreWriter(
             tabTimer = device.tabTimer,
             tabTemperature = device.tabTemperature,
 
-            productId = device.productId.orEmpty(),
-            productFamily = device.productFamily.orEmpty(),
-            productModel = device.productModel.orEmpty(),
+            productId = device.productId ?: definition.productId,
+            productFamily = device.productFamily ?: definition.productFamily,
+            productModel = device.productModel ?: definition.productModel,
             hardwareRevision = device.hardwareRevision.orEmpty(),
             firmwareVersion = device.firmwareVersion.orEmpty(),
             apiVersion = device.apiVersion,

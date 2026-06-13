@@ -296,7 +296,8 @@ object UdpDeviceDiscovery {
                 null
             }
 
-        val apiVersion = deviceJson.optNullableInt("ApiVersion")
+        val apiVersion = deviceJson.optNullableInt("ProtocolVersion")
+            ?: deviceJson.optNullableInt("ApiVersion")
 
         val supportedFeatures = deviceJson.readStringSet(
             key = "SupportedFeatures"
@@ -322,9 +323,7 @@ object UdpDeviceDiscovery {
         )
 
         val resolvedType = resolveDeviceType(
-            productId = productId,
-            aquaName = aquaName,
-            name = name
+            productId = productId
         )
 
         if (resolvedType == AquaDeviceType.UNKNOWN) {
@@ -375,21 +374,10 @@ object UdpDeviceDiscovery {
     }
 
     private fun resolveDeviceType(
-        productId: String?,
-        aquaName: String,
-        name: String
+        productId: String?
     ): AquaDeviceType {
-        val byProductId = AquaDeviceCatalog.resolveTypeByProductId(
+        return AquaDeviceCatalog.resolveTypeByProductId(
             productId = productId
-        )
-
-        if (byProductId != AquaDeviceType.UNKNOWN) {
-            return byProductId
-        }
-
-        return AquaDeviceCatalog.resolveTypeByLegacyIdentity(
-            aquaName = aquaName,
-            name = name
         )
     }
 

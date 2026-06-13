@@ -68,32 +68,36 @@ class DeviceAddAdapter(
         private fun visibleSerial(
             item: DeviceAddCandidate
         ): String {
-            val rawId = when (item.source) {
-                DeviceAddSource.LOCAL_NETWORK -> {
-                    item.localDevice
-                        ?.id
-                        ?.toString()
-                        .orEmpty()
-                }
-
+            return when (item.source) {
                 DeviceAddSource.SETUP_AP -> {
-                    item.setupSsid
+                    val setupId = item.setupShortId
                         .orEmpty()
-                        .substringAfterLast(
-                            delimiter = "-",
-                            missingDelimiterValue = ""
-                        )
                         .trim()
-                }
-            }.ifBlank {
-                item.key
-            }
 
-            return DeviceSerialFormatter.buildSerial(
-                aquaName = item.familyName,
-                name = item.displayName,
-                rawId = rawId
-            )
+                    if (setupId.isBlank()) {
+                        "Setup mode"
+                    } else {
+                        "Setup ID: ${setupId.uppercase()}"
+                    }
+                }
+
+                DeviceAddSource.LOCAL_NETWORK -> {
+                    val localDevice = item.localDevice
+
+                    if (localDevice == null) {
+                        "Device"
+                    } else {
+                        DeviceSerialFormatter.buildSerial(
+                            aquaName = item.familyName,
+                            name = item.displayName,
+                            id = localDevice.id,
+                            firmwareSerial = localDevice.firmwareSerial.orEmpty(),
+                            deviceUid = localDevice.deviceUid.orEmpty(),
+                            macAddress = localDevice.macAddress.orEmpty()
+                        )
+                    }
+                }
+            }
         }
     }
 

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,8 +41,17 @@ object SetupApScanner {
             emptyList()
         }
 
+        val nowUs = SystemClock.elapsedRealtimeNanos() / 1_000L
+
         return@withContext scanResults
             .asSequence()
+            .filter { result ->
+                val ageUs = nowUs - result.timestamp
+
+                result.timestamp > 0L &&
+                    ageUs >= 0L &&
+                    ageUs <= MAX_SCAN_RESULT_AGE_US
+            }
             .mapNotNull { result ->
                 val ssid = result.SSID.orEmpty()
 
@@ -80,4 +90,6 @@ object SetupApScanner {
             hasFineLocation
         }
     }
+
+    private const val MAX_SCAN_RESULT_AGE_US = 45_000_000L
 }

@@ -1,10 +1,14 @@
 package com.aqua.aqualight.data.devices.catalog.cooling
 
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceFamily
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
+import com.aqua.aqualight.data.devices.catalog.AquaProductVariant
+import com.aqua.aqualight.data.devices.catalog.AquaProductRegion
+import com.aqua.aqualight.data.devices.catalog.AquaProductColor
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
@@ -14,21 +18,31 @@ object CoolingProductCatalog {
 
     val aquaCool001 = CoolingDeviceDefinition(
         base = AquaDeviceDefinition(
-            type = AquaDeviceType.AQUA_COOL_001,
-            family = AquaDeviceFamily.AQUA_COOL,
+            productKey = AquaProductKey.COOLING_COOL_PRO,
+            productId = AquaProductKey.COOLING_COOL_PRO.productId,
+            category = AquaDeviceCategory.COOLING,
 
-            legacyAquaName = "AquaCool",
-            legacyName = "CoolPro",
-
-            productId = "aquacool.001",
             productFamily = "AquaCool",
+            productLine = "Cooling",
             productModel = "CoolPro",
-
             displayName = "CoolPro",
+            setupCode = AquaProductKey.COOLING_COOL_PRO.setupCode,
+
+            variants = listOf(
+                AquaProductVariant(
+                    skuId = "com.aqua.cooling.cool_pro.global.black",
+                    skuCode = "AQL-CPR-GLOBAL-BLK",
+                    displayName = "CoolPro Global Black",
+                    sensorCount = 2,
+                    region = AquaProductRegion.GLOBAL,
+                    color = AquaProductColor.BLACK,
+                    hardwareRevision = "1.0"
+                )
+            ),
 
             mainModule = AquaDeviceModule.COOLING,
             controllerType = AquaDeviceControllerType.GENERIC_COOLING,
-            firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
+            firmwareProtocol = FirmwareProtocol.AQUA_V1,
 
             moduleVisibility = mapOf(
                 AquaDeviceModule.LIGHT to ModuleVisibility.HIDDEN,
@@ -68,6 +82,14 @@ object CoolingProductCatalog {
     val all: List<CoolingDeviceDefinition> = listOf(
         aquaCool001
     )
+
+    fun findByProductKey(
+        productKey: AquaProductKey
+    ): CoolingDeviceDefinition? {
+        return all.firstOrNull { definition ->
+            definition.base.productKey == productKey
+        }
+    }
 
     fun findByType(
         type: AquaDeviceType

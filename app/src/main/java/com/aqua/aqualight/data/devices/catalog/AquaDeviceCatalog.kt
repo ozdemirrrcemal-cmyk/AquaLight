@@ -39,31 +39,15 @@ object AquaDeviceCatalog {
             )
         }
 
-    fun findByType(
-        type: AquaDeviceType
+    fun findByProductKey(
+        productKey: AquaProductKey
     ): AquaDeviceDefinition? {
-        return allDefinitions.firstOrNull { definition ->
-            definition.type == type
-        }
-    }
-
-    fun findByLegacyIdentity(
-        aquaName: String?,
-        name: String?
-    ): AquaDeviceDefinition? {
-        val normalizedAquaName = aquaName.normalizedIdentity()
-        val normalizedName = name.normalizedIdentity()
-
-        if (
-            normalizedAquaName.isBlank() ||
-            normalizedName.isBlank()
-        ) {
+        if (productKey == AquaProductKey.UNKNOWN) {
             return null
         }
 
         return allDefinitions.firstOrNull { definition ->
-            definition.legacyAquaName.normalizedIdentity() == normalizedAquaName &&
-                definition.legacyName.normalizedIdentity() == normalizedName
+            definition.productKey == productKey
         }
     }
 
@@ -81,14 +65,53 @@ object AquaDeviceCatalog {
         }
     }
 
-    fun resolveTypeByLegacyIdentity(
-        aquaName: String?,
-        name: String?
-    ): AquaDeviceType {
-        return findByLegacyIdentity(
-            aquaName = aquaName,
-            name = name
-        )?.type ?: AquaDeviceType.UNKNOWN
+    fun findBySetupCode(
+        setupCode: String?
+    ): AquaDeviceDefinition? {
+        val normalizedSetupCode = setupCode.normalizedSetupCode()
+
+        if (normalizedSetupCode.isBlank()) {
+            return null
+        }
+
+        return allDefinitions.firstOrNull { definition ->
+            definition.setupCode.normalizedSetupCode() == normalizedSetupCode
+        }
+    }
+
+    fun findByCategory(
+        category: AquaDeviceCategory
+    ): List<AquaDeviceDefinition> {
+        if (category == AquaDeviceCategory.UNKNOWN) {
+            return emptyList()
+        }
+
+        return allDefinitions.filter { definition ->
+            definition.category == category
+        }
+    }
+
+    /**
+     * Geçiş köprüsü. Yeni route kararları category/productKey ile alınmalı.
+     */
+    fun findByType(
+        type: AquaDeviceType
+    ): AquaDeviceDefinition? {
+        if (type == AquaDeviceType.UNKNOWN) {
+            return null
+        }
+
+        return allDefinitions.firstOrNull { definition ->
+            definition.type == type
+        }
+    }
+
+    fun resolveCategoryByProductId(
+        productId: String?
+    ): AquaDeviceCategory {
+        return findByProductId(
+            productId = productId
+        )?.category ?: AquaDeviceCategory.UNKNOWN
     }
 
     fun resolveTypeByProductId(
@@ -99,11 +122,63 @@ object AquaDeviceCatalog {
         )?.type ?: AquaDeviceType.UNKNOWN
     }
 
+    @Deprecated(
+        message = "Commercial identity uses ProductId, DeviceUid and setupCode."
+    )
+    fun findByLegacyIdentity(
+        aquaName: String?,
+        name: String?
+    ): AquaDeviceDefinition? {
+        val normalizedAquaName = aquaName.normalizedIdentity()
+        val normalizedName = name.normalizedIdentity()
+
+        if (
+            normalizedAquaName.isBlank() ||
+            normalizedName.isBlank()
+        ) {
+            return null
+        }
+
+        return allDefinitions.firstOrNull { definition ->
+            definition.productFamily.normalizedIdentity() == normalizedAquaName &&
+                definition.productModel.normalizedIdentity() == normalizedName
+        }
+    }
+
+    @Deprecated(
+        message = "Commercial identity uses ProductId, DeviceUid and setupCode."
+    )
+    fun resolveTypeByLegacyIdentity(
+        aquaName: String?,
+        name: String?
+    ): AquaDeviceType {
+        return findByLegacyIdentity(
+            aquaName = aquaName,
+            name = name
+        )?.type ?: AquaDeviceType.UNKNOWN
+    }
+
+    fun lightDefinitionOf(
+        productKey: AquaProductKey
+    ): LightDeviceDefinition? {
+        return LightProductCatalog.findByProductKey(
+            productKey = productKey
+        )
+    }
+
     fun lightDefinitionOf(
         type: AquaDeviceType
     ): LightDeviceDefinition? {
         return LightProductCatalog.findByType(
             type = type
+        )
+    }
+
+    fun timerDefinitionOf(
+        productKey: AquaProductKey
+    ): TimerDeviceDefinition? {
+        return TimerProductCatalog.findByProductKey(
+            productKey = productKey
         )
     }
 
@@ -116,10 +191,26 @@ object AquaDeviceCatalog {
     }
 
     fun coolingDefinitionOf(
+        productKey: AquaProductKey
+    ): CoolingDeviceDefinition? {
+        return CoolingProductCatalog.findByProductKey(
+            productKey = productKey
+        )
+    }
+
+    fun coolingDefinitionOf(
         type: AquaDeviceType
     ): CoolingDeviceDefinition? {
         return CoolingProductCatalog.findByType(
             type = type
+        )
+    }
+
+    fun dosingDefinitionOf(
+        productKey: AquaProductKey
+    ): DosingDeviceDefinition? {
+        return DosingProductCatalog.findByProductKey(
+            productKey = productKey
         )
     }
 
@@ -140,6 +231,14 @@ object AquaDeviceCatalog {
             ) != null
     }
 
+    fun isSupported(
+        productId: String?
+    ): Boolean {
+        return findByProductId(
+            productId = productId
+        ) != null
+    }
+
     private fun String?.normalizedIdentity(): String {
         return this
             ?.trim()
@@ -157,6 +256,15 @@ object AquaDeviceCatalog {
         return this
             ?.trim()
             ?.lowercase(
+                Locale.US
+            )
+            .orEmpty()
+    }
+
+    private fun String?.normalizedSetupCode(): String {
+        return this
+            ?.trim()
+            ?.uppercase(
                 Locale.US
             )
             .orEmpty()

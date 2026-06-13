@@ -1,10 +1,14 @@
 package com.aqua.aqualight.data.devices.catalog.light
 
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceFamily
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
+import com.aqua.aqualight.data.devices.catalog.AquaProductVariant
+import com.aqua.aqualight.data.devices.catalog.AquaProductRegion
+import com.aqua.aqualight.data.devices.catalog.AquaProductColor
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
@@ -14,21 +18,33 @@ object LightProductCatalog {
 
     val aquaLight001 = LightDeviceDefinition(
         base = AquaDeviceDefinition(
-            type = AquaDeviceType.AQUA_LIGHT_001,
-            family = AquaDeviceFamily.AQUA_LIGHT,
+            productKey = AquaProductKey.LIGHT_WRGB_PRO2,
+            productId = AquaProductKey.LIGHT_WRGB_PRO2.productId,
+            category = AquaDeviceCategory.LIGHT,
 
-            legacyAquaName = "AquaLight",
-            legacyName = "WRGB Pro2",
-
-            productId = "aqualight.001",
             productFamily = "AquaLight",
+            productLine = "WRGB",
             productModel = "WRGB Pro2",
-
             displayName = "WRGB Pro2",
+            setupCode = AquaProductKey.LIGHT_WRGB_PRO2.setupCode,
+
+            variants = listOf(
+                AquaProductVariant(
+                    skuId = "com.aqua.light.wrgb_pro2.060.eu.black",
+                    skuCode = "AQL-WP2-060-EU-BLK",
+                    displayName = "WRGB Pro2 60cm EU Black",
+                    sizeMm = 600,
+                    channelCount = 4,
+                    maxPowerWatt = 60,
+                    region = AquaProductRegion.EU,
+                    color = AquaProductColor.BLACK,
+                    hardwareRevision = "1.0"
+                )
+            ),
 
             mainModule = AquaDeviceModule.LIGHT,
             controllerType = AquaDeviceControllerType.GENERIC_LIGHT,
-            firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
+            firmwareProtocol = FirmwareProtocol.AQUA_V1,
 
             moduleVisibility = mapOf(
                 AquaDeviceModule.LIGHT to ModuleVisibility.TOP_LEVEL,
@@ -103,21 +119,31 @@ object LightProductCatalog {
 
     val aquaLight002 = LightDeviceDefinition(
         base = AquaDeviceDefinition(
-            type = AquaDeviceType.AQUA_LIGHT_002,
-            family = AquaDeviceFamily.AQUA_LIGHT,
+            productKey = AquaProductKey.LIGHT_RGB_PRO_ELITE,
+            productId = AquaProductKey.LIGHT_RGB_PRO_ELITE.productId,
+            category = AquaDeviceCategory.LIGHT,
 
-            legacyAquaName = "AquaLight",
-            legacyName = "RGB Pro Elite",
-
-            productId = "aqualight.002",
             productFamily = "AquaLight",
+            productLine = "RGB",
             productModel = "RGB Pro Elite",
-
             displayName = "RGB Pro Elite",
+            setupCode = AquaProductKey.LIGHT_RGB_PRO_ELITE.setupCode,
+
+            variants = listOf(
+                AquaProductVariant(
+                    skuId = "com.aqua.light.rgb_pro_elite.global.black",
+                    skuCode = "AQL-RPE-GLOBAL-BLK",
+                    displayName = "RGB Pro Elite Global Black",
+                    channelCount = 3,
+                    region = AquaProductRegion.GLOBAL,
+                    color = AquaProductColor.BLACK,
+                    hardwareRevision = "1.0"
+                )
+            ),
 
             mainModule = AquaDeviceModule.LIGHT,
             controllerType = AquaDeviceControllerType.GENERIC_LIGHT,
-            firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
+            firmwareProtocol = FirmwareProtocol.AQUA_V1,
 
             moduleVisibility = mapOf(
                 AquaDeviceModule.LIGHT to ModuleVisibility.TOP_LEVEL,
@@ -184,6 +210,14 @@ object LightProductCatalog {
         aquaLight001,
         aquaLight002
     )
+
+    fun findByProductKey(
+        productKey: AquaProductKey
+    ): LightDeviceDefinition? {
+        return all.firstOrNull { definition ->
+            definition.base.productKey == productKey
+        }
+    }
 
     fun findByType(
         type: AquaDeviceType

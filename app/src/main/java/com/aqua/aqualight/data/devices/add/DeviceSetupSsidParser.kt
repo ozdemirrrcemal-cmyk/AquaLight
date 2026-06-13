@@ -1,113 +1,46 @@
 package com.aqua.aqualight.data.devices.add
 
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
-import java.util.Locale
+import com.aqua.aqualight.data.devices.catalog.AquaSetupSsid
 
 object DeviceSetupSsidParser {
 
-    private const val MIN_PART_COUNT = 3
-
+    /**
+     * Commercial setup SSID format:
+     * AQL-<setupCode>-<shortId>
+     *
+     * Eski AquaLight-WRGBPro2-1221 / AquaCool-CoolPro-7872 formatları artık
+     * kabul edilmez. Uygulama yayınlanmadığı için eski destek taşınmıyor.
+     */
     fun parse(
         ssid: String
     ): DeviceAddCandidate? {
-        val parts = ssid
-            .trim()
-            .split("-")
-            .map { part -> part.trim() }
-            .filter { part -> part.isNotBlank() }
+        val setupSsid = AquaSetupSsid.parse(
+            ssid = ssid
+        ) ?: return null
 
-        if (parts.size < MIN_PART_COUNT) {
-            return null
-        }
-
-        val familyPart = parts.first()
-        val shortId = parts.last()
-        val modelSlug = parts
-            .drop(1)
-            .dropLast(1)
-            .joinToString(separator = "")
-
-        if (
-            familyPart.isBlank() ||
-            modelSlug.isBlank() ||
-            shortId.isBlank()
-        ) {
-            return null
-        }
-
-        val definition = AquaDeviceCatalog.allDefinitions.firstOrNull { definition ->
-            matchesFamily(
-                ssidFamily = familyPart,
-                catalogFamily = definition.productFamily
-            ) ||
-                matchesFamily(
-                    ssidFamily = familyPart,
-                    catalogFamily = definition.legacyAquaName
-                ) ||
-                matchesFamily(
-                    ssidFamily = familyPart,
-                    catalogFamily = definition.family.legacyAquaName
-                )
-        }?.let { _ ->
-            AquaDeviceCatalog.allDefinitions.firstOrNull { definition ->
-                val familyMatches =
-                    matchesFamily(familyPart, definition.productFamily) ||
-                        matchesFamily(familyPart, definition.legacyAquaName) ||
-                        matchesFamily(familyPart, definition.family.legacyAquaName)
-
-                val modelMatches =
-                    matchesModel(modelSlug, definition.productModel) ||
-                        matchesModel(modelSlug, definition.legacyName) ||
-                        matchesModel(modelSlug, definition.displayName)
-
-                familyMatches && modelMatches
-            }
-        } ?: return null
+        val definition = AquaDeviceCatalog.findBySetupCode(
+            setupCode = setupSsid.setupCode
+        ) ?: return null
 
         return DeviceAddCandidate(
-            key = "setup:${ssid}",
+            key = "setup:${setupSsid.rawSsid}",
             source = DeviceAddSource.SETUP_AP,
             displayName = definition.displayName,
-            familyName = definition.family.displayName,
+            familyName = definition.productFamily,
             deviceType = definition.type,
-            stateText = "Ready for setup",
+            stateText = "Setup mode",
             actionText = "Set up",
-            setupSsid = ssid,
-            setupShortId = shortId
+            setupSsid = setupSsid.rawSsid,
+            setupShortId = setupSsid.shortId
         )
     }
 
     fun isPossibleAquaSetupSsid(
         ssid: String
     ): Boolean {
-        val normalized = ssid.trim()
-
-        return normalized.startsWith("AquaLight-", ignoreCase = true) ||
-            normalized.startsWith("AquaTimer-", ignoreCase = true) ||
-            normalized.startsWith("AquaCool-", ignoreCase = true) ||
-            normalized.startsWith("AquaControl-", ignoreCase = true) ||
-            normalized.startsWith("Proelite-", ignoreCase = true)
-    }
-
-    private fun matchesFamily(
-        ssidFamily: String,
-        catalogFamily: String
-    ): Boolean {
-        return normalize(ssidFamily) == normalize(catalogFamily)
-    }
-
-    private fun matchesModel(
-        ssidModel: String,
-        catalogModel: String
-    ): Boolean {
-        return normalize(ssidModel) == normalize(catalogModel)
-    }
-
-    private fun normalize(
-        value: String
-    ): String {
-        return value
-            .lowercase(Locale.US)
-            .replace(Regex("[^a-z0-9]"), "")
+        return AquaSetupSsid.isValid(
+            ssid = ssid
+        )
     }
 }

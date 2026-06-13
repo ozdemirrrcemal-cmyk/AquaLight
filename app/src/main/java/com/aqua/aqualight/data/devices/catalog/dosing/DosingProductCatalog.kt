@@ -1,10 +1,14 @@
 package com.aqua.aqualight.data.devices.catalog.dosing
 
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceFamily
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
+import com.aqua.aqualight.data.devices.catalog.AquaProductVariant
+import com.aqua.aqualight.data.devices.catalog.AquaProductRegion
+import com.aqua.aqualight.data.devices.catalog.AquaProductColor
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
@@ -14,21 +18,31 @@ object DosingProductCatalog {
 
     val aquaDose001 = DosingDeviceDefinition(
         base = AquaDeviceDefinition(
-            type = AquaDeviceType.AQUA_DOSE_001,
-            family = AquaDeviceFamily.AQUA_DOSE,
+            productKey = AquaProductKey.DOSING_DOSE_PRO_4,
+            productId = AquaProductKey.DOSING_DOSE_PRO_4.productId,
+            category = AquaDeviceCategory.DOSING,
 
-            legacyAquaName = "AquaDose",
-            legacyName = "DosePro 4",
-
-            productId = "aquadose.001",
             productFamily = "AquaDose",
+            productLine = "Dosing",
             productModel = "DosePro 4",
-
             displayName = "DosePro 4",
+            setupCode = AquaProductKey.DOSING_DOSE_PRO_4.setupCode,
+
+            variants = listOf(
+                AquaProductVariant(
+                    skuId = "com.aqua.dosing.dose_pro_4.global.black",
+                    skuCode = "AQL-DP4-GLOBAL-BLK",
+                    displayName = "DosePro 4 Global Black",
+                    channelCount = 4,
+                    region = AquaProductRegion.GLOBAL,
+                    color = AquaProductColor.BLACK,
+                    hardwareRevision = "1.0"
+                )
+            ),
 
             mainModule = AquaDeviceModule.DOSING,
             controllerType = AquaDeviceControllerType.CUSTOM_DOSING_4CH,
-            firmwareProtocol = FirmwareProtocol.LEGACY_GET_SET,
+            firmwareProtocol = FirmwareProtocol.AQUA_V1,
 
             moduleVisibility = mapOf(
                 AquaDeviceModule.LIGHT to ModuleVisibility.HIDDEN,
@@ -77,6 +91,14 @@ object DosingProductCatalog {
     val all: List<DosingDeviceDefinition> = listOf(
         aquaDose001
     )
+
+    fun findByProductKey(
+        productKey: AquaProductKey
+    ): DosingDeviceDefinition? {
+        return all.firstOrNull { definition ->
+            definition.base.productKey == productKey
+        }
+    }
 
     fun findByType(
         type: AquaDeviceType
