@@ -69,7 +69,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
-                    android:hint="Tank name"
+                    android:hint="@string/aquarium_tank_name_title"
                     app:boxBackgroundMode="outline"
                     app:boxBackgroundColor="@color/aqua_input_background"
                     app:boxCornerRadiusTopStart="14dp"

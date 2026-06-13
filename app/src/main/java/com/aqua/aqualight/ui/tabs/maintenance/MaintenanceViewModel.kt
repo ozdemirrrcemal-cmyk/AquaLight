@@ -28,11 +28,20 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Job
 
+enum class TankNextCareStatus {
+  NONE,
+  OVERDUE,
+  TODAY,
+  TOMORROW,
+  FUTURE
+}
+
 data class TankActivityUiState(
   val lastTrimText: String = "--",
   val lastWaterChangeText: String = "--",
   val lastFilterMaintenanceText: String = "--",
   val nextCareText: String = "--",
+  val nextCareStatus: TankNextCareStatus = TankNextCareStatus.NONE,
   val nextCareTask: CareTaskUi? = null,
   val completedTasks: List<CareTaskUi> = emptyList()
 )
@@ -198,6 +207,10 @@ class MaintenanceViewModel(
           task ->
           getNextCareSummaryText(task)
         } ?: "--",
+        nextCareStatus = nextCareTask?.let {
+          task ->
+          getNextCareStatus(task)
+        } ?: TankNextCareStatus.NONE,
         nextCareTask = nextCareTask?.toCareTaskUi(
           tankName = tankName
         ),
@@ -667,6 +680,25 @@ class MaintenanceViewModel(
     return tasks.minByOrNull {
       task ->
       task.dueAtMillis
+    }
+  }
+
+
+  private fun getNextCareStatus(
+    task: CareTask
+  ): TankNextCareStatus {
+    val todayStartMillis = getTodayStartMillis()
+    val dueDayStartMillis = getStartOfDayMillis(task.dueAtMillis)
+
+    val daysUntil = TimeUnit.MILLISECONDS.toDays(
+      dueDayStartMillis - todayStartMillis
+    )
+
+    return when {
+      daysUntil < 0L -> TankNextCareStatus.OVERDUE
+      daysUntil == 0L -> TankNextCareStatus.TODAY
+      daysUntil == 1L -> TankNextCareStatus.TOMORROW
+      else -> TankNextCareStatus.FUTURE
     }
   }
 

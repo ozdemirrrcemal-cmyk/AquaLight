@@ -65,7 +65,7 @@ class TankDescriptionFragment :
 
         if (description.isBlank()) {
             binding.tilTankDescription.error =
-                "Aquarium concept is required"
+                getString(R.string.aquarium_validation_tank_description_required)
 
             binding.etTankDescription.requestFocus()
 
@@ -74,7 +74,7 @@ class TankDescriptionFragment :
 
         if (description.length < 10) {
             binding.tilTankDescription.error =
-                "Please enter at least 10 characters"
+                getString(R.string.aquarium_validation_tank_description_min)
 
             binding.etTankDescription.requestFocus()
 

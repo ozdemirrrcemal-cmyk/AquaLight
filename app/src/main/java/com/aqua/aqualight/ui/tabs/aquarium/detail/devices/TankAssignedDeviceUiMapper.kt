@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
+import android.content.Context
 import android.graphics.Color
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
@@ -17,7 +19,12 @@ import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
 import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
 
-class TankAssignedDeviceUiMapper {
+class TankAssignedDeviceUiMapper(
+    context: Context
+) {
+
+    private val appContext =
+        context.applicationContext
 
     private val deviceCardStateMapper =
         DeviceCardStateMapper()
@@ -41,7 +48,7 @@ class TankAssignedDeviceUiMapper {
                 device = device,
                 statuses = statuses,
                 nowMillis = now,
-                unknownTankText = TankAssignedDeviceText.UNKNOWN_AQUARIUM
+                unknownTankText = text(TankAssignedDeviceText.UNKNOWN_AQUARIUM)
             )
 
         val title =
@@ -275,7 +282,7 @@ class TankAssignedDeviceUiMapper {
                 LightChannelConfig(
                     key = TankLightChannelKey.WHITE,
                     label = displayName.ifBlank {
-                        "White"
+                        text(R.string.aquarium_light_channel_white)
                     },
                     semantic = LightChannelSemantic.WHITE,
                     colorInt = Color.parseColor("#DDE2E8")
@@ -286,7 +293,7 @@ class TankAssignedDeviceUiMapper {
                 LightChannelConfig(
                     key = TankLightChannelKey.RED,
                     label = displayName.ifBlank {
-                        "Red"
+                        text(R.string.aquarium_light_channel_red)
                     },
                     semantic = LightChannelSemantic.RED,
                     colorInt = Color.parseColor("#D86E72")
@@ -297,7 +304,7 @@ class TankAssignedDeviceUiMapper {
                 LightChannelConfig(
                     key = TankLightChannelKey.GREEN,
                     label = displayName.ifBlank {
-                        "Green"
+                        text(R.string.aquarium_light_channel_green)
                     },
                     semantic = LightChannelSemantic.GREEN,
                     colorInt = Color.parseColor("#72C37F")
@@ -308,7 +315,7 @@ class TankAssignedDeviceUiMapper {
                 LightChannelConfig(
                     key = TankLightChannelKey.BLUE,
                     label = displayName.ifBlank {
-                        "Blue"
+                        text(R.string.aquarium_light_channel_blue)
                     },
                     semantic = LightChannelSemantic.BLUE,
                     colorInt = Color.parseColor("#6FA0E0")
@@ -319,7 +326,7 @@ class TankAssignedDeviceUiMapper {
                 LightChannelConfig(
                     key = TankLightChannelKey.WHITE,
                     label = displayName.ifBlank {
-                        "Warm White"
+                        text(R.string.aquarium_light_channel_warm_white)
                     },
                     semantic = LightChannelSemantic.WHITE,
                     colorInt = Color.parseColor("#E2D0AA")
@@ -330,7 +337,7 @@ class TankAssignedDeviceUiMapper {
                 LightChannelConfig(
                     key = TankLightChannelKey.WHITE,
                     label = displayName.ifBlank {
-                        "Cool White"
+                        text(R.string.aquarium_light_channel_cool_white)
                     },
                     semantic = LightChannelSemantic.WHITE,
                     colorInt = Color.parseColor("#DDE2E8")
@@ -341,7 +348,7 @@ class TankAssignedDeviceUiMapper {
                 LightChannelConfig(
                     key = TankLightChannelKey.UV,
                     label = displayName.ifBlank {
-                        "UV"
+                        text(R.string.aquarium_light_channel_uv)
                     },
                     semantic = LightChannelSemantic.UNKNOWN,
                     colorInt = Color.parseColor("#A37CFF")
@@ -352,7 +359,7 @@ class TankAssignedDeviceUiMapper {
                 LightChannelConfig(
                     key = TankLightChannelKey.INTENSITY,
                     label = displayName.ifBlank {
-                        "Intensity"
+                        text(R.string.aquarium_light_channel_intensity)
                     },
                     semantic = LightChannelSemantic.UNKNOWN,
                     colorInt = Color.parseColor("#8EB8FF")
@@ -367,25 +374,25 @@ class TankAssignedDeviceUiMapper {
                 listOf(
                     LightChannelConfig(
                         key = TankLightChannelKey.WHITE,
-                        label = "White",
+                        label = text(R.string.aquarium_light_channel_white),
                         semantic = LightChannelSemantic.WHITE,
                         colorInt = Color.parseColor("#DDE2E8")
                     ),
                     LightChannelConfig(
                         key = TankLightChannelKey.RED,
-                        label = "Red",
+                        label = text(R.string.aquarium_light_channel_red),
                         semantic = LightChannelSemantic.RED,
                         colorInt = Color.parseColor("#D86E72")
                     ),
                     LightChannelConfig(
                         key = TankLightChannelKey.GREEN,
-                        label = "Green",
+                        label = text(R.string.aquarium_light_channel_green),
                         semantic = LightChannelSemantic.GREEN,
                         colorInt = Color.parseColor("#72C37F")
                     ),
                     LightChannelConfig(
                         key = TankLightChannelKey.BLUE,
-                        label = "Blue",
+                        label = text(R.string.aquarium_light_channel_blue),
                         semantic = LightChannelSemantic.BLUE,
                         colorInt = Color.parseColor("#6FA0E0")
                     )
@@ -396,19 +403,19 @@ class TankAssignedDeviceUiMapper {
                 listOf(
                     LightChannelConfig(
                         key = TankLightChannelKey.RED,
-                        label = "Red",
+                        label = text(R.string.aquarium_light_channel_red),
                         semantic = LightChannelSemantic.RED,
                         colorInt = Color.parseColor("#D86E72")
                     ),
                     LightChannelConfig(
                         key = TankLightChannelKey.GREEN,
-                        label = "Green",
+                        label = text(R.string.aquarium_light_channel_green),
                         semantic = LightChannelSemantic.GREEN,
                         colorInt = Color.parseColor("#72C37F")
                     ),
                     LightChannelConfig(
                         key = TankLightChannelKey.BLUE,
-                        label = "Blue",
+                        label = text(R.string.aquarium_light_channel_blue),
                         semantic = LightChannelSemantic.BLUE,
                         colorInt = Color.parseColor("#6FA0E0")
                     )
@@ -419,13 +426,13 @@ class TankAssignedDeviceUiMapper {
                 listOf(
                     LightChannelConfig(
                         key = TankLightChannelKey.WHITE,
-                        label = "White",
+                        label = text(R.string.aquarium_light_channel_white),
                         semantic = LightChannelSemantic.WHITE,
                         colorInt = Color.parseColor("#DDE2E8")
                     ),
                     LightChannelConfig(
                         key = TankLightChannelKey.BLUE,
-                        label = "Blue",
+                        label = text(R.string.aquarium_light_channel_blue),
                         semantic = LightChannelSemantic.BLUE,
                         colorInt = Color.parseColor("#6FA0E0")
                     )
@@ -436,7 +443,7 @@ class TankAssignedDeviceUiMapper {
                 listOf(
                     LightChannelConfig(
                         key = TankLightChannelKey.INTENSITY,
-                        label = "Intensity",
+                        label = text(R.string.aquarium_light_channel_intensity),
                         semantic = LightChannelSemantic.UNKNOWN,
                         colorInt = Color.parseColor("#8EB8FF")
                     )
@@ -447,7 +454,7 @@ class TankAssignedDeviceUiMapper {
                 listOf(
                     LightChannelConfig(
                         key = TankLightChannelKey.INTENSITY,
-                        label = "Intensity",
+                        label = text(R.string.aquarium_light_channel_intensity),
                         semantic = LightChannelSemantic.UNKNOWN,
                         colorInt = Color.parseColor("#8EB8FF")
                     )
@@ -490,10 +497,10 @@ class TankAssignedDeviceUiMapper {
     if (!isOnline) {
         return LightModeContent(
             mode = TankLightCardMode.OFFLINE,
-            label = TankAssignedDeviceText.OFFLINE_LABEL,
-            title = TankAssignedDeviceText.NO_LIVE_DATA_TITLE,
-            leftText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
-            rightText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
+            label = text(TankAssignedDeviceText.OFFLINE_LABEL),
+            title = text(TankAssignedDeviceText.NO_LIVE_DATA_TITLE),
+            leftText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
+            rightText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
             accentColorInt = Color.parseColor("#90A1B5"),
             timelineProgressPercent = 0
         )
@@ -503,10 +510,10 @@ class TankAssignedDeviceUiMapper {
         TankLightCardMode.MANUAL -> {
             return LightModeContent(
                 mode = TankLightCardMode.MANUAL,
-                label = TankAssignedDeviceText.MANUAL_LABEL,
-                title = TankAssignedDeviceText.MANUAL_CONTROL_TITLE,
-                leftText = TankAssignedDeviceText.MANUAL_LEFT_TEXT,
-                rightText = TankAssignedDeviceText.RESUME_RIGHT_TEXT,
+                label = text(TankAssignedDeviceText.MANUAL_LABEL),
+                title = text(TankAssignedDeviceText.MANUAL_CONTROL_TITLE),
+                leftText = text(TankAssignedDeviceText.MANUAL_LEFT_TEXT),
+                rightText = text(TankAssignedDeviceText.RESUME_RIGHT_TEXT),
                 accentColorInt = Color.parseColor("#C8A86B"),
                 timelineProgressPercent = 100
             )
@@ -515,12 +522,12 @@ class TankAssignedDeviceUiMapper {
         TankLightCardMode.SCENE -> {
             return LightModeContent(
                 mode = TankLightCardMode.SCENE,
-                label = TankAssignedDeviceText.SCENE_LABEL,
+                label = text(TankAssignedDeviceText.SCENE_LABEL),
                 title = modeOverride.title.ifBlank {
-                    TankAssignedDeviceText.SCENE_MODE_TITLE
+                    text(TankAssignedDeviceText.SCENE_MODE_TITLE)
                 },
-                leftText = TankAssignedDeviceText.SCENE_LEFT_TEXT,
-                rightText = TankAssignedDeviceText.RESUME_RIGHT_TEXT,
+                leftText = text(TankAssignedDeviceText.SCENE_LEFT_TEXT),
+                rightText = text(TankAssignedDeviceText.RESUME_RIGHT_TEXT),
                 accentColorInt = Color.parseColor("#A37CFF"),
                 timelineProgressPercent = 100
             )
@@ -529,12 +536,12 @@ class TankAssignedDeviceUiMapper {
         TankLightCardMode.MOONLIGHT -> {
             return LightModeContent(
                 mode = TankLightCardMode.MOONLIGHT,
-                label = TankAssignedDeviceText.MOONLIGHT_LABEL,
+                label = text(TankAssignedDeviceText.MOONLIGHT_LABEL),
                 title = modeOverride.title.ifBlank {
-                    TankAssignedDeviceText.MOONLIGHT_MODE_TITLE
+                    text(TankAssignedDeviceText.MOONLIGHT_MODE_TITLE)
                 },
-                leftText = modeOverride.leftText ?: "--:--",
-                rightText = modeOverride.rightText ?: "--:--",
+                leftText = modeOverride.leftText ?: text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
+                rightText = modeOverride.rightText ?: text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
                 accentColorInt = Color.parseColor("#7FA7FF"),
                 timelineProgressPercent = modeOverride.timelineProgressPercent ?: 0
             )
@@ -553,10 +560,10 @@ class TankAssignedDeviceUiMapper {
     if (!hasDeviceTime) {
         return LightModeContent(
             mode = TankLightCardMode.SYNCING,
-            label = TankAssignedDeviceText.SYNCING_LABEL,
-            title = TankAssignedDeviceText.WAITING_FOR_TIME_TITLE,
-            leftText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
-            rightText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
+            label = text(TankAssignedDeviceText.SYNCING_LABEL),
+            title = text(TankAssignedDeviceText.WAITING_FOR_TIME_TITLE),
+            leftText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
+            rightText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
             accentColorInt = Color.parseColor("#90A1B5"),
             timelineProgressPercent = 0
         )
@@ -565,10 +572,10 @@ class TankAssignedDeviceUiMapper {
     if (displayProgram == null) {
         return LightModeContent(
             mode = TankLightCardMode.NO_PROGRAM,
-            label = TankAssignedDeviceText.NO_ACTIVE_PROGRAM_LABEL,
-            title = TankAssignedDeviceText.PROGRAM_NOT_SET_TITLE,
-            leftText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
-            rightText = TankAssignedDeviceText.EMPTY_TIME_TEXT,
+            label = text(TankAssignedDeviceText.NO_ACTIVE_PROGRAM_LABEL),
+            title = text(TankAssignedDeviceText.PROGRAM_NOT_SET_TITLE),
+            leftText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
+            rightText = text(TankAssignedDeviceText.EMPTY_TIME_TEXT),
             accentColorInt = Color.parseColor("#90A1B5"),
             timelineProgressPercent = 0
         )
@@ -577,9 +584,9 @@ class TankAssignedDeviceUiMapper {
     return LightModeContent(
         mode = TankLightCardMode.AUTO,
         label = if (hasActualLiveData) {
-            TankAssignedDeviceText.ACTIVE_PROGRAM_LABEL
+            text(TankAssignedDeviceText.ACTIVE_PROGRAM_LABEL)
         } else {
-            TankAssignedDeviceText.SCHEDULED_LABEL
+            text(TankAssignedDeviceText.SCHEDULED_LABEL)
         },
         title = displayProgram.name,
         leftText = displayProgram.draft.start.label,
@@ -590,6 +597,16 @@ class TankAssignedDeviceUiMapper {
         timelineProgressPercent = null
     )
 }
+
+
+    private fun text(
+        resId: Int
+    ): String {
+        return TankAssignedDeviceText.resolve(
+            context = appContext,
+            resId = resId
+        )
+    }
 
     private data class LightModeContent(
         val mode: TankLightCardMode,

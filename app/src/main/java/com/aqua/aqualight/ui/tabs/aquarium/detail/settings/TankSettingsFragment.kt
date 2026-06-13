@@ -83,7 +83,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "Tank Settings",
+                titleOverride = getString(R.string.screen_title_tank_settings),
                 onBackClick = {
                     findNavController().navigateUp()
                 },
@@ -92,7 +92,7 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
                         text = scoreText,
                         strokeColor = scoreColor,
                         textColor = scoreColor,
-                        contentDescription = "Tank score",
+                        contentDescription = getString(R.string.aquarium_content_desc_tank_score),
                         onClick = {
                             currentTank?.let { tank ->
                                 showCareProfileSheet(tank)
@@ -454,9 +454,9 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             rowBinding.tvCareProfileItemSubtitle.text = item.subtitle
 
             rowBinding.tvCareProfileItemStatus.text = if (item.completed) {
-                "Complete"
+                getString(R.string.aquarium_care_profile_status_complete)
             } else {
-                "Missing"
+                getString(R.string.aquarium_care_profile_status_missing)
             }
 
             rowBinding.tvCareProfileItemStatus.setTextColor(
@@ -536,50 +536,50 @@ class TankSettingsFragment : Fragment(R.layout.fragment_tank_settings) {
             return
         }
 
-        when (item.title) {
-            "Tank name" -> {
+        when (item.actionKey) {
+            CareProfileCalculator.ActionKey.TANK_NAME -> {
                 openBasicCareProfileAction(
                     TankSettingsBasicFragment.ACTION_TANK_NAME
                 )
             }
 
-            "Tank type" -> {
+            CareProfileCalculator.ActionKey.TANK_TYPE -> {
                 openBasicCareProfileAction(
                     TankSettingsBasicFragment.ACTION_TANK_TYPE
                 )
             }
 
-            "Tank size" -> {
+            CareProfileCalculator.ActionKey.TANK_SIZE -> {
                 openBasicCareProfileAction(
                     TankSettingsBasicFragment.ACTION_TANK_SIZE
                 )
             }
 
-            "Setup date" -> {
+            CareProfileCalculator.ActionKey.SETUP_DATE -> {
                 openBasicCareProfileAction(
                     TankSettingsBasicFragment.ACTION_SETUP_DATE
                 )
             }
 
-            "Tank style" -> {
+            CareProfileCalculator.ActionKey.TANK_STYLE -> {
                 openBasicCareProfileAction(
                     TankSettingsBasicFragment.ACTION_STYLE
                 )
             }
 
-            "Plants" -> {
+            CareProfileCalculator.ActionKey.PLANTS -> {
                 openTankDetailCareProfileAction(
                     TankDetailFragment.CARE_PROFILE_ACTION_PLANTS
                 )
             }
 
-            "Livestock" -> {
+            CareProfileCalculator.ActionKey.LIVESTOCK -> {
                 openTankDetailCareProfileAction(
                     TankDetailFragment.CARE_PROFILE_ACTION_LIVESTOCK
                 )
             }
 
-            else -> Unit
+            null -> Unit
         }
     }
 

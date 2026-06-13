@@ -12,7 +12,7 @@
     android:layout_height="58dp"
     android:background="@drawable/bg_settings_sheet_input"
     android:gravity="center_vertical"
-    android:hint="Write custom style"
+    android:hint="@string/aquarium_hint_tank_style_custom"
     android:includeFontPadding="false"
     android:inputType="textCapWords"
     android:maxLines="1"

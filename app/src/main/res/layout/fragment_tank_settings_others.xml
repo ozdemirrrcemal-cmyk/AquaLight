@@ -203,7 +203,7 @@
                 <ImageView
                     android:layout_width="22dp"
                     android:layout_height="22dp"
-                    android:contentDescription="Open"
+                    android:contentDescription="@string/aquarium_content_desc_open"
                     android:scaleType="center"
                     android:src="@drawable/ic_arrow_right"
                     app:tint="#8FA4BE" />
@@ -246,7 +246,7 @@
                 <ImageView
                     android:layout_width="22dp"
                     android:layout_height="22dp"
-                    android:contentDescription="Open"
+                    android:contentDescription="@string/aquarium_content_desc_open"
                     android:scaleType="center"
                     android:src="@drawable/ic_arrow_right"
                     app:tint="#8FA4BE" />

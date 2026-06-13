@@ -65,7 +65,7 @@ class TankNameFragment :
 
         if (tankName.isBlank()) {
             binding.tilTankName.error =
-                "Tank name is required"
+                getString(R.string.aquarium_validation_tank_name_required)
 
             binding.etTankName.requestFocus()
 
@@ -74,7 +74,7 @@ class TankNameFragment :
 
         if (tankName.length < 2) {
             binding.tilTankName.error =
-                "Tank name must be at least 2 characters"
+                getString(R.string.aquarium_validation_tank_name_min)
 
             binding.etTankName.requestFocus()
 

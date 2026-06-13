@@ -175,7 +175,7 @@ class TankDetailFragment :
                 actions = listOf(
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_edit_24,
-                        contentDescription = "Edit tank",
+                        contentDescription = getString(R.string.aquarium_content_desc_edit_tank),
                         onClick = {
                             openTankSettings()
                         }

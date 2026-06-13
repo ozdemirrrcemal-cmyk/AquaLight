@@ -331,16 +331,20 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
 
         val title =
             if (selectedCount == 1) {
-                "Delete aquarium?"
+                getString(R.string.aquarium_delete_aquarium_title_single)
             } else {
-                "Delete aquariums?"
+                getString(R.string.aquarium_delete_aquarium_title_multi)
             }
 
         val message =
             if (selectedCount == 1) {
-                "Selected aquarium will be permanently deleted."
+                getString(R.string.aquarium_delete_aquarium_message_single)
             } else {
-                "$selectedCount selected aquariums will be permanently deleted."
+                resources.getQuantityString(
+                    R.plurals.aquarium_selected_aquariums_delete_message,
+                    selectedCount,
+                    selectedCount
+                )
             }
 
         DialogManager.showConfirmDialog(

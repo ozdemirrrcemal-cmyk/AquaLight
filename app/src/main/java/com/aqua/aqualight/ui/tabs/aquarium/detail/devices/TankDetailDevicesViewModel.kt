@@ -52,7 +52,9 @@ class TankDetailDevicesViewModel(
         LightRuntimeRepository()
 
     private val mapper =
-        TankAssignedDeviceUiMapper()
+        TankAssignedDeviceUiMapper(
+            context = appContext
+        )
 
     private val _uiState =
         MutableStateFlow(
@@ -357,7 +359,10 @@ class TankDetailDevicesViewModel(
 
         return TankLightModeOverride(
             mode = TankLightCardMode.MOONLIGHT,
-            title = TankAssignedDeviceText.MOONLIGHT_MODE_TITLE,
+            title = TankAssignedDeviceText.resolve(
+                context = appContext,
+                resId = TankAssignedDeviceText.MOONLIGHT_MODE_TITLE
+            ),
             leftText = LightProgramRuntimeEvaluator.labelForMinute(startMinute),
             rightText = LightProgramRuntimeEvaluator.labelForMinute(endMinute),
             timelineProgressPercent = moonlightProgressPercent(
@@ -430,7 +435,10 @@ class TankDetailDevicesViewModel(
             val sceneName =
                 runtime.activeSceneName.orEmpty()
                     .ifBlank {
-                        TankAssignedDeviceText.SCENE_MODE_TITLE
+                        TankAssignedDeviceText.resolve(
+                            context = appContext,
+                            resId = TankAssignedDeviceText.SCENE_MODE_TITLE
+                        )
                     }
 
             return TankLightModeOverride(
@@ -442,7 +450,10 @@ class TankDetailDevicesViewModel(
         if (runtime.isManualMode) {
             return TankLightModeOverride(
                 mode = TankLightCardMode.MANUAL,
-                title = TankAssignedDeviceText.MANUAL_CONTROL_TITLE
+                title = TankAssignedDeviceText.resolve(
+                    context = appContext,
+                    resId = TankAssignedDeviceText.MANUAL_CONTROL_TITLE
+                )
             )
         }
 

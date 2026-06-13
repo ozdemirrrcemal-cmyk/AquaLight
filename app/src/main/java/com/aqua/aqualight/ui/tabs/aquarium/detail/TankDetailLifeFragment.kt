@@ -118,9 +118,13 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         }
 
         binding.tvTankLifeSummary.text = if (livestock.isEmpty()) {
-            "No livestock yet"
+            getString(R.string.aquarium_no_livestock_yet)
         } else {
-            "${livestock.size} species • $totalQuantity total livestock"
+            getString(
+                R.string.aquarium_livestock_summary_format,
+                livestock.size,
+                totalQuantity
+            )
         }
 
         binding.cardTankLifeEmpty.isVisible = livestock.isEmpty()
@@ -187,7 +191,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             scaleType = ImageView.ScaleType.CENTER_INSIDE
 
             contentDescription = livestock.category.ifBlank {
-                "Livestock"
+                getString(R.string.aquarium_livestock_default_title)
             }
 
             layoutParams = LinearLayout.LayoutParams(
@@ -314,18 +318,18 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     ): String {
         val safeQuantity = quantity.coerceAtLeast(1)
 
-        return if (safeQuantity == 1) {
-            "1 pc"
-        } else {
-            "$safeQuantity pcs"
-        }
+        return resources.getQuantityString(
+            R.plurals.aquarium_livestock_quantity_piece,
+            safeQuantity,
+            safeQuantity
+        )
     }
 
     private fun getLivestockAddedDateText(
         addedDateMillis: Long?
     ): String {
         if (addedDateMillis == null || addedDateMillis <= 0L) {
-            return "Added date not set"
+            return getString(R.string.aquarium_livestock_added_date_not_set)
         }
 
         val formatter = SimpleDateFormat(
@@ -333,7 +337,10 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             Locale.getDefault()
         )
 
-        return "Added ${formatter.format(Date(addedDateMillis))}"
+        return getString(
+            R.string.aquarium_livestock_added_date_format,
+            formatter.format(Date(addedDateMillis))
+        )
     }
 
     private fun getLivestockCategoryIcon(

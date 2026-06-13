@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium
 
+import android.content.Context
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -89,14 +90,26 @@ class AquariumTankAdapter(
       isSelected: Boolean
     ) {
       binding.tvTankName.text = tank.name
-      binding.tvTankDay.text = getTankDayText(tank.setupDateMillis)
+      val context = binding.root.context
+
+      binding.tvTankDay.text = getTankDayText(
+        context = context,
+        setupDateMillis = tank.setupDateMillis
+      )
 
       binding.tvCareInfo.text = getCareInfoText(
+        context = context,
         careSummary = careSummary
       )
 
-      binding.tvTankSize.text = getTankSizeText(tank)
-      binding.tvSetupDate.text = getSetupDateText(tank.setupDateMillis)
+      binding.tvTankSize.text = getTankSizeText(
+        context = context,
+        tank = tank
+      )
+      binding.tvSetupDate.text = getSetupDateText(
+        context = context,
+        setupDateMillis = tank.setupDateMillis
+      )
 
       bindTankPhoto(tank)
 
@@ -167,25 +180,39 @@ class AquariumTankAdapter(
     }
 
     private fun getCareInfoText(
+      context: Context,
       careSummary: TankCareSummaryUi?
     ): String {
-      val lastWaterChange = careSummary?.lastWaterChangeText ?: "--"
-      val lastTrim = careSummary?.lastTrimText ?: "--"
+      val lastWaterChange = careSummary?.lastWaterChangeText
+        ?: context.getString(R.string.aquarium_no_value_placeholder)
+      val lastTrim = careSummary?.lastTrimText
+        ?: context.getString(R.string.aquarium_no_value_placeholder)
 
-      return "Last Water Change: $lastWaterChange | Last Trim: $lastTrim"
+      return context.getString(
+        R.string.aquarium_care_info_format,
+        lastWaterChange,
+        lastTrim
+      )
     }
 
     private fun getTankSizeText(
+      context: Context,
       tank: SavedAquariumTank
     ): String {
-      return "${tank.widthCm}W x ${tank.lengthCm}L x ${tank.heightCm}H"
+      return context.getString(
+        R.string.aquarium_tank_size_card_format,
+        tank.widthCm,
+        tank.lengthCm,
+        tank.heightCm
+      )
     }
 
     private fun getSetupDateText(
+      context: Context,
       setupDateMillis: Long?
     ): String {
       if (setupDateMillis == null) {
-        return "Setup Date: -"
+        return context.getString(R.string.aquarium_setup_date_empty)
       }
 
       val formatter = SimpleDateFormat(
@@ -193,10 +220,14 @@ class AquariumTankAdapter(
         Locale.getDefault()
       )
 
-      return "Setup Date: ${formatter.format(Date(setupDateMillis))}"
+      return context.getString(
+        R.string.aquarium_setup_date_card_format,
+        formatter.format(Date(setupDateMillis))
+      )
     }
 
     private fun getTankDayText(
+      context: Context,
       setupDateMillis: Long?
     ): String {
       val setupMillis = setupDateMillis ?: System.currentTimeMillis()
@@ -206,7 +237,10 @@ class AquariumTankAdapter(
         .toDays(nowMillis - setupMillis)
         .coerceAtLeast(0)
 
-      return "Day $day"
+      return context.getString(
+        R.string.aquarium_day_format,
+        day
+      )
     }
 
     companion object {

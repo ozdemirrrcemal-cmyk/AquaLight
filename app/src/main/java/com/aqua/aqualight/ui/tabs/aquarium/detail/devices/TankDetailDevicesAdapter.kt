@@ -7,6 +7,7 @@ import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemTankDetailDeviceGenericCardBinding
 import com.aqua.aqualight.databinding.ItemTankDetailDeviceLightCardBinding
 import com.aqua.aqualight.databinding.ItemTankLightChannelRowBinding
@@ -104,9 +105,9 @@ class TankDetailDevicesAdapter(
 
             binding.tvConnectionStatus.text =
             if (item.isOnline) {
-                "Online"
+                binding.root.context.getString(R.string.aquarium_device_status_online)
             } else {
-                "Offline"
+                binding.root.context.getString(R.string.aquarium_device_status_offline)
             }
 
             binding.tvConnectionStatus.setTextColor(
@@ -130,7 +131,10 @@ class TankDetailDevicesAdapter(
             item.endTimeText
 
             binding.tvOutputPercent.text =
-            "${item.outputPercent}%"
+            binding.root.context.getString(
+                R.string.aquarium_care_profile_percent_format,
+                item.outputPercent
+            )
 
             binding.tvOutputPercent.setTextColor(
                 item.accentColorInt
@@ -210,7 +214,10 @@ class TankDetailDevicesAdapter(
                 channel.label
 
                 channelBinding.tvChannelValue.text =
-                "$safePercent%"
+                binding.root.context.getString(
+                    R.string.aquarium_care_profile_percent_format,
+                    safePercent
+                )
 
                 channelBinding.progressChannel.bind(
                     progressPercent = safePercent,
@@ -284,9 +291,9 @@ class TankDetailDevicesAdapter(
 
             binding.tvConnectionStatus.text =
             if (item.isOnline) {
-                "Online"
+                binding.root.context.getString(R.string.aquarium_device_status_online)
             } else {
-                "Offline"
+                binding.root.context.getString(R.string.aquarium_device_status_offline)
             }
 
             binding.tvConnectionStatus.setTextColor(

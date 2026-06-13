@@ -28,7 +28,7 @@
                 android:id="@+id/imgTankPhoto"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="Aquarium photo"
+                android:contentDescription="@string/aquarium_content_desc_aquarium_photo"
                 android:scaleType="centerCrop"
                 tools:src="@drawable/nature_aquarium" />
 
@@ -44,7 +44,7 @@
                 android:layout_gravity="top|end"
                 android:layout_marginTop="12dp"
                 android:layout_marginEnd="12dp"
-                android:contentDescription="Selected"
+                android:contentDescription="@string/aquarium_content_desc_selected"
                 android:padding="7dp"
                 android:scaleType="centerInside"
                 android:visibility="gone"

@@ -194,16 +194,16 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
         setupHeader(
             title = if (isEditing) {
-                "Edit Livestock"
+                getString(R.string.aquarium_livestock_form_title_edit)
             } else {
-                "Add Livestock"
+                getString(R.string.aquarium_livestock_form_title_add)
             }
         )
 
         binding.btnSaveLife.text = if (isEditing) {
-            "Save Changes"
+            getString(R.string.aquarium_action_save_changes)
         } else {
-            "Save Livestock"
+            getString(R.string.aquarium_text_save_livestock)
         }
 
         binding.btnDeleteLife.isVisible = isEditing
@@ -355,7 +355,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         .trim()
 
         binding.tvLifePreviewTitle.text = lifeName.ifBlank {
-            "Livestock"
+            getString(R.string.aquarium_livestock_default_title)
         }
 
         binding.ivLifeIconPreview.setImageResource(

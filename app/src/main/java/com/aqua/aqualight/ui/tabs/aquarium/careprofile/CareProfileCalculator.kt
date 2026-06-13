@@ -16,10 +16,21 @@ object CareProfileCalculator {
     val items: List<Item>
   )
 
+  enum class ActionKey {
+    TANK_NAME,
+    TANK_TYPE,
+    TANK_SIZE,
+    SETUP_DATE,
+    TANK_STYLE,
+    PLANTS,
+    LIVESTOCK
+  }
+
   data class Item(
     val title: String,
     val subtitle: String,
     val completed: Boolean,
+    val actionKey: ActionKey? = null,
     val materialCategoryKey: String? = null,
     val materialCategoryTitle: String? = null
   )
@@ -34,7 +45,8 @@ object CareProfileCalculator {
       Item(
         title = context.getString(R.string.aquarium_care_profile_tank_name),
         subtitle = if (tank.name.isNotBlank()) tank.name else context.getString(R.string.aquarium_care_profile_missing_tank_name),
-        completed = tank.name.isNotBlank()
+        completed = tank.name.isNotBlank(),
+        actionKey = ActionKey.TANK_NAME
       )
     )
 
@@ -42,7 +54,8 @@ object CareProfileCalculator {
       Item(
         title = context.getString(R.string.aquarium_care_profile_tank_type),
         subtitle = if (tank.tankType.isNotBlank()) tank.tankType else context.getString(R.string.aquarium_care_profile_missing_tank_type),
-        completed = tank.tankType.isNotBlank()
+        completed = tank.tankType.isNotBlank(),
+        actionKey = ActionKey.TANK_TYPE
       )
     )
 
@@ -59,7 +72,8 @@ object CareProfileCalculator {
         } else {
           context.getString(R.string.aquarium_care_profile_missing_tank_dimensions)
         },
-        completed = hasValidTankSize(tank)
+        completed = hasValidTankSize(tank),
+        actionKey = ActionKey.TANK_SIZE
       )
     )
 
@@ -67,7 +81,8 @@ object CareProfileCalculator {
       Item(
         title = context.getString(R.string.aquarium_care_profile_setup_date),
         subtitle = if (tank.setupDateMillis != null) context.getString(R.string.aquarium_care_profile_selected) else context.getString(R.string.aquarium_care_profile_missing_setup_date),
-        completed = tank.setupDateMillis != null
+        completed = tank.setupDateMillis != null,
+        actionKey = ActionKey.SETUP_DATE
       )
     )
 
@@ -75,7 +90,8 @@ object CareProfileCalculator {
       Item(
         title = context.getString(R.string.aquarium_care_profile_tank_style),
         subtitle = if (tank.tankStyle.isNotBlank()) tank.tankStyle else context.getString(R.string.aquarium_care_profile_missing_tank_style),
-        completed = tank.tankStyle.isNotBlank()
+        completed = tank.tankStyle.isNotBlank(),
+        actionKey = ActionKey.TANK_STYLE
       )
     )
 
@@ -87,7 +103,8 @@ object CareProfileCalculator {
         } else {
           context.getString(R.string.aquarium_care_profile_missing_plants)
         },
-        completed = tank.plants.isNotEmpty()
+        completed = tank.plants.isNotEmpty(),
+        actionKey = ActionKey.PLANTS
       )
     )
 
@@ -99,7 +116,8 @@ object CareProfileCalculator {
         } else {
           context.getString(R.string.aquarium_care_profile_missing_livestock)
         },
-        completed = tank.livestock.isNotEmpty()
+        completed = tank.livestock.isNotEmpty(),
+        actionKey = ActionKey.LIVESTOCK
       )
     )
 

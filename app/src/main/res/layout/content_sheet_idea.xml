@@ -12,7 +12,7 @@
     android:layout_height="112dp"
     android:background="@drawable/bg_settings_sheet_input"
     android:gravity="top|start"
-    android:hint="Write your aquarium idea or concept..."
+    android:hint="@string/aquarium_hint_tank_idea"
     android:includeFontPadding="false"
     android:inputType="textMultiLine"
     android:maxLines="5"

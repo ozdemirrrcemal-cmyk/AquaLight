@@ -32,6 +32,7 @@ import com.aqua.aqualight.ui.common.timeline.TimelineDayResolver
 import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
+import com.aqua.aqualight.ui.tabs.maintenance.TankNextCareStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.utils.DialogManager
@@ -150,7 +151,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
             binding.tvNextCareTaskTitle.text = state.nextCareTask.title
             binding.tvNextCareValue.text = state.nextCareText
             binding.tvNextCareValue.setTextColor(
-                getNextCareStatusColor(state.nextCareText)
+                getNextCareStatusColor(state.nextCareStatus)
             )
         }
 
@@ -160,20 +161,23 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     }
 
     private fun getNextCareStatusColor(
-        statusText: String
+        status: TankNextCareStatus
     ): Int {
-        return when (statusText) {
-            "Overdue" -> {
+        return when (status) {
+            TankNextCareStatus.OVERDUE -> {
                 Color.parseColor("#D85C5C")
             }
 
-            "Today" -> {
+            TankNextCareStatus.TODAY -> {
                 Color.parseColor("#F2C94C")
             }
 
-            "Tomorrow" -> {
+            TankNextCareStatus.TOMORROW -> {
                 Color.parseColor("#5FD6B4")
-            } else -> {
+            }
+
+            TankNextCareStatus.NONE,
+            TankNextCareStatus.FUTURE -> {
                 Color.parseColor("#8FA4BE")
             }
         }
@@ -624,11 +628,17 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
 
         return when {
             isActivityToday(millis) -> {
-                "$dateText · Today"
+                getString(
+                    R.string.aquarium_activity_date_today_format,
+                    dateText
+                )
             }
 
             isActivityYesterday(millis) -> {
-                "$dateText · Yesterday"
+                getString(
+                    R.string.aquarium_activity_date_yesterday_format,
+                    dateText
+                )
             } else -> {
                 dateText
             }

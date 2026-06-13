@@ -71,7 +71,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
-                    android:hint="What is the concept behind this aquarium?"
+                    android:hint="@string/aquarium_hint_tank_description"
                     app:boxBackgroundMode="outline"
                     app:boxBackgroundColor="@color/aqua_input_background"
                     app:boxCornerRadiusTopStart="14dp"
