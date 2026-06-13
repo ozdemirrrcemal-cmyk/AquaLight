@@ -9,8 +9,9 @@ object DeviceSetupSsidParser {
      * Commercial setup SSID format:
      * AQL-<setupCode>-<shortId>
      *
-     * Eski AquaLight-WRGBPro2-1221 / AquaCool-CoolPro-7872 formatları artık
-     * kabul edilmez. Uygulama yayınlanmadığı için eski destek taşınmıyor.
+     * Legacy product-name based SSID formats are intentionally not accepted.
+     * The app is not released yet, so setup discovery only follows this final
+     * commercial contract.
      */
     fun parse(
         ssid: String

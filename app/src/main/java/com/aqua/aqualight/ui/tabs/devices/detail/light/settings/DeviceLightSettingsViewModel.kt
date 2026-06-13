@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightCoolingManager
 import com.aqua.aqualight.data.devices.light.runtime.Esp32LightThermalProtectionManager
 import com.aqua.aqualight.data.devices.light.runtime.LightDeviceAddressResolver
@@ -302,6 +304,14 @@ class DeviceLightSettingsViewModel(
                             firmwareVersion = "—",
                             deviceIp = "—",
                             serialNumber = "—",
+                            productId = "",
+                            productKey = "",
+                            skuCode = "",
+                            setupCode = "",
+                            deviceUid = "",
+                            macAddress = "",
+                            hardwareRevision = "",
+                            protocolVersion = "",
                             isDeviceOnline = false,
                             controlsEnabled = false,
                             connectionStatusText = "Device profile not found"
@@ -324,8 +334,15 @@ class DeviceLightSettingsViewModel(
                     ?: device.ip
 
                 val catalogName = definition?.displayName.orEmpty()
+                val catalogVariant = definition?.variants?.firstOrNull()
 
-                val resolvedDeviceName = device.aquaName
+                val resolvedDeviceName = device.customName
+                    .ifBlank {
+                        device.displayName
+                    }
+                    .ifBlank {
+                        catalogName
+                    }
                     .ifBlank {
                         device.name
                     }
@@ -333,13 +350,62 @@ class DeviceLightSettingsViewModel(
                         "—"
                     }
 
-                val resolvedDeviceType = catalogName
-                    .ifBlank {
-                        device.productModel
+                val resolvedDeviceType = listOf(
+                    device.productFamily.ifBlank {
+                        definition?.productFamily.orEmpty()
+                    },
+                    device.productLine.ifBlank {
+                        definition?.productLine.orEmpty()
+                    },
+                    formatEnumName(device.category.name)
+                ).filter { value ->
+                    value.isNotBlank() && value != "Unknown"
+                }.joinToString(
+                    separator = " • "
+                ).ifBlank {
+                    catalogName.ifBlank {
+                        device.productModel.ifBlank {
+                            formatEnumName(device.category.name)
+                        }
                     }
-                    .ifBlank {
-                        formatEnumName(device.category.name)
+                }
+
+                val resolvedSkuCode = device.skuCode.ifBlank {
+                    catalogVariant?.skuCode.orEmpty()
+                }
+
+                val resolvedHardwareRevision = device.hardwareRevision.ifBlank {
+                    catalogVariant?.hardwareRevision.orEmpty()
+                }
+
+                val resolvedSerial = DeviceSerialFormatter.buildCommercialIdentifier(
+                    setupCode = device.setupCode.ifBlank {
+                        definition?.setupCode.orEmpty()
+                    },
+                    serialNumber = device.serialNumber.ifBlank {
+                        null
+                    },
+                    shortId = device.shortId.ifBlank {
+                        null
+                    },
+                    deviceUid = device.deviceUid.ifBlank {
+                        null
+                    },
+                    macAddress = device.macAddress.ifBlank {
+                        null
+                    },
+                    firmwareSerial = device.firmwareSerial.ifBlank {
+                        null
+                    },
+                    fallbackNumericId = device.id
+                )
+
+                val resolvedProtocolVersion = device.protocolVersion
+                    ?.takeIf { version -> version > 0 }
+                    ?.let { version ->
+                        "Aqua v$version"
                     }
+                    .orEmpty()
 
                 val hasLiveContact = liveState.hasAuthoritativeContact
                 val isOnline = status?.isOnline == true || hasLiveContact
@@ -375,10 +441,35 @@ class DeviceLightSettingsViewModel(
                             "—"
                         },
 
-                        serialNumber = device.serial
-                            .ifBlank {
+                        serialNumber = resolvedSerial.ifBlank {
+                            device.serial.ifBlank {
                                 "—"
-                            },
+                            }
+                        },
+
+                        productId = device.productId.ifBlank {
+                            definition?.productId.orEmpty()
+                        },
+
+                        productKey = if (device.productKey == AquaProductKey.UNKNOWN) {
+                            ""
+                        } else {
+                            device.productKey.storageKey
+                        },
+
+                        skuCode = resolvedSkuCode,
+
+                        setupCode = device.setupCode.ifBlank {
+                            definition?.setupCode.orEmpty()
+                        },
+
+                        deviceUid = device.deviceUid,
+
+                        macAddress = device.macAddress,
+
+                        hardwareRevision = resolvedHardwareRevision,
+
+                        protocolVersion = resolvedProtocolVersion,
 
                         isDeviceOnline = isOnline,
                         controlsEnabled = isOnline,

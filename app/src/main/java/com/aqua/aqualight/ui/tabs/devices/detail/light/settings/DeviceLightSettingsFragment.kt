@@ -2,7 +2,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.settings
 
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -285,6 +287,54 @@ class DeviceLightSettingsFragment :
             "—"
         }
 
+        renderIdentityRow(
+            row = binding.rowProductId,
+            textView = binding.tvProductId,
+            value = state.productId
+        )
+
+        renderIdentityRow(
+            row = binding.rowProductKey,
+            textView = binding.tvProductKey,
+            value = state.productKey
+        )
+
+        renderIdentityRow(
+            row = binding.rowSkuCode,
+            textView = binding.tvSkuCode,
+            value = state.skuCode
+        )
+
+        renderIdentityRow(
+            row = binding.rowSetupCode,
+            textView = binding.tvSetupCode,
+            value = state.setupCode
+        )
+
+        renderIdentityRow(
+            row = binding.rowDeviceUid,
+            textView = binding.tvDeviceUid,
+            value = state.deviceUid
+        )
+
+        renderIdentityRow(
+            row = binding.rowMacAddress,
+            textView = binding.tvMacAddress,
+            value = state.macAddress
+        )
+
+        renderIdentityRow(
+            row = binding.rowHardwareRevision,
+            textView = binding.tvHardwareRevision,
+            value = state.hardwareRevision
+        )
+
+        renderIdentityRow(
+            row = binding.rowProtocolVersion,
+            textView = binding.tvProtocolVersion,
+            value = state.protocolVersion
+        )
+
         binding.tvDeviceTime.text = state.deviceTime.ifBlank {
             "--:--"
         }
@@ -345,6 +395,18 @@ class DeviceLightSettingsFragment :
         renderControlAvailability(
             state
         )
+    }
+
+    private fun renderIdentityRow(
+        row: View,
+        textView: TextView,
+        value: String
+    ) {
+        val displayValue = value.trim()
+        row.isVisible = displayValue.isNotBlank()
+        textView.text = displayValue.ifBlank {
+            "—"
+        }
     }
 
     private fun renderControlAvailability(

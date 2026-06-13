@@ -36,7 +36,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private val deviceTitle: String
         get() = args.deviceTitle.ifBlank {
-            "WRGB Pro"
+            "WRGB Pro Elite"
         }
 
     override fun onViewCreated(

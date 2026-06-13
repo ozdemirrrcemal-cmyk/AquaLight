@@ -225,7 +225,19 @@
                             android:textColor="@android:color/white"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            tools:text="AquaCool-CoolPro-7872" />
+                            tools:text="AQL-WPE-12ABCD" />
+
+                        <TextView
+                            android:id="@+id/tvSetupNetworkMeta"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:ellipsize="end"
+                            android:includeFontPadding="false"
+                            android:maxLines="1"
+                            android:textColor="@color/settings_text_secondary"
+                            android:textSize="12sp"
+                            tools:text="Product code: WPE • Setup ID: 12ABCD" />
 
                     </LinearLayout>
 

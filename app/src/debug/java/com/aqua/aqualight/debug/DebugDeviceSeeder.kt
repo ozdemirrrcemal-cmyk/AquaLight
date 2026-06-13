@@ -3,7 +3,8 @@ package com.aqua.aqualight.debug
 import android.content.Context
 import android.util.Log
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import kotlinx.coroutines.flow.first
 
 object DebugDeviceSeeder {
@@ -67,7 +68,9 @@ object DebugDeviceSeeder {
             serial = DEBUG_DOSING_SERIAL,
             firmwareBuild = "debug-local",
 
-            deviceType = AquaDeviceType.AQUA_DOSE_001,
+            productKey = AquaProductKey.DOSING_DOSE_PRO_4,
+            category = AquaDeviceCategory.DOSING,
+            setupCode = AquaProductKey.DOSING_DOSE_PRO_4.setupCode,
 
             udpVersion = 20240813,
 
@@ -75,12 +78,14 @@ object DebugDeviceSeeder {
             tabTimer = false,
             tabTemperature = false,
 
-            productId = "aquadose.001.local",
+            productId = AquaProductKey.DOSING_DOSE_PRO_4.productId,
             productFamily = "AquaDose",
+            productLine = "Dosing",
             productModel = "DosePro 4",
+            displayName = "DosePro 4 Local",
             hardwareRevision = "debug",
             firmwareVersion = "debug-local",
-            apiVersion = 1,
+            protocolVersion = 1,
 
             channelCount = 4,
             sensorCount = 0,
@@ -137,7 +142,9 @@ object DebugDeviceSeeder {
             serial = DEBUG_LIGHT_SERIAL,
             firmwareBuild = "debug-local",
 
-            deviceType = AquaDeviceType.AQUA_LIGHT_001,
+            productKey = AquaProductKey.LIGHT_WRGB_PRO_ELITE,
+            category = AquaDeviceCategory.LIGHT,
+            setupCode = AquaProductKey.LIGHT_WRGB_PRO_ELITE.setupCode,
 
             udpVersion = 20240813,
 
@@ -145,12 +152,14 @@ object DebugDeviceSeeder {
             tabTimer = true,
             tabTemperature = true,
 
-            productId = "aqualight.001.local",
+            productId = AquaProductKey.LIGHT_WRGB_PRO_ELITE.productId,
             productFamily = "AquaLight",
-            productModel = "WRGB Light",
+            productLine = "WRGB",
+            productModel = "WRGB Pro Elite",
+            displayName = "WRGB Pro Elite Local",
             hardwareRevision = "debug",
             firmwareVersion = "debug-local",
-            apiVersion = 1,
+            protocolVersion = 1,
 
             channelCount = 4,
             sensorCount = 1,
@@ -160,7 +169,6 @@ object DebugDeviceSeeder {
                 "manual_light_control",
                 "rgbw_channels",
                 "light_programs",
-                "sunrise_sunset",
                 "temporary_modes",
                 "presets",
                 "acclimation",

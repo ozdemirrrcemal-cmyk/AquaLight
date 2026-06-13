@@ -148,7 +148,7 @@
                                 android:gravity="end"
                                 android:maxLines="1"
                                 android:ellipsize="end"
-                                android:text="WRGB Pro"
+                                android:text="AquaLight • WRGB • Light"
                                 tools:text="WRGB Pro Elite" />
 
                         </LinearLayout>
@@ -233,7 +233,239 @@
                                 android:maxLines="1"
                                 android:ellipsize="end"
                                 android:text="—"
-                                tools:text="AW-1812703003" />
+                                tools:text="AQL-WPE-12ABCD" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/rowProductId"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="42dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="0.9"
+                                android:text="Product ID" />
+
+                            <TextView
+                                android:id="@+id/tvProductId"
+                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.15"
+                                android:gravity="end"
+                                android:maxLines="2"
+                                android:ellipsize="end"
+                                android:text="—"
+                                tools:text="com.aqua.light.wrgb_pro_elite" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/rowProductKey"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="42dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="0.9"
+                                android:text="Product Key" />
+
+                            <TextView
+                                android:id="@+id/tvProductKey"
+                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.15"
+                                android:gravity="end"
+                                android:maxLines="1"
+                                android:ellipsize="end"
+                                android:text="—"
+                                tools:text="LIGHT_WRGB_PRO_ELITE" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/rowSkuCode"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="42dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="0.9"
+                                android:text="SKU" />
+
+                            <TextView
+                                android:id="@+id/tvSkuCode"
+                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.15"
+                                android:gravity="end"
+                                android:maxLines="1"
+                                android:ellipsize="end"
+                                android:text="—"
+                                tools:text="AQL-WPE-120-GLB-BLK" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/rowSetupCode"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="42dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="0.9"
+                                android:text="Setup Code" />
+
+                            <TextView
+                                android:id="@+id/tvSetupCode"
+                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.15"
+                                android:gravity="end"
+                                android:maxLines="1"
+                                android:ellipsize="end"
+                                android:text="—"
+                                tools:text="WPE" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/rowDeviceUid"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="42dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="0.9"
+                                android:text="Device UID" />
+
+                            <TextView
+                                android:id="@+id/tvDeviceUid"
+                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.15"
+                                android:gravity="end"
+                                android:maxLines="1"
+                                android:ellipsize="end"
+                                android:text="—"
+                                tools:text="AQL-ESP32-FCB46712ABCD" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/rowMacAddress"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="42dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="0.9"
+                                android:text="MAC" />
+
+                            <TextView
+                                android:id="@+id/tvMacAddress"
+                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.15"
+                                android:gravity="end"
+                                android:maxLines="1"
+                                android:ellipsize="end"
+                                android:text="—"
+                                tools:text="FC:B4:67:12:AB:CD" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/rowHardwareRevision"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="42dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="0.9"
+                                android:text="Hardware" />
+
+                            <TextView
+                                android:id="@+id/tvHardwareRevision"
+                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.15"
+                                android:gravity="end"
+                                android:maxLines="1"
+                                android:ellipsize="end"
+                                android:text="—"
+                                tools:text="1.0" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/rowProtocolVersion"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="42dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="0.9"
+                                android:text="Protocol" />
+
+                            <TextView
+                                android:id="@+id/tvProtocolVersion"
+                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.15"
+                                android:gravity="end"
+                                android:maxLines="1"
+                                android:ellipsize="end"
+                                android:text="—"
+                                tools:text="Aqua v1" />
 
                         </LinearLayout>
 

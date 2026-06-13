@@ -13,7 +13,7 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.URLEncoder
 
-class LegacyDeviceSetupClient {
+class AquaDeviceSetupClient {
 
     init {
         LocalNetworkAddressPolicy.requireLocalCleartextHost(SETUP_DEVICE_IP)

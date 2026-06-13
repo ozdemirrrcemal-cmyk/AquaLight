@@ -17,12 +17,13 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaProductKey
+import com.aqua.aqualight.data.devices.catalog.AquaSetupSsid
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import com.aqua.aqualight.data.devices.setup.DeviceSetupWifiConnector
 import com.aqua.aqualight.data.devices.setup.HomeWifiConnectionWaiter
-import com.aqua.aqualight.data.devices.setup.LegacyDeviceSetupClient
+import com.aqua.aqualight.data.devices.setup.AquaDeviceSetupClient
 import com.aqua.aqualight.databinding.FragmentDeviceSetupBinding
 import com.aqua.aqualight.ui.common.bottomsheet.HomeWifiNetworksBottomSheetFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -41,7 +42,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private val binding get() = _binding!!
 
     private lateinit var wifiConnector: DeviceSetupWifiConnector
-    private lateinit var setupClient: LegacyDeviceSetupClient
+    private lateinit var setupClient: AquaDeviceSetupClient
     private lateinit var homeWifiWaiter: HomeWifiConnectionWaiter
     private lateinit var deviceStoreWriter: DeviceStoreWriter
 
@@ -55,6 +56,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private var expectedCategory: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN
     private var expectedSetupCode: String = ""
     private var setupShortId: String = ""
+    private var setupContractValid: Boolean = false
     private var selectedHomeSsid: String = ""
 
     private var isSettingUp = false
@@ -87,7 +89,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         )
 
         wifiConnector = DeviceSetupWifiConnector(requireContext())
-        setupClient = LegacyDeviceSetupClient()
+        setupClient = AquaDeviceSetupClient()
         homeWifiWaiter = HomeWifiConnectionWaiter(requireContext())
         deviceStoreWriter = DeviceStoreWriter(devicesStore)
 
@@ -117,7 +119,13 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         familyName = args.familyName
 
-        setupSsid = args.setupSsid
+        val rawSetupSsid = args.setupSsid.trim()
+
+        val parsedSetupSsid = AquaSetupSsid.parse(
+            ssid = rawSetupSsid
+        )
+
+        setupSsid = parsedSetupSsid?.rawSsid ?: rawSetupSsid
 
         expectedProductId = args.productId
 
@@ -129,14 +137,13 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             value = args.category
         )
 
-        expectedSetupCode = args.setupCode
+        expectedSetupCode = args.setupCode.ifBlank {
+            parsedSetupSsid?.setupCode.orEmpty()
+        }.trim()
 
         setupShortId = args.setupShortId.ifBlank {
-            setupSsid.substringAfterLast(
-                delimiter = "-",
-                missingDelimiterValue = ""
-            ).trim()
-        }
+            parsedSetupSsid?.shortId.orEmpty()
+        }.trim()
 
         val definition = AquaDeviceCatalog.findDefinition(
             productId = expectedProductId,
@@ -151,18 +158,42 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             expectedProductKey = definition.productKey
             expectedCategory = definition.category
             expectedSetupCode = definition.setupCode
-            displayName = displayName.ifBlank {
-                definition.displayName
+
+            if (displayName.isBlank() || displayName == DEFAULT_DEVICE_NAME) {
+                displayName = definition.displayName
             }
-            familyName = familyName.ifBlank {
-                definition.productFamily
+
+            if (familyName.isBlank() || familyName == DEFAULT_FAMILY_NAME) {
+                familyName = definition.productFamily
             }
         }
+
+        setupContractValid = parsedSetupSsid != null &&
+            definition != null &&
+            expectedSetupCode.equals(
+                other = parsedSetupSsid.setupCode,
+                ignoreCase = true
+            ) &&
+            setupShortId.equals(
+                other = parsedSetupSsid.shortId,
+                ignoreCase = true
+            )
     }
 
     private fun renderInitialState() {
+        binding.tvTitle.text = displayName
+        binding.tvSubtitle.text = familyName
         binding.tvSetupSsid.text = setupSsid
-        binding.tvStatus.text = getString(R.string.device_setup_choose_home_wifi)
+        binding.tvSetupNetworkMeta.text = getString(
+            R.string.device_setup_network_meta,
+            expectedSetupCode.ifBlank { "—" },
+            setupShortId.ifBlank { "—" }
+        )
+        binding.tvStatus.text = if (setupContractValid) {
+            getString(R.string.device_setup_choose_home_wifi)
+        } else {
+            getString(R.string.device_setup_invalid_setup_network)
+        }
         binding.etHomeWifiSsid.setText("")
 
         binding.ivDeviceImage.setImageResource(
@@ -174,6 +205,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         renderSetupProgress(
             activeStep = SetupUiStep.WIFI
         )
+
+        if (!setupContractValid) {
+            setSetupInputControlsEnabled(false)
+        }
     }
 
     private fun setupClickListeners() {
@@ -224,10 +259,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             return
         }
 
-        if (setupSsid.isBlank()) {
-            showError(
-                getString(R.string.device_setup_missing_setup_network)
-            )
+        if (!ensureSetupContractReady()) {
             return
         }
 
@@ -331,6 +363,10 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             return
         }
 
+        if (!ensureSetupContractReady()) {
+            return
+        }
+
         val input = readAndValidateHomeWifiInput()
             ?: return
 
@@ -386,9 +422,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             ?.toString()
             .orEmpty()
 
-        if (setupSsid.isBlank()) {
+        if (!setupContractValid) {
             showError(
-                getString(R.string.device_setup_missing_setup_network)
+                getString(R.string.device_setup_invalid_setup_network)
             )
             return null
         }
@@ -668,8 +704,26 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         )
     }
 
+    private fun ensureSetupContractReady(): Boolean {
+        if (setupSsid.isBlank()) {
+            showError(
+                getString(R.string.device_setup_missing_setup_network)
+            )
+            return false
+        }
+
+        if (!setupContractValid) {
+            showError(
+                getString(R.string.device_setup_invalid_setup_network)
+            )
+            return false
+        }
+
+        return true
+    }
+
     private fun showWifiNetworksBottomSheet(
-        networks: List<LegacyDeviceSetupClient.HomeWifiNetwork>
+        networks: List<AquaDeviceSetupClient.HomeWifiNetwork>
     ) {
         HomeWifiNetworksBottomSheetFragment.show(
             fragmentManager = parentFragmentManager,
@@ -768,7 +822,8 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         findNavController().navigate(
             DeviceSetupFragmentDirections.actionDeviceSetupFragmentToDeviceRouterFragment(
                 deviceId = deviceId,
-                deviceIp = ""
+                deviceIp = "",
+                deviceTitle = displayName
             )
         )
     }
@@ -785,9 +840,9 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private fun setBusyControlsEnabled(
         enabled: Boolean
     ) {
-        binding.etHomeWifiSsid.isEnabled = enabled
-        binding.etHomeWifiPassword.isEnabled = enabled
-        binding.btnStartSetup.isEnabled = enabled
+        setSetupInputControlsEnabled(
+            enabled = enabled
+        )
 
         binding.appHeader.btnBack.isEnabled = enabled
         binding.appHeader.btnBack.alpha = if (enabled) {
@@ -795,6 +850,14 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         } else {
             0.45f
         }
+    }
+
+    private fun setSetupInputControlsEnabled(
+        enabled: Boolean
+    ) {
+        binding.etHomeWifiSsid.isEnabled = enabled
+        binding.etHomeWifiPassword.isEnabled = enabled
+        binding.btnStartSetup.isEnabled = enabled
 
         binding.btnStartSetup.alpha = if (enabled) {
             1f
@@ -830,5 +893,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
     private companion object {
         const val SETUP_AP_PASSWORD = "adminadmin"
+        const val DEFAULT_DEVICE_NAME = "Device"
+        const val DEFAULT_FAMILY_NAME = "Aqua device"
     }
 }

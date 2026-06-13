@@ -583,6 +583,8 @@
     <string name="device_setup_header_title">Set up device</string>
     <string name="device_setup_ready_chip">Ready for setup</string>
     <string name="device_setup_network_label">Setup network</string>
+    <string name="device_setup_network_meta">Product code: %1$s • Setup ID: %2$s</string>
+    <string name="device_setup_invalid_setup_network">This setup network does not match the Aqua commercial setup standard.</string>
     <string name="device_setup_step_1">1</string>
     <string name="device_setup_step_2">2</string>
     <string name="device_setup_step_3">3</string>

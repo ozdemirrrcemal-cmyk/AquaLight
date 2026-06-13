@@ -338,7 +338,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 )
 
                 openDeviceMenu(
-                    deviceId = deviceId
+                    deviceId = deviceId,
+                    deviceTitle = candidate.displayName
                 )
             } catch (exception: Exception) {
                 exception.printStackTrace()
@@ -371,12 +372,14 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
     }
 
     private fun openDeviceMenu(
-        deviceId: Long
+        deviceId: Long,
+        deviceTitle: String = ""
     ) {
         findNavController().navigate(
             DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceRouterFragment(
                 deviceId = deviceId,
-                deviceIp = ""
+                deviceIp = "",
+                deviceTitle = deviceTitle
             )
         )
     }
