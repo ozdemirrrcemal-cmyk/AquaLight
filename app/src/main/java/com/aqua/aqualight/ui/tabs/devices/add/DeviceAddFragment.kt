@@ -23,8 +23,6 @@ import com.aqua.aqualight.databinding.FragmentDeviceAddBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.tabs.devices.navigation.DeviceRouterBackStackMode
-import com.aqua.aqualight.ui.tabs.devices.navigation.navigateToDeviceRouter
 import kotlinx.coroutines.launch
 
 class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
@@ -377,11 +375,12 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         deviceId: Long,
         deviceTitle: String = ""
     ) {
-        findNavController().navigateToDeviceRouter(
-            deviceId = deviceId,
-            deviceIp = "",
-            deviceTitle = deviceTitle,
-            backStackMode = DeviceRouterBackStackMode.RETURN_TO_DEVICES
+        findNavController().navigate(
+            DeviceAddFragmentDirections.actionDeviceAddFragmentToDeviceRouterFragment(
+                deviceId = deviceId,
+                deviceIp = "",
+                deviceTitle = deviceTitle
+            )
         )
     }
 

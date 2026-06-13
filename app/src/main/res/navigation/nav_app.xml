@@ -3,7 +3,6 @@
   <include app:graph="@navigation/nav_aquarium"/>
   <include app:graph="@navigation/nav_maintenance"/>
   <include app:graph="@navigation/nav_devices"/>
-  <include app:graph="@navigation/nav_device_flow"/>
   <include app:graph="@navigation/nav_settings"/>
   <action android:id="@+id/action_global_taskDetailFragment" app:destination="@id/taskDetailFragment">
     <argument android:name="taskId" app:argType="long"/>

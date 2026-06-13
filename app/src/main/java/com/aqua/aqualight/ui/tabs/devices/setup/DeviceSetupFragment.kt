@@ -29,8 +29,6 @@ import com.aqua.aqualight.ui.common.bottomsheet.HomeWifiNetworksBottomSheetFragm
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
-import com.aqua.aqualight.ui.tabs.devices.navigation.DeviceRouterBackStackMode
-import com.aqua.aqualight.ui.tabs.devices.navigation.navigateToDeviceRouter
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -821,11 +819,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private fun openDeviceMenu(
         deviceId: Long
     ) {
-        findNavController().navigateToDeviceRouter(
-            deviceId = deviceId,
-            deviceIp = "",
-            deviceTitle = displayName,
-            backStackMode = DeviceRouterBackStackMode.RETURN_TO_DEVICES
+        findNavController().navigate(
+            DeviceSetupFragmentDirections.actionDeviceSetupFragmentToDeviceRouterFragment(
+                deviceId = deviceId,
+                deviceIp = "",
+                deviceTitle = displayName
+            )
         )
     }
 
