@@ -16,7 +16,8 @@ class DeviceStoreWriter(
             macAddress = device.macAddress,
             firmwareSerial = device.firmwareSerial,
             serialNumber = device.serialNumber,
-            shortId = device.shortId
+            shortId = device.shortId,
+            productId = device.productId
         )
 
         if (existingDeviceId != null) {
@@ -51,6 +52,14 @@ class DeviceStoreWriter(
             definition.productModel
         }
 
+        val defaultVariant = definition.variants.firstOrNull()
+        val savedSkuId = device.skuId.orEmpty().ifBlank {
+            defaultVariant?.skuId.orEmpty()
+        }
+        val savedSkuCode = device.skuCode.orEmpty().ifBlank {
+            defaultVariant?.skuCode.orEmpty()
+        }
+
         val identifier = DeviceSerialFormatter.buildCommercialIdentifier(
             setupCode = definition.setupCode,
             serialNumber = device.serialNumber,
@@ -81,6 +90,8 @@ class DeviceStoreWriter(
             productLine = savedProductLine,
             productModel = savedProductModel,
             displayName = savedDisplayName,
+            skuId = savedSkuId,
+            skuCode = savedSkuCode,
             serialNumber = device.serialNumber.orEmpty(),
             shortId = device.shortId.orEmpty(),
 
@@ -132,6 +143,8 @@ class DeviceStoreWriter(
             productLine = productLine,
             productModel = productModel,
             displayName = displayName,
+            skuId = skuId,
+            skuCode = skuCode,
 
             udpVersion = udpVersion,
             tabLight = tabLight,

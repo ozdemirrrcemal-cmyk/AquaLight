@@ -22,6 +22,8 @@ data class DiscoveredAquaDevice(
     val productLine: String,
     val productModel: String,
     val displayName: String,
+    val skuId: String? = null,
+    val skuCode: String? = null,
 
     val deviceUid: String? = null,
     val macAddress: String? = null,

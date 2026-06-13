@@ -48,7 +48,9 @@ class TankAssignedDeviceUiMapper {
             commonCardState.title
 
         val subtitle =
-            commonCardState.familyName
+            commonCardState.productMetaText.ifBlank {
+                commonCardState.familyName
+            }
 
         val online =
             commonCardState.isOnline

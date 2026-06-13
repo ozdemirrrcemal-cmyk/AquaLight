@@ -179,6 +179,13 @@ object UdpDeviceDiscovery {
             productId = productId
         ) ?: return null
 
+        val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
+            ?: deviceJson.optNullableInt("ApiVersion")
+
+        if (!definition.isProtocolVersionSupported(protocolVersion)) {
+            return null
+        }
+
         val idRaw = deviceJson.optLong(
             "ID",
             0L
@@ -199,9 +206,8 @@ object UdpDeviceDiscovery {
             return null
         }
 
-        val deviceUid = deviceJson.firstNonBlankString(
+        val rawDeviceUid = deviceJson.firstNonBlankString(
             "DeviceUid",
-            "DeviceUID",
             "DeviceUID",
             "UID",
             "deviceUid",
@@ -214,6 +220,11 @@ object UdpDeviceDiscovery {
             "macAddress",
             "mac_address"
         )
+
+        val deviceUid = rawDeviceUid
+            ?: buildDeviceUidFromMac(
+                macAddress = macAddress
+            )
 
         val serialNumber = deviceJson.firstNonBlankString(
             "SerialNumber",
@@ -242,6 +253,20 @@ object UdpDeviceDiscovery {
                 ?: espChipId.takeIf { value -> value > 0L }
         )
 
+        if (
+            !hasStableDiscoveryIdentity(
+                deviceUid = deviceUid,
+                macAddress = macAddress,
+                serialNumber = serialNumber,
+                firmwareSerial = firmwareSerial,
+                shortId = shortId,
+                numericId = idRaw.takeIf { value -> value > 0L }
+                    ?: espChipId.takeIf { value -> value > 0L }
+            )
+        ) {
+            return null
+        }
+
         val finalId = when {
             idRaw > 0L -> {
                 idRaw
@@ -267,8 +292,12 @@ object UdpDeviceDiscovery {
                 createStableIdFromString(macAddress)
             }
 
+            !shortId.isNullOrBlank() -> {
+                createStableIdFromString(shortId)
+            }
+
             else -> {
-                createStableIdFromIp(ip)
+                return null
             }
         }
 
@@ -285,9 +314,6 @@ object UdpDeviceDiscovery {
         val udpVersion = root
             .optNullableInt("VerUdp")
             ?: deviceJson.optNullableInt("VerUdp")
-
-        val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
-            ?: deviceJson.optNullableInt("ApiVersion")
 
         val productFamily = deviceJson.firstNonBlankString(
             "ProductFamily",
@@ -308,6 +334,22 @@ object UdpDeviceDiscovery {
             "UserName",
             "CustomName"
         ) ?: definition.displayName
+
+        val defaultVariant = definition.variants.firstOrNull()
+
+        val skuId = deviceJson.firstNonBlankString(
+            "SkuId",
+            "SKUId",
+            "skuId",
+            "sku_id"
+        ) ?: defaultVariant?.skuId
+
+        val skuCode = deviceJson.firstNonBlankString(
+            "SkuCode",
+            "SKU",
+            "skuCode",
+            "sku_code"
+        ) ?: defaultVariant?.skuCode
 
         val hardwareRevision = deviceJson.firstNonBlankString(
             "HardwareRevision"
@@ -353,6 +395,8 @@ object UdpDeviceDiscovery {
             productLine = productLine,
             productModel = productModel,
             displayName = displayName,
+            skuId = skuId,
+            skuCode = skuCode,
 
             deviceUid = deviceUid,
             macAddress = macAddress,
@@ -533,12 +577,45 @@ object UdpDeviceDiscovery {
         )
     }
 
-    private fun createStableIdFromIp(
-        ip: String
-    ): Long {
-        return createStableIdFromString(
-            value = ip
+    private fun hasStableDiscoveryIdentity(
+        deviceUid: String?,
+        macAddress: String?,
+        serialNumber: String?,
+        firmwareSerial: String?,
+        shortId: String?,
+        numericId: Long?
+    ): Boolean {
+        return !deviceUid.isNullOrBlank() ||
+            !macAddress.isNullOrBlank() ||
+            !serialNumber.isNullOrBlank() ||
+            !firmwareSerial.isNullOrBlank() ||
+            !shortId.isNullOrBlank() ||
+            numericId != null
+    }
+
+    private fun buildDeviceUidFromMac(
+        macAddress: String?
+    ): String? {
+        val normalizedMac = normalizeHardwareToken(
+            value = macAddress
         )
+
+        if (normalizedMac.length < 12) {
+            return null
+        }
+
+        return "AQL-ESP32-${normalizedMac.takeLast(12)}"
+    }
+
+    private fun normalizeHardwareToken(
+        value: String?
+    ): String {
+        return value
+            ?.filter { char ->
+                char.isLetterOrDigit()
+            }
+            ?.uppercase(Locale.US)
+            .orEmpty()
     }
 
     private fun createStableIdFromString(

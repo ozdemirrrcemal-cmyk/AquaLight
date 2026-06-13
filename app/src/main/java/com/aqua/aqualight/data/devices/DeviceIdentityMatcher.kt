@@ -17,30 +17,32 @@ object DeviceIdentityMatcher {
         savedDevice: DevicesDataStoreManager.DeviceInfo,
         discoveredDevice: DiscoveredAquaDevice
     ): Boolean {
-        if (stableNumericIdMatches(savedDevice.id, discoveredDevice.id)) {
-            return true
+        if (productMismatch(savedDevice.productId, discoveredDevice.productId)) {
+            return false
         }
 
         return identifiersMatch(savedDevice.deviceUid, discoveredDevice.deviceUid) ||
             identifiersMatch(savedDevice.macAddress, discoveredDevice.macAddress) ||
             identifiersMatch(savedDevice.serialNumber, discoveredDevice.serialNumber) ||
             identifiersMatch(savedDevice.firmwareSerial, discoveredDevice.firmwareSerial) ||
-            identifiersMatch(savedDevice.shortId, discoveredDevice.shortId)
+            identifiersMatch(savedDevice.shortId, discoveredDevice.shortId) ||
+            stableNumericIdMatches(savedDevice.id, discoveredDevice.id)
     }
 
     fun samePhysicalDevice(
         savedDevice: DevicesDataStoreManager.DeviceInfo,
         update: DevicesDataStoreManager.DeviceLastSeenUpdate
     ): Boolean {
-        if (stableNumericIdMatches(savedDevice.id, update.id)) {
-            return true
+        if (productMismatch(savedDevice.productId, update.productId)) {
+            return false
         }
 
         return identifiersMatch(savedDevice.deviceUid, update.deviceUid) ||
             identifiersMatch(savedDevice.macAddress, update.macAddress) ||
             identifiersMatch(savedDevice.serialNumber, update.serialNumber) ||
             identifiersMatch(savedDevice.firmwareSerial, update.firmwareSerial) ||
-            identifiersMatch(savedDevice.shortId, update.shortId)
+            identifiersMatch(savedDevice.shortId, update.shortId) ||
+            stableNumericIdMatches(savedDevice.id, update.id)
     }
 
     fun matchesStoredIdentity(
@@ -50,17 +52,19 @@ object DeviceIdentityMatcher {
         macAddress: String?,
         firmwareSerial: String?,
         serialNumber: String? = null,
-        shortId: String? = null
+        shortId: String? = null,
+        productId: String? = null
     ): Boolean {
-        if (stableNumericIdMatches(savedDevice.id, id)) {
-            return true
+        if (productMismatch(savedDevice.productId, productId)) {
+            return false
         }
 
         return identifiersMatch(savedDevice.deviceUid, deviceUid) ||
             identifiersMatch(savedDevice.macAddress, macAddress) ||
             identifiersMatch(savedDevice.serialNumber, serialNumber) ||
             identifiersMatch(savedDevice.firmwareSerial, firmwareSerial) ||
-            identifiersMatch(savedDevice.shortId, shortId)
+            identifiersMatch(savedDevice.shortId, shortId) ||
+            stableNumericIdMatches(savedDevice.id, id)
     }
 
     fun matchesSetupShortId(
@@ -75,8 +79,7 @@ object DeviceIdentityMatcher {
                 savedDevice.deviceUid,
                 savedDevice.macAddress,
                 savedDevice.firmwareSerial,
-                savedDevice.serial,
-                savedDevice.id.toString()
+                savedDevice.serial
             )
         )
     }
@@ -92,8 +95,7 @@ object DeviceIdentityMatcher {
                 discoveredDevice.serialNumber.orEmpty(),
                 discoveredDevice.deviceUid.orEmpty(),
                 discoveredDevice.macAddress.orEmpty(),
-                discoveredDevice.firmwareSerial.orEmpty(),
-                discoveredDevice.id.toString()
+                discoveredDevice.firmwareSerial.orEmpty()
             )
         )
     }
@@ -103,6 +105,18 @@ object DeviceIdentityMatcher {
         second: Long
     ): Boolean {
         return first > 0L && second > 0L && first == second
+    }
+
+    private fun productMismatch(
+        firstProductId: String?,
+        secondProductId: String?
+    ): Boolean {
+        val first = normalizeProductId(firstProductId.orEmpty())
+        val second = normalizeProductId(secondProductId.orEmpty())
+
+        return first.isNotBlank() &&
+            second.isNotBlank() &&
+            first != second
     }
 
     private fun matchesSetupShortId(
@@ -146,5 +160,13 @@ object DeviceIdentityMatcher {
             .trim()
             .lowercase(Locale.US)
             .replace(Regex("[^a-z0-9]"), "")
+    }
+
+    private fun normalizeProductId(
+        value: String
+    ): String {
+        return value
+            .trim()
+            .lowercase(Locale.US)
     }
 }

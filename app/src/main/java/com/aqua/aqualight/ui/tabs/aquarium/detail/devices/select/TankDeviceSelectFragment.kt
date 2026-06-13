@@ -12,7 +12,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.databinding.FragmentTankDeviceSelectBinding
@@ -137,12 +139,63 @@ class TankDeviceSelectFragment :
         return TankDeviceSelectItem(
             deviceId = id,
             title = buildDeviceTitle(),
-            serialNumber = serial.trim(),
+            productMetaText = buildProductMetaText(),
+            identityText = buildIdentityText(),
             iconRes = DeviceIconMapper.iconFor(
                 category
             ),
             isOnline = online
         )
+    }
+
+
+    private fun DevicesDataStoreManager.DeviceInfo.buildProductMetaText(): String {
+        val definition = AquaDeviceCatalog.findDefinition(
+            productId = productId,
+            productKey = productKey,
+            category = category
+        )
+
+        val family = productFamily.ifBlank {
+            definition?.productFamily ?: aquaName
+        }
+
+        val line = productLine.ifBlank {
+            definition?.productLine.orEmpty()
+        }
+
+        val categoryName = when (definition?.category ?: category) {
+            AquaDeviceCategory.LIGHT -> "Light"
+            AquaDeviceCategory.TIMER -> "Timer"
+            AquaDeviceCategory.COOLING -> "Cooling"
+            AquaDeviceCategory.DOSING -> "Dosing"
+            AquaDeviceCategory.CONTROLLER -> "Controller"
+            AquaDeviceCategory.UNKNOWN -> ""
+        }
+
+        return listOf(
+            family,
+            line,
+            categoryName
+        ).filter { value ->
+            value.isNotBlank()
+        }.distinct().joinToString(
+            separator = " • "
+        )
+    }
+
+    private fun DevicesDataStoreManager.DeviceInfo.buildIdentityText(): String {
+        return serial.trim().ifBlank {
+            DeviceSerialFormatter.buildCommercialIdentifier(
+                setupCode = setupCode,
+                serialNumber = serialNumber,
+                shortId = shortId,
+                deviceUid = deviceUid,
+                macAddress = macAddress,
+                firmwareSerial = firmwareSerial,
+                fallbackNumericId = id
+            )
+        }
     }
 
     private fun DevicesDataStoreManager.DeviceInfo.buildDeviceTitle(): String {

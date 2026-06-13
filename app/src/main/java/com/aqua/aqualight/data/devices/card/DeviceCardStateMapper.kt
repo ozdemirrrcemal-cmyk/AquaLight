@@ -2,8 +2,11 @@ package com.aqua.aqualight.data.devices.card
 
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
@@ -53,11 +56,80 @@ class DeviceCardStateMapper {
                     }
             }
 
+        val productLine =
+            device.productLine.ifBlank {
+                definition?.productLine.orEmpty()
+            }
+
+        val productModel =
+            device.productModel.ifBlank {
+                definition?.productModel ?: device.name
+            }
+
+        val productKey =
+            definition?.productKey ?: device.productKey
+
+        val category =
+            definition?.category ?: device.category
+
+        val setupCode =
+            device.setupCode.ifBlank {
+                definition?.setupCode ?: productKey.setupCode.takeUnless { code ->
+                    productKey.name == "UNKNOWN"
+                }.orEmpty()
+            }
+
+        val productId =
+            device.productId.ifBlank {
+                definition?.productId ?: productKey.productId.takeUnless { id ->
+                    productKey.name == "UNKNOWN"
+                }.orEmpty()
+            }
+
+        val commercialIdentifier =
+            DeviceSerialFormatter.buildCommercialIdentifier(
+                setupCode = setupCode,
+                serialNumber = device.serialNumber,
+                shortId = device.shortId,
+                deviceUid = device.deviceUid,
+                macAddress = device.macAddress,
+                firmwareSerial = device.firmwareSerial,
+                fallbackNumericId = device.id
+            )
+
+        val serial =
+            DeviceSerialFormatter.displaySerial(
+                serial = device.serial.ifBlank {
+                    commercialIdentifier
+                }
+            )
+
         val isOnline =
             statusState?.isOnline == true
 
         val lastSeenMillis =
             statusState?.lastSeenMillis ?: device.lastSeenMillis
+
+        val ip =
+            statusState?.ip ?: device.ip
+
+        val lastSeenText =
+            if (includeLastSeenText) {
+                formatLastSeen(
+                    isOnline = isOnline,
+                    lastSeenMillis = lastSeenMillis,
+                    nowMillis = nowMillis
+                )
+            } else {
+                ""
+            }
+
+        val statusText =
+            if (isOnline) {
+                "Online"
+            } else {
+                "Offline"
+            }
 
         return DeviceCardUiState(
             deviceId = device.id,
@@ -69,30 +141,45 @@ class DeviceCardStateMapper {
                 unassignedTankText = unassignedTankText,
                 unknownTankText = unknownTankText
             ),
-            ip = statusState?.ip ?: device.ip,
-            serial = device.serial,
+            ip = ip,
+            serial = serial,
             firmwareBuild = device.firmwareBuild,
-            productId = device.productId,
-            productKey = device.productKey,
-            category = device.category,
+            productId = productId,
+            productKey = productKey,
+            category = category,
+            productLine = productLine,
+            productModel = productModel,
+            skuCode = device.skuCode,
+            setupCode = setupCode,
+            deviceUid = device.deviceUid,
+            macAddress = device.macAddress,
+            serialNumber = device.serialNumber,
+            shortId = device.shortId,
+            hardwareRevision = device.hardwareRevision,
+            firmwareVersion = device.firmwareVersion,
+            protocolVersion = device.protocolVersion,
+            productMetaText = buildProductMetaText(
+                familyName = familyName,
+                productLine = productLine,
+                category = category
+            ),
+            identityText = buildIdentityText(
+                serial = serial,
+                skuCode = device.skuCode,
+                shortId = device.shortId,
+                deviceUid = device.deviceUid
+            ),
+            networkText = buildNetworkText(
+                statusText = statusText,
+                ip = ip,
+                lastSeenText = lastSeenText
+            ),
+            statusText = statusText,
             isOnline = isOnline,
             lastSeenMillis = lastSeenMillis,
             lastCheckedMillis = statusState?.lastCheckedMillis,
             missedChecks = statusState?.missedChecks ?: 0,
-            statusText = if (isOnline) {
-                "Online"
-            } else {
-                "Offline"
-            },
-            lastSeenText = if (includeLastSeenText) {
-                formatLastSeen(
-                    isOnline = isOnline,
-                    lastSeenMillis = lastSeenMillis,
-                    nowMillis = nowMillis
-                )
-            } else {
-                ""
-            }
+            lastSeenText = lastSeenText
         )
     }
 
@@ -130,6 +217,83 @@ class DeviceCardStateMapper {
         return tanks.firstOrNull { tank ->
             tank.id == connectedTankId
         }?.name ?: unknownTankText
+    }
+
+    private fun buildProductMetaText(
+        familyName: String,
+        productLine: String,
+        category: AquaDeviceCategory
+    ): String {
+        return listOf(
+            familyName,
+            productLine,
+            categoryDisplayName(
+                category = category
+            )
+        ).filter { value ->
+            value.isNotBlank()
+        }.distinct().joinToString(
+            separator = " • "
+        )
+    }
+
+    private fun buildIdentityText(
+        serial: String,
+        skuCode: String,
+        shortId: String,
+        deviceUid: String
+    ): String {
+        val identity = DeviceSerialFormatter.displaySerial(
+            serial = serial
+        )
+
+        val primary = if (identity.isNotBlank()) {
+            identity
+        } else if (shortId.isNotBlank()) {
+            "Device code: $shortId"
+        } else {
+            deviceUid
+        }
+
+        return listOf(
+            primary,
+            skuCode
+        ).filter { value ->
+            value.isNotBlank()
+        }.distinct().joinToString(
+            separator = " • "
+        )
+    }
+
+    private fun buildNetworkText(
+        statusText: String,
+        ip: String,
+        lastSeenText: String
+    ): String {
+        return listOf(
+            statusText,
+            ip.ifBlank {
+                "No IP"
+            },
+            lastSeenText
+        ).filter { value ->
+            value.isNotBlank()
+        }.distinct().joinToString(
+            separator = " • "
+        )
+    }
+
+    private fun categoryDisplayName(
+        category: AquaDeviceCategory
+    ): String {
+        return when (category) {
+            AquaDeviceCategory.LIGHT -> "Light"
+            AquaDeviceCategory.TIMER -> "Timer"
+            AquaDeviceCategory.COOLING -> "Cooling"
+            AquaDeviceCategory.DOSING -> "Dosing"
+            AquaDeviceCategory.CONTROLLER -> "Controller"
+            AquaDeviceCategory.UNKNOWN -> ""
+        }
     }
 
     private fun formatLastSeen(

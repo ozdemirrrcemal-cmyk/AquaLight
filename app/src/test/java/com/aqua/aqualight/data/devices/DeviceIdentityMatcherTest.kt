@@ -74,6 +74,43 @@ class DeviceIdentityMatcherTest {
         )
     }
 
+
+    @Test
+    fun samePhysicalDevice_doesNotMatchSameNumericIdWhenProductDiffers() {
+        val savedDevice = savedDevice(
+            id = 1001L,
+            deviceUid = "AQL-ESP32-001122334455"
+        )
+
+        val discoveredDevice = discoveredDevice(
+            id = 1001L,
+            ip = "192.168.1.30",
+            productKey = AquaProductKey.COOLING_COOL_PRO,
+            deviceUid = "AQL-ESP32-AABBCCDDEEFF"
+        )
+
+        assertFalse(
+            DeviceIdentityMatcher.samePhysicalDevice(
+                savedDevice = savedDevice,
+                discoveredDevice = discoveredDevice
+            )
+        )
+    }
+
+    @Test
+    fun matchesSetupShortId_doesNotMatchOnlyNumericDatabaseId() {
+        val savedDevice = savedDevice(
+            id = 123456L
+        )
+
+        assertFalse(
+            DeviceIdentityMatcher.matchesSetupShortId(
+                savedDevice = savedDevice,
+                setupShortId = "123456"
+            )
+        )
+    }
+
     @Test
     fun matchesSetupShortId_matchesIdentifierSuffix() {
         val savedDevice = savedDevice(
@@ -116,6 +153,7 @@ class DeviceIdentityMatcherTest {
     private fun discoveredDevice(
         id: Long,
         ip: String,
+        productKey: AquaProductKey = AquaProductKey.LIGHT_WRGB_PRO_ELITE,
         deviceUid: String? = null,
         macAddress: String? = null,
         firmwareSerial: String? = null
@@ -123,10 +161,10 @@ class DeviceIdentityMatcherTest {
         return DiscoveredAquaDevice(
             id = id,
             ip = ip,
-            productId = AquaProductKey.LIGHT_WRGB_PRO_ELITE.productId,
-            productKey = AquaProductKey.LIGHT_WRGB_PRO_ELITE,
-            category = AquaDeviceCategory.LIGHT,
-            setupCode = AquaProductKey.LIGHT_WRGB_PRO_ELITE.setupCode,
+            productId = productKey.productId,
+            productKey = productKey,
+            category = productKey.category,
+            setupCode = productKey.setupCode,
             productFamily = "AquaLight",
             productLine = "WRGB",
             productModel = "WRGB Pro Elite",

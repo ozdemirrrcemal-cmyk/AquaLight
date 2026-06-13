@@ -62,8 +62,12 @@ class TankDeviceSelectAdapter(
                 )
             }
 
-            val serialNumber =
-            item.serialNumber
+            val productMeta =
+            item.productMetaText
+            .trim()
+
+            val identityText =
+            item.identityText
             .trim()
             .ifBlank {
                 context.getString(
@@ -75,7 +79,14 @@ class TankDeviceSelectAdapter(
             deviceName
 
             binding.tvSerialNumber.text =
-            serialNumber
+            listOf(
+                productMeta,
+                identityText
+            ).filter { value ->
+                value.isNotBlank()
+            }.joinToString(
+                separator = " • "
+            )
 
             binding.ivDeviceIcon.setImageResource(
                 item.iconRes
@@ -108,7 +119,7 @@ class TankDeviceSelectAdapter(
             buildString {
                 append(deviceName)
                 append(", ")
-                append(serialNumber)
+                append(identityText)
                 append(
                     if (item.isOnline) {
                         ", Online"

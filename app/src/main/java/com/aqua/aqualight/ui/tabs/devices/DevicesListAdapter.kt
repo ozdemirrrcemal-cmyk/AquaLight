@@ -4,6 +4,7 @@ import android.graphics.PorterDuff
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -66,6 +67,20 @@ class DevicesListAdapter(
             }
 
             binding.tvDeviceName.text = deviceName
+            binding.tvProductMeta.text = item.productMetaText.ifBlank {
+                item.familyName
+            }
+
+            binding.tvDeviceIdentity.text = item.identityText.ifBlank {
+                item.serial
+            }
+            binding.tvDeviceIdentity.isVisible = binding.tvDeviceIdentity.text.isNotBlank()
+
+            binding.tvNetworkMeta.text = item.networkText.ifBlank {
+                item.ip
+            }
+            binding.tvNetworkMeta.isVisible = binding.tvNetworkMeta.text.isNotBlank()
+
             binding.tvTankName.text = tankName
 
             binding.ivDeviceIcon.setImageResource(
@@ -78,6 +93,11 @@ class DevicesListAdapter(
                 append(deviceName)
                 append(", ")
                 append(tankName)
+
+                if (item.identityText.isNotBlank()) {
+                    append(", ")
+                    append(item.identityText)
+                }
 
                 append(
                     if (item.isOnline) {

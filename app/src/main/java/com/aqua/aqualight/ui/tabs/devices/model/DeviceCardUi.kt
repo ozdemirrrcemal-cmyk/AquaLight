@@ -15,5 +15,20 @@ data class DeviceCardUi(
     val lastSeenText: String = "",
     val productId: String = "",
     val productKey: AquaProductKey = AquaProductKey.UNKNOWN,
-    val category: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN
+    val category: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN,
+    val productLine: String = "",
+    val productModel: String = "",
+    val skuCode: String = "",
+    val setupCode: String = "",
+    val deviceUid: String = "",
+    val macAddress: String = "",
+    val serialNumber: String = "",
+    val shortId: String = "",
+    val hardwareRevision: String = "",
+    val firmwareVersion: String = "",
+    val protocolVersion: Int? = null,
+    val productMetaText: String = "",
+    val identityText: String = "",
+    val networkText: String = "",
+    val statusText: String = ""
 )

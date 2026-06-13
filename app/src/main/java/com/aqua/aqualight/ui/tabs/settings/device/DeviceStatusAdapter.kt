@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
@@ -35,8 +34,23 @@ class DeviceStatusAdapter(
                 "Device"
             }
 
-            binding.tvTankName.text = item.tankName.ifBlank {
-                "Not connected"
+            binding.tvTankName.text = buildString {
+                append(
+                    item.productMetaText.ifBlank {
+                        item.familyName
+                    }
+                )
+
+                val tankName = item.tankName.ifBlank {
+                    "Not connected"
+                }
+
+                if (tankName.isNotBlank()) {
+                    if (isNotBlank()) {
+                        append(" • ")
+                    }
+                    append(tankName)
+                }
             }
 
             binding.ivDeviceIcon.setImageResource(
@@ -47,16 +61,20 @@ class DeviceStatusAdapter(
                 "Unknown"
             }
 
-            binding.tvSerial.text = DeviceSerialFormatter.displaySerial(
-                serial = item.serial
-            ).ifBlank {
-                "Unknown"
+            binding.tvSerialTitle.text = "Device code"
+            binding.tvSerial.text = item.identityText.ifBlank {
+                item.serial.ifBlank {
+                    "Unknown"
+                }
             }
 
-            binding.tvFirmware.text = if (item.firmwareBuild.isBlank()) {
-                "Unknown"
-            } else {
-                item.firmwareBuild.substringBefore(" (")
+            binding.tvFirmwareTitle.text = "Product"
+            binding.tvFirmware.text = item.skuCode.ifBlank {
+                item.productKey.storageKey.takeIf { value ->
+                    value != "UNKNOWN"
+                } ?: item.productId.ifBlank {
+                    "Unknown"
+                }
             }
 
             binding.tvLastSeen.text = item.lastSeenText.ifBlank {

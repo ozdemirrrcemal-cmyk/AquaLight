@@ -122,7 +122,22 @@ class DevicesViewModel(
                 lastSeenText = cardState.lastSeenText,
                 productId = cardState.productId,
                 productKey = cardState.productKey,
-                category = cardState.category
+                category = cardState.category,
+                productLine = cardState.productLine,
+                productModel = cardState.productModel,
+                skuCode = cardState.skuCode,
+                setupCode = cardState.setupCode,
+                deviceUid = cardState.deviceUid,
+                macAddress = cardState.macAddress,
+                serialNumber = cardState.serialNumber,
+                shortId = cardState.shortId,
+                hardwareRevision = cardState.hardwareRevision,
+                firmwareVersion = cardState.firmwareVersion,
+                protocolVersion = cardState.protocolVersion,
+                productMetaText = cardState.productMetaText,
+                identityText = cardState.identityText,
+                networkText = cardState.networkText,
+                statusText = cardState.statusText
             )
         }
     }

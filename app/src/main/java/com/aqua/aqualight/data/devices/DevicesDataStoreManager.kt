@@ -213,7 +213,8 @@ class DevicesDataStoreManager private constructor(
         macAddress: String?,
         firmwareSerial: String?,
         serialNumber: String? = null,
-        shortId: String? = null
+        shortId: String? = null,
+        productId: String? = null
     ): Long? {
         return devicesPrefsFlow.first()
             .devicesList
@@ -231,7 +232,8 @@ class DevicesDataStoreManager private constructor(
                     macAddress = macAddress,
                     firmwareSerial = firmwareSerial,
                     serialNumber = serialNumber,
-                    shortId = shortId
+                    shortId = shortId,
+                    productId = productId
                 )
             }
             ?.id
@@ -284,7 +286,17 @@ class DevicesDataStoreManager private constructor(
         dataStore.updateData { prefs ->
             if (
                 prefs.devicesList.any { device ->
-                    device.id == id && device.belongsToOwner(ownerUid)
+                    device.belongsToOwner(ownerUid) &&
+                        DeviceIdentityMatcher.matchesStoredIdentity(
+                            savedDevice = device.toDeviceInfo(),
+                            id = id,
+                            deviceUid = deviceUid,
+                            macAddress = macAddress,
+                            firmwareSerial = firmwareSerial,
+                            serialNumber = serialNumber,
+                            shortId = shortId,
+                            productId = productId
+                        )
                 }
             ) {
                 return@updateData prefs
