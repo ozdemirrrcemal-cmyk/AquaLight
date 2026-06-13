@@ -79,7 +79,6 @@ object DeviceIdentityMatcher {
                 savedDevice.deviceUid,
                 savedDevice.macAddress,
                 savedDevice.firmwareSerial,
-                savedDevice.serial
             )
         )
     }

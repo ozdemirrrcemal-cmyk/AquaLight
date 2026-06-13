@@ -1,0 +1,452 @@
+diff -ruN rev11_contract_orig/AquaLight-release/docs/devices/COMMERCIAL_DEVICE_CONTRACT_V1.md rev11_contract_work/AquaLight-release/docs/devices/COMMERCIAL_DEVICE_CONTRACT_V1.md
+--- rev11_contract_orig/AquaLight-release/docs/devices/COMMERCIAL_DEVICE_CONTRACT_V1.md	1970-01-01 00:00:00.000000000 +0000
++++ rev11_contract_work/AquaLight-release/docs/devices/COMMERCIAL_DEVICE_CONTRACT_V1.md	2026-06-13 12:16:32.094524521 +0000
+@@ -0,0 +1,448 @@
++# AquaLight Commercial Device Contract v1
++
++Status: App-side contract baseline after AquaLight rev11  
++Owner: AquaLight app + firmware  
++Purpose: define the single commercial identity, discovery, setup Wi-Fi, serial, and routing standard that firmware must implement and the Android app must trust.
++
++## 1. Contract principles
++
++1. Wi-Fi SSID is not the device identity. It is only a setup-network hint.
++2. `ProductId` is the product-model identity and is the primary catalog lookup key.
++3. `DeviceUid` is the physical-device identity and must be stable for the life of the device.
++4. `DeviceCategory` decides which app flow opens: light, timer, cooling, dosing, controller, or unsupported.
++5. `ProductKey` is the app enum derived from `ProductId`. Firmware may send it, but the app must not require it when `ProductId` is valid.
++6. IP address is never an identity. It is only the current network address.
++7. `AquaName` and `Name` are not routing keys. They may be returned for display compatibility, but they cannot decide the product.
++8. Synthetic serials such as `AW-1221`, `AC-7872`, or `AT-1953207285` are forbidden.
++9. Paired devices must not appear again as addable devices in Add Device.
++10. Unknown or unsupported products must be shown as unsupported, not guessed.
++
++## 2. Product registry
++
++The app catalog is the source of truth for known products.
++
++| Product | ProductId | ProductKey | Category | setupCode | Setup SSID example | SKU |
++|---|---|---|---|---|---|---|
++| WRGB Pro Elite 120cm Global Black | `com.aqua.light.wrgb_pro_elite` | `LIGHT_WRGB_PRO_ELITE` | `LIGHT` | `WPE` | `AQL-WPE-12ABCD` | `AQL-WPE-120-GLB-BLK` |
++| TimerPro Global Black | `com.aqua.timer.timer_pro` | `TIMER_TIMER_PRO` | `TIMER` | `TPR` | `AQL-TPR-12ABCD` | `AQL-TPR-GLOBAL-BLK` |
++| Multi Control Global Black | `com.aqua.timer.multi_control` | `TIMER_MULTI_CONTROL` | `TIMER` | `TMC` | `AQL-TMC-12ABCD` | `AQL-TMC-GLOBAL-BLK` |
++| CoolPro Global Black | `com.aqua.cooling.cool_pro` | `COOLING_COOL_PRO` | `COOLING` | `CPR` | `AQL-CPR-12ABCD` | `AQL-CPR-GLOBAL-BLK` |
++| DosePro 4 Global Black | `com.aqua.dosing.dose_pro_4` | `DOSING_DOSE_PRO_4` | `DOSING` | `DP4` | `AQL-DP4-12ABCD` | `AQL-DP4-GLOBAL-BLK` |
++
++Current production-confirmed product: `WRGB Pro Elite 120cm Global Black`. Other catalog records are app-side product slots and must be confirmed before final firmware release for those products.
++
++## 3. WRGB Pro Elite 120cm product profile
++
++| Field | Value |
++|---|---|
++| ProductFamily | `AquaLight` |
++| ProductLine | `WRGB` |
++| ProductModel | `WRGB Pro Elite` |
++| DisplayName | `WRGB Pro Elite` |
++| Variant display name | `WRGB Pro Elite 120cm Global Black` |
++| ProductId | `com.aqua.light.wrgb_pro_elite` |
++| ProductKey | `LIGHT_WRGB_PRO_ELITE` |
++| Category | `LIGHT` |
++| setupCode | `WPE` |
++| SKU code | `AQL-WPE-120-GLB-BLK` |
++| Size | `1200 mm` |
++| Max power | `120 W` |
++| Color | `BLACK` |
++| Region | `GLOBAL` |
++| Channels | `4` |
++| Channel order | `White`, `Red`, `Green`, `Blue` |
++| Fan count | `2` |
++| Temperature sensor count | `1` |
++
++Supported app features:
++
++- Manual light control
++- Channel control
++- Program / schedule
++- Presets
++- Quick setup
++- Moonlight
++- Acclimation / adaptation
++- Temperature protection
++- Fan control
++- Temperature read
++- OTA update
++
++Disabled for this product version:
++
++- Cloud effect
++- Storm effect
++- Extra decorative effects
++
++UI intensity scale is `0%..100%`. Firmware raw PWM range, GPIO pins, PWM frequency, and PWM resolution are firmware/hardware details and must not be encoded in the product catalog.
++
++## 4. Setup Wi-Fi contract
++
++### Format
++
++```text
++AQL-<setupCode>-<shortId>
++```
++
++Regex accepted by the app:
++
++```text
++^AQL-([A-Z0-9]{2,5})-([A-Z0-9]{4,12})$
++```
++
++Examples:
++
++```text
++AQL-WPE-12ABCD
++AQL-TPR-34CDEF
++AQL-CPR-78EF90
++AQL-DP4-91AE22
++```
++
++Rejected legacy examples:
++
++```text
++AquaLight-WRGBPro2-1221
++AquaCool-CoolPro-7872
++AquaTimer-TimerPro-1953207285
++```
++
++### Firmware rule
++
++Firmware must generate setup SSID from its fixed product identity:
++
++```text
++setupSsid = "AQL-" + setupCode + "-" + shortId
++```
++
++For WRGB Pro Elite:
++
++```text
++setupCode = WPE
++setupSsid = AQL-WPE-<shortId>
++```
++
++The user must not manually type this product code. The app must not invent the product code. The firmware identity and app catalog must match.
++
++### Setup AP lifecycle
++
++- Factory/new device or reset state: setup AP may be enabled.
++- After successful home Wi-Fi connection: setup AP must be disabled.
++- Normal operation: setup AP must remain disabled.
++- If home Wi-Fi connection fails or pairing reset is requested: setup AP may be enabled again.
++
++## 5. Physical identity rules
++
++### DeviceUid
++
++`DeviceUid` is the main physical identity.
++
++Recommended ESP32 format:
++
++```text
++AQL-ESP32-<MAC_WITHOUT_COLONS>
++```
++
++Example:
++
++```text
++MacAddress = FC:B4:67:12:AB:CD
++DeviceUid = AQL-ESP32-FCB46712ABCD
++```
++
++Rules:
++
++- Stable across reboot.
++- Stable across firmware update.
++- Stable across Wi-Fi network changes.
++- Stable across app reinstall.
++- Must not be IP address.
++- Must not be setup SSID.
++- Must not be display name.
++
++### ShortId
++
++`ShortId` is a short user-facing device code derived from stable hardware identity.
++
++Recommended source:
++
++```text
++ShortId = last 6 uppercase hex chars of MAC/device UID
++```
++
++Example:
++
++```text
++DeviceUid = AQL-ESP32-FCB46712ABCD
++ShortId = 12ABCD
++```
++
++### SerialNumber
++
++`SerialNumber` is an optional factory/warranty serial. If production serial infrastructure is ready, use this format:
++
++```text
++AQL-<setupCode>-<YYMM>-<sequence>
++```
++
++Example:
++
++```text
++AQL-WPE-2606-000001
++```
++
++If firmware does not provide `SerialNumber`, the app shows device code using `setupCode + shortId`:
++
++```text
++AQL-WPE-12ABCD
++```
++
++## 6. Protocol and version rules
++
++Current app contract version:
++
++```text
++ProtocolVersion = 1
++```
++
++Rules:
++
++- Adding a new optional JSON field is allowed without increasing `ProtocolVersion`.
++- Removing a required field is breaking and requires a new protocol version.
++- Changing the meaning/type of a required field is breaking.
++- App must reject products whose `ProtocolVersion` is missing, zero, lower than `minProtocolVersion`, or above `maxProtocolVersion` when configured.
++- App currently requires catalog-known `ProductId` for LAN discovery.
++
++Recommended firmware version field:
++
++```text
++FirmwareVersion = major.minor.patch
++```
++
++Example:
++
++```text
++FirmwareVersion = 1.0.0
++```
++
++## 7. UDP discovery contract
++
++### Request
++
++The app sends UDP broadcast to port `10888`:
++
++```json
++{"Command":"RefreshUDP","VerUdp":20240813}
++```
++
++### Response shape
++
++Firmware must respond with `Data.0` or `NetUdp.Data.0`. Preferred response:
++
++```json
++{
++  "VerUdp": 20240813,
++  "ProtocolVersion": 1,
++  "Data": {
++    "0": {
++      "ProductId": "com.aqua.light.wrgb_pro_elite",
++      "DeviceType": "light",
++      "ProductFamily": "AquaLight",
++      "ProductLine": "WRGB",
++      "ProductModel": "WRGB Pro Elite",
++      "DisplayName": "WRGB Pro Elite",
++      "SkuCode": "AQL-WPE-120-GLB-BLK",
++      "DeviceUid": "AQL-ESP32-FCB46712ABCD",
++      "ShortId": "12ABCD",
++      "SerialNumber": "AQL-WPE-2606-000001",
++      "ProtocolVersion": 1,
++      "FirmwareVersion": "1.0.0",
++      "HardwareRevision": "1.0",
++      "MacAddress": "FC:B4:67:12:AB:CD",
++      "IP": "192.168.1.149",
++      "SetupMode": false,
++      "APEnabled": false,
++      "SupportedFeatures": [
++        "WIFI_SETUP",
++        "LAN_DISCOVERY",
++        "LIGHT_CONTROL",
++        "LIGHT_QUICK_SETUP",
++        "LIGHT_PRESETS",
++        "LIGHT_MOONLIGHT",
++        "LIGHT_ACCLIMATION",
++        "LIGHT_TEMPERATURE_PROTECTION",
++        "LIGHT_FAN_CONTROL",
++        "TEMPERATURE_READ",
++        "OTA_UPDATE"
++      ],
++      "ChannelCount": 4,
++      "SensorCount": 1
++    }
++  }
++}
++```
++
++### Required fields for LAN discovery acceptance
++
++Minimum required fields:
++
++```text
++ProductId
++ProtocolVersion
++IP
++stable identity: DeviceUid OR MacAddress OR SerialNumber OR ShortId OR positive ID/ESPChipID
++```
++
++Recommended required firmware output:
++
++```text
++ProductId
++DeviceType
++DeviceUid
++ShortId
++ProtocolVersion
++FirmwareVersion
++MacAddress
++IP
++SetupMode
++APEnabled
++```
++
++If `ProductId` is unknown to the app catalog, the app must not treat the device as supported.
++
++## 8. HTTP setup identity contract
++
++The current app still supports the existing `/get` and `/set` flow for Wi-Fi scan and credential submission. The target commercial firmware should also expose a clear identity endpoint before setup is submitted.
++
++Preferred endpoint:
++
++```text
++GET http://192.168.4.1/api/v1/identity
++```
++
++Preferred response:
++
++```json
++{
++  "ProtocolVersion": 1,
++  "ProductId": "com.aqua.light.wrgb_pro_elite",
++  "DeviceType": "light",
++  "ProductFamily": "AquaLight",
++  "ProductLine": "WRGB",
++  "ProductModel": "WRGB Pro Elite",
++  "DisplayName": "WRGB Pro Elite",
++  "SkuCode": "AQL-WPE-120-GLB-BLK",
++  "DeviceUid": "AQL-ESP32-FCB46712ABCD",
++  "ShortId": "12ABCD",
++  "SerialNumber": "AQL-WPE-2606-000001",
++  "FirmwareVersion": "1.0.0",
++  "HardwareRevision": "1.0",
++  "MacAddress": "FC:B4:67:12:AB:CD",
++  "SetupSsid": "AQL-WPE-12ABCD",
++  "SetupMode": true,
++  "APEnabled": true
++}
++```
++
++App behavior target:
++
++1. Parse setup SSID.
++2. Match `setupCode` to catalog candidate.
++3. Connect to setup AP.
++4. Read `/api/v1/identity`.
++5. Trust the identity endpoint over SSID text.
++6. Reject setup if identity `ProductId` and SSID `setupCode` disagree.
++7. Submit home Wi-Fi credentials.
++8. Wait for LAN discovery using `DeviceUid`/`ProductId`.
++9. Save device only after a valid LAN identity is found.
++
++## 9. Add Device behavior
++
++The Add Device screen has two sections.
++
++### On your network
++
++Shows LAN devices that are:
++
++- discovered via UDP,
++- catalog-supported by `ProductId`,
++- valid by `ProtocolVersion`,
++- not already paired in local storage.
++
++### Setup mode
++
++Shows setup AP networks that:
++
++- match `AQL-<setupCode>-<shortId>`,
++- use known `setupCode`,
++- are not already paired by known `shortId`, `DeviceUid`, `SerialNumber`, or `MacAddress`.
++
++Paired devices must not appear as addable devices.
++
++## 10. Stored device contract
++
++A stored device record must distinguish product identity from physical identity.
++
++Product identity fields:
++
++```text
++ProductId
++ProductKey
++Category
++ProductFamily
++ProductLine
++ProductModel
++DisplayName
++SetupCode
++SkuId
++SkuCode
++```
++
++Physical/runtime identity fields:
++
++```text
++DeviceUid
++SerialNumber
++ShortId
++MacAddress
++FirmwareSerial
++IP
++FirmwareVersion
++HardwareRevision
++ProtocolVersion
++LastSeenMillis
++TankId
++CustomName
++```
++
++Routing uses `Category`. Product display uses catalog fields. Physical matching uses `DeviceUid`, then `SerialNumber`, `MacAddress`, `ShortId`, and only then numeric legacy ID if still present.
++
++## 11. Firmware implementation checklist
++
++Before app/firmware integration test, firmware must implement:
++
++- Fixed product constants: `ProductId`, `DeviceType`, `ProductFamily`, `ProductLine`, `ProductModel`, `setupCode`.
++- Setup SSID generation: `AQL-<setupCode>-<shortId>`.
++- Stable `DeviceUid` from ESP32 MAC/eFuse identity.
++- Stable `ShortId` from the same hardware identity.
++- UDP discovery response with required identity fields.
++- Optional `/api/v1/identity` endpoint for setup verification.
++- Setup AP disable after successful home Wi-Fi connection.
++- No user-writable ProductId/ProductModel/setupCode.
++- No release logs of home Wi-Fi password.
++- No default shared setup password for commercial release unless protected by pairing token or per-device credentials.
++
++## 12. App-side final acceptance tests
++
++App must pass these checks before firmware work is considered integrated:
++
++1. Old SSIDs such as `AquaLight-WRGBPro2-1221` are ignored.
++2. `AQL-WPE-12ABCD` appears under Setup mode.
++3. A valid UDP identity for `com.aqua.light.wrgb_pro_elite` appears under On your network when unpaired.
++4. The same device disappears from Add Device after pairing.
++5. Devices tab shows `WRGB Pro Elite`, SKU, device code, IP, and online/offline state.
++6. Device settings shows Product ID, Product Key, SKU, Setup Code, Device UID, MAC, Hardware, Firmware, and Protocol when present.
++7. ProductId mismatch prevents accidental matching.
++8. IP change does not create a new device.
++9. Missing/invalid ProductId is unsupported.
++10. Missing/invalid ProtocolVersion is unsupported.
