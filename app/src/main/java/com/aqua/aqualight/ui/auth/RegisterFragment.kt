@@ -12,7 +12,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.navigation.RootNavigator
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentRegisterBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
@@ -30,8 +30,6 @@ class RegisterFragment : Fragment() {
         AuthViewModelFactory(requireContext())
     }
 
-    private val baseActivity
-        get() = activity as? BaseActivity
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -97,7 +95,7 @@ class RegisterFragment : Fragment() {
     ) {
         val isLoading = state is AuthActionState.Loading
 
-        baseActivity?.showLoading(isLoading)
+        setFragmentGlobalLoading(isLoading)
         binding.btnRegister.isEnabled = !isLoading
         binding.btnRegister.text = getString(
             if (isLoading) {

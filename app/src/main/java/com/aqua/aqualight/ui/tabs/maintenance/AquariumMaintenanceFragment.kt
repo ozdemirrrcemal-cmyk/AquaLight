@@ -20,7 +20,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentAquariumMaintenanceBinding
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
@@ -752,7 +752,7 @@ class AquariumMaintenanceFragment :
     private fun showGlobalLoading(
         show: Boolean
     ) {
-        (activity as? BaseActivity)?.showLoading(show)
+        setFragmentGlobalLoading(show)
     }
 
     private fun openAddCareTaskScreen() {

@@ -2,14 +2,14 @@ package com.aqua.aqualight.ui.tabs.devices.common.feedback
 
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 
 fun Fragment.showDeviceLoading(
     show: Boolean
 ) {
-    val baseActivity = activity as? BaseActivity
-        ?: return
-
-    baseActivity.showLoading(show)
+    setFragmentGlobalLoading(
+        show = show
+    )
 }
 
 fun Fragment.showDeviceSnack(

@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentChangeEmailBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
@@ -229,7 +230,7 @@ class ChangeEmailFragment :
     ) {
         val isLoading = state is AuthActionState.Loading
 
-        baseActivity?.showLoading(isLoading)
+        setFragmentGlobalLoading(isLoading)
         binding.btnSaveEmail.isEnabled = !isLoading
 
         when (state) {

@@ -17,6 +17,7 @@ import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentFeedbackBinding
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.google.firebase.Firebase
@@ -842,10 +843,7 @@ class FeedbackFragment :
                 sending
         }
 
-        (
-            requireActivity()
-                as? BaseActivity
-            )?.showLoading(
+        setFragmentGlobalLoading(
             sending
         )
     }

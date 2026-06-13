@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentUserAddressBinding
 import com.aqua.aqualight.ui.common.bottomsheet.CountryPickerBottomSheet
@@ -807,10 +808,7 @@ class UserAddressFragment :
         binding.btnSave.isEnabled =
             !loading
 
-        (
-            requireActivity()
-                as? BaseActivity
-            )?.showLoading(
+        setFragmentGlobalLoading(
             loading
         )
     }

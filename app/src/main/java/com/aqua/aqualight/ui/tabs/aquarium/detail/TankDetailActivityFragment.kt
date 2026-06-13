@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTankDetailActivityBinding
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
@@ -719,7 +720,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     private fun showGlobalLoading(
         show: Boolean
     ) {
-        (activity as? BaseActivity)?.showLoading(show)
+        setFragmentGlobalLoading(show)
     }
 
     private fun showSnackBar(

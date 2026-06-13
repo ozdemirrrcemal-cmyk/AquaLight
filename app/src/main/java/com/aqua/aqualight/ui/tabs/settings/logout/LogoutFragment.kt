@@ -10,6 +10,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.auth.LogoutManager
 import com.aqua.aqualight.databinding.FragmentLogoutBinding
 import com.aqua.aqualight.ui.auth.security.ReAuthManager
@@ -118,7 +119,7 @@ class LogoutFragment :
     }
 
     private fun performLogout() {
-        baseActivity?.showLoading(
+        setFragmentGlobalLoading(
             true
         )
 
@@ -150,7 +151,7 @@ class LogoutFragment :
                 binding.btnLogout.isEnabled =
                     true
 
-                baseActivity?.showLoading(
+                setFragmentGlobalLoading(
                     false
                 )
             }

@@ -22,7 +22,7 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
@@ -336,7 +336,7 @@ class TankDetailFragment :
     private fun showGlobalLoading(
         show: Boolean
     ) {
-        (activity as? BaseActivity)?.showLoading(
+        setFragmentGlobalLoading(
             show
         )
     }

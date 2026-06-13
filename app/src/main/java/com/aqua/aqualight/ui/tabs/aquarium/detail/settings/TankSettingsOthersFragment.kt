@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.databinding.FragmentTankSettingsOthersBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -234,7 +235,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         isDuplicatingTank = true
 
         val baseActivity = activity as? BaseActivity
-        baseActivity?.showLoading(true)
+        setFragmentGlobalLoading(true)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -242,7 +243,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                     tankId = tankId
                 )
 
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
 
                 val popped = findNavController().popBackStack(
                     R.id.aquariumFragment,
@@ -258,7 +259,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 exception.printStackTrace()
 
                 isDuplicatingTank = false
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
 
                 DialogManager.showInfoDialog(
                     context = requireContext(),
@@ -282,7 +283,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         val appContext = requireContext().applicationContext
         val baseActivity = activity as? BaseActivity
 
-        baseActivity?.showLoading(true)
+        setFragmentGlobalLoading(true)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -298,7 +299,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                     )
                 }
 
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
                 isExportingTank = false
 
                 TankPdfExporter.shareTankReportPdf(
@@ -310,7 +311,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 exception.printStackTrace()
 
                 isExportingTank = false
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
 
                 DialogManager.showInfoDialog(
                     context = requireContext(),
@@ -353,7 +354,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
         ?.markTankDeletionInProgress()
 
         val baseActivity = activity as? BaseActivity
-        baseActivity?.showLoading(true)
+        setFragmentGlobalLoading(true)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -361,7 +362,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                     tankIds = listOf(tankId)
                 )
 
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
 
                 val popped = findNavController().popBackStack(
                     R.id.aquariumFragment,
@@ -377,7 +378,7 @@ class TankSettingsOthersFragment : Fragment(R.layout.fragment_tank_settings_othe
                 exception.printStackTrace()
 
                 isDeletingTank = false
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
 
                 DialogManager.showInfoDialog(
                     context = requireContext(),

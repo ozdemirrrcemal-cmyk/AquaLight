@@ -12,7 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentTaskDetailBinding
 import com.aqua.aqualight.databinding.ItemTaskDetailRowBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -379,7 +379,7 @@ class TaskDetailFragment :
   private fun showGlobalLoading(
     show: Boolean
   ) {
-    (activity as? BaseActivity)?.showLoading(show)
+    setFragmentGlobalLoading(show)
   }
 
   private fun createIconBackground(

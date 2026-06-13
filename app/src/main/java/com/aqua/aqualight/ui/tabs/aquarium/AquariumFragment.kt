@@ -14,7 +14,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentAquariumBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
@@ -376,10 +376,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
         isDeletingTanks =
             true
 
-        val baseActivity =
-            activity as? BaseActivity
-
-        baseActivity?.showLoading(
+        setFragmentGlobalLoading(
             true
         )
 
@@ -403,7 +400,7 @@ class AquariumFragment : Fragment(R.layout.fragment_aquarium) {
                 isDeletingTanks =
                     false
 
-                baseActivity?.showLoading(
+                setFragmentGlobalLoading(
                     false
                 )
             }

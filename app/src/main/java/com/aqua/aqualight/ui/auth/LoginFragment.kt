@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.navigation.RootNavigator
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
 import com.aqua.aqualight.databinding.FragmentLoginBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
@@ -38,8 +38,6 @@ class LoginFragment : Fragment() {
         AuthViewModelFactory(requireContext())
     }
 
-    private val baseActivity
-        get() = activity as? BaseActivity
 
     private val googleSignInLauncher =
         registerForActivityResult(
@@ -183,7 +181,7 @@ class LoginFragment : Fragment() {
     ) {
         val isLoading = state is AuthActionState.Loading
 
-        baseActivity?.showLoading(isLoading)
+        setFragmentGlobalLoading(isLoading)
         binding.btnGoogleLogin.isEnabled = !isLoading
         binding.btnSignIn.isEnabled = !isLoading
         binding.btnRegister.isEnabled = !isLoading

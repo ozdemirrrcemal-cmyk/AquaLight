@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentChangePasswordBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
@@ -179,7 +180,7 @@ class ChangePasswordFragment :
     ) {
         val isLoading = state is AuthActionState.Loading
 
-        baseActivity?.showLoading(isLoading)
+        setFragmentGlobalLoading(isLoading)
         setLoading(isLoading)
 
         when (state) {

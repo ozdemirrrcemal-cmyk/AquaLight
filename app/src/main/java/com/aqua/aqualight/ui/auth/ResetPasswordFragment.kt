@@ -11,7 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentResetPasswordBinding
 import com.aqua.aqualight.ui.auth.state.AuthActionState
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
@@ -29,8 +29,6 @@ class ResetPasswordFragment : Fragment() {
         AuthViewModelFactory(requireContext())
     }
 
-    private val baseActivity
-        get() = activity as? BaseActivity
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -90,7 +88,7 @@ class ResetPasswordFragment : Fragment() {
     ) {
         val isLoading = state is AuthActionState.Loading
 
-        baseActivity?.showLoading(isLoading)
+        setFragmentGlobalLoading(isLoading)
         binding.btnSend.isEnabled = !isLoading
         binding.btnSend.text = getString(
             if (isLoading) {

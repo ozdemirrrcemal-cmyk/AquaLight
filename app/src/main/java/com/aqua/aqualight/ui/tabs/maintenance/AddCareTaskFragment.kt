@@ -25,6 +25,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.databinding.FragmentAddCareTaskBinding
 import com.aqua.aqualight.ui.common.bottomsheet.CareTaskTypeBottomSheetFragment
@@ -1038,7 +1039,7 @@ class AddCareTaskFragment :
     private fun showGlobalLoading(
         show: Boolean
     ) {
-        (activity as? BaseActivity)?.showLoading(show)
+        setFragmentGlobalLoading(show)
     }
 
     private fun applyAlpha(

@@ -11,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.navigation.RootNavigator
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.data.auth.GoogleSignInClientFactory
 import com.aqua.aqualight.data.auth.AccountDeletionManager
 import com.aqua.aqualight.databinding.FragmentReAuthenticateBinding
@@ -67,7 +68,7 @@ class ReAuthenticateFragment :
 
             if (result.resultCode != Activity.RESULT_OK) {
 
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
                 setLoadingState(false)
 
                 return@registerForActivityResult
@@ -84,7 +85,7 @@ class ReAuthenticateFragment :
                 val token = account.idToken
 
                 if (token.isNullOrBlank()) {
-                    baseActivity?.showLoading(false)
+                    setFragmentGlobalLoading(false)
                     setLoadingState(false)
 
                     DialogManager.showInfoDialog(
@@ -109,7 +110,13 @@ class ReAuthenticateFragment :
 
                 val user =
                     auth.currentUser
-                        ?: return@registerForActivityResult
+
+                if (user == null) {
+                    setFragmentGlobalLoading(false)
+                    setLoadingState(false)
+
+                    return@registerForActivityResult
+                }
 
                 user.reauthenticate(credential)
                     .addOnSuccessListener {
@@ -118,7 +125,7 @@ class ReAuthenticateFragment :
                     }
                     .addOnFailureListener {
 
-                        baseActivity?.showLoading(false)
+                        setFragmentGlobalLoading(false)
 
                         setLoadingState(false)
 
@@ -136,7 +143,7 @@ class ReAuthenticateFragment :
 
             } catch (e: Exception) {
 
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
 
                 setLoadingState(false)
 
@@ -266,7 +273,7 @@ class ReAuthenticateFragment :
 
         if (isLoading) return
 
-        baseActivity?.showLoading(true)
+        setFragmentGlobalLoading(true)
 
         setLoadingState(true)
 
@@ -309,7 +316,7 @@ class ReAuthenticateFragment :
         val email =
             user.email ?: return
 
-        baseActivity?.showLoading(true)
+        setFragmentGlobalLoading(true)
 
         setLoadingState(true)
 
@@ -326,7 +333,7 @@ class ReAuthenticateFragment :
             }
             .addOnFailureListener {
 
-                baseActivity?.showLoading(false)
+                setFragmentGlobalLoading(false)
 
                 setLoadingState(false)
 
@@ -367,7 +374,7 @@ class ReAuthenticateFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             val result = accountDeletionManager.deleteCurrentAccount()
 
-            baseActivity?.showLoading(false)
+            setFragmentGlobalLoading(false)
             setLoadingState(false)
 
             val accountDeleteError = result.accountDeleteError

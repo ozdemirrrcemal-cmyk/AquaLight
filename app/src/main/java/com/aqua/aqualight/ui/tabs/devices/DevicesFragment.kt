@@ -13,7 +13,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
@@ -407,7 +407,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
     private fun showGlobalLoading(
         show: Boolean
     ) {
-        (activity as? BaseActivity)?.showLoading(
+        setFragmentGlobalLoading(
             show
         )
     }

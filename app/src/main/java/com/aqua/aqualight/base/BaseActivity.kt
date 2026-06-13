@@ -40,7 +40,12 @@ open class BaseActivity : AppCompatActivity() {
 
     private var loadingDialog: Dialog? = null
     private var loadingLogo: ImageView? = null
-    private var loadingRequestCount: Int = 0
+
+    private val loadingOwners: MutableSet<String> =
+        linkedSetOf()
+
+    private val legacyLoadingOwner =
+        "${BaseActivity::class.java.name}.LegacyLoadingOwner"
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -50,23 +55,76 @@ open class BaseActivity : AppCompatActivity() {
         )
     }
 
+    fun setGlobalLoading(
+        owner: Any,
+        show: Boolean
+    ) {
+        setGlobalLoading(
+            ownerKey = owner.toLoadingOwnerKey(),
+            show = show
+        )
+    }
+
+    fun setGlobalLoading(
+        ownerKey: String,
+        show: Boolean
+    ) {
+        val normalizedOwnerKey =
+            ownerKey.trim()
+                .ifBlank {
+                    legacyLoadingOwner
+                }
+
+        val changed =
+            if (show) {
+                loadingOwners.add(
+                    normalizedOwnerKey
+                )
+            } else {
+                loadingOwners.remove(
+                    normalizedOwnerKey
+                )
+            }
+
+        if (!changed) {
+            return
+        }
+
+        if (loadingOwners.isNotEmpty()) {
+            showLoadingDialog()
+        } else {
+            hideLoadingDialog()
+        }
+    }
+
+    fun clearGlobalLoading(
+        owner: Any
+    ) {
+        clearGlobalLoading(
+            ownerKey = owner.toLoadingOwnerKey()
+        )
+    }
+
+    fun clearGlobalLoading(
+        ownerKey: String
+    ) {
+        setGlobalLoading(
+            ownerKey = ownerKey,
+            show = false
+        )
+    }
+
     fun showLoading(
         show: Boolean
     ) {
-        if (show) {
-            loadingRequestCount++
+        setGlobalLoading(
+            ownerKey = legacyLoadingOwner,
+            show = show
+        )
+    }
 
-            showLoadingDialog()
-        } else {
-            loadingRequestCount =
-            (loadingRequestCount - 1).coerceAtLeast(
-                0
-            )
-
-            if (loadingRequestCount == 0) {
-                hideLoadingDialog()
-            }
-        }
+    private fun Any.toLoadingOwnerKey(): String {
+        return "${this::class.java.name}@${System.identityHashCode(this)}"
     }
 
     private fun showLoadingDialog() {
@@ -292,7 +350,7 @@ open class BaseActivity : AppCompatActivity() {
     override fun onDestroy() {
         activityJob.cancel()
 
-        loadingRequestCount = 0
+        loadingOwners.clear()
 
         hideLoadingDialog()
 
