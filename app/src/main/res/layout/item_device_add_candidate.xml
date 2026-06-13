@@ -5,17 +5,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rowCandidate"
     android:layout_width="match_parent"
-    android:layout_height="58dp"
+    android:layout_height="76dp"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:paddingStart="34dp"
-    android:paddingEnd="34dp">
+    android:paddingStart="28dp"
+    android:paddingEnd="28dp">
 
     <ImageView
         android:id="@+id/ivDeviceIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:contentDescription="@string/device_add_title"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -24,39 +24,61 @@
         app:tint="#B8C6D6"
         tools:src="@drawable/ic_device_temperature" />
 
-    <TextView
-        android:id="@+id/tvDeviceName"
+    <LinearLayout
+        android:id="@+id/textContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="56dp"
-        android:layout_marginEnd="18dp"
-        android:ellipsize="end"
-        android:includeFontPadding="false"
-        android:maxLines="1"
-        android:textColor="#DDE7F2"
-        android:textSize="14sp"
-        android:textStyle="normal"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="14dp"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/tvDeviceSerial"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="CoolPro" />
+        app:layout_constraintEnd_toStartOf="@id/tvCandidateAction"
+        app:layout_constraintStart_toEndOf="@id/ivDeviceIcon"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvDeviceName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="#DDE7F2"
+            android:textSize="14.5sp"
+            android:textStyle="bold"
+            tools:text="WRGB Pro Elite 120cm" />
+
+        <TextView
+            android:id="@+id/tvDeviceSerial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="#8FA4BE"
+            android:textSize="12.5sp"
+            tools:text="AQL-WPE-12ABCD • Setup mode" />
+
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/tvDeviceSerial"
+        android:id="@+id/tvCandidateAction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:gravity="end"
+        android:background="@drawable/bg_device_add_tip_card"
         android:includeFontPadding="false"
-        android:maxLines="1"
-        android:textColor="#C3CEDA"
-        android:textSize="13sp"
-        android:textStyle="normal"
+        android:minWidth="58dp"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="7dp"
+        android:textAlignment="center"
+        android:textColor="#5FD6B4"
+        android:textSize="12sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="AC-7872" />
+        tools:text="Set up" />
 
     <View
         android:id="@+id/divider"

@@ -244,8 +244,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             retryEnabled = true
         )
 
-        adapter.submitList(
-            candidates
+        adapter.submitCandidates(
+            candidates = candidates
         )
     }
 
@@ -267,8 +267,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             R.string.device_add_empty_subtitle
         )
 
-        adapter.submitList(
-            emptyList()
+        adapter.submitCandidates(
+            candidates = emptyList()
         )
     }
 
@@ -292,8 +292,8 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             R.string.device_add_permission_required
         )
 
-        adapter.submitList(
-            emptyList()
+        adapter.submitCandidates(
+            candidates = emptyList()
         )
 
         (activity as? BaseActivity)?.showSnackBar(

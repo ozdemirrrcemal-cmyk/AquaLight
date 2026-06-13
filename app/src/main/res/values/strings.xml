@@ -543,6 +543,10 @@
     <string name="device_add_permission_required">Permission required.</string>
     <string name="device_add_permission_message">Wi-Fi permission is required to find nearby Aqua devices.</string>
     <string name="device_add_save_error">Device could not be added.</string>
+    <string name="device_add_section_on_network_title">On your network</string>
+    <string name="device_add_section_on_network_message">Devices already connected to your Wi-Fi and ready to add.</string>
+    <string name="device_add_section_setup_title">Setup mode</string>
+    <string name="device_add_section_setup_message">Devices broadcasting Aqua setup Wi-Fi and waiting for configuration.</string>
     <string name="device_setup_choose_home_wifi">Choose your home Wi-Fi network to continue.</string>
     <string name="device_setup_missing_setup_network">Device setup network is missing.</string>
     <string name="device_setup_connecting_to_setup">Connecting to %1$s to scan Wi-Fi networks...</string>
