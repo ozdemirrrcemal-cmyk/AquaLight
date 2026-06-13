@@ -1,12 +1,10 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select
 
-import androidx.annotation.DrawableRes
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 
 data class TankDeviceSelectItem(
-    val deviceId: Long,
-    val displayName: String,
-    val productMetaText: String,
-    val identityText: String,
-    @DrawableRes val iconRes: Int,
-    val isOnline: Boolean
-)
+    val card: DeviceCompactCardUi
+) {
+    val deviceId: Long
+        get() = card.deviceId
+}

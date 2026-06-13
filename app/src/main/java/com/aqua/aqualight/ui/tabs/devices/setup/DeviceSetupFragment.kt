@@ -28,7 +28,7 @@ import com.aqua.aqualight.ui.common.bottomsheet.HomeWifiNetworksBottomSheetFragm
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -197,7 +197,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         binding.etHomeWifiSsid.setText("")
 
         binding.ivDeviceImage.setImageResource(
-            DeviceIconMapper.iconFor(expectedCategory)
+            DeviceCardIconMapper.iconFor(expectedCategory)
         )
 
         binding.ivDeviceImage.contentDescription = displayName

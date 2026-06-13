@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemDeviceStatusBinding
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
 
 class DeviceStatusAdapter(
     private val onDeviceClick: ((DeviceCardUi) -> Unit)? = null
@@ -54,7 +54,7 @@ class DeviceStatusAdapter(
             }
 
             binding.ivDeviceIcon.setImageResource(
-                DeviceIconMapper.iconFor(item.category)
+                DeviceCardIconMapper.iconFor(item.category)
             )
 
             binding.tvIp.text = item.ip.ifBlank {

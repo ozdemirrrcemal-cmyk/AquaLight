@@ -11,7 +11,7 @@ import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
 import com.aqua.aqualight.databinding.ItemDeviceAddCandidateBinding
 import com.aqua.aqualight.databinding.ItemDeviceAddSectionHeaderBinding
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
 import java.util.Locale
 
 class DeviceAddAdapter(
@@ -174,7 +174,7 @@ class DeviceAddAdapter(
             item: DeviceAddCandidate
         ) {
             binding.ivDeviceIcon.setImageResource(
-                DeviceIconMapper.iconFor(item.category)
+                DeviceCardIconMapper.iconFor(item.category)
             )
 
             binding.ivDeviceIcon.contentDescription = item.displayName

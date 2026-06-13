@@ -90,6 +90,7 @@ class TankDeviceSelectViewModel(
     ) {
         if (
             deviceId <= 0L ||
+            tankId <= 0L ||
             _uiState.value.isAssigning
         ) {
             return

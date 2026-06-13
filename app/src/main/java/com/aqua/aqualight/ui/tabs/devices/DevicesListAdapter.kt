@@ -1,17 +1,17 @@
 package com.aqua.aqualight.ui.tabs.devices
 
-import android.graphics.PorterDuff
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.ItemDeviceCardBinding
+import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
+import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 
 class DevicesListAdapter(
     private val onSelectionModeStart: () -> Unit,
@@ -28,11 +28,12 @@ class DevicesListAdapter(
         parent: ViewGroup,
         viewType: Int
     ): DeviceViewHolder {
-        val binding = ItemDeviceCardBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+        val binding =
+            ItemDeviceCompactCardBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
 
         return DeviceViewHolder(
             binding = binding
@@ -49,77 +50,26 @@ class DevicesListAdapter(
     }
 
     inner class DeviceViewHolder(
-        private val binding: ItemDeviceCardBinding
+        private val binding: ItemDeviceCompactCardBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
             item: DeviceCardUi
         ) {
-            val context = binding.root.context
-            val isSelected = selectedIds.contains(item.id)
+            val context =
+                binding.root.context
 
-            val deviceName = item.displayName.ifBlank {
-                "Device"
-            }
-
-            val tankName = item.tankName.ifBlank {
-                "Not assigned to a tank"
-            }
-
-            binding.tvDeviceName.text = deviceName
-            binding.tvProductMeta.text = item.productMetaText.ifBlank {
-                item.familyName
-            }
-
-            binding.tvDeviceIdentity.text = item.identityText.ifBlank {
-                item.serial
-            }
-            binding.tvDeviceIdentity.isVisible = binding.tvDeviceIdentity.text.isNotBlank()
-
-            binding.tvNetworkMeta.text = item.networkText.ifBlank {
-                item.ip
-            }
-            binding.tvNetworkMeta.isVisible = binding.tvNetworkMeta.text.isNotBlank()
-
-            binding.tvTankName.text = tankName
-
-            binding.ivDeviceIcon.setImageResource(
-                DeviceIconMapper.iconFor(item.category)
-            )
-
-            binding.ivDeviceIcon.contentDescription = deviceName
-
-            binding.root.contentDescription = buildString {
-                append(deviceName)
-                append(", ")
-                append(tankName)
-
-                if (item.identityText.isNotBlank()) {
-                    append(", ")
-                    append(item.identityText)
-                }
-
-                append(
-                    if (item.isOnline) {
-                        ", Online"
-                    } else {
-                        ", Offline"
-                    }
+            val isSelected =
+                selectedIds.contains(
+                    item.id
                 )
-            }
 
-            val statusColorRes = if (item.isOnline) {
-                R.color.dialog_icon_success
-            } else {
-                R.color.settings_text_secondary
-            }
+            val compactCard =
+                item.compactCard ?: item.toFallbackCompactCard()
 
-            binding.ivStatus.setColorFilter(
-                ContextCompat.getColor(
-                    context,
-                    statusColorRes
-                ),
-                PorterDuff.Mode.SRC_IN
+            DeviceCompactCardBinder.bind(
+                binding = binding,
+                item = compactCard
             )
 
             if (isSelected) {
@@ -146,12 +96,15 @@ class DevicesListAdapter(
                         item = item
                     )
                 } else {
-                    onDeviceClick(item)
+                    onDeviceClick(
+                        item
+                    )
                 }
             }
 
             binding.root.setOnLongClickListener {
-                val firstSelection = selectedIds.isEmpty()
+                val firstSelection =
+                    selectedIds.isEmpty()
 
                 toggleSelection(
                     item = item
@@ -165,6 +118,24 @@ class DevicesListAdapter(
                 true
             }
         }
+    }
+
+    private fun DeviceCardUi.toFallbackCompactCard(): DeviceCompactCardUi {
+        return DeviceCompactCardUi(
+            deviceId = id,
+            displayName = displayName,
+            serialText = serial.ifBlank {
+                identityText.substringBefore(
+                    delimiter = " • "
+                )
+            },
+            tankText = tankName,
+            showTankText = true,
+            iconRes = DeviceCardIconMapper.iconFor(
+                category = category
+            ),
+            isOnline = isOnline
+        )
     }
 
     private fun toggleSelection(

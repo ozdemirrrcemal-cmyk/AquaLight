@@ -15,7 +15,7 @@ import com.aqua.aqualight.data.devices.light.runtime.LightOutputMath
 import com.aqua.aqualight.data.devices.light.programs.model.LightProgramTimeMath
 import com.aqua.aqualight.data.devices.presence.DeviceStatusState
 import com.aqua.aqualight.data.devices.light.programs.model.SavedLightProgram
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
 
 class TankAssignedDeviceUiMapper {
 
@@ -56,7 +56,7 @@ class TankAssignedDeviceUiMapper {
             commonCardState.isOnline
 
         val iconRes =
-            DeviceIconMapper.iconFor(
+            DeviceCardIconMapper.iconFor(
                 commonCardState.category
             )
 

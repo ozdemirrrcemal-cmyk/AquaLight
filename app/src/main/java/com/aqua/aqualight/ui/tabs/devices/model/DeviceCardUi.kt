@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.model
 
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaProductKey
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 
 data class DeviceCardUi(
     val id: Long,
@@ -30,5 +31,6 @@ data class DeviceCardUi(
     val productMetaText: String = "",
     val identityText: String = "",
     val networkText: String = "",
-    val statusText: String = ""
+    val statusText: String = "",
+    val compactCard: DeviceCompactCardUi? = null
 )

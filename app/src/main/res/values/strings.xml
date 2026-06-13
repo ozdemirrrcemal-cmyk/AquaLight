@@ -533,6 +533,11 @@
     <string name="devices_delete_message_single">Are you sure you want to delete this device? This action cannot be undone.</string>
     <string name="devices_delete_message_multi">Are you sure you want to delete the selected %1$d devices? This action cannot be undone.</string>
     <string name="devices_selected_device_toast">Selected devices: %1$s</string>
+    <string name="device_card_unknown_device">AquaLight Device</string>
+    <string name="device_card_serial_unavailable">Serial number unavailable</string>
+    <string name="device_card_serial_format">Serial: %1$s</string>
+    <string name="device_card_tank_format">Tank: %1$s</string>
+    <string name="device_card_not_assigned">Not assigned</string>
     <string name="device_offline_title">Device offline</string>
     <string name="device_offline_message">This device is currently offline. Please make sure it is powered on and connected to the same network.</string>
     <string name="device_add_title">Add Device</string>

@@ -1,22 +1,20 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select
 
 import com.aqua.aqualight.data.devices.card.DeviceCardUiState
-import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardMapper
 
-class TankDeviceSelectItemMapper {
+class TankDeviceSelectItemMapper(
+    private val compactCardMapper: DeviceCompactCardMapper = DeviceCompactCardMapper()
+) {
 
     fun map(
         cardState: DeviceCardUiState
     ): TankDeviceSelectItem {
         return TankDeviceSelectItem(
-            deviceId = cardState.deviceId,
-            displayName = cardState.title,
-            productMetaText = cardState.productMetaText,
-            identityText = cardState.identityText,
-            iconRes = DeviceIconMapper.iconFor(
-                category = cardState.category
-            ),
-            isOnline = cardState.isOnline
+            card = compactCardMapper.map(
+                cardState = cardState,
+                showTankText = false
+            )
         )
     }
 

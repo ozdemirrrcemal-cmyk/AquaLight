@@ -1,14 +1,12 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select
 
-import android.graphics.PorterDuff
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.aqua.aqualight.R
-import com.aqua.aqualight.databinding.ItemTankDeviceSelectCardBinding
+import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
 
 class TankDeviceSelectAdapter(
     private val onDeviceClick: (TankDeviceSelectItem) -> Unit
@@ -21,7 +19,7 @@ class TankDeviceSelectAdapter(
         viewType: Int
     ): ViewHolder {
         val binding =
-            ItemTankDeviceSelectCardBinding.inflate(
+            ItemDeviceCompactCardBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
                 false
@@ -38,98 +36,22 @@ class TankDeviceSelectAdapter(
         position: Int
     ) {
         holder.bind(
-            item = getItem(
-                position
-            )
+            item = getItem(position)
         )
     }
 
     class ViewHolder(
-        private val binding: ItemTankDeviceSelectCardBinding,
+        private val binding: ItemDeviceCompactCardBinding,
         private val onDeviceClick: (TankDeviceSelectItem) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
             item: TankDeviceSelectItem
         ) {
-            val context =
-                binding.root.context
-
-            val deviceName =
-                item.displayName
-                    .trim()
-                    .ifBlank {
-                        context.getString(
-                            R.string.tank_device_select_unknown_device
-                        )
-                    }
-
-            val productMeta =
-                item.productMetaText
-                    .trim()
-
-            val identityText =
-                item.identityText
-                    .trim()
-                    .ifBlank {
-                        context.getString(
-                            R.string.tank_device_select_serial_unavailable
-                        )
-                    }
-
-            binding.tvDeviceName.text =
-                deviceName
-
-            binding.tvSerialNumber.text =
-                listOf(
-                    productMeta,
-                    identityText
-                ).filter { value ->
-                    value.isNotBlank()
-                }.joinToString(
-                    separator = " • "
-                )
-
-            binding.ivDeviceIcon.setImageResource(
-                item.iconRes
+            DeviceCompactCardBinder.bind(
+                binding = binding,
+                item = item.card
             )
-
-            binding.ivDeviceIcon.imageTintList =
-                null
-
-            binding.ivDeviceIcon.clearColorFilter()
-
-            binding.ivDeviceIcon.contentDescription =
-                deviceName
-
-            val statusColorRes =
-                if (item.isOnline) {
-                    R.color.dialog_icon_success
-                } else {
-                    R.color.settings_text_secondary
-                }
-
-            binding.ivConnectionStatus.setColorFilter(
-                ContextCompat.getColor(
-                    context,
-                    statusColorRes
-                ),
-                PorterDuff.Mode.SRC_IN
-            )
-
-            binding.root.contentDescription =
-                buildString {
-                    append(deviceName)
-                    append(", ")
-                    append(identityText)
-                    append(
-                        if (item.isOnline) {
-                            ", Online"
-                        } else {
-                            ", Offline"
-                        }
-                    )
-                }
 
             binding.root.setOnClickListener {
                 onDeviceClick(

@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.access.DeviceAccessGuard
 import com.aqua.aqualight.data.devices.access.DeviceOpenResult
 import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardMapper
 import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
@@ -45,6 +46,9 @@ class DevicesViewModel(
 
     private val deviceCardStateMapper =
         DeviceCardStateMapper()
+
+    private val deviceCompactCardMapper =
+        DeviceCompactCardMapper()
 
     private val _uiState =
         MutableStateFlow(
@@ -137,7 +141,11 @@ class DevicesViewModel(
                 productMetaText = cardState.productMetaText,
                 identityText = cardState.identityText,
                 networkText = cardState.networkText,
-                statusText = cardState.statusText
+                statusText = cardState.statusText,
+                compactCard = deviceCompactCardMapper.map(
+                    cardState = cardState,
+                    showTankText = true
+                )
             )
         }
     }

@@ -1,10 +1,12 @@
-package com.aqua.aqualight.ui.tabs.devices.model
+package com.aqua.aqualight.ui.common.devicecard
 
+import androidx.annotation.DrawableRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 
-object DeviceIconMapper {
+object DeviceCardIconMapper {
 
+    @DrawableRes
     fun iconFor(
         category: AquaDeviceCategory
     ): Int {
