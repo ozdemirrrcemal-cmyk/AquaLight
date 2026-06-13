@@ -6,13 +6,10 @@
     <action android:id="@+id/action_aquariumMaintenanceFragment_to_taskDetailFragment" app:destination="@id/taskDetailFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="taskId" app:argType="long"/>
     </action>
-    <action android:id="@+id/action_aquariumMaintenanceFragment_to_tankSettingsFragment" app:destination="@id/tankSettingsFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
-      <argument android:name="tankId" app:argType="long"/>
-      <argument android:name="startTab" app:argType="string" android:defaultValue="general"/>
-    </action>
   </fragment>
   <fragment android:id="@+id/taskDetailFragment" android:name="com.aqua.aqualight.ui.tabs.maintenance.TaskDetailFragment" android:label="@string/screen_title_task_detail" tools:layout="@layout/fragment_task_detail">
     <argument android:name="taskId" app:argType="long"/>
+    <deepLink app:uri="aqualight://app/care-task/{taskId}"/>
     <action android:id="@+id/action_taskDetailFragment_to_addCareTaskFragment" app:destination="@id/addCareTaskFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
       <argument android:name="taskId" app:argType="long" android:defaultValue="-1L"/>
     </action>

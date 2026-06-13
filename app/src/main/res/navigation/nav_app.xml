@@ -4,22 +4,4 @@
   <include app:graph="@navigation/nav_maintenance"/>
   <include app:graph="@navigation/nav_devices"/>
   <include app:graph="@navigation/nav_settings"/>
-  <action android:id="@+id/action_global_taskDetailFragment" app:destination="@id/taskDetailFragment">
-    <argument android:name="taskId" app:argType="long"/>
-  </action>
-  <action android:id="@+id/action_global_tankDetailFragment" app:destination="@id/tankDetailFragment">
-    <argument android:name="tankId" app:argType="long"/>
-  </action>
-  <action android:id="@+id/action_global_tankSettingsFragment" app:destination="@id/tankSettingsFragment">
-    <argument android:name="tankId" app:argType="long"/>
-    <argument android:name="startTab" app:argType="string" android:defaultValue="basic"/>
-  </action>
-  <action android:id="@+id/action_global_deviceRouterFragment" app:destination="@id/deviceRouterFragment">
-    <argument android:name="deviceId" app:argType="long" android:defaultValue="0L"/>
-    <argument android:name="deviceIp" app:argType="string" android:defaultValue=""/>
-    <argument android:name="deviceTitle" app:argType="string" android:defaultValue=""/>
-  </action>
-  <action android:id="@+id/action_global_reAuthenticateFragment" app:destination="@id/reAuthenticateFragment">
-    <argument android:name="arg_action" app:argType="string" android:defaultValue="delete_account"/>
-  </action>
 </navigation>

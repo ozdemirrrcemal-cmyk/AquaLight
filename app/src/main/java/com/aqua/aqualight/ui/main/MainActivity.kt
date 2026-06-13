@@ -8,7 +8,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.aqua.aqualight.NavAppDirections
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.auth.AuthSessionManager
@@ -16,6 +15,7 @@ import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.databinding.ActivityMainBinding
 import com.aqua.aqualight.ui.navigation.AppDestinationContract
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import kotlinx.coroutines.launch
 
 class MainActivity : BaseActivity() {
@@ -187,10 +187,9 @@ class MainActivity : BaseActivity() {
 
         binding.navHost.post {
             runCatching {
-                navController.navigate(
-                    NavAppDirections.actionGlobalTaskDetailFragment(
-                        taskId = taskId
-                    )
+                AppRouteNavigator.openTaskDetail(
+                    navController = navController,
+                    taskId = taskId
                 )
             }.onFailure {
                 pendingCareTaskId = taskId

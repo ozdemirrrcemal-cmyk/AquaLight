@@ -168,6 +168,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 findNavController().navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceLightFragment(
                         deviceId = deviceId,
+                        deviceIp = deviceIp,
                         deviceTitle = controllerTitle
                     )
                 )

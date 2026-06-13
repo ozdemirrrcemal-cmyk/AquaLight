@@ -18,6 +18,7 @@ import com.aqua.aqualight.databinding.FragmentDevicesBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceCardUi
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -189,12 +190,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         when (event) {
             is DevicesViewModel.DevicesEvent.NavigateToDeviceRouter -> {
-                navigateFromDevices(
-                    DevicesFragmentDirections.actionDevicesFragmentToDeviceRouterFragment(
-                        deviceId = event.deviceId,
-                        deviceIp = event.deviceIp,
-                        deviceTitle = event.deviceTitle
-                    )
+                openDeviceController(
+                    deviceId = event.deviceId,
+                    deviceIp = event.deviceIp,
+                    deviceTitle = event.deviceTitle
                 )
             }
 
@@ -285,6 +284,26 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
         navController.navigate(
             directions
+        )
+    }
+
+    private fun openDeviceController(
+        deviceId: Long,
+        deviceIp: String,
+        deviceTitle: String
+    ) {
+        val navController =
+            findNavController()
+
+        if (navController.currentDestination?.id != R.id.devicesFragment) {
+            return
+        }
+
+        AppRouteNavigator.openDevice(
+            navController = navController,
+            deviceId = deviceId,
+            deviceIp = deviceIp,
+            deviceTitle = deviceTitle
         )
     }
 

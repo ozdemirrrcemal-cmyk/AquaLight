@@ -28,6 +28,7 @@ import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceUi
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumChildTabHost
@@ -127,12 +128,10 @@ class TankDetailFragment :
 
         when (event) {
             is TankDetailViewModel.TankDetailEvent.NavigateToDeviceRouter -> {
-                navigateFromTankDetail(
-                    TankDetailFragmentDirections.actionTankDetailFragmentToDeviceRouterFragment(
-                        deviceId = event.deviceId,
-                        deviceIp = event.deviceIp,
-                        deviceTitle = event.deviceTitle
-                    )
+                openDeviceController(
+                    deviceId = event.deviceId,
+                    deviceIp = event.deviceIp,
+                    deviceTitle = event.deviceTitle
                 )
             }
 
@@ -528,6 +527,31 @@ class TankDetailFragment :
             directions
         )
     }
+
+    private fun openDeviceController(
+        deviceId: Long,
+        deviceIp: String,
+        deviceTitle: String
+    ) {
+        val navController =
+            findNavController()
+
+        if (navController.currentDestination?.id != R.id.tankDetailFragment) {
+            return
+        }
+
+        saveSelectedTabState(
+            tab = selectedTab
+        )
+
+        AppRouteNavigator.openDevice(
+            navController = navController,
+            deviceId = deviceId,
+            deviceIp = deviceIp,
+            deviceTitle = deviceTitle
+        )
+    }
+
 
     private fun observeTank() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->

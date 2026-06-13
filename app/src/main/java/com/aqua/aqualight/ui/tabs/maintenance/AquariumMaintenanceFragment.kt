@@ -32,8 +32,10 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.timeline.TimelineAxisView
 import com.aqua.aqualight.ui.common.timeline.TimelineDayResolver
 import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.careprofile.CareProfileCalculator
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
@@ -254,11 +256,17 @@ class AquariumMaintenanceFragment :
             return
         }
 
-        findNavController().navigate(
-            AquariumMaintenanceFragmentDirections.actionAquariumMaintenanceFragmentToTankSettingsFragment(
-                tankId = careProfileTargetTankId,
-                startTab = ""
-            )
+        val navController =
+            findNavController()
+
+        if (navController.currentDestination?.id != R.id.aquariumMaintenanceFragment) {
+            return
+        }
+
+        AppRouteNavigator.openTankSettings(
+            navController = navController,
+            tankId = careProfileTargetTankId,
+            startTab = AquariumTabArgs.BASIC
         )
     }
 

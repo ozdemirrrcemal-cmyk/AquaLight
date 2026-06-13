@@ -8,7 +8,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.navOptions
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
@@ -28,6 +27,7 @@ import com.aqua.aqualight.databinding.FragmentDeviceSetupBinding
 import com.aqua.aqualight.ui.common.bottomsheet.HomeWifiNetworksBottomSheetFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.devices.model.DeviceIconMapper
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.delay
@@ -819,12 +819,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private fun openDeviceMenu(
         deviceId: Long
     ) {
-        findNavController().navigate(
-            DeviceSetupFragmentDirections.actionDeviceSetupFragmentToDeviceRouterFragment(
-                deviceId = deviceId,
-                deviceIp = "",
-                deviceTitle = displayName
-            )
+        AppRouteNavigator.openDevice(
+            navController = findNavController(),
+            deviceId = deviceId,
+            deviceIp = "",
+            deviceTitle = displayName,
+            clearSetupFlow = true
         )
     }
 
