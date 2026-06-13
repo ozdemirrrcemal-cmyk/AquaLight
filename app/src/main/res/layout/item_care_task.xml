@@ -129,7 +129,7 @@
                 android:minWidth="78dp"
                 android:paddingStart="11dp"
                 android:paddingEnd="11dp"
-                android:text="Completed"
+                android:text="@string/maintenance_status_completed"
                 android:textColor="#5FD6B4"
                 android:textSize="11.5sp"
                 android:textStyle="bold"

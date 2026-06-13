@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Maintenance header / tabs -->
+    <string name="maintenance_title">Maintenance</string>
+    <string name="maintenance_action_add">+ Add</string>
+    <string name="maintenance_action_add_task">+ Add Task</string>
+    <string name="maintenance_action_add_care_task">Add care task</string>
+    <string name="maintenance_tab_all">All</string>
+    <string name="maintenance_tab_today">Today</string>
+    <string name="maintenance_tab_upcoming">Upcoming</string>
+    <string name="maintenance_tab_history">History</string>
+    <string name="maintenance_warning_icon">!</string>
+    <string name="maintenance_empty_text"></string>
+
+    <!-- Maintenance care profile warning -->
+    <string name="maintenance_care_profile_incomplete">Care profile incomplete</string>
+    <string name="maintenance_care_profiles_incomplete">Care profiles incomplete</string>
+    <string name="maintenance_improve_automatic_care_tasks">Improve automatic care tasks</string>
+    <string name="maintenance_aquariums_need_more_details">%1$d aquariums need more details</string>
+    <string name="maintenance_percent_value">%1$d%%</string>
+    <string name="maintenance_percent_preview" translatable="false">42%%</string>
+
+    <!-- Maintenance empty states -->
+    <string name="maintenance_empty_no_tasks_title">No care tasks yet</string>
+    <string name="maintenance_empty_no_tasks_message">Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup.</string>
+    <string name="maintenance_empty_today_title">Nothing due today</string>
+    <string name="maintenance_empty_today_message">There are no care tasks scheduled for today.</string>
+    <string name="maintenance_empty_upcoming_title">No upcoming tasks</string>
+    <string name="maintenance_empty_upcoming_message">Future care reminders will appear here.</string>
+    <string name="maintenance_empty_history_title">No completed tasks</string>
+    <string name="maintenance_empty_history_message">Completed maintenance tasks will be listed here.</string>
+
+    <!-- Add / edit care task form -->
+    <string name="maintenance_add_care_task_title">Add Care Task</string>
+    <string name="maintenance_edit_care_task_title">Edit Care Task</string>
+    <string name="maintenance_save_task">Save Task</string>
+    <string name="maintenance_update_task">Update Task</string>
+    <string name="maintenance_task_type_label">Task Type</string>
+    <string name="maintenance_select_task_type">Select Task Type</string>
+    <string name="maintenance_select_care_task_type">Select care task type</string>
+    <string name="maintenance_required">Required</string>
+    <string name="maintenance_custom_title_label">Custom Title</string>
+    <string name="maintenance_custom_title_hint">Example: Clean aquarium lid</string>
+    <string name="maintenance_aquarium_label">Aquarium</string>
+    <string name="maintenance_select_aquarium">Select aquarium</string>
+    <string name="maintenance_schedule_label">Schedule</string>
+    <string name="maintenance_date_label">Date</string>
+    <string name="maintenance_time_label">Time</string>
+    <string name="maintenance_repeat_label">Repeat</string>
+    <string name="maintenance_repeat_description">Create the next task automatically after completion.</string>
+    <string name="maintenance_repeat_every_label">Repeat every</string>
+    <string name="maintenance_days_label">days</string>
+    <string name="maintenance_reminder_label">Reminder</string>
+    <string name="maintenance_reminder_description">Notify when this care task is due.</string>
+    <string name="maintenance_missed_reminder_label">Remind if missed</string>
+    <string name="maintenance_missed_reminder_description">If not completed, remind again for a few days.</string>
+    <string name="maintenance_repeat_missed_reminders_for_label">Repeat missed reminders for</string>
+    <string name="maintenance_note_label">Note</string>
+    <string name="maintenance_note_hint">Optional note...</string>
+    <string name="maintenance_default_repeat_days">7</string>
+    <string name="maintenance_default_missed_reminder_days">3</string>
+    <string name="maintenance_only_pending_manual_tasks_editable">Only pending manual tasks can be edited.</string>
+    <string name="maintenance_create_aquarium_first">Create an aquarium first to add care tasks.</string>
+    <string name="maintenance_unnamed_aquarium">Unnamed aquarium</string>
+    <string name="maintenance_selected">Selected</string>
+    <string name="maintenance_selected_aquarium">Selected aquarium</string>
+    <string name="maintenance_select_water_change_percentage">Select water change percentage</string>
+    <string name="maintenance_validation_select_task_type">Please select a care task type.</string>
+    <string name="maintenance_validation_select_aquarium">Please select an aquarium.</string>
+    <string name="maintenance_validation_select_water_change_percentage">Please select water change percentage.</string>
+    <string name="maintenance_validation_custom_title_short">Custom task title must be at least 2 characters.</string>
+    <string name="maintenance_task_fallback_title">Care Task</string>
+    <string name="maintenance_water_change_percent_sheet_title">Water Change Percentage</string>
+    <string name="maintenance_task_title_with_percent">%1$s (%2$d%%)</string>
+    <string name="maintenance_task_category_with_percent">%1$s • %2$d%%</string>
+
+    <!-- Task detail -->
+    <string name="maintenance_task_detail_title">Task Detail</string>
+    <string name="maintenance_edit">Edit</string>
+    <string name="maintenance_edit_task">Edit task</string>
+    <string name="maintenance_task_information">Task Information</string>
+    <string name="maintenance_description_label">Description</string>
+    <string name="maintenance_automatic_task_info">This is an automatic task generated by AquaLight. It can be completed, but editing and deleting are disabled.</string>
+    <string name="maintenance_complete_task">Complete Task</string>
+    <string name="maintenance_delete_task">Delete Task</string>
+    <string name="maintenance_scheduled_date">Scheduled Date</string>
+    <string name="maintenance_scheduled_time">Scheduled Time</string>
+    <string name="maintenance_created_date">Created Date</string>
+    <string name="maintenance_missed_reminder_detail_label">Missed Reminder</string>
+    <string name="maintenance_every_days">Every %1$d days</string>
+    <string name="maintenance_every_days_if_missed">Every %1$d days if missed</string>
+    <string name="maintenance_on">On</string>
+    <string name="maintenance_off">Off</string>
+    <string name="maintenance_no_description">No description</string>
+    <string name="maintenance_status_pending">Pending</string>
+    <string name="maintenance_status_pending_overdue">Pending • Overdue</string>
+    <string name="maintenance_status_completed">Completed</string>
+    <string name="maintenance_status_completed_with_date">Completed • %1$s</string>
+    <string name="maintenance_dialog_complete_task_title">Complete Task?</string>
+    <string name="maintenance_dialog_complete_task_message">&quot;%1$s&quot; will be marked as completed.</string>
+    <string name="maintenance_dialog_delete_task_title">Delete Task?</string>
+    <string name="maintenance_dialog_delete_task_message">&quot;%1$s&quot; will be permanently deleted.</string>
+    <string name="maintenance_delete_failed_title">Delete Failed</string>
+    <string name="maintenance_delete_failed_message">Task could not be deleted. Please try again.</string>
+
+    <!-- Care task list / history -->
+    <string name="maintenance_today">Today</string>
+    <string name="maintenance_tomorrow">Tomorrow</string>
+    <string name="maintenance_yesterday">Yesterday</string>
+    <string name="maintenance_overdue">Overdue</string>
+    <string name="maintenance_unknown_aquarium">Unknown aquarium</string>
+    <string name="maintenance_manual_source">Manual</string>
+    <string name="maintenance_smart_source">Smart</string>
+    <string name="maintenance_completed_time">Completed %1$s</string>
+    <string name="maintenance_time_repeat_days">%1$s • Every %2$d days</string>
+    <string name="maintenance_reminder_active">Reminder active</string>
+    <string name="maintenance_reminder_active_missed_days">Reminder active • repeats %1$d days if missed</string>
+    <string name="maintenance_days_later">%1$d days later</string>
+    <string name="maintenance_one_day_ago">1 day ago</string>
+    <string name="maintenance_days_ago">%1$d days ago</string>
+    <string name="maintenance_date_header_relative">%1$s · %2$s</string>
+    <string name="maintenance_schedule_text_unavailable">-</string>
+    <string name="maintenance_schedule_overdue_suffix">%1$s • Overdue</string>
+    <string name="maintenance_completed_care_record">Completed care record</string>
+    <string name="maintenance_completed_at">Completed at</string>
+    <string name="maintenance_source_label">Source</string>
+    <string name="maintenance_status_label">Status</string>
+    <string name="maintenance_unknown">Unknown</string>
+    <string name="maintenance_delete_from_history">Delete from history</string>
+    <string name="maintenance_delete_from_history_title">Delete from history?</string>
+    <string name="maintenance_delete_from_history_message">&quot;%1$s&quot; will be removed from completed history.</string>
+
+    <!-- Care task type catalog categories -->
+    <string name="maintenance_category_water_care">Water Care</string>
+    <string name="maintenance_category_equipment">Equipment</string>
+    <string name="maintenance_category_cleaning">Cleaning</string>
+    <string name="maintenance_category_plants">Plants</string>
+    <string name="maintenance_category_livestock">Livestock</string>
+    <string name="maintenance_category_other">Other</string>
+
+    <!-- Care task type catalog titles -->
+    <string name="maintenance_task_type_water_change">Water Change</string>
+    <string name="maintenance_task_type_water_test">Water Test</string>
+    <string name="maintenance_task_type_temperature_check">Temperature Check</string>
+    <string name="maintenance_task_type_substrate_cleaning">Substrate Cleaning</string>
+    <string name="maintenance_task_type_filter_maintenance">Filter Maintenance</string>
+    <string name="maintenance_task_type_filter_change">Filter Change</string>
+    <string name="maintenance_task_type_pre_filter_cleaning">Pre-filter Cleaning</string>
+    <string name="maintenance_task_type_pipe_cleaning">Pipe Cleaning</string>
+    <string name="maintenance_task_type_diffuser_cleaning">Diffuser Cleaning</string>
+    <string name="maintenance_task_type_hose_cleaning">Hose Cleaning</string>
+    <string name="maintenance_task_type_device_check">Device Check</string>
+    <string name="maintenance_task_type_glass_cleaning">Glass Cleaning</string>
+    <string name="maintenance_task_type_algae_cleaning">Algae Cleaning</string>
+    <string name="maintenance_task_type_plant_trim">Plant Trim</string>
+    <string name="maintenance_task_type_fertilizer_dosing">Fertilizer Dosing</string>
+    <string name="maintenance_task_type_plant_health_check">Plant Health Check</string>
+    <string name="maintenance_task_type_co2_check">CO2 Check</string>
+    <string name="maintenance_task_type_light_check">Light Check</string>
+    <string name="maintenance_task_type_feeding">Feeding</string>
+    <string name="maintenance_task_type_livestock_check">Livestock Check</string>
+    <string name="maintenance_task_type_custom">Custom Task</string>
+
+    <!-- Care task type catalog descriptions -->
+    <string name="maintenance_task_desc_water_change">Change part of the aquarium water.</string>
+    <string name="maintenance_task_desc_water_test">Check water parameters.</string>
+    <string name="maintenance_task_desc_temperature_check">Check aquarium temperature.</string>
+    <string name="maintenance_task_desc_substrate_cleaning">Clean substrate surface if needed.</string>
+    <string name="maintenance_task_desc_filter_maintenance">Check filter flow and media condition.</string>
+    <string name="maintenance_task_desc_filter_change">Replace or maintain filter media carefully.</string>
+    <string name="maintenance_task_desc_pre_filter_cleaning">Clean pre-filter sponge or intake guard.</string>
+    <string name="maintenance_task_desc_pipe_cleaning">Clean aquarium pipes.</string>
+    <string name="maintenance_task_desc_diffuser_cleaning">Clean CO2 diffuser.</string>
+    <string name="maintenance_task_desc_hose_cleaning">Clean aquarium hoses.</string>
+    <string name="maintenance_task_desc_device_check">Check connected aquarium devices.</string>
+    <string name="maintenance_task_desc_glass_cleaning">Clean aquarium glass.</string>
+    <string name="maintenance_task_desc_algae_cleaning">Remove visible algae if needed.</string>
+    <string name="maintenance_task_desc_plant_trim">Trim aquarium plants.</string>
+    <string name="maintenance_task_desc_fertilizer_dosing">Dose aquarium fertilizer.</string>
+    <string name="maintenance_task_desc_plant_health_check">Check plant growth and leaf condition.</string>
+    <string name="maintenance_task_desc_co2_check">Check CO2 flow and diffuser bubbles.</string>
+    <string name="maintenance_task_desc_light_check">Check aquarium lighting schedule.</string>
+    <string name="maintenance_task_desc_feeding">Feed aquarium livestock.</string>
+    <string name="maintenance_task_desc_livestock_check">Observe livestock behavior and health.</string>
+    <string name="maintenance_task_desc_custom">Custom aquarium care task.</string>
+
+    <!-- Smart care rule titles -->
+    <string name="maintenance_smart_rule_initial_setup_check_title">Initial setup check</string>
+    <string name="maintenance_smart_rule_check_light_duration_title">Check light duration</string>
+    <string name="maintenance_smart_rule_co2_check_title">CO₂ check</string>
+    <string name="maintenance_smart_rule_early_water_change_title">Early water change</string>
+    <string name="maintenance_smart_rule_startup_water_change_title">Startup water change</string>
+    <string name="maintenance_smart_rule_plant_adaptation_check_title">Plant adaptation check</string>
+    <string name="maintenance_smart_rule_algae_check_title">Algae check</string>
+    <string name="maintenance_smart_rule_review_fertilizer_plan_title">Review fertilizer plan</string>
+    <string name="maintenance_smart_rule_fertilizer_check_title">Fertilizer check</string>
+    <string name="maintenance_smart_rule_water_test_before_livestock_title">Water test before livestock</string>
+    <string name="maintenance_smart_rule_livestock_readiness_check_title">Livestock readiness check</string>
+    <string name="maintenance_smart_rule_fish_addition_check_title">Fish addition check</string>
+    <string name="maintenance_smart_rule_adjust_light_period_title">Adjust light period</string>
+    <string name="maintenance_smart_rule_first_trimming_check_title">First trimming check</string>
+    <string name="maintenance_smart_rule_weekly_water_change_title">Weekly water change</string>
+    <string name="maintenance_smart_rule_filter_flow_check_title">Filter flow check</string>
+    <string name="maintenance_smart_rule_shrimp_stability_check_title">Shrimp stability check</string>
+    <string name="maintenance_smart_rule_feeding_review_title">Feeding review</string>
+    <string name="maintenance_smart_rule_startup_phase_complete_title">Startup phase complete</string>
+    <string name="maintenance_smart_rule_plant_trimming_check_title">Plant trimming check</string>
+    <string name="maintenance_smart_rule_filter_maintenance_check_title">Filter maintenance check</string>
+    <string name="maintenance_smart_rule_co2_system_check_title">CO₂ system check</string>
+    <string name="maintenance_smart_rule_livestock_health_check_title">Livestock health check</string>
+
+    <!-- Smart care rule messages -->
+    <string name="maintenance_smart_rule_initial_setup_check_message">Check that the filter is running, equipment is installed correctly, and water circulation is stable.</string>
+    <string name="maintenance_smart_rule_check_light_duration_message">During the early setup phase, keeping the light period around 6 hours can help reduce algae risk.</string>
+    <string name="maintenance_smart_rule_co2_check_message">Check CO₂ timing, drop checker color, and livestock behavior.</string>
+    <string name="maintenance_smart_rule_early_water_change_message">Active soil can release excess nutrients during the first days. A water change helps reduce algae risk.</string>
+    <string name="maintenance_smart_rule_startup_water_change_message">Regular water changes during the first weeks help stabilize the aquarium and reduce excess nutrients.</string>
+    <string name="maintenance_smart_rule_plant_adaptation_check_message">Check for melting leaves, weak stems, or newly planted sections that may need adjustment.</string>
+    <string name="maintenance_smart_rule_algae_check_message">Check glass, hardscape, and plant leaves for early algae signs.</string>
+    <string name="maintenance_smart_rule_review_fertilizer_plan_message">Add your fertilizer product to improve automatic dosing recommendations.</string>
+    <string name="maintenance_smart_rule_fertilizer_check_message">Start carefully with reduced dosing and adjust based on plant response and algae signs.</string>
+    <string name="maintenance_smart_rule_water_test_before_livestock_message">Before adding livestock, check that the aquarium is stable and no ammonia or nitrite is detected.</string>
+    <string name="maintenance_smart_rule_livestock_readiness_check_message">If water parameters are stable, you can start planning suitable cleanup crew or livestock gradually.</string>
+    <string name="maintenance_smart_rule_fish_addition_check_message">Add fish only if the tank is stable. Start with a small number and avoid overstocking.</string>
+    <string name="maintenance_smart_rule_adjust_light_period_message">If plant growth is stable and algae is under control, you can gradually increase the light period.</string>
+    <string name="maintenance_smart_rule_first_trimming_check_message">Check fast-growing plants and trim unhealthy or overgrown sections if needed.</string>
+    <string name="maintenance_smart_rule_weekly_water_change_message">Continue weekly water changes while the aquarium matures.</string>
+    <string name="maintenance_smart_rule_filter_flow_check_message">Check filter flow and make sure circulation is still strong and stable.</string>
+    <string name="maintenance_smart_rule_shrimp_stability_check_message">Shrimp are sensitive to unstable water parameters. Check behavior and avoid sudden changes.</string>
+    <string name="maintenance_smart_rule_feeding_review_message">Review feeding amount and remove excess food if needed.</string>
+    <string name="maintenance_smart_rule_startup_phase_complete_message">Your aquarium has reached the end of the startup phase. Continue with a regular maintenance routine.</string>
+    <string name="maintenance_smart_rule_weekly_water_change_mature_message">Perform a regular water change to keep water quality stable.</string>
+    <string name="maintenance_smart_rule_plant_trimming_check_message">Check plant growth and trim overgrown or unhealthy sections if needed.</string>
+    <string name="maintenance_smart_rule_filter_maintenance_check_message">Check filter flow and clean mechanical media only if the flow is reduced.</string>
+    <string name="maintenance_smart_rule_co2_system_check_message">Check CO₂ timing, bubble rate, drop checker color, and livestock behavior.</string>
+    <string name="maintenance_smart_rule_livestock_health_check_message">Check appetite, behavior, breathing, and visible signs of stress.</string>
+
+    <!-- Smart care generated task messages -->
+    <string name="maintenance_smart_msg_water_change_day">Day %1$d. Change about %2$d%% of the water to help keep the aquarium stable.</string>
+    <string name="maintenance_smart_msg_water_change">Change about %1$d%% of the water to help keep the aquarium stable.</string>
+    <string name="maintenance_smart_msg_fertilizer_missing_day">Day %1$d. Add your fertilizer product to improve automatic dosing recommendations.</string>
+    <string name="maintenance_smart_msg_fertilizer_missing">Add your fertilizer product to improve automatic dosing recommendations.</string>
+    <string name="maintenance_smart_msg_delay_fertilizer_day">Day %1$d. Delay %2$s dosing for now and monitor plant response.</string>
+    <string name="maintenance_smart_msg_reduced_fertilizer_day">Day %1$d. Use about %2$s mL of %3$s as a reduced startup dose.</string>
+    <string name="maintenance_smart_msg_normal_fertilizer">Dose about %1$s mL of %2$s %3$s.</string>
+    <string name="maintenance_smart_msg_co2_check">Check CO₂ timing, drop checker color, and livestock behavior.</string>
+    <string name="maintenance_smart_msg_feeding">Feed lightly and remove excess food if needed.</string>
+    <string name="maintenance_smart_msg_lighting">Check the light period and keep it stable.</string>
+    <string name="maintenance_smart_msg_water_test">Test water before making livestock or dosing decisions.</string>
+    <string name="maintenance_smart_msg_plant_check">Check plant health, melting leaves, and weak growth.</string>
+    <string name="maintenance_smart_msg_plant_trim">Trim overgrown or unhealthy plant sections if needed.</string>
+    <string name="maintenance_smart_msg_filter_check">Check filter flow and clean only if flow is reduced.</string>
+    <string name="maintenance_smart_msg_glass_cleaning">Check glass and hardscape for early algae signs.</string>
+    <string name="maintenance_smart_msg_livestock_check">Check livestock behavior, appetite, and visible stress signs.</string>
+    <string name="maintenance_smart_frequency_daily">daily</string>
+    <string name="maintenance_smart_frequency_weekly">weekly</string>
+    <string name="maintenance_smart_frequency_once_or_twice_weekly">once or twice weekly</string>
+    <string name="maintenance_smart_frequency_twice_weekly">twice weekly</string>
+    <string name="maintenance_smart_frequency_two_to_three_times_weekly">2–3 times weekly</string>
+    <string name="maintenance_smart_frequency_as_needed">as needed</string>
+
+    <!-- Notifications -->
+    <string name="maintenance_notification_due_now">This care task is due now.</string>
+    <string name="maintenance_notification_message_with_aquarium">%1$s\n%2$s</string>
+
+</resources>

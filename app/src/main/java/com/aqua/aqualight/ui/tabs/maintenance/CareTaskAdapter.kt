@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -22,6 +23,7 @@ import java.util.Date
 import java.util.Locale
 
 class CareTaskAdapter(
+  private val context: Context,
   private val onTaskClick: (CareTaskUi) -> Unit
 ) : ListAdapter<CareTaskAdapter.CareTaskListItem, RecyclerView.ViewHolder>(
   CareTaskListDiffCallback
@@ -152,15 +154,27 @@ class CareTaskAdapter(
 
     return when {
       isToday(millis) -> {
-        "$dateText · Today"
+        context.getString(
+          R.string.maintenance_date_header_relative,
+          dateText,
+          context.getString(R.string.maintenance_today)
+        )
       }
 
       isTomorrow(millis) -> {
-        "$dateText · Tomorrow"
+        context.getString(
+          R.string.maintenance_date_header_relative,
+          dateText,
+          context.getString(R.string.maintenance_tomorrow)
+        )
       }
 
       isYesterday(millis) -> {
-        "$dateText · Yesterday"
+        context.getString(
+          R.string.maintenance_date_header_relative,
+          dateText,
+          context.getString(R.string.maintenance_yesterday)
+        )
       } else -> {
         dateText
       }
@@ -289,7 +303,7 @@ class CareTaskAdapter(
       )
 
       binding.tvTaskSecondary.text = item.tankName.ifBlank {
-        "Aquarium"
+        context.getString(R.string.maintenance_aquarium_label)
       }
       binding.tvTaskSecondary.textSize = 11.5f
       binding.tvTaskSecondary.setTextColor(
@@ -315,16 +329,17 @@ class CareTaskAdapter(
     private fun buildScheduleText(
       item: CareTaskUi
     ): String {
-      return buildString {
-        if (item.primaryTimeText.isNotBlank()) {
-          append(item.primaryTimeText)
-        } else {
-          append("-")
-        }
+      val baseText = item.primaryTimeText.ifBlank {
+        context.getString(R.string.maintenance_schedule_text_unavailable)
+      }
 
-        if (item.isOverdue && item.status == CareTaskStatus.PENDING) {
-          append(" • Overdue")
-        }
+      return if (item.isOverdue && item.status == CareTaskStatus.PENDING) {
+        context.getString(
+          R.string.maintenance_schedule_overdue_suffix,
+          baseText
+        )
+      } else {
+        baseText
       }
     }
 

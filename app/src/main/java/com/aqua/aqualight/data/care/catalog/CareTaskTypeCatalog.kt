@@ -1,210 +1,224 @@
 package com.aqua.aqualight.data.care.catalog
 
+import android.content.Context
+import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.care.model.CareTaskType
 
 data class CareTaskTypeDefinition(
   val type: CareTaskType,
-  val title: String,
-  val category: String,
+  @StringRes val titleRes: Int,
+  @StringRes val categoryRes: Int,
   val iconRes: Int,
   val accentColor: String,
-  val defaultDescription: String
-)
+  @StringRes val defaultDescriptionRes: Int
+) {
+
+  fun title(
+    context: Context
+  ): String {
+    return context.getString(titleRes)
+  }
+
+  fun category(
+    context: Context
+  ): String {
+    return context.getString(categoryRes)
+  }
+
+  fun defaultDescription(
+    context: Context
+  ): String {
+    return context.getString(defaultDescriptionRes)
+  }
+}
 
 object CareTaskTypeCatalog {
-
-  const val CATEGORY_WATER = "Water Care"
-  const val CATEGORY_EQUIPMENT = "Equipment"
-  const val CATEGORY_CLEANING = "Cleaning"
-  const val CATEGORY_PLANTS = "Plants"
-  const val CATEGORY_LIVESTOCK = "Livestock"
-  const val CATEGORY_OTHER = "Other"
 
   val all: List<CareTaskTypeDefinition> = listOf(
     CareTaskTypeDefinition(
       type = CareTaskType.WATER_CHANGE,
-      title = "Water Change",
-      category = CATEGORY_WATER,
+      titleRes = R.string.maintenance_task_type_water_change,
+      categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_water_change_24,
       accentColor = "#2196F3",
-      defaultDescription = "Change part of the aquarium water."
+      defaultDescriptionRes = R.string.maintenance_task_desc_water_change
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.WATER_TEST,
-      title = "Water Test",
-      category = CATEGORY_WATER,
+      titleRes = R.string.maintenance_task_type_water_test,
+      categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_water_test_24,
       accentColor = "#5C7CFA",
-      defaultDescription = "Check water parameters."
+      defaultDescriptionRes = R.string.maintenance_task_desc_water_test
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.TEMPERATURE_CHECK,
-      title = "Temperature Check",
-      category = CATEGORY_WATER,
+      titleRes = R.string.maintenance_task_type_temperature_check,
+      categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_temperature_24,
       accentColor = "#FF8A4C",
-      defaultDescription = "Check aquarium temperature."
+      defaultDescriptionRes = R.string.maintenance_task_desc_temperature_check
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.SUBSTRATE_CLEANING,
-      title = "Substrate Cleaning",
-      category = CATEGORY_WATER,
+      titleRes = R.string.maintenance_task_type_substrate_cleaning,
+      categoryRes = R.string.maintenance_category_water_care,
       iconRes = R.drawable.ic_care_substrate_24,
       accentColor = "#B7793E",
-      defaultDescription = "Clean substrate surface if needed."
+      defaultDescriptionRes = R.string.maintenance_task_desc_substrate_cleaning
     ),
 
     CareTaskTypeDefinition(
       type = CareTaskType.FILTER_MAINTENANCE,
-      title = "Filter Maintenance",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_filter_maintenance,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_filter_24,
       accentColor = "#F2A900",
-      defaultDescription = "Check filter flow and media condition."
+      defaultDescriptionRes = R.string.maintenance_task_desc_filter_maintenance
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.FILTER_CHANGE,
-      title = "Filter Change",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_filter_change,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_filter_change_24,
       accentColor = "#D99A00",
-      defaultDescription = "Replace or maintain filter media carefully."
+      defaultDescriptionRes = R.string.maintenance_task_desc_filter_change
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.PRE_FILTER_CLEANING,
-      title = "Pre-filter Cleaning",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_pre_filter_cleaning,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_prefilter_24,
       accentColor = "#8EA9A0",
-      defaultDescription = "Clean pre-filter sponge or intake guard."
+      defaultDescriptionRes = R.string.maintenance_task_desc_pre_filter_cleaning
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.PIPE_CLEANING,
-      title = "Pipe Cleaning",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_pipe_cleaning,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_pipe_24,
       accentColor = "#D8F3B0",
-      defaultDescription = "Clean aquarium pipes."
+      defaultDescriptionRes = R.string.maintenance_task_desc_pipe_cleaning
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.DIFFUSER_CLEANING,
-      title = "Diffuser Cleaning",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_diffuser_cleaning,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_diffuser_24,
       accentColor = "#45D6B4",
-      defaultDescription = "Clean CO2 diffuser."
+      defaultDescriptionRes = R.string.maintenance_task_desc_diffuser_cleaning
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.HOSE_CLEANING,
-      title = "Hose Cleaning",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_hose_cleaning,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_hose_24,
       accentColor = "#7B2CBF",
-      defaultDescription = "Clean aquarium hoses."
+      defaultDescriptionRes = R.string.maintenance_task_desc_hose_cleaning
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.DEVICE_CHECK,
-      title = "Device Check",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_device_check,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_device_24,
       accentColor = "#4A90E2",
-      defaultDescription = "Check connected aquarium devices."
+      defaultDescriptionRes = R.string.maintenance_task_desc_device_check
     ),
 
     CareTaskTypeDefinition(
       type = CareTaskType.GLASS_CLEANING,
-      title = "Glass Cleaning",
-      category = CATEGORY_CLEANING,
+      titleRes = R.string.maintenance_task_type_glass_cleaning,
+      categoryRes = R.string.maintenance_category_cleaning,
       iconRes = R.drawable.ic_care_glass_24,
       accentColor = "#66C7F4",
-      defaultDescription = "Clean aquarium glass."
+      defaultDescriptionRes = R.string.maintenance_task_desc_glass_cleaning
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.ALGAE_CLEANING,
-      title = "Algae Cleaning",
-      category = CATEGORY_CLEANING,
+      titleRes = R.string.maintenance_task_type_algae_cleaning,
+      categoryRes = R.string.maintenance_category_cleaning,
       iconRes = R.drawable.ic_care_algae_24,
       accentColor = "#4CAF50",
-      defaultDescription = "Remove visible algae if needed."
+      defaultDescriptionRes = R.string.maintenance_task_desc_algae_cleaning
     ),
 
     CareTaskTypeDefinition(
       type = CareTaskType.PLANT_TRIM,
-      title = "Plant Trim",
-      category = CATEGORY_PLANTS,
+      titleRes = R.string.maintenance_task_type_plant_trim,
+      categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_trim_24,
       accentColor = "#4DD6A7",
-      defaultDescription = "Trim aquarium plants."
+      defaultDescriptionRes = R.string.maintenance_task_desc_plant_trim
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.FERTILIZER_DOSING,
-      title = "Fertilizer Dosing",
-      category = CATEGORY_PLANTS,
+      titleRes = R.string.maintenance_task_type_fertilizer_dosing,
+      categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_fertilizer_24,
       accentColor = "#8BC34A",
-      defaultDescription = "Dose aquarium fertilizer."
+      defaultDescriptionRes = R.string.maintenance_task_desc_fertilizer_dosing
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.PLANT_HEALTH_CHECK,
-      title = "Plant Health Check",
-      category = CATEGORY_PLANTS,
+      titleRes = R.string.maintenance_task_type_plant_health_check,
+      categoryRes = R.string.maintenance_category_plants,
       iconRes = R.drawable.ic_care_plant_health_24,
       accentColor = "#66BB6A",
-      defaultDescription = "Check plant growth and leaf condition."
+      defaultDescriptionRes = R.string.maintenance_task_desc_plant_health_check
     ),
 
     CareTaskTypeDefinition(
       type = CareTaskType.CO2_CHECK,
-      title = "CO2 Check",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_co2_check,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_co2_24,
       accentColor = "#00BCD4",
-      defaultDescription = "Check CO2 flow and diffuser bubbles."
+      defaultDescriptionRes = R.string.maintenance_task_desc_co2_check
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.LIGHT_CHECK,
-      title = "Light Check",
-      category = CATEGORY_EQUIPMENT,
+      titleRes = R.string.maintenance_task_type_light_check,
+      categoryRes = R.string.maintenance_category_equipment,
       iconRes = R.drawable.ic_care_light_24,
       accentColor = "#FFD54F",
-      defaultDescription = "Check aquarium lighting schedule."
+      defaultDescriptionRes = R.string.maintenance_task_desc_light_check
     ),
 
     CareTaskTypeDefinition(
       type = CareTaskType.FEEDING,
-      title = "Feeding",
-      category = CATEGORY_LIVESTOCK,
+      titleRes = R.string.maintenance_task_type_feeding,
+      categoryRes = R.string.maintenance_category_livestock,
       iconRes = R.drawable.ic_care_feeding_24,
       accentColor = "#7C4DFF",
-      defaultDescription = "Feed aquarium livestock."
+      defaultDescriptionRes = R.string.maintenance_task_desc_feeding
     ),
     CareTaskTypeDefinition(
       type = CareTaskType.LIVESTOCK_CHECK,
-      title = "Livestock Check",
-      category = CATEGORY_LIVESTOCK,
+      titleRes = R.string.maintenance_task_type_livestock_check,
+      categoryRes = R.string.maintenance_category_livestock,
       iconRes = R.drawable.ic_care_livestock_24,
       accentColor = "#FF6B6B",
-      defaultDescription = "Observe livestock behavior and health."
+      defaultDescriptionRes = R.string.maintenance_task_desc_livestock_check
     ),
 
     CareTaskTypeDefinition(
       type = CareTaskType.CUSTOM,
-      title = "Custom Task",
-      category = CATEGORY_OTHER,
+      titleRes = R.string.maintenance_task_type_custom,
+      categoryRes = R.string.maintenance_category_other,
       iconRes = R.drawable.ic_care_custom_24,
       accentColor = "#8FA4BE",
-      defaultDescription = "Custom aquarium care task."
+      defaultDescriptionRes = R.string.maintenance_task_desc_custom
     )
   )
 
-  val categories: List<String> = listOf(
-    CATEGORY_WATER,
-    CATEGORY_EQUIPMENT,
-    CATEGORY_CLEANING,
-    CATEGORY_PLANTS,
-    CATEGORY_LIVESTOCK,
-    CATEGORY_OTHER
+  val categoryResIds: List<Int> = listOf(
+    R.string.maintenance_category_water_care,
+    R.string.maintenance_category_equipment,
+    R.string.maintenance_category_cleaning,
+    R.string.maintenance_category_plants,
+    R.string.maintenance_category_livestock,
+    R.string.maintenance_category_other
   )
 
   fun get(
@@ -215,11 +229,11 @@ object CareTaskTypeCatalog {
     } ?: all.last()
   }
 
-  fun byCategory(
-    category: String
+  fun byCategoryRes(
+    @StringRes categoryRes: Int
   ): List<CareTaskTypeDefinition> {
     return all.filter { item ->
-      item.category == category
+      item.categoryRes == categoryRes
     }
   }
 }

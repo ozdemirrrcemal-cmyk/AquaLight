@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/maintenanceRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -46,7 +47,7 @@
                 android:background="@drawable/bg_maintenance_tab_selected"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="All"
+                android:text="@string/maintenance_tab_all"
                 android:textColor="@android:color/white"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -60,7 +61,7 @@
                 android:background="@drawable/bg_maintenance_tab_unselected"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="Today"
+                android:text="@string/maintenance_tab_today"
                 android:textColor="#8FA4BE"
                 android:textSize="12sp" />
 
@@ -73,7 +74,7 @@
                 android:background="@drawable/bg_maintenance_tab_unselected"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="Upcoming"
+                android:text="@string/maintenance_tab_upcoming"
                 android:textColor="#8FA4BE"
                 android:textSize="13sp" />
 
@@ -85,7 +86,7 @@
                 android:background="@drawable/bg_maintenance_tab_unselected"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="History"
+                android:text="@string/maintenance_tab_history"
                 android:textColor="#8FA4BE"
                 android:textSize="13sp" />
 
@@ -135,7 +136,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:text="!"
+                    android:text="@string/maintenance_warning_icon"
                     android:textColor="#E0A84C"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -157,7 +158,7 @@
                     android:ellipsize="end"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:text="Care profile incomplete"
+                    android:text="@string/maintenance_care_profile_incomplete"
                     android:textColor="@android:color/white"
                     android:textSize="13sp"
                     android:textStyle="bold" />
@@ -170,7 +171,7 @@
                     android:ellipsize="end"
                     android:includeFontPadding="false"
                     android:maxLines="1"
-                    android:text="Improve automatic care tasks"
+                    android:text="@string/maintenance_improve_automatic_care_tasks"
                     android:textColor="#8FA4BE"
                     android:textSize="11.5sp" />
 
@@ -183,7 +184,7 @@
                 android:background="@drawable/bg_maintenance_profile_percent_warning"
                 android:gravity="center"
                 android:includeFontPadding="false"
-                android:text="42%"
+                tools:text="@string/maintenance_percent_preview"
                 android:textColor="#E0A84C"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -269,7 +270,7 @@
             android:layout_marginTop="18dp"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="No care tasks yet"
+            android:text="@string/maintenance_empty_no_tasks_title"
             android:textColor="?attr/colorOnSurface"
             android:textSize="17sp"
             android:textStyle="bold" />
@@ -282,7 +283,7 @@
             android:gravity="center"
             android:includeFontPadding="false"
             android:lineSpacingExtra="3dp"
-            android:text="Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup."
+            android:text="@string/maintenance_empty_no_tasks_message"
             android:textColor="#8FA4BE"
             android:textSize="13sp" />
 
@@ -293,7 +294,7 @@
             android:layout_marginTop="22dp"
             android:insetTop="0dp"
             android:insetBottom="0dp"
-            android:text="+ Add Task"
+            android:text="@string/maintenance_action_add_task"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textSize="13sp"

@@ -143,16 +143,16 @@ class AddCareTaskFragment :
     private fun setupInitialUi() {
         setupHeader(
             title = if (isEditMode) {
-                "Edit Care Task"
+                getString(R.string.maintenance_edit_care_task_title)
             } else {
-                "Add Care Task"
+                getString(R.string.maintenance_add_care_task_title)
             }
         )
 
         binding.btnSaveTask.text = if (isEditMode) {
-            "Update Task"
+            getString(R.string.maintenance_update_task)
         } else {
-            "Save Task"
+            getString(R.string.maintenance_save_task)
         }
 
         binding.switchReminder.isChecked = true
@@ -235,7 +235,7 @@ class AddCareTaskFragment :
                         task.status != CareTaskStatus.PENDING
                     ) {
                         showSnackBar(
-                            message = "Only pending manual tasks can be edited.",
+                            message = getString(R.string.maintenance_only_pending_manual_tasks_editable),
                             type = BaseActivity.SnackType.WARNING
                         )
                         closeForm()
@@ -291,7 +291,7 @@ class AddCareTaskFragment :
     private fun showTaskTypeBottomSheet() {
         CareTaskTypeBottomSheetFragment.show(
             fragmentManager = childFragmentManager,
-            title = "Select Task Type",
+            title = getString(R.string.maintenance_select_task_type),
             resultRequestKey = CareTaskTypeBottomSheetFragment.REQUEST_KEY_SELECT_TASK_TYPE,
             selectedType = selectedType
         )
@@ -416,7 +416,7 @@ class AddCareTaskFragment :
         val selected = percent == selectedWaterChangePercent
 
         return TextView(requireContext()).apply {
-            text = "$percent%"
+            text = getString(R.string.maintenance_percent_value, percent)
             gravity = Gravity.CENTER
             textSize = 12.8f
             setTextColor(Color.WHITE)
@@ -474,7 +474,7 @@ class AddCareTaskFragment :
     private fun showAquariumBottomSheet() {
         if (latestTanks.isEmpty()) {
             showSnackBar(
-                message = "Create an aquarium first to add care tasks.",
+                message = getString(R.string.maintenance_create_aquarium_first),
                 type = BaseActivity.SnackType.WARNING
             )
             return
@@ -579,7 +579,7 @@ class AddCareTaskFragment :
 
         val title = TextView(requireContext()).apply {
             text = tank.name.ifBlank {
-                "Unnamed aquarium"
+                getString(R.string.maintenance_unnamed_aquarium)
             }
             textSize = 13.5f
             setTextColor(Color.WHITE)
@@ -603,7 +603,7 @@ class AddCareTaskFragment :
 
         val check = TextView(requireContext()).apply {
             text = if (selected) {
-                "Selected"
+                getString(R.string.maintenance_selected)
             } else {
                 ""
             }
@@ -626,15 +626,16 @@ class AddCareTaskFragment :
 
         if (type == null) {
             binding.taskTypeIconContainer.isVisible = false
-            binding.tvTaskTypeTitle.text = "Select care task type"
+            binding.tvTaskTypeTitle.text = getString(R.string.maintenance_select_care_task_type)
             binding.tvTaskTypeTitle.setTextColor(Color.parseColor("#8FA4BE"))
-            binding.tvTaskTypeSubtitle.text = "Required"
+            binding.tvTaskTypeSubtitle.text = getString(R.string.maintenance_required)
             binding.tvTaskTypeSubtitle.setTextColor(Color.parseColor("#6F829B"))
             return
         }
 
         val typeUi = CareTaskTypeCatalog.get(type)
-        val category = getCategoryForTaskType(type)
+        val typeTitle = typeUi.title(requireContext())
+        val category = typeUi.category(requireContext())
         val accentColor = Color.parseColor(typeUi.accentColor)
 
         binding.taskTypeIconContainer.isVisible = true
@@ -650,21 +651,29 @@ class AddCareTaskFragment :
             val percent = selectedWaterChangePercent
 
             if (percent == null) {
-                typeUi.title
+                typeTitle
             } else {
-                "${typeUi.title} ($percent%)"
+                getString(
+                    R.string.maintenance_task_title_with_percent,
+                    typeTitle,
+                    percent
+                )
             }
         } else {
-            typeUi.title
+            typeTitle
         }
 
         val subtitle = when {
             type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent == null -> {
-                "Select water change percentage"
+                getString(R.string.maintenance_select_water_change_percentage)
             }
 
             type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent != null -> {
-                "$category • ${selectedWaterChangePercent}%"
+                getString(
+                    R.string.maintenance_task_category_with_percent,
+                    category,
+                    selectedWaterChangePercent
+                )
             }
 
             else -> {
@@ -684,18 +693,18 @@ class AddCareTaskFragment :
         }
 
         if (selectedTank == null) {
-            binding.tvAquariumTitle.text = "Select aquarium"
+            binding.tvAquariumTitle.text = getString(R.string.maintenance_select_aquarium)
             binding.tvAquariumTitle.setTextColor(Color.parseColor("#8FA4BE"))
-            binding.tvAquariumSubtitle.text = "Required"
+            binding.tvAquariumSubtitle.text = getString(R.string.maintenance_required)
             binding.tvAquariumSubtitle.setTextColor(Color.parseColor("#6F829B"))
             return
         }
 
         binding.tvAquariumTitle.text = selectedTank.name.ifBlank {
-            "Unnamed aquarium"
+            getString(R.string.maintenance_unnamed_aquarium)
         }
         binding.tvAquariumTitle.setTextColor(Color.WHITE)
-        binding.tvAquariumSubtitle.text = "Selected aquarium"
+        binding.tvAquariumSubtitle.text = getString(R.string.maintenance_selected_aquarium)
         binding.tvAquariumSubtitle.setTextColor(Color.parseColor("#5FD6B4"))
     }
 
@@ -836,7 +845,7 @@ class AddCareTaskFragment :
 
         if (type == null) {
             showSnackBar(
-                message = "Please select a care task type.",
+                message = getString(R.string.maintenance_validation_select_task_type),
                 type = BaseActivity.SnackType.WARNING
             )
             return
@@ -844,7 +853,7 @@ class AddCareTaskFragment :
 
         if (selectedTankId == 0L) {
             showSnackBar(
-                message = "Please select an aquarium.",
+                message = getString(R.string.maintenance_validation_select_aquarium),
                 type = BaseActivity.SnackType.WARNING
             )
             return
@@ -852,7 +861,7 @@ class AddCareTaskFragment :
 
         if (type == CareTaskType.WATER_CHANGE && selectedWaterChangePercent == null) {
             showSnackBar(
-                message = "Please select water change percentage.",
+                message = getString(R.string.maintenance_validation_select_water_change_percentage),
                 type = BaseActivity.SnackType.WARNING
             )
             return
@@ -866,7 +875,7 @@ class AddCareTaskFragment :
 
         if (type == CareTaskType.CUSTOM && customTitle.length < 2) {
             showSnackBar(
-                message = "Custom task title must be at least 2 characters.",
+                message = getString(R.string.maintenance_validation_custom_title_short),
                 type = BaseActivity.SnackType.WARNING
             )
             return
@@ -876,21 +885,21 @@ class AddCareTaskFragment :
             .toString()
             .toIntOrNull()
             ?.coerceAtLeast(1)
-            ?: 7
+            ?: getString(R.string.maintenance_default_repeat_days).toInt()
 
         val missedDays = binding.etMissedReminderDays.text
             .toString()
             .toIntOrNull()
             ?.coerceAtLeast(1)
-            ?: 3
+            ?: getString(R.string.maintenance_default_missed_reminder_days).toInt()
 
         val title = if (type == CareTaskType.CUSTOM) {
             customTitle
         } else {
-            typeUi.title
+            typeUi.title(requireContext())
         }
 
-        val description = typeUi.defaultDescription
+        val description = typeUi.defaultDescription(requireContext())
 
         val waterPercent = if (type == CareTaskType.WATER_CHANGE) {
             selectedWaterChangePercent
@@ -958,21 +967,6 @@ class AddCareTaskFragment :
         }
     }
 
-    private fun getCategoryForTaskType(
-        type: CareTaskType
-    ): String {
-        CareTaskTypeCatalog.categories.forEach { category ->
-            val match = CareTaskTypeCatalog.byCategory(category).firstOrNull { item ->
-                item.type == type
-            }
-
-            if (match != null) {
-                return category
-            }
-        }
-
-        return "Care Task"
-    }
 
     private fun closeForm() {
         findNavController().navigateUp()

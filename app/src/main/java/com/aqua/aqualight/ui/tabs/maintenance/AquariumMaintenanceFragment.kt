@@ -85,11 +85,11 @@ class AquariumMaintenanceFragment :
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = "Maintenance",
+                titleOverride = getString(R.string.maintenance_title),
                 showBackButton = false,
                 primaryAction = AquaHeaderPrimaryAction(
-                    text = "+ Add",
-                    contentDescription = "Add care task",
+                    text = getString(R.string.maintenance_action_add),
+                    contentDescription = getString(R.string.maintenance_action_add_care_task),
                     onClick = {
                         openAddCareTaskScreen()
                     }
@@ -100,6 +100,7 @@ class AquariumMaintenanceFragment :
 
     private fun setupRecycler() {
         adapter = CareTaskAdapter(
+            context = requireContext(),
             onTaskClick = { task ->
                 openTaskDetailScreen(task)
             }
@@ -234,20 +235,26 @@ class AquariumMaintenanceFragment :
         careProfileTargetTankId = targetTank.id
 
         binding.cardCareProfileWarning.isVisible = true
-        binding.tvCareProfileWarningPercent.text = "${targetResult.percent}%"
+        binding.tvCareProfileWarningPercent.text = getString(
+            R.string.maintenance_percent_value,
+            targetResult.percent
+        )
 
         if (incompleteProfiles.size == 1) {
             binding.tvCareProfileWarningTitle.text =
-                "Care profile incomplete"
+                getString(R.string.maintenance_care_profile_incomplete)
 
             binding.tvCareProfileWarningMessage.text =
-                "Improve automatic care tasks"
+                getString(R.string.maintenance_improve_automatic_care_tasks)
         } else {
             binding.tvCareProfileWarningTitle.text =
-                "Care profiles incomplete"
+                getString(R.string.maintenance_care_profiles_incomplete)
 
             binding.tvCareProfileWarningMessage.text =
-                "${incompleteProfiles.size} aquariums need more details"
+                getString(
+                    R.string.maintenance_aquariums_need_more_details,
+                    incompleteProfiles.size
+                )
         }
     }
 
@@ -340,27 +347,27 @@ class AquariumMaintenanceFragment :
     ) {
         when (selectedTab) {
             MaintenanceTab.ALL -> {
-                binding.tvEmptyMaintenanceTitle.text = "No care tasks yet"
+                binding.tvEmptyMaintenanceTitle.text = getString(R.string.maintenance_empty_no_tasks_title)
                 binding.tvEmptyMaintenanceMessage.text =
-                    "Add manual reminders or let AquaLight create smart care tasks based on your aquarium setup."
+                    getString(R.string.maintenance_empty_no_tasks_message)
             }
 
             MaintenanceTab.TODAY -> {
-                binding.tvEmptyMaintenanceTitle.text = "Nothing due today"
+                binding.tvEmptyMaintenanceTitle.text = getString(R.string.maintenance_empty_today_title)
                 binding.tvEmptyMaintenanceMessage.text =
-                    "There are no care tasks scheduled for today."
+                    getString(R.string.maintenance_empty_today_message)
             }
 
             MaintenanceTab.UPCOMING -> {
-                binding.tvEmptyMaintenanceTitle.text = "No upcoming tasks"
+                binding.tvEmptyMaintenanceTitle.text = getString(R.string.maintenance_empty_upcoming_title)
                 binding.tvEmptyMaintenanceMessage.text =
-                    "Future care reminders will appear here."
+                    getString(R.string.maintenance_empty_upcoming_message)
             }
 
             MaintenanceTab.HISTORY -> {
-                binding.tvEmptyMaintenanceTitle.text = "No completed tasks"
+                binding.tvEmptyMaintenanceTitle.text = getString(R.string.maintenance_empty_history_title)
                 binding.tvEmptyMaintenanceMessage.text =
-                    "Completed maintenance tasks will be listed here."
+                    getString(R.string.maintenance_empty_history_message)
             }
         }
     }
@@ -449,7 +456,9 @@ class AquariumMaintenanceFragment :
         }
 
         val statusText = TextView(requireContext()).apply {
-            text = TimelineDayResolver.getStatusText(dayStatus)
+            text = getString(
+                TimelineDayResolver.getStatusTextRes(dayStatus)
+            )
             textSize = 12.5f
             setTextColor(
                 TimelineDayResolver.getStatusTextColor(dayStatus)
@@ -612,7 +621,7 @@ class AquariumMaintenanceFragment :
         }
 
         val completedText = TextView(requireContext()).apply {
-            text = "Completed"
+            text = getString(R.string.maintenance_status_completed)
             textSize = 11.8f
             setTextColor(Color.parseColor("#5FD6B4"))
             setTypeface(null, Typeface.BOLD)
@@ -690,30 +699,30 @@ class AquariumMaintenanceFragment :
         GlobalActionBottomSheet.show(
             context = requireContext(),
             title = task.title,
-            message = "Completed care record",
+            message = getString(R.string.maintenance_completed_care_record),
             details = listOf(
                 BottomSheetDetailRow(
-                    label = "Aquarium",
+                    label = getString(R.string.maintenance_aquarium_label),
                     value = task.tankName
                 ),
                 BottomSheetDetailRow(
-                    label = "Completed at",
+                    label = getString(R.string.maintenance_completed_at),
                     value = formatHistoryDateTime(completedAt)
                 ),
                 BottomSheetDetailRow(
-                    label = "Source",
+                    label = getString(R.string.maintenance_source_label),
                     value = task.sourceLabel.ifBlank {
-                        "Unknown"
+                        getString(R.string.maintenance_unknown)
                     }
                 ),
                 BottomSheetDetailRow(
-                    label = "Status",
-                    value = "Completed"
+                    label = getString(R.string.maintenance_status_label),
+                    value = getString(R.string.maintenance_status_completed)
                 )
             ),
             actions = listOf(
                 BottomSheetAction(
-                    text = "Delete from history",
+                    text = getString(R.string.maintenance_delete_from_history),
                     style = BottomSheetActionStyle.DANGER,
                     onClick = {
                         showDeleteHistoryTaskDialog(task)
@@ -729,8 +738,11 @@ class AquariumMaintenanceFragment :
         DialogManager.showConfirmDialog(
             context = requireContext(),
             type = DialogType.ERROR,
-            title = "Delete from history?",
-            message = "\"${task.title}\" will be removed from completed history.",
+            title = getString(R.string.maintenance_delete_from_history_title),
+            message = getString(
+                R.string.maintenance_delete_from_history_message,
+                task.title
+            ),
             confirmTextResId = R.string.confirm,
             cancelTextResId = R.string.cancel,
             onConfirm = {

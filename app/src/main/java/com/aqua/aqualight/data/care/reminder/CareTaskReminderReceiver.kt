@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.care.reminder
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.auth.AuthSessionManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.user.UserPreferencesManager
@@ -118,7 +119,7 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
         )
 
         val baseTitle = task.title.ifBlank {
-          typeUi.title
+          typeUi.title(appContext)
         }
 
         val title = if (
@@ -126,7 +127,11 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
           task.waterChangePercent > 0 &&
           !baseTitle.contains("%")
         ) {
-          "$baseTitle (${task.waterChangePercent}%)"
+          appContext.getString(
+            R.string.maintenance_task_title_with_percent,
+            baseTitle,
+            task.waterChangePercent
+          )
         } else {
           baseTitle
         }
@@ -140,15 +145,19 @@ class CareTaskReminderReceiver : BroadcastReceiver() {
             task.description
           }
 
-          typeUi.defaultDescription.isNotBlank() -> {
-            typeUi.defaultDescription
+          typeUi.defaultDescription(appContext).isNotBlank() -> {
+            typeUi.defaultDescription(appContext)
           } else -> {
-            "This care task is due now."
+            appContext.getString(R.string.maintenance_notification_due_now)
           }
         }
 
         val message = if (aquariumName.isNotBlank()) {
-          "$aquariumName\n$bodyText"
+          appContext.getString(
+            R.string.maintenance_notification_message_with_aquarium,
+            aquariumName,
+            bodyText
+          )
         } else {
           bodyText
         }

@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.maintenance
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.model.CareTask
@@ -45,8 +46,11 @@ class MaintenanceViewModel(
   application: Application
 ) : AndroidViewModel(application) {
 
+  private val appContext =
+  application.applicationContext
+
   private val careTaskDataStoreManager =
-  CareTaskDataStoreManager.create(application)
+  CareTaskDataStoreManager.create(appContext)
 
   private val selectedTabFlow = MutableStateFlow(
     MaintenanceTab.ALL
@@ -218,6 +222,7 @@ class MaintenanceViewModel(
 
     viewModelScope.launch {
       val generatedTasks = SmartCareTaskGenerator.generateForTanks(
+        context = appContext,
         tanks = tanks
       )
 
@@ -277,8 +282,8 @@ class MaintenanceViewModel(
 
       careTaskDataStoreManager.addCompletedActivity(
         tankId = tankId,
-        title = typeUi.title,
-        description = typeUi.defaultDescription,
+        title = typeUi.title(appContext),
+        description = typeUi.defaultDescription(appContext),
         type = type,
         completedAtMillis = completedAtMillis,
         waterChangePercent = waterChangePercent,
@@ -446,6 +451,8 @@ class MaintenanceViewModel(
     tankName: String
   ): CareTaskUi {
     val typeUi = CareTaskTypeCatalog.get(type)
+    val typeTitle = typeUi.title(appContext)
+    val typeDescription = typeUi.defaultDescription(appContext)
 
     return CareTaskUi(
       id = id,
@@ -453,13 +460,13 @@ class MaintenanceViewModel(
       tankName = tankName,
       title = getTaskTitle(
         task = this,
-        typeTitle = typeUi.title
+        typeTitle = typeTitle
       ),
       description = description.ifBlank {
-        typeUi.defaultDescription
+        typeDescription
       },
       type = type,
-      typeTitle = typeUi.title,
+      typeTitle = typeTitle,
       source = source,
       sourceLabel = getSourceLabel(source),
       status = status,
@@ -490,7 +497,11 @@ class MaintenanceViewModel(
       val percent = task.waterChangePercent
 
       if (percent != null && percent > 0) {
-        return "$typeTitle ($percent%)"
+        return appContext.getString(
+          R.string.maintenance_task_title_with_percent,
+          typeTitle,
+          percent
+        )
       }
     }
 
@@ -503,8 +514,8 @@ class MaintenanceViewModel(
     source: CareTaskSource
   ): String {
     return when (source) {
-      CareTaskSource.MANUAL -> "Manual"
-      CareTaskSource.AUTOMATIC -> "Smart"
+      CareTaskSource.MANUAL -> appContext.getString(R.string.maintenance_manual_source)
+      CareTaskSource.AUTOMATIC -> appContext.getString(R.string.maintenance_smart_source)
     }
   }
 
@@ -515,16 +526,23 @@ class MaintenanceViewModel(
       val completedAt = task.completedAtMillis
 
       return if (completedAt == null || completedAt <= 0L) {
-        "Completed"
+        appContext.getString(R.string.maintenance_status_completed)
       } else {
-        "Completed ${formatTime(completedAt)}"
+        appContext.getString(
+          R.string.maintenance_completed_time,
+          formatTime(completedAt)
+        )
       }
     }
 
     val timeText = formatTime(task.dueAtMillis)
 
     return if (task.repeatEnabled) {
-      "$timeText • Every ${task.repeatIntervalDays.coerceAtLeast(1)} days"
+      appContext.getString(
+        R.string.maintenance_time_repeat_days,
+        timeText,
+        task.repeatIntervalDays.coerceAtLeast(1)
+      )
     } else {
       timeText
     }
@@ -546,11 +564,14 @@ class MaintenanceViewModel(
       }
 
       task.reminderEnabled && task.missedReminderEnabled -> {
-        "Reminder active • repeats ${task.missedReminderDays.coerceAtLeast(1)} days if missed"
+        appContext.getString(
+          R.string.maintenance_reminder_active_missed_days,
+          task.missedReminderDays.coerceAtLeast(1)
+        )
       }
 
       task.reminderEnabled -> {
-        "Reminder active"
+        appContext.getString(R.string.maintenance_reminder_active)
       } else -> {
         task.description
       }
@@ -661,17 +682,20 @@ class MaintenanceViewModel(
 
     return when {
       daysUntil < 0L -> {
-        "Overdue"
+        appContext.getString(R.string.maintenance_overdue)
       }
 
       daysUntil == 0L -> {
-        "Today"
+        appContext.getString(R.string.maintenance_today)
       }
 
       daysUntil == 1L -> {
-        "Tomorrow"
+        appContext.getString(R.string.maintenance_tomorrow)
       } else -> {
-        "$daysUntil days later"
+        appContext.getString(
+          R.string.maintenance_days_later,
+          daysUntil
+        )
       }
     }
   }
@@ -688,13 +712,16 @@ class MaintenanceViewModel(
 
     return when (daysAgo) {
       0L -> {
-        "Today"
+        appContext.getString(R.string.maintenance_today)
       }
 
       1L -> {
-        "1 day ago"
+        appContext.getString(R.string.maintenance_one_day_ago)
       } else -> {
-        "$daysAgo days ago"
+        appContext.getString(
+          R.string.maintenance_days_ago,
+          daysAgo
+        )
       }
     }
   }
@@ -706,7 +733,7 @@ class MaintenanceViewModel(
     return tanks.firstOrNull {
       tank ->
       tank.id == tankId
-    }?.name ?: "Unknown aquarium"
+    }?.name ?: appContext.getString(R.string.maintenance_unknown_aquarium)
   }
 
   private fun getTodayStartMillis(): Long {

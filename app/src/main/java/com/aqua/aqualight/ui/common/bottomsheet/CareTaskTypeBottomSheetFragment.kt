@@ -28,7 +28,7 @@ import com.google.android.material.card.MaterialCardView
 class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
 
   private val sheetTitle: String
-    get() = arguments?.getString(ARG_TITLE) ?: DEFAULT_TITLE
+    get() = arguments?.getString(ARG_TITLE) ?: getString(R.string.maintenance_select_task_type)
 
   private val resultRequestKey: String
     get() = arguments?.getString(ARG_RESULT_REQUEST_KEY) ?: REQUEST_KEY_DEFAULT
@@ -116,9 +116,9 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
 
     var renderedCategoryCount = 0
 
-    CareTaskTypeCatalog.categories.forEach { category ->
+    CareTaskTypeCatalog.categoryResIds.forEach { categoryRes ->
 
-      val items = CareTaskTypeCatalog.byCategory(category)
+      val items = CareTaskTypeCatalog.byCategoryRes(categoryRes)
 
       if (items.isEmpty()) {
         return@forEach
@@ -126,7 +126,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
 
       container.addView(
         createCategoryTitle(
-          title = category,
+          title = getString(categoryRes),
           isFirstCategory = renderedCategoryCount == 0
         )
       )
@@ -283,7 +283,7 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
     iconContainer.addView(icon)
 
     val title = TextView(requireContext()).apply {
-      text = item.title
+      text = item.title(requireContext())
       textSize = 12.2f
       setTextColor(Color.WHITE)
 
@@ -323,8 +323,8 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
       resultRequestKey,
       bundleOf(
         RESULT_TASK_TYPE to item.type.name,
-        RESULT_TASK_TYPE_TITLE to item.title,
-        RESULT_TASK_TYPE_CATEGORY to item.category
+        RESULT_TASK_TYPE_TITLE to item.title(requireContext()),
+        RESULT_TASK_TYPE_CATEGORY to item.category(requireContext())
       )
     )
   }
@@ -395,7 +395,6 @@ class CareTaskTypeBottomSheetFragment : BottomSheetDialogFragment() {
     private const val ARG_RESULT_REQUEST_KEY = "resultRequestKey"
     private const val ARG_SELECTED_TYPE = "selectedType"
 
-    private const val DEFAULT_TITLE = "Select Task Type"
 
     const val REQUEST_KEY_DEFAULT = "care_task_type_result"
     const val REQUEST_KEY_ADD_ACTIVITY = "care_task_type_add_activity_result"

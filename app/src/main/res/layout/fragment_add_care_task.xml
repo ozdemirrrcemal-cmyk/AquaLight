@@ -41,7 +41,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:includeFontPadding="false"
-        android:text="Task Type"
+        android:text="@string/maintenance_task_type_label"
         android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -90,7 +90,7 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:text="Select care task type"
+            android:text="@string/maintenance_select_care_task_type"
             android:textColor="#8FA4BE"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -103,7 +103,7 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:text="Required"
+            android:text="@string/maintenance_required"
             android:textColor="#6F829B"
             android:textSize="12.5sp" />
 
@@ -129,7 +129,7 @@
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:includeFontPadding="false"
-          android:text="Custom Title"
+          android:text="@string/maintenance_custom_title_label"
           android:textColor="?attr/colorOnSurface"
           android:textSize="13sp"
           android:textStyle="bold" />
@@ -140,7 +140,7 @@
           android:layout_height="50dp"
           android:layout_marginTop="9dp"
           android:background="@drawable/bg_care_input"
-          android:hint="Example: Clean aquarium lid"
+          android:hint="@string/maintenance_custom_title_hint"
           android:inputType="textCapSentences"
           android:paddingStart="14dp"
           android:paddingEnd="14dp"
@@ -156,7 +156,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
         android:includeFontPadding="false"
-        android:text="Aquarium"
+        android:text="@string/maintenance_aquarium_label"
         android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -187,7 +187,7 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:text="Select aquarium"
+            android:text="@string/maintenance_select_aquarium"
             android:textColor="#8FA4BE"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -200,7 +200,7 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:text="Required"
+            android:text="@string/maintenance_required"
             android:textColor="#6F829B"
             android:textSize="12.5sp" />
 
@@ -219,7 +219,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
         android:includeFontPadding="false"
-        android:text="Schedule"
+        android:text="@string/maintenance_schedule_label"
         android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:textStyle="bold" />
@@ -248,7 +248,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
-            android:text="Date"
+            android:text="@string/maintenance_date_label"
             android:textColor="#8FA4BE"
             android:textSize="11.5sp" />
 
@@ -284,7 +284,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
-            android:text="Time"
+            android:text="@string/maintenance_time_label"
             android:textColor="#8FA4BE"
             android:textSize="11.5sp" />
 
@@ -336,7 +336,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
-                android:text="Repeat"
+                android:text="@string/maintenance_repeat_label"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -346,7 +346,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:includeFontPadding="false"
-                android:text="Create the next task automatically after completion."
+                android:text="@string/maintenance_repeat_description"
                 android:textColor="#8FA4BE"
                 android:textSize="12.5sp" />
 
@@ -373,7 +373,7 @@
               android:layout_height="wrap_content"
               android:layout_weight="1"
               android:includeFontPadding="false"
-              android:text="Repeat every"
+              android:text="@string/maintenance_repeat_every_label"
               android:textColor="#B8C7D9"
               android:textSize="13sp" />
 
@@ -385,7 +385,7 @@
               android:gravity="center"
               android:inputType="number"
               android:maxLength="3"
-              android:text="7"
+              android:text="@string/maintenance_default_repeat_days"
               android:textColor="@android:color/white"
               android:textSize="14sp"
               android:textStyle="bold" />
@@ -395,7 +395,7 @@
               android:layout_height="wrap_content"
               android:layout_marginStart="10dp"
               android:includeFontPadding="false"
-              android:text="days"
+              android:text="@string/maintenance_days_label"
               android:textColor="#B8C7D9"
               android:textSize="13sp" />
 
@@ -437,7 +437,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
-                android:text="Reminder"
+                android:text="@string/maintenance_reminder_label"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -447,7 +447,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:includeFontPadding="false"
-                android:text="Notify when this care task is due."
+                android:text="@string/maintenance_reminder_description"
                 android:textColor="#8FA4BE"
                 android:textSize="12.5sp" />
 
@@ -484,7 +484,7 @@
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:includeFontPadding="false"
-                  android:text="Remind if missed"
+                  android:text="@string/maintenance_missed_reminder_label"
                   android:textColor="?attr/colorOnSurface"
                   android:textSize="14sp"
                   android:textStyle="bold" />
@@ -494,7 +494,7 @@
                   android:layout_height="wrap_content"
                   android:layout_marginTop="6dp"
                   android:includeFontPadding="false"
-                  android:text="If not completed, remind again for a few days."
+                  android:text="@string/maintenance_missed_reminder_description"
                   android:textColor="#8FA4BE"
                   android:textSize="12.5sp" />
 
@@ -521,7 +521,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:includeFontPadding="false"
-                android:text="Repeat missed reminders for"
+                android:text="@string/maintenance_repeat_missed_reminders_for_label"
                 android:textColor="#B8C7D9"
                 android:textSize="13sp" />
 
@@ -533,7 +533,7 @@
                 android:gravity="center"
                 android:inputType="number"
                 android:maxLength="2"
-                android:text="3"
+                android:text="@string/maintenance_default_missed_reminder_days"
                 android:textColor="@android:color/white"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -543,7 +543,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:includeFontPadding="false"
-                android:text="days"
+                android:text="@string/maintenance_days_label"
                 android:textColor="#B8C7D9"
                 android:textSize="13sp" />
 
@@ -560,7 +560,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="22dp"
         android:includeFontPadding="false"
-        android:text="Note"
+        android:text="@string/maintenance_note_label"
         android:textColor="?attr/colorOnSurface"
         android:textSize="13sp"
         android:textStyle="bold" />
@@ -572,7 +572,7 @@
         android:layout_marginTop="9dp"
         android:background="@drawable/bg_care_input"
         android:gravity="top|start"
-        android:hint="Optional note..."
+        android:hint="@string/maintenance_note_hint"
         android:inputType="textMultiLine|textCapSentences"
         android:maxLines="5"
         android:minLines="4"
@@ -610,7 +610,7 @@
       android:enabled="false"
       android:insetTop="0dp"
       android:insetBottom="0dp"
-      android:text="Save Task"
+      android:text="@string/maintenance_save_task"
       android:textAllCaps="false"
       android:textColor="@android:color/white"
       android:textSize="14sp"

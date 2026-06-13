@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.common.timeline
 
 import android.graphics.Color
+import androidx.annotation.StringRes
+import com.aqua.aqualight.R
 import java.util.Calendar
 
 object TimelineDayResolver {
@@ -26,13 +28,14 @@ object TimelineDayResolver {
     }
   }
 
-  fun getStatusText(
+  @StringRes
+  fun getStatusTextRes(
     status: TimelineDayStatus
-  ): String {
+  ): Int {
     return when (status) {
-      TimelineDayStatus.TODAY -> "Today"
-      TimelineDayStatus.UPCOMING -> "Upcoming"
-      TimelineDayStatus.PAST -> ""
+      TimelineDayStatus.TODAY -> R.string.maintenance_today
+      TimelineDayStatus.UPCOMING -> R.string.maintenance_tab_upcoming
+      TimelineDayStatus.PAST -> R.string.maintenance_empty_text
     }
   }
 

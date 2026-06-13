@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.care.smartcare
 
+import com.aqua.aqualight.R
+
 object SmartCareRuleCatalog {
 
   val startupRules: List<SmartCareRule> = listOf(
@@ -10,8 +12,8 @@ object SmartCareRuleCatalog {
       dayEnd = 1,
       conditions = emptyList(),
       taskType = SmartCareTaskType.GENERAL_CHECK,
-      titleTr = "Initial setup check",
-      messageTr = "Check that the filter is running, equipment is installed correctly, and water circulation is stable.",
+      titleRes = R.string.maintenance_smart_rule_initial_setup_check_title,
+      messageRes = R.string.maintenance_smart_rule_initial_setup_check_message,
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = listOf("SmartCare")
@@ -26,8 +28,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_LIGHT
       ),
       taskType = SmartCareTaskType.LIGHTING,
-      titleTr = "Check light duration",
-      messageTr = "During the early setup phase, keeping the light period around 6 hours can help reduce algae risk.",
+      titleRes = R.string.maintenance_smart_rule_check_light_duration_title,
+      messageRes = R.string.maintenance_smart_rule_check_light_duration_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -41,8 +43,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_CO2
       ),
       taskType = SmartCareTaskType.CO2_CHECK,
-      titleTr = "CO₂ check",
-      messageTr = "Check CO₂ timing, drop checker color, and livestock behavior.",
+      titleRes = R.string.maintenance_smart_rule_co2_check_title,
+      messageRes = R.string.maintenance_smart_rule_co2_check_message,
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.EVERY_2_DAYS,
       sourceTags = listOf("SmartCare")
@@ -56,8 +58,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_ACTIVE_SOIL
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
-      titleTr = "Early water change",
-      messageTr = "Active soil can release excess nutrients during the first days. A water change helps reduce algae risk.",
+      titleRes = R.string.maintenance_smart_rule_early_water_change_title,
+      messageRes = R.string.maintenance_smart_rule_early_water_change_message,
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.EVERY_2_DAYS,
       sourceTags = listOf("SmartCare")
@@ -71,8 +73,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
-      titleTr = "Startup water change",
-      messageTr = "Regular water changes during the first weeks help stabilize the aquarium and reduce excess nutrients.",
+      titleRes = R.string.maintenance_smart_rule_startup_water_change_title,
+      messageRes = R.string.maintenance_smart_rule_startup_water_change_message,
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -86,8 +88,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.PLANT_CHECK,
-      titleTr = "Plant adaptation check",
-      messageTr = "Check for melting leaves, weak stems, or newly planted sections that may need adjustment.",
+      titleRes = R.string.maintenance_smart_rule_plant_adaptation_check_title,
+      messageRes = R.string.maintenance_smart_rule_plant_adaptation_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
       sourceTags = listOf("SmartCare")
@@ -101,8 +103,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.GLASS_CLEANING,
-      titleTr = "Algae check",
-      messageTr = "Check glass, hardscape, and plant leaves for early algae signs.",
+      titleRes = R.string.maintenance_smart_rule_algae_check_title,
+      messageRes = R.string.maintenance_smart_rule_algae_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -117,8 +119,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.FERTILIZER_UNKNOWN
       ),
       taskType = SmartCareTaskType.FERTILIZER,
-      titleTr = "Review fertilizer plan",
-      messageTr = "Add your fertilizer product to improve automatic dosing recommendations.",
+      titleRes = R.string.maintenance_smart_rule_review_fertilizer_plan_title,
+      messageRes = R.string.maintenance_smart_rule_review_fertilizer_plan_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = listOf("SmartCare")
@@ -133,8 +135,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_FERTILIZER
       ),
       taskType = SmartCareTaskType.FERTILIZER,
-      titleTr = "Fertilizer check",
-      messageTr = "Start carefully with reduced dosing and adjust based on plant response and algae signs.",
+      titleRes = R.string.maintenance_smart_rule_fertilizer_check_title,
+      messageRes = R.string.maintenance_smart_rule_fertilizer_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -148,8 +150,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.NO_LIVESTOCK
       ),
       taskType = SmartCareTaskType.WATER_TEST,
-      titleTr = "Water test before livestock",
-      messageTr = "Before adding livestock, check that the aquarium is stable and no ammonia or nitrite is detected.",
+      titleRes = R.string.maintenance_smart_rule_water_test_before_livestock_title,
+      messageRes = R.string.maintenance_smart_rule_water_test_before_livestock_message,
       priority = SmartCarePriority.CRITICAL,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       requiresWaterTest = true,
@@ -164,8 +166,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.NO_LIVESTOCK
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
-      titleTr = "Livestock readiness check",
-      messageTr = "If water parameters are stable, you can start planning suitable cleanup crew or livestock gradually.",
+      titleRes = R.string.maintenance_smart_rule_livestock_readiness_check_title,
+      messageRes = R.string.maintenance_smart_rule_livestock_readiness_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       requiresWaterTest = true,
@@ -180,8 +182,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.NO_LIVESTOCK
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
-      titleTr = "Fish addition check",
-      messageTr = "Add fish only if the tank is stable. Start with a small number and avoid overstocking.",
+      titleRes = R.string.maintenance_smart_rule_fish_addition_check_title,
+      messageRes = R.string.maintenance_smart_rule_fish_addition_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       requiresWaterTest = true,
@@ -197,8 +199,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_LIGHT
       ),
       taskType = SmartCareTaskType.LIGHTING,
-      titleTr = "Adjust light period",
-      messageTr = "If plant growth is stable and algae is under control, you can gradually increase the light period.",
+      titleRes = R.string.maintenance_smart_rule_adjust_light_period_title,
+      messageRes = R.string.maintenance_smart_rule_adjust_light_period_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = listOf("SmartCare")
@@ -212,8 +214,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.PLANT_TRIM,
-      titleTr = "First trimming check",
-      messageTr = "Check fast-growing plants and trim unhealthy or overgrown sections if needed.",
+      titleRes = R.string.maintenance_smart_rule_first_trimming_check_title,
+      messageRes = R.string.maintenance_smart_rule_first_trimming_check_message,
       priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = listOf("SmartCare")
@@ -227,8 +229,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.STARTUP_PERIOD
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
-      titleTr = "Weekly water change",
-      messageTr = "Continue weekly water changes while the aquarium matures.",
+      titleRes = R.string.maintenance_smart_rule_weekly_water_change_title,
+      messageRes = R.string.maintenance_smart_rule_weekly_water_change_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -242,8 +244,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_FILTER
       ),
       taskType = SmartCareTaskType.FILTER_CHECK,
-      titleTr = "Filter flow check",
-      messageTr = "Check filter flow and make sure circulation is still strong and stable.",
+      titleRes = R.string.maintenance_smart_rule_filter_flow_check_title,
+      messageRes = R.string.maintenance_smart_rule_filter_flow_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_2_WEEKS,
       sourceTags = listOf("SmartCare")
@@ -257,8 +259,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_SHRIMP
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
-      titleTr = "Shrimp stability check",
-      messageTr = "Shrimp are sensitive to unstable water parameters. Check behavior and avoid sudden changes.",
+      titleRes = R.string.maintenance_smart_rule_shrimp_stability_check_title,
+      messageRes = R.string.maintenance_smart_rule_shrimp_stability_check_message,
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -272,8 +274,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_FISH
       ),
       taskType = SmartCareTaskType.FEEDING,
-      titleTr = "Feeding review",
-      messageTr = "Review feeding amount and remove excess food if needed.",
+      titleRes = R.string.maintenance_smart_rule_feeding_review_title,
+      messageRes = R.string.maintenance_smart_rule_feeding_review_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
       sourceTags = listOf("SmartCare")
@@ -287,8 +289,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.STARTUP_PERIOD
       ),
       taskType = SmartCareTaskType.GENERAL_CHECK,
-      titleTr = "Startup phase complete",
-      messageTr = "Your aquarium has reached the end of the startup phase. Continue with a regular maintenance routine.",
+      titleRes = R.string.maintenance_smart_rule_startup_phase_complete_title,
+      messageRes = R.string.maintenance_smart_rule_startup_phase_complete_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = listOf("SmartCare")
@@ -305,8 +307,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.MATURE_TANK
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
-      titleTr = "Weekly water change",
-      messageTr = "Perform a regular water change to keep water quality stable.",
+      titleRes = R.string.maintenance_smart_rule_weekly_water_change_title,
+      messageRes = R.string.maintenance_smart_rule_weekly_water_change_mature_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -321,8 +323,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.PLANT_TRIM,
-      titleTr = "Plant trimming check",
-      messageTr = "Check plant growth and trim overgrown or unhealthy sections if needed.",
+      titleRes = R.string.maintenance_smart_rule_plant_trimming_check_title,
+      messageRes = R.string.maintenance_smart_rule_plant_trimming_check_message,
       priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -337,8 +339,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_FILTER
       ),
       taskType = SmartCareTaskType.FILTER_CHECK,
-      titleTr = "Filter maintenance check",
-      messageTr = "Check filter flow and clean mechanical media only if the flow is reduced.",
+      titleRes = R.string.maintenance_smart_rule_filter_maintenance_check_title,
+      messageRes = R.string.maintenance_smart_rule_filter_maintenance_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.MONTHLY,
       sourceTags = listOf("SmartCare")
@@ -353,8 +355,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_CO2
       ),
       taskType = SmartCareTaskType.CO2_CHECK,
-      titleTr = "CO₂ system check",
-      messageTr = "Check CO₂ timing, bubble rate, drop checker color, and livestock behavior.",
+      titleRes = R.string.maintenance_smart_rule_co2_system_check_title,
+      messageRes = R.string.maintenance_smart_rule_co2_system_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")
@@ -369,8 +371,8 @@ object SmartCareRuleCatalog {
         SmartCareCondition.HAS_LIVESTOCK
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
-      titleTr = "Livestock health check",
-      messageTr = "Check appetite, behavior, breathing, and visible signs of stress.",
+      titleRes = R.string.maintenance_smart_rule_livestock_health_check_title,
+      messageRes = R.string.maintenance_smart_rule_livestock_health_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = listOf("SmartCare")

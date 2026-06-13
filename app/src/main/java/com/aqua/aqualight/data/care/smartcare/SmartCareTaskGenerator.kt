@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.care.smartcare
 
+import android.content.Context
+import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -10,12 +12,14 @@ object SmartCareTaskGenerator {
   private const val CARE_DAY_END_HOUR = 21
 
   fun generateForTanks(
+    context: Context,
     tanks: List<SavedAquariumTank>,
     nowMillis: Long = System.currentTimeMillis()
   ): List<SmartCareGeneratedTask> {
     return tanks.flatMap {
       tank ->
       generateForTank(
+        context = context,
         tank = tank,
         nowMillis = nowMillis
       )
@@ -23,6 +27,7 @@ object SmartCareTaskGenerator {
   }
 
   fun generateForTank(
+    context: Context,
     tank: SavedAquariumTank,
     nowMillis: Long = System.currentTimeMillis()
   ): List<SmartCareGeneratedTask> {
@@ -58,6 +63,7 @@ object SmartCareTaskGenerator {
       .map {
         rule ->
         createGeneratedTask(
+          context = context,
           tank = tank,
           profile = profile,
           rule = rule,
@@ -141,6 +147,7 @@ object SmartCareTaskGenerator {
   }
 
   private fun createGeneratedTask(
+    context: Context,
     tank: SavedAquariumTank,
     profile: SmartCareTankProfile,
     rule: SmartCareRule,
@@ -162,8 +169,9 @@ object SmartCareTaskGenerator {
       tankName = profile.tankName,
       ruleId = rule.id,
       taskType = rule.taskType,
-      titleTr = rule.titleTr,
+      titleTr = context.getString(rule.titleRes),
       messageTr = buildShortMessage(
+        context = context,
         tank = tank,
         rule = rule,
         profile = profile
@@ -222,6 +230,7 @@ object SmartCareTaskGenerator {
   }
 
   private fun buildShortMessage(
+    context: Context,
     tank: SavedAquariumTank,
     rule: SmartCareRule,
     profile: SmartCareTankProfile
@@ -236,62 +245,71 @@ object SmartCareTaskGenerator {
         ) ?: 30
 
         if (setupDay != null) {
-          "Day $setupDay. Change about $percent% of the water to help keep the aquarium stable."
+          context.getString(
+            R.string.maintenance_smart_msg_water_change_day,
+            setupDay,
+            percent
+          )
         } else {
-          "Change about $percent% of the water to help keep the aquarium stable."
+          context.getString(
+            R.string.maintenance_smart_msg_water_change,
+            percent
+          )
         }
       }
 
       SmartCareTaskType.FERTILIZER -> {
         buildFertilizerMessage(
+          context = context,
           tank = tank,
           profile = profile
         )
       }
 
       SmartCareTaskType.CO2_CHECK -> {
-        "Check CO₂ timing, drop checker color, and livestock behavior."
+        context.getString(R.string.maintenance_smart_msg_co2_check)
       }
 
       SmartCareTaskType.FEEDING -> {
-        "Feed lightly and remove excess food if needed."
+        context.getString(R.string.maintenance_smart_msg_feeding)
       }
 
       SmartCareTaskType.LIGHTING -> {
-        "Check the light period and keep it stable."
+        context.getString(R.string.maintenance_smart_msg_lighting)
       }
 
       SmartCareTaskType.WATER_TEST -> {
-        "Test water before making livestock or dosing decisions."
+        context.getString(R.string.maintenance_smart_msg_water_test)
       }
 
       SmartCareTaskType.PLANT_CHECK -> {
-        "Check plant health, melting leaves, and weak growth."
+        context.getString(R.string.maintenance_smart_msg_plant_check)
       }
 
       SmartCareTaskType.PLANT_TRIM -> {
-        "Trim overgrown or unhealthy plant sections if needed."
+        context.getString(R.string.maintenance_smart_msg_plant_trim)
       }
 
       SmartCareTaskType.FILTER_CHECK -> {
-        "Check filter flow and clean only if flow is reduced."
+        context.getString(R.string.maintenance_smart_msg_filter_check)
       }
 
       SmartCareTaskType.GLASS_CLEANING -> {
-        "Check glass and hardscape for early algae signs."
+        context.getString(R.string.maintenance_smart_msg_glass_cleaning)
       }
 
       SmartCareTaskType.LIVESTOCK_CHECK -> {
-        "Check livestock behavior, appetite, and visible stress signs."
+        context.getString(R.string.maintenance_smart_msg_livestock_check)
       }
 
       SmartCareTaskType.GENERAL_CHECK -> {
-        rule.messageTr
+        context.getString(rule.messageRes)
       }
     }
   }
 
   private fun buildFertilizerMessage(
+    context: Context,
     tank: SavedAquariumTank,
     profile: SmartCareTankProfile
   ): String {
@@ -301,9 +319,12 @@ object SmartCareTaskGenerator {
 
     if (fertilizerRule == null) {
       return if (profile.setupDay != null) {
-        "Day ${profile.setupDay}. Add your fertilizer product to improve automatic dosing recommendations."
+        context.getString(
+          R.string.maintenance_smart_msg_fertilizer_missing_day,
+          profile.setupDay
+        )
       } else {
-        "Add your fertilizer product to improve automatic dosing recommendations."
+        context.getString(R.string.maintenance_smart_msg_fertilizer_missing)
       }
     }
 
@@ -317,6 +338,7 @@ object SmartCareTaskGenerator {
     val productName = fertilizerRule.productName
 
     val frequencyText = getFrequencyText(
+      context = context,
       frequency = fertilizerRule.frequency
     )
 
@@ -327,17 +349,31 @@ object SmartCareTaskGenerator {
       setupDay <= 7 &&
       recommendation.startupDoseFactor == 0.0
     ) {
-      return "Day $setupDay. Delay $productName dosing for now and monitor plant response."
+      return context.getString(
+        R.string.maintenance_smart_msg_delay_fertilizer_day,
+        setupDay,
+        productName
+      )
     }
 
     if (
       setupDay != null &&
       setupDay <= 30
     ) {
-      return "Day $setupDay. Use about ${recommendation.startupDoseMl} mL of $productName as a reduced startup dose."
+      return context.getString(
+        R.string.maintenance_smart_msg_reduced_fertilizer_day,
+        setupDay,
+        recommendation.startupDoseMl.toString(),
+        productName
+      )
     }
 
-    return "Dose about ${recommendation.normalDoseMl} mL of $productName $frequencyText."
+    return context.getString(
+      R.string.maintenance_smart_msg_normal_fertilizer,
+      recommendation.normalDoseMl.toString(),
+      productName,
+      frequencyText
+    )
   }
 
   private fun findSelectedFertilizerRule(
@@ -377,31 +413,32 @@ object SmartCareTaskGenerator {
   }
 
   private fun getFrequencyText(
+    context: Context,
     frequency: FertilizerFrequency
   ): String {
     return when (frequency) {
       FertilizerFrequency.DAILY -> {
-        "daily"
+        context.getString(R.string.maintenance_smart_frequency_daily)
       }
 
       FertilizerFrequency.WEEKLY -> {
-        "weekly"
+        context.getString(R.string.maintenance_smart_frequency_weekly)
       }
 
       FertilizerFrequency.ONCE_OR_TWICE_WEEKLY -> {
-        "once or twice weekly"
+        context.getString(R.string.maintenance_smart_frequency_once_or_twice_weekly)
       }
 
       FertilizerFrequency.TWICE_WEEKLY -> {
-        "twice weekly"
+        context.getString(R.string.maintenance_smart_frequency_twice_weekly)
       }
 
       FertilizerFrequency.TWO_TO_THREE_TIMES_WEEKLY -> {
-        "2–3 times weekly"
+        context.getString(R.string.maintenance_smart_frequency_two_to_three_times_weekly)
       }
 
       FertilizerFrequency.AS_NEEDED -> {
-        "as needed"
+        context.getString(R.string.maintenance_smart_frequency_as_needed)
       }
     }
   }

@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:text="Select Task Type"
+        android:text="@string/maintenance_select_task_type"
         android:textColor="@android:color/white"
         android:textSize="18sp"
         android:textStyle="bold" />

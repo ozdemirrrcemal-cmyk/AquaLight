@@ -78,15 +78,15 @@ class TaskDetailFragment :
     binding.appHeader.setupAquaHeader(
       fragment = this,
       config = AquaHeaderConfig(
-        titleOverride = "Task Detail",
+        titleOverride = getString(R.string.maintenance_task_detail_title),
         onBackClick = {
           findNavController().popBackStack()
         },
         pillTextAction = if (canEdit && task != null) {
           AquaHeaderPillTextAction(
-            text = "Edit",
+            text = getString(R.string.maintenance_edit),
             backgroundRes = R.drawable.bg_maintenance_tab_selected,
-            contentDescription = "Edit task",
+            contentDescription = getString(R.string.maintenance_edit_task),
             onClick = {
               openEditTaskScreen(task)
             }
@@ -169,66 +169,72 @@ class TaskDetailFragment :
 
     bindRow(
       row = binding.rowTaskType,
-      label = "Task Type",
+      label = getString(R.string.maintenance_task_type_label),
       value = buildTaskTypeText(task)
     )
 
     bindRow(
       row = binding.rowAquarium,
-      label = "Aquarium",
+      label = getString(R.string.maintenance_aquarium_label),
       value = task.tankName
     )
 
     bindRow(
       row = binding.rowScheduledDate,
-      label = "Scheduled Date",
+      label = getString(R.string.maintenance_scheduled_date),
       value = formatDate(task.dueAtMillis)
     )
 
     bindRow(
       row = binding.rowScheduledTime,
-      label = "Scheduled Time",
+      label = getString(R.string.maintenance_scheduled_time),
       value = formatTime(task.dueAtMillis)
     )
 
     bindRow(
       row = binding.rowRepeat,
-      label = "Repeat",
+      label = getString(R.string.maintenance_repeat_label),
       value = if (task.repeatEnabled) {
-        "Every ${task.repeatIntervalDays.coerceAtLeast(1)} days"
+        getString(
+          R.string.maintenance_every_days,
+          task.repeatIntervalDays.coerceAtLeast(1)
+        )
       } else {
-        "Off"
+        getString(R.string.maintenance_off)
       }
     )
 
     bindRow(
       row = binding.rowReminder,
-      label = "Reminder",
+      label = getString(R.string.maintenance_reminder_label),
       value = if (task.reminderEnabled) {
-        "On"
+        getString(R.string.maintenance_on)
       } else {
-        "Off"
+        getString(R.string.maintenance_off)
       }
     )
 
     bindRow(
       row = binding.rowMissedReminder,
-      label = "Missed Reminder",
+      label = getString(R.string.maintenance_missed_reminder_detail_label),
       value = if (task.reminderEnabled && task.missedReminderEnabled) {
-        "Every ${task.missedReminderDays.coerceAtLeast(1)} days if missed"
+        getString(
+          R.string.maintenance_every_days_if_missed,
+          task.missedReminderDays.coerceAtLeast(1)
+        )
       } else {
-        "Off"
+        getString(R.string.maintenance_off)
       }
     )
 
     bindRow(
       row = binding.rowCreatedDate,
-      label = "Created Date",
+      label = getString(R.string.maintenance_created_date),
       value = formatDateTime(task.createdAtMillis)
     )
 
     binding.tvDescriptionValue.text = task.description.ifBlank {
-      "No description"
+      getString(R.string.maintenance_no_description)
     }
 
     val hasNote = task.note.isNotBlank()
@@ -267,7 +273,11 @@ class TaskDetailFragment :
       task.waterChangePercent != null &&
       task.waterChangePercent > 0
     ) {
-      "${task.typeTitle} • ${task.waterChangePercent}%"
+      getString(
+        R.string.maintenance_task_category_with_percent,
+        task.typeTitle,
+        task.waterChangePercent
+      )
     } else {
       task.typeTitle
     }
@@ -279,9 +289,9 @@ class TaskDetailFragment :
     return when (task.status) {
       CareTaskStatus.PENDING -> {
         if (task.isOverdue) {
-          "Pending • Overdue"
+          getString(R.string.maintenance_status_pending_overdue)
         } else {
-          "Pending"
+          getString(R.string.maintenance_status_pending)
         }
       }
 
@@ -289,9 +299,12 @@ class TaskDetailFragment :
         val completedAt = task.completedAtMillis
 
         if (completedAt == null || completedAt <= 0L) {
-          "Completed"
+          getString(R.string.maintenance_status_completed)
         } else {
-          "Completed • ${formatDateTime(completedAt)}"
+          getString(
+            R.string.maintenance_status_completed_with_date,
+            formatDateTime(completedAt)
+          )
         }
       }
     }
@@ -313,8 +326,11 @@ class TaskDetailFragment :
     DialogManager.showConfirmDialog(
       context = requireContext(),
       type = DialogType.SUCCESS,
-      title = "Complete Task?",
-      message = "\"${task.title}\" will be marked as completed.",
+      title = getString(R.string.maintenance_dialog_complete_task_title),
+      message = getString(
+        R.string.maintenance_dialog_complete_task_message,
+        task.title
+      ),
       confirmTextResId = R.string.confirm,
       cancelTextResId = R.string.cancel,
       onConfirm = {
@@ -341,8 +357,11 @@ class TaskDetailFragment :
     DialogManager.showConfirmDialog(
       context = requireContext(),
       type = DialogType.WARNING,
-      title = "Delete Task?",
-      message = "\"${task.title}\" will be permanently deleted.",
+      title = getString(R.string.maintenance_dialog_delete_task_title),
+      message = getString(
+        R.string.maintenance_dialog_delete_task_message,
+        task.title
+      ),
       confirmTextResId = R.string.confirm,
       cancelTextResId = R.string.cancel,
       onConfirm = {
@@ -367,8 +386,8 @@ class TaskDetailFragment :
             DialogManager.showInfoDialog(
               context = requireContext(),
               type = DialogType.ERROR,
-              title = "Delete Failed",
-              message = "Task could not be deleted. Please try again."
+              title = getString(R.string.maintenance_delete_failed_title),
+              message = getString(R.string.maintenance_delete_failed_message)
             )
           }
         }

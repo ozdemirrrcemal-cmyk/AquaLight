@@ -23,7 +23,7 @@
     android:layout_height="wrap_content"
     android:gravity="center"
     android:includeFontPadding="false"
-    android:text="Water Change Percentage"
+    android:text="@string/maintenance_water_change_percent_sheet_title"
     android:textColor="@android:color/white"
     android:textSize="18sp"
     android:textStyle="bold" />

@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.care.smartcare
 
+import androidx.annotation.StringRes
+
 enum class SmartCareCondition {
   PLANTED,
   NO_PLANTS,
@@ -67,8 +69,8 @@ data class SmartCareRule(
   val dayEnd: Int,
   val conditions: List<SmartCareCondition>,
   val taskType: SmartCareTaskType,
-  val titleTr: String,
-  val messageTr: String,
+  @StringRes val titleRes: Int,
+  @StringRes val messageRes: Int,
   val priority: SmartCarePriority,
   val repeatMode: SmartCareRepeatMode,
   val requiresWaterTest: Boolean = false,

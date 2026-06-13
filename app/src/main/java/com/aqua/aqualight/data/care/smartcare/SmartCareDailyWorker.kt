@@ -45,6 +45,7 @@ class SmartCareDailyWorker(
       val tanks = tankDataStoreManager.tanksFlow.first()
 
       val generatedTasks = SmartCareTaskGenerator.generateForTanks(
+        context = applicationContext,
         tanks = tanks
       )
 
