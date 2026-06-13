@@ -63,7 +63,7 @@
             android:gravity="center_vertical"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/ivConnectionStatus"
+            app:layout_constraintEnd_toStartOf="@id/trailingContainer"
             app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -105,17 +105,43 @@
 
         </LinearLayout>
 
-        <ImageView
-            android:id="@+id/ivConnectionStatus"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:alpha="0.95"
-            android:contentDescription="@string/devices_scan_button_desc"
-            android:src="@drawable/ic_status_wifi"
+        <FrameLayout
+            android:id="@+id/trailingContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="24dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/device_status_connected" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/ivConnectionStatus"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:alpha="0.95"
+                android:contentDescription="@string/devices_scan_button_desc"
+                android:src="@drawable/ic_status_wifi"
+                app:tint="@color/device_status_connected" />
+
+            <TextView
+                android:id="@+id/tvCardAction"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_device_compact_action_chip"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:minWidth="64dp"
+                android:paddingHorizontal="14dp"
+                android:textColor="#5FD6B4"
+                android:textSize="12.5sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="Add"
+                tools:visibility="visible" />
+
+        </FrameLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

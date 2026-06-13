@@ -8,6 +8,11 @@ data class DeviceCompactCardUi(
     val serialText: String,
     val tankText: String = "",
     val showTankText: Boolean = false,
+    val supportingText: String = "",
+    val showSupportingText: Boolean = false,
     @DrawableRes val iconRes: Int,
-    val isOnline: Boolean
+    val isOnline: Boolean = false,
+    val showConnectionStatus: Boolean = true,
+    val actionText: String = "",
+    val showAction: Boolean = false
 )

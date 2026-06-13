@@ -36,11 +36,14 @@ object DeviceCompactCardBinder {
         binding.tvDeviceName.text =
             deviceName
 
-        binding.tvSerialNumber.text =
+        val formattedSerial =
             context.getString(
                 R.string.device_card_serial_format,
                 serialValue
             )
+
+        binding.tvSerialNumber.text =
+            formattedSerial
 
         val tankValue =
             item.tankText
@@ -51,14 +54,27 @@ object DeviceCompactCardBinder {
                     )
                 }
 
+        val secondaryText =
+            when {
+                item.showTankText -> {
+                    context.getString(
+                        R.string.device_card_tank_format,
+                        tankValue
+                    )
+                }
+
+                item.showSupportingText -> {
+                    item.supportingText.trim()
+                }
+
+                else -> ""
+            }
+
         binding.tvTankName.text =
-            context.getString(
-                R.string.device_card_tank_format,
-                tankValue
-            )
+            secondaryText
 
         binding.tvTankName.isVisible =
-            item.showTankText
+            secondaryText.isNotBlank()
 
         binding.ivDeviceIcon.setImageResource(
             item.iconRes
@@ -72,49 +88,67 @@ object DeviceCompactCardBinder {
         binding.ivDeviceIcon.contentDescription =
             deviceName
 
-        val statusColorRes =
-            if (item.isOnline) {
-                R.color.dialog_icon_success
-            } else {
-                R.color.settings_text_secondary
-            }
+        binding.ivConnectionStatus.isVisible =
+            item.showConnectionStatus && !item.showAction
 
-        binding.ivConnectionStatus.setColorFilter(
-            ContextCompat.getColor(
-                context,
-                statusColorRes
-            ),
-            PorterDuff.Mode.SRC_IN
-        )
+        if (item.showConnectionStatus) {
+            val statusColorRes =
+                if (item.isOnline) {
+                    R.color.dialog_icon_success
+                } else {
+                    R.color.settings_text_secondary
+                }
+
+            binding.ivConnectionStatus.setColorFilter(
+                ContextCompat.getColor(
+                    context,
+                    statusColorRes
+                ),
+                PorterDuff.Mode.SRC_IN
+            )
+        } else {
+            binding.ivConnectionStatus.clearColorFilter()
+        }
+
+        val actionValue =
+            item.actionText
+                .trim()
+
+        binding.tvCardAction.text =
+            actionValue
+
+        binding.tvCardAction.isVisible =
+            item.showAction && actionValue.isNotBlank()
+
+        binding.trailingContainer.isVisible =
+            binding.ivConnectionStatus.isVisible ||
+                binding.tvCardAction.isVisible
 
         binding.root.contentDescription =
             buildString {
                 append(deviceName)
                 append(", ")
-                append(
-                    context.getString(
-                        R.string.device_card_serial_format,
-                        serialValue
-                    )
-                )
+                append(formattedSerial)
 
-                if (item.showTankText) {
+                if (secondaryText.isNotBlank()) {
                     append(", ")
+                    append(secondaryText)
+                }
+
+                if (item.showConnectionStatus) {
                     append(
-                        context.getString(
-                            R.string.device_card_tank_format,
-                            tankValue
-                        )
+                        if (item.isOnline) {
+                            ", Online"
+                        } else {
+                            ", Offline"
+                        }
                     )
                 }
 
-                append(
-                    if (item.isOnline) {
-                        ", Online"
-                    } else {
-                        ", Offline"
-                    }
-                )
+                if (binding.tvCardAction.isVisible) {
+                    append(", ")
+                    append(actionValue)
+                }
             }
     }
 }

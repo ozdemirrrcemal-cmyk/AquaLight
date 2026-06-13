@@ -188,6 +188,8 @@
         android:id="@+id/rvCandidates"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:clipToPadding="false"
         android:paddingTop="18dp"
         android:paddingBottom="28dp"
@@ -196,7 +198,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
-        tools:listitem="@layout/item_device_add_candidate" />
+        tools:listitem="@layout/item_device_compact_card" />
 
     <LinearLayout
         android:id="@+id/emptyContainer"

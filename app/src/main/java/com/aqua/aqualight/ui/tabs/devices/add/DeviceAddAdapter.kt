@@ -9,9 +9,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.add.DeviceAddCandidate
 import com.aqua.aqualight.data.devices.add.DeviceAddSource
-import com.aqua.aqualight.databinding.ItemDeviceAddCandidateBinding
 import com.aqua.aqualight.databinding.ItemDeviceAddSectionHeaderBinding
+import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
 import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import java.util.Locale
 
 class DeviceAddAdapter(
@@ -117,7 +119,7 @@ class DeviceAddAdapter(
             }
 
             else -> {
-                val binding = ItemDeviceAddCandidateBinding.inflate(
+                val binding = ItemDeviceCompactCardBinding.inflate(
                     inflater,
                     parent,
                     false
@@ -167,91 +169,71 @@ class DeviceAddAdapter(
     }
 
     inner class DeviceAddViewHolder(
-        private val binding: ItemDeviceAddCandidateBinding
+        private val binding: ItemDeviceCompactCardBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
             item: DeviceAddCandidate
         ) {
-            binding.ivDeviceIcon.setImageResource(
-                DeviceCardIconMapper.iconFor(item.category)
+            DeviceCompactCardBinder.bind(
+                binding = binding,
+                item = item.toCompactCard()
             )
 
-            binding.ivDeviceIcon.contentDescription = item.displayName
-
-            binding.tvDeviceName.text = item.displayName.ifBlank {
-                item.familyName.ifBlank {
-                    "Device"
-                }
+            binding.root.setOnClickListener {
+                onCandidateClick(item)
             }
 
-            binding.tvDeviceSerial.text = visibleMeta(
-                item = item
-            )
-
-            binding.tvCandidateAction.text = item.actionText.ifBlank {
-                when (item.source) {
-                    DeviceAddSource.LOCAL_NETWORK -> "Add"
-                    DeviceAddSource.SETUP_AP -> "Set up"
-                }
-            }
-
-            binding.rowCandidate.setOnClickListener {
+            binding.tvCardAction.setOnClickListener {
                 onCandidateClick(item)
             }
         }
 
-        private fun visibleMeta(
-            item: DeviceAddCandidate
-        ): String {
-            return when (item.source) {
-                DeviceAddSource.SETUP_AP -> {
-                    val setupSsid = item.setupSsid
-                        .orEmpty()
-                        .trim()
-
-                    if (setupSsid.isNotBlank()) {
-                        "$setupSsid • Setup mode"
-                    } else {
-                        val setupId = item.setupShortId
-                            .orEmpty()
-                            .trim()
-                            .uppercase(Locale.US)
-
-                        if (setupId.isBlank()) {
-                            "Setup mode"
-                        } else {
-                            "Setup ID: $setupId"
-                        }
+        private fun DeviceAddCandidate.toCompactCard(): DeviceCompactCardUi {
+            return DeviceCompactCardUi(
+                deviceId = localDevice?.id ?: 0L,
+                displayName = displayName.ifBlank {
+                    familyName.ifBlank {
+                        "Device"
                     }
+                },
+                serialText = commercialSerial(),
+                iconRes = DeviceCardIconMapper.iconFor(
+                    category = category
+                ),
+                isOnline = source == DeviceAddSource.LOCAL_NETWORK,
+                showConnectionStatus = false,
+                actionText = actionText.ifBlank {
+                    when (source) {
+                        DeviceAddSource.LOCAL_NETWORK -> "Add"
+                        DeviceAddSource.SETUP_AP -> "Set up"
+                    }
+                },
+                showAction = true
+            )
+        }
+
+        private fun DeviceAddCandidate.commercialSerial(): String {
+            return when (source) {
+                DeviceAddSource.SETUP_AP -> {
+                    DeviceSerialFormatter.buildCommercialIdentifier(
+                        setupCode = setupCode,
+                        shortId = setupShortId
+                    )
                 }
 
                 DeviceAddSource.LOCAL_NETWORK -> {
-                    val localDevice = item.localDevice
-                    val identifier = if (localDevice == null) {
-                        "Device code unavailable"
-                    } else {
-                        DeviceSerialFormatter.buildCommercialIdentifier(
-                            setupCode = item.setupCode,
-                            serialNumber = localDevice.serialNumber,
-                            shortId = localDevice.shortId,
-                            deviceUid = localDevice.deviceUid,
-                            macAddress = localDevice.macAddress,
-                            firmwareSerial = localDevice.firmwareSerial,
-                            fallbackNumericId = localDevice.id
-                        )
-                    }
+                    val device = localDevice
 
-                    val ip = localDevice
-                        ?.ip
-                        .orEmpty()
-                        .trim()
-
-                    if (ip.isBlank()) {
-                        "Device code: $identifier"
-                    } else {
-                        "Device code: $identifier • $ip"
-                    }
+                    DeviceSerialFormatter.buildCommercialIdentifier(
+                        setupCode = setupCode,
+                        serialNumber = device?.serialNumber,
+                        shortId = device?.shortId,
+                        deviceUid = device?.deviceUid,
+                        macAddress = device?.macAddress,
+                        firmwareSerial = device?.firmwareSerial,
+                        fallbackNumericId = device?.id
+                    )
                 }
             }
         }

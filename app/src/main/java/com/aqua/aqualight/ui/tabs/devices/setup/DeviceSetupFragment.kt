@@ -11,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
+import com.aqua.aqualight.data.devices.DeviceSerialFormatter
 import com.aqua.aqualight.data.devices.DeviceStoreWriter
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
@@ -29,6 +30,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.common.devicecard.DeviceCardIconMapper
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
+import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -181,8 +184,27 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private fun renderInitialState() {
-        binding.tvTitle.text = displayName
-        binding.tvSubtitle.text = familyName
+        DeviceCompactCardBinder.bind(
+            binding = binding.deviceHeroCompactCard,
+            item = DeviceCompactCardUi(
+                deviceId = 0L,
+                displayName = displayName,
+                serialText = setupSerialText(),
+                supportingText = getString(
+                    R.string.device_setup_ready_chip
+                ),
+                showSupportingText = true,
+                iconRes = DeviceCardIconMapper.iconFor(
+                    expectedCategory
+                ),
+                isOnline = false,
+                showConnectionStatus = false
+            )
+        )
+
+        binding.deviceHeroCompactCard.root.isClickable = false
+        binding.deviceHeroCompactCard.root.isFocusable = false
+
         binding.tvSetupSsid.text = setupSsid
         binding.tvSetupNetworkMeta.text = getString(
             R.string.device_setup_network_meta,
@@ -196,12 +218,6 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         }
         binding.etHomeWifiSsid.setText("")
 
-        binding.ivDeviceImage.setImageResource(
-            DeviceCardIconMapper.iconFor(expectedCategory)
-        )
-
-        binding.ivDeviceImage.contentDescription = displayName
-
         renderSetupProgress(
             activeStep = SetupUiStep.WIFI
         )
@@ -209,6 +225,13 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         if (!setupContractValid) {
             setSetupInputControlsEnabled(false)
         }
+    }
+
+    private fun setupSerialText(): String {
+        return DeviceSerialFormatter.buildCommercialIdentifier(
+            setupCode = expectedSetupCode,
+            shortId = setupShortId
+        )
     }
 
     private fun setupClickListeners() {
