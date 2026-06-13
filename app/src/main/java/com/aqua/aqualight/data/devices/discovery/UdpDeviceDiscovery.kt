@@ -8,6 +8,8 @@ import android.net.wifi.WifiManager
 import android.os.SystemClock
 import android.util.Log
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -25,8 +27,6 @@ import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
 import java.util.Locale
 import kotlin.coroutines.coroutineContext
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 
 object UdpDeviceDiscovery {
 
@@ -37,6 +37,28 @@ object UdpDeviceDiscovery {
     private const val UDP_PORT = 10888
     private const val SOCKET_TIMEOUT_MS = 300
     private const val BUFFER_SIZE = 4096
+
+    /**
+     * GEÇİCİ TEST UYUMLULUĞU
+     *
+     * true:
+     * Eski firmware ProductId / ProtocolVersion vermese bile
+     * AquaName + Name + TabLight/TabTimer/TabTemperature üzerinden
+     * cihaz katalog eşleştirmesi yapılır.
+     *
+     * FIRMWARE_READY:
+     * Firmware UDP tarafı şu alanları verdiğinde bunu false yap:
+     *
+     * ProductId
+     * ProtocolVersion veya ApiVersion
+     * DeviceUid veya ShortId veya MacAddress veya FirmwareSerial veya SerialNumber veya ID
+     *
+     * Sonra:
+     * 1. LEGACY_DISCOVERY_START / LEGACY_DISCOVERY_END arası fallback kodları silinebilir.
+     * 2. resolveLegacyDefinition(...) fonksiyonu silinebilir.
+     * 3. AquaDeviceDefinition ve AquaProductKey importları başka yerde kullanılmıyorsa silinebilir.
+     */
+    private const val ALLOW_LEGACY_DISCOVERY = true
 
     suspend fun discover(
         context: Context,
@@ -161,7 +183,7 @@ object UdpDeviceDiscovery {
     ): DiscoveredAquaDevice? {
         val root = try {
             JSONObject(jsonString)
-        } catch (exception: Exception) {
+        } catch (_: Exception) {
             return null
         }
 
@@ -171,22 +193,139 @@ object UdpDeviceDiscovery {
 
         val deviceJson = extractDeviceJson(root) ?: return null
 
+        /**
+         * TICARI DISCOVERY CONTRACT
+         *
+         * Firmware düzeldiğinde UDP cihaz bilgisinde şu alanlar zorunlu olmalı:
+         *
+         * ProductId:
+         *   com.aqua.light.wrgb_pro_elite
+         *
+         * ProtocolVersion veya ApiVersion:
+         *   1
+         *
+         * Stable identity alanlarından en az biri:
+         *   DeviceUid / ShortId / MacAddress / FirmwareSerial / SerialNumber / ID / ESPChipID
+         *
+         * ProductId cihazın modelini çözer.
+         * ProtocolVersion uygulamanın bu protokolü destekleyip desteklemediğini kontrol eder.
+         * Stable identity ise aynı fiziksel cihazı IP değişse bile takip etmeyi sağlar.
+         */
         val productId = deviceJson.firstNonBlankString(
-    "ProductId",
-    "productId",
-    "product_id"
-) ?: return null
+            "ProductId",
+            "productId",
+            "product_id"
+        )
 
-val definition = AquaDeviceCatalog.findByProductId(
-    productId = productId
-) ?: return null
+        val definitionFromProductId = productId?.let { value ->
+            AquaDeviceCatalog.findByProductId(
+                productId = value
+            )
+        }
 
-val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
-    ?: deviceJson.optNullableInt("ApiVersion")
+        /**
+         * Firmware ProductId gönderiyor ama uygulama katalogunda yoksa bu cihaz desteklenmez.
+         *
+         * Bu kontrol ticari seviye için doğru.
+         * Çünkü yanlış ProductId gönderen cihazı AquaName/Name ile tahmin edip kabul etmek istemeyiz.
+         */
+        if (
+            !productId.isNullOrBlank() &&
+            definitionFromProductId == null
+        ) {
+            Log.w(
+                TAG_RECEIVED,
+                "Unsupported ProductId=$productId from $sourceIp"
+            )
+            return null
+        }
 
-if (!definition.isProtocolVersionSupported(protocolVersion)) {
-    return null
-}
+        /**
+         * LEGACY_DISCOVERY_START
+         *
+         * Eski firmware ProductId vermediği için geçici olarak
+         * AquaName / Name / TabLight / TabTimer / TabTemperature alanlarını okuyoruz.
+         *
+         * FIRMWARE_READY:
+         * Firmware ProductId gönderdiğinde bu legacy alanlar cihaz modelini çözmek için kullanılmayacak.
+         */
+        val legacyAquaName = deviceJson.firstNonBlankString(
+            "AquaName"
+        )
+
+        val legacyName = deviceJson.firstNonBlankString(
+            "Name"
+        )
+
+        val legacyTabLight = deviceJson.optFlexibleBoolean(
+            key = "TabLight"
+        )
+
+        val legacyTabTimer = deviceJson.optFlexibleBoolean(
+            key = "TabTimer"
+        )
+
+        val legacyTabTemperature = deviceJson.optFlexibleBoolean(
+            key = "TabTemperature"
+        )
+        /**
+         * LEGACY_DISCOVERY_END
+         */
+
+        val definition = definitionFromProductId
+            ?: run {
+                // LEGACY_DISCOVERY_START
+                // Geçici eski firmware desteği.
+                //
+                // Eski firmware ProductId vermediği için AquaName/Name/Tab alanlarından
+                // katalog eşleştiriyoruz.
+                //
+                // FIRMWARE_READY:
+                // Bu blok silinebilir. ProductId yoksa cihaz direkt reddedilmelidir.
+
+                if (!ALLOW_LEGACY_DISCOVERY) {
+                    return null
+                }
+
+                resolveLegacyDefinition(
+                    aquaName = legacyAquaName,
+                    name = legacyName,
+                    tabLight = legacyTabLight,
+                    tabTimer = legacyTabTimer,
+                    tabTemperature = legacyTabTemperature
+                )
+                // LEGACY_DISCOVERY_END
+            }
+            ?: return null
+
+        val isLegacyDiscovery = definitionFromProductId == null
+
+        val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
+            ?: deviceJson.optNullableInt("ApiVersion")
+            ?: if (
+                ALLOW_LEGACY_DISCOVERY &&
+                isLegacyDiscovery
+            ) {
+                // LEGACY_DISCOVERY_START
+                // Eski firmware ProtocolVersion vermiyor.
+                //
+                // Test için katalogdaki v1 protokolü varsayıyoruz.
+                //
+                // FIRMWARE_READY:
+                // Bu fallback silinecek. ProtocolVersion veya ApiVersion zorunlu olacak.
+                1
+                // LEGACY_DISCOVERY_END
+            } else {
+                null
+            }
+
+        if (!definition.isProtocolVersionSupported(protocolVersion)) {
+            Log.w(
+                TAG_RECEIVED,
+                "Unsupported protocolVersion=$protocolVersion productId=${definition.productId} from $sourceIp"
+            )
+            return null
+        }
 
         val idRaw = deviceJson.optLong(
             "ID",
@@ -240,6 +379,9 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
             "firmwareSerial"
         ) ?: serialNumber
 
+        val numericIdentity = idRaw.takeIf { value -> value > 0L }
+            ?: espChipId.takeIf { value -> value > 0L }
+
         val shortId = deviceJson.firstNonBlankString(
             "ShortId",
             "ShortID",
@@ -251,8 +393,7 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
             macAddress = macAddress,
             serialNumber = serialNumber,
             firmwareSerial = firmwareSerial,
-            fallbackNumericId = idRaw.takeIf { value -> value > 0L }
-                ?: espChipId.takeIf { value -> value > 0L }
+            fallbackNumericId = numericIdentity
         )
 
         if (
@@ -262,10 +403,13 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
                 serialNumber = serialNumber,
                 firmwareSerial = firmwareSerial,
                 shortId = shortId,
-                numericId = idRaw.takeIf { value -> value > 0L }
-                    ?: espChipId.takeIf { value -> value > 0L }
+                numericId = numericIdentity
             )
         ) {
+            Log.w(
+                TAG_RECEIVED,
+                "Missing stable identity for productId=${definition.productId} from $sourceIp"
+            )
             return null
         }
 
@@ -369,19 +513,12 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
             key = "SupportedScreens"
         )
 
-        val channelCount = deviceJson.optNullableInt("ChannelCount")
-        val sensorCount = deviceJson.optNullableInt("SensorCount")
-
-        val tabLight = deviceJson.optFlexibleBoolean(
-            key = "TabLight"
+        val channelCount = deviceJson.optNullableInt(
+            key = "ChannelCount"
         )
 
-        val tabTimer = deviceJson.optFlexibleBoolean(
-            key = "TabTimer"
-        )
-
-        val tabTemperature = deviceJson.optFlexibleBoolean(
-            key = "TabTemperature"
+        val sensorCount = deviceJson.optNullableInt(
+            key = "SensorCount"
         )
 
         return DiscoveredAquaDevice(
@@ -413,9 +550,9 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
             firmwareBuild = firmwareBuild,
             udpVersion = udpVersion,
 
-            tabLight = tabLight,
-            tabTimer = tabTimer,
-            tabTemperature = tabTemperature,
+            tabLight = legacyTabLight,
+            tabTimer = legacyTabTimer,
+            tabTemperature = legacyTabTemperature,
 
             supportedFeatures = supportedFeatures,
             supportedScreens = supportedScreens,
@@ -427,55 +564,93 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
             name = productModel
         )
     }
-    
+
+    /**
+     * LEGACY_DISCOVERY_START
+     *
+     * Geçici eski firmware destek fonksiyonu.
+     *
+     * Eski firmware UDP'de ProductId göndermediği için:
+     * AquaName + Name + TabLight + TabTimer + TabTemperature
+     * alanlarından en yakın katalog ürününü bulur.
+     *
+     * WRGB test cihazı için:
+     *
+     * AquaName = AquaLight
+     * Name = WRGB Pro Elite
+     * TabLight = 1
+     *
+     * FIRMWARE_READY:
+     * Firmware UDP tarafı şu alanları verdiğinde bu fonksiyonu tamamen sil:
+     *
+     * ProductId = com.aqua.light.wrgb_pro_elite
+     * ProtocolVersion = 1
+     * DeviceUid veya ShortId veya MacAddress veya FirmwareSerial
+     *
+     * Bu fonksiyon silinince şu importlar da başka yerde kullanılmıyorsa silinir:
+     *
+     * import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
+     * import com.aqua.aqualight.data.devices.catalog.AquaProductKey
+     */
     private fun resolveLegacyDefinition(
-    aquaName: String?,
-    name: String?,
-    tabLight: Boolean,
-    tabTimer: Boolean,
-    tabTemperature: Boolean
-): AquaDeviceDefinition? {
-    val identity = "${aquaName.orEmpty()} ${name.orEmpty()}"
-        .lowercase(Locale.US)
+        aquaName: String?,
+        name: String?,
+        tabLight: Boolean,
+        tabTimer: Boolean,
+        tabTemperature: Boolean
+    ): AquaDeviceDefinition? {
+        val identity = "${aquaName.orEmpty()} ${name.orEmpty()}"
+            .lowercase(Locale.US)
 
-    val productKey = when {
-        identity.contains("wrgb") ||
-            identity.contains("light") ||
-            identity.contains("aqualight") ||
+        val productKey = when {
+            identity.contains("dose") ||
+                identity.contains("dosing") -> {
+                AquaProductKey.DOSING_DOSE_PRO_4
+            }
+
+            identity.contains("cool") ||
+                identity.contains("cooling") -> {
+                AquaProductKey.COOLING_COOL_PRO
+            }
+
+            identity.contains("multi") -> {
+                AquaProductKey.TIMER_MULTI_CONTROL
+            }
+
+            identity.contains("timer") -> {
+                AquaProductKey.TIMER_TIMER_PRO
+            }
+
+            identity.contains("wrgb") ||
+                identity.contains("light") ||
+                identity.contains("aqualight") -> {
+                AquaProductKey.LIGHT_WRGB_PRO_ELITE
+            }
+
             tabLight -> {
-            AquaProductKey.LIGHT_WRGB_PRO_ELITE
-        }
+                AquaProductKey.LIGHT_WRGB_PRO_ELITE
+            }
 
-        identity.contains("dose") ||
-            identity.contains("dosing") -> {
-            AquaProductKey.DOSING_DOSE_PRO_4
-        }
-
-        identity.contains("cool") ||
-            tabTemperature -> {
-            AquaProductKey.COOLING_COOL_PRO
-        }
-
-        identity.contains("multi") -> {
-            AquaProductKey.TIMER_MULTI_CONTROL
-        }
-
-        identity.contains("timer") ||
             tabTimer -> {
-            AquaProductKey.TIMER_TIMER_PRO
+                AquaProductKey.TIMER_TIMER_PRO
+            }
+
+            tabTemperature -> {
+                AquaProductKey.COOLING_COOL_PRO
+            }
+
+            else -> {
+                null
+            }
         }
 
-        else -> {
-            null
+        return productKey?.let { value ->
+            AquaDeviceCatalog.findByProductKey(
+                productKey = value
+            )
         }
     }
-
-    return productKey?.let { value ->
-        AquaDeviceCatalog.findByProductKey(
-            productKey = value
-        )
-    }
-}
+    // LEGACY_DISCOVERY_END
 
     private fun isSelfRefreshPacket(
         root: JSONObject
@@ -716,6 +891,8 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
                 ?.ifBlank { null }
             ?: serialNumber
                 ?.ifBlank { null }
+            ?: firmwareSerial
+                ?.ifBlank { null }
             ?: shortId
                 ?.ifBlank { null }
             ?: id.toString()
@@ -749,7 +926,7 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
                 is String -> value.trim().toIntOrNull()
                 else -> null
             }
-        } catch (exception: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -774,7 +951,7 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
 
                 else -> false
             }
-        } catch (exception: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -814,7 +991,7 @@ if (!definition.isProtocolVersionSupported(protocolVersion)) {
 
                 else -> emptySet()
             }
-        } catch (exception: Exception) {
+        } catch (_: Exception) {
             emptySet()
         }
     }
