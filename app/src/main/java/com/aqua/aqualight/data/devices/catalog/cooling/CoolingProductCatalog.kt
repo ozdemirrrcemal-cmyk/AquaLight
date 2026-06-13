@@ -9,7 +9,6 @@ import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.catalog.AquaProductVariant
 import com.aqua.aqualight.data.devices.catalog.AquaProductRegion
 import com.aqua.aqualight.data.devices.catalog.AquaProductColor
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
 import com.aqua.aqualight.data.devices.catalog.ModuleVisibility
@@ -91,23 +90,6 @@ object CoolingProductCatalog {
         }
     }
 
-    fun findByType(
-        type: AquaDeviceType
-    ): CoolingDeviceDefinition? {
-        return all.firstOrNull { definition ->
-            definition.base.type == type
-        }
-    }
-
-    fun findByLegacyIdentity(
-        aquaName: String,
-        name: String
-    ): CoolingDeviceDefinition? {
-        return all.firstOrNull { definition ->
-            definition.base.legacyAquaName.equals(aquaName.trim(), ignoreCase = true) &&
-                definition.base.legacyName.equals(name.trim(), ignoreCase = true)
-        }
-    }
 
     fun findByProductId(
         productId: String

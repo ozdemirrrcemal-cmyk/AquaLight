@@ -1,7 +1,6 @@
 package com.aqua.aqualight.data.devices.discovery.model
 
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 
 /**
@@ -50,9 +49,6 @@ data class DiscoveredAquaDevice(
     val channelCount: Int? = null,
     val sensorCount: Int? = null,
 
-    /** Compatibility with older screens until Phase 3 removes AquaDeviceType. */
-    val deviceType: AquaDeviceType,
-
     /** Firmware display fields. They must not drive routing. */
     val aquaName: String = productFamily,
     val name: String = productModel
@@ -60,6 +56,5 @@ data class DiscoveredAquaDevice(
 
     val isSupported: Boolean
         get() = productKey != AquaProductKey.UNKNOWN &&
-            category != AquaDeviceCategory.UNKNOWN &&
-            deviceType != AquaDeviceType.UNKNOWN
+            category != AquaDeviceCategory.UNKNOWN
 }

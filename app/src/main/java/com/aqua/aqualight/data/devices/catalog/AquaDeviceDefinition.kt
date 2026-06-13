@@ -36,26 +36,7 @@ data class AquaDeviceDefinition(
     val minProtocolVersion: Int = 1,
     val maxProtocolVersion: Int? = null,
 
-    /**
-     * Geçiş tamamlanana kadar mevcut uygulama sınıflarını kırmamak için tutulur.
-     * Yeni kod ProductKey/Category kullanmalı.
-     */
-    val type: AquaDeviceType = productKey.legacyDeviceType,
-    val family: AquaDeviceFamily = category.defaultFamily,
-
-    /**
-     * Legacy identity runtime karar kaynağı değildir.
-     * Yeni firmware ProductId + DeviceUid + ProtocolVersion göndermelidir.
-     */
-    @Deprecated(
-        message = "Use productFamily/ProductId. Legacy identity is not a commercial runtime identity."
-    )
-    val legacyAquaName: String = productFamily,
-
-    @Deprecated(
-        message = "Use productModel/ProductId. Legacy identity is not a commercial runtime identity."
-    )
-    val legacyName: String = productModel
+    val family: AquaDeviceFamily = category.defaultFamily
 ) {
 
     init {

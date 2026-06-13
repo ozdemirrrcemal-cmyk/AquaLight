@@ -9,7 +9,7 @@ import java.util.Locale
  * IP is intentionally not part of the identity check. IP is only a mutable
  * network address. A physical device is matched by its stable commercial
  * identity: DeviceUid, MAC address, SerialNumber/FirmwareSerial, ShortId, or
- * legacy numeric id during transition.
+ * stable numeric device id as a final fallback.
  */
 object DeviceIdentityMatcher {
 

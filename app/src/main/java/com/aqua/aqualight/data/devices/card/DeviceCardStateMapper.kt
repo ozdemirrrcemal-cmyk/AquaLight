@@ -27,12 +27,10 @@ class DeviceCardStateMapper {
             statuses[device.id]
 
         val definition =
-            AquaDeviceCatalog.findByProductId(
-                productId = device.productId
-            ) ?: AquaDeviceCatalog.findByProductKey(
-                productKey = device.productKey
-            ) ?: AquaDeviceCatalog.findByType(
-                type = device.deviceType
+            AquaDeviceCatalog.findDefinition(
+                productId = device.productId,
+                productKey = device.productKey,
+                category = device.category
             )
 
         val title =
@@ -77,7 +75,6 @@ class DeviceCardStateMapper {
             productId = device.productId,
             productKey = device.productKey,
             category = device.category,
-            deviceType = device.deviceType,
             isOnline = isOnline,
             lastSeenMillis = lastSeenMillis,
             lastCheckedMillis = statusState?.lastCheckedMillis,

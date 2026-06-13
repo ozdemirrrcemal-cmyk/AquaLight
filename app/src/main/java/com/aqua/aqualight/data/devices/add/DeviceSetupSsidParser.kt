@@ -32,7 +32,6 @@ object DeviceSetupSsidParser {
             productKey = definition.productKey,
             category = definition.category,
             setupCode = definition.setupCode,
-            deviceType = definition.type,
             stateText = "Setup mode",
             actionText = "Set up",
             setupSsid = setupSsid.rawSsid,

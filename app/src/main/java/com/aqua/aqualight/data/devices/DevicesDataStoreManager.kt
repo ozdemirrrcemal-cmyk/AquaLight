@@ -7,7 +7,6 @@ import androidx.datastore.dataStoreFile
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineScope
@@ -94,8 +93,6 @@ class DevicesDataStoreManager private constructor(
         val lastSeenMillis: Long,
         val tankId: Long? = null,
 
-        /** Compatibility field for screens not migrated away from AquaDeviceType yet. */
-        val deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN,
 
         val udpVersion: Int? = null,
         val tabLight: Boolean = false,
@@ -147,7 +144,6 @@ class DevicesDataStoreManager private constructor(
         val skuId: String? = null,
         val skuCode: String? = null,
 
-        val deviceType: AquaDeviceType? = null,
 
         val udpVersion: Int? = null,
         val tabLight: Boolean? = null,
@@ -252,8 +248,6 @@ class DevicesDataStoreManager private constructor(
         macAddress: String = "",
         firmwareSerial: String = "",
 
-        deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN,
-
         productId: String = "",
         productKey: AquaProductKey = AquaProductKey.UNKNOWN,
         category: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN,
@@ -301,8 +295,7 @@ class DevicesDataStoreManager private constructor(
             val definition = resolveDefinition(
                 productId = productId,
                 productKey = productKey,
-                category = category,
-                deviceType = deviceType
+                category = category
             )
 
             val resolvedProductKey = definition?.productKey
@@ -312,9 +305,6 @@ class DevicesDataStoreManager private constructor(
             val resolvedCategory = definition?.category
                 ?: category.takeIf { value -> value != AquaDeviceCategory.UNKNOWN }
                 ?: resolvedProductKey.category
-
-            val resolvedDeviceType = definition?.type
-                ?: deviceType
 
             val resolvedProductId = definition?.productId
                 ?: productId.ifBlank {
@@ -360,7 +350,6 @@ class DevicesDataStoreManager private constructor(
                 .setFirmwareSerial(firmwareSerial)
                 .setLastSeenMillis(now)
                 .setTankId(0L)
-                .setDeviceType(resolvedDeviceType.storageKey)
                 .setProductId(resolvedProductId)
                 .setProductKey(resolvedProductKey.storageKey)
                 .setCategory(resolvedCategory.storageKey)
@@ -416,8 +405,7 @@ class DevicesDataStoreManager private constructor(
         name: String? = null,
         ip: String? = null,
         serial: String? = null,
-        firmwareBuild: String? = null,
-        deviceType: AquaDeviceType? = null
+        firmwareBuild: String? = null
     ) {
         dataStore.updateData { prefs ->
             val updatedDevices = prefs.devicesList.map { device ->
@@ -446,9 +434,6 @@ class DevicesDataStoreManager private constructor(
                         setFirmwareBuild(value)
                     }
 
-                    deviceType?.let { value ->
-                        setDeviceType(value.storageKey)
-                    }
                 }.build()
             }
 
@@ -681,9 +666,6 @@ class DevicesDataStoreManager private constructor(
                             setSkuCode(value)
                         }
 
-                        match.deviceType?.let { value ->
-                            setDeviceType(value.storageKey)
-                        }
 
                         match.udpVersion?.let { value ->
                             setUdpVersion(value)
@@ -761,15 +743,11 @@ class DevicesDataStoreManager private constructor(
             value = category
         )
 
-        val parsedType = AquaDeviceType.fromStorageKey(
-            value = deviceType
-        )
 
         val definition = resolveDefinition(
             productId = productId,
             productKey = parsedProductKey,
-            category = parsedCategory,
-            deviceType = parsedType
+            category = parsedCategory
         )
 
         val resolvedProductKey = definition?.productKey
@@ -779,8 +757,6 @@ class DevicesDataStoreManager private constructor(
             ?: parsedCategory.takeIf { value -> value != AquaDeviceCategory.UNKNOWN }
             ?: resolvedProductKey.category
 
-        val resolvedType = definition?.type
-            ?: parsedType
 
         val resolvedProductId = productId.ifBlank {
             definition?.productId ?: resolvedProductKey.productId.takeUnless { value ->
@@ -848,8 +824,6 @@ class DevicesDataStoreManager private constructor(
                 value > 0L
             },
 
-            deviceType = resolvedType,
-
             udpVersion = udpVersion.takeIf { value ->
                 value > 0
             },
@@ -902,31 +876,12 @@ class DevicesDataStoreManager private constructor(
     private fun resolveDefinition(
         productId: String,
         productKey: AquaProductKey,
-        category: AquaDeviceCategory,
-        deviceType: AquaDeviceType
+        category: AquaDeviceCategory
     ): AquaDeviceDefinition? {
-        AquaDeviceCatalog.findByProductId(
-            productId = productId
-        )?.let { definition ->
-            return definition
-        }
-
-        AquaDeviceCatalog.findByProductKey(
-            productKey = productKey
-        )?.let { definition ->
-            return definition
-        }
-
-        if (category != AquaDeviceCategory.UNKNOWN) {
-            AquaDeviceCatalog.findByCategory(
-                category = category
-            ).firstOrNull()?.let { definition ->
-                return definition
-            }
-        }
-
-        return AquaDeviceCatalog.findByType(
-            type = deviceType
+        return AquaDeviceCatalog.findDefinition(
+            productId = productId,
+            productKey = productKey,
+            category = category
         )
     }
 }

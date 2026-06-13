@@ -91,20 +91,28 @@ object AquaDeviceCatalog {
         }
     }
 
-    /**
-     * Geçiş köprüsü. Yeni route kararları category/productKey ile alınmalı.
-     */
-    fun findByType(
-        type: AquaDeviceType
+    fun findDefinition(
+        productId: String?,
+        productKey: AquaProductKey = AquaProductKey.UNKNOWN,
+        category: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN
     ): AquaDeviceDefinition? {
-        if (type == AquaDeviceType.UNKNOWN) {
-            return null
+        findByProductId(
+            productId = productId
+        )?.let { definition ->
+            return definition
         }
 
-        return allDefinitions.firstOrNull { definition ->
-            definition.type == type
+        findByProductKey(
+            productKey = productKey
+        )?.let { definition ->
+            return definition
         }
+
+        return findByCategory(
+            category = category
+        ).firstOrNull()
     }
+
 
     fun resolveCategoryByProductId(
         productId: String?
@@ -114,49 +122,6 @@ object AquaDeviceCatalog {
         )?.category ?: AquaDeviceCategory.UNKNOWN
     }
 
-    fun resolveTypeByProductId(
-        productId: String?
-    ): AquaDeviceType {
-        return findByProductId(
-            productId = productId
-        )?.type ?: AquaDeviceType.UNKNOWN
-    }
-
-    @Deprecated(
-        message = "Commercial identity uses ProductId, DeviceUid and setupCode."
-    )
-    fun findByLegacyIdentity(
-        aquaName: String?,
-        name: String?
-    ): AquaDeviceDefinition? {
-        val normalizedAquaName = aquaName.normalizedIdentity()
-        val normalizedName = name.normalizedIdentity()
-
-        if (
-            normalizedAquaName.isBlank() ||
-            normalizedName.isBlank()
-        ) {
-            return null
-        }
-
-        return allDefinitions.firstOrNull { definition ->
-            definition.productFamily.normalizedIdentity() == normalizedAquaName &&
-                definition.productModel.normalizedIdentity() == normalizedName
-        }
-    }
-
-    @Deprecated(
-        message = "Commercial identity uses ProductId, DeviceUid and setupCode."
-    )
-    fun resolveTypeByLegacyIdentity(
-        aquaName: String?,
-        name: String?
-    ): AquaDeviceType {
-        return findByLegacyIdentity(
-            aquaName = aquaName,
-            name = name
-        )?.type ?: AquaDeviceType.UNKNOWN
-    }
 
     fun lightDefinitionOf(
         productKey: AquaProductKey
@@ -166,13 +131,6 @@ object AquaDeviceCatalog {
         )
     }
 
-    fun lightDefinitionOf(
-        type: AquaDeviceType
-    ): LightDeviceDefinition? {
-        return LightProductCatalog.findByType(
-            type = type
-        )
-    }
 
     fun timerDefinitionOf(
         productKey: AquaProductKey
@@ -182,13 +140,6 @@ object AquaDeviceCatalog {
         )
     }
 
-    fun timerDefinitionOf(
-        type: AquaDeviceType
-    ): TimerDeviceDefinition? {
-        return TimerProductCatalog.findByType(
-            type = type
-        )
-    }
 
     fun coolingDefinitionOf(
         productKey: AquaProductKey
@@ -198,13 +149,6 @@ object AquaDeviceCatalog {
         )
     }
 
-    fun coolingDefinitionOf(
-        type: AquaDeviceType
-    ): CoolingDeviceDefinition? {
-        return CoolingProductCatalog.findByType(
-            type = type
-        )
-    }
 
     fun dosingDefinitionOf(
         productKey: AquaProductKey
@@ -214,22 +158,7 @@ object AquaDeviceCatalog {
         )
     }
 
-    fun dosingDefinitionOf(
-        type: AquaDeviceType
-    ): DosingDeviceDefinition? {
-        return DosingProductCatalog.findByType(
-            type = type
-        )
-    }
 
-    fun isSupported(
-        type: AquaDeviceType
-    ): Boolean {
-        return type != AquaDeviceType.UNKNOWN &&
-            findByType(
-                type = type
-            ) != null
-    }
 
     fun isSupported(
         productId: String?
@@ -239,18 +168,6 @@ object AquaDeviceCatalog {
         ) != null
     }
 
-    private fun String?.normalizedIdentity(): String {
-        return this
-            ?.trim()
-            ?.replace(
-                Regex("\\s+"),
-                " "
-            )
-            ?.lowercase(
-                Locale.US
-            )
-            .orEmpty()
-    }
 
     private fun String?.normalizedProductId(): String {
         return this

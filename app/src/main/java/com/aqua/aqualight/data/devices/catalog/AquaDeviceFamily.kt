@@ -1,46 +1,46 @@
 package com.aqua.aqualight.data.devices.catalog
 
 enum class AquaDeviceFamily(
-    val legacyAquaName: String,
+    val productFamilyName: String,
     val displayName: String
 ) {
     AQUA_LIGHT(
-        legacyAquaName = "AquaLight",
+        productFamilyName = "AquaLight",
         displayName = "AquaLight"
     ),
 
     AQUA_TIMER(
-        legacyAquaName = "AquaTimer",
+        productFamilyName = "AquaTimer",
         displayName = "AquaTimer"
     ),
-	
-	AQUA_DOSE(
-        legacyAquaName = "AquaDose",
+
+    AQUA_DOSE(
+        productFamilyName = "AquaDose",
         displayName = "AquaDose"
     ),
 
     AQUA_COOL(
-        legacyAquaName = "AquaCool",
+        productFamilyName = "AquaCool",
         displayName = "AquaCool"
     ),
 
     AQUA_CONTROL(
-        legacyAquaName = "AquaControl",
+        productFamilyName = "AquaControl",
         displayName = "AquaControl"
     ),
 
     CUSTOM(
-        legacyAquaName = "Custom",
+        productFamilyName = "Custom",
         displayName = "Custom"
     ),
 
     UNKNOWN(
-        legacyAquaName = "Unknown",
+        productFamilyName = "Unknown",
         displayName = "Unknown"
     );
 
     companion object {
-        fun fromLegacyAquaName(
+        fun fromProductFamilyName(
             value: String?
         ): AquaDeviceFamily {
             if (value.isNullOrBlank()) {
@@ -48,7 +48,10 @@ enum class AquaDeviceFamily(
             }
 
             return values().firstOrNull { family ->
-                family.legacyAquaName.equals(
+                family.productFamilyName.equals(
+                    other = value.trim(),
+                    ignoreCase = true
+                ) || family.displayName.equals(
                     other = value.trim(),
                     ignoreCase = true
                 )

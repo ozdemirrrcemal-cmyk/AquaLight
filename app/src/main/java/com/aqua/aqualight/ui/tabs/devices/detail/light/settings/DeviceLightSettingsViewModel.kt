@@ -311,7 +311,11 @@ class DeviceLightSettingsViewModel(
                 }
 
                 val status = statuses[deviceId]
-                val definition = AquaDeviceCatalog.findByType(device.deviceType)
+                val definition = AquaDeviceCatalog.findDefinition(
+                    productId = device.productId,
+                    productKey = device.productKey,
+                    category = device.category
+                )
 
                 val resolvedIp = status?.ip
                     ?.ifBlank {
@@ -334,7 +338,7 @@ class DeviceLightSettingsViewModel(
                         device.productModel
                     }
                     .ifBlank {
-                        formatEnumName(device.deviceType.name)
+                        formatEnumName(device.category.name)
                     }
 
                 val hasLiveContact = liveState.hasAuthoritativeContact

@@ -58,7 +58,7 @@ class DeviceStoreWriter(
             deviceUid = device.deviceUid,
             macAddress = device.macAddress,
             firmwareSerial = device.firmwareSerial,
-            legacyId = device.id
+            fallbackNumericId = device.id
         )
 
         devicesStore.addDevice(
@@ -71,8 +71,6 @@ class DeviceStoreWriter(
             deviceUid = device.deviceUid.orEmpty(),
             macAddress = device.macAddress.orEmpty(),
             firmwareSerial = device.firmwareSerial.orEmpty(),
-
-            deviceType = definition.type,
 
             productId = definition.productId,
             productKey = definition.productKey,
@@ -134,8 +132,6 @@ class DeviceStoreWriter(
             productLine = productLine,
             productModel = productModel,
             displayName = displayName,
-
-            deviceType = deviceType,
 
             udpVersion = udpVersion,
             tabLight = tabLight,

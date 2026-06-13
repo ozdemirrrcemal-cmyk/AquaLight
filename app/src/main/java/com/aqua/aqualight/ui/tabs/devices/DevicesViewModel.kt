@@ -122,8 +122,7 @@ class DevicesViewModel(
                 lastSeenText = cardState.lastSeenText,
                 productId = cardState.productId,
                 productKey = cardState.productKey,
-                category = cardState.category,
-                deviceType = cardState.deviceType
+                category = cardState.category
             )
         }
     }

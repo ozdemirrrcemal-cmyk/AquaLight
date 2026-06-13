@@ -9,7 +9,6 @@ import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.catalog.AquaProductVariant
 import com.aqua.aqualight.data.devices.catalog.AquaProductRegion
 import com.aqua.aqualight.data.devices.catalog.AquaProductColor
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
 import com.aqua.aqualight.data.devices.catalog.ModuleVisibility
@@ -81,10 +80,6 @@ object TimerProductCatalog {
 
     /**
      * İkinci timer ürün modeli.
-     *
-     * ESP32 legacy identity:
-     * AquaName = Proelite
-     * Name     = Multi control
      *
      * 4 çıkışlı timer cihazıdır.
      * Şu an standart Generic Timer ekranına yönlendirilir.
@@ -167,29 +162,6 @@ object TimerProductCatalog {
         }
     }
 
-    fun findByType(
-        type: AquaDeviceType
-    ): TimerDeviceDefinition? {
-        return all.firstOrNull { definition ->
-            definition.base.type == type
-        }
-    }
-
-    fun findByLegacyIdentity(
-        aquaName: String,
-        name: String
-    ): TimerDeviceDefinition? {
-        return all.firstOrNull { definition ->
-            definition.base.legacyAquaName.equals(
-                other = aquaName.trim(),
-                ignoreCase = true
-            ) &&
-                definition.base.legacyName.equals(
-                    other = name.trim(),
-                    ignoreCase = true
-                )
-        }
-    }
 
     fun findByProductId(
         productId: String

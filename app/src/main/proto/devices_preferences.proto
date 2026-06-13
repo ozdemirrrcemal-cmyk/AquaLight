@@ -17,9 +17,8 @@ message SavedDeviceInfo {
   int64 last_seen_millis = 7;
   int64 tank_id = 8;
 
-  // Legacy app model field. Kept until every old screen is migrated away from
-  // AquaDeviceType. Commercial routing uses category/product_key/product_id.
-  string device_type = 9;
+  reserved 9;
+  reserved "device_type";
   int32 udp_version = 10;
   bool tab_light = 11;
   bool tab_timer = 12;

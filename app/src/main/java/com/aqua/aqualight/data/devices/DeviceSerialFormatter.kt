@@ -11,9 +11,6 @@ object DeviceSerialFormatter {
      * 1. Factory/customer SerialNumber from firmware.
      * 2. AQL-<setupCode>-<shortId> device code.
      * 3. AQL-<setupCode>-<derivedId> fallback.
-     *
-     * The old AW-1221 / AC-7872 synthetic format is intentionally no longer
-     * generated for new commercial devices.
      */
     fun buildCommercialIdentifier(
         setupCode: String,
@@ -22,7 +19,7 @@ object DeviceSerialFormatter {
         deviceUid: String? = null,
         macAddress: String? = null,
         firmwareSerial: String? = null,
-        legacyId: Long? = null
+        fallbackNumericId: Long? = null
     ): String {
         val factorySerial = serialNumber
             ?.trim()
@@ -52,7 +49,7 @@ object DeviceSerialFormatter {
                 deviceUid = deviceUid,
                 macAddress = macAddress,
                 firmwareSerial = firmwareSerial,
-                legacyId = legacyId
+                fallbackNumericId = fallbackNumericId
             )
 
         return "$SERIAL_PREFIX-$normalizedSetupCode-$code"
@@ -64,53 +61,11 @@ object DeviceSerialFormatter {
         return serial.trim()
     }
 
-    /**
-     * Legacy helper kept for old call sites during migration. New code should
-     * call buildCommercialIdentifier().
-     */
-    fun buildSerial(
-        aquaName: String,
-        name: String,
-        id: Long,
-        firmwareSerial: String = "",
-        deviceUid: String = "",
-        macAddress: String = ""
-    ): String {
-        return buildSerial(
-            aquaName = aquaName,
-            name = name,
-            rawId = firmwareSerial
-                .ifBlank { deviceUid }
-                .ifBlank { macAddress }
-                .ifBlank { id.toString() }
-        )
-    }
-
-    /**
-     * Legacy helper kept for old previews/migration only.
-     */
-    fun buildSerial(
-        aquaName: String,
-        name: String,
-        rawId: String
-    ): String {
-        val prefix = buildPrefix(
-            aquaName = aquaName,
-            name = name
-        )
-
-        val cleanId = cleanId(
-            rawId = rawId
-        )
-
-        return "$prefix-$cleanId"
-    }
-
     private fun deriveShortId(
         deviceUid: String?,
         macAddress: String?,
         firmwareSerial: String?,
-        legacyId: Long?
+        fallbackNumericId: Long?
     ): String {
         return cleanId(
             rawId = deviceUid
@@ -119,26 +74,11 @@ object DeviceSerialFormatter {
                     ?.ifBlank { null }
                 ?: firmwareSerial
                     ?.ifBlank { null }
-                ?: legacyId
+                ?: fallbackNumericId
                     ?.takeIf { value -> value > 0L }
                     ?.toString()
                 ?: DEFAULT_SHORT_ID
         ).takeLast(SHORT_ID_LENGTH)
-    }
-
-    private fun buildPrefix(
-        aquaName: String,
-        name: String
-    ): String {
-        val aquaInitial = aquaName.firstOrNull()
-            ?.uppercaseChar()
-            ?: 'X'
-
-        val nameInitial = name.firstOrNull()
-            ?.uppercaseChar()
-            ?: 'X'
-
-        return "$aquaInitial$nameInitial"
     }
 
     private fun cleanId(

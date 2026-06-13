@@ -82,7 +82,6 @@ class DeviceAddCandidateLoader(
                     productKey = definition.productKey,
                     category = definition.category,
                     setupCode = definition.setupCode,
-                    deviceType = definition.type,
                     stateText = "Already connected",
                     actionText = "Add",
                     localDevice = device

@@ -6,7 +6,6 @@ import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaProductColor
 import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.catalog.AquaProductRegion
@@ -144,23 +143,6 @@ object LightProductCatalog {
         }
     }
 
-    fun findByType(
-        type: AquaDeviceType
-    ): LightDeviceDefinition? {
-        return all.firstOrNull { definition ->
-            definition.base.type == type
-        }
-    }
-
-    fun findByLegacyIdentity(
-        aquaName: String,
-        name: String
-    ): LightDeviceDefinition? {
-        return all.firstOrNull { definition ->
-            definition.base.legacyAquaName.equals(aquaName.trim(), ignoreCase = true) &&
-                definition.base.legacyName.equals(name.trim(), ignoreCase = true)
-        }
-    }
 
     fun findByProductId(
         productId: String

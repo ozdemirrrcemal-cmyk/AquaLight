@@ -1,9 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.model
 
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 
 object DeviceIconMapper {
 
@@ -35,18 +33,5 @@ object DeviceIconMapper {
                 R.drawable.ic_device_aqua_ster
             }
         }
-    }
-
-    /** Compatibility overload for old card code. */
-    fun iconFor(
-        type: AquaDeviceType
-    ): Int {
-        val category = AquaDeviceCatalog.findByType(
-            type = type
-        )?.category ?: AquaDeviceCategory.UNKNOWN
-
-        return iconFor(
-            category = category
-        )
     }
 }

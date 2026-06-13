@@ -139,7 +139,7 @@ class TankDeviceSelectFragment :
             title = buildDeviceTitle(),
             serialNumber = serial.trim(),
             iconRes = DeviceIconMapper.iconFor(
-                deviceType
+                category
             ),
             isOnline = online
         )
@@ -147,8 +147,10 @@ class TankDeviceSelectFragment :
 
     private fun DevicesDataStoreManager.DeviceInfo.buildDeviceTitle(): String {
         val catalogName =
-            AquaDeviceCatalog.findByType(
-                type = deviceType
+            AquaDeviceCatalog.findDefinition(
+                productId = productId,
+                productKey = productKey,
+                category = category
             )?.displayName.orEmpty()
 
         return name

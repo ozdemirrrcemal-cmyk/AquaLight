@@ -94,7 +94,7 @@ class DeviceAddAdapter(
                             deviceUid = localDevice.deviceUid,
                             macAddress = localDevice.macAddress,
                             firmwareSerial = localDevice.firmwareSerial,
-                            legacyId = localDevice.id
+                            fallbackNumericId = localDevice.id
                         )
                     }
                 }

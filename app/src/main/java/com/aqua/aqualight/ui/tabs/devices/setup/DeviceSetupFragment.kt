@@ -16,7 +16,6 @@ import com.aqua.aqualight.data.devices.DeviceStoreWriter
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
@@ -56,7 +55,6 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private var expectedCategory: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN
     private var expectedSetupCode: String = ""
     private var setupShortId: String = ""
-    private var expectedDeviceType: AquaDeviceType = AquaDeviceType.UNKNOWN
     private var selectedHomeSsid: String = ""
 
     private var isSettingUp = false
@@ -140,20 +138,12 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             ).trim()
         }
 
-        val deviceTypeKey = args.deviceType
-
-        expectedDeviceType = AquaDeviceType.entries.firstOrNull { type ->
-            type.storageKey == deviceTypeKey
-        } ?: AquaDeviceType.UNKNOWN
-
-        val definition = AquaDeviceCatalog.findByProductId(
-            productId = expectedProductId
-        ) ?: AquaDeviceCatalog.findByProductKey(
-            productKey = expectedProductKey
+        val definition = AquaDeviceCatalog.findDefinition(
+            productId = expectedProductId,
+            productKey = expectedProductKey,
+            category = expectedCategory
         ) ?: AquaDeviceCatalog.findBySetupCode(
             setupCode = expectedSetupCode
-        ) ?: AquaDeviceCatalog.findByType(
-            type = expectedDeviceType
         )
 
         if (definition != null) {
@@ -161,7 +151,6 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
             expectedProductKey = definition.productKey
             expectedCategory = definition.category
             expectedSetupCode = definition.setupCode
-            expectedDeviceType = definition.type
             displayName = displayName.ifBlank {
                 definition.displayName
             }

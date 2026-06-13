@@ -20,7 +20,6 @@
             <argument android:name="setupSsid" app:argType="string" android:defaultValue="" />
             <argument android:name="displayName" app:argType="string" android:defaultValue="Device" />
             <argument android:name="familyName" app:argType="string" android:defaultValue="Aqua device" />
-            <argument android:name="deviceType" app:argType="string" android:defaultValue="" />
             <argument android:name="productId" app:argType="string" android:defaultValue="" />
             <argument android:name="productKey" app:argType="string" android:defaultValue="" />
             <argument android:name="category" app:argType="string" android:defaultValue="" />
@@ -39,7 +38,6 @@
         <argument android:name="setupSsid" app:argType="string" android:defaultValue="" />
         <argument android:name="displayName" app:argType="string" android:defaultValue="Device" />
         <argument android:name="familyName" app:argType="string" android:defaultValue="Aqua device" />
-        <argument android:name="deviceType" app:argType="string" android:defaultValue="" />
         <argument android:name="productId" app:argType="string" android:defaultValue="" />
         <argument android:name="productKey" app:argType="string" android:defaultValue="" />
         <argument android:name="category" app:argType="string" android:defaultValue="" />

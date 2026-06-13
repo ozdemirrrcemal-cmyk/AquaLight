@@ -1,7 +1,6 @@
 package com.aqua.aqualight.data.devices.card
 
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 
 /**
@@ -19,8 +18,6 @@ data class DeviceCardUiState(
     val productId: String,
     val productKey: AquaProductKey,
     val category: AquaDeviceCategory,
-    /** Compatibility until old UI mappers are migrated to category. */
-    val deviceType: AquaDeviceType,
     val isOnline: Boolean,
     val lastSeenMillis: Long,
     val lastCheckedMillis: Long?,

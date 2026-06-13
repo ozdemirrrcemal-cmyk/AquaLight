@@ -24,12 +24,10 @@ class DeviceAccessGuard(
                 savedDevice.id == deviceId
             } ?: return DeviceOpenResult.NotFound
 
-        val definition = AquaDeviceCatalog.findByProductId(
-            productId = device.productId
-        ) ?: AquaDeviceCatalog.findByProductKey(
-            productKey = device.productKey
-        ) ?: AquaDeviceCatalog.findByType(
-            type = device.deviceType
+        val definition = AquaDeviceCatalog.findDefinition(
+            productId = device.productId,
+            productKey = device.productKey,
+            category = device.category
         ) ?: return DeviceOpenResult.Unsupported(
             device = device
         )

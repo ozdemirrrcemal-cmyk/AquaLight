@@ -156,8 +156,7 @@ class DeviceStatusFragment : Fragment(R.layout.fragment_device_status) {
                     lastSeenText = cardState.lastSeenText,
                     productId = cardState.productId,
                     productKey = cardState.productKey,
-                    category = cardState.category,
-                    deviceType = cardState.deviceType
+                    category = cardState.category
                 )
             }
 

@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 import android.graphics.Color
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.card.DeviceCardStateMapper
 import com.aqua.aqualight.data.devices.catalog.light.LightChannelColor
 import com.aqua.aqualight.data.devices.catalog.light.LightProductCatalog
@@ -54,7 +55,7 @@ class TankAssignedDeviceUiMapper {
 
         val iconRes =
             DeviceIconMapper.iconFor(
-                commonCardState.deviceType
+                commonCardState.category
             )
 
         return if (device.isLightDevice()) {
@@ -227,13 +228,10 @@ class TankAssignedDeviceUiMapper {
 
     private fun DevicesDataStoreManager.DeviceInfo.supportedLightChannels(): List<LightChannelConfig> {
         val catalogDefinition =
-            LightProductCatalog.findByType(
-                type = deviceType
+            LightProductCatalog.findByProductKey(
+                productKey = productKey
             ) ?: LightProductCatalog.findByProductId(
                 productId = productId
-            ) ?: LightProductCatalog.findByLegacyIdentity(
-                aquaName = aquaName,
-                name = name
             )
 
         val catalogChannels =
@@ -258,33 +256,13 @@ class TankAssignedDeviceUiMapper {
 
     private fun DevicesDataStoreManager.DeviceInfo.isLightDevice(): Boolean {
         val catalogDefinition =
-            LightProductCatalog.findByType(
-                type = deviceType
+            LightProductCatalog.findByProductKey(
+                productKey = productKey
             ) ?: LightProductCatalog.findByProductId(
                 productId = productId
-            ) ?: LightProductCatalog.findByLegacyIdentity(
-                aquaName = aquaName,
-                name = name
             )
 
-        if (catalogDefinition != null) {
-            return true
-        }
-
-        if (tabLight) {
-            return true
-        }
-
-        val rawText =
-            lightSearchText()
-
-        return rawText.contains(
-            "light"
-        ) || rawText.contains(
-            "wrgb"
-        ) || rawText.contains(
-            "rgb"
-        )
+        return catalogDefinition != null || category == AquaDeviceCategory.LIGHT
     }
 
     private fun LightChannelColor.toTankLightChannelConfig(
@@ -478,14 +456,17 @@ class TankAssignedDeviceUiMapper {
 
     private fun DevicesDataStoreManager.DeviceInfo.lightSearchText(): String {
         val definition =
-            AquaDeviceCatalog.findByType(
-                type = deviceType
+            AquaDeviceCatalog.findDefinition(
+                productId = productId,
+                productKey = productKey,
+                category = category
             )
 
         return listOf(
-            deviceType.storageKey,
+            productKey.storageKey,
+            category.storageKey,
             definition?.displayName.orEmpty(),
-            definition?.family?.displayName.orEmpty(),
+            definition?.productFamily.orEmpty(),
             name,
             productModel,
             productFamily,

@@ -238,7 +238,7 @@ object UdpDeviceDiscovery {
             macAddress = macAddress,
             serialNumber = serialNumber,
             firmwareSerial = firmwareSerial,
-            legacyId = idRaw.takeIf { value -> value > 0L }
+            fallbackNumericId = idRaw.takeIf { value -> value > 0L }
                 ?: espChipId.takeIf { value -> value > 0L }
         )
 
@@ -376,8 +376,6 @@ object UdpDeviceDiscovery {
 
             channelCount = channelCount,
             sensorCount = sensorCount,
-
-            deviceType = definition.type,
 
             aquaName = productFamily,
             name = productModel
@@ -557,7 +555,7 @@ object UdpDeviceDiscovery {
         macAddress: String?,
         serialNumber: String?,
         firmwareSerial: String?,
-        legacyId: Long?
+        fallbackNumericId: Long?
     ): String? {
         val source = deviceUid
             ?.ifBlank { null }
@@ -567,7 +565,7 @@ object UdpDeviceDiscovery {
                 ?.ifBlank { null }
             ?: firmwareSerial
                 ?.ifBlank { null }
-            ?: legacyId
+            ?: fallbackNumericId
                 ?.takeIf { value -> value > 0L }
                 ?.toString()
             ?: return null
