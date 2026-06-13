@@ -25,6 +25,8 @@ import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
 import java.util.Locale
 import kotlin.coroutines.coroutineContext
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 
 object UdpDeviceDiscovery {
 
@@ -170,21 +172,21 @@ object UdpDeviceDiscovery {
         val deviceJson = extractDeviceJson(root) ?: return null
 
         val productId = deviceJson.firstNonBlankString(
-            "ProductId",
-            "productId",
-            "product_id"
-        ) ?: return null
+    "ProductId",
+    "productId",
+    "product_id"
+) ?: return null
 
-        val definition = AquaDeviceCatalog.findByProductId(
-            productId = productId
-        ) ?: return null
+val definition = AquaDeviceCatalog.findByProductId(
+    productId = productId
+) ?: return null
 
-        val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
-            ?: deviceJson.optNullableInt("ApiVersion")
+val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
+    ?: deviceJson.optNullableInt("ApiVersion")
 
-        if (!definition.isProtocolVersionSupported(protocolVersion)) {
-            return null
-        }
+if (!definition.isProtocolVersionSupported(protocolVersion)) {
+    return null
+}
 
         val idRaw = deviceJson.optLong(
             "ID",
@@ -425,6 +427,55 @@ object UdpDeviceDiscovery {
             name = productModel
         )
     }
+    
+    private fun resolveLegacyDefinition(
+    aquaName: String?,
+    name: String?,
+    tabLight: Boolean,
+    tabTimer: Boolean,
+    tabTemperature: Boolean
+): AquaDeviceDefinition? {
+    val identity = "${aquaName.orEmpty()} ${name.orEmpty()}"
+        .lowercase(Locale.US)
+
+    val productKey = when {
+        identity.contains("wrgb") ||
+            identity.contains("light") ||
+            identity.contains("aqualight") ||
+            tabLight -> {
+            AquaProductKey.LIGHT_WRGB_PRO_ELITE
+        }
+
+        identity.contains("dose") ||
+            identity.contains("dosing") -> {
+            AquaProductKey.DOSING_DOSE_PRO_4
+        }
+
+        identity.contains("cool") ||
+            tabTemperature -> {
+            AquaProductKey.COOLING_COOL_PRO
+        }
+
+        identity.contains("multi") -> {
+            AquaProductKey.TIMER_MULTI_CONTROL
+        }
+
+        identity.contains("timer") ||
+            tabTimer -> {
+            AquaProductKey.TIMER_TIMER_PRO
+        }
+
+        else -> {
+            null
+        }
+    }
+
+    return productKey?.let { value ->
+        AquaDeviceCatalog.findByProductKey(
+            productKey = value
+        )
+    }
+}
 
     private fun isSelfRefreshPacket(
         root: JSONObject
