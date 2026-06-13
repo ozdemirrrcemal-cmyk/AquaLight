@@ -149,7 +149,7 @@
                                 android:maxLines="1"
                                 android:ellipsize="end"
                                 android:text="WRGB Pro"
-                                tools:text="WRGB Pro2" />
+                                tools:text="WRGB Pro Elite" />
 
                         </LinearLayout>
 

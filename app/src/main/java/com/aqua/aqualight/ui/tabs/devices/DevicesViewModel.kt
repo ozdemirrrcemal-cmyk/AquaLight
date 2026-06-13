@@ -120,6 +120,9 @@ class DevicesViewModel(
                 firmwareBuild = cardState.firmwareBuild,
                 isOnline = cardState.isOnline,
                 lastSeenText = cardState.lastSeenText,
+                productId = cardState.productId,
+                productKey = cardState.productKey,
+                category = cardState.category,
                 deviceType = cardState.deviceType
             )
         }

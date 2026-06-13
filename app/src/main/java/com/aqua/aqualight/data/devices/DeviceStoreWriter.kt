@@ -14,7 +14,9 @@ class DeviceStoreWriter(
             id = device.id,
             deviceUid = device.deviceUid,
             macAddress = device.macAddress,
-            firmwareSerial = device.firmwareSerial
+            firmwareSerial = device.firmwareSerial,
+            serialNumber = device.serialNumber,
+            shortId = device.shortId
         )
 
         if (existingDeviceId != null) {
@@ -31,46 +33,68 @@ class DeviceStoreWriter(
 
         val definition = AquaDeviceCatalog.findByProductId(
             productId = device.productId
-        ) ?: AquaDeviceCatalog.findByType(
-            type = device.deviceType
-        ) ?: error("Unsupported device")
+        ) ?: error("Unsupported device productId=${device.productId}")
 
-        val savedAquaName = definition.productFamily
-        val savedName = definition.displayName
+        val savedDisplayName = device.displayName.ifBlank {
+            definition.displayName
+        }
 
-        val serial = DeviceSerialFormatter.buildSerial(
-            aquaName = savedAquaName,
-            name = savedName,
-            id = device.id,
-            firmwareSerial = device.firmwareSerial.orEmpty(),
-            deviceUid = device.deviceUid.orEmpty(),
-            macAddress = device.macAddress.orEmpty()
+        val savedProductFamily = device.productFamily.ifBlank {
+            definition.productFamily
+        }
+
+        val savedProductLine = device.productLine.ifBlank {
+            definition.productLine
+        }
+
+        val savedProductModel = device.productModel.ifBlank {
+            definition.productModel
+        }
+
+        val identifier = DeviceSerialFormatter.buildCommercialIdentifier(
+            setupCode = definition.setupCode,
+            serialNumber = device.serialNumber,
+            shortId = device.shortId,
+            deviceUid = device.deviceUid,
+            macAddress = device.macAddress,
+            firmwareSerial = device.firmwareSerial,
+            legacyId = device.id
         )
 
         devicesStore.addDevice(
             id = device.id,
-            aquaName = savedAquaName,
-            name = savedName,
+            aquaName = savedProductFamily,
+            name = savedDisplayName,
             ip = device.ip,
-            serial = serial,
+            serial = identifier,
             firmwareBuild = device.firmwareBuild,
             deviceUid = device.deviceUid.orEmpty(),
             macAddress = device.macAddress.orEmpty(),
             firmwareSerial = device.firmwareSerial.orEmpty(),
 
-            deviceType = device.deviceType,
+            deviceType = definition.type,
+
+            productId = definition.productId,
+            productKey = definition.productKey,
+            category = definition.category,
+            setupCode = definition.setupCode,
+
+            productFamily = savedProductFamily,
+            productLine = savedProductLine,
+            productModel = savedProductModel,
+            displayName = savedDisplayName,
+            serialNumber = device.serialNumber.orEmpty(),
+            shortId = device.shortId.orEmpty(),
 
             udpVersion = device.udpVersion,
             tabLight = device.tabLight,
             tabTimer = device.tabTimer,
             tabTemperature = device.tabTemperature,
 
-            productId = device.productId ?: definition.productId,
-            productFamily = device.productFamily ?: definition.productFamily,
-            productModel = device.productModel ?: definition.productModel,
             hardwareRevision = device.hardwareRevision.orEmpty(),
             firmwareVersion = device.firmwareVersion.orEmpty(),
-            apiVersion = device.apiVersion,
+            protocolVersion = device.protocolVersion,
+            apiVersion = device.protocolVersion,
 
             channelCount = device.channelCount,
             sensorCount = device.sensorCount,
@@ -97,7 +121,19 @@ class DeviceStoreWriter(
             firmwareBuild = firmwareBuild,
             deviceUid = deviceUid,
             macAddress = macAddress,
+            serialNumber = serialNumber,
+            shortId = shortId,
             firmwareSerial = firmwareSerial,
+
+            productId = productId,
+            productKey = productKey,
+            category = category,
+            setupCode = setupCode,
+
+            productFamily = productFamily,
+            productLine = productLine,
+            productModel = productModel,
+            displayName = displayName,
 
             deviceType = deviceType,
 
@@ -106,12 +142,10 @@ class DeviceStoreWriter(
             tabTimer = tabTimer,
             tabTemperature = tabTemperature,
 
-            productId = productId,
-            productFamily = productFamily,
-            productModel = productModel,
             hardwareRevision = hardwareRevision,
             firmwareVersion = firmwareVersion,
-            apiVersion = apiVersion,
+            protocolVersion = protocolVersion,
+            apiVersion = protocolVersion,
 
             channelCount = channelCount,
             sensorCount = sensorCount,

@@ -90,7 +90,11 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
             }
 
             val definition =
-                AquaDeviceCatalog.findByType(
+                AquaDeviceCatalog.findByProductId(
+                    productId = device.productId
+                ) ?: AquaDeviceCatalog.findByProductKey(
+                    productKey = device.productKey
+                ) ?: AquaDeviceCatalog.findByType(
                     type = device.deviceType
                 )
 
@@ -161,7 +165,7 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
         controllerTitle: String,
         definition: AquaDeviceDefinition
     ) {
-        when (definition.controllerType.toControllerRoute()) {
+        when (definition.category.toControllerRoute()) {
             AquaDeviceControllerRoute.LIGHT -> {
                 findNavController().navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceLightFragment(

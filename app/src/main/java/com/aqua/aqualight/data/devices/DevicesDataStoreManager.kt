@@ -5,7 +5,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,17 +66,35 @@ class DevicesDataStoreManager private constructor(
     data class DeviceInfo(
         val id: Long,
         val ownerUid: String = "",
+
+        val deviceUid: String = "",
+        val macAddress: String = "",
+        val serialNumber: String = "",
+        val shortId: String = "",
+        val firmwareSerial: String = "",
+
+        val productId: String = "",
+        val productKey: AquaProductKey = AquaProductKey.UNKNOWN,
+        val category: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN,
+        val setupCode: String = "",
+
+        val productFamily: String = "",
+        val productLine: String = "",
+        val productModel: String = "",
+        val displayName: String = "",
+        val customName: String = "",
+        val skuId: String = "",
+        val skuCode: String = "",
+
         val aquaName: String,
         val name: String,
         val ip: String,
         val serial: String,
-        val deviceUid: String = "",
-        val macAddress: String = "",
-        val firmwareSerial: String = "",
         val firmwareBuild: String,
         val lastSeenMillis: Long,
         val tankId: Long? = null,
 
+        /** Compatibility field for screens not migrated away from AquaDeviceType yet. */
         val deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN,
 
         val udpVersion: Int? = null,
@@ -81,19 +102,28 @@ class DevicesDataStoreManager private constructor(
         val tabTimer: Boolean = false,
         val tabTemperature: Boolean = false,
 
-        val productId: String = "",
-        val productFamily: String = "",
-        val productModel: String = "",
         val hardwareRevision: String = "",
         val firmwareVersion: String = "",
-        val apiVersion: Int? = null,
+        val protocolVersion: Int? = null,
+        val apiVersion: Int? = protocolVersion,
 
         val channelCount: Int? = null,
         val sensorCount: Int? = null,
 
         val supportedFeatures: Set<String> = emptySet(),
         val supportedScreens: Set<String> = emptySet()
-    )
+    ) {
+        val resolvedTitle: String
+            get() = customName.ifBlank {
+                displayName.ifBlank {
+                    name.ifBlank {
+                        productModel.ifBlank {
+                            "Device"
+                        }
+                    }
+                }
+            }
+    }
 
     data class DeviceLastSeenUpdate(
         val id: Long,
@@ -101,7 +131,21 @@ class DevicesDataStoreManager private constructor(
         val firmwareBuild: String = "",
         val deviceUid: String? = null,
         val macAddress: String? = null,
+        val serialNumber: String? = null,
+        val shortId: String? = null,
         val firmwareSerial: String? = null,
+
+        val productId: String? = null,
+        val productKey: AquaProductKey? = null,
+        val category: AquaDeviceCategory? = null,
+        val setupCode: String? = null,
+
+        val productFamily: String? = null,
+        val productLine: String? = null,
+        val productModel: String? = null,
+        val displayName: String? = null,
+        val skuId: String? = null,
+        val skuCode: String? = null,
 
         val deviceType: AquaDeviceType? = null,
 
@@ -110,12 +154,10 @@ class DevicesDataStoreManager private constructor(
         val tabTimer: Boolean? = null,
         val tabTemperature: Boolean? = null,
 
-        val productId: String? = null,
-        val productFamily: String? = null,
-        val productModel: String? = null,
         val hardwareRevision: String? = null,
         val firmwareVersion: String? = null,
-        val apiVersion: Int? = null,
+        val protocolVersion: Int? = null,
+        val apiVersion: Int? = protocolVersion,
 
         val channelCount: Int? = null,
         val sensorCount: Int? = null,
@@ -173,7 +215,9 @@ class DevicesDataStoreManager private constructor(
         id: Long,
         deviceUid: String?,
         macAddress: String?,
-        firmwareSerial: String?
+        firmwareSerial: String?,
+        serialNumber: String? = null,
+        shortId: String? = null
     ): Long? {
         return devicesPrefsFlow.first()
             .devicesList
@@ -189,7 +233,9 @@ class DevicesDataStoreManager private constructor(
                     id = id,
                     deviceUid = deviceUid,
                     macAddress = macAddress,
-                    firmwareSerial = firmwareSerial
+                    firmwareSerial = firmwareSerial,
+                    serialNumber = serialNumber,
+                    shortId = shortId
                 )
             }
             ?.id
@@ -208,17 +254,30 @@ class DevicesDataStoreManager private constructor(
 
         deviceType: AquaDeviceType = AquaDeviceType.UNKNOWN,
 
+        productId: String = "",
+        productKey: AquaProductKey = AquaProductKey.UNKNOWN,
+        category: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN,
+        setupCode: String = "",
+
+        productFamily: String = "",
+        productLine: String = "",
+        productModel: String = "",
+        displayName: String = "",
+        customName: String = "",
+        skuId: String = "",
+        skuCode: String = "",
+        serialNumber: String = "",
+        shortId: String = "",
+
         udpVersion: Int? = null,
         tabLight: Boolean = false,
         tabTimer: Boolean = false,
         tabTemperature: Boolean = false,
 
-        productId: String = "",
-        productFamily: String = "",
-        productModel: String = "",
         hardwareRevision: String = "",
         firmwareVersion: String = "",
-        apiVersion: Int? = null,
+        protocolVersion: Int? = null,
+        apiVersion: Int? = protocolVersion,
 
         channelCount: Int? = null,
         sensorCount: Int? = null,
@@ -239,18 +298,60 @@ class DevicesDataStoreManager private constructor(
 
             val now = System.currentTimeMillis()
 
-            val resolvedType = resolveDeviceType(
-                explicitType = deviceType,
-                aquaName = aquaName,
-                name = name,
-                productId = productId
+            val definition = resolveDefinition(
+                productId = productId,
+                productKey = productKey,
+                category = category,
+                deviceType = deviceType
             )
+
+            val resolvedProductKey = definition?.productKey
+                ?: productKey.takeIf { key -> key != AquaProductKey.UNKNOWN }
+                ?: AquaProductKey.fromProductId(productId)
+
+            val resolvedCategory = definition?.category
+                ?: category.takeIf { value -> value != AquaDeviceCategory.UNKNOWN }
+                ?: resolvedProductKey.category
+
+            val resolvedDeviceType = definition?.type
+                ?: deviceType
+
+            val resolvedProductId = definition?.productId
+                ?: productId.ifBlank {
+                    resolvedProductKey.productId.takeUnless { value ->
+                        resolvedProductKey == AquaProductKey.UNKNOWN || value == AquaProductKey.UNKNOWN.productId
+                    }.orEmpty()
+                }
+
+            val resolvedSetupCode = setupCode.ifBlank {
+                definition?.setupCode ?: resolvedProductKey.setupCode.takeUnless { value ->
+                    resolvedProductKey == AquaProductKey.UNKNOWN || value == AquaProductKey.UNKNOWN.setupCode
+                }.orEmpty()
+            }
+
+            val resolvedProductFamily = productFamily.ifBlank {
+                definition?.productFamily ?: aquaName
+            }
+
+            val resolvedProductLine = productLine.ifBlank {
+                definition?.productLine.orEmpty()
+            }
+
+            val resolvedProductModel = productModel.ifBlank {
+                definition?.productModel ?: name
+            }
+
+            val resolvedDisplayName = displayName.ifBlank {
+                definition?.displayName ?: name.ifBlank {
+                    resolvedProductModel
+                }
+            }
 
             val device = SavedDeviceInfo.newBuilder()
                 .setId(id)
                 .setOwnerUid(ownerUid)
-                .setAquaName(aquaName)
-                .setName(name)
+                .setAquaName(resolvedProductFamily)
+                .setName(resolvedDisplayName)
                 .setIp(ip)
                 .setSerial(serial)
                 .setFirmwareBuild(firmwareBuild)
@@ -259,20 +360,34 @@ class DevicesDataStoreManager private constructor(
                 .setFirmwareSerial(firmwareSerial)
                 .setLastSeenMillis(now)
                 .setTankId(0L)
-                .setDeviceType(resolvedType.storageKey)
+                .setDeviceType(resolvedDeviceType.storageKey)
+                .setProductId(resolvedProductId)
+                .setProductKey(resolvedProductKey.storageKey)
+                .setCategory(resolvedCategory.storageKey)
+                .setSetupCode(resolvedSetupCode)
+                .setProductFamily(resolvedProductFamily)
+                .setProductLine(resolvedProductLine)
+                .setProductModel(resolvedProductModel)
+                .setDisplayName(resolvedDisplayName)
+                .setCustomName(customName)
+                .setSkuId(skuId)
+                .setSkuCode(skuCode)
+                .setSerialNumber(serialNumber)
+                .setShortId(shortId)
+                .setHardwareRevision(hardwareRevision)
+                .setFirmwareVersion(firmwareVersion)
                 .setTabLight(tabLight)
                 .setTabTimer(tabTimer)
                 .setTabTemperature(tabTemperature)
-                .setProductId(productId)
-                .setProductFamily(productFamily)
-                .setProductModel(productModel)
-                .setHardwareRevision(hardwareRevision)
-                .setFirmwareVersion(firmwareVersion)
                 .addAllSupportedFeatures(supportedFeatures)
                 .addAllSupportedScreens(supportedScreens)
                 .apply {
                     udpVersion?.let { value ->
                         setUdpVersion(value)
+                    }
+
+                    protocolVersion?.let { value ->
+                        setProtocolVersion(value)
                     }
 
                     apiVersion?.let { value ->
@@ -504,22 +619,66 @@ class DevicesDataStoreManager private constructor(
                             setFirmwareBuild(match.firmwareBuild)
                         }
 
-                        match.deviceUid?.takeIf { value ->
-                            value.isNotBlank()
-                        }?.let { value ->
+                        match.deviceUid?.takeIf { value -> value.isNotBlank() }?.let { value ->
                             setDeviceUid(value)
                         }
 
-                        match.macAddress?.takeIf { value ->
-                            value.isNotBlank()
-                        }?.let { value ->
+                        match.macAddress?.takeIf { value -> value.isNotBlank() }?.let { value ->
                             setMacAddress(value)
                         }
 
-                        match.firmwareSerial?.takeIf { value ->
-                            value.isNotBlank()
-                        }?.let { value ->
+                        match.serialNumber?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setSerialNumber(value)
+                        }
+
+                        match.shortId?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setShortId(value)
+                        }
+
+                        match.firmwareSerial?.takeIf { value -> value.isNotBlank() }?.let { value ->
                             setFirmwareSerial(value)
+                        }
+
+                        match.productId?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setProductId(value)
+                        }
+
+                        match.productKey?.takeIf { value -> value != AquaProductKey.UNKNOWN }?.let { value ->
+                            setProductKey(value.storageKey)
+                        }
+
+                        match.category?.takeIf { value -> value != AquaDeviceCategory.UNKNOWN }?.let { value ->
+                            setCategory(value.storageKey)
+                        }
+
+                        match.setupCode?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setSetupCode(value)
+                        }
+
+                        match.productFamily?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setProductFamily(value)
+                            setAquaName(value)
+                        }
+
+                        match.productLine?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setProductLine(value)
+                        }
+
+                        match.productModel?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setProductModel(value)
+                        }
+
+                        match.displayName?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setDisplayName(value)
+                            setName(value)
+                        }
+
+                        match.skuId?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setSkuId(value)
+                        }
+
+                        match.skuCode?.takeIf { value -> value.isNotBlank() }?.let { value ->
+                            setSkuCode(value)
                         }
 
                         match.deviceType?.let { value ->
@@ -542,24 +701,17 @@ class DevicesDataStoreManager private constructor(
                             setTabTemperature(value)
                         }
 
-                        match.productId?.let { value ->
-                            setProductId(value)
-                        }
-
-                        match.productFamily?.let { value ->
-                            setProductFamily(value)
-                        }
-
-                        match.productModel?.let { value ->
-                            setProductModel(value)
-                        }
-
                         match.hardwareRevision?.let { value ->
                             setHardwareRevision(value)
                         }
 
                         match.firmwareVersion?.let { value ->
                             setFirmwareVersion(value)
+                        }
+
+                        match.protocolVersion?.let { value ->
+                            setProtocolVersion(value)
+                            setApiVersion(value)
                         }
 
                         match.apiVersion?.let { value ->
@@ -597,31 +749,99 @@ class DevicesDataStoreManager private constructor(
     }
 
     private fun SavedDeviceInfo.toDeviceInfo(): DeviceInfo {
-        val fallbackType = AquaDeviceCatalog.resolveTypeByLegacyIdentity(
-            aquaName = aquaName,
-            name = name
+        val parsedProductKey = AquaProductKey.fromStorageKey(
+            value = productKey
+        ).takeIf { key ->
+            key != AquaProductKey.UNKNOWN
+        } ?: AquaProductKey.fromProductId(
+            value = productId
+        )
+
+        val parsedCategory = AquaDeviceCategory.fromStorageKey(
+            value = category
         )
 
         val parsedType = AquaDeviceType.fromStorageKey(
             value = deviceType
         )
 
-        val resolvedType = if (parsedType != AquaDeviceType.UNKNOWN) {
-            parsedType
-        } else {
-            fallbackType
+        val definition = resolveDefinition(
+            productId = productId,
+            productKey = parsedProductKey,
+            category = parsedCategory,
+            deviceType = parsedType
+        )
+
+        val resolvedProductKey = definition?.productKey
+            ?: parsedProductKey
+
+        val resolvedCategory = definition?.category
+            ?: parsedCategory.takeIf { value -> value != AquaDeviceCategory.UNKNOWN }
+            ?: resolvedProductKey.category
+
+        val resolvedType = definition?.type
+            ?: parsedType
+
+        val resolvedProductId = productId.ifBlank {
+            definition?.productId ?: resolvedProductKey.productId.takeUnless { value ->
+                resolvedProductKey == AquaProductKey.UNKNOWN || value == AquaProductKey.UNKNOWN.productId
+            }.orEmpty()
         }
+
+        val resolvedSetupCode = setupCode.ifBlank {
+            definition?.setupCode ?: resolvedProductKey.setupCode.takeUnless { value ->
+                resolvedProductKey == AquaProductKey.UNKNOWN || value == AquaProductKey.UNKNOWN.setupCode
+            }.orEmpty()
+        }
+
+        val resolvedProductFamily = productFamily.ifBlank {
+            definition?.productFamily ?: aquaName
+        }
+
+        val resolvedProductLine = productLine.ifBlank {
+            definition?.productLine.orEmpty()
+        }
+
+        val resolvedProductModel = productModel.ifBlank {
+            definition?.productModel ?: name
+        }
+
+        val resolvedDisplayName = displayName.ifBlank {
+            definition?.displayName ?: name.ifBlank {
+                resolvedProductModel
+            }
+        }
+
+        val resolvedProtocolVersion = protocolVersion.takeIf { value -> value > 0 }
+            ?: apiVersion.takeIf { value -> value > 0 }
 
         return DeviceInfo(
             id = id,
             ownerUid = ownerUid,
-            aquaName = aquaName,
-            name = name,
-            ip = ip,
-            serial = serial,
+
             deviceUid = deviceUid,
             macAddress = macAddress,
+            serialNumber = serialNumber,
+            shortId = shortId,
             firmwareSerial = firmwareSerial,
+
+            productId = resolvedProductId,
+            productKey = resolvedProductKey,
+            category = resolvedCategory,
+            setupCode = resolvedSetupCode,
+
+            productFamily = resolvedProductFamily,
+            productLine = resolvedProductLine,
+            productModel = resolvedProductModel,
+            displayName = resolvedDisplayName,
+            customName = customName,
+            skuId = skuId,
+            skuCode = skuCode,
+
+            aquaName = resolvedProductFamily,
+            name = resolvedDisplayName,
+            ip = ip,
+            serial = serial,
             firmwareBuild = firmwareBuild,
             lastSeenMillis = lastSeenMillis,
             tankId = tankId.takeIf { value ->
@@ -637,14 +857,10 @@ class DevicesDataStoreManager private constructor(
             tabTimer = tabTimer,
             tabTemperature = tabTemperature,
 
-            productId = productId,
-            productFamily = productFamily,
-            productModel = productModel,
             hardwareRevision = hardwareRevision,
             firmwareVersion = firmwareVersion,
-            apiVersion = apiVersion.takeIf { value ->
-                value > 0
-            },
+            protocolVersion = resolvedProtocolVersion,
+            apiVersion = apiVersion.takeIf { value -> value > 0 },
 
             channelCount = channelCount.takeIf { value ->
                 value > 0
@@ -683,27 +899,34 @@ class DevicesDataStoreManager private constructor(
         )
     }
 
-    private fun resolveDeviceType(
-        explicitType: AquaDeviceType,
-        aquaName: String,
-        name: String,
-        productId: String
-    ): AquaDeviceType {
-        if (explicitType != AquaDeviceType.UNKNOWN) {
-            return explicitType
-        }
-
-        val byProductId = AquaDeviceCatalog.resolveTypeByProductId(
+    private fun resolveDefinition(
+        productId: String,
+        productKey: AquaProductKey,
+        category: AquaDeviceCategory,
+        deviceType: AquaDeviceType
+    ): AquaDeviceDefinition? {
+        AquaDeviceCatalog.findByProductId(
             productId = productId
-        )
-
-        if (byProductId != AquaDeviceType.UNKNOWN) {
-            return byProductId
+        )?.let { definition ->
+            return definition
         }
 
-        return AquaDeviceCatalog.resolveTypeByLegacyIdentity(
-            aquaName = aquaName,
-            name = name
+        AquaDeviceCatalog.findByProductKey(
+            productKey = productKey
+        )?.let { definition ->
+            return definition
+        }
+
+        if (category != AquaDeviceCategory.UNKNOWN) {
+            AquaDeviceCatalog.findByCategory(
+                category = category
+            ).firstOrNull()?.let { definition ->
+                return definition
+            }
+        }
+
+        return AquaDeviceCatalog.findByType(
+            type = deviceType
         )
     }
 }

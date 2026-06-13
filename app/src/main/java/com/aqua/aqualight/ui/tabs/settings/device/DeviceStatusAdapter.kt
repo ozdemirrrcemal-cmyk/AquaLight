@@ -40,7 +40,7 @@ class DeviceStatusAdapter(
             }
 
             binding.ivDeviceIcon.setImageResource(
-                DeviceIconMapper.iconFor(item.deviceType)
+                DeviceIconMapper.iconFor(item.category)
             )
 
             binding.tvIp.text = item.ip.ifBlank {

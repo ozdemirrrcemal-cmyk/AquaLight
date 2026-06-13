@@ -8,7 +8,6 @@ import android.net.wifi.WifiManager
 import android.os.SystemClock
 import android.util.Log
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -44,7 +43,7 @@ object UdpDeviceDiscovery {
         shouldStopEarly: (() -> Boolean)? = null
     ): List<DiscoveredAquaDevice> = withContext(Dispatchers.IO) {
         val appContext = context.applicationContext
-        val resultMap = linkedMapOf<Long, DiscoveredAquaDevice>()
+        val resultMap = linkedMapOf<String, DiscoveredAquaDevice>()
         val buffer = ByteArray(BUFFER_SIZE)
 
         val targets = getBroadcastTargets(appContext)
@@ -105,7 +104,7 @@ object UdpDeviceDiscovery {
                         sourceIp = sourceIp
                     ) ?: continue
 
-                    resultMap[discoveredDevice.id] = discoveredDevice
+                    resultMap[discoveredDevice.identityKey()] = discoveredDevice
 
                     if (stopWhen?.invoke(discoveredDevice) == true) {
                         break
@@ -170,6 +169,16 @@ object UdpDeviceDiscovery {
 
         val deviceJson = extractDeviceJson(root) ?: return null
 
+        val productId = deviceJson.firstNonBlankString(
+            "ProductId",
+            "productId",
+            "product_id"
+        ) ?: return null
+
+        val definition = AquaDeviceCatalog.findByProductId(
+            productId = productId
+        ) ?: return null
+
         val idRaw = deviceJson.optLong(
             "ID",
             0L
@@ -186,24 +195,51 @@ object UdpDeviceDiscovery {
                 sourceIp
             }
 
+        if (ip.isBlank()) {
+            return null
+        }
+
         val deviceUid = deviceJson.firstNonBlankString(
             "DeviceUid",
             "DeviceUID",
+            "DeviceUID",
             "UID",
-            "deviceUid"
+            "deviceUid",
+            "device_uid"
         )
 
         val macAddress = deviceJson.firstNonBlankString(
             "MacAddress",
             "MAC",
-            "macAddress"
+            "macAddress",
+            "mac_address"
+        )
+
+        val serialNumber = deviceJson.firstNonBlankString(
+            "SerialNumber",
+            "Serial",
+            "serialNumber",
+            "serial_number"
         )
 
         val firmwareSerial = deviceJson.firstNonBlankString(
-            "SerialNumber",
-            "Serial",
             "FirmwareSerial",
             "firmwareSerial"
+        ) ?: serialNumber
+
+        val shortId = deviceJson.firstNonBlankString(
+            "ShortId",
+            "ShortID",
+            "DeviceCode",
+            "shortId",
+            "short_id"
+        ) ?: deriveShortId(
+            deviceUid = deviceUid,
+            macAddress = macAddress,
+            serialNumber = serialNumber,
+            firmwareSerial = firmwareSerial,
+            legacyId = idRaw.takeIf { value -> value > 0L }
+                ?: espChipId.takeIf { value -> value > 0L }
         )
 
         val finalId = when {
@@ -217,6 +253,10 @@ object UdpDeviceDiscovery {
 
             !deviceUid.isNullOrBlank() -> {
                 createStableIdFromString(deviceUid)
+            }
+
+            !serialNumber.isNullOrBlank() -> {
+                createStableIdFromString(serialNumber)
             }
 
             !firmwareSerial.isNullOrBlank() -> {
@@ -236,26 +276,6 @@ object UdpDeviceDiscovery {
             return null
         }
 
-        if (ip.isBlank()) {
-            return null
-        }
-
-        val aquaName = deviceJson
-            .optString("AquaName", "")
-            .ifBlank {
-                ""
-            }
-
-        val name = deviceJson
-            .optString("Name", "")
-            .ifBlank {
-                "Aqua_$finalId"
-            }
-
-        if (aquaName.isBlank() && name.isBlank()) {
-            return null
-        }
-
         val firmwareBuild = deviceJson
             .optString("FirmwareBuild", "")
             .ifBlank {
@@ -266,38 +286,36 @@ object UdpDeviceDiscovery {
             .optNullableInt("VerUdp")
             ?: deviceJson.optNullableInt("VerUdp")
 
-        val productId = deviceJson
-            .optString("ProductId", "")
-            .ifBlank {
-                null
-            }
-
-        val productFamily = deviceJson
-            .optString("ProductFamily", "")
-            .ifBlank {
-                null
-            }
-
-        val productModel = deviceJson
-            .optString("ProductModel", "")
-            .ifBlank {
-                null
-            }
-
-        val hardwareRevision = deviceJson
-            .optString("HardwareRevision", "")
-            .ifBlank {
-                null
-            }
-
-        val firmwareVersion = deviceJson
-            .optString("FirmwareVersion", "")
-            .ifBlank {
-                null
-            }
-
-        val apiVersion = deviceJson.optNullableInt("ProtocolVersion")
+        val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
             ?: deviceJson.optNullableInt("ApiVersion")
+
+        val productFamily = deviceJson.firstNonBlankString(
+            "ProductFamily",
+            "AquaName"
+        ) ?: definition.productFamily
+
+        val productLine = deviceJson.firstNonBlankString(
+            "ProductLine"
+        ) ?: definition.productLine
+
+        val productModel = deviceJson.firstNonBlankString(
+            "ProductModel",
+            "Name"
+        ) ?: definition.productModel
+
+        val displayName = deviceJson.firstNonBlankString(
+            "DisplayName",
+            "UserName",
+            "CustomName"
+        ) ?: definition.displayName
+
+        val hardwareRevision = deviceJson.firstNonBlankString(
+            "HardwareRevision"
+        )
+
+        val firmwareVersion = deviceJson.firstNonBlankString(
+            "FirmwareVersion"
+        )
 
         val supportedFeatures = deviceJson.readStringSet(
             key = "SupportedFeatures"
@@ -322,31 +340,29 @@ object UdpDeviceDiscovery {
             key = "TabTemperature"
         )
 
-        val resolvedType = resolveDeviceType(
-            productId = productId
-        )
-
-        if (resolvedType == AquaDeviceType.UNKNOWN) {
-            return null
-        }
-
         return DiscoveredAquaDevice(
             id = finalId,
             ip = ip,
 
-            aquaName = aquaName,
-            name = name,
+            productId = definition.productId,
+            productKey = definition.productKey,
+            category = definition.category,
+            setupCode = definition.setupCode,
+
+            productFamily = productFamily,
+            productLine = productLine,
+            productModel = productModel,
+            displayName = displayName,
 
             deviceUid = deviceUid,
             macAddress = macAddress,
+            serialNumber = serialNumber,
+            shortId = shortId,
             firmwareSerial = firmwareSerial,
 
-            productId = productId,
-            productFamily = productFamily,
-            productModel = productModel,
             hardwareRevision = hardwareRevision,
             firmwareVersion = firmwareVersion,
-            apiVersion = apiVersion,
+            protocolVersion = protocolVersion,
 
             firmwareBuild = firmwareBuild,
             udpVersion = udpVersion,
@@ -361,7 +377,10 @@ object UdpDeviceDiscovery {
             channelCount = channelCount,
             sensorCount = sensorCount,
 
-            deviceType = resolvedType
+            deviceType = definition.type,
+
+            aquaName = productFamily,
+            name = productModel
         )
     }
 
@@ -371,14 +390,6 @@ object UdpDeviceDiscovery {
         return root.optString("Command", "") == "RefreshUDP" &&
             !root.has("Data") &&
             !root.has("NetUdp")
-    }
-
-    private fun resolveDeviceType(
-        productId: String?
-    ): AquaDeviceType {
-        return AquaDeviceCatalog.resolveTypeByProductId(
-            productId = productId
-        )
     }
 
     private fun extractDeviceJson(
@@ -539,6 +550,49 @@ object UdpDeviceDiscovery {
             .lowercase(Locale.US)
             .hashCode()
             .toLong() and 0x00000000FFFFFFFFL
+    }
+
+    private fun deriveShortId(
+        deviceUid: String?,
+        macAddress: String?,
+        serialNumber: String?,
+        firmwareSerial: String?,
+        legacyId: Long?
+    ): String? {
+        val source = deviceUid
+            ?.ifBlank { null }
+            ?: macAddress
+                ?.ifBlank { null }
+            ?: serialNumber
+                ?.ifBlank { null }
+            ?: firmwareSerial
+                ?.ifBlank { null }
+            ?: legacyId
+                ?.takeIf { value -> value > 0L }
+                ?.toString()
+            ?: return null
+
+        return source
+            .filter { char ->
+                char.isLetterOrDigit()
+            }
+            .uppercase(Locale.US)
+            .takeLast(6)
+            .ifBlank {
+                null
+            }
+    }
+
+    private fun DiscoveredAquaDevice.identityKey(): String {
+        return deviceUid
+            ?.ifBlank { null }
+            ?: macAddress
+                ?.ifBlank { null }
+            ?: serialNumber
+                ?.ifBlank { null }
+            ?: shortId
+                ?.ifBlank { null }
+            ?: id.toString()
     }
 
     private fun JSONObject.firstNonBlankString(

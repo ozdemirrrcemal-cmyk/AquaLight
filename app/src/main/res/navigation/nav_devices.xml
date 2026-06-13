@@ -21,6 +21,11 @@
             <argument android:name="displayName" app:argType="string" android:defaultValue="Device" />
             <argument android:name="familyName" app:argType="string" android:defaultValue="Aqua device" />
             <argument android:name="deviceType" app:argType="string" android:defaultValue="" />
+            <argument android:name="productId" app:argType="string" android:defaultValue="" />
+            <argument android:name="productKey" app:argType="string" android:defaultValue="" />
+            <argument android:name="category" app:argType="string" android:defaultValue="" />
+            <argument android:name="setupCode" app:argType="string" android:defaultValue="" />
+            <argument android:name="setupShortId" app:argType="string" android:defaultValue="" />
         </action>
 
         <action android:id="@+id/action_deviceAddFragment_to_deviceRouterFragment" app:destination="@id/deviceRouterFragment" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
@@ -35,6 +40,11 @@
         <argument android:name="displayName" app:argType="string" android:defaultValue="Device" />
         <argument android:name="familyName" app:argType="string" android:defaultValue="Aqua device" />
         <argument android:name="deviceType" app:argType="string" android:defaultValue="" />
+        <argument android:name="productId" app:argType="string" android:defaultValue="" />
+        <argument android:name="productKey" app:argType="string" android:defaultValue="" />
+        <argument android:name="category" app:argType="string" android:defaultValue="" />
+        <argument android:name="setupCode" app:argType="string" android:defaultValue="" />
+        <argument android:name="setupShortId" app:argType="string" android:defaultValue="" />
 
         <action android:id="@+id/action_deviceSetupFragment_to_deviceRouterFragment" app:destination="@id/deviceRouterFragment" app:popUpTo="@id/devicesFragment" app:popUpToInclusive="false" app:launchSingleTop="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
             <argument android:name="deviceId" app:argType="long" android:defaultValue="0L" />

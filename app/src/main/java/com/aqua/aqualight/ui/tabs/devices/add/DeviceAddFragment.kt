@@ -361,7 +361,12 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
                 setupSsid = candidate.setupSsid.orEmpty(),
                 displayName = candidate.displayName,
                 familyName = candidate.familyName,
-                deviceType = candidate.deviceType.storageKey
+                deviceType = candidate.deviceType.storageKey,
+                productId = candidate.productId,
+                productKey = candidate.productKey.storageKey,
+                category = candidate.category.storageKey,
+                setupCode = candidate.setupCode,
+                setupShortId = candidate.setupShortId.orEmpty()
             )
         )
     }

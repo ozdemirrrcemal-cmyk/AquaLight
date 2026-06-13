@@ -11,6 +11,7 @@ enum class LightFeature {
     CLOUD_SIMULATION,
     MOONLIGHT,
     ACCLIMATION_MODE,
+    FAN_CONTROL,
     SPECTRUM_EDITOR,
     MATRIX_EDITOR
 }

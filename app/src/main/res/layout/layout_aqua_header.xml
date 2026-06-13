@@ -275,7 +275,7 @@
             android:maxLines="1"
             android:text="Device"
             android:textColor="?attr/colorOnSurface"
-            tools:text="WRGB Pro2" />
+            tools:text="WRGB Pro Elite" />
 
         <ImageView
             android:id="@+id/imgStatusIcon"

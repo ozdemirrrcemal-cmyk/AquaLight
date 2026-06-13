@@ -13,19 +13,12 @@ enum class AquaProductKey(
     val category: AquaDeviceCategory,
     val legacyDeviceType: AquaDeviceType
 ) {
-    LIGHT_WRGB_PRO2(
-        storageKey = "LIGHT_WRGB_PRO2",
-        productId = "com.aqua.light.wrgb_pro2",
-        setupCode = "WP2",
+    LIGHT_WRGB_PRO_ELITE(
+        storageKey = "LIGHT_WRGB_PRO_ELITE",
+        productId = "com.aqua.light.wrgb_pro_elite",
+        setupCode = "WPE",
         category = AquaDeviceCategory.LIGHT,
         legacyDeviceType = AquaDeviceType.AQUA_LIGHT_001
-    ),
-    LIGHT_RGB_PRO_ELITE(
-        storageKey = "LIGHT_RGB_PRO_ELITE",
-        productId = "com.aqua.light.rgb_pro_elite",
-        setupCode = "RPE",
-        category = AquaDeviceCategory.LIGHT,
-        legacyDeviceType = AquaDeviceType.AQUA_LIGHT_002
     ),
     TIMER_TIMER_PRO(
         storageKey = "TIMER_TIMER_PRO",

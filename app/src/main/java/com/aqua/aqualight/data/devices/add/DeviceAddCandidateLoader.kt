@@ -61,15 +61,27 @@ class DeviceAddCandidateLoader(
                 }
             }
             .mapNotNull { device ->
-                val definition = AquaDeviceCatalog.findByType(
-                    type = device.deviceType
+                val definition = AquaDeviceCatalog.findByProductId(
+                    productId = device.productId
                 ) ?: return@mapNotNull null
 
+                val localKey = device.deviceUid
+                    ?.takeIf { value -> value.isNotBlank() }
+                    ?: device.macAddress
+                        ?.takeIf { value -> value.isNotBlank() }
+                    ?: device.shortId
+                        ?.takeIf { value -> value.isNotBlank() }
+                    ?: device.id.toString()
+
                 DeviceAddCandidate(
-                    key = "local:${device.id}",
+                    key = "local:$localKey",
                     source = DeviceAddSource.LOCAL_NETWORK,
-                    displayName = definition.displayName,
-                    familyName = definition.family.displayName,
+                    displayName = device.displayName.ifBlank { definition.displayName },
+                    familyName = device.productFamily.ifBlank { definition.productFamily },
+                    productId = definition.productId,
+                    productKey = definition.productKey,
+                    category = definition.category,
+                    setupCode = definition.setupCode,
                     deviceType = definition.type,
                     stateText = "Already connected",
                     actionText = "Add",

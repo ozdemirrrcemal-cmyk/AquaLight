@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices
 
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -96,6 +98,10 @@ class DeviceIdentityMatcherTest {
     ): DevicesDataStoreManager.DeviceInfo {
         return DevicesDataStoreManager.DeviceInfo(
             id = id,
+            productId = AquaProductKey.LIGHT_WRGB_PRO2.productId,
+            productKey = AquaProductKey.LIGHT_WRGB_PRO2,
+            category = AquaDeviceCategory.LIGHT,
+            setupCode = AquaProductKey.LIGHT_WRGB_PRO2.setupCode,
             aquaName = "AquaLight",
             name = "WRGB Pro2",
             ip = "192.168.1.25",
@@ -119,8 +125,14 @@ class DeviceIdentityMatcherTest {
         return DiscoveredAquaDevice(
             id = id,
             ip = ip,
-            aquaName = "AquaLight",
-            name = "WRGB Pro2",
+            productId = AquaProductKey.LIGHT_WRGB_PRO2.productId,
+            productKey = AquaProductKey.LIGHT_WRGB_PRO2,
+            category = AquaDeviceCategory.LIGHT,
+            setupCode = AquaProductKey.LIGHT_WRGB_PRO2.setupCode,
+            productFamily = "AquaLight",
+            productLine = "WRGB",
+            productModel = "WRGB Pro2",
+            displayName = "WRGB Pro2",
             deviceUid = deviceUid,
             macAddress = macAddress,
             firmwareSerial = firmwareSerial,

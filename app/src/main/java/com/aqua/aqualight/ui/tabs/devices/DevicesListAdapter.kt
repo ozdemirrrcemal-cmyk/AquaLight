@@ -69,7 +69,7 @@ class DevicesListAdapter(
             binding.tvTankName.text = tankName
 
             binding.ivDeviceIcon.setImageResource(
-                DeviceIconMapper.iconFor(item.deviceType)
+                DeviceIconMapper.iconFor(item.category)
             )
 
             binding.ivDeviceIcon.contentDescription = deviceName

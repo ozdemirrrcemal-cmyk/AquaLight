@@ -9,6 +9,7 @@ data class AquaProductVariant(
     val channelCount: Int? = null,
     val outputCount: Int? = null,
     val sensorCount: Int? = null,
+    val fanCount: Int? = null,
     val pumpCount: Int? = null,
     val maxPowerWatt: Int? = null,
     val region: AquaProductRegion = AquaProductRegion.GLOBAL,

@@ -14,7 +14,10 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.data.devices.DeviceIdentityMatcher
 import com.aqua.aqualight.data.devices.DeviceStoreWriter
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.discovery.DeviceDiscoveryService
 import com.aqua.aqualight.data.devices.discovery.DeviceScanReason
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
@@ -48,6 +51,11 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     private var setupSsid: String = ""
     private var displayName: String = "Device"
     private var familyName: String = "Aqua device"
+    private var expectedProductId: String = ""
+    private var expectedProductKey: AquaProductKey = AquaProductKey.UNKNOWN
+    private var expectedCategory: AquaDeviceCategory = AquaDeviceCategory.UNKNOWN
+    private var expectedSetupCode: String = ""
+    private var setupShortId: String = ""
     private var expectedDeviceType: AquaDeviceType = AquaDeviceType.UNKNOWN
     private var selectedHomeSsid: String = ""
 
@@ -113,11 +121,54 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
 
         setupSsid = args.setupSsid
 
+        expectedProductId = args.productId
+
+        expectedProductKey = AquaProductKey.fromStorageKey(
+            value = args.productKey
+        )
+
+        expectedCategory = AquaDeviceCategory.fromStorageKey(
+            value = args.category
+        )
+
+        expectedSetupCode = args.setupCode
+
+        setupShortId = args.setupShortId.ifBlank {
+            setupSsid.substringAfterLast(
+                delimiter = "-",
+                missingDelimiterValue = ""
+            ).trim()
+        }
+
         val deviceTypeKey = args.deviceType
 
         expectedDeviceType = AquaDeviceType.entries.firstOrNull { type ->
             type.storageKey == deviceTypeKey
         } ?: AquaDeviceType.UNKNOWN
+
+        val definition = AquaDeviceCatalog.findByProductId(
+            productId = expectedProductId
+        ) ?: AquaDeviceCatalog.findByProductKey(
+            productKey = expectedProductKey
+        ) ?: AquaDeviceCatalog.findBySetupCode(
+            setupCode = expectedSetupCode
+        ) ?: AquaDeviceCatalog.findByType(
+            type = expectedDeviceType
+        )
+
+        if (definition != null) {
+            expectedProductId = definition.productId
+            expectedProductKey = definition.productKey
+            expectedCategory = definition.category
+            expectedSetupCode = definition.setupCode
+            expectedDeviceType = definition.type
+            displayName = displayName.ifBlank {
+                definition.displayName
+            }
+            familyName = familyName.ifBlank {
+                definition.productFamily
+            }
+        }
     }
 
     private fun renderInitialState() {
@@ -126,7 +177,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         binding.etHomeWifiSsid.setText("")
 
         binding.ivDeviceImage.setImageResource(
-            DeviceIconMapper.iconFor(expectedDeviceType)
+            DeviceIconMapper.iconFor(expectedCategory)
         )
 
         binding.ivDeviceImage.contentDescription = displayName
@@ -473,7 +524,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
                 getString(R.string.device_setup_device_not_found)
             )
 
-        deviceStoreWriter.saveDiscoveredDevice(
+        val savedDeviceId = deviceStoreWriter.saveDiscoveredDevice(
             device = discoveredDevice
         )
 
@@ -493,7 +544,7 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         delay(700L)
 
         openDeviceMenu(
-            deviceId = discoveredDevice.id
+            deviceId = savedDeviceId
         )
     }
 
@@ -563,13 +614,6 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
     }
 
     private suspend fun waitForDeviceOnHomeNetwork(): DiscoveredAquaDevice? {
-        val setupShortId = setupSsid
-            .substringAfterLast(
-                delimiter = "-",
-                missingDelimiterValue = ""
-            )
-            .trim()
-
         repeat(20) {
             val result = DeviceDiscoveryService.scan(
                 context = requireContext(),
@@ -598,10 +642,30 @@ class DeviceSetupFragment : Fragment(R.layout.fragment_device_setup) {
         device: DiscoveredAquaDevice,
         setupShortId: String
     ): Boolean {
-        val typeMatches = expectedDeviceType == AquaDeviceType.UNKNOWN ||
-            device.deviceType == expectedDeviceType
+        val productMatches = expectedProductId.isBlank() ||
+            device.productId.equals(
+                other = expectedProductId,
+                ignoreCase = true
+            )
 
-        if (!typeMatches) {
+        if (!productMatches) {
+            return false
+        }
+
+        val categoryMatches = expectedCategory == AquaDeviceCategory.UNKNOWN ||
+            device.category == expectedCategory
+
+        if (!categoryMatches) {
+            return false
+        }
+
+        val setupCodeMatches = expectedSetupCode.isBlank() ||
+            device.setupCode.equals(
+                other = expectedSetupCode,
+                ignoreCase = true
+            )
+
+        if (!setupCodeMatches) {
             return false
         }
 

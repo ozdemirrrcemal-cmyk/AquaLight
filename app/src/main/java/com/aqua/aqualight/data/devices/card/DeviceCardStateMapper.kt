@@ -27,25 +27,33 @@ class DeviceCardStateMapper {
             statuses[device.id]
 
         val definition =
-            AquaDeviceCatalog.findByType(
+            AquaDeviceCatalog.findByProductId(
+                productId = device.productId
+            ) ?: AquaDeviceCatalog.findByProductKey(
+                productKey = device.productKey
+            ) ?: AquaDeviceCatalog.findByType(
                 type = device.deviceType
             )
 
         val title =
-            definition?.displayName
-                ?: device.name.ifBlank {
-                    device.productModel.ifBlank {
-                        "Device"
-                    }
+            device.customName.ifBlank {
+                device.displayName.ifBlank {
+                    definition?.displayName
+                        ?: device.name.ifBlank {
+                            device.productModel.ifBlank {
+                                "Device"
+                            }
+                        }
                 }
+            }
 
         val familyName =
-            definition?.family?.displayName
-                ?: device.productFamily.ifBlank {
-                    device.aquaName.ifBlank {
+            device.productFamily.ifBlank {
+                definition?.productFamily
+                    ?: device.aquaName.ifBlank {
                         "Unknown"
                     }
-                }
+            }
 
         val isOnline =
             statusState?.isOnline == true
@@ -66,6 +74,9 @@ class DeviceCardStateMapper {
             ip = statusState?.ip ?: device.ip,
             serial = device.serial,
             firmwareBuild = device.firmwareBuild,
+            productId = device.productId,
+            productKey = device.productKey,
+            category = device.category,
             deviceType = device.deviceType,
             isOnline = isOnline,
             lastSeenMillis = lastSeenMillis,

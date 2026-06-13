@@ -47,7 +47,7 @@ class DeviceAddAdapter(
             item: DeviceAddCandidate
         ) {
             binding.ivDeviceIcon.setImageResource(
-                DeviceIconMapper.iconFor(item.deviceType)
+                DeviceIconMapper.iconFor(item.category)
             )
 
             binding.ivDeviceIcon.contentDescription = item.displayName
@@ -87,13 +87,14 @@ class DeviceAddAdapter(
                     if (localDevice == null) {
                         "Device"
                     } else {
-                        DeviceSerialFormatter.buildSerial(
-                            aquaName = item.familyName,
-                            name = item.displayName,
-                            id = localDevice.id,
-                            firmwareSerial = localDevice.firmwareSerial.orEmpty(),
-                            deviceUid = localDevice.deviceUid.orEmpty(),
-                            macAddress = localDevice.macAddress.orEmpty()
+                        DeviceSerialFormatter.buildCommercialIdentifier(
+                            setupCode = item.setupCode,
+                            serialNumber = localDevice.serialNumber,
+                            shortId = localDevice.shortId,
+                            deviceUid = localDevice.deviceUid,
+                            macAddress = localDevice.macAddress,
+                            firmwareSerial = localDevice.firmwareSerial,
+                            legacyId = localDevice.id
                         )
                     }
                 }

@@ -1,44 +1,46 @@
 package com.aqua.aqualight.data.devices.catalog.light
 
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceDefinition
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceFeature
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceModule
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceScreen
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
-import com.aqua.aqualight.data.devices.catalog.AquaProductKey
-import com.aqua.aqualight.data.devices.catalog.AquaProductVariant
-import com.aqua.aqualight.data.devices.catalog.AquaProductRegion
-import com.aqua.aqualight.data.devices.catalog.AquaProductColor
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
-import com.aqua.aqualight.data.devices.catalog.AquaDeviceControllerType
+import com.aqua.aqualight.data.devices.catalog.AquaProductColor
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
+import com.aqua.aqualight.data.devices.catalog.AquaProductRegion
+import com.aqua.aqualight.data.devices.catalog.AquaProductVariant
 import com.aqua.aqualight.data.devices.catalog.FirmwareProtocol
 import com.aqua.aqualight.data.devices.catalog.ModuleVisibility
 
 object LightProductCatalog {
 
-    val aquaLight001 = LightDeviceDefinition(
+    val wrgbProElite120 = LightDeviceDefinition(
         base = AquaDeviceDefinition(
-            productKey = AquaProductKey.LIGHT_WRGB_PRO2,
-            productId = AquaProductKey.LIGHT_WRGB_PRO2.productId,
+            productKey = AquaProductKey.LIGHT_WRGB_PRO_ELITE,
+            productId = AquaProductKey.LIGHT_WRGB_PRO_ELITE.productId,
             category = AquaDeviceCategory.LIGHT,
 
             productFamily = "AquaLight",
             productLine = "WRGB",
-            productModel = "WRGB Pro2",
-            displayName = "WRGB Pro2",
-            setupCode = AquaProductKey.LIGHT_WRGB_PRO2.setupCode,
+            productModel = "WRGB Pro Elite",
+            displayName = "WRGB Pro Elite",
+            setupCode = AquaProductKey.LIGHT_WRGB_PRO_ELITE.setupCode,
 
             variants = listOf(
                 AquaProductVariant(
-                    skuId = "com.aqua.light.wrgb_pro2.060.eu.black",
-                    skuCode = "AQL-WP2-060-EU-BLK",
-                    displayName = "WRGB Pro2 60cm EU Black",
-                    sizeMm = 600,
+                    skuId = "com.aqua.light.wrgb_pro_elite.120.global.black",
+                    skuCode = "AQL-WPE-120-GLB-BLK",
+                    displayName = "WRGB Pro Elite 120cm Global Black",
+                    sizeMm = 1200,
                     channelCount = 4,
-                    maxPowerWatt = 60,
-                    region = AquaProductRegion.EU,
+                    fanCount = 2,
+                    sensorCount = 1,
+                    maxPowerWatt = 120,
+                    region = AquaProductRegion.GLOBAL,
                     color = AquaProductColor.BLACK,
-                    hardwareRevision = "1.0"
+                    hardwareRevision = null
                 )
             ),
 
@@ -59,7 +61,11 @@ object LightProductCatalog {
                 AquaDeviceScreen.LIGHT_CHANNELS,
                 AquaDeviceScreen.LIGHT_SCHEDULE,
                 AquaDeviceScreen.LIGHT_PRESETS,
+                AquaDeviceScreen.LIGHT_QUICK_SETUP,
+                AquaDeviceScreen.LIGHT_MOONLIGHT,
+                AquaDeviceScreen.LIGHT_ACCLIMATION,
                 AquaDeviceScreen.LIGHT_TEMPERATURE_PROTECTION,
+                AquaDeviceScreen.LIGHT_FAN_CONTROL,
                 AquaDeviceScreen.ADVANCED
             ),
 
@@ -67,6 +73,12 @@ object LightProductCatalog {
                 AquaDeviceFeature.WIFI_SETUP,
                 AquaDeviceFeature.LAN_DISCOVERY,
                 AquaDeviceFeature.LIGHT_CONTROL,
+                AquaDeviceFeature.LIGHT_QUICK_SETUP,
+                AquaDeviceFeature.LIGHT_PRESETS,
+                AquaDeviceFeature.LIGHT_MOONLIGHT,
+                AquaDeviceFeature.LIGHT_ACCLIMATION,
+                AquaDeviceFeature.LIGHT_TEMPERATURE_PROTECTION,
+                AquaDeviceFeature.LIGHT_FAN_CONTROL,
                 AquaDeviceFeature.TEMPERATURE_READ,
                 AquaDeviceFeature.OTA_UPDATE
             )
@@ -78,7 +90,10 @@ object LightProductCatalog {
             LightFeature.CHANNEL_CONTROL,
             LightFeature.LIGHT_SCHEDULE,
             LightFeature.PRESETS,
-            LightFeature.TEMPERATURE_PROTECTION
+            LightFeature.MOONLIGHT,
+            LightFeature.ACCLIMATION_MODE,
+            LightFeature.TEMPERATURE_PROTECTION,
+            LightFeature.FAN_CONTROL
         ),
 
         channels = listOf(
@@ -117,98 +132,8 @@ object LightProductCatalog {
         supportsIndependentChannelSchedule = true
     )
 
-    val aquaLight002 = LightDeviceDefinition(
-        base = AquaDeviceDefinition(
-            productKey = AquaProductKey.LIGHT_RGB_PRO_ELITE,
-            productId = AquaProductKey.LIGHT_RGB_PRO_ELITE.productId,
-            category = AquaDeviceCategory.LIGHT,
-
-            productFamily = "AquaLight",
-            productLine = "RGB",
-            productModel = "RGB Pro Elite",
-            displayName = "RGB Pro Elite",
-            setupCode = AquaProductKey.LIGHT_RGB_PRO_ELITE.setupCode,
-
-            variants = listOf(
-                AquaProductVariant(
-                    skuId = "com.aqua.light.rgb_pro_elite.global.black",
-                    skuCode = "AQL-RPE-GLOBAL-BLK",
-                    displayName = "RGB Pro Elite Global Black",
-                    channelCount = 3,
-                    region = AquaProductRegion.GLOBAL,
-                    color = AquaProductColor.BLACK,
-                    hardwareRevision = "1.0"
-                )
-            ),
-
-            mainModule = AquaDeviceModule.LIGHT,
-            controllerType = AquaDeviceControllerType.GENERIC_LIGHT,
-            firmwareProtocol = FirmwareProtocol.AQUA_V1,
-
-            moduleVisibility = mapOf(
-                AquaDeviceModule.LIGHT to ModuleVisibility.TOP_LEVEL,
-                AquaDeviceModule.TEMPERATURE to ModuleVisibility.EMBEDDED,
-                AquaDeviceModule.TIMER to ModuleVisibility.HIDDEN,
-                AquaDeviceModule.COOLING to ModuleVisibility.HIDDEN
-            ),
-
-            screens = setOf(
-                AquaDeviceScreen.OVERVIEW,
-                AquaDeviceScreen.LIGHT_CONTROL,
-                AquaDeviceScreen.LIGHT_CHANNELS,
-                AquaDeviceScreen.LIGHT_SCHEDULE,
-                AquaDeviceScreen.LIGHT_PRESETS,
-                AquaDeviceScreen.ADVANCED
-            ),
-
-            features = setOf(
-                AquaDeviceFeature.WIFI_SETUP,
-                AquaDeviceFeature.LAN_DISCOVERY,
-                AquaDeviceFeature.LIGHT_CONTROL,
-                AquaDeviceFeature.OTA_UPDATE
-            )
-        ),
-
-        lightFeatures = setOf(
-            LightFeature.MANUAL_POWER,
-            LightFeature.GLOBAL_BRIGHTNESS,
-            LightFeature.CHANNEL_CONTROL,
-            LightFeature.LIGHT_SCHEDULE,
-            LightFeature.PRESETS
-        ),
-
-        channels = listOf(
-            LightChannelDefinition(
-                id = "red",
-                displayName = "Red",
-                color = LightChannelColor.RED,
-                order = 0,
-                firmwareChannelIndex = 0
-            ),
-            LightChannelDefinition(
-                id = "green",
-                displayName = "Green",
-                color = LightChannelColor.GREEN,
-                order = 1,
-                firmwareChannelIndex = 1
-            ),
-            LightChannelDefinition(
-                id = "blue",
-                displayName = "Blue",
-                color = LightChannelColor.BLUE,
-                order = 2,
-                firmwareChannelIndex = 2
-            )
-        ),
-
-        defaultSchedulePointCount = 5,
-        maxSchedulePointCount = 24,
-        supportsIndependentChannelSchedule = true
-    )
-
     val all: List<LightDeviceDefinition> = listOf(
-        aquaLight001,
-        aquaLight002
+        wrgbProElite120
     )
 
     fun findByProductKey(

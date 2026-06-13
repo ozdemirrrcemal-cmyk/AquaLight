@@ -94,7 +94,7 @@
                 app:layout_constraintEnd_toStartOf="@id/tvConnectionStatus"
                 app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
                 app:layout_constraintTop_toBottomOf="@id/tvDeviceType"
-                tools:text="WRGB Pro2" />
+                tools:text="WRGB Pro Elite" />
 
             <TextView
                 android:id="@+id/tvConnectionStatus"

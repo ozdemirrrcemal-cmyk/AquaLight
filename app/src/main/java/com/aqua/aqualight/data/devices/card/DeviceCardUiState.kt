@@ -1,14 +1,12 @@
 package com.aqua.aqualight.data.devices.card
 
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 
 /**
  * Single source for the common card fields shared by Devices, Tank devices and
  * other device-list surfaces.
- *
- * Device-specific values stay in their own domain layer. This model only owns
- * the common identity/presence/card metadata so every screen renders online,
- * offline, title, IP and type with the same rules.
  */
 data class DeviceCardUiState(
     val deviceId: Long,
@@ -18,6 +16,10 @@ data class DeviceCardUiState(
     val ip: String,
     val serial: String,
     val firmwareBuild: String,
+    val productId: String,
+    val productKey: AquaProductKey,
+    val category: AquaDeviceCategory,
+    /** Compatibility until old UI mappers are migrated to category. */
     val deviceType: AquaDeviceType,
     val isOnline: Boolean,
     val lastSeenMillis: Long,

@@ -1,43 +1,52 @@
 package com.aqua.aqualight.ui.tabs.devices.model
 
 import com.aqua.aqualight.R
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
 
 object DeviceIconMapper {
 
     fun iconFor(
-        type: AquaDeviceType
+        category: AquaDeviceCategory
     ): Int {
-        return when (type) {
-            AquaDeviceType.AQUA_LIGHT_001,
-            AquaDeviceType.AQUA_LIGHT_002,
-            AquaDeviceType.AQUA_LIGHT_003,
-            AquaDeviceType.AQUA_LIGHT_004 -> {
+        return when (category) {
+            AquaDeviceCategory.LIGHT -> {
                 R.drawable.ic_device_light
             }
 
-            AquaDeviceType.AQUA_TIMER_001,
-            AquaDeviceType.AQUA_TIMER_002 -> {
+            AquaDeviceCategory.TIMER -> {
                 R.drawable.ic_device_timer
             }
 
-            AquaDeviceType.AQUA_DOSE_001,
-            AquaDeviceType.AQUA_DOSE_002 -> {
+            AquaDeviceCategory.DOSING -> {
                 R.drawable.img_dosing_pump_4ch
             }
 
-            AquaDeviceType.AQUA_COOL_001,
-            AquaDeviceType.AQUA_COOL_002 -> {
+            AquaDeviceCategory.COOLING -> {
                 R.drawable.ic_device_temperature
             }
 
-            AquaDeviceType.AQUA_CONTROL_001 -> {
+            AquaDeviceCategory.CONTROLLER -> {
                 R.drawable.ic_device_wifi_hub
             }
 
-            AquaDeviceType.UNKNOWN -> {
+            AquaDeviceCategory.UNKNOWN -> {
                 R.drawable.ic_device_aqua_ster
             }
         }
+    }
+
+    /** Compatibility overload for old card code. */
+    fun iconFor(
+        type: AquaDeviceType
+    ): Int {
+        val category = AquaDeviceCatalog.findByType(
+            type = type
+        )?.category ?: AquaDeviceCategory.UNKNOWN
+
+        return iconFor(
+            category = category
+        )
     }
 }

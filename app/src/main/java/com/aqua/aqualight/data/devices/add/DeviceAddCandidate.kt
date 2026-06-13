@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.add
 
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 import com.aqua.aqualight.data.devices.discovery.model.DiscoveredAquaDevice
 
 data class DeviceAddCandidate(
@@ -9,6 +11,13 @@ data class DeviceAddCandidate(
 
     val displayName: String,
     val familyName: String,
+
+    val productId: String,
+    val productKey: AquaProductKey,
+    val category: AquaDeviceCategory,
+    val setupCode: String,
+
+    /** Compatibility field for older screens until final migration. */
     val deviceType: AquaDeviceType,
 
     val stateText: String,

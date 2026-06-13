@@ -1,72 +1,65 @@
 package com.aqua.aqualight.data.devices.discovery.model
 
+import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceType
+import com.aqua.aqualight.data.devices.catalog.AquaProductKey
 
+/**
+ * Device returned by LAN discovery.
+ *
+ * Commercial discovery requires ProductId. AquaName/Name are retained only as
+ * display/fallback fields while firmware is being moved to the new contract.
+ */
 data class DiscoveredAquaDevice(
     val id: Long,
     val ip: String,
 
-    /**
-     * Mevcut ESP32 firmware kimliği.
-     *
-     * Şimdiki firmware:
-     * AquaName
-     * Name
-     */
-    val aquaName: String,
-    val name: String,
+    val productId: String,
+    val productKey: AquaProductKey,
+    val category: AquaDeviceCategory,
+    val setupCode: String,
 
-    /**
-     * Ticari cihaz kimliği.
-     * IP değişebilir; bu alanlar cihazın kalıcı kimliğini taşır.
-     */
+    val productFamily: String,
+    val productLine: String,
+    val productModel: String,
+    val displayName: String,
+
     val deviceUid: String? = null,
     val macAddress: String? = null,
+    val serialNumber: String? = null,
+    val shortId: String? = null,
     val firmwareSerial: String? = null,
 
-    /**
-     * ESP32 firmware tarafındaki profesyonel ürün/capability alanları.
-     */
-    val productId: String? = null,
-    val productFamily: String? = null,
-    val productModel: String? = null,
     val hardwareRevision: String? = null,
     val firmwareVersion: String? = null,
-    val apiVersion: Int? = null,
+    val protocolVersion: Int? = null,
 
-    /**
-     * Mevcut firmware alanı.
-     */
+    /** Existing firmware/build field. */
     val firmwareBuild: String,
 
     val udpVersion: Int?,
 
-    /**
-     * Mevcut ESP32 UDP response içindeki eski tab bilgileri.
-     * Bunları ekran açma ana kaynağı yapmayacağız.
-     * Katalog ana kaynaktır.
-     */
+    /** Legacy ESP32 tab fields. Not used as commercial routing source. */
     val tabLight: Boolean,
     val tabTimer: Boolean,
     val tabTemperature: Boolean,
 
-    /**
-     * İleride firmware tarafında gelecek profesyonel capability alanları.
-     */
     val supportedFeatures: Set<String> = emptySet(),
     val supportedScreens: Set<String> = emptySet(),
 
     val channelCount: Int? = null,
     val sensorCount: Int? = null,
 
-    /**
-     * Android katalog çözüm sonucu.
-     *
-     * UNKNOWN ise cihaz desteklenmiyor demektir.
-     */
-    val deviceType: AquaDeviceType
+    /** Compatibility with older screens until Phase 3 removes AquaDeviceType. */
+    val deviceType: AquaDeviceType,
+
+    /** Firmware display fields. They must not drive routing. */
+    val aquaName: String = productFamily,
+    val name: String = productModel
 ) {
 
     val isSupported: Boolean
-        get() = deviceType != AquaDeviceType.UNKNOWN
+        get() = productKey != AquaProductKey.UNKNOWN &&
+            category != AquaDeviceCategory.UNKNOWN &&
+            deviceType != AquaDeviceType.UNKNOWN
 }

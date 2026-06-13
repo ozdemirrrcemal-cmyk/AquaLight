@@ -28,3 +28,14 @@ fun AquaDeviceControllerType.toControllerRoute(): AquaDeviceControllerRoute {
         AquaDeviceControllerType.UNSUPPORTED -> AquaDeviceControllerRoute.UNSUPPORTED
     }
 }
+
+fun AquaDeviceCategory.toControllerRoute(): AquaDeviceControllerRoute {
+    return when (this) {
+        AquaDeviceCategory.LIGHT -> AquaDeviceControllerRoute.LIGHT
+        AquaDeviceCategory.DOSING -> AquaDeviceControllerRoute.DOSING
+        AquaDeviceCategory.TIMER -> AquaDeviceControllerRoute.TIMER
+        AquaDeviceCategory.COOLING -> AquaDeviceControllerRoute.COOLING
+        AquaDeviceCategory.CONTROLLER,
+        AquaDeviceCategory.UNKNOWN -> AquaDeviceControllerRoute.UNSUPPORTED
+    }
+}
