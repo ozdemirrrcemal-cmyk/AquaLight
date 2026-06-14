@@ -3,46 +3,46 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/presetCardRoot"
-    style="@style/Widget.Aqua.Light.Card"
+    style="@style/Widget.Aqua.Light.Card.Preset"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="2dp"
-    android:layout_marginEnd="2dp"
-    android:layout_marginBottom="9dp">
+    android:layout_marginStart="1dp"
+    android:layout_marginEnd="1dp"
+    android:layout_marginBottom="7dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="96dp"
+        android:minHeight="84dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="10dp">
+        android:paddingStart="11dp"
+        android:paddingTop="9dp"
+        android:paddingEnd="9dp"
+        android:paddingBottom="9dp">
 
         <View
             android:id="@+id/viewPresetColor"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:background="@drawable/bg_light_filter_selected" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="13dp"
+            android:layout_marginStart="11dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="30dp"
+                android:layout_height="26dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tvPresetTitle"
-                    style="@style/TextAppearance.Aqua.Light.ActionTitle"
+                    style="@style/TextAppearance.Aqua.Light.PresetTitle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -52,9 +52,9 @@
 
                 <TextView
                     android:id="@+id/btnPresetMore"
-                    style="@style/TextAppearance.Aqua.Light.ActionTitle"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+                    style="@style/TextAppearance.Aqua.Light.PresetMore"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
                     android:gravity="center"
                     android:text="⋮" />
 
@@ -62,7 +62,7 @@
 
             <TextView
                 android:id="@+id/tvPresetCategory"
-                style="@style/TextAppearance.Aqua.Light.Caption"
+                style="@style/TextAppearance.Aqua.Light.PresetMeta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
@@ -72,10 +72,10 @@
 
             <TextView
                 android:id="@+id/tvPresetSubtitle"
-                style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
+                style="@style/TextAppearance.Aqua.Light.PresetSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="4dp"
                 android:maxLines="1"
                 android:ellipsize="end"
                 tools:text="Balanced spectrum for planted tanks" />
@@ -83,14 +83,14 @@
             <LinearLayout
                 android:id="@+id/presetChannelContainer"
                 android:layout_width="match_parent"
-                android:layout_height="22dp"
-                android:layout_marginTop="7dp"
+                android:layout_height="20dp"
+                android:layout_marginTop="6dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tvPresetRed"
-                    style="@style/TextAppearance.Aqua.Light.ChannelValue.Red"
+                    style="@style/TextAppearance.Aqua.Light.PresetChannel.Red"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
@@ -98,28 +98,28 @@
 
                 <TextView
                     android:id="@+id/tvPresetGreen"
-                    style="@style/TextAppearance.Aqua.Light.ChannelValue.Green"
+                    style="@style/TextAppearance.Aqua.Light.PresetChannel.Green"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="10dp"
                     android:gravity="center_vertical"
                     android:text="G75" />
 
                 <TextView
                     android:id="@+id/tvPresetBlue"
-                    style="@style/TextAppearance.Aqua.Light.ChannelValue.Blue"
+                    style="@style/TextAppearance.Aqua.Light.PresetChannel.Blue"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="10dp"
                     android:gravity="center_vertical"
                     android:text="B45" />
 
                 <TextView
                     android:id="@+id/tvPresetWhite"
-                    style="@style/TextAppearance.Aqua.Light.ChannelValue.White"
+                    style="@style/TextAppearance.Aqua.Light.PresetChannel.White"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="10dp"
                     android:gravity="center_vertical"
                     android:text="W90" />
 

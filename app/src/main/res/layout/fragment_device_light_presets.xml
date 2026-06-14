@@ -23,9 +23,9 @@
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:paddingStart="10dp"
-        android:paddingTop="14dp"
+        android:paddingTop="12dp"
         android:paddingEnd="10dp"
-        android:paddingBottom="28dp"
+        android:paddingBottom="24dp"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -37,74 +37,73 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- ACTIVE PREVIEW -->
-          <com.google.android.material.card.MaterialCardView
-    android:id="@+id/cardActivePreset"
-    style="@style/Widget.Aqua.Light.Card.Hero"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingTop="14dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="14dp">
-
-        <View
-            android:id="@+id/viewActivePresetColor"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:background="@drawable/bg_light_filter_selected" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="13dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                style="@style/TextAppearance.Aqua.Light.Caption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Current Scene" />
-
-            <TextView
-                android:id="@+id/tvActivePresetTitle"
-                style="@style/TextAppearance.Aqua.Light.ActionTitle"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardActivePreset"
+                style="@style/Widget.Aqua.Light.Card.Preset"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="No preset applied"
-                tools:text="Plant Growth" />
+                android:layout_height="wrap_content">
 
-            <TextView
-                android:id="@+id/tvActivePresetChannels"
-                style="@style/TextAppearance.Aqua.Light.ActionSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="Select a preset to apply"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
 
-        </LinearLayout>
+                    <View
+                        android:id="@+id/viewActivePresetColor"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:background="@drawable/bg_light_filter_selected" />
 
-    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="11dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-</com.google.android.material.card.MaterialCardView>
-            <!-- FILTER -->
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.PresetStatusLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Current Scene" />
+
+                        <TextView
+                            android:id="@+id/tvActivePresetTitle"
+                            style="@style/TextAppearance.Aqua.Light.PresetStatusTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            android:text="No preset applied"
+                            tools:text="Plant Growth" />
+
+                        <TextView
+                            android:id="@+id/tvActivePresetChannels"
+                            style="@style/TextAppearance.Aqua.Light.PresetStatusSubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            android:text="Select a preset to apply" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
             <LinearLayout
                 android:id="@+id/presetFilterBar"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="16dp"
+                android:layout_height="38dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_light_filter_bar"
                 android:gravity="center"
                 android:orientation="horizontal"
@@ -112,7 +111,7 @@
 
                 <TextView
                     android:id="@+id/filterAll"
-                    style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                    style="@style/TextAppearance.Aqua.Light.PresetFilter.Selected"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -122,7 +121,7 @@
 
                 <TextView
                     android:id="@+id/filterBuiltIn"
-                    style="@style/TextAppearance.Aqua.Light.Filter"
+                    style="@style/TextAppearance.Aqua.Light.PresetFilter"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -131,7 +130,7 @@
 
                 <TextView
                     android:id="@+id/filterMyPresets"
-                    style="@style/TextAppearance.Aqua.Light.Filter"
+                    style="@style/TextAppearance.Aqua.Light.PresetFilter"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -140,21 +139,19 @@
 
             </LinearLayout>
 
-            <!-- LIST -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/presetsRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="12dp"
                 android:nestedScrollingEnabled="false"
                 tools:itemCount="6"
                 tools:listitem="@layout/item_light_preset_card" />
 
-            <!-- EMPTY -->
             <LinearLayout
                 android:id="@+id/emptyPresetsContainer"
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
+                android:layout_height="200dp"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:visibility="gone">

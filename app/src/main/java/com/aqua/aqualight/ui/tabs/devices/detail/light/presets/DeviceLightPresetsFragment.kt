@@ -379,13 +379,11 @@ class DeviceLightPresetsFragment :
         if (preset == null) {
             binding.tvActivePresetTitle.text = "No preset applied"
             binding.tvActivePresetChannels.text = "Select a preset to apply"
-
-            binding.viewActivePresetColor.background = createColorDrawable(
-                Color.TRANSPARENT
-            )
+            binding.viewActivePresetColor.visibility = View.GONE
             return
         }
 
+        binding.viewActivePresetColor.visibility = View.VISIBLE
         binding.tvActivePresetTitle.text = preset.title
         binding.tvActivePresetChannels.text =
             "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}"
@@ -403,9 +401,17 @@ class DeviceLightPresetsFragment :
     private fun createColorDrawable(
         color: Int
     ): GradientDrawable {
+        val strokeWidth = resources.displayMetrics.density
+            .roundToInt()
+            .coerceAtLeast(1)
+
         return GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(color)
+            setStroke(
+                strokeWidth,
+                requireContext().getColor(R.color.light_stroke)
+            )
         }
     }
 

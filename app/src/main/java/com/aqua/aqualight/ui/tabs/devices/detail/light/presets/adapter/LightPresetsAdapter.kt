@@ -5,6 +5,7 @@ import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemLightPresetCardBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
 
@@ -83,9 +84,15 @@ class LightPresetsAdapter(
                 white = item.white
             )
 
+            val strokeWidth = binding.root.resources.displayMetrics.density
+                .toInt()
+                .coerceAtLeast(1)
+            val strokeColor = binding.root.context.getColor(R.color.light_stroke)
+
             return GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(color)
+                setStroke(strokeWidth, strokeColor)
             }
         }
 

@@ -519,6 +519,115 @@
     </style>
 
 
+    <!-- Presets screen compact premium typography -->
+    <style name="TextAppearance.Aqua.Light.PresetStatusLabel"
+        parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/inter_medium</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+        <item name="android:textColor">@color/light_text_tertiary</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.015</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetStatusTitle"
+        parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/light_text_primary</item>
+        <item name="android:textSize">15.5sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetStatusSubtitle"
+        parent="TextAppearance.Material3.BodySmall">
+        <item name="fontFamily">@font/inter_medium</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+        <item name="android:textColor">@color/light_text_secondary</item>
+        <item name="android:textSize">11.5sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetFilter"
+        parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/light_text_secondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetFilter.Selected"
+        parent="TextAppearance.Aqua.Light.PresetFilter">
+        <item name="android:textColor">@color/light_button_on_primary</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetTitle"
+        parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/light_text_primary</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetMore"
+        parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/light_text_primary</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetMeta"
+        parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/inter_medium</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+        <item name="android:textColor">@color/light_text_tertiary</item>
+        <item name="android:textSize">11.2sp</item>
+        <item name="android:letterSpacing">0.015</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetSubtitle"
+        parent="TextAppearance.Material3.BodySmall">
+        <item name="fontFamily">@font/inter_medium</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+        <item name="android:textColor">@color/light_text_secondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetChannel.Base"
+        parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textSize">11.2sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetChannel.Red"
+        parent="TextAppearance.Aqua.Light.PresetChannel.Base">
+        <item name="android:textColor">@color/light_channel_red</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetChannel.Green"
+        parent="TextAppearance.Aqua.Light.PresetChannel.Base">
+        <item name="android:textColor">@color/light_channel_green</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetChannel.Blue"
+        parent="TextAppearance.Aqua.Light.PresetChannel.Base">
+        <item name="android:textColor">@color/light_channel_blue</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.PresetChannel.White"
+        parent="TextAppearance.Aqua.Light.PresetChannel.Base">
+        <item name="android:textColor">@color/light_channel_white</item>
+    </style>
+
+
 
     <!-- Settings screen compact premium typography -->
     <style name="TextAppearance.Aqua.Light.SettingsSectionTitle"
