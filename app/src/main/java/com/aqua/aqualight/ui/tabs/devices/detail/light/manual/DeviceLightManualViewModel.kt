@@ -4,8 +4,9 @@ import android.app.Application
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.data.devices.light.math.LightOutputMath
+import com.aqua.aqualight.data.devices.light.math.LightRgbwPowerCalibration
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
@@ -21,23 +22,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * Data-ready manual light control state machine.
  *
- * The screen currently has no device data contract connected on purpose. The UI
- * still models the commercial behavior correctly:
- *
  * AUTO            -> sliders display the runtime output that the schedule/device
- *                    reports. The controls look passive, but touching them is
- *                    the explicit action that starts manual override.
+ *                    reports. Touching a slider starts manual override.
  * MANUAL_OVERRIDE -> slider changes are previewed instantly and flushed through
  *                    a throttled low-latency command path.
  * SCENE_OVERRIDE  -> a quick scene is selected, highlighted, and sent as one
  *                    manual output command.
  *
- * When the real repository/service is added, replace the private device stub
- * methods at the bottom. The UI contract does not need to change.
+ * Center ring/text is power, not output. Power is calculated only from firmware
+ * channel watt values. If runtime watt calibration is unavailable, the screen
+ * shows "-- W" instead of a fake catalog/fallback value.
  */
 class DeviceLightManualViewModel(
     application: Application
@@ -58,6 +59,7 @@ class DeviceLightManualViewModel(
     private var controlMode: ManualLightControlMode = ManualLightControlMode.AUTO
     private var runtimeChannels: LightRgbwChannels = LightRgbwChannels(0, 0, 0, 0)
     private var manualDraftChannels: LightRgbwChannels = runtimeChannels
+    private var powerCalibration: LightRgbwPowerCalibration? = null
     private var selectedScene: ManualLightScene? = null
     private var savedPresets: List<ManualLightPreset> = emptyList()
 
@@ -127,6 +129,7 @@ class DeviceLightManualViewModel(
 
             controlMode = ManualLightControlMode.AUTO
             runtimeChannels = readRuntimeChannelsFromDevice().sanitized()
+            powerCalibration = readRuntimePowerCalibrationFromDevice()
             manualDraftChannels = runtimeChannels
 
             renderCurrentState()
@@ -225,6 +228,7 @@ class DeviceLightManualViewModel(
 
     private fun refreshRuntimeSnapshot() {
         runtimeChannels = readRuntimeChannelsFromDevice().sanitized()
+        powerCalibration = readRuntimePowerCalibrationFromDevice()
 
         if (controlMode == ManualLightControlMode.AUTO) {
             manualDraftChannels = runtimeChannels
@@ -335,6 +339,18 @@ class DeviceLightManualViewModel(
         val outputPercent = calculateOutputPercent(
             channels
         )
+        val currentPowerWatts = calculateCurrentPowerWatts(
+            channels
+        )
+        val maxPowerWatts = powerCalibration?.maxWatt
+        val powerLoadPercent = powerCalibration?.powerLoadPercent(
+            redPercent = channels.safeRed,
+            greenPercent = channels.safeGreen,
+            bluePercent = channels.safeBlue,
+            whitePercent = channels.safeWhite
+        )?.takeIf {
+            currentPowerWatts != null && maxPowerWatts != null
+        } ?: 0
         val isManual = controlMode == ManualLightControlMode.MANUAL_OVERRIDE
         val isScene = controlMode == ManualLightControlMode.SCENE_OVERRIDE
 
@@ -345,14 +361,14 @@ class DeviceLightManualViewModel(
             isPowerOn = controlMode != ManualLightControlMode.AUTO || outputPercent > 0,
             activeSceneName = selectedScene?.title,
             activeSceneSource = selectedScene?.name,
-            masterOutputPercent = outputPercent,
+            powerLoadPercent = powerLoadPercent,
+            currentPowerWatts = currentPowerWatts,
+            maxPowerWatts = maxPowerWatts,
+            powerText = formatPowerText(currentPowerWatts),
             red = channels.safeRed,
             green = channels.safeGreen,
             blue = channels.safeBlue,
             white = channels.safeWhite,
-            estimatedPowerWatts = 0.0,
-            hasPowerCalibration = false,
-            powerText = "$outputPercent%",
             savedPresets = savedPresets,
             isDeviceOnline = controlsEnabled,
             controlsEnabled = controlsEnabled,
@@ -380,6 +396,35 @@ class DeviceLightManualViewModel(
         )
     }
 
+    private fun calculateCurrentPowerWatts(
+        channels: LightRgbwChannels
+    ): Double? {
+        return powerCalibration?.currentWatt(
+            redPercent = channels.safeRed,
+            greenPercent = channels.safeGreen,
+            bluePercent = channels.safeBlue,
+            whitePercent = channels.safeWhite
+        )
+    }
+
+    private fun formatPowerText(
+        watts: Double?
+    ): String {
+        val value = watts?.takeIf { it >= 0.0 } ?: return "-- W"
+        val rounded = (value * 10.0).roundToInt() / 10.0
+        val roundedInt = rounded.roundToInt()
+
+        return if (abs(rounded - roundedInt) < 0.05) {
+            "$roundedInt W"
+        } else {
+            String.format(
+                Locale.US,
+                "%.1f W",
+                rounded
+            )
+        }
+    }
+
     private fun modeSubtitle(): String {
         return when (controlMode) {
             ManualLightControlMode.AUTO -> {
@@ -399,19 +444,19 @@ class DeviceLightManualViewModel(
     private fun modeOutputHint(): String {
         return when (controlMode) {
             ManualLightControlMode.AUTO -> {
-                "Auto output preview · drag any slider to override"
+                "Auto power preview · drag any slider to override"
             }
 
             ManualLightControlMode.MANUAL_OVERRIDE -> {
                 if (isSliderInteractionActive) {
-                    "Live override · sending while you adjust"
+                    "Live power preview · sending while you adjust"
                 } else {
                     "Manual override · sliders are controlling output"
                 }
             }
 
             ManualLightControlMode.SCENE_OVERRIDE -> {
-                "Scene output · drag a slider to customize"
+                "Scene power preview · drag a slider to customize"
             }
         }
     }
@@ -426,11 +471,20 @@ class DeviceLightManualViewModel(
     }
 
     /**
-     * TODO(data): Replace with the real light runtime stream/repository. This
-     * must return the current AUTO/schedule output, not the last manual draft.
+     * TODO(data): Replace with the real light runtime repository. This must
+     * return the current AUTO/schedule output, not the last manual draft.
      */
     private fun readRuntimeChannelsFromDevice(): LightRgbwChannels {
         return runtimeChannels
+    }
+
+    /**
+     * TODO(data): Replace with LightRuntimeSnapshot.powerCalibration from the
+     * real runtime repository. Null means watt data is unavailable; the UI must
+     * show "-- W" instead of a fake value.
+     */
+    private fun readRuntimePowerCalibrationFromDevice(): LightRgbwPowerCalibration? {
+        return powerCalibration
     }
 
     /**

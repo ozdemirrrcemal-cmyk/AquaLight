@@ -103,7 +103,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardMasterOutput"
+                android:id="@+id/cardManualPowerControl"
                 style="@style/Widget.Aqua.Light.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -133,7 +133,7 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:text=""
-                        tools:text="Auto output preview · drag any slider to override" />
+                        tools:text="Auto power preview · drag any slider to override" />
 
                     <FrameLayout
                         android:layout_width="178dp"
@@ -143,7 +143,7 @@
                         android:layout_marginBottom="14dp">
 
                         <com.google.android.material.progressindicator.CircularProgressIndicator
-                            android:id="@+id/masterOutputProgress"
+                            android:id="@+id/powerProgress"
                             android:layout_width="178dp"
                             android:layout_height="178dp"
                             android:indeterminate="false"
@@ -162,7 +162,7 @@
                             android:orientation="vertical">
 
                             <TextView
-                                android:id="@+id/tvEstimatedPower"
+                                android:id="@+id/tvCurrentPower"
                                 style="@style/TextAppearance.Aqua.Light.SectionTitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -171,7 +171,7 @@
                                 android:maxLines="1"
                                 android:text=""
                                 android:textSize="24sp"
-                                tools:text="21.9W" />
+                                tools:text="120 W" />
 
                         </LinearLayout>
 

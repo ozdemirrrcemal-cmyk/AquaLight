@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.light
 
+import com.aqua.aqualight.data.devices.api.light.LightChannelRole
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerState
 import com.aqua.aqualight.data.devices.api.light.LightDeviceState
@@ -11,6 +12,7 @@ import com.aqua.aqualight.data.devices.api.light.LightTemperatureSensorState
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionState
 import com.aqua.aqualight.data.devices.api.light.LightTimeState
 import com.aqua.aqualight.data.devices.light.math.LightPowerMath
+import com.aqua.aqualight.data.devices.light.math.LightRgbwPowerCalibration
 
 data class LightRuntimeSnapshot(
     val mode: LightMode = LightMode.UNKNOWN,
@@ -20,6 +22,7 @@ data class LightRuntimeSnapshot(
     val currentWatt: Double? = null,
     val maxWatt: Double? = null,
     val powerLoadPercent: Int? = null,
+    val powerCalibration: LightRgbwPowerCalibration? = null,
     val fanOutputPercent: Int? = null,
     val deviceTime: LightTimeState = LightTimeState(),
     val nextEvent: LightNextEvent? = null,
@@ -48,6 +51,7 @@ data class LightRuntimeSnapshot(
                     currentWatt = state.status.currentWatt,
                     maxWatt = state.status.maxWatt
                 ),
+                powerCalibration = state.ledChannels.toRgbwPowerCalibration(),
                 fanOutputPercent = state.status.fanOutputPercent,
                 deviceTime = state.time,
                 nextEvent = state.nextEvent,
@@ -62,6 +66,28 @@ data class LightRuntimeSnapshot(
             )
         }
     }
+}
+
+
+private fun List<LightPwmChannelState>.toRgbwPowerCalibration(): LightRgbwPowerCalibration? {
+    fun maxWattFor(role: LightChannelRole): Double? {
+        val total = filter { channel ->
+            channel.role == role
+        }.mapNotNull { channel ->
+            channel.maxWatt?.takeIf { it > 0.0 }
+        }.sum()
+
+        return total.takeIf { it > 0.0 }
+    }
+
+    val calibration = LightRgbwPowerCalibration(
+        redMaxWatt = maxWattFor(LightChannelRole.RED),
+        greenMaxWatt = maxWattFor(LightChannelRole.GREEN),
+        blueMaxWatt = maxWattFor(LightChannelRole.BLUE),
+        whiteMaxWatt = maxWattFor(LightChannelRole.WHITE)
+    )
+
+    return calibration.takeIf { it.hasChannelWattData }
 }
 
 enum class LightRuntimeSource {

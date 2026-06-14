@@ -183,10 +183,10 @@ class DeviceLightManualFragment :
         binding.tvOutputModeHint.text =
             state.outputHintText
 
-        binding.masterOutputProgress.progress =
-            state.masterOutputPercent
+        binding.powerProgress.progress =
+            state.powerLoadPercent
 
-        binding.masterOutputProgress.setIndicatorColor(
+        binding.powerProgress.setIndicatorColor(
             LightRgbwColorMath.previewColor(
                 red = state.red,
                 green = state.green,
@@ -195,7 +195,7 @@ class DeviceLightManualFragment :
             )
         )
 
-        binding.tvEstimatedPower.text =
+        binding.tvCurrentPower.text =
             state.powerText
 
         setSliderValueIfNeeded(
@@ -254,7 +254,7 @@ class DeviceLightManualFragment :
             else -> 1f
         }
 
-        binding.cardMasterOutput.alpha =
+        binding.cardManualPowerControl.alpha =
             outputAlpha
 
         binding.cardQuickScenes.alpha =
