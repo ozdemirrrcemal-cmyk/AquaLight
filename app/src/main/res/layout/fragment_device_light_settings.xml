@@ -37,10 +37,26 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/tvSettingsRuntimeBanner"
+                style="@style/TextAppearance.Aqua.Light.SettingsChip"
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_light_settings_status_banner"
+                android:ellipsize="end"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="Runtime values unavailable"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
             <!-- DEVICE PROFILE -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDeviceProfile"
-                style="@style/Widget.Aqua.Light.Card.Hero"
+                style="@style/Widget.Aqua.Light.Card.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -48,10 +64,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="20dp"
-                    android:paddingTop="20dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="20dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -60,8 +76,8 @@
                         android:orientation="horizontal">
 
                         <ImageView
-                            android:layout_width="42dp"
-                            android:layout_height="42dp"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/bg_light_sheet_icon"
                             android:contentDescription="@null"
                             android:padding="10dp"
@@ -70,21 +86,21 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                                style="@style/TextAppearance.Aqua.Light.SettingsSectionTitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Device Profile" />
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsDescription"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
+                                android:layout_marginTop="4dp"
                                 android:text="Controller identity and firmware." />
 
                         </LinearLayout>
@@ -94,32 +110,31 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp"
+                        android:layout_marginTop="16dp"
                         android:orientation="vertical">
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Device Name" />
 
                             <TextView
                                 android:id="@+id/tvDeviceName"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="AquaLight"
                                 tools:text="AquaLight" />
 
@@ -127,27 +142,26 @@
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Device Type" />
 
                             <TextView
                                 android:id="@+id/tvDeviceType"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="AquaLight • WRGB • Light"
                                 tools:text="WRGB Pro Elite" />
 
@@ -155,55 +169,53 @@
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.75"
+                                android:layout_weight="0.95"
                                 android:text="Firmware" />
 
                             <TextView
                                 android:id="@+id/tvFirmwareVersion"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.35"
-                                android:gravity="end"
-                                android:maxLines="2"
+                                android:layout_weight="1.1"
                                 android:ellipsize="end"
+                                android:gravity="end"
+                                android:maxLines="1"
                                 android:text="v1.0.0"
-                                tools:text="f2.3.2.5r build on Feb 12 2020" />
+                                tools:text="f2.3.2.5r" />
 
                         </LinearLayout>
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="IP Address" />
 
                             <TextView
                                 android:id="@+id/tvDeviceIp"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="192.168.1.53" />
 
@@ -211,27 +223,26 @@
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Serial" />
 
                             <TextView
                                 android:id="@+id/tvSerialNumber"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="AQL-WPE-12ABCD" />
 
@@ -240,27 +251,26 @@
                         <LinearLayout
                             android:id="@+id/rowProductId"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Product ID" />
 
                             <TextView
                                 android:id="@+id/tvProductId"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
-                                android:gravity="end"
-                                android:maxLines="2"
+                                android:layout_weight="1.1"
                                 android:ellipsize="end"
+                                android:gravity="end"
+                                android:maxLines="1"
                                 android:text="—"
                                 tools:text="com.aqua.light.wrgb_pro_elite" />
 
@@ -269,27 +279,26 @@
                         <LinearLayout
                             android:id="@+id/rowProductKey"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Product Key" />
 
                             <TextView
                                 android:id="@+id/tvProductKey"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="LIGHT_WRGB_PRO_ELITE" />
 
@@ -298,27 +307,26 @@
                         <LinearLayout
                             android:id="@+id/rowSkuCode"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="SKU" />
 
                             <TextView
                                 android:id="@+id/tvSkuCode"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="AQL-WPE-120-GLB-BLK" />
 
@@ -327,27 +335,26 @@
                         <LinearLayout
                             android:id="@+id/rowSetupCode"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Setup Code" />
 
                             <TextView
                                 android:id="@+id/tvSetupCode"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="WPE" />
 
@@ -356,27 +363,26 @@
                         <LinearLayout
                             android:id="@+id/rowDeviceUid"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Device UID" />
 
                             <TextView
                                 android:id="@+id/tvDeviceUid"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="AQL-ESP32-FCB46712ABCD" />
 
@@ -385,27 +391,26 @@
                         <LinearLayout
                             android:id="@+id/rowMacAddress"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="MAC" />
 
                             <TextView
                                 android:id="@+id/tvMacAddress"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="FC:B4:67:12:AB:CD" />
 
@@ -414,27 +419,26 @@
                         <LinearLayout
                             android:id="@+id/rowHardwareRevision"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Hardware" />
 
                             <TextView
                                 android:id="@+id/tvHardwareRevision"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="1.0" />
 
@@ -443,27 +447,26 @@
                         <LinearLayout
                             android:id="@+id/rowProtocolVersion"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:minHeight="42dp"
+                            android:layout_height="36dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="0.9"
+                                android:layout_weight="0.95"
                                 android:text="Protocol" />
 
                             <TextView
                                 android:id="@+id/tvProtocolVersion"
-                                style="@style/TextAppearance.Aqua.Light.BodyStrong"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1.15"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
                                 android:gravity="end"
                                 android:maxLines="1"
-                                android:ellipsize="end"
                                 android:text="—"
                                 tools:text="Aqua v1" />
 
@@ -475,12 +478,13 @@
                         android:id="@+id/btnUpdateFirmware"
                         style="@style/Widget.Aqua.Light.Button.Secondary"
                         android:layout_width="match_parent"
-                        android:layout_height="54dp"
-                        android:layout_marginTop="18dp"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="14dp"
                         android:text="Update Firmware"
+                        android:textSize="14sp"
                         app:icon="@drawable/ic_light_settings_update_24"
                         app:iconGravity="textStart"
-                        app:iconPadding="10dp" />
+                        app:iconPadding="8dp" />
 
                 </LinearLayout>
 
@@ -489,19 +493,19 @@
             <!-- TIME SYNC -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardTimeSync"
-                style="@style/Widget.Aqua.Light.Card"
+                style="@style/Widget.Aqua.Light.Card.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp">
+                android:layout_marginTop="14dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="20dp"
-                    android:paddingTop="20dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="20dp">
+                    android:paddingStart="16dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -510,8 +514,8 @@
                         android:orientation="horizontal">
 
                         <ImageView
-                            android:layout_width="42dp"
-                            android:layout_height="42dp"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/bg_light_sheet_icon"
                             android:contentDescription="@null"
                             android:padding="10dp"
@@ -520,589 +524,606 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="14dp"
+                            android:layout_marginStart="12dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.SectionTitle"
+                                style="@style/TextAppearance.Aqua.Light.SettingsSectionTitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="Time Sync" />
 
                             <TextView
-                                style="@style/TextAppearance.Aqua.Light.Caption"
+                                style="@style/TextAppearance.Aqua.Light.SettingsDescription"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="5dp"
-                                android:text="Keep device time accurate."/>
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="18dp"
-                                android:orientation="vertical">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="42dp"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.Caption"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:text="Device Time" />
-
-                                    <TextView
-                                        android:id="@+id/tvDeviceTime"
-                                        style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="--:--"
-                                        tools:text="10:34" />
-
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="42dp"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.Caption"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:text="Phone Time" />
-
-                                    <TextView
-                                        android:id="@+id/tvPhoneTime"
-                                        style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="--:--"
-                                        tools:text="10:34" />
-
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="42dp"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.Caption"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:text="Last Sync" />
-
-                                    <TextView
-                                        android:id="@+id/tvLastSyncTime"
-                                        style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="Never"
-                                        tools:text="Never" />
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnSyncTime"
-                                style="@style/Widget.Aqua.Light.Button.Primary"
-                                android:layout_width="match_parent"
-                                android:layout_height="54dp"
-                                android:layout_marginTop="18dp"
-                                android:text="Sync Clock"
-                                app:icon="@drawable/ic_light_settings_sync_24"
-                                app:iconGravity="textStart"
-                                app:iconPadding="10dp" />
+                                android:layout_marginTop="4dp"
+                                android:text="Keep device time accurate." />
 
                         </LinearLayout>
 
-                    </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
 
-                    <!-- TEMPERATURE PROTECTION -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cardTemperatureProtection"
-                        style="@style/Widget.Aqua.Light.Card"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp">
+                        android:layout_marginTop="16dp"
+                        android:orientation="vertical">
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:paddingStart="20dp"
-                            android:paddingTop="20dp"
-                            android:paddingEnd="20dp"
-                            android:paddingBottom="20dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="42dp"
-                                    android:layout_height="42dp"
-                                    android:background="@drawable/bg_light_sheet_icon"
-                                    android:contentDescription="@null"
-                                    android:padding="10dp"
-                                    android:src="@drawable/ic_light_settings_shield_24" />
-
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="14dp"
-                                    android:layout_weight="1"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:maxLines="1"
-                                        android:ellipsize="end"
-                                        android:text="Thermal Protection" />
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.Caption"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="5dp"
-                                        android:text="Protects light output during high temperature." />
-
-                                </LinearLayout>
-
-                            </LinearLayout>
+                            android:layout_height="36dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
                             <TextView
-                                android:id="@+id/tvThermalProtectionStatus"
-                                style="@style/TextAppearance.Aqua.Light.Filter.Selected"
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Device Time" />
+
+                            <TextView
+                                android:id="@+id/tvDeviceTime"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
                                 android:layout_width="wrap_content"
-                                android:layout_height="30dp"
-                                android:layout_marginTop="14dp"
-                                android:background="@drawable/bg_light_filter_selected"
-                                android:gravity="center"
-                                android:paddingStart="14dp"
-                                android:paddingEnd="14dp"
-                                android:text="Protected"
-                                android:textSize="11sp"
-                                tools:text="Protected" />
-
-                            <LinearLayout
-                                android:id="@+id/rowCurrentTemperature"
-                                android:layout_width="match_parent"
-                                android:layout_height="56dp"
-                                android:layout_marginTop="16dp"
-                                android:background="@drawable/bg_light_program_time_panel"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="16dp">
-
-                                <TextView
-                                    style="@style/TextAppearance.Aqua.Light.Body"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:maxLines="1"
-                                    android:ellipsize="end"
-                                    android:text="Current Temperature" />
-
-                                <TextView
-                                    android:id="@+id/tvCurrentTemperatureValue"
-                                    style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:maxLines="1"
-                                    android:text="-- °C"
-                                    android:textSize="20sp"
-                                    tools:text="26.1°C" />
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/rowLimitTemperature"
-                                android:layout_width="match_parent"
-                                android:layout_height="56dp"
-                                android:layout_marginTop="10dp"
-                                android:background="@drawable/bg_light_program_time_panel"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:foreground="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="10dp">
-
-                                <TextView
-                                    style="@style/TextAppearance.Aqua.Light.Body"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Limit Temperature" />
-
-                                <TextView
-                                    android:id="@+id/tvLimitTemperatureValue"
-                                    style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="50°C"
-                                    android:textSize="20sp" />
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:layout_marginStart="8dp"
-                                    android:contentDescription="@null"
-                                    android:src="@drawable/ic_light_chevron_right_24" />
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/rowLightReduction"
-                                android:layout_width="match_parent"
-                                android:layout_height="56dp"
-                                android:layout_marginTop="10dp"
-                                android:background="@drawable/bg_light_program_time_panel"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:foreground="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="10dp">
-
-                                <TextView
-                                    style="@style/TextAppearance.Aqua.Light.Body"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Light Reduction" />
-
-                                <TextView
-                                    android:id="@+id/tvLightReductionValue"
-                                    style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="70%"
-                                    android:textSize="20sp" />
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:layout_marginStart="8dp"
-                                    android:contentDescription="@null"
-                                    android:src="@drawable/ic_light_chevron_right_24" />
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/rowRecoveryInterval"
-                                android:layout_width="match_parent"
-                                android:layout_height="56dp"
-                                android:layout_marginTop="10dp"
-                                android:background="@drawable/bg_light_program_time_panel"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:foreground="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="10dp">
-
-                                <TextView
-                                    style="@style/TextAppearance.Aqua.Light.Body"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Recovery Interval" />
-
-                                <TextView
-                                    android:id="@+id/tvRecoveryIntervalValue"
-                                    style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="60s"
-                                    android:textSize="20sp" />
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:layout_marginStart="8dp"
-                                    android:contentDescription="@null"
-                                    android:src="@drawable/ic_light_chevron_right_24" />
-
-                            </LinearLayout>
+                                android:layout_height="wrap_content"
+                                android:text="--:--"
+                                tools:text="10:34" />
 
                         </LinearLayout>
-
-                    </com.google.android.material.card.MaterialCardView>
-                    <!-- COOLING -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cardCooling"
-                        style="@style/Widget.Aqua.Light.Card"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:paddingStart="20dp"
-                            android:paddingTop="20dp"
-                            android:paddingEnd="20dp"
-                            android:paddingBottom="20dp">
+                            android:layout_height="36dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                            <LinearLayout
-                                android:layout_width="match_parent"
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
+                                android:layout_weight="1"
+                                android:text="Phone Time" />
 
-                                <ImageView
-                                    android:layout_width="42dp"
-                                    android:layout_height="42dp"
-                                    android:background="@drawable/bg_light_sheet_icon"
-                                    android:contentDescription="@null"
-                                    android:padding="10dp"
-                                    android:src="@drawable/ic_light_settings_fan_24" />
-
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="14dp"
-                                    android:layout_weight="1"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.SectionTitle"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:text="Cooling" />
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.Caption"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="5dp"
-                                        android:text="Automatic fan behavior." />
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
+                            <TextView
+                                android:id="@+id/tvPhoneTime"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="18dp"
-                                android:orientation="vertical">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="42dp"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.Caption"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:text="Status" />
-
-                                    <TextView
-                                        android:id="@+id/tvCoolingStatus"
-                                        style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="Syncing"
-                                        tools:text="Standby" />
-
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="42dp"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.Caption"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:text="Controller Temp" />
-
-                                    <TextView
-                                        android:id="@+id/tvCoolingControllerTemp"
-                                        style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="-- °C"
-                                        tools:text="26.1°C" />
-
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="42dp"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        style="@style/TextAppearance.Aqua.Light.Caption"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:text="Fans" />
-
-                                    <TextView
-                                        android:id="@+id/tvCoolingFans"
-                                        style="@style/TextAppearance.Aqua.Light.BodyStrong"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="Syncing"
-                                        tools:text="Auto · 2 fans" />
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/rowCoolingMode"
-                                android:layout_width="match_parent"
-                                android:layout_height="56dp"
-                                android:layout_marginTop="14dp"
-                                android:background="@drawable/bg_light_program_time_panel"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:foreground="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="10dp">
-
-                                <TextView
-                                    style="@style/TextAppearance.Aqua.Light.Body"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Cooling Mode" />
-
-                                <TextView
-                                    android:id="@+id/tvCoolingMode"
-                                    style="@style/TextAppearance.Aqua.Light.SectionTitle"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Auto"
-                                    tools:text="Auto" />
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:layout_marginStart="8dp"
-                                    android:contentDescription="@null"
-                                    android:src="@drawable/ic_light_chevron_right_24" />
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/rowFanStart"
-                                android:layout_width="match_parent"
-                                android:layout_height="56dp"
-                                android:layout_marginTop="10dp"
-                                android:background="@drawable/bg_light_program_time_panel"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:foreground="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="10dp">
-
-                                <TextView
-                                    style="@style/TextAppearance.Aqua.Light.Body"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Fan Start" />
-
-                                <TextView
-                                    android:id="@+id/tvFanStartValue"
-                                    style="@style/TextAppearance.Aqua.Light.SectionTitle"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="30°C" />
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:layout_marginStart="8dp"
-                                    android:contentDescription="@null"
-                                    android:src="@drawable/ic_light_chevron_right_24" />
-
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/rowFanFullSpeed"
-                                android:layout_width="match_parent"
-                                android:layout_height="56dp"
-                                android:layout_marginTop="10dp"
-                                android:background="@drawable/bg_light_program_time_panel"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:foreground="?attr/selectableItemBackground"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="10dp">
-
-                                <TextView
-                                    style="@style/TextAppearance.Aqua.Light.Body"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Full Speed" />
-
-                                <TextView
-                                    android:id="@+id/tvFanFullSpeedValue"
-                                    style="@style/TextAppearance.Aqua.Light.SectionTitle"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="50°C" />
-
-                                <ImageView
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
-                                    android:layout_marginStart="8dp"
-                                    android:contentDescription="@null"
-                                    android:src="@drawable/ic_light_chevron_right_24" />
-
-                            </LinearLayout>
+                                android:text="--:--"
+                                tools:text="10:34" />
 
                         </LinearLayout>
 
-                    </com.google.android.material.card.MaterialCardView>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Last Sync" />
+
+                            <TextView
+                                android:id="@+id/tvLastSyncTime"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Never"
+                                tools:text="Never" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSyncTime"
+                        style="@style/Widget.Aqua.Light.Button.Primary"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="14dp"
+                        android:text="Sync Clock"
+                        android:textSize="14sp"
+                        app:icon="@drawable/ic_light_settings_sync_24"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp" />
 
                 </LinearLayout>
 
-            </androidx.core.widget.NestedScrollView>
+            </com.google.android.material.card.MaterialCardView>
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- TEMPERATURE PROTECTION -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTemperatureProtection"
+                style="@style/Widget.Aqua.Light.Card.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_light_sheet_icon"
+                            android:contentDescription="@null"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_light_settings_shield_24" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsSectionTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:maxLines="1"
+                                android:text="Thermal Protection" />
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsDescription"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Protects light output during high temperature." />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvThermalProtectionStatus"
+                        style="@style/TextAppearance.Aqua.Light.SettingsChip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_light_settings_status_banner"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:maxWidth="260dp"
+                        android:paddingStart="13dp"
+                        android:paddingEnd="13dp"
+                        android:text="Protected"
+                        tools:text="Runtime data unavailable" />
+
+                    <LinearLayout
+                        android:id="@+id/rowCurrentTemperature"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_light_settings_row"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="Current Temperature" />
+
+                        <TextView
+                            android:id="@+id/tvCurrentTemperatureValue"
+                            style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:text="-- °C"
+                            tools:text="26.1 °C" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowLimitTemperature"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_light_settings_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="8dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Limit Temperature" />
+
+                        <TextView
+                            android:id="@+id/tvLimitTemperatureValue"
+                            style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:text="50 °C" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="6dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_light_chevron_right_24" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowLightReduction"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_light_settings_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="8dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Light Reduction" />
+
+                        <TextView
+                            android:id="@+id/tvLightReductionValue"
+                            style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:text="70%" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="6dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_light_chevron_right_24" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowRecoveryInterval"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_light_settings_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="8dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Recovery Interval" />
+
+                        <TextView
+                            android:id="@+id/tvRecoveryIntervalValue"
+                            style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:text="60 s" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="6dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_light_chevron_right_24" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- COOLING -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardCooling"
+                style="@style/Widget.Aqua.Light.Card.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="18dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_light_sheet_icon"
+                            android:contentDescription="@null"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_light_settings_fan_24" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsSectionTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Cooling" />
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsDescription"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Automatic fan behavior." />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_light_settings_summary_panel"
+                        android:orientation="vertical"
+                        android:paddingStart="14dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="10dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Status" />
+
+                            <TextView
+                                android:id="@+id/tvCoolingStatus"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValueMuted"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1.1"
+                                android:ellipsize="end"
+                                android:gravity="end"
+                                android:maxLines="1"
+                                android:text="Syncing"
+                                tools:text="Unavailable" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Controller Temp" />
+
+                            <TextView
+                                android:id="@+id/tvCoolingControllerTemp"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValueMuted"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:maxLines="1"
+                                android:text="-- °C"
+                                tools:text="26.1 °C" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Fans" />
+
+                            <TextView
+                                android:id="@+id/tvCoolingFans"
+                                style="@style/TextAppearance.Aqua.Light.SettingsValueMuted"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:maxLines="1"
+                                android:text="—"
+                                tools:text="Auto · 2 fans" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowCoolingMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_light_settings_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="8dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Cooling Mode" />
+
+                        <TextView
+                            android:id="@+id/tvCoolingMode"
+                            style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:text="Auto"
+                            tools:text="Unavailable" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="6dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_light_chevron_right_24" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowFanStart"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_light_settings_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="8dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Fan Start" />
+
+                        <TextView
+                            android:id="@+id/tvFanStartValue"
+                            style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:text="30 °C" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="6dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_light_chevron_right_24" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/rowFanFullSpeed"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_light_settings_row"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="8dp">
+
+                        <TextView
+                            style="@style/TextAppearance.Aqua.Light.SettingsLabel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Full Speed" />
+
+                        <TextView
+                            android:id="@+id/tvFanFullSpeedValue"
+                            style="@style/TextAppearance.Aqua.Light.SettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:maxLines="1"
+                            android:text="50 °C" />
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="6dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_light_chevron_right_24" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -353,18 +353,20 @@ class DeviceLightSettingsFragment :
             }
 
         binding.tvCurrentTemperatureValue.text =
-            state.currentTemperatureText.ifBlank {
-                "-- °C"
-            }
+            normalizeTemperatureText(
+                state.currentTemperatureText.ifBlank {
+                    "-- °C"
+                }
+            )
 
         binding.tvLimitTemperatureValue.text =
-            "${state.limitTemperatureCelsius}°C"
+            formatCelsius(state.limitTemperatureCelsius)
 
         binding.tvLightReductionValue.text =
             "${state.lightReductionPercent}%"
 
         binding.tvRecoveryIntervalValue.text =
-            "${state.recoveryIntervalSeconds}s"
+            "${state.recoveryIntervalSeconds} s"
 
         binding.tvCoolingStatus.text =
             state.coolingStatusText.ifBlank {
@@ -372,9 +374,11 @@ class DeviceLightSettingsFragment :
             }
 
         binding.tvCoolingControllerTemp.text =
-            state.currentTemperatureText.ifBlank {
-                "-- °C"
-            }
+            normalizeTemperatureText(
+                state.currentTemperatureText.ifBlank {
+                    "-- °C"
+                }
+            )
 
         binding.tvCoolingFans.text =
             state.coolingFansText.ifBlank {
@@ -387,10 +391,10 @@ class DeviceLightSettingsFragment :
             }
 
         binding.tvFanStartValue.text =
-            "${state.fanStartTemperatureCelsius}°C"
+            formatCelsius(state.fanStartTemperatureCelsius)
 
         binding.tvFanFullSpeedValue.text =
-            "${state.fanFullSpeedTemperatureCelsius}°C"
+            formatCelsius(state.fanFullSpeedTemperatureCelsius)
 
         renderControlAvailability(
             state
@@ -419,6 +423,11 @@ class DeviceLightSettingsFragment :
             0.52f
         }
 
+        binding.tvSettingsRuntimeBanner.isVisible = !enabled
+        binding.tvSettingsRuntimeBanner.text = compactConnectionStatus(
+            state.connectionStatusText
+        )
+
         binding.btnSyncTime.isEnabled = enabled
         binding.btnUpdateFirmware.isEnabled = enabled
         binding.rowLimitTemperature.isEnabled = enabled
@@ -436,9 +445,32 @@ class DeviceLightSettingsFragment :
         binding.rowFanFullSpeed.alpha = alpha
 
         if (!enabled) {
-            binding.tvThermalProtectionStatus.text = state.connectionStatusText
-            binding.tvCoolingStatus.text = state.connectionStatusText
+            binding.tvThermalProtectionStatus.text = "Runtime data unavailable"
+            binding.tvCoolingStatus.text = "Unavailable"
+            binding.tvCoolingMode.text = "Unavailable"
         }
+    }
+
+    private fun formatCelsius(
+        value: Int
+    ): String = "$value °C"
+
+    private fun normalizeTemperatureText(
+        value: String
+    ): String {
+        val normalized = value.trim().ifBlank {
+            "-- °C"
+        }
+
+        return normalized
+            .replace("°C", " °C")
+            .replace(Regex("\\s+°C"), " °C")
+    }
+
+    private fun compactConnectionStatus(
+        value: String
+    ): String = value.trim().ifBlank {
+        "Runtime values unavailable"
     }
 
     override fun onResume() {

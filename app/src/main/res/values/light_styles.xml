@@ -518,4 +518,66 @@
         <item name="android:includeFontPadding">false</item>
     </style>
 
+
+
+    <!-- Settings screen compact premium typography -->
+    <style name="TextAppearance.Aqua.Light.SettingsSectionTitle"
+        parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/light_text_primary</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.SettingsDescription"
+        parent="TextAppearance.Material3.BodySmall">
+        <item name="fontFamily">@font/inter_medium</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+        <item name="android:textColor">@color/light_text_secondary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineSpacingExtra">1dp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.SettingsLabel"
+        parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/inter_medium</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+        <item name="android:textColor">@color/light_text_tertiary</item>
+        <item name="android:textSize">13.5sp</item>
+        <item name="android:letterSpacing">0.015</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.SettingsValue"
+        parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/light_text_primary</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.SettingsValueMuted"
+        parent="TextAppearance.Aqua.Light.SettingsValue">
+        <item name="android:textColor">@color/light_text_secondary</item>
+    </style>
+
+    <style name="TextAppearance.Aqua.Light.SettingsChip"
+        parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/inter_semibold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textColor">@color/light_accent</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Widget.Aqua.Light.Card.Settings"
+        parent="Widget.Aqua.Light.Card">
+        <item name="cardBackgroundColor">@color/light_surface</item>
+        <item name="strokeColor">@color/light_stroke</item>
+        <item name="cardCornerRadius">28dp</item>
+    </style>
+
 </resources>
