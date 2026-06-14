@@ -111,8 +111,8 @@
 
     <style name="Widget.Aqua.Light.Card.Hero"
         parent="Widget.Aqua.Light.Card">
-        <item name="cardBackgroundColor">@color/light_surface_elevated</item>
-        <item name="strokeColor">@color/light_stroke_soft</item>
+        <item name="cardBackgroundColor">@color/light_surface</item>
+        <item name="strokeColor">@color/light_stroke</item>
         <item name="cardCornerRadius">32dp</item>
     </style>
 

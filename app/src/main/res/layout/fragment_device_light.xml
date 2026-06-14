@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_light_dashboard_screen"
+    android:background="@color/light_bg"
     tools:context=".ui.tabs.devices.detail.light.dashboard.DeviceLightFragment">
 
     <include
@@ -43,7 +43,7 @@
                 style="@style/Widget.Aqua.Light.Card.Hero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/light_surface_elevated"
+                app:cardBackgroundColor="@color/light_surface"
                 app:cardCornerRadius="24dp"
                 app:strokeColor="@color/light_stroke">
 
@@ -279,7 +279,7 @@
                                     android:gravity="center"
                                     android:maxLines="1"
                                     android:text=""
-                                    tools:text="--" />
+                                    tools:text="--%" />
 
                             </LinearLayout>
 
@@ -325,7 +325,7 @@
                                     android:gravity="center"
                                     android:maxLines="1"
                                     android:text=""
-                                    tools:text="--" />
+                                    tools:text="--%" />
 
                             </LinearLayout>
 
@@ -371,7 +371,7 @@
                                     android:gravity="center"
                                     android:maxLines="1"
                                     android:text=""
-                                    tools:text="--" />
+                                    tools:text="--%" />
 
                             </LinearLayout>
 
@@ -416,7 +416,7 @@
                                     android:gravity="center"
                                     android:maxLines="1"
                                     android:text=""
-                                    tools:text="--" />
+                                    tools:text="--%" />
 
                             </LinearLayout>
 
@@ -728,7 +728,7 @@
                                 android:layout_gravity="center"
                                 android:importantForAccessibility="no"
                                 android:src="@drawable/ic_light_dashboard_programs_24"
-                                app:tint="@color/light_action_purple" />
+                                app:tint="#B492FF" />
 
                         </FrameLayout>
 
@@ -884,7 +884,7 @@
                                 android:layout_gravity="center"
                                 android:importantForAccessibility="no"
                                 android:src="@drawable/ic_light_dashboard_presets_24"
-                                app:tint="@color/light_action_teal" />
+                                app:tint="#64DDE8" />
 
                         </FrameLayout>
 

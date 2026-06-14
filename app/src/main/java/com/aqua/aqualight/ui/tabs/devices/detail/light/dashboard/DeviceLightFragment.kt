@@ -83,10 +83,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 )
             )
         )
-
-        binding.appHeader.aquaHeaderRoot.setBackgroundResource(
-            R.drawable.bg_light_dashboard_header
-        )
     }
 
     private fun setupClicks() {
@@ -159,16 +155,16 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         )
 
         binding.tvLiveRedChannel.text =
-            state.redChannelText
+            state.redChannelText.toLightChannelPercentText()
 
         binding.tvLiveGreenChannel.text =
-            state.greenChannelText
+            state.greenChannelText.toLightChannelPercentText()
 
         binding.tvLiveBlueChannel.text =
-            state.blueChannelText
+            state.blueChannelText.toLightChannelPercentText()
 
         binding.tvLiveWhiteChannel.text =
-            state.whiteChannelText
+            state.whiteChannelText.toLightChannelPercentText()
 
         binding.tvCurrentWatt.text =
             state.currentWattText
@@ -202,6 +198,17 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         )
 
         renderControlAvailability()
+    }
+
+    private fun String.toLightChannelPercentText(): String {
+        val value = trim()
+
+        return when {
+            value.isEmpty() || value == "--" -> "--%"
+            value.endsWith("%") -> value
+            value.any { it.isDigit() } -> "$value%"
+            else -> value
+        }
     }
 
     private fun renderControlAvailability() {

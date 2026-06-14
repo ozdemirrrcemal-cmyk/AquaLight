@@ -1,88 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Light module premium background -->
-    <color name="light_bg">#06111D</color>
-    <color name="light_bg_deep">#03080E</color>
-    <color name="light_screen_gradient_top">#081A2C</color>
-    <color name="light_screen_gradient_middle">#06121F</color>
-    <color name="light_screen_gradient_bottom">#02070D</color>
-    <color name="light_header_gradient_top">#0A1C31</color>
-    <color name="light_header_gradient_bottom">#071422</color>
+    <!-- Light module background -->
+    <color name="light_bg">#07131F</color>
+    <color name="light_bg_deep">#040A12</color>
 
-    <!-- Premium glass surfaces -->
-    <color name="light_surface">#101D2A</color>
-    <color name="light_surface_elevated">#16283A</color>
-    <color name="light_surface_soft">#1B2C3E</color>
-    <color name="light_surface_glass">#D9101D2A</color>
+    <!-- Surfaces -->
+    <color name="light_surface">#0F1C2A</color>
+    <color name="light_surface_elevated">#0F1C2A</color>
+    <color name="light_surface_soft">#162638</color>
+    <color name="light_surface_glass">#D90F1C2A</color>
 
     <!-- Borders / strokes -->
-    <color name="light_stroke">#2A4055</color>
-    <color name="light_stroke_soft">#213448</color>
-    <color name="light_stroke_active">#8EBBFF</color>
+    <color name="light_stroke">#2B425A</color>
+    <color name="light_stroke_soft">#213449</color>
+    <color name="light_stroke_active">#8FB9FF</color>
 
     <!-- Accent system -->
-    <color name="light_accent">#8AB9FF</color>
-    <color name="light_accent_soft">#203B60</color>
-    <color name="light_accent_muted">#6E91C4</color>
+    <color name="light_accent">#8FB9FF</color>
+    <color name="light_accent_soft">#243F64</color>
+    <color name="light_accent_muted">#7EA3D6</color>
 
     <!-- Premium secondary accent -->
-    <color name="light_gold">#D6B46E</color>
-    <color name="light_gold_soft">#3A2B16</color>
+    <color name="light_gold">#D2AF70</color>
+    <color name="light_gold_soft">#352915</color>
 
     <!-- Text -->
-    <color name="light_text_primary">#F5FAFF</color>
-    <color name="light_text_secondary">#A3B4C7</color>
-    <color name="light_text_tertiary">#74879D</color>
-    <color name="light_text_disabled">#4E6073</color>
+    <color name="light_text_primary">#F4F8FC</color>
+    <color name="light_text_secondary">#9AAEC4</color>
+    <color name="light_text_tertiary">#697B90</color>
+    <color name="light_text_disabled">#4D5D70</color>
 
     <!-- Status -->
-    <color name="light_status_online">#61E0A0</color>
-    <color name="light_status_warning">#F3B85D</color>
-    <color name="light_status_error">#EF7777</color>
-    <color name="light_status_manual">#D6B46E</color>
-    <color name="light_status_auto">#8AB9FF</color>
+    <color name="light_status_online">#64DB9B</color>
+    <color name="light_status_warning">#F7BD5A</color>
+    <color name="light_status_error">#F07474</color>
+    <color name="light_status_manual">#D2AF70</color>
+    <color name="light_status_auto">#8FB9FF</color>
 
-    <!-- WRGB channel colors - premium but readable -->
-    <color name="light_channel_red">#EF747A</color>
-    <color name="light_channel_green">#7BD88F</color>
-    <color name="light_channel_blue">#79A9FF</color>
-    <color name="light_channel_white">#EEF4FA</color>
-
-    <!-- Dashboard chart / chip surfaces -->
-    <color name="light_chart_panel_top">#071321</color>
-    <color name="light_chart_panel_middle">#050E18</color>
-    <color name="light_chart_panel_bottom">#03080E</color>
-    <color name="light_chart_panel_stroke">#20364C</color>
-    <color name="light_chip_idle_bg">#18283A</color>
-    <color name="light_chip_idle_stroke">#2D4359</color>
-
-    <!-- Dashboard action accent capsules -->
-    <color name="light_action_blue_start">#2D4F80</color>
-    <color name="light_action_blue_end">#152D49</color>
-    <color name="light_action_blue_stroke">#4E7FC3</color>
-    <color name="light_action_purple">#B99AFF</color>
-    <color name="light_action_purple_start">#4A3A7D</color>
-    <color name="light_action_purple_end">#241D4B</color>
-    <color name="light_action_purple_stroke">#7B61CA</color>
-    <color name="light_action_teal">#69E2EF</color>
-    <color name="light_action_teal_start">#1D6070</color>
-    <color name="light_action_teal_end">#123747</color>
-    <color name="light_action_teal_stroke">#44B2C6</color>
-    <color name="light_action_gold_start">#57421F</color>
-    <color name="light_action_gold_end">#2A1E0F</color>
-    <color name="light_action_gold_stroke">#A28245</color>
-    <color name="light_action_muted_bg">#18283A</color>
-    <color name="light_action_muted_stroke">#2C4157</color>
+    <!-- WRGB channel colors - premium glass -->
+    <color name="light_channel_red">#EB6F7B</color>
+    <color name="light_channel_green">#73D98B</color>
+    <color name="light_channel_blue">#7FAAFF</color>
+    <color name="light_channel_white">#F2F6FA</color>
 
     <!-- Buttons -->
-    <color name="light_button_primary">#688FD0</color>
-    <color name="light_button_on_primary">#F5FAFF</color>
-    <color name="light_button_secondary">#1B2C3E</color>
-    <color name="light_button_on_secondary">#F5FAFF</color>
+    <color name="light_button_primary">#6489C9</color>
+    <color name="light_button_on_primary">#F4F8FC</color>
+    <color name="light_button_secondary">#162638</color>
+    <color name="light_button_on_secondary">#F4F8FC</color>
 
     <!-- Dividers -->
-    <color name="light_divider">#203347</color>
-    <color name="light_slider_inactive">#263C52</color>
+    <color name="light_divider">#1B2D40</color>
+
+    <color name="light_slider_inactive">#26394D</color>
 
 </resources>

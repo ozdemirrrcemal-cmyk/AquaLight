@@ -12,10 +12,10 @@ data class DeviceLightDashboardUiState(
     val currentWattText: String = "-- W",
     val outputPercentText: String = "0%",
 
-    val redChannelText: String = "--",
-    val greenChannelText: String = "--",
-    val blueChannelText: String = "--",
-    val whiteChannelText: String = "--",
+    val redChannelText: String = "--%",
+    val greenChannelText: String = "--%",
+    val blueChannelText: String = "--%",
+    val whiteChannelText: String = "--%",
 
     val deviceTimeText: String = "--:--",
     val nextEventText: String = "No upcoming event",

@@ -97,10 +97,10 @@
     <string name="light_dashboard_channel_green_label">G</string>
     <string name="light_dashboard_channel_blue_label">B</string>
     <string name="light_dashboard_channel_white_label">W</string>
-    <string name="light_dashboard_channel_red_empty">--</string>
-    <string name="light_dashboard_channel_green_empty">--</string>
-    <string name="light_dashboard_channel_blue_empty">--</string>
-    <string name="light_dashboard_channel_white_empty">--</string>
+    <string name="light_dashboard_channel_red_empty">--%</string>
+    <string name="light_dashboard_channel_green_empty">--%</string>
+    <string name="light_dashboard_channel_blue_empty">--%</string>
+    <string name="light_dashboard_channel_white_empty">--%</string>
     <string name="light_dashboard_power_empty">-- W</string>
     <string name="light_dashboard_output_empty">--%</string>
     <string name="light_dashboard_time_empty">--:--</string>
