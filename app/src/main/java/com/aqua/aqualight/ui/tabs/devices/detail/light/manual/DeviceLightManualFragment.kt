@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.manual
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -8,6 +7,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -15,19 +15,18 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwColorMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.sheet.SaveLightPresetBottomSheet
 import com.google.android.material.slider.Slider
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightManualFragment :
     Fragment(R.layout.fragment_device_light_manual) {
 
     private val args: DeviceLightManualFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceLightManualBinding? = null
     private val binding get() = _binding!!
@@ -180,10 +179,11 @@ class DeviceLightManualFragment :
             state.masterOutputPercent
 
         binding.masterOutputProgress.setIndicatorColor(
-            Color.rgb(
-                state.previewRed,
-                state.previewGreen,
-                state.previewBlue
+            LightRgbwColorMath.previewColor(
+                red = state.red,
+                green = state.green,
+                blue = state.blue,
+                white = state.white
             )
         )
 

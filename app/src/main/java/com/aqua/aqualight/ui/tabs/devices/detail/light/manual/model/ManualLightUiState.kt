@@ -24,10 +24,6 @@ data class ManualLightUiState(
     val hasPowerCalibration: Boolean = false,
     val powerText: String = "-- W",
 
-    val previewRed: Int = 80,
-    val previewGreen: Int = 140,
-    val previewBlue: Int = 255,
-
     val savedPresets: List<ManualLightPreset> = emptyList(),
 
     val isDeviceOnline: Boolean = false,

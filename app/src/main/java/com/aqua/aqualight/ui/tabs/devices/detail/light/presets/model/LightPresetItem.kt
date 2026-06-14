@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model
 
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwColorMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.runtime.LightOutputMath
 
 data class LightPresetItem(
@@ -13,15 +15,29 @@ data class LightPresetItem(
     val white: Int
 ) {
 
+    val channels: LightRgbwChannels
+        get() = LightRgbwChannels(
+            red = red,
+            green = green,
+            blue = blue,
+            white = white
+        )
+
     val isCustom: Boolean
         get() = category == LightPresetCategory.CUSTOM
+
+    val channelLabel: String
+        get() = channels.compactLabel
+
+    val previewColor: Int
+        get() = LightRgbwColorMath.previewColor(channels)
 
     val outputPercent: Int
         get() =
             LightOutputMath.outputPercent(
-                red = red,
-                green = green,
-                blue = blue,
-                white = white
+                red = channels.safeRed,
+                green = channels.safeGreen,
+                blue = channels.safeBlue,
+                white = channels.safeWhite
             )
 }

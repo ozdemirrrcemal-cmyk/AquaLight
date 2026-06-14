@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presets
 
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
@@ -11,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
@@ -29,15 +29,12 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.sheet.LightPresetOptionsSheet
 import kotlinx.coroutines.launch
-import kotlin.math.pow
 import kotlin.math.roundToInt
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightPresetsFragment :
     Fragment(R.layout.fragment_device_light_presets) {
 
     private val args: DeviceLightPresetsFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceLightPresetsBinding? = null
     private val binding get() = _binding!!
@@ -76,13 +73,13 @@ class DeviceLightPresetsFragment :
     }
 
     private fun setupHeader() {
-    binding.appHeader.setupAquaHeader(
-        fragment = this,
-        config = AquaHeaderConfig(
-            titleOverride = "Presets & Scenes"
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = "Presets & Scenes"
+            )
         )
-    )
-}
+    }
 
     private fun setupRecyclerView() {
         presetsAdapter = LightPresetsAdapter(
@@ -300,7 +297,7 @@ class DeviceLightPresetsFragment :
             .create(requireContext())
             .show(
                 presetName = preset.title,
-                subtitle = "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}",
+                subtitle = preset.channelLabel,
                 isCustom = preset.isCustom,
                 onApply = {
                     applyPresetToDevice(preset)
@@ -386,15 +383,10 @@ class DeviceLightPresetsFragment :
         binding.viewActivePresetColor.visibility = View.VISIBLE
         binding.tvActivePresetTitle.text = preset.title
         binding.tvActivePresetChannels.text =
-            "R${preset.red} · G${preset.green} · B${preset.blue} · W${preset.white}"
+            preset.channelLabel
 
         binding.viewActivePresetColor.background = createColorDrawable(
-            calculatePreviewColor(
-                red = preset.red,
-                green = preset.green,
-                blue = preset.blue,
-                white = preset.white
-            )
+            preset.previewColor
         )
     }
 
@@ -413,65 +405,6 @@ class DeviceLightPresetsFragment :
                 requireContext().getColor(R.color.light_stroke)
             )
         }
-    }
-
-    private fun calculatePreviewColor(
-        red: Int,
-        green: Int,
-        blue: Int,
-        white: Int
-    ): Int {
-        val r = red.coerceIn(0, 100) / 100.0
-        val g = green.coerceIn(0, 100) / 100.0
-        val b = blue.coerceIn(0, 100) / 100.0
-        val w = white.coerceIn(0, 100) / 100.0
-
-        val redColor = Triple(1.00, 0.08, 0.03)
-        val greenColor = Triple(0.12, 1.00, 0.20)
-        val blueColor = Triple(0.05, 0.28, 1.00)
-        val whiteColor = Triple(0.92, 0.96, 1.00)
-
-        val linearRed =
-            redColor.first * r +
-                greenColor.first * g +
-                blueColor.first * b +
-                whiteColor.first * w
-
-        val linearGreen =
-            redColor.second * r +
-                greenColor.second * g +
-                blueColor.second * b +
-                whiteColor.second * w
-
-        val linearBlue =
-            redColor.third * r +
-                greenColor.third * g +
-                blueColor.third * b +
-                whiteColor.third * w
-
-        val max = maxOf(
-            linearRed,
-            linearGreen,
-            linearBlue,
-            1.0
-        )
-
-        fun gammaCorrect(
-            value: Double
-        ): Int {
-            val normalized =
-                (value / max).coerceIn(0.0, 1.0)
-
-            return (255.0 * normalized.pow(1.0 / 2.2))
-                .roundToInt()
-                .coerceIn(0, 255)
-        }
-
-        return Color.rgb(
-            gammaCorrect(linearRed),
-            gammaCorrect(linearGreen),
-            gammaCorrect(linearBlue)
-        )
     }
 
     override fun onDestroyView() {

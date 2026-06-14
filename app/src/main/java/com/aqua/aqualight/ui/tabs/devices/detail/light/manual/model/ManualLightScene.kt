@@ -1,57 +1,47 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model
 
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.catalog.LightBuiltInPreset
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.catalog.LightBuiltInPresetCatalog
+
 enum class ManualLightScene(
-    val title: String,
-    val red: Int,
-    val green: Int,
-    val blue: Int,
-    val white: Int
+    private val preset: LightBuiltInPreset
 ) {
     PLANT_GROWTH(
-        title = "Plant",
-        red = 90,
-        green = 75,
-        blue = 45,
-        white = 90
+        LightBuiltInPresetCatalog.PLANT_GROWTH
     ),
 
     FISH_DISPLAY(
-        title = "Fish",
-        red = 100,
-        green = 100,
-        blue = 100,
-        white = 10
+        LightBuiltInPresetCatalog.FISH_DISPLAY
     ),
 
     SHRIMP_SAFE(
-        title = "Shrimp",
-        red = 35,
-        green = 50,
-        blue = 20,
-        white = 30
+        LightBuiltInPresetCatalog.SHRIMP_SAFE
     ),
 
     BLUE_ACCENT(
-        title = "Blue",
-        red = 5,
-        green = 5,
-        blue = 100,
-        white = 20
+        LightBuiltInPresetCatalog.BLUE_ACCENT
     ),
 
     RED_ACCENT(
-        title = "Red",
-        red = 100,
-        green = 40,
-        blue = 70,
-        white = 35
+        LightBuiltInPresetCatalog.RED_PLANT
     ),
 
     FULL_SPECTRUM(
-        title = "Full",
-        red = 100,
-        green = 100,
-        blue = 100,
-        white = 100
-    )
+        LightBuiltInPresetCatalog.FULL_SPECTRUM
+    );
+
+    val title: String
+        get() = preset.manualTitle
+
+    val red: Int
+        get() = preset.red
+
+    val green: Int
+        get() = preset.green
+
+    val blue: Int
+        get() = preset.blue
+
+    val white: Int
+        get() = preset.white
 }
