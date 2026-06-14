@@ -1,24 +1,45 @@
 package com.aqua.aqualight.data.devices.runtime.light
 
+import android.content.Context
+import android.content.SharedPreferences
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightMode
 import com.aqua.aqualight.data.devices.light.math.LightPowerMath
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
+import org.json.JSONObject
 
 /**
- * Process-local fallback state for legacy light firmware that accepts manual
+ * Persistent fallback state for legacy light firmware that accepts manual
  * output commands but does not report MANUAL / SCENE mode back in /get.
  *
  * New firmware remains the source of truth: when the runtime reports a concrete
- * MANUAL / SCENE / MOONLIGHT mode, the dashboard and manual screen use that
- * controller state. This store is only applied to legacy/unknown runtime
- * snapshots so older controllers can still show the override that the app just
- * sent without leaking legacy checks into UI code.
+ * MANUAL / SCENE / MOONLIGHT mode from a non-legacy source, the dashboard and
+ * manual screen use that controller state. This store is only applied to
+ * legacy/unknown runtime snapshots so older controllers can still show the
+ * override that the app sent, including after process death / app restart.
  */
 object LightLocalOverrideStore {
 
     private val overrides = ConcurrentHashMap<Long, LightLocalOverrideState>()
+
+    @Volatile
+    private var preferences: SharedPreferences? = null
+
+    fun initialize(
+        context: Context
+    ) {
+        if (preferences != null) return
+
+        synchronized(this) {
+            if (preferences == null) {
+                preferences = context.applicationContext.getSharedPreferences(
+                    PREFERENCES_NAME,
+                    Context.MODE_PRIVATE
+                )
+            }
+        }
+    }
 
     fun recordManual(
         deviceId: Long,
@@ -27,12 +48,18 @@ object LightLocalOverrideStore {
     ) {
         if (deviceId <= 0L) return
 
-        overrides[deviceId] = LightLocalOverrideState(
+        val state = LightLocalOverrideState(
             type = LightLocalOverrideType.MANUAL,
             channels = channels.normalized(),
             sceneName = null,
             sceneSource = null,
             updatedAtMillis = nowMillis
+        )
+
+        overrides[deviceId] = state
+        persist(
+            deviceId = deviceId,
+            state = state
         )
     }
 
@@ -45,12 +72,18 @@ object LightLocalOverrideStore {
     ) {
         if (deviceId <= 0L) return
 
-        overrides[deviceId] = LightLocalOverrideState(
+        val state = LightLocalOverrideState(
             type = LightLocalOverrideType.SCENE,
             channels = channels.normalized(),
             sceneName = sceneName.trim().takeIf { it.isNotEmpty() },
             sceneSource = sceneSource?.trim()?.takeIf { it.isNotEmpty() },
             updatedAtMillis = nowMillis
+        )
+
+        overrides[deviceId] = state
+        persist(
+            deviceId = deviceId,
+            state = state
         )
     }
 
@@ -58,7 +91,11 @@ object LightLocalOverrideStore {
         deviceId: Long
     ) {
         if (deviceId <= 0L) return
+
         overrides.remove(deviceId)
+        preferences?.edit()
+            ?.remove(preferenceKey(deviceId))
+            ?.apply()
     }
 
     fun current(
@@ -67,9 +104,15 @@ object LightLocalOverrideStore {
     ): LightLocalOverrideState? {
         if (deviceId <= 0L) return null
 
-        val state = overrides[deviceId] ?: return null
+        val state = overrides[deviceId]
+            ?: restore(deviceId)
+            ?: return null
+
         if (state.isExpired(nowMillis)) {
             overrides.remove(deviceId, state)
+            preferences?.edit()
+                ?.remove(preferenceKey(deviceId))
+                ?.apply()
             return null
         }
 
@@ -100,6 +143,81 @@ object LightLocalOverrideStore {
                 snapshot.withAppliedLocalOverride(state)
             }
         }
+    }
+
+    private fun persist(
+        deviceId: Long,
+        state: LightLocalOverrideState
+    ) {
+        val prefs = preferences ?: return
+
+        prefs.edit()
+            .putString(
+                preferenceKey(deviceId),
+                state.toJson().toString()
+            )
+            .apply()
+    }
+
+    private fun restore(
+        deviceId: Long
+    ): LightLocalOverrideState? {
+        val raw = preferences
+            ?.getString(preferenceKey(deviceId), null)
+            ?: return null
+
+        val state = runCatching {
+            JSONObject(raw).toLightLocalOverrideState()
+        }.getOrNull()
+
+        if (state == null) {
+            preferences?.edit()
+                ?.remove(preferenceKey(deviceId))
+                ?.apply()
+            return null
+        }
+
+        overrides[deviceId] = state
+        return state
+    }
+
+    private fun LightLocalOverrideState.toJson(): JSONObject {
+        return JSONObject()
+            .put(KEY_TYPE, type.name)
+            .put(KEY_RED, channels.red.coerceIn(0, 100))
+            .put(KEY_GREEN, channels.green.coerceIn(0, 100))
+            .put(KEY_BLUE, channels.blue.coerceIn(0, 100))
+            .put(KEY_WHITE, channels.white.coerceIn(0, 100))
+            .put(KEY_SCENE_NAME, sceneName)
+            .put(KEY_SCENE_SOURCE, sceneSource)
+            .put(KEY_UPDATED_AT, updatedAtMillis)
+    }
+
+    private fun JSONObject.toLightLocalOverrideState(): LightLocalOverrideState? {
+        val type = runCatching {
+            LightLocalOverrideType.valueOf(
+                optString(KEY_TYPE).uppercase()
+            )
+        }.getOrNull() ?: return null
+
+        return LightLocalOverrideState(
+            type = type,
+            channels = LightChannelValues(
+                red = optInt(KEY_RED, 0).coerceIn(0, 100),
+                green = optInt(KEY_GREEN, 0).coerceIn(0, 100),
+                blue = optInt(KEY_BLUE, 0).coerceIn(0, 100),
+                white = optInt(KEY_WHITE, 0).coerceIn(0, 100)
+            ).normalized(),
+            sceneName = optString(KEY_SCENE_NAME).trim().takeIf { it.isNotEmpty() },
+            sceneSource = optString(KEY_SCENE_SOURCE).trim().takeIf { it.isNotEmpty() },
+            updatedAtMillis = optLong(KEY_UPDATED_AT, 0L)
+        )
+    }
+
+    private fun preferenceKey(
+        deviceId: Long
+    ): String {
+        return "$PREFERENCE_KEY_PREFIX$deviceId"
     }
 
     private fun LightRuntimeSnapshot.withSceneLabelFrom(
@@ -172,9 +290,20 @@ object LightLocalOverrideStore {
     private fun LightLocalOverrideState.isExpired(
         nowMillis: Long
     ): Boolean {
-        return nowMillis - updatedAtMillis > LOCAL_OVERRIDE_TTL_MILLIS
+        return updatedAtMillis <= 0L ||
+            nowMillis - updatedAtMillis > LOCAL_OVERRIDE_TTL_MILLIS
     }
 
+    private const val PREFERENCES_NAME = "aql_light_local_override_state"
+    private const val PREFERENCE_KEY_PREFIX = "device_"
+    private const val KEY_TYPE = "type"
+    private const val KEY_RED = "red"
+    private const val KEY_GREEN = "green"
+    private const val KEY_BLUE = "blue"
+    private const val KEY_WHITE = "white"
+    private const val KEY_SCENE_NAME = "sceneName"
+    private const val KEY_SCENE_SOURCE = "sceneSource"
+    private const val KEY_UPDATED_AT = "updatedAtMillis"
     private const val CHANNEL_MATCH_TOLERANCE_PERCENT = 2
     private const val LOCAL_OVERRIDE_TTL_MILLIS = 24L * 60L * 60L * 1000L
 }

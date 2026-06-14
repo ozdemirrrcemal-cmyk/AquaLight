@@ -32,6 +32,12 @@ class LightRuntimeDeviceAccessor(
     )
 ) {
 
+    init {
+        LightLocalOverrideStore.initialize(
+            context = context.applicationContext
+        )
+    }
+
     suspend fun readSnapshot(
         deviceId: Long
     ): ApiResult<LightRuntimeSnapshot> {
