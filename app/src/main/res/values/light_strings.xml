@@ -68,4 +68,40 @@
     <string name="light_preview_day_start_again_button">Start Again</string>
     <string name="light_preset_options_apply_to_device">Apply to Device</string>
 
+
+    <!-- Dashboard shell -->
+    <string name="light_dashboard_status_title">Light data not connected</string>
+    <string name="light_dashboard_status_subtitle">Light data layer is not connected.</string>
+    <string name="light_dashboard_status_idle">IDLE</string>
+    <string name="light_dashboard_current_power">Current Power</string>
+    <string name="light_dashboard_output">Output</string>
+    <string name="light_dashboard_now">Now</string>
+    <string name="light_dashboard_next_event">Next Event</string>
+    <string name="light_dashboard_no_runtime_source">No runtime source</string>
+    <string name="light_dashboard_timeline_title">Live Timeline</string>
+    <string name="light_dashboard_timeline_not_connected">No light data source connected</string>
+    <string name="light_dashboard_timeline_empty">No active plan today</string>
+    <string name="light_dashboard_action_manual">Manual</string>
+    <string name="light_dashboard_action_manual_subtitle">Live control</string>
+    <string name="light_dashboard_action_programs">Programs</string>
+    <string name="light_dashboard_action_programs_subtitle">Schedule</string>
+    <string name="light_dashboard_action_quick_setup">Quick Setup</string>
+    <string name="light_dashboard_action_quick_setup_subtitle">Smart setup</string>
+    <string name="light_dashboard_action_presets">Presets</string>
+    <string name="light_dashboard_action_presets_subtitle">Scenes</string>
+    <string name="light_dashboard_device_health">Device Health</string>
+    <string name="light_dashboard_controller_temp">Controller Temp</string>
+    <string name="light_dashboard_cooling_fan">Cooling Fan</string>
+    <string name="light_dashboard_unavailable">Unavailable</string>
+    <string name="light_dashboard_channel_red_empty">R --</string>
+    <string name="light_dashboard_channel_green_empty">G --</string>
+    <string name="light_dashboard_channel_blue_empty">B --</string>
+    <string name="light_dashboard_channel_white_empty">W --</string>
+    <string name="light_dashboard_power_empty">-- W</string>
+    <string name="light_dashboard_output_empty">--%</string>
+    <string name="light_dashboard_time_empty">--:--</string>
+    <string name="light_dashboard_temperature_empty">-- °C</string>
+    <string name="light_dashboard_settings_desc">Light settings</string>
+    <string name="light_dashboard_refresh_desc">Refresh device status</string>
+
 </resources>

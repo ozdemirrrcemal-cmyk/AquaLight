@@ -69,14 +69,14 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 actions = listOf(
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_settings,
-                        contentDescription = "Light settings",
+                        contentDescription = getString(R.string.light_dashboard_settings_desc),
                         onClick = {
                             openSettings()
                         }
                     ),
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_refresh,
-                        contentDescription = "Refresh device status",
+                        contentDescription = getString(R.string.light_dashboard_refresh_desc),
                         onClick = {
                             refreshDeviceStatus()
                         }
@@ -228,17 +228,16 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private fun renderControlAvailability(
         state: DeviceLightDashboardUiState
     ) {
-        val enabled = state.controlsEnabled
-        val alpha = if (enabled) {
+        val alpha = if (state.controlsEnabled) {
             1f
         } else {
-            0.55f
+            0.88f
         }
 
-        binding.cardManual.isEnabled = enabled
-        binding.cardPrograms.isEnabled = enabled
-        binding.cardQuickSetup.isEnabled = enabled
-        binding.cardPresets.isEnabled = enabled
+        binding.cardManual.isEnabled = true
+        binding.cardPrograms.isEnabled = true
+        binding.cardQuickSetup.isEnabled = true
+        binding.cardPresets.isEnabled = true
 
         binding.cardManual.alpha = alpha
         binding.cardPrograms.alpha = alpha

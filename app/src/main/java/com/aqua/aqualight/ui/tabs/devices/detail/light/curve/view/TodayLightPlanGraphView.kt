@@ -33,30 +33,30 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
 
     private val hourlyGridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = dp(0.7f)
+        strokeWidth = dp(0.65f)
         color = color(R.color.light_stroke)
-        alpha = 45
+        alpha = 34
     }
 
     private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = dp(1f)
+        strokeWidth = dp(0.8f)
         color = color(R.color.light_stroke)
-        alpha = 70
+        alpha = 56
     }
 
     private val majorGridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = dp(1.1f)
+        strokeWidth = dp(0.95f)
         color = color(R.color.light_stroke)
-        alpha = 120
+        alpha = 96
     }
 
     private val baseLinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = dp(1.2f)
+        strokeWidth = dp(1f)
         color = color(R.color.light_stroke)
-        alpha = 150
+        alpha = 120
     }
 
     private val outputPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -166,7 +166,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
 
     private val axisTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = color(R.color.light_text_tertiary)
-        textSize = sp(10f)
+        textSize = sp(9.5f)
         textAlign = Paint.Align.CENTER
     }
 
@@ -177,9 +177,31 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
     }
 
     private val emptyTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = color(R.color.light_text_tertiary)
-        textSize = sp(12f)
+        color = color(R.color.light_text_secondary)
+        textSize = sp(11.5f)
         textAlign = Paint.Align.CENTER
+    }
+
+    private val emptyIconCirclePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = color(R.color.light_surface_soft)
+        alpha = 150
+    }
+
+    private val emptyIconStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(0.9f)
+        color = color(R.color.light_stroke_active)
+        alpha = 115
+    }
+
+    private val emptyIconWavePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(1.5f)
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+        color = color(R.color.light_text_secondary)
+        alpha = 205
     }
 
     private val pausedOverlayPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -242,10 +264,10 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
 
     private fun calculateGraphRect() {
         graphRect.set(
-            dp(18f),
-            dp(32f),
-            width - dp(18f),
-            height - dp(28f)
+            dp(20f),
+            dp(34f),
+            width - dp(20f),
+            height - dp(30f)
         )
     }
 
@@ -776,11 +798,72 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
     private fun drawEmptyState(
         canvas: Canvas
     ) {
+        val centerX = graphRect.centerX()
+        val iconCenterY = graphRect.centerY() - dp(14f)
+        val radius = dp(17f)
+
+        canvas.drawCircle(
+            centerX,
+            iconCenterY,
+            radius,
+            emptyIconCirclePaint
+        )
+
+        canvas.drawCircle(
+            centerX,
+            iconCenterY,
+            radius,
+            emptyIconStrokePaint
+        )
+
+        drawEmptyWave(
+            canvas = canvas,
+            startX = centerX - dp(8.5f),
+            centerY = iconCenterY - dp(3f)
+        )
+
+        drawEmptyWave(
+            canvas = canvas,
+            startX = centerX - dp(8.5f),
+            centerY = iconCenterY + dp(4f)
+        )
+
         canvas.drawText(
-            "No active plan today",
-            graphRect.centerX(),
-            graphRect.centerY() + dp(4f),
+            context.getString(R.string.light_dashboard_timeline_empty),
+            centerX,
+            iconCenterY + dp(40f),
             emptyTextPaint
+        )
+    }
+
+    private fun drawEmptyWave(
+        canvas: Canvas,
+        startX: Float,
+        centerY: Float
+    ) {
+        val wavePath = Path().apply {
+            moveTo(startX, centerY)
+            cubicTo(
+                startX + dp(3.2f),
+                centerY - dp(4f),
+                startX + dp(6.2f),
+                centerY + dp(4f),
+                startX + dp(9.4f),
+                centerY
+            )
+            cubicTo(
+                startX + dp(12.6f),
+                centerY - dp(4f),
+                startX + dp(15.6f),
+                centerY + dp(4f),
+                startX + dp(18.8f),
+                centerY
+            )
+        }
+
+        canvas.drawPath(
+            wavePath,
+            emptyIconWavePaint
         )
     }
 
