@@ -3,7 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.settings
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightViewModel.Companion.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
 import java.text.SimpleDateFormat
@@ -21,9 +22,8 @@ import kotlinx.coroutines.launch
 /**
  * Temporary UI shell for light device settings.
  *
- * Old ESP32 time, thermal protection, cooling and firmware command managers
- * were removed. The settings form is not connected to firmware until the new
- * Device API layer is connected intentionally.
+ * The settings form is intentionally UI-only until the new Light settings
+ * contract is designed and connected.
  */
 class DeviceLightSettingsViewModel(
     application: Application
@@ -44,7 +44,7 @@ class DeviceLightSettingsViewModel(
     ) {
         _uiState.value = unavailableState(
             reason = if (deviceId <= 0L) {
-                "Device information is missing"
+                LIGHT_DEVICE_INFORMATION_MISSING
             } else {
                 LIGHT_DATA_LAYER_NOT_CONNECTED
             }

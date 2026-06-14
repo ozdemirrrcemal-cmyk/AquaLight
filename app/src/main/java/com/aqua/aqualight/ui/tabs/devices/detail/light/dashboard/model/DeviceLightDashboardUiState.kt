@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.model
+package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model
 
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.TodayLightPlanGraphState

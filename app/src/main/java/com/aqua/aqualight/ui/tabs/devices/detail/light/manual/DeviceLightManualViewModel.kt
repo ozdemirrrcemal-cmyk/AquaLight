@@ -3,7 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.manual
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightViewModel.Companion.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
@@ -18,9 +19,8 @@ import kotlinx.coroutines.launch
 /**
  * Temporary UI shell for manual light control.
  *
- * No firmware command, live PWM reader, preset store or manual runtime cache is
- * connected here. The screen remains compile-safe while the new Light API
- * contract is being designed.
+ * Manual controls expose a UI-only unavailable state until the Light command
+ * contract is designed and connected intentionally.
  */
 class DeviceLightManualViewModel(
     application: Application
@@ -44,7 +44,7 @@ class DeviceLightManualViewModel(
         this.deviceId = deviceId
         _uiState.value = unavailableState(
             reason = if (deviceId <= 0L) {
-                "Device information is missing"
+                LIGHT_DEVICE_INFORMATION_MISSING
             } else {
                 LIGHT_DATA_LAYER_NOT_CONNECTED
             }

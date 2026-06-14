@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.sheet
+package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet
 
 import android.view.LayoutInflater
 import com.aqua.aqualight.databinding.BottomSheetLightProgramOptionsBinding

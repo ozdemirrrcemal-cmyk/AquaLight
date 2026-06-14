@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.programs
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightViewModel.Companion.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
@@ -19,9 +19,8 @@ import kotlinx.coroutines.launch
 /**
  * Temporary UI shell for program list.
  *
- * The previous light program DataStore, schedule conflict validator and ESP32
- * upload command were removed. Program persistence will be reintroduced only
- * after the new Light API contract is finalized.
+ * Program persistence is not connected at this stage. The list stays as a
+ * UI-only shell until the Light program contract is finalized.
  */
 class DeviceLightProgramsViewModel(
     application: Application

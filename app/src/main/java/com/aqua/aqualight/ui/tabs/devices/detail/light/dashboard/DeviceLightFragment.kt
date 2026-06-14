@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light
+package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard
 
 import android.os.Bundle
 import android.view.View
@@ -8,6 +8,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
@@ -15,10 +16,10 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.renderLightModeChip
-import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.DeviceLightDashboardUiState
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
@@ -261,7 +262,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private fun refreshDeviceStatus() {
         if (deviceId <= 0L) {
             showDeviceSnack(
-                message = "Device information is missing",
+                message = LIGHT_DEVICE_INFORMATION_MISSING,
                 type = DeviceFeedbackType.ERROR
             )
 

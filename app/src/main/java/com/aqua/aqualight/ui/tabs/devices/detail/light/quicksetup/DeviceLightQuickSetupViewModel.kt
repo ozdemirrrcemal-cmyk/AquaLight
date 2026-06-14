@@ -3,7 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightViewModel.Companion.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.DeviceLightQuickSetupEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupUiState
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,9 +18,8 @@ import kotlinx.coroutines.launch
 /**
  * Temporary UI shell for Smart Quick Setup.
  *
- * Recommendation generation can still be reviewed later, but this ViewModel no
- * longer saves programs or uploads schedules to the old light DataStore/ESP32
- * firmware command layer.
+ * Recommendation generation can be reviewed later. Saving and device loading
+ * remain disabled until the new Light contract is connected.
  */
 class DeviceLightQuickSetupViewModel(
     application: Application
@@ -42,7 +42,7 @@ class DeviceLightQuickSetupViewModel(
     ) {
         _uiState.value = QuickSetupUiState(
             errorMessage = if (deviceId <= 0L) {
-                "Device information is missing"
+                LIGHT_DEVICE_INFORMATION_MISSING
             } else {
                 LIGHT_DATA_LAYER_NOT_CONNECTED
             }

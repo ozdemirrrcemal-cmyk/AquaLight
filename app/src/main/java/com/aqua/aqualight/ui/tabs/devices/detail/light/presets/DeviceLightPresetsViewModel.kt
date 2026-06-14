@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presets
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightViewModel.Companion.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
@@ -18,8 +18,8 @@ import kotlinx.coroutines.launch
 /**
  * Temporary UI shell for presets.
  *
- * The previous preset persistence and device apply command are not connected.
- * Custom presets are intentionally empty until the new Light data contract is defined.
+ * Custom presets are intentionally empty until the new Light preset contract
+ * is defined and connected intentionally.
  */
 class DeviceLightPresetsViewModel(
     application: Application

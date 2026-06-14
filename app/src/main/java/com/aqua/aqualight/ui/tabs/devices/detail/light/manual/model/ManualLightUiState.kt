@@ -15,7 +15,6 @@ data class ManualLightUiState(
     val blue: Int = 0,
     val white: Int = 0,
 
-    // Loaded from ESP32 live PWM channel W values when available.
     val redMaxWatts: Double = 0.0,
     val greenMaxWatts: Double = 0.0,
     val blueMaxWatts: Double = 0.0,

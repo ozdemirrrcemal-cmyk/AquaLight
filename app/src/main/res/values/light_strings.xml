@@ -9,6 +9,7 @@
     <string name="screen_title_light_presets">Presets &amp; Scenes</string>
     <string name="screen_title_light_settings">Light Settings</string>
     <string name="screen_title_light_quick_setup">Smart Quick Setup</string>
+    <string name="screen_title_light_automation">Light Automation</string>
 
     <!-- Cloud simulation -->
     <string name="light_cloud_simulation_title">Cloud Simulation</string>

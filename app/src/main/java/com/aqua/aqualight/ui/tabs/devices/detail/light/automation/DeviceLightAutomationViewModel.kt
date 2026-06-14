@@ -12,9 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * Temporary UI shell for light automation.
  *
- * Local automation DataStore and ESP32 automation commands were removed. This
- * state is intentionally in-memory/default only and is not connected to any
- * firmware or persistence source.
+ * Automation data is intentionally local/default only at this stage. The
+ * screen is not connected to any runtime or persistence source yet.
  */
 class DeviceLightAutomationViewModel(
     application: Application

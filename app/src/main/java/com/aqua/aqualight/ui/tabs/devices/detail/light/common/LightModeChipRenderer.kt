@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.common
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightDashboardMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDashboardMode
 
 fun TextView.renderLightModeChip(
     mode: LightDashboardMode

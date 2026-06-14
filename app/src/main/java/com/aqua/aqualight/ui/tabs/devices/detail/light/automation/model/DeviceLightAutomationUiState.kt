@@ -12,5 +12,5 @@ data class DeviceLightAutomationUiState(
     val moonlightStatusText: String get() = if (moonlight.enabled) "ON" else "OFF"
     val moonlightSummaryText: String get() = if (moonlight.enabled) "${moonlight.intensityPercent}% • Until ${moonlight.endTime.label}" else "Independent night output automation"
     val cloudStatusText: String get() = if (cloudSimulation.enabled) "ON" else "OFF"
-    val cloudSummaryText: String get() = if (cloudSimulation.enabled) "Coverage ${cloudSimulation.coveragePercent}%" else "Prepared for firmware runtime support"
+    val cloudSummaryText: String get() = if (cloudSimulation.enabled) "Coverage ${cloudSimulation.coveragePercent}%" else "Prepared for runtime support"
 }

@@ -3,7 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.programs.editor
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightViewModel.Companion.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.RepeatMode
@@ -22,8 +22,8 @@ import kotlinx.coroutines.launch
 /**
  * Temporary UI shell for the program editor.
  *
- * It keeps local form editing alive but does not load, save, validate against a
- * persisted program store or upload anything to firmware.
+ * It keeps local form editing alive without loading from or saving to any
+ * external Light source.
  */
 class DeviceLightProgramEditorViewModel(
     application: Application

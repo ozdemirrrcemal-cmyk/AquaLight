@@ -1,9 +1,11 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light
+package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.model.DeviceLightDashboardUiState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.model.LightDashboardMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
+import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.DeviceLightDashboardUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDashboardMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,11 +13,9 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * Temporary UI shell for the Light dashboard.
  *
- * The previous firmware/DataStore based light data layer has been removed.
- * This ViewModel intentionally does not read firmware, local light programs,
- * automation settings or cached runtime data. It keeps the screen compile-safe
- * until the new Device API layer and the new Light contract are designed and
- * explicitly connected.
+ * No Light data source is connected in this layer yet. The dashboard stays
+ * compile-safe and exposes only an unavailable UI state until the new Light
+ * contract is designed and connected intentionally.
  */
 class DeviceLightViewModel(
     application: Application
@@ -37,7 +37,7 @@ class DeviceLightViewModel(
 
         _uiState.value = unavailableState(
             reason = if (deviceId <= 0L) {
-                "Device information is missing"
+                LIGHT_DEVICE_INFORMATION_MISSING
             } else {
                 LIGHT_DATA_LAYER_NOT_CONNECTED
             }
@@ -47,7 +47,7 @@ class DeviceLightViewModel(
     fun refreshNow() {
         _uiState.value = unavailableState(
             reason = if (deviceId <= 0L) {
-                "Device information is missing"
+                LIGHT_DEVICE_INFORMATION_MISSING
             } else {
                 LIGHT_DATA_LAYER_NOT_CONNECTED
             }
@@ -78,10 +78,5 @@ class DeviceLightViewModel(
             controlsEnabled = false,
             connectionStatusText = reason
         )
-    }
-
-    companion object {
-        const val LIGHT_DATA_LAYER_NOT_CONNECTED =
-            "Light data layer is not connected yet"
     }
 }

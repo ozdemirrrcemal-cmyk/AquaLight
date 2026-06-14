@@ -8,32 +8,32 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightProgramsBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
+import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
+import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.adapter.LightProgramsAdapter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListItem
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramListUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.LightProgramsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.model.ProgramFilter
 import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramNameSheet
-import com.aqua.aqualight.ui.tabs.devices.detail.light.sheet.LightProgramOptionsSheet
-import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
-import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmTone
+import com.aqua.aqualight.ui.tabs.devices.detail.light.programs.sheet.LightProgramOptionsSheet
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class DeviceLightProgramsFragment :
-Fragment(R.layout.fragment_device_light_programs) {
+    Fragment(R.layout.fragment_device_light_programs) {
 
     private val args: DeviceLightProgramsFragmentArgs by navArgs()
-
 
     private var _binding: FragmentDeviceLightProgramsBinding? = null
     private val binding get() = _binding!!
@@ -331,7 +331,7 @@ Fragment(R.layout.fragment_device_light_programs) {
     private fun openAutomation() {
         if (deviceId <= 0L) {
             showDeviceSnack(
-                message = "Device information is missing",
+                message = LIGHT_DEVICE_INFORMATION_MISSING,
                 type = DeviceFeedbackType.ERROR
             )
             return
@@ -349,7 +349,7 @@ Fragment(R.layout.fragment_device_light_programs) {
     ) {
         if (deviceId <= 0L) {
             showDeviceSnack(
-                message = "Device information is missing",
+                message = LIGHT_DEVICE_INFORMATION_MISSING,
                 type = DeviceFeedbackType.ERROR
             )
             return
