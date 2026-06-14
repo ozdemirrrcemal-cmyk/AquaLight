@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.api.light.LightScheduleChannelState
 import com.aqua.aqualight.data.devices.api.light.LightTemperatureSensorState
 import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionState
 import com.aqua.aqualight.data.devices.api.light.LightTimeState
+import com.aqua.aqualight.data.devices.light.math.LightPowerMath
 
 data class LightRuntimeSnapshot(
     val mode: LightMode = LightMode.UNKNOWN,
@@ -18,6 +19,8 @@ data class LightRuntimeSnapshot(
     val channels: LightChannelValues = LightChannelValues(),
     val currentWatt: Double? = null,
     val maxWatt: Double? = null,
+    val powerLoadPercent: Int? = null,
+    val fanOutputPercent: Int? = null,
     val deviceTime: LightTimeState = LightTimeState(),
     val nextEvent: LightNextEvent? = null,
     val temperatureSensors: List<LightTemperatureSensorState> = emptyList(),
@@ -37,10 +40,15 @@ data class LightRuntimeSnapshot(
             return LightRuntimeSnapshot(
                 mode = state.status.mode,
                 isPowerOn = state.status.isPowerOn,
-                outputPercent = state.status.outputPercent,
+                outputPercent = state.channels.maxPercent,
                 channels = state.channels,
                 currentWatt = state.status.currentWatt,
                 maxWatt = state.status.maxWatt,
+                powerLoadPercent = state.status.powerLoadPercent ?: LightPowerMath.powerLoadPercent(
+                    currentWatt = state.status.currentWatt,
+                    maxWatt = state.status.maxWatt
+                ),
+                fanOutputPercent = state.status.fanOutputPercent,
                 deviceTime = state.time,
                 nextEvent = state.nextEvent,
                 temperatureSensors = state.temperatureSensors,

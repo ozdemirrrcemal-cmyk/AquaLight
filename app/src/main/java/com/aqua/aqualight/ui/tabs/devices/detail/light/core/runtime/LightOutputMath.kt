@@ -1,5 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.core.runtime
 
+/**
+ * UI compatibility wrapper around the central light output math.
+ */
 object LightOutputMath {
 
     fun outputPercent(
@@ -8,11 +11,11 @@ object LightOutputMath {
         blue: Int,
         white: Int
     ): Int {
-        return maxOf(
-            red,
-            green,
-            blue,
-            white
-        ).coerceIn(0, 100)
+        return com.aqua.aqualight.data.devices.light.math.LightOutputMath.outputPercent(
+            red = red,
+            green = green,
+            blue = blue,
+            white = white
+        )
     }
 }

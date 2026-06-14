@@ -1,55 +1,24 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.core.color
 
-import android.graphics.Color
-import kotlin.math.pow
-import kotlin.math.roundToInt
+import com.aqua.aqualight.data.devices.light.math.LightRgbwPreviewColorMath
 
 /**
- * Shared WRGB preview renderer.
+ * UI compatibility wrapper around the central RGBW preview renderer.
  *
- * The app does not show the raw RGB slider values as a color. It simulates the
- * additive contribution of the red, green, blue and white emitters in linear
- * light, normalizes the resulting chromaticity for a readable UI swatch, then
- * converts it back to sRGB for Android drawing.
+ * Keep this object so existing Manual/Preset screens do not need to know where
+ * the device/domain math lives. The actual color calculation is single-source
+ * in data.devices.light.math.LightRgbwPreviewColorMath.
  */
 object LightRgbwColorMath {
-
-    private const val OFF_PREVIEW_RED = 10
-    private const val OFF_PREVIEW_GREEN = 16
-    private const val OFF_PREVIEW_BLUE = 24
-
-    private val redEmitter = LinearRgb(
-        red = 1.00,
-        green = 0.025,
-        blue = 0.005
-    )
-
-    private val greenEmitter = LinearRgb(
-        red = 0.060,
-        green = 1.00,
-        blue = 0.180
-    )
-
-    private val blueEmitter = LinearRgb(
-        red = 0.030,
-        green = 0.090,
-        blue = 1.00
-    )
-
-    private val whiteEmitter = LinearRgb(
-        red = 0.850,
-        green = 0.920,
-        blue = 1.00
-    )
 
     fun previewColor(
         channels: LightRgbwChannels
     ): Int {
         return previewColor(
-            red = channels.red,
-            green = channels.green,
-            blue = channels.blue,
-            white = channels.white
+            red = channels.safeRed,
+            green = channels.safeGreen,
+            blue = channels.safeBlue,
+            white = channels.safeWhite
         )
     }
 
@@ -59,109 +28,11 @@ object LightRgbwColorMath {
         blue: Int,
         white: Int
     ): Int {
-        val redLevel = percentToLevel(red)
-        val greenLevel = percentToLevel(green)
-        val blueLevel = percentToLevel(blue)
-        val whiteLevel = percentToLevel(white)
-
-        val strongestInput = maxOf(
-            redLevel,
-            greenLevel,
-            blueLevel,
-            whiteLevel
+        return LightRgbwPreviewColorMath.previewColor(
+            red = red,
+            green = green,
+            blue = blue,
+            white = white
         )
-
-        if (strongestInput <= 0.0) {
-            return Color.rgb(
-                OFF_PREVIEW_RED,
-                OFF_PREVIEW_GREEN,
-                OFF_PREVIEW_BLUE
-            )
-        }
-
-        val mixed =
-            redEmitter * redLevel +
-                greenEmitter * greenLevel +
-                blueEmitter * blueLevel +
-                whiteEmitter * whiteLevel
-
-        val peak = maxOf(
-            mixed.red,
-            mixed.green,
-            mixed.blue
-        )
-
-        if (peak <= 0.0) {
-            return Color.rgb(
-                OFF_PREVIEW_RED,
-                OFF_PREVIEW_GREEN,
-                OFF_PREVIEW_BLUE
-            )
-        }
-
-        val previewBrightness = 0.46 + (0.54 * strongestInput)
-        val displayLinear = LinearRgb(
-            red = (mixed.red / peak) * previewBrightness,
-            green = (mixed.green / peak) * previewBrightness,
-            blue = (mixed.blue / peak) * previewBrightness
-        )
-
-        return Color.rgb(
-            linearToSrgb(displayLinear.red),
-            linearToSrgb(displayLinear.green),
-            linearToSrgb(displayLinear.blue)
-        )
-    }
-
-    private fun percentToLevel(
-        value: Int
-    ): Double {
-        return value
-            .coerceIn(
-                LightRgbwChannels.MIN_PERCENT,
-                LightRgbwChannels.MAX_PERCENT
-            ) / 100.0
-    }
-
-    private fun linearToSrgb(
-        value: Double
-    ): Int {
-        val safeValue = value.coerceIn(0.0, 1.0)
-        val srgb = if (safeValue <= 0.0031308) {
-            safeValue * 12.92
-        } else {
-            1.055 * safeValue.pow(1.0 / 2.4) - 0.055
-        }
-
-        return (srgb * 255.0)
-            .roundToInt()
-            .coerceIn(0, 255)
-    }
-
-    private data class LinearRgb(
-        val red: Double,
-        val green: Double,
-        val blue: Double
-    ) {
-
-        operator fun plus(
-            other: LinearRgb
-        ): LinearRgb {
-            return LinearRgb(
-                red = red + other.red,
-                green = green + other.green,
-                blue = blue + other.blue
-            )
-        }
-
-        operator fun times(
-            multiplier: Double
-        ): LinearRgb {
-            return LinearRgb(
-                red = red * multiplier,
-                green = green * multiplier,
-                blue = blue * multiplier
-            )
-        }
     }
 }

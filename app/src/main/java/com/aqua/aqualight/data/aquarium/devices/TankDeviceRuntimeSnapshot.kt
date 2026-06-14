@@ -22,7 +22,10 @@ sealed class TankDeviceRuntimeSnapshot {
         val outputPercent: Int,
         val timelineProgressPercent: Int,
         val accentColorInt: Int,
-        val channels: List<TankDeviceRuntimeChannelSnapshot>
+        val channels: List<TankDeviceRuntimeChannelSnapshot>,
+        val currentWatt: Double? = null,
+        val maxWatt: Double? = null,
+        val powerLoadPercent: Int? = null
     ) : TankDeviceRuntimeSnapshot()
 }
 

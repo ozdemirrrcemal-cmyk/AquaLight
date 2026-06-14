@@ -1,5 +1,8 @@
 package com.aqua.aqualight.data.devices.api.light
 
+import com.aqua.aqualight.data.devices.light.math.LightChannelPowerState
+import com.aqua.aqualight.data.devices.light.math.LightOutputMath
+import com.aqua.aqualight.data.devices.light.math.LightPowerMath
 import kotlin.math.roundToInt
 
 data class LightStatus(
@@ -14,6 +17,7 @@ data class LightStatus(
     val temperatureCelsius: Double? = null,
     val currentWatt: Double? = null,
     val maxWatt: Double? = null,
+    val powerLoadPercent: Int? = null,
     val thermalReductionPercent: Int? = null,
     val fanOutputPercent: Int? = null
 )
@@ -43,7 +47,12 @@ data class LightChannelValues(
     }
 
     val maxPercent: Int
-        get() = maxOf(red, green, blue, white)
+        get() = LightOutputMath.outputPercent(
+            red = red,
+            green = green,
+            blue = blue,
+            white = white
+        )
 
     val isOff: Boolean
         get() = red <= 0 && green <= 0 && blue <= 0 && white <= 0
@@ -209,27 +218,35 @@ object LightApiMath {
     fun calculateCurrentWatt(
         channels: List<LightPwmChannelState>
     ): Double? {
-        val wattValues = channels.mapNotNull { channel ->
-            val maxWatt = channel.maxWatt ?: return@mapNotNull null
-            val percent = channel.currentPercent ?: return@mapNotNull null
-            maxWatt * percent.coerceIn(0, 100) / 100.0
-        }
-
-        return wattValues.takeIf { it.isNotEmpty() }?.sum()
+        return LightPowerMath.calculateCurrentWatt(
+            channels = channels.map { channel ->
+                LightChannelPowerState(
+                    maxWatt = channel.maxWatt,
+                    currentPercent = channel.currentPercent
+                )
+            }
+        )
     }
 
     fun calculateMaxWatt(
         configuredMaxWatt: Double?,
         channels: List<LightPwmChannelState>
     ): Double? {
-        if (configuredMaxWatt != null && configuredMaxWatt > 0.0) {
-            return configuredMaxWatt
-        }
+        return LightPowerMath.calculateMaxWatt(
+            configuredMaxWatt = configuredMaxWatt,
+            channelMaxWatts = channels.map { channel ->
+                channel.maxWatt
+            }
+        )
+    }
 
-        val channelMax = channels.mapNotNull { channel ->
-            channel.maxWatt?.takeIf { it > 0.0 }
-        }.sum()
-
-        return channelMax.takeIf { it > 0.0 }
+    fun powerLoadPercent(
+        currentWatt: Double?,
+        maxWatt: Double?
+    ): Int? {
+        return LightPowerMath.powerLoadPercent(
+            currentWatt = currentWatt,
+            maxWatt = maxWatt
+        )
     }
 }

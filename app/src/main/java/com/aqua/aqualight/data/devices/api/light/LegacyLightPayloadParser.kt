@@ -79,6 +79,10 @@ class LegacyLightPayloadParser {
                 temperatureCelsius = temperature,
                 currentWatt = currentWatt,
                 maxWatt = maxWatt,
+                powerLoadPercent = LightApiMath.powerLoadPercent(
+                    currentWatt = currentWatt,
+                    maxWatt = maxWatt
+                ),
                 thermalReductionPercent = thermal.reductionPercent,
                 fanOutputPercent = fanOutputPercent
             )

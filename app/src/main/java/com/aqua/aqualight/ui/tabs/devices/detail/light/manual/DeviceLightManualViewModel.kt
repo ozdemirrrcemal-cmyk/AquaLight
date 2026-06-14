@@ -5,6 +5,7 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
+import com.aqua.aqualight.data.devices.light.math.LightOutputMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
@@ -20,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 /**
  * Data-ready manual light control state machine.
@@ -372,17 +372,12 @@ class DeviceLightManualViewModel(
     private fun calculateOutputPercent(
         channels: LightRgbwChannels
     ): Int {
-        return listOf(
-            channels.safeRed,
-            channels.safeGreen,
-            channels.safeBlue,
-            channels.safeWhite
-        ).average()
-            .roundToInt()
-            .coerceIn(
-                LightRgbwChannels.MIN_PERCENT,
-                LightRgbwChannels.MAX_PERCENT
-            )
+        return LightOutputMath.outputPercent(
+            red = channels.safeRed,
+            green = channels.safeGreen,
+            blue = channels.safeBlue,
+            white = channels.safeWhite
+        )
     }
 
     private fun modeSubtitle(): String {
