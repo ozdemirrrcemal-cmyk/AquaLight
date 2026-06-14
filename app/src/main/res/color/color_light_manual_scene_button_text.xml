@@ -3,7 +3,7 @@
 
     <item
         android:state_selected="true"
-        android:color="@color/light_accent" />
+        android:color="@color/light_gold" />
 
     <item
         android:state_pressed="true"

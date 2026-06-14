@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.manual
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -16,6 +17,7 @@ import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwColorMath
+import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightUiState
@@ -142,38 +144,44 @@ class DeviceLightManualFragment :
         isRendering =
             true
 
-        binding.switchManualPower.isChecked =
-            state.isPowerOn
-
         binding.tvManualModeTitle.text =
-            if (state.isManualScene) {
-                "Manual Scene"
-            } else {
-                "Manual Mode"
+            when (state.controlMode) {
+                ManualLightControlMode.AUTO -> "Auto Schedule Active"
+                ManualLightControlMode.MANUAL_OVERRIDE -> "Manual Override Active"
+                ManualLightControlMode.SCENE_OVERRIDE -> "Scene Override Active"
             }
 
         binding.tvManualModeSubtitle.text =
-            when {
-                state.isManualScene -> {
-                    state.activeSceneName
-                        .orEmpty()
-                        .ifBlank {
-                            "Preset Scene"
-                        }
-                }
+            state.connectionStatusText
 
-                state.isManualMode -> {
-                    "Live RGBW control active"
-                }
-
-                !state.controlsEnabled -> {
-                    state.connectionStatusText
-                }
-
-                else -> {
-                    "Automatic schedule is running"
-                }
+        binding.tvManualModeChip.text =
+            when (state.controlMode) {
+                ManualLightControlMode.AUTO -> "AUTO"
+                ManualLightControlMode.MANUAL_OVERRIDE -> "MANUAL"
+                ManualLightControlMode.SCENE_OVERRIDE -> "SCENE"
             }
+
+        binding.tvManualModeChip.setBackgroundResource(
+            when (state.controlMode) {
+                ManualLightControlMode.AUTO -> R.drawable.bg_light_mode_chip_auto
+                ManualLightControlMode.MANUAL_OVERRIDE -> R.drawable.bg_light_mode_chip_manual
+                ManualLightControlMode.SCENE_OVERRIDE -> R.drawable.bg_light_mode_chip_scene
+            }
+        )
+
+        binding.tvManualModeChip.setTextColor(
+            ContextCompat.getColor(
+                requireContext(),
+                when (state.controlMode) {
+                    ManualLightControlMode.AUTO -> R.color.light_accent
+                    ManualLightControlMode.MANUAL_OVERRIDE -> R.color.light_gold
+                    ManualLightControlMode.SCENE_OVERRIDE -> R.color.light_gold
+                }
+            )
+        )
+
+        binding.tvOutputModeHint.text =
+            state.outputHintText
 
         binding.masterOutputProgress.progress =
             state.masterOutputPercent
@@ -238,27 +246,20 @@ class DeviceLightManualFragment :
         state: ManualLightUiState
     ) {
         val controlsEnabled = state.controlsEnabled
-        val isManualActive =
-            controlsEnabled &&
-                (
-                    state.isPowerOn ||
-                        state.isManualMode ||
-                        state.isManualScene
-                )
+        val isAutoMode = state.controlMode == ManualLightControlMode.AUTO
 
-        val controlAlpha = when {
+        val outputAlpha = when {
             !controlsEnabled -> 0.48f
-            isManualActive -> 1f
-            else -> 0.82f
+            isAutoMode -> 0.76f
+            else -> 1f
         }
 
         binding.cardMasterOutput.alpha =
-            controlAlpha
+            outputAlpha
 
         binding.cardQuickScenes.alpha =
-            controlAlpha
+            if (controlsEnabled) 1f else 0.48f
 
-        binding.switchManualPower.isEnabled = controlsEnabled
         binding.sliderRed.isEnabled = controlsEnabled
         binding.sliderGreen.isEnabled = controlsEnabled
         binding.sliderBlue.isEnabled = controlsEnabled
@@ -269,7 +270,14 @@ class DeviceLightManualFragment :
         }
 
         binding.btnResumeAuto.isEnabled =
-            controlsEnabled && (state.isManualMode || state.isManualScene)
+            controlsEnabled && state.isManualOverrideActive
+
+        binding.btnResumeAuto.text =
+            if (state.isManualOverrideActive) {
+                "Resume Auto"
+            } else {
+                "Auto Active"
+            }
 
         binding.btnSavePreset.isEnabled =
             controlsEnabled
@@ -295,14 +303,6 @@ class DeviceLightManualFragment :
     }
 
     private fun setupClicks() {
-        binding.switchManualPower.setOnCheckedChangeListener { _, isChecked ->
-            if (isRendering) return@setOnCheckedChangeListener
-
-            viewModel.setPowerOn(
-                isChecked
-            )
-        }
-
         binding.scenePlantGrowth.setOnClickListener {
             viewModel.applyScene(
                 ManualLightScene.PLANT_GROWTH

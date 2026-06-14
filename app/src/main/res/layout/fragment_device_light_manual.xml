@@ -66,7 +66,7 @@
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:text=""
-                            tools:text="Manual Mode" />
+                            tools:text="Auto Schedule Active" />
 
                         <TextView
                             android:id="@+id/tvManualModeSubtitle"
@@ -81,12 +81,19 @@
 
                     </LinearLayout>
 
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchManualPower"
+                    <TextView
+                        android:id="@+id/tvManualModeChip"
+                        style="@style/TextAppearance.Aqua.Light.Filter"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="32dp"
                         android:layout_marginStart="12dp"
-                        android:checked="false" />
+                        android:background="@drawable/bg_light_mode_chip_auto"
+                        android:gravity="center"
+                        android:minWidth="72dp"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="AUTO"
+                        android:textColor="@color/light_accent" />
 
                 </LinearLayout>
 
@@ -113,6 +120,17 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Manual Light Control" />
+
+                    <TextView
+                        android:id="@+id/tvOutputModeHint"
+                        style="@style/TextAppearance.Aqua.Light.Caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text=""
+                        tools:text="Auto output preview · drag any slider to override" />
 
                     <FrameLayout
                         android:layout_width="178dp"
