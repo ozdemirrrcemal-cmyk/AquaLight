@@ -1,68 +1,70 @@
 package com.aqua.aqualight.data.devices.runtime.light
 
+import android.content.Context
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.api.AquaDeviceApiFactory
-import com.aqua.aqualight.data.devices.api.AquaDeviceConnection
 import com.aqua.aqualight.data.devices.api.AquaLightDeviceApi
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.api.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
+import com.aqua.aqualight.data.devices.runtime.DeviceCommandGateway
+import com.aqua.aqualight.data.devices.runtime.DeviceEndpointResolver
 
 /**
  * Single entry point for reading Light runtime from a stored Aqua device.
  *
- * Fragments/ViewModels do not know whether the controller is served by legacy
- * /get or the future V1 API. They provide a stored device record; this accessor
- * builds the correct device API and returns the common LightRuntimeSnapshot.
+ * UI code passes only the local deviceId. IP is resolved here through the
+ * central gateway. If the cached IP fails, the gateway rediscoveres the same
+ * physical device by identity, updates DataStore, and retries once.
  */
 class LightRuntimeDeviceAccessor(
-    private val apiFactory: AquaDeviceApiFactory = AquaDeviceApiFactory()
+    context: Context,
+    private val apiFactory: AquaDeviceApiFactory = AquaDeviceApiFactory(),
+    private val commandGateway: DeviceCommandGateway = DeviceCommandGateway(
+        endpointResolver = DeviceEndpointResolver(
+            context = context.applicationContext
+        )
+    )
 ) {
 
     suspend fun readSnapshot(
-        device: DevicesDataStoreManager.DeviceInfo
+        deviceId: Long
     ): ApiResult<LightRuntimeSnapshot> {
-        if (device.id <= 0L) {
+        if (deviceId <= 0L) {
             return ApiResult.failure(
                 code = ApiErrorCode.INVALID_REQUEST,
                 message = "Light device id is missing"
             )
         }
 
-        if (device.category != AquaDeviceCategory.LIGHT) {
-            return ApiResult.failure(
-                code = ApiErrorCode.UNSUPPORTED_DEVICE,
-                message = "Stored device is not a Light controller"
-            )
-        }
-
-        val host = device.ip.trim()
-        if (host.isBlank()) {
-            return ApiResult.failure(
-                code = ApiErrorCode.NOT_CONNECTED,
-                message = "Light device address is missing"
-            )
-        }
-
-        val deviceApi = when (val apiResult = apiFactory.create(
-            identity = device.toIdentity(),
-            connection = AquaDeviceConnection(
-                host = host
-            )
-        )) {
-            is ApiResult.Success -> apiResult.value as? AquaLightDeviceApi
-                ?: return ApiResult.failure(
+        return commandGateway.execute(
+            deviceId = deviceId
+        ) { device, connection ->
+            if (device.category != AquaDeviceCategory.LIGHT) {
+                return@execute ApiResult.failure(
                     code = ApiErrorCode.UNSUPPORTED_DEVICE,
-                    message = "Stored device cannot create a Light API"
+                    message = "Stored device is not a Light controller"
                 )
+            }
 
-            is ApiResult.Error -> return apiResult
+            val deviceApi = when (val apiResult = apiFactory.create(
+                identity = device.toIdentity(),
+                connection = connection
+            )) {
+                is ApiResult.Success -> apiResult.value as? AquaLightDeviceApi
+                    ?: return@execute ApiResult.failure(
+                        code = ApiErrorCode.UNSUPPORTED_DEVICE,
+                        message = "Stored device cannot create a Light API"
+                    )
+
+                is ApiResult.Error -> return@execute apiResult
+            }
+
+            LightRuntimeRepositoryFactory
+                .create(deviceApi)
+                .readSnapshot(deviceApi.connection)
         }
-
-        return LightRuntimeRepositoryFactory
-            .create(deviceApi)
-            .readSnapshot(deviceApi.connection)
     }
 
     private fun DevicesDataStoreManager.DeviceInfo.toIdentity(): DeviceIdentity {

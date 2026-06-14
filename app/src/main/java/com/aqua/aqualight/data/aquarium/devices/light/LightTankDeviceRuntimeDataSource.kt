@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.aquarium.devices.light
 
+import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRuntimeDataSource
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRuntimeSnapshot
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
@@ -21,7 +22,10 @@ import kotlinx.coroutines.isActive
  * changing UI fragments.
  */
 class LightTankDeviceRuntimeDataSource(
-    private val runtimeAccessor: LightRuntimeDeviceAccessor = LightRuntimeDeviceAccessor(),
+    context: Context,
+    private val runtimeAccessor: LightRuntimeDeviceAccessor = LightRuntimeDeviceAccessor(
+        context = context.applicationContext
+    ),
     private val pollIntervalMillis: Long = DEFAULT_POLL_INTERVAL_MILLIS
 ) : TankDeviceRuntimeDataSource {
 
@@ -29,7 +33,7 @@ class LightTankDeviceRuntimeDataSource(
         devices: List<DevicesDataStoreManager.DeviceInfo>
     ): Flow<Map<Long, TankDeviceRuntimeSnapshot>> {
         val lightDevices = devices.filter { device ->
-            device.category == AquaDeviceCategory.LIGHT && device.ip.isNotBlank()
+            device.category == AquaDeviceCategory.LIGHT
         }
 
         return flow {
@@ -50,7 +54,7 @@ class LightTankDeviceRuntimeDataSource(
     ): Map<Long, TankDeviceRuntimeSnapshot> {
         return buildMap {
             devices.forEach { device ->
-                val snapshot = when (val result = runtimeAccessor.readSnapshot(device)) {
+                val snapshot = when (val result = runtimeAccessor.readSnapshot(device.id)) {
                     is ApiResult.Success -> result.value
                     is ApiResult.Error -> null
                 } ?: return@forEach

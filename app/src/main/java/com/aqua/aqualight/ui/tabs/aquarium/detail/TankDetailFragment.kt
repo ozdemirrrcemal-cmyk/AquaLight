@@ -130,7 +130,6 @@ class TankDetailFragment :
             is TankDetailViewModel.TankDetailEvent.NavigateToDeviceRouter -> {
                 openDeviceController(
                     deviceId = event.deviceId,
-                    deviceIp = event.deviceIp,
                     deviceTitle = event.deviceTitle
                 )
             }
@@ -530,7 +529,6 @@ class TankDetailFragment :
 
     private fun openDeviceController(
         deviceId: Long,
-        deviceIp: String,
         deviceTitle: String
     ) {
         val navController =
@@ -547,7 +545,6 @@ class TankDetailFragment :
         AppRouteNavigator.openDevice(
             navController = navController,
             deviceId = deviceId,
-            deviceIp = deviceIp,
             deviceTitle = deviceTitle
         )
     }

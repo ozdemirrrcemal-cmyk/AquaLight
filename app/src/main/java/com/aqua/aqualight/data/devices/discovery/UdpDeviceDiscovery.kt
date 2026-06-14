@@ -39,27 +39,13 @@ object UdpDeviceDiscovery {
     private const val BUFFER_SIZE = 4096
 
     /**
-     * GEÇİCİ TEST UYUMLULUĞU
+     * Eski firmware desteği sadece burada normalize edilir.
      *
-     * true:
-     * Eski firmware ProductId / ProtocolVersion vermese bile
-     * AquaName + Name + TabLight/TabTimer/TabTemperature üzerinden
-     * cihaz katalog eşleştirmesi yapılır.
-     *
-     * FIRMWARE_READY:
-     * Firmware UDP tarafı şu alanları verdiğinde bunu false yap:
-     *
-     * ProductId
-     * ProtocolVersion veya ApiVersion
-     * DeviceUid veya ShortId veya MacAddress veya FirmwareSerial veya SerialNumber veya ID
-     *
-     * Sonra:
-     * 1. LEGACY_DISCOVERY_START / LEGACY_DISCOVERY_END arası fallback kodları silinebilir.
-     * 2. resolveLegacyDefinition(...) fonksiyonu silinebilir.
-     * 3. AquaDeviceDefinition ve AquaProductKey importları başka yerde kullanılmıyorsa silinebilir.
+     * Firmware hazır olduğunda yapılacak tek temizlik:
+     * ProductId/DeviceUid/ProtocolVersion zorunlu yapılır ve
+     * resolveLegacyDefinition(...) fallback bloğu kaldırılır.
+     * Uygulamanın geri kalanı eski/yeni firmware ayrımı bilmez.
      */
-    private const val ALLOW_LEGACY_DISCOVERY = true
-
     suspend fun discover(
         context: Context,
         timeoutMs: Long = 3_000L,
@@ -273,53 +259,26 @@ object UdpDeviceDiscovery {
          */
 
         val definition = definitionFromProductId
-            ?: run {
-                // LEGACY_DISCOVERY_START
-                // Geçici eski firmware desteği.
-                //
-                // Eski firmware ProductId vermediği için AquaName/Name/Tab alanlarından
-                // katalog eşleştiriyoruz.
-                //
-                // FIRMWARE_READY:
-                // Bu blok silinebilir. ProductId yoksa cihaz direkt reddedilmelidir.
-
-                if (!ALLOW_LEGACY_DISCOVERY) {
-                    return null
-                }
-
-                resolveLegacyDefinition(
-                    aquaName = legacyAquaName,
-                    name = legacyName,
-                    tabLight = legacyTabLight,
-                    tabTimer = legacyTabTimer,
-                    tabTemperature = legacyTabTemperature
-                )
-                // LEGACY_DISCOVERY_END
-            }
+            ?: resolveLegacyDefinition(
+                aquaName = legacyAquaName,
+                name = legacyName,
+                tabLight = legacyTabLight,
+                tabTimer = legacyTabTimer,
+                tabTemperature = legacyTabTemperature
+            )
             ?: return null
 
         val isLegacyDiscovery = definitionFromProductId == null
 
         val protocolVersion = deviceJson.optNullableInt("ProtocolVersion")
             ?: deviceJson.optNullableInt("ApiVersion")
-            ?: if (
-                ALLOW_LEGACY_DISCOVERY &&
-                isLegacyDiscovery
-            ) {
-                // LEGACY_DISCOVERY_START
-                // Eski firmware ProtocolVersion vermiyor.
-                //
-                // Test için katalogdaki v1 protokolü varsayıyoruz.
-                //
-                // FIRMWARE_READY:
-                // Bu fallback silinecek. ProtocolVersion veya ApiVersion zorunlu olacak.
-                1
-                // LEGACY_DISCOVERY_END
+            ?: if (isLegacyDiscovery) {
+                0
             } else {
                 null
             }
 
-        if (!definition.isProtocolVersionSupported(protocolVersion)) {
+        if (!isLegacyDiscovery && !definition.isProtocolVersionSupported(protocolVersion)) {
             Log.w(
                 TAG_RECEIVED,
                 "Unsupported protocolVersion=$protocolVersion productId=${definition.productId} from $sourceIp"
@@ -337,11 +296,7 @@ object UdpDeviceDiscovery {
             0L
         )
 
-        val ip = deviceJson
-            .optString("IP", sourceIp)
-            .ifBlank {
-                sourceIp
-            }
+        val ip = sourceIp
 
         if (ip.isBlank()) {
             return null
@@ -362,10 +317,16 @@ object UdpDeviceDiscovery {
             "mac_address"
         )
 
+        val numericIdentity = idRaw.takeIf { value -> value > 0L }
+            ?: espChipId.takeIf { value -> value > 0L }
+
         val deviceUid = rawDeviceUid
             ?: buildDeviceUidFromMac(
                 macAddress = macAddress
             )
+            ?: numericIdentity?.let { value ->
+                "AQL-LEGACY-ESP32-$value"
+            }
 
         val serialNumber = deviceJson.firstNonBlankString(
             "SerialNumber",
@@ -378,9 +339,6 @@ object UdpDeviceDiscovery {
             "FirmwareSerial",
             "firmwareSerial"
         ) ?: serialNumber
-
-        val numericIdentity = idRaw.takeIf { value -> value > 0L }
-            ?: espChipId.takeIf { value -> value > 0L }
 
         val shortId = deviceJson.firstNonBlankString(
             "ShortId",

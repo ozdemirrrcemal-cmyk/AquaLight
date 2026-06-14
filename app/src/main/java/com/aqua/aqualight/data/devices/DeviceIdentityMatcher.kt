@@ -17,6 +17,10 @@ object DeviceIdentityMatcher {
         savedDevice: DevicesDataStoreManager.DeviceInfo,
         discoveredDevice: DiscoveredAquaDevice
     ): Boolean {
+        if (legacyMigrationIdMatches(savedDevice, discoveredDevice)) {
+            return true
+        }
+
         if (productMismatch(savedDevice.productId, discoveredDevice.productId)) {
             return false
         }
@@ -33,6 +37,10 @@ object DeviceIdentityMatcher {
         savedDevice: DevicesDataStoreManager.DeviceInfo,
         update: DevicesDataStoreManager.DeviceLastSeenUpdate
     ): Boolean {
+        if (legacyMigrationIdMatches(savedDevice, update)) {
+            return true
+        }
+
         if (productMismatch(savedDevice.productId, update.productId)) {
             return false
         }
@@ -55,6 +63,16 @@ object DeviceIdentityMatcher {
         shortId: String? = null,
         productId: String? = null
     ): Boolean {
+        if (
+            stableNumericIdMatches(savedDevice.id, id) &&
+            (
+                savedDevice.isLegacyCompatDevice() ||
+                    isLegacyCompatIdentity(deviceUid = deviceUid)
+                )
+        ) {
+            return true
+        }
+
         if (productMismatch(savedDevice.productId, productId)) {
             return false
         }
@@ -97,6 +115,51 @@ object DeviceIdentityMatcher {
                 discoveredDevice.firmwareSerial.orEmpty()
             )
         )
+    }
+
+
+    private fun legacyMigrationIdMatches(
+        savedDevice: DevicesDataStoreManager.DeviceInfo,
+        discoveredDevice: DiscoveredAquaDevice
+    ): Boolean {
+        return stableNumericIdMatches(savedDevice.id, discoveredDevice.id) &&
+            (
+                savedDevice.isLegacyCompatDevice() ||
+                    discoveredDevice.isLegacyCompatDevice()
+                )
+    }
+
+    private fun legacyMigrationIdMatches(
+        savedDevice: DevicesDataStoreManager.DeviceInfo,
+        update: DevicesDataStoreManager.DeviceLastSeenUpdate
+    ): Boolean {
+        return stableNumericIdMatches(savedDevice.id, update.id) &&
+            (
+                savedDevice.isLegacyCompatDevice() ||
+                    update.isLegacyCompatDevice()
+                )
+    }
+
+    private fun DevicesDataStoreManager.DeviceInfo.isLegacyCompatDevice(): Boolean {
+        return isLegacyCompatIdentity(deviceUid = deviceUid) ||
+            (protocolVersion ?: 0) <= 0
+    }
+
+    private fun DiscoveredAquaDevice.isLegacyCompatDevice(): Boolean {
+        return isLegacyCompatIdentity(deviceUid = deviceUid) ||
+            (protocolVersion ?: 0) <= 0
+    }
+
+    private fun DevicesDataStoreManager.DeviceLastSeenUpdate.isLegacyCompatDevice(): Boolean {
+        return isLegacyCompatIdentity(deviceUid = deviceUid) ||
+            (protocolVersion ?: 0) <= 0
+    }
+
+    private fun isLegacyCompatIdentity(
+        deviceUid: String?
+    ): Boolean {
+        return normalizeIdentity(deviceUid.orEmpty())
+            .startsWith("aqllegacy")
     }
 
     private fun stableNumericIdMatches(

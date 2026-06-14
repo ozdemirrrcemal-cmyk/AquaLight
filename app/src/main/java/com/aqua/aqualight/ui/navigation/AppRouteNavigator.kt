@@ -12,7 +12,6 @@ object AppRouteNavigator {
     fun openDevice(
         navController: NavController,
         deviceId: Long,
-        deviceIp: String = "",
         deviceTitle: String = "",
         clearSetupFlow: Boolean = false
     ) {
@@ -26,7 +25,6 @@ object AppRouteNavigator {
                 .authority(AUTHORITY)
                 .appendPath(PATH_DEVICE)
                 .appendPath(deviceId.toString())
-                .appendQueryParameter(QUERY_DEVICE_IP, deviceIp)
                 .appendQueryParameter(QUERY_DEVICE_TITLE, deviceTitle)
                 .build()
         )
@@ -121,7 +119,6 @@ object AppRouteNavigator {
     private const val PATH_SETTINGS = "settings"
     private const val PATH_CARE_TASK = "care-task"
 
-    private const val QUERY_DEVICE_IP = "deviceIp"
     private const val QUERY_DEVICE_TITLE = "deviceTitle"
     private const val QUERY_START_TAB = "startTab"
 }

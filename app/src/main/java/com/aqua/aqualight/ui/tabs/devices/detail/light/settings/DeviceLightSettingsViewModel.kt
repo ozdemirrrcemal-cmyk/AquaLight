@@ -122,7 +122,7 @@ class DeviceLightSettingsViewModel(
             deviceName = "—",
             deviceType = "Light Controller",
             firmwareVersion = "—",
-            deviceIp = "—",
+            lastKnownIpText = "—",
             serialNumber = "—",
             deviceTime = "--:--",
             phoneTime = SimpleDateFormat(

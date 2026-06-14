@@ -192,7 +192,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             is DevicesViewModel.DevicesEvent.NavigateToDeviceRouter -> {
                 openDeviceController(
                     deviceId = event.deviceId,
-                    deviceIp = event.deviceIp,
                     deviceTitle = event.deviceTitle
                 )
             }
@@ -289,7 +288,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private fun openDeviceController(
         deviceId: Long,
-        deviceIp: String,
         deviceTitle: String
     ) {
         val navController =
@@ -302,7 +300,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         AppRouteNavigator.openDevice(
             navController = navController,
             deviceId = deviceId,
-            deviceIp = deviceIp,
             deviceTitle = deviceTitle
         )
     }

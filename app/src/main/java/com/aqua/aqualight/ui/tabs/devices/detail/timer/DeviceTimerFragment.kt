@@ -103,10 +103,7 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
                 DeviceConnectionStatus.UNKNOWN -> "Unknown"
             }
 
-        val resolvedIp =
-            statusState?.ip.orEmpty().ifBlank {
-                args.deviceIp
-            }
+        val resolvedIp = statusState?.ip.orEmpty()
 
         return buildString {
             append("Device ID: ")
@@ -139,7 +136,6 @@ class DeviceTimerFragment : Fragment(R.layout.fragment_device_timer) {
 
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
-        const val ARG_DEVICE_IP = "deviceIp"
         const val ARG_DEVICE_TITLE = "deviceTitle"
     }
 }

@@ -179,7 +179,6 @@ class DevicesViewModel(
                         _events.emit(
                             DevicesEvent.NavigateToDeviceRouter(
                                 deviceId = result.device.id,
-                                deviceIp = result.ip,
                                 deviceTitle = device.displayName
                             )
                         )
@@ -306,7 +305,6 @@ class DevicesViewModel(
 
         data class NavigateToDeviceRouter(
             val deviceId: Long,
-            val deviceIp: String,
             val deviceTitle: String
         ) : DevicesEvent
 

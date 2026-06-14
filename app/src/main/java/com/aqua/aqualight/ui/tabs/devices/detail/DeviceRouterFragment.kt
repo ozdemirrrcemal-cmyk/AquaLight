@@ -120,14 +120,8 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                     )
                 }
 
-            val resolvedIp =
-                args.deviceIp.ifBlank {
-                    device.ip
-                }
-
             routeToController(
                 deviceId = device.id,
-                deviceIp = resolvedIp,
                 routerTitle = routerTitle,
                 controllerTitle = controllerTitle,
                 definition = definition
@@ -158,7 +152,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     private fun routeToController(
         deviceId: Long,
-        deviceIp: String,
         routerTitle: String,
         controllerTitle: String,
         definition: AquaDeviceDefinition
@@ -168,7 +161,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 findNavController().navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceLightFragment(
                         deviceId = deviceId,
-                        deviceIp = deviceIp,
                         deviceTitle = controllerTitle
                     )
                 )
@@ -178,7 +170,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 findNavController().navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceDosingFragment(
                         deviceId = deviceId,
-                        deviceIp = deviceIp,
                         deviceTitle = controllerTitle
                     )
                 )
@@ -188,7 +179,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 findNavController().navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceTimerFragment(
                         deviceId = deviceId,
-                        deviceIp = deviceIp,
                         deviceTitle = controllerTitle
                     )
                 )
@@ -198,7 +188,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
                 findNavController().navigate(
                     DeviceRouterFragmentDirections.actionDeviceRouterFragmentToDeviceCoolingFragment(
                         deviceId = deviceId,
-                        deviceIp = deviceIp,
                         deviceTitle = controllerTitle
                     )
                 )
@@ -250,7 +239,6 @@ class DeviceRouterFragment : Fragment(R.layout.fragment_device_router) {
 
     companion object {
         const val ARG_DEVICE_ID = "deviceId"
-        const val ARG_DEVICE_IP = "deviceIp"
         const val ARG_DEVICE_TITLE = "deviceTitle"
         const val ARG_CAN_EDIT_DEVICE_NAME = "canEditDeviceName"
         const val ARG_USER_DEVICE_NAME = "userDeviceName"

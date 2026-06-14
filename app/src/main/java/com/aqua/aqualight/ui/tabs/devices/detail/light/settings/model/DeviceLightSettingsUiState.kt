@@ -4,7 +4,7 @@ data class DeviceLightSettingsUiState(
     val deviceName: String = "—",
     val deviceType: String = "—",
     val firmwareVersion: String = "—",
-    val deviceIp: String = "—",
+    val lastKnownIpText: String = "—",
     val serialNumber: String = "—",
     val productId: String = "",
     val productKey: String = "",

@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
@@ -16,7 +15,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -26,8 +24,9 @@ class DeviceLightViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val devicesDataStore = DevicesDataStoreManager.create(application)
-    private val runtimeAccessor = LightRuntimeDeviceAccessor()
+    private val runtimeAccessor = LightRuntimeDeviceAccessor(
+        context = application.applicationContext
+    )
     private val refreshMutex = Mutex()
 
     private val _uiState = MutableStateFlow(
@@ -90,20 +89,7 @@ class DeviceLightViewModel(
                 return@withLock
             }
 
-            val device = devicesDataStore.devicesFlow
-                .first()
-                .firstOrNull { storedDevice ->
-                    storedDevice.id == deviceId
-                }
-
-            if (device == null) {
-                _uiState.value = unavailableState(
-                    reason = "Light device not found"
-                )
-                return@withLock
-            }
-
-            _uiState.value = when (val result = runtimeAccessor.readSnapshot(device)) {
+            _uiState.value = when (val result = runtimeAccessor.readSnapshot(deviceId)) {
                 is ApiResult.Success -> LightDashboardRuntimeUiMapper.map(
                     context = getApplication<Application>(),
                     snapshot = result.value

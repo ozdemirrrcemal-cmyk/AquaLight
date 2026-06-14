@@ -279,7 +279,7 @@ class DeviceLightSettingsFragment :
             "—"
         }
 
-        binding.tvDeviceIp.text = state.deviceIp.ifBlank {
+        binding.tvDeviceIp.text = state.lastKnownIpText.ifBlank {
             "—"
         }
 

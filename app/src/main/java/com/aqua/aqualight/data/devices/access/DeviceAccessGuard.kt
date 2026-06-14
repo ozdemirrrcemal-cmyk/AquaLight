@@ -2,8 +2,9 @@ package com.aqua.aqualight.data.devices.access
 
 import android.content.Context
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCatalog
-import com.aqua.aqualight.data.devices.presence.DevicePresenceMonitor
+import com.aqua.aqualight.data.devices.runtime.DeviceEndpointResolver
 import kotlinx.coroutines.flow.first
 
 class DeviceAccessGuard(
@@ -13,7 +14,10 @@ class DeviceAccessGuard(
     )
 ) {
 
-    private val appContext = context.applicationContext
+    private val endpointResolver = DeviceEndpointResolver(
+        context = context.applicationContext,
+        devicesStore = devicesStore
+    )
 
     suspend fun resolveForOpen(
         deviceId: Long
@@ -32,33 +36,20 @@ class DeviceAccessGuard(
             device = device
         )
 
-        val status = DevicePresenceMonitor.checkDeviceNow(
-            context = appContext,
+        val endpoint = endpointResolver.resolve(
             deviceId = device.id,
-            knownIp = device.ip,
-            allowRecentOnlineCache = false
+            forceDiscovery = true
         )
 
-        if (status?.isOnline != true) {
-            return DeviceOpenResult.Offline(
+        return when (endpoint) {
+            is ApiResult.Success -> DeviceOpenResult.Allowed(
+                device = endpoint.value.device,
+                definition = definition
+            )
+
+            is ApiResult.Error -> DeviceOpenResult.Offline(
                 device = device
             )
         }
-
-        val resolvedIp = status.ip.ifBlank {
-            device.ip
-        }
-
-        if (resolvedIp.isBlank()) {
-            return DeviceOpenResult.Offline(
-                device = device
-            )
-        }
-
-        return DeviceOpenResult.Allowed(
-            device = device,
-            ip = resolvedIp,
-            definition = definition
-        )
     }
 }

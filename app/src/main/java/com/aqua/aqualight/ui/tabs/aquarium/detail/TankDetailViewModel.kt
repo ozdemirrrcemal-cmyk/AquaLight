@@ -62,7 +62,6 @@ class TankDetailViewModel(
                         _events.emit(
                             TankDetailEvent.NavigateToDeviceRouter(
                                 deviceId = result.device.id,
-                                deviceIp = result.ip,
                                 deviceTitle = deviceTitle
                             )
                         )
@@ -101,7 +100,6 @@ class TankDetailViewModel(
 
         data class NavigateToDeviceRouter(
             val deviceId: Long,
-            val deviceIp: String,
             val deviceTitle: String
         ) : TankDetailEvent
 

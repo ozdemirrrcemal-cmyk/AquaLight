@@ -36,9 +36,9 @@
 
     <fragment android:id="@+id/deviceRouterFragment" android:name="com.aqua.aqualight.ui.tabs.devices.detail.DeviceRouterFragment" android:label="@string/screen_title_device" tools:layout="@layout/fragment_device_router">
         <argument android:name="deviceId" app:argType="long" />
-        <argument android:name="deviceIp" app:argType="string" android:defaultValue="" />
         <argument android:name="deviceTitle" app:argType="string" android:defaultValue="" />
-        <deepLink app:uri="aqualight://app/device/{deviceId}?deviceIp={deviceIp}&amp;deviceTitle={deviceTitle}" />
+        <deepLink app:uri="aqualight://app/device/{deviceId}" />
+        <deepLink app:uri="aqualight://app/device/{deviceId}?deviceTitle={deviceTitle}" />
 
         <action
             android:id="@+id/action_deviceRouterFragment_to_deviceLightFragment"
@@ -55,10 +55,6 @@
                 app:argType="long"
                 android:defaultValue="0L" />
 
-            <argument
-                android:name="deviceIp"
-                app:argType="string"
-                android:defaultValue="" />
 
             <argument
                 android:name="deviceTitle"
@@ -81,10 +77,6 @@
                 app:argType="long"
                 android:defaultValue="0L" />
 
-            <argument
-                android:name="deviceIp"
-                app:argType="string"
-                android:defaultValue="" />
 
             <argument
                 android:name="deviceTitle"
@@ -107,10 +99,6 @@
                 app:argType="long"
                 android:defaultValue="0L" />
 
-            <argument
-                android:name="deviceIp"
-                app:argType="string"
-                android:defaultValue="" />
 
             <argument
                 android:name="deviceTitle"
@@ -133,10 +121,6 @@
                 app:argType="long"
                 android:defaultValue="0L" />
 
-            <argument
-                android:name="deviceIp"
-                app:argType="string"
-                android:defaultValue="" />
 
             <argument
                 android:name="deviceTitle"
@@ -146,7 +130,6 @@
 
         <action android:id="@+id/action_deviceRouterFragment_to_unsupportedDeviceFragment" app:destination="@id/unsupportedDeviceFragment" app:popUpTo="@id/deviceRouterFragment" app:popUpToInclusive="true" app:enterAnim="@anim/nav_slide_in_right" app:exitAnim="@anim/nav_slide_out_left" app:popEnterAnim="@anim/nav_slide_in_left" app:popExitAnim="@anim/nav_slide_out_right">
             <argument android:name="deviceId" app:argType="long" android:defaultValue="0L" />
-            <argument android:name="deviceIp" app:argType="string" android:defaultValue="" />
             <argument android:name="deviceTitle" app:argType="string" android:defaultValue="" />
             <argument android:name="message" app:argType="string" android:defaultValue="" />
         </action>
@@ -156,6 +139,5 @@
         <argument android:name="deviceTitle" app:argType="string" android:defaultValue="Device" />
         <argument android:name="message" app:argType="string" android:defaultValue="" />
         <argument android:name="deviceId" app:argType="long" android:defaultValue="0L" />
-        <argument android:name="deviceIp" app:argType="string" android:defaultValue="" />
     </fragment>
 </navigation>

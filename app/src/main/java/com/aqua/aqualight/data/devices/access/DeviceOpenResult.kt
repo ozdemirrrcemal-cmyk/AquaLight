@@ -7,7 +7,6 @@ sealed interface DeviceOpenResult {
 
     data class Allowed(
         val device: DevicesDataStoreManager.DeviceInfo,
-        val ip: String,
         val definition: AquaDeviceDefinition
     ) : DeviceOpenResult
 

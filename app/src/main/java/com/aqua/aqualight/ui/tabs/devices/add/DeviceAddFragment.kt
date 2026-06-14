@@ -379,7 +379,6 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         AppRouteNavigator.openDevice(
             navController = findNavController(),
             deviceId = deviceId,
-            deviceIp = "",
             deviceTitle = deviceTitle,
             clearSetupFlow = true
         )
