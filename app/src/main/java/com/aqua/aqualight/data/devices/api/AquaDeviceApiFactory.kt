@@ -87,13 +87,9 @@ class AquaDeviceApiFactory(
     private fun resolveMode(
         identity: DeviceIdentity
     ): DeviceApiMode {
-        /*
-         * Current Light firmware exposes /api/v1 only for identity/status, while
-         * the full light runtime payload still lives under the legacy /get
-         * contract. Do not switch Light runtime to V1 just because ApiVersion=1;
-         * V1LightApi can be selected explicitly with preferredMode when the
-         * firmware exposes the full light API.
-         */
+        // Current Light firmware exposes ApiVersion/ProtocolVersion values, but
+        // live Light runtime is still served by the legacy /get contract. Keep
+        // Light on LEGACY until the dedicated Light V1 endpoints are implemented.
         if (identity.category == AquaDeviceCategory.LIGHT) {
             return DeviceApiMode.LEGACY
         }

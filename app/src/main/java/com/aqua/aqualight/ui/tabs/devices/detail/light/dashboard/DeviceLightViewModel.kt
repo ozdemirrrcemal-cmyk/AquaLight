@@ -2,62 +2,122 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_NOT_CONNECTED
+import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.api.model.ApiResult
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.DeviceLightDashboardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDashboardMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineMapper
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-/**
- * Temporary UI shell for the Light dashboard.
- *
- * No Light data source is connected in this layer yet. The dashboard stays
- * compile-safe and exposes only an unavailable UI state until the new Light
- * contract is designed and connected intentionally.
- */
 class DeviceLightViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val devicesDataStore = DevicesDataStoreManager.create(application)
+    private val runtimeAccessor = LightRuntimeDeviceAccessor()
+    private val refreshMutex = Mutex()
+
     private val _uiState = MutableStateFlow(
-        unavailableState()
+        unavailableState(
+            reason = getApplication<Application>().getString(
+                R.string.light_dashboard_timeline_not_connected
+            )
+        )
     )
 
     val uiState: StateFlow<DeviceLightDashboardUiState> =
         _uiState.asStateFlow()
 
     private var deviceId: Long = 0L
+    private var runtimeJob: Job? = null
 
     fun initialize(
         deviceId: Long
     ) {
-        this.deviceId = deviceId
+        if (this.deviceId == deviceId && runtimeJob?.isActive == true) {
+            return
+        }
 
-        _uiState.value = unavailableState(
-            reason = if (deviceId <= 0L) {
-                LIGHT_DEVICE_INFORMATION_MISSING
-            } else {
-                LIGHT_DATA_LAYER_NOT_CONNECTED
-            }
-        )
+        this.deviceId = deviceId
+        startRuntimePolling()
     }
 
     fun refreshNow() {
-        _uiState.value = unavailableState(
-            reason = if (deviceId <= 0L) {
-                LIGHT_DEVICE_INFORMATION_MISSING
-            } else {
-                LIGHT_DATA_LAYER_NOT_CONNECTED
+        viewModelScope.launch {
+            readAndRenderSnapshot()
+        }
+    }
+
+    private fun startRuntimePolling() {
+        runtimeJob?.cancel()
+
+        if (deviceId <= 0L) {
+            _uiState.value = unavailableState(
+                reason = LIGHT_DEVICE_INFORMATION_MISSING
+            )
+            return
+        }
+
+        runtimeJob = viewModelScope.launch {
+            readAndRenderSnapshot()
+
+            while (isActive) {
+                delay(RUNTIME_REFRESH_INTERVAL_MILLIS)
+                readAndRenderSnapshot()
             }
-        )
+        }
+    }
+
+    private suspend fun readAndRenderSnapshot() {
+        refreshMutex.withLock {
+            if (deviceId <= 0L) {
+                _uiState.value = unavailableState(
+                    reason = LIGHT_DEVICE_INFORMATION_MISSING
+                )
+                return@withLock
+            }
+
+            val device = devicesDataStore.devicesFlow
+                .first()
+                .firstOrNull { storedDevice ->
+                    storedDevice.id == deviceId
+                }
+
+            if (device == null) {
+                _uiState.value = unavailableState(
+                    reason = "Light device not found"
+                )
+                return@withLock
+            }
+
+            _uiState.value = when (val result = runtimeAccessor.readSnapshot(device)) {
+                is ApiResult.Success -> LightDashboardRuntimeUiMapper.map(
+                    context = getApplication<Application>(),
+                    snapshot = result.value
+                )
+
+                is ApiResult.Error -> unavailableState(
+                    reason = result.error.message
+                )
+            }
+        }
     }
 
     private fun unavailableState(
-        reason: String = LIGHT_DATA_LAYER_NOT_CONNECTED
+        reason: String
     ): DeviceLightDashboardUiState {
         val app = getApplication<Application>()
         val timeline = LightDashboardTimelineMapper.noData(
@@ -69,7 +129,7 @@ class DeviceLightViewModel(
         return DeviceLightDashboardUiState(
             activeProgramName = app.getString(R.string.light_dashboard_status_title),
             runStatus = app.getString(R.string.light_dashboard_status_subtitle),
-            liveMode = LightDashboardMode.IDLE,
+            liveMode = LightDashboardMode.SYNC,
             currentWattText = app.getString(R.string.light_dashboard_power_empty),
             outputPercentText = app.getString(R.string.light_dashboard_output_empty),
             redChannelText = app.getString(R.string.light_dashboard_channel_red_empty),
@@ -88,5 +148,14 @@ class DeviceLightViewModel(
             controlsEnabled = false,
             connectionStatusText = reason
         )
+    }
+
+    override fun onCleared() {
+        runtimeJob?.cancel()
+        super.onCleared()
+    }
+
+    companion object {
+        private const val RUNTIME_REFRESH_INTERVAL_MILLIS = 5_000L
     }
 }
