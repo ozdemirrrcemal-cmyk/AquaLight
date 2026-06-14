@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Light module background -->
+    <!-- Light module premium background -->
     <color name="light_bg">#07131F</color>
     <color name="light_bg_deep">#040A12</color>
+    <color name="light_screen_gradient_top">#081A2C</color>
+    <color name="light_screen_gradient_middle">#06121F</color>
+    <color name="light_screen_gradient_bottom">#02070D</color>
+    <color name="light_header_gradient_top">#0A1C31</color>
+    <color name="light_header_gradient_bottom">#071422</color>
 
-    <!-- Surfaces -->
+    <!-- Premium glass surfaces -->
     <color name="light_surface">#0F1C2A</color>
     <color name="light_surface_elevated">#0F1C2A</color>
     <color name="light_surface_soft">#162638</color>
@@ -44,15 +49,40 @@
     <color name="light_channel_blue">#7FAAFF</color>
     <color name="light_channel_white">#F2F6FA</color>
 
+    <!-- Dashboard chart / chip surfaces -->
+    <color name="light_chart_panel_top">#071321</color>
+    <color name="light_chart_panel_middle">#050E18</color>
+    <color name="light_chart_panel_bottom">#03080E</color>
+    <color name="light_chart_panel_stroke">#20364C</color>
+    <color name="light_chip_idle_bg">#18283A</color>
+    <color name="light_chip_idle_stroke">#2D4359</color>
+
+    <!-- Dashboard action accent capsules -->
+    <color name="light_action_blue_start">#2D4F80</color>
+    <color name="light_action_blue_end">#152D49</color>
+    <color name="light_action_blue_stroke">#4E7FC3</color>
+    <color name="light_action_purple">#B99AFF</color>
+    <color name="light_action_purple_start">#4A3A7D</color>
+    <color name="light_action_purple_end">#241D4B</color>
+    <color name="light_action_purple_stroke">#7B61CA</color>
+    <color name="light_action_teal">#69E2EF</color>
+    <color name="light_action_teal_start">#1D6070</color>
+    <color name="light_action_teal_end">#123747</color>
+    <color name="light_action_teal_stroke">#44B2C6</color>
+    <color name="light_action_gold_start">#57421F</color>
+    <color name="light_action_gold_end">#2A1E0F</color>
+    <color name="light_action_gold_stroke">#A28245</color>
+    <color name="light_action_muted_bg">#18283A</color>
+    <color name="light_action_muted_stroke">#2C4157</color>
+
     <!-- Buttons -->
     <color name="light_button_primary">#6489C9</color>
     <color name="light_button_on_primary">#F4F8FC</color>
     <color name="light_button_secondary">#162638</color>
     <color name="light_button_on_secondary">#F4F8FC</color>
 
-    <!-- Dividers -->
+    <!-- Dividers / controls -->
     <color name="light_divider">#1B2D40</color>
-
     <color name="light_slider_inactive">#26394D</color>
 
 </resources>
