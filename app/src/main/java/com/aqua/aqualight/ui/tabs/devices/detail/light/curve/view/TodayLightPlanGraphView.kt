@@ -101,6 +101,26 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         alpha = 22
     }
 
+    private val cloudOverlayPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = color(R.color.light_text_secondary)
+        alpha = 20
+    }
+
+    private val cloudOverlayStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(0.8f)
+        color = color(R.color.light_text_secondary)
+        alpha = 95
+    }
+
+    private val cloudOverlayStripePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(0.8f)
+        color = color(R.color.light_text_secondary)
+        alpha = 45
+    }
+
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = color(R.color.light_accent)
@@ -253,7 +273,9 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             drawSegments(canvas)
         }
 
-        drawCurrentTime(canvas)
+        if (state.showCurrentTimeMarker) {
+            drawCurrentTime(canvas)
+        }
 
         if (state.showPausedOverlay) {
             drawPausedOverlay(canvas)
@@ -347,7 +369,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
                 }
 
                 TodayLightPlanGraphSegmentType.CLOUD_OVERLAY -> {
-                    drawMainProgramSegmentCurve(canvas, segment)
+                    drawCloudOverlaySegment(canvas, segment)
                 }
             }
 
@@ -381,6 +403,10 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
 
             segment.type == TodayLightPlanGraphSegmentType.MOONLIGHT -> {
                 segmentBackgroundPaint.copyWithAlpha(10)
+            }
+
+            segment.type == TodayLightPlanGraphSegmentType.CLOUD_OVERLAY -> {
+                segmentBackgroundPaint.copyWithAlpha(0)
             }
 
             segment.isCurrent -> currentSegmentBackgroundPaint
@@ -524,6 +550,65 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             dp(2.6f),
             moonlightPaint
         )
+    }
+
+    private fun drawCloudOverlaySegment(
+        canvas: Canvas,
+        segment: TodayLightPlanGraphSegment
+    ) {
+        val startMinute = segment.startMinute.coerceIn(0, TodayLightPlanGraphSegment.MINUTES_PER_DAY)
+        val endMinute = endMinutesForSegment(segment)
+            .coerceIn(0, TodayLightPlanGraphSegment.MINUTES_PER_DAY)
+
+        if (endMinute <= startMinute) {
+            return
+        }
+
+        val startX = xForMinute(startMinute)
+        val endX = xForMinute(endMinute)
+
+        val rect = RectF(
+            startX,
+            graphRect.top,
+            endX,
+            graphRect.bottom
+        )
+
+        val fill = if (state.showPausedOverlay) {
+            cloudOverlayPaint.copyWithAlpha(12)
+        } else if (segment.isCurrent) {
+            cloudOverlayPaint.copyWithAlpha(30)
+        } else {
+            cloudOverlayPaint
+        }
+
+        canvas.drawRoundRect(
+            rect,
+            dp(10f),
+            dp(10f),
+            fill
+        )
+
+        canvas.drawRoundRect(
+            rect,
+            dp(10f),
+            dp(10f),
+            cloudOverlayStrokePaint
+        )
+
+        val stripeStep = dp(12f)
+        var stripeX = startX + stripeStep
+
+        while (stripeX < endX) {
+            canvas.drawLine(
+                stripeX,
+                graphRect.top + dp(8f),
+                stripeX - dp(8f),
+                graphRect.bottom - dp(8f),
+                cloudOverlayStripePaint
+            )
+            stripeX += stripeStep
+        }
     }
 
     private fun drawSegmentBoundaryMarkers(
@@ -675,6 +760,10 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
                     color(R.color.light_channel_blue)
                 }
 
+                segment.type == TodayLightPlanGraphSegmentType.CLOUD_OVERLAY -> {
+                    color(R.color.light_text_secondary)
+                }
+
                 segment.isCurrent -> {
                     color(R.color.light_accent)
                 } else -> {
@@ -688,6 +777,10 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
             color = when {
                 segment.type == TodayLightPlanGraphSegmentType.MOONLIGHT -> {
                     color(R.color.light_channel_blue)
+                }
+
+                segment.type == TodayLightPlanGraphSegmentType.CLOUD_OVERLAY -> {
+                    color(R.color.light_text_secondary)
                 }
 
                 segment.isCurrent -> {
@@ -829,7 +922,7 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
         )
 
         canvas.drawText(
-            context.getString(R.string.light_dashboard_timeline_empty),
+            state.emptyMessage ?: context.getString(R.string.light_dashboard_timeline_empty),
             centerX,
             iconCenterY + dp(40f),
             emptyTextPaint

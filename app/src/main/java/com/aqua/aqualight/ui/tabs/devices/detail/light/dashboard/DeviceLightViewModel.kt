@@ -7,6 +7,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DATA_LAYER_N
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.DeviceLightDashboardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDashboardMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,6 +60,11 @@ class DeviceLightViewModel(
         reason: String = LIGHT_DATA_LAYER_NOT_CONNECTED
     ): DeviceLightDashboardUiState {
         val app = getApplication<Application>()
+        val timeline = LightDashboardTimelineMapper.noData(
+            statusText = app.getString(R.string.light_dashboard_timeline_not_connected),
+            nextEventText = app.getString(R.string.light_dashboard_no_runtime_source),
+            emptyMessage = app.getString(R.string.light_dashboard_timeline_not_connected)
+        )
 
         return DeviceLightDashboardUiState(
             activeProgramName = app.getString(R.string.light_dashboard_status_title),
@@ -71,12 +77,13 @@ class DeviceLightViewModel(
             blueChannelText = app.getString(R.string.light_dashboard_channel_blue_empty),
             whiteChannelText = app.getString(R.string.light_dashboard_channel_white_empty),
             deviceTimeText = app.getString(R.string.light_dashboard_time_empty),
-            nextEventText = app.getString(R.string.light_dashboard_no_runtime_source),
+            nextEventText = timeline.nextEventText,
             healthTemperatureText = app.getString(R.string.light_dashboard_temperature_empty),
             healthTemperatureStatusText = app.getString(R.string.light_dashboard_unavailable),
             healthFanText = app.getString(R.string.light_dashboard_unavailable),
             healthFanStatusText = app.getString(R.string.light_dashboard_unavailable),
-            timelineStatusText = app.getString(R.string.light_dashboard_timeline_not_connected),
+            timelineStatusText = timeline.statusText,
+            todayPlanGraphState = timeline.graphState,
             isDeviceOnline = false,
             controlsEnabled = false,
             connectionStatusText = reason
