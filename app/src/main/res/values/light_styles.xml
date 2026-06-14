@@ -334,7 +334,7 @@
     <item name="fontFamily">@font/inter_semibold</item>
     <item name="android:fontFamily">@font/inter_semibold</item>
     <item name="android:textColor">@color/light_channel_red</item>
-    <item name="android:textSize">11.5sp</item>
+    <item name="android:textSize">12sp</item>
     <item name="android:includeFontPadding">false</item>
 </style>
 
@@ -343,7 +343,7 @@
     <item name="fontFamily">@font/inter_semibold</item>
     <item name="android:fontFamily">@font/inter_semibold</item>
     <item name="android:textColor">@color/light_channel_green</item>
-    <item name="android:textSize">11.5sp</item>
+    <item name="android:textSize">12sp</item>
     <item name="android:includeFontPadding">false</item>
 </style>
 
@@ -352,7 +352,7 @@
     <item name="fontFamily">@font/inter_semibold</item>
     <item name="android:fontFamily">@font/inter_semibold</item>
     <item name="android:textColor">@color/light_channel_blue</item>
-    <item name="android:textSize">11.5sp</item>
+    <item name="android:textSize">12sp</item>
     <item name="android:includeFontPadding">false</item>
 </style>
 
@@ -360,8 +360,8 @@
     parent="TextAppearance.Material3.BodyMedium">
     <item name="fontFamily">@font/inter_semibold</item>
     <item name="android:fontFamily">@font/inter_semibold</item>
-    <item name="android:textColor">@color/light_text_primary</item>
-    <item name="android:textSize">11.5sp</item>
+    <item name="android:textColor">@color/light_channel_white</item>
+    <item name="android:textSize">12sp</item>
     <item name="android:includeFontPadding">false</item>
 </style>
 

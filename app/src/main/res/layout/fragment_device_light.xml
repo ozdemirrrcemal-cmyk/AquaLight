@@ -261,14 +261,11 @@
                                 <TextView
                                     android:id="@+id/tvLiveRedChannelBadge"
                                     style="@style/TextAppearance.Aqua.Light.ChannelValue.Red"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="24dp"
                                     android:layout_height="24dp"
                                     android:background="@drawable/bg_light_channel_chip_red"
                                     android:gravity="center"
-                                    android:minWidth="28dp"
-                                    android:paddingStart="8dp"
-                                    android:paddingEnd="8dp"
-                                    android:text=""
+                                    android:text="@string/light_dashboard_channel_red_label"
                                     tools:text="R" />
 
                                 <TextView
@@ -310,14 +307,11 @@
                                 <TextView
                                     android:id="@+id/tvLiveGreenChannelBadge"
                                     style="@style/TextAppearance.Aqua.Light.ChannelValue.Green"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="24dp"
                                     android:layout_height="24dp"
                                     android:background="@drawable/bg_light_channel_chip_green"
                                     android:gravity="center"
-                                    android:minWidth="28dp"
-                                    android:paddingStart="8dp"
-                                    android:paddingEnd="8dp"
-                                    android:text=""
+                                    android:text="@string/light_dashboard_channel_green_label"
                                     tools:text="G" />
 
                                 <TextView
@@ -359,14 +353,11 @@
                                 <TextView
                                     android:id="@+id/tvLiveBlueChannelBadge"
                                     style="@style/TextAppearance.Aqua.Light.ChannelValue.Blue"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="24dp"
                                     android:layout_height="24dp"
                                     android:background="@drawable/bg_light_channel_chip_blue"
                                     android:gravity="center"
-                                    android:minWidth="28dp"
-                                    android:paddingStart="8dp"
-                                    android:paddingEnd="8dp"
-                                    android:text=""
+                                    android:text="@string/light_dashboard_channel_blue_label"
                                     tools:text="B" />
 
                                 <TextView
@@ -407,14 +398,11 @@
                                 <TextView
                                     android:id="@+id/tvLiveWhiteChannelBadge"
                                     style="@style/TextAppearance.Aqua.Light.ChannelValue.White"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="24dp"
                                     android:layout_height="24dp"
                                     android:background="@drawable/bg_light_channel_chip_white"
                                     android:gravity="center"
-                                    android:minWidth="28dp"
-                                    android:paddingStart="8dp"
-                                    android:paddingEnd="8dp"
-                                    android:text=""
+                                    android:text="@string/light_dashboard_channel_white_label"
                                     tools:text="W" />
 
                                 <TextView
@@ -565,7 +553,7 @@
                 style="@style/Widget.Aqua.Light.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
                 app:cardBackgroundColor="@color/light_surface"
                 app:cardCornerRadius="26dp">
 
@@ -573,9 +561,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingStart="12dp"
+                    android:paddingStart="10dp"
                     android:paddingTop="12dp"
-                    android:paddingEnd="12dp"
+                    android:paddingEnd="10dp"
                     android:paddingBottom="12dp">
 
                     <LinearLayout
@@ -634,8 +622,8 @@
                     android:layout_height="66dp"
                     android:layout_columnWeight="1"
                     android:layout_gravity="fill_horizontal"
-                    android:layout_marginEnd="3dp"
-                    android:layout_marginBottom="3dp"
+                    android:layout_marginEnd="2dp"
+                    android:layout_marginBottom="2dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
@@ -713,8 +701,8 @@
                     android:layout_height="66dp"
                     android:layout_columnWeight="1"
                     android:layout_gravity="fill_horizontal"
-                    android:layout_marginStart="3dp"
-                    android:layout_marginBottom="3dp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginBottom="2dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
@@ -792,7 +780,7 @@
                     android:layout_height="66dp"
                     android:layout_columnWeight="1"
                     android:layout_gravity="fill_horizontal"
-                    android:layout_marginEnd="3dp"
+                    android:layout_marginEnd="2dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
@@ -870,7 +858,7 @@
                     android:layout_height="66dp"
                     android:layout_columnWeight="1"
                     android:layout_gravity="fill_horizontal"
-                    android:layout_marginStart="3dp"
+                    android:layout_marginStart="2dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
@@ -948,7 +936,7 @@
                 style="@style/Widget.Aqua.Light.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
                 app:cardBackgroundColor="@color/light_surface"
                 app:cardCornerRadius="26dp">
 

@@ -264,9 +264,9 @@ class TodayLightPlanGraphView @JvmOverloads constructor(
 
     private fun calculateGraphRect() {
         graphRect.set(
-            dp(20f),
+            dp(16f),
             dp(34f),
-            width - dp(20f),
+            width - dp(16f),
             height - dp(30f)
         )
     }
