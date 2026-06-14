@@ -2,7 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model
 
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwColorMath
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.runtime.LightOutputMath
+import com.aqua.aqualight.data.devices.light.math.LightOutputMath
 
 data class LightPresetItem(
     val id: String,
