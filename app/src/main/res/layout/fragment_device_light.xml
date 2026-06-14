@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/light_bg"
+    android:background="@drawable/bg_light_dashboard_screen"
     tools:context=".ui.tabs.devices.detail.light.dashboard.DeviceLightFragment">
 
     <include
@@ -728,7 +728,7 @@
                                 android:layout_gravity="center"
                                 android:importantForAccessibility="no"
                                 android:src="@drawable/ic_light_dashboard_programs_24"
-                                app:tint="#B492FF" />
+                                app:tint="@color/light_action_purple" />
 
                         </FrameLayout>
 
@@ -884,7 +884,7 @@
                                 android:layout_gravity="center"
                                 android:importantForAccessibility="no"
                                 android:src="@drawable/ic_light_dashboard_presets_24"
-                                app:tint="#64DDE8" />
+                                app:tint="@color/light_action_teal" />
 
                         </FrameLayout>
 

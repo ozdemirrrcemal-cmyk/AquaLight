@@ -83,6 +83,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
                 )
             )
         )
+
+        binding.appHeader.aquaHeaderRoot.setBackgroundResource(
+            R.drawable.bg_light_dashboard_header
+        )
     }
 
     private fun setupClicks() {
