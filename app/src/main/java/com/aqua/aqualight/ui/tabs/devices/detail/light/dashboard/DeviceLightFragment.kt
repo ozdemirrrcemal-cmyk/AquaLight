@@ -172,9 +172,6 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         binding.tvCurrentOutputPercent.text =
             state.outputPercentText
 
-        binding.tvDeviceTime.text =
-            state.deviceTimeText
-
         binding.tvNextEvent.text =
             state.nextEventText
 

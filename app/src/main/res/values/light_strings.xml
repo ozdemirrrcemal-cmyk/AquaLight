@@ -75,9 +75,9 @@
     <string name="light_dashboard_status_idle">IDLE</string>
     <string name="light_dashboard_current_power">Current Power</string>
     <string name="light_dashboard_output">Output</string>
-    <string name="light_dashboard_now">Now</string>
-    <string name="light_dashboard_next_event">Next Event</string>
-    <string name="light_dashboard_no_runtime_source">No runtime source</string>
+    <string name="light_dashboard_now">Time</string>
+    <string name="light_dashboard_next_event">Next</string>
+    <string name="light_dashboard_no_runtime_source">No schedule event</string>
     <string name="light_dashboard_timeline_title">Live Timeline</string>
     <string name="light_dashboard_timeline_not_connected">No light data source connected</string>
     <string name="light_dashboard_timeline_empty">No active plan today</string>
