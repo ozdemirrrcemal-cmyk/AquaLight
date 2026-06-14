@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.data.aquarium.devices.TankAssignedDevicesRepository
+import com.aqua.aqualight.data.aquarium.devices.CompositeTankDeviceRuntimeDataSource
+import com.aqua.aqualight.data.aquarium.devices.light.LightTankDeviceRuntimeDataSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,9 +22,16 @@ class TankDetailDevicesViewModel(
         application.applicationContext
 
     private val assignedDevicesRepository =
-        TankAssignedDevicesRepository(
-            context = appContext
+    TankAssignedDevicesRepository(
+        context = appContext,
+        runtimeDataSource = CompositeTankDeviceRuntimeDataSource(
+            sources = listOf(
+                LightTankDeviceRuntimeDataSource(
+                    context = appContext
+                )
+            )
         )
+    )
 
     private val mapper =
         TankAssignedDeviceUiMapper()
