@@ -11,7 +11,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightSettingsBinding
-import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet
@@ -22,6 +21,7 @@ import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.sheet.LightSettingValueSheet
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.navigation.fragment.navArgs
 
@@ -36,7 +36,6 @@ class DeviceLightSettingsFragment :
 
     private val viewModel: DeviceLightSettingsViewModel by viewModels()
 
-    private var hasResumedOnce = false
 
     private val deviceId: Long
         get() = args.deviceId
@@ -55,27 +54,17 @@ class DeviceLightSettingsFragment :
         observeEvents()
 
         viewModel.initialize(deviceId)
+        startAutoRefresh()
     }
 
     private fun setupHeader() {
-    binding.appHeader.setupAquaHeader(
-        fragment = this,
-        config = AquaHeaderConfig(
-            titleOverride = "Light Settings",
-            actions = listOf(
-                AquaHeaderAction(
-                    iconRes = R.drawable.ic_refresh,
-                    contentDescription = "Refresh device info",
-                    onClick = {
-                        viewModel.refreshAll(
-                            showMessage = false
-                        )
-                    }
-                )
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = "Light Settings"
             )
         )
-    )
-}
+    }
 
     private fun setupClicks() {
         binding.btnUpdateFirmware.setOnClickListener {
@@ -264,6 +253,17 @@ class DeviceLightSettingsFragment :
         }
     }
 
+    private fun startAutoRefresh() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    viewModel.refreshAll(showMessage = false)
+                    delay(SETTINGS_AUTO_REFRESH_INTERVAL_MS)
+                }
+            }
+        }
+    }
+
     private fun renderUiState(
         state: DeviceLightSettingsUiState
     ) {
@@ -423,11 +423,6 @@ class DeviceLightSettingsFragment :
             0.52f
         }
 
-        binding.tvSettingsRuntimeBanner.isVisible = !enabled
-        binding.tvSettingsRuntimeBanner.text = compactConnectionStatus(
-            state.connectionStatusText
-        )
-
         binding.btnSyncTime.isEnabled = enabled
         binding.btnUpdateFirmware.isEnabled = enabled
         binding.rowLimitTemperature.isEnabled = enabled
@@ -467,28 +462,13 @@ class DeviceLightSettingsFragment :
             .replace(Regex("\\s+°C"), " °C")
     }
 
-    private fun compactConnectionStatus(
-        value: String
-    ): String = value.trim().ifBlank {
-        "Runtime values unavailable"
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        if (hasResumedOnce) {
-            viewModel.refreshTimes()
-        } else {
-            hasResumedOnce = true
-        }
-    }
-
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
     }
 
     companion object {
+        private const val SETTINGS_AUTO_REFRESH_INTERVAL_MS = 5_000L
         const val ARG_DEVICE_ID = "deviceId"
     }
 }

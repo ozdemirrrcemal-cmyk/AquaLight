@@ -37,22 +37,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvSettingsRuntimeBanner"
-                style="@style/TextAppearance.Aqua.Light.SettingsChip"
-                android:layout_width="match_parent"
-                android:layout_height="38dp"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/bg_light_settings_status_banner"
-                android:ellipsize="end"
-                android:gravity="center_vertical"
-                android:maxLines="1"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:text="Runtime values unavailable"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
             <!-- DEVICE PROFILE -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardDeviceProfile"
