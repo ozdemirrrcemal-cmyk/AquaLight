@@ -76,7 +76,10 @@ class DeviceLightManualViewModel(
     private var savedPresets: List<ManualLightPreset> = emptyList()
 
     private var isSliderInteractionActive: Boolean = false
-    private var pendingFlushJob: Job? = null
+    private var manualCommandWorkerJob: Job? = null
+    private var pendingManualChannels: LightRgbwChannels? = null
+    private var lastSubmittedManualChannels: LightRgbwChannels? = null
+    private var forceNextManualSend: Boolean = false
     private var lastCommandFlushAtMillis: Long = 0L
 
     fun initialize(
@@ -124,8 +127,11 @@ class DeviceLightManualViewModel(
     fun resumeAuto() {
         if (deviceId <= 0L) return
 
-        pendingFlushJob?.cancel()
-        pendingFlushJob = null
+        manualCommandWorkerJob?.cancel()
+        manualCommandWorkerJob = null
+        pendingManualChannels = null
+        lastSubmittedManualChannels = null
+        forceNextManualSend = false
         selectedScene = null
         isSliderInteractionActive = false
 
@@ -394,31 +400,68 @@ class DeviceLightManualViewModel(
     ) {
         if (deviceId <= 0L) return
 
-        pendingFlushJob?.cancel()
+        pendingManualChannels = channels.sanitized()
+        forceNextManualSend = forceNextManualSend || immediate
 
-        val now = SystemClock.uptimeMillis()
-        val waitMillis = if (immediate || lastCommandFlushAtMillis <= 0L) {
-            0L
-        } else {
-            (COMMAND_THROTTLE_MILLIS - (now - lastCommandFlushAtMillis))
-                .coerceAtLeast(0L)
+        if (manualCommandWorkerJob?.isActive == true) {
+            return
         }
 
-        pendingFlushJob = viewModelScope.launch {
+        manualCommandWorkerJob = viewModelScope.launch {
+            runManualCommandLoop()
+        }
+    }
+
+    private suspend fun runManualCommandLoop() {
+        while (true) {
+            val targetChannels = pendingManualChannels?.sanitized() ?: break
+            val shouldForceSend = forceNextManualSend
+
+            if (!shouldForceSend && targetChannels == lastSubmittedManualChannels) {
+                break
+            }
+
+            val waitMillis = manualCommandDelayMillis(
+                forceSend = shouldForceSend
+            )
+            forceNextManualSend = false
+
             if (waitMillis > 0L) {
                 delay(waitMillis)
             }
 
+            val latestChannels = pendingManualChannels?.sanitized() ?: break
+            if (!shouldForceSend && latestChannels == lastSubmittedManualChannels) {
+                break
+            }
+
             flushManualOutput(
-                channels.sanitized()
+                latestChannels
             )
+
+            if (pendingManualChannels?.sanitized() == latestChannels && !forceNextManualSend) {
+                break
+            }
         }
+    }
+
+    private fun manualCommandDelayMillis(
+        forceSend: Boolean
+    ): Long {
+        if (forceSend || lastCommandFlushAtMillis <= 0L) {
+            return 0L
+        }
+
+        val now = SystemClock.uptimeMillis()
+        return (COMMAND_THROTTLE_MILLIS - (now - lastCommandFlushAtMillis))
+            .coerceAtLeast(0L)
     }
 
     private suspend fun flushManualOutput(
         channels: LightRgbwChannels
     ) {
         val safeChannels = channels.sanitized()
+        lastSubmittedManualChannels = safeChannels
 
         when (val result = sendManualOutputCommand(safeChannels)) {
             is ApiResult.Success -> {
@@ -427,6 +470,7 @@ class DeviceLightManualViewModel(
             }
 
             is ApiResult.Error -> {
+                lastSubmittedManualChannels = null
                 _events.emit(
                     ManualLightEvent.ShowError(
                         result.error.message
@@ -652,6 +696,6 @@ class DeviceLightManualViewModel(
     }
 
     companion object {
-        private const val COMMAND_THROTTLE_MILLIS = 75L
+        private const val COMMAND_THROTTLE_MILLIS = 120L
     }
 }
