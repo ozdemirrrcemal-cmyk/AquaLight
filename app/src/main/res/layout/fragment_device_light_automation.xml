@@ -21,9 +21,9 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:paddingStart="20dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="20dp"
+        android:paddingStart="18dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="18dp"
         android:paddingBottom="32dp"
         app:layout_constraintTop_toBottomOf="@id/appHeader"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -36,17 +36,20 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvAutomationIntro"
                 style="@style/TextAppearance.Aqua.Light.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Programlardan bağımsız ışık otomasyonları burada yönetilecek. Firmware runtime desteği aktif olduğunda Moonlight ve Cloud Simulation cihazdan okunup cihaza yazılacak." />
+                android:lineSpacingExtra="1dp"
+                android:maxLines="2"
+                android:text="Configure independent lighting effects that run outside the daily schedule." />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardMoonlight"
                 style="@style/Widget.Aqua.Light.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="14dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground">
@@ -54,19 +57,23 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="22dp">
+                    android:minHeight="96dp"
+                    android:paddingStart="16dp"
+                    android:paddingTop="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
 
                     <FrameLayout
                         android:id="@+id/moonIconContainer"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
                         android:background="@drawable/bg_light_action_icon"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
 
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_width="21dp"
+                            android:layout_height="21dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_light_moon_24"
                             app:tint="@color/light_accent" />
@@ -78,10 +85,29 @@
                         style="@style/TextAppearance.Aqua.Light.CardTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="10dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="Moonlight"
+                        android:textSize="18sp"
                         app:layout_constraintStart_toEndOf="@id/moonIconContainer"
                         app:layout_constraintEnd_toStartOf="@id/tvMoonStatus"
+                        app:layout_constraintTop_toTopOf="@id/moonIconContainer" />
+
+                    <TextView
+                        android:id="@+id/tvMoonStatus"
+                        style="@style/TextAppearance.Aqua.Light.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="28dp"
+                        android:background="@drawable/bg_light_mode_chip_idle"
+                        android:gravity="center"
+                        android:minWidth="58dp"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="OFF"
+                        android:textSize="12sp"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="@id/moonIconContainer" />
 
                     <TextView
@@ -89,26 +115,15 @@
                         style="@style/TextAppearance.Aqua.Light.Body"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="4dp"
-                        android:text="Gece ışığı için bağımsız cihaz otomasyonu"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginTop="5dp"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:text="Tap to configure night output"
+                        android:textSize="13sp"
                         app:layout_constraintStart_toEndOf="@id/moonIconContainer"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/tvMoonTitle" />
-
-                    <TextView
-                        android:id="@+id/tvMoonStatus"
-                        style="@style/TextAppearance.Aqua.Light.Filter.Selected"
-                        android:layout_width="wrap_content"
-                        android:layout_height="32dp"
-                        android:background="@drawable/bg_light_stat_pill"
-                        android:gravity="center"
-                        android:minWidth="86dp"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:text="Ready"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/moonIconContainer" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -119,7 +134,7 @@
                 style="@style/Widget.Aqua.Light.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="12dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground">
@@ -127,19 +142,23 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="22dp">
+                    android:minHeight="96dp"
+                    android:paddingStart="16dp"
+                    android:paddingTop="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
 
                     <FrameLayout
                         android:id="@+id/cloudIconContainer"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="42dp"
+                        android:layout_height="42dp"
                         android:background="@drawable/bg_light_action_icon"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
 
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_width="21dp"
+                            android:layout_height="21dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_light_cloud_24"
                             app:tint="@color/light_accent" />
@@ -151,10 +170,29 @@
                         style="@style/TextAppearance.Aqua.Light.CardTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="10dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="Cloud Simulation"
+                        android:textSize="18sp"
                         app:layout_constraintStart_toEndOf="@id/cloudIconContainer"
                         app:layout_constraintEnd_toStartOf="@id/tvCloudStatus"
+                        app:layout_constraintTop_toTopOf="@id/cloudIconContainer" />
+
+                    <TextView
+                        android:id="@+id/tvCloudStatus"
+                        style="@style/TextAppearance.Aqua.Light.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="28dp"
+                        android:background="@drawable/bg_light_mode_chip_idle"
+                        android:gravity="center"
+                        android:minWidth="58dp"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:text="OFF"
+                        android:textSize="12sp"
+                        app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="@id/cloudIconContainer" />
 
                     <TextView
@@ -162,26 +200,15 @@
                         style="@style/TextAppearance.Aqua.Light.Body"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="4dp"
-                        android:text="Firmware efekti hazır olduğunda buradan yönetilecek"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginTop="5dp"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:text="Tap to configure cloud dimming"
+                        android:textSize="13sp"
                         app:layout_constraintStart_toEndOf="@id/cloudIconContainer"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/tvCloudTitle" />
-
-                    <TextView
-                        android:id="@+id/tvCloudStatus"
-                        style="@style/TextAppearance.Aqua.Light.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="32dp"
-                        android:background="@drawable/bg_light_stat_pill"
-                        android:gravity="center"
-                        android:minWidth="86dp"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:text="Soon"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="@id/cloudIconContainer" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
