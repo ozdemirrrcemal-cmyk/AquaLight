@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.api.dosing.DosingApi
 import com.aqua.aqualight.data.devices.api.dosing.LegacyDosingApi
 import com.aqua.aqualight.data.devices.api.dosing.V1DosingApi
 import com.aqua.aqualight.data.devices.api.legacy.LegacyHttpClient
+import com.aqua.aqualight.data.devices.api.legacy.LegacyUrlConnectionClient
 import com.aqua.aqualight.data.devices.api.light.LegacyLightApi
 import com.aqua.aqualight.data.devices.api.light.LightApi
 import com.aqua.aqualight.data.devices.api.light.V1LightApi
@@ -20,7 +21,7 @@ import com.aqua.aqualight.data.devices.api.v1.V1HttpClient
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
 
 class AquaDeviceApiFactory(
-    private val legacyHttpClient: LegacyHttpClient = LegacyHttpClient.NotConnected,
+    private val legacyHttpClient: LegacyHttpClient = LegacyUrlConnectionClient(),
     private val v1HttpClient: V1HttpClient = V1HttpClient.NotConnected
 ) {
 
@@ -30,7 +31,10 @@ class AquaDeviceApiFactory(
         preferredMode: DeviceApiMode? = null
     ): ApiResult<AquaDeviceApi> {
         val mode = preferredMode ?: resolveMode(identity)
-        val capabilities = capabilitiesFor(mode)
+        val capabilities = capabilitiesFor(
+            identity = identity,
+            mode = mode
+        )
 
         return when (identity.category) {
             AquaDeviceCategory.LIGHT -> ApiResult.success(
@@ -92,10 +96,14 @@ class AquaDeviceApiFactory(
     }
 
     private fun capabilitiesFor(
+        identity: DeviceIdentity,
         mode: DeviceApiMode
     ): DeviceApiCapabilities {
         return when (mode) {
-            DeviceApiMode.LEGACY -> DeviceApiCapabilities.None
+            DeviceApiMode.LEGACY -> when (identity.category) {
+                AquaDeviceCategory.LIGHT -> DeviceApiCapabilities.LegacyLightDefault
+                else -> DeviceApiCapabilities.None
+            }
             DeviceApiMode.V1 -> DeviceApiCapabilities.V1Default
         }
     }

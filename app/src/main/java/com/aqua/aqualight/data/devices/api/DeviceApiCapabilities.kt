@@ -15,6 +15,19 @@ data class DeviceApiCapabilities(
     companion object {
         val None = DeviceApiCapabilities()
 
+        val LegacyLightDefault = DeviceApiCapabilities(
+            supportsIdentityRead = false,
+            supportsLiveStatus = true,
+            supportsProgramRead = true,
+            supportsProgramWrite = false,
+            supportsManualControl = true,
+            supportsAutomation = false,
+            supportsCalibration = false,
+            supportsSchedules = true,
+            supportsSettingsRead = true,
+            supportsSettingsWrite = false
+        )
+
         val V1Default = DeviceApiCapabilities(
             supportsIdentityRead = true,
             supportsLiveStatus = true,

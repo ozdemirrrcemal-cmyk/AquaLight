@@ -5,6 +5,10 @@ import com.aqua.aqualight.data.devices.api.model.ApiResult
 
 interface LightApi {
 
+    suspend fun readDeviceState(
+        connection: AquaDeviceConnection
+    ): ApiResult<LightDeviceState>
+
     suspend fun readStatus(
         connection: AquaDeviceConnection
     ): ApiResult<LightStatus>

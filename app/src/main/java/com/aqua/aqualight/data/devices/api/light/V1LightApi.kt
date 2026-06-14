@@ -8,6 +8,12 @@ class V1LightApi(
     private val client: V1HttpClient
 ) : LightApi {
 
+    override suspend fun readDeviceState(
+        connection: AquaDeviceConnection
+    ): ApiResult<LightDeviceState> {
+        return ApiResult.notConnected()
+    }
+
     override suspend fun readStatus(
         connection: AquaDeviceConnection
     ): ApiResult<LightStatus> {
