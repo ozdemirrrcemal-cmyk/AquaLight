@@ -131,20 +131,21 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center_vertical"
                                 android:orientation="horizontal"
-                                android:paddingStart="10dp"
-                                android:paddingEnd="9dp">
+                                android:paddingStart="12dp"
+                                android:paddingEnd="10dp">
 
                                 <ImageView
-                                    android:layout_width="17dp"
-                                    android:layout_height="17dp"
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
                                     android:importantForAccessibility="no"
+                                    android:layout_marginEnd="2dp"
                                     android:src="@drawable/ic_light_dashboard_power_24"
                                     app:tint="@color/light_accent" />
 
                                 <LinearLayout
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
+                                    android:layout_marginStart="10dp"
                                     android:layout_weight="1"
                                     android:orientation="vertical">
 
@@ -187,20 +188,21 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center_vertical"
                                 android:orientation="horizontal"
-                                android:paddingStart="10dp"
-                                android:paddingEnd="9dp">
+                                android:paddingStart="12dp"
+                                android:paddingEnd="10dp">
 
                                 <ImageView
-                                    android:layout_width="17dp"
-                                    android:layout_height="17dp"
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
                                     android:importantForAccessibility="no"
+                                    android:layout_marginEnd="2dp"
                                     android:src="@drawable/ic_light_dashboard_output_24"
                                     app:tint="@color/light_accent" />
 
                                 <LinearLayout
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
+                                    android:layout_marginStart="10dp"
                                     android:layout_weight="1"
                                     android:orientation="vertical">
 
@@ -259,10 +261,13 @@
                                 <TextView
                                     android:id="@+id/tvLiveRedChannelBadge"
                                     style="@style/TextAppearance.Aqua.Light.ChannelValue.Red"
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="24dp"
                                     android:background="@drawable/bg_light_channel_chip_red"
                                     android:gravity="center"
+                                    android:minWidth="28dp"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
                                     android:text=""
                                     tools:text="R" />
 
@@ -271,7 +276,7 @@
                                     style="@style/TextAppearance.Aqua.Light.ChannelMetricValue"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
+                                    android:layout_marginStart="6dp"
                                     android:layout_weight="1"
                                     android:ellipsize="end"
                                     android:gravity="center"
@@ -305,10 +310,13 @@
                                 <TextView
                                     android:id="@+id/tvLiveGreenChannelBadge"
                                     style="@style/TextAppearance.Aqua.Light.ChannelValue.Green"
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="24dp"
                                     android:background="@drawable/bg_light_channel_chip_green"
                                     android:gravity="center"
+                                    android:minWidth="28dp"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
                                     android:text=""
                                     tools:text="G" />
 
@@ -317,7 +325,7 @@
                                     style="@style/TextAppearance.Aqua.Light.ChannelMetricValue"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
+                                    android:layout_marginStart="6dp"
                                     android:layout_weight="1"
                                     android:ellipsize="end"
                                     android:gravity="center"
@@ -351,10 +359,13 @@
                                 <TextView
                                     android:id="@+id/tvLiveBlueChannelBadge"
                                     style="@style/TextAppearance.Aqua.Light.ChannelValue.Blue"
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="24dp"
                                     android:background="@drawable/bg_light_channel_chip_blue"
                                     android:gravity="center"
+                                    android:minWidth="28dp"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
                                     android:text=""
                                     tools:text="B" />
 
@@ -363,7 +374,7 @@
                                     style="@style/TextAppearance.Aqua.Light.ChannelMetricValue"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
+                                    android:layout_marginStart="6dp"
                                     android:layout_weight="1"
                                     android:ellipsize="end"
                                     android:gravity="center"
@@ -396,10 +407,13 @@
                                 <TextView
                                     android:id="@+id/tvLiveWhiteChannelBadge"
                                     style="@style/TextAppearance.Aqua.Light.ChannelValue.White"
-                                    android:layout_width="22dp"
-                                    android:layout_height="22dp"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="24dp"
                                     android:background="@drawable/bg_light_channel_chip_white"
                                     android:gravity="center"
+                                    android:minWidth="28dp"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
                                     android:text=""
                                     tools:text="W" />
 
@@ -408,7 +422,7 @@
                                     style="@style/TextAppearance.Aqua.Light.ChannelMetricValue"
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginStart="4dp"
+                                    android:layout_marginStart="6dp"
                                     android:layout_weight="1"
                                     android:ellipsize="end"
                                     android:gravity="center"
