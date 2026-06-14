@@ -16,7 +16,7 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceFeedbackType
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceLoading
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwColorMath
+import com.aqua.aqualight.data.devices.light.math.LightRgbwPreviewColorMath
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightScene
@@ -187,7 +187,7 @@ class DeviceLightManualFragment :
             state.powerLoadPercent
 
         binding.powerProgress.setIndicatorColor(
-            LightRgbwColorMath.previewColor(
+            LightRgbwPreviewColorMath.previewColor(
                 red = state.red,
                 green = state.green,
                 blue = state.blue,

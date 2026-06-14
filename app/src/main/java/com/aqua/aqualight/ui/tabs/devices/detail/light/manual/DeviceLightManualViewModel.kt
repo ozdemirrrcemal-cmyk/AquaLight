@@ -66,7 +66,6 @@ class DeviceLightManualViewModel(
     private var isSliderInteractionActive: Boolean = false
     private var pendingFlushJob: Job? = null
     private var lastCommandFlushAtMillis: Long = 0L
-    private var lastCommandedChannels: LightRgbwChannels = runtimeChannels
 
     fun initialize(
         deviceId: Long
@@ -83,20 +82,6 @@ class DeviceLightManualViewModel(
         }
 
         refreshRuntimeSnapshot()
-    }
-
-    fun setPowerOn(
-        enabled: Boolean
-    ) {
-        if (enabled) {
-            activateManualOverride(
-                channels = displayedChannels(),
-                scene = null,
-                immediateFlush = true
-            )
-        } else {
-            resumeAuto()
-        }
     }
 
     fun applyScene(
@@ -322,7 +307,6 @@ class DeviceLightManualViewModel(
             safeChannels
         )
 
-        lastCommandedChannels = safeChannels
         lastCommandFlushAtMillis = SystemClock.uptimeMillis()
     }
 
