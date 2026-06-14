@@ -30,6 +30,7 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private val viewModel: DeviceLightViewModel by viewModels()
 
+    private var latestState: DeviceLightDashboardUiState = DeviceLightDashboardUiState()
 
     private val deviceId: Long
         get() = args.deviceId
@@ -87,6 +88,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
 
     private fun setupClicks() {
         binding.cardManual.setOnClickListener {
+            if (!ensureControlsEnabled()) {
+                return@setOnClickListener
+            }
+
             findNavController().navigate(
                 DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightManualFragment(
                     deviceId = deviceId
@@ -95,6 +100,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardPrograms.setOnClickListener {
+            if (!ensureControlsEnabled()) {
+                return@setOnClickListener
+            }
+
             findNavController().navigate(
                 DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightProgramsFragment(
                     deviceId = deviceId
@@ -103,6 +112,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardQuickSetup.setOnClickListener {
+            if (!ensureControlsEnabled()) {
+                return@setOnClickListener
+            }
+
             findNavController().navigate(
                 DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightQuickSetupFragment(
                     deviceId = deviceId
@@ -111,6 +124,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         }
 
         binding.cardPresets.setOnClickListener {
+            if (!ensureControlsEnabled()) {
+                return@setOnClickListener
+            }
+
             findNavController().navigate(
                 DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightPresetsFragment(
                     deviceId = deviceId
@@ -120,6 +137,10 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     }
 
     private fun openSettings() {
+        if (!ensureControlsEnabled()) {
+            return
+        }
+
         findNavController().navigate(
             DeviceLightFragmentDirections.actionDeviceLightFragmentToDeviceLightSettingsFragment(
                 deviceId = deviceId
@@ -144,6 +165,8 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
     private fun renderUiState(
         state: DeviceLightDashboardUiState
     ) {
+        latestState = state
+
         binding.tvActiveProgramName.text =
             state.activeProgramName
 
@@ -197,25 +220,43 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
             state.todayPlanGraphState
         )
 
-        renderControlAvailability()
+        renderControlAvailability(
+            state
+        )
     }
 
-    private fun renderControlAvailability() {
-        // Dashboard cards are navigation entry points. They stay available in
-        // the UI shell so every Light screen can be reviewed before the data
-        // layer is connected. Firmware/data actions inside those screens remain
-        // guarded by their own ViewModels.
+    private fun renderControlAvailability(
+        state: DeviceLightDashboardUiState
+    ) {
+        val alpha = if (state.controlsEnabled) {
+            1f
+        } else {
+            0.88f
+        }
+
         binding.cardManual.isEnabled = true
         binding.cardPrograms.isEnabled = true
         binding.cardQuickSetup.isEnabled = true
         binding.cardPresets.isEnabled = true
 
-        binding.cardManual.alpha = 1f
-        binding.cardPrograms.alpha = 1f
-        binding.cardQuickSetup.alpha = 1f
-        binding.cardPresets.alpha = 1f
+        binding.cardManual.alpha = alpha
+        binding.cardPrograms.alpha = alpha
+        binding.cardQuickSetup.alpha = alpha
+        binding.cardPresets.alpha = alpha
     }
 
+    private fun ensureControlsEnabled(): Boolean {
+        if (latestState.controlsEnabled) {
+            return true
+        }
+
+        showDeviceSnack(
+            message = latestState.connectionStatusText,
+            type = DeviceFeedbackType.WARNING
+        )
+
+        return false
+    }
 
     private fun refreshDeviceStatus() {
         if (deviceId <= 0L) {
