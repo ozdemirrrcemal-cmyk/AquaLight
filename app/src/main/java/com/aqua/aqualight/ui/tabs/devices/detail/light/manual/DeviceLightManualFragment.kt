@@ -146,9 +146,9 @@ class DeviceLightManualFragment :
 
         binding.tvManualModeTitle.text =
             when (state.controlMode) {
-                ManualLightControlMode.AUTO -> "Auto Schedule Active"
-                ManualLightControlMode.MANUAL_OVERRIDE -> "Manual Override Active"
-                ManualLightControlMode.SCENE_OVERRIDE -> "Scene Override Active"
+                ManualLightControlMode.AUTO -> "Auto Schedule"
+                ManualLightControlMode.MANUAL_OVERRIDE -> "Manual Control"
+                ManualLightControlMode.SCENE_OVERRIDE -> "Scene Applied"
             }
 
         binding.tvManualModeSubtitle.text =
