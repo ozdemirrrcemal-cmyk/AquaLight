@@ -46,9 +46,20 @@ class LightRuntimeDeviceAccessor(
             deviceId = deviceId
         ) { device, connection ->
             when (val deviceApi = createLightDeviceApi(device, connection)) {
-                is ApiResult.Success -> LightRuntimeRepositoryFactory
-                    .create(deviceApi.value)
-                    .readSnapshot(deviceApi.value.connection)
+                is ApiResult.Success -> {
+                    when (val snapshot = LightRuntimeRepositoryFactory
+                        .create(deviceApi.value)
+                        .readSnapshot(deviceApi.value.connection)) {
+                        is ApiResult.Success -> ApiResult.success(
+                            LightLocalOverrideStore.applyToSnapshot(
+                                deviceId = deviceId,
+                                snapshot = snapshot.value
+                            )
+                        )
+
+                        is ApiResult.Error -> snapshot
+                    }
+                }
 
                 is ApiResult.Error -> deviceApi
             }
@@ -71,13 +82,25 @@ class LightRuntimeDeviceAccessor(
             deviceId = deviceId
         ) { device, connection ->
             when (val deviceApi = createLightDeviceApi(device, connection)) {
-                is ApiResult.Success -> deviceApi.value.lightApi.setManual(
-                    connection = deviceApi.value.connection,
-                    request = LightManualRequest(
-                        powerOn = !normalizedChannels.isOff,
-                        channelValues = normalizedChannels
-                    )
-                )
+                is ApiResult.Success -> {
+                    when (val result = deviceApi.value.lightApi.setManual(
+                        connection = deviceApi.value.connection,
+                        request = LightManualRequest(
+                            powerOn = !normalizedChannels.isOff,
+                            channelValues = normalizedChannels
+                        )
+                    )) {
+                        is ApiResult.Success -> {
+                            LightLocalOverrideStore.recordManual(
+                                deviceId = deviceId,
+                                channels = normalizedChannels
+                            )
+                            result
+                        }
+
+                        is ApiResult.Error -> result
+                    }
+                }
 
                 is ApiResult.Error -> deviceApi
             }
@@ -98,9 +121,18 @@ class LightRuntimeDeviceAccessor(
             deviceId = deviceId
         ) { device, connection ->
             when (val deviceApi = createLightDeviceApi(device, connection)) {
-                is ApiResult.Success -> deviceApi.value.lightApi.resumeAuto(
-                    connection = deviceApi.value.connection
-                )
+                is ApiResult.Success -> {
+                    when (val result = deviceApi.value.lightApi.resumeAuto(
+                        connection = deviceApi.value.connection
+                    )) {
+                        is ApiResult.Success -> {
+                            LightLocalOverrideStore.clear(deviceId)
+                            result
+                        }
+
+                        is ApiResult.Error -> result
+                    }
+                }
 
                 is ApiResult.Error -> deviceApi
             }

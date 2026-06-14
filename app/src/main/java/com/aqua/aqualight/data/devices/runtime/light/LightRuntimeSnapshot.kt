@@ -32,6 +32,9 @@ data class LightRuntimeSnapshot(
     val fanPwmChannels: List<LightPwmChannelState> = emptyList(),
     val scheduleChannels: List<LightScheduleChannelState> = emptyList(),
     val thermalProtection: LightThermalProtectionState = LightThermalProtectionState(),
+    val activeSceneName: String? = null,
+    val activeSceneSource: String? = null,
+    val localOverride: LightLocalOverrideState? = null,
     val source: LightRuntimeSource = LightRuntimeSource.NONE,
     val rawDeviceState: LightDeviceState? = null
 ) {

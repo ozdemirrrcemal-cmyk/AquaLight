@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.api.light.LightMode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.math.LightOutputMath
 import com.aqua.aqualight.data.devices.light.math.LightRgbwPowerCalibration
+import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideStore
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
@@ -328,8 +329,10 @@ class DeviceLightManualViewModel(
             }
         }
 
-        if (controlMode == ManualLightControlMode.AUTO) {
-            selectedScene = null
+        selectedScene = if (controlMode == ManualLightControlMode.SCENE_OVERRIDE) {
+            snapshot.toManualScene()
+        } else {
+            null
         }
 
         manualDraftChannels = runtimeChannels
@@ -419,6 +422,7 @@ class DeviceLightManualViewModel(
 
         when (val result = sendManualOutputCommand(safeChannels)) {
             is ApiResult.Success -> {
+                recordSceneOverrideIfNeeded(safeChannels)
                 lastCommandFlushAtMillis = SystemClock.uptimeMillis()
             }
 
@@ -430,6 +434,20 @@ class DeviceLightManualViewModel(
                 )
             }
         }
+    }
+
+    private fun recordSceneOverrideIfNeeded(
+        channels: LightRgbwChannels
+    ) {
+        val scene = selectedScene ?: return
+        if (controlMode != ManualLightControlMode.SCENE_OVERRIDE) return
+
+        LightLocalOverrideStore.recordScene(
+            deviceId = deviceId,
+            sceneName = scene.title,
+            sceneSource = scene.name,
+            channels = channels.toApiChannelValues()
+        )
     }
 
     private fun renderCurrentState() {
@@ -584,6 +602,28 @@ class DeviceLightManualViewModel(
             blue = values.blue,
             white = values.white
         )
+    }
+
+    private fun LightRuntimeSnapshot.toManualScene(): ManualLightScene? {
+        val source = activeSceneSource ?: localOverride?.sceneSource
+        if (!source.isNullOrBlank()) {
+            ManualLightScene.values().firstOrNull { scene ->
+                scene.name.equals(source, ignoreCase = true)
+            }?.let { scene ->
+                return scene
+            }
+        }
+
+        val name = activeSceneName ?: localOverride?.sceneName
+        if (!name.isNullOrBlank()) {
+            ManualLightScene.values().firstOrNull { scene ->
+                scene.title.equals(name, ignoreCase = true)
+            }?.let { scene ->
+                return scene
+            }
+        }
+
+        return null
     }
 
     private fun LightRgbwChannels.toApiChannelValues(): LightChannelValues {

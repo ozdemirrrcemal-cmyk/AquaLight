@@ -26,7 +26,9 @@ object LightDashboardRuntimeUiMapper {
         context: Context,
         snapshot: LightRuntimeSnapshot
     ): DeviceLightDashboardUiState {
-        val hasLedRuntime = snapshot.ledPwmChannels.isNotEmpty()
+        val hasLedRuntime = snapshot.ledPwmChannels.isNotEmpty() ||
+            snapshot.localOverride != null ||
+            snapshot.channels.maxPercent > 0
         val timeline = buildTimeline(
             context = context,
             snapshot = snapshot
@@ -37,7 +39,7 @@ object LightDashboardRuntimeUiMapper {
             .maxOrNull()
         val fanPercent = snapshot.fanOutputPercent
         val titleAndStatus = modeTitleAndStatus(
-            mode = snapshot.mode,
+            snapshot = snapshot,
             hasTimeline = timeline.graphState.segments.isNotEmpty()
         )
 
@@ -110,59 +112,115 @@ object LightDashboardRuntimeUiMapper {
             ?.takeIf { it.isNotEmpty() }
             ?: context.getString(R.string.light_dashboard_no_runtime_source)
 
-        if (mainSegments.isEmpty()) {
-            return LightDashboardTimelineMapper.noActivePlan(
-                currentTimeMinute = currentMinute,
-                statusText = context.getString(R.string.light_dashboard_timeline_empty),
-                nextEventText = context.getString(R.string.light_dashboard_no_runtime_source),
-                emptyMessage = context.getString(R.string.light_dashboard_timeline_empty)
-            )
-        }
-
         return when (snapshot.mode) {
-            LightMode.MANUAL -> LightDashboardTimelineMapper.manualOverride(
-                currentTimeMinute = currentMinute,
-                mainSegments = mainSegments,
-                statusText = "Manual override",
-                nextEventText = "Auto paused"
-            )
+            LightMode.MANUAL -> {
+                val overrideSegments = mainSegments.ifEmpty {
+                    buildOverrideOutputSegments(
+                        snapshot = snapshot,
+                        name = "Manual"
+                    )
+                }
 
-            LightMode.SCENE -> LightDashboardTimelineMapper.sceneOverride(
-                currentTimeMinute = currentMinute,
-                sceneName = null,
-                mainSegments = mainSegments,
-                statusText = "Scene override",
-                nextEventText = "Auto paused"
-            )
+                LightDashboardTimelineMapper.manualOverride(
+                    currentTimeMinute = currentMinute,
+                    mainSegments = overrideSegments,
+                    statusText = "Manual override",
+                    nextEventText = "Auto paused"
+                )
+            }
 
-            LightMode.MOONLIGHT -> LightDashboardTimelineMapper.moonlightActive(
-                currentTimeMinute = currentMinute,
-                mainSegments = mainSegments,
-                moonlightSegments = emptyList(),
-                statusText = "Moonlight active",
-                nextEventText = nextEvent
-            )
+            LightMode.SCENE -> {
+                val sceneName = snapshot.activeSceneName
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+                val overrideSegments = mainSegments.ifEmpty {
+                    buildOverrideOutputSegments(
+                        snapshot = snapshot,
+                        name = sceneName ?: "Scene"
+                    )
+                }
 
-            LightMode.AUTO -> LightDashboardTimelineMapper.activeAuto(
-                currentTimeMinute = currentMinute,
-                mainSegments = mainSegments,
-                statusText = "Auto schedule",
-                nextEventText = nextEvent
-            )
+                LightDashboardTimelineMapper.sceneOverride(
+                    currentTimeMinute = currentMinute,
+                    sceneName = sceneName,
+                    mainSegments = overrideSegments,
+                    statusText = "Scene override",
+                    nextEventText = "Auto paused"
+                )
+            }
 
-            LightMode.IDLE -> LightDashboardTimelineMapper.activeAuto(
-                currentTimeMinute = currentMinute,
-                mainSegments = mainSegments,
-                statusText = "Idle · schedule available",
-                nextEventText = nextEvent
-            )
+            LightMode.MOONLIGHT -> {
+                val moonlightSegments = buildOverrideOutputSegments(
+                    snapshot = snapshot,
+                    name = "Moonlight"
+                )
 
-            LightMode.UNKNOWN -> LightDashboardTimelineMapper.activeAuto(
-                currentTimeMinute = currentMinute,
-                mainSegments = mainSegments,
-                statusText = "Runtime synced",
-                nextEventText = nextEvent
-            )
+                LightDashboardTimelineMapper.moonlightActive(
+                    currentTimeMinute = currentMinute,
+                    mainSegments = mainSegments.ifEmpty { moonlightSegments },
+                    moonlightSegments = if (mainSegments.isEmpty()) {
+                        emptyList()
+                    } else {
+                        moonlightSegments
+                    },
+                    statusText = "Moonlight active",
+                    nextEventText = nextEvent
+                )
+            }
+
+            LightMode.AUTO -> {
+                if (mainSegments.isEmpty()) {
+                    LightDashboardTimelineMapper.noActivePlan(
+                        currentTimeMinute = currentMinute,
+                        statusText = context.getString(R.string.light_dashboard_timeline_empty),
+                        nextEventText = context.getString(R.string.light_dashboard_no_runtime_source),
+                        emptyMessage = context.getString(R.string.light_dashboard_timeline_empty)
+                    )
+                } else {
+                    LightDashboardTimelineMapper.activeAuto(
+                        currentTimeMinute = currentMinute,
+                        mainSegments = mainSegments,
+                        statusText = "Auto schedule",
+                        nextEventText = nextEvent
+                    )
+                }
+            }
+
+            LightMode.IDLE -> {
+                if (mainSegments.isEmpty()) {
+                    LightDashboardTimelineMapper.noActivePlan(
+                        currentTimeMinute = currentMinute,
+                        statusText = context.getString(R.string.light_dashboard_timeline_empty),
+                        nextEventText = context.getString(R.string.light_dashboard_no_runtime_source),
+                        emptyMessage = context.getString(R.string.light_dashboard_timeline_empty)
+                    )
+                } else {
+                    LightDashboardTimelineMapper.activeAuto(
+                        currentTimeMinute = currentMinute,
+                        mainSegments = mainSegments,
+                        statusText = "Idle · schedule available",
+                        nextEventText = nextEvent
+                    )
+                }
+            }
+
+            LightMode.UNKNOWN -> {
+                if (mainSegments.isEmpty()) {
+                    LightDashboardTimelineMapper.noActivePlan(
+                        currentTimeMinute = currentMinute,
+                        statusText = context.getString(R.string.light_dashboard_timeline_empty),
+                        nextEventText = context.getString(R.string.light_dashboard_no_runtime_source),
+                        emptyMessage = context.getString(R.string.light_dashboard_timeline_empty)
+                    )
+                } else {
+                    LightDashboardTimelineMapper.activeAuto(
+                        currentTimeMinute = currentMinute,
+                        mainSegments = mainSegments,
+                        statusText = "Runtime synced",
+                        nextEventText = nextEvent
+                    )
+                }
+            }
         }
     }
 
@@ -216,11 +274,37 @@ object LightDashboardRuntimeUiMapper {
         )
     }
 
+    private fun buildOverrideOutputSegments(
+        snapshot: LightRuntimeSnapshot,
+        name: String
+    ): List<LightDashboardTimelineSegment> {
+        val outputPercent = maxOf(
+            snapshot.outputPercent,
+            snapshot.channels.maxPercent
+        ).coerceIn(0, 100)
+
+        return listOf(
+            LightDashboardTimelineSegment(
+                id = "device-runtime-override",
+                name = name,
+                startMinute = 0,
+                peakStartMinute = snapshot.deviceTime.currentMinuteOfDay
+                    ?.coerceIn(0, MINUTES_PER_DAY)
+                    ?: 0,
+                peakEndMinute = snapshot.deviceTime.currentMinuteOfDay
+                    ?.coerceIn(0, MINUTES_PER_DAY)
+                    ?: MINUTES_PER_DAY,
+                endMinute = MINUTES_PER_DAY,
+                outputPercent = maxOf(1, outputPercent)
+            )
+        )
+    }
+
     private fun modeTitleAndStatus(
-        mode: LightMode,
+        snapshot: LightRuntimeSnapshot,
         hasTimeline: Boolean
     ): Pair<String, String> {
-        return when (mode) {
+        return when (snapshot.mode) {
             LightMode.AUTO -> {
                 "Auto Schedule" to if (hasTimeline) {
                     "Running from controller schedule"
@@ -230,7 +314,17 @@ object LightDashboardRuntimeUiMapper {
             }
 
             LightMode.MANUAL -> "Manual Override" to "Auto schedule is paused"
-            LightMode.SCENE -> "Scene Override" to "Scene output is active"
+            LightMode.SCENE -> {
+                val sceneName = snapshot.activeSceneName
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+
+                "Scene Override" to if (sceneName == null) {
+                    "Scene output is active"
+                } else {
+                    "$sceneName is active"
+                }
+            }
             LightMode.MOONLIGHT -> "Moonlight" to "Night output is active"
             LightMode.IDLE -> "Idle" to "Output is currently off"
             LightMode.UNKNOWN -> "Runtime Synced" to "Controller state received"
