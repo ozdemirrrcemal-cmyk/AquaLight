@@ -17,12 +17,12 @@ object DeviceIdentityMatcher {
         savedDevice: DevicesDataStoreManager.DeviceInfo,
         discoveredDevice: DiscoveredAquaDevice
     ): Boolean {
-        if (legacyMigrationIdMatches(savedDevice, discoveredDevice)) {
-            return true
-        }
-
         if (productMismatch(savedDevice.productId, discoveredDevice.productId)) {
             return false
+        }
+
+        if (legacyMigrationIdMatches(savedDevice, discoveredDevice)) {
+            return true
         }
 
         return identifiersMatch(savedDevice.deviceUid, discoveredDevice.deviceUid) ||
@@ -37,12 +37,12 @@ object DeviceIdentityMatcher {
         savedDevice: DevicesDataStoreManager.DeviceInfo,
         update: DevicesDataStoreManager.DeviceLastSeenUpdate
     ): Boolean {
-        if (legacyMigrationIdMatches(savedDevice, update)) {
-            return true
-        }
-
         if (productMismatch(savedDevice.productId, update.productId)) {
             return false
+        }
+
+        if (legacyMigrationIdMatches(savedDevice, update)) {
+            return true
         }
 
         return identifiersMatch(savedDevice.deviceUid, update.deviceUid) ||
@@ -63,6 +63,10 @@ object DeviceIdentityMatcher {
         shortId: String? = null,
         productId: String? = null
     ): Boolean {
+        if (productMismatch(savedDevice.productId, productId)) {
+            return false
+        }
+
         if (
             stableNumericIdMatches(savedDevice.id, id) &&
             (
@@ -71,10 +75,6 @@ object DeviceIdentityMatcher {
                 )
         ) {
             return true
-        }
-
-        if (productMismatch(savedDevice.productId, productId)) {
-            return false
         }
 
         return identifiersMatch(savedDevice.deviceUid, deviceUid) ||
