@@ -27,6 +27,10 @@ interface LightApi {
         request: LightManualRequest
     ): ApiResult<Unit>
 
+    suspend fun resumeAuto(
+        connection: AquaDeviceConnection
+    ): ApiResult<Unit>
+
     suspend fun setAutomation(
         connection: AquaDeviceConnection,
         request: LightAutomationRequest

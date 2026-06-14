@@ -69,6 +69,20 @@ class LegacyLightApi(
         }
     }
 
+
+    override suspend fun resumeAuto(
+        connection: AquaDeviceConnection
+    ): ApiResult<Unit> {
+        val command = buildResumeAutoCommand()
+        return when (val response = client.set(
+            connection = connection,
+            command = command
+        )) {
+            is ApiResult.Success -> ApiResult.success(Unit)
+            is ApiResult.Error -> response
+        }
+    }
+
     override suspend fun setAutomation(
         connection: AquaDeviceConnection,
         request: LightAutomationRequest
@@ -146,6 +160,42 @@ class LegacyLightApi(
         }
     }
 
+
+    private fun buildResumeAutoCommand(): String {
+        val data = JSONObject().apply {
+            listOf(
+                LEGACY_WHITE_INDEX,
+                LEGACY_RED_INDEX,
+                LEGACY_GREEN_INDEX,
+                LEGACY_BLUE_INDEX
+            ).forEach { index ->
+                put(
+                    index.toString(),
+                    resumeAutoChannelObject()
+                )
+            }
+        }
+
+        val json = JSONObject().apply {
+            put(
+                KEY_LED_PWM,
+                JSONObject().apply {
+                    put("Data", data)
+                }
+            )
+        }
+
+        return buildString {
+            append(PARAM_JSON)
+            append('=')
+            append(json.toString())
+            append('&')
+            append(PARAM_RETURN)
+            append('=')
+            append(returnObject().toString())
+        }
+    }
+
     private fun manualChannelObject(
         percent: Int
     ): JSONObject {
@@ -155,6 +205,20 @@ class LegacyLightApi(
                 JSONObject().apply {
                     put("V", LightApiMath.percentToDeviceValue(percent))
                     put("TOffMs", MANUAL_OVERRIDE_TIMEOUT_MILLIS)
+                }
+            )
+        }
+    }
+
+
+
+    private fun resumeAutoChannelObject(): JSONObject {
+        return JSONObject().apply {
+            put(
+                "VManual",
+                JSONObject().apply {
+                    put("V", MANUAL_RESUME_VALUE)
+                    put("TOffMs", 0)
                 }
             )
         }
@@ -221,6 +285,7 @@ class LegacyLightApi(
         const val LEGACY_GREEN_INDEX = 2
         const val LEGACY_BLUE_INDEX = 3
         const val MANUAL_OVERRIDE_TIMEOUT_MILLIS = 24 * 60 * 60 * 1000
+        const val MANUAL_RESUME_VALUE = -1.0
         const val LEGACY_PROGRAM_ID = "legacy-light-schedule"
         const val LEGACY_PROGRAM_NAME = "Legacy light schedule"
         val LEGACY_ALL_DAYS = setOf(1, 2, 3, 4, 5, 6, 7)

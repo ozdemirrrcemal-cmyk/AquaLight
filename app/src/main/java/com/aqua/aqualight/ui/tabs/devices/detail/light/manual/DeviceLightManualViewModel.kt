@@ -4,8 +4,13 @@ import android.app.Application
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.data.devices.api.light.LightChannelValues
+import com.aqua.aqualight.data.devices.api.light.LightMode
+import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.math.LightOutputMath
 import com.aqua.aqualight.data.devices.light.math.LightRgbwPowerCalibration
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightControlMode
@@ -27,14 +32,16 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Data-ready manual light control state machine.
+ * Manual light control state machine connected to the shared Light runtime
+ * gateway.
  *
  * AUTO            -> sliders display the runtime output that the schedule/device
  *                    reports. Touching a slider starts manual override.
  * MANUAL_OVERRIDE -> slider changes are previewed instantly and flushed through
  *                    a throttled low-latency command path.
- * SCENE_OVERRIDE  -> a quick scene is selected, highlighted, and sent as one
- *                    manual output command.
+ * SCENE_OVERRIDE  -> legacy firmware receives the scene as a normal manual
+ *                    RGBW output command. Future firmware can expose a real
+ *                    scene mode without changing this screen.
  *
  * Center ring/text is power, not output. Power is calculated only from firmware
  * channel watt values. If runtime watt calibration is unavailable, the screen
@@ -43,6 +50,10 @@ import kotlin.math.roundToInt
 class DeviceLightManualViewModel(
     application: Application
 ) : AndroidViewModel(application) {
+
+    private val runtimeAccessor = LightRuntimeDeviceAccessor(
+        context = application.applicationContext
+    )
 
     private val _uiState = MutableStateFlow(
         ManualLightUiState()
@@ -81,7 +92,15 @@ class DeviceLightManualViewModel(
             return
         }
 
-        refreshRuntimeSnapshot()
+        _uiState.value = buildState(
+            controlsEnabled = false,
+            connectionStatusText = "Connecting to light controller",
+            outputHintText = "Reading live RGBW output"
+        )
+        refreshRuntimeSnapshot(
+            showLoading = true,
+            forceAutoMode = false
+        )
     }
 
     fun applyScene(
@@ -110,14 +129,39 @@ class DeviceLightManualViewModel(
         isSliderInteractionActive = false
 
         viewModelScope.launch {
-            sendResumeAutoCommand()
+            _events.emit(
+                ManualLightEvent.SetLoading(true)
+            )
 
-            controlMode = ManualLightControlMode.AUTO
-            runtimeChannels = readRuntimeChannelsFromDevice().sanitized()
-            powerCalibration = readRuntimePowerCalibrationFromDevice()
-            manualDraftChannels = runtimeChannels
+            when (val result = sendResumeAutoCommand()) {
+                is ApiResult.Success -> {
+                    controlMode = ManualLightControlMode.AUTO
+                    val refreshed = refreshRuntimeSnapshotNow(
+                        showLoading = false,
+                        forceAutoMode = true
+                    )
+                    if (refreshed) {
+                        _events.emit(
+                            ManualLightEvent.ShowMessage(
+                                "Auto schedule resumed"
+                            )
+                        )
+                    }
+                }
 
-            renderCurrentState()
+                is ApiResult.Error -> {
+                    _events.emit(
+                        ManualLightEvent.ShowError(
+                            result.error.message
+                        )
+                    )
+                    renderCurrentState()
+                }
+            }
+
+            _events.emit(
+                ManualLightEvent.SetLoading(false)
+            )
         }
     }
 
@@ -193,7 +237,7 @@ class DeviceLightManualViewModel(
     }
 
     fun beginSliderInteraction() {
-        if (deviceId <= 0L) return
+        if (deviceId <= 0L || !_uiState.value.controlsEnabled) return
 
         isSliderInteractionActive = true
         if (controlMode == ManualLightControlMode.AUTO) {
@@ -211,16 +255,84 @@ class DeviceLightManualViewModel(
         }
     }
 
-    private fun refreshRuntimeSnapshot() {
-        runtimeChannels = readRuntimeChannelsFromDevice().sanitized()
-        powerCalibration = readRuntimePowerCalibrationFromDevice()
+    private fun refreshRuntimeSnapshot(
+        showLoading: Boolean,
+        forceAutoMode: Boolean
+    ) {
+        viewModelScope.launch {
+            refreshRuntimeSnapshotNow(
+                showLoading = showLoading,
+                forceAutoMode = forceAutoMode
+            )
+        }
+    }
+
+    private suspend fun refreshRuntimeSnapshotNow(
+        showLoading: Boolean,
+        forceAutoMode: Boolean
+    ): Boolean {
+        if (showLoading) {
+            _events.emit(
+                ManualLightEvent.SetLoading(true)
+            )
+        }
+
+        val success = when (val snapshot = runtimeAccessor.readSnapshot(deviceId)) {
+            is ApiResult.Success -> {
+                applyRuntimeSnapshot(
+                    snapshot = snapshot.value,
+                    forceAutoMode = forceAutoMode
+                )
+                renderCurrentState()
+                true
+            }
+
+            is ApiResult.Error -> {
+                _uiState.value = buildState(
+                    controlsEnabled = false,
+                    connectionStatusText = "Light controller is not reachable",
+                    outputHintText = snapshot.error.message
+                )
+                _events.emit(
+                    ManualLightEvent.ShowError(
+                        snapshot.error.message
+                    )
+                )
+                false
+            }
+        }
+
+        if (showLoading) {
+            _events.emit(
+                ManualLightEvent.SetLoading(false)
+            )
+        }
+
+        return success
+    }
+
+    private fun applyRuntimeSnapshot(
+        snapshot: LightRuntimeSnapshot,
+        forceAutoMode: Boolean
+    ) {
+        runtimeChannels = snapshot.channels.toManualChannels().sanitized()
+        powerCalibration = snapshot.powerCalibration
+
+        controlMode = if (forceAutoMode) {
+            ManualLightControlMode.AUTO
+        } else {
+            when (snapshot.mode) {
+                LightMode.MANUAL -> ManualLightControlMode.MANUAL_OVERRIDE
+                LightMode.SCENE -> ManualLightControlMode.SCENE_OVERRIDE
+                else -> ManualLightControlMode.AUTO
+            }
+        }
 
         if (controlMode == ManualLightControlMode.AUTO) {
-            manualDraftChannels = runtimeChannels
             selectedScene = null
         }
 
-        renderCurrentState()
+        manualDraftChannels = runtimeChannels
     }
 
     private fun updateManualChannel(
@@ -229,7 +341,7 @@ class DeviceLightManualViewModel(
         blue: Int? = null,
         white: Int? = null
     ) {
-        if (deviceId <= 0L) return
+        if (deviceId <= 0L || !_uiState.value.controlsEnabled) return
 
         val base = if (controlMode == ManualLightControlMode.AUTO) {
             runtimeChannels
@@ -256,6 +368,8 @@ class DeviceLightManualViewModel(
         scene: ManualLightScene?,
         immediateFlush: Boolean
     ) {
+        if (!_uiState.value.controlsEnabled) return
+
         manualDraftChannels = channels.sanitized()
         selectedScene = scene
         controlMode = if (scene == null) {
@@ -303,11 +417,19 @@ class DeviceLightManualViewModel(
     ) {
         val safeChannels = channels.sanitized()
 
-        sendManualOutputCommand(
-            safeChannels
-        )
+        when (val result = sendManualOutputCommand(safeChannels)) {
+            is ApiResult.Success -> {
+                lastCommandFlushAtMillis = SystemClock.uptimeMillis()
+            }
 
-        lastCommandFlushAtMillis = SystemClock.uptimeMillis()
+            is ApiResult.Error -> {
+                _events.emit(
+                    ManualLightEvent.ShowError(
+                        result.error.message
+                    )
+                )
+            }
+        }
     }
 
     private fun renderCurrentState() {
@@ -454,40 +576,39 @@ class DeviceLightManualViewModel(
         )
     }
 
-    /**
-     * TODO(data): Replace with the real light runtime repository. This must
-     * return the current AUTO/schedule output, not the last manual draft.
-     */
-    private fun readRuntimeChannelsFromDevice(): LightRgbwChannels {
-        return runtimeChannels
+    private fun LightChannelValues.toManualChannels(): LightRgbwChannels {
+        val values = normalized()
+        return LightRgbwChannels(
+            red = values.red,
+            green = values.green,
+            blue = values.blue,
+            white = values.white
+        )
     }
 
-    /**
-     * TODO(data): Replace with LightRuntimeSnapshot.powerCalibration from the
-     * real runtime repository. Null means watt data is unavailable; the UI must
-     * show "-- W" instead of a fake value.
-     */
-    private fun readRuntimePowerCalibrationFromDevice(): LightRgbwPowerCalibration? {
-        return powerCalibration
+    private fun LightRgbwChannels.toApiChannelValues(): LightChannelValues {
+        val channels = sanitized()
+        return LightChannelValues(
+            red = channels.safeRed,
+            green = channels.safeGreen,
+            blue = channels.safeBlue,
+            white = channels.safeWhite
+        ).normalized()
     }
 
-    /**
-     * TODO(data): Replace with the ESP/light command call. Keep this method fast;
-     * the ViewModel already throttles slider movement and sends a final flush on
-     * touch release.
-     */
     private suspend fun sendManualOutputCommand(
         channels: LightRgbwChannels
-    ) {
-        // Intentionally no-op until the light command/data layer is connected.
+    ): ApiResult<Unit> {
+        return runtimeAccessor.setManualOutput(
+            deviceId = deviceId,
+            channelValues = channels.toApiChannelValues()
+        )
     }
 
-    /**
-     * TODO(data): Replace with the command that disables manual override and
-     * resumes the active program/schedule on the device.
-     */
-    private suspend fun sendResumeAutoCommand() {
-        // Intentionally no-op until the light command/data layer is connected.
+    private suspend fun sendResumeAutoCommand(): ApiResult<Unit> {
+        return runtimeAccessor.resumeAuto(
+            deviceId = deviceId
+        )
     }
 
     companion object {

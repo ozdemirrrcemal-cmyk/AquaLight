@@ -40,6 +40,12 @@ class V1LightApi(
         return ApiResult.notConnected()
     }
 
+    override suspend fun resumeAuto(
+        connection: AquaDeviceConnection
+    ): ApiResult<Unit> {
+        return ApiResult.notConnected()
+    }
+
     override suspend fun setAutomation(
         connection: AquaDeviceConnection,
         request: LightAutomationRequest
