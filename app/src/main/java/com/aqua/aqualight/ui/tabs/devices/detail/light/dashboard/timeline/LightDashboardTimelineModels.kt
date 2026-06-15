@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
 
 /**
  * UI-safe timeline contract for the dashboard graph.

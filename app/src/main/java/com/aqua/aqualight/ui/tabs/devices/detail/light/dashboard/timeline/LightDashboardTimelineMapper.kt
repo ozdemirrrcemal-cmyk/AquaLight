@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.TodayLightPlanGraphSegment
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.TodayLightPlanGraphSegmentType
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.TodayLightPlanGraphState
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegment
+import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphSegmentType
+import com.aqua.aqualight.data.devices.light.curve.model.TodayLightPlanGraphState
 
 object LightDashboardTimelineMapper {
 

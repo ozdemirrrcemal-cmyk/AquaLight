@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.engine
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.LightProgramDraft
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.model.RepeatMode
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.programs.model.LightProgramDraft
+import com.aqua.aqualight.data.devices.light.programs.model.RepeatMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupAlgaeRisk
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupLightProfile
 import com.aqua.aqualight.ui.tabs.devices.detail.light.quicksetup.model.QuickSetupPlantDemand

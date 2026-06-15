@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.core.automation.model
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
 
 data class MoonlightSettings(
     val enabled: Boolean = false,

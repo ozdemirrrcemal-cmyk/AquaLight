@@ -1,7 +1,7 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.interpolator
+package com.aqua.aqualight.data.devices.light.curve.interpolator
 
-import android.graphics.PointF
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveTransitionMode
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveSample
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveTransitionMode
 import kotlin.math.cos
 import kotlin.math.pow
 
@@ -15,18 +15,18 @@ object LightCurveInterpolator {
         peakPercent: Int,
         transitionMode: LightCurveTransitionMode,
         samplesPerRamp: Int = 24
-    ): List<PointF> {
+    ): List<LightCurveSample> {
         val safePeak = peakPercent.coerceIn(0, 100)
 
-        val start = startMinute.coerceIn(0, 1440)
-        val peakStart = peakStartMinute.coerceIn(start, 1440)
-        val peakEnd = peakEndMinute.coerceIn(peakStart, 1440)
-        val end = endMinute.coerceIn(peakEnd, 1440)
+        val start = startMinute.coerceIn(0, MINUTES_PER_DAY)
+        val peakStart = peakStartMinute.coerceIn(start, MINUTES_PER_DAY)
+        val peakEnd = peakEndMinute.coerceIn(peakStart, MINUTES_PER_DAY)
+        val end = endMinute.coerceIn(peakEnd, MINUTES_PER_DAY)
 
-        val points = mutableListOf<PointF>()
+        val points = mutableListOf<LightCurveSample>()
 
-        points.add(PointF(0f, 0f))
-        points.add(PointF(start.toFloat(), 0f))
+        points.add(LightCurveSample(minute = 0f, percent = 0f))
+        points.add(LightCurveSample(minute = start.toFloat(), percent = 0f))
 
         points.addAll(
             buildRamp(
@@ -39,7 +39,12 @@ object LightCurveInterpolator {
             )
         )
 
-        points.add(PointF(peakEnd.toFloat(), safePeak.toFloat()))
+        points.add(
+            LightCurveSample(
+                minute = peakEnd.toFloat(),
+                percent = safePeak.toFloat()
+            )
+        )
 
         points.addAll(
             buildRamp(
@@ -52,11 +57,16 @@ object LightCurveInterpolator {
             )
         )
 
-        points.add(PointF(1440f, 0f))
+        points.add(
+            LightCurveSample(
+                minute = MINUTES_PER_DAY.toFloat(),
+                percent = 0f
+            )
+        )
 
         return points
-            .distinctBy { "${it.x}:${it.y}" }
-            .sortedBy { it.x }
+            .distinctBy { sample -> "${sample.minute}:${sample.percent}" }
+            .sortedBy { sample -> sample.minute }
     }
 
     private fun buildRamp(
@@ -66,9 +76,14 @@ object LightCurveInterpolator {
         toPercent: Int,
         transitionMode: LightCurveTransitionMode,
         samples: Int
-    ): List<PointF> {
+    ): List<LightCurveSample> {
         if (toMinute <= fromMinute) {
-            return listOf(PointF(toMinute.toFloat(), toPercent.toFloat()))
+            return listOf(
+                LightCurveSample(
+                    minute = toMinute.toFloat(),
+                    percent = toPercent.toFloat()
+                )
+            )
         }
 
         val safeSamples = samples.coerceAtLeast(2)
@@ -80,7 +95,10 @@ object LightCurveInterpolator {
             val minute = fromMinute + (toMinute - fromMinute) * t
             val percent = fromPercent + (toPercent - fromPercent) * eased
 
-            PointF(minute, percent)
+            LightCurveSample(
+                minute = minute,
+                percent = percent
+            )
         }
     }
 
@@ -105,4 +123,6 @@ object LightCurveInterpolator {
             }
         }
     }
+
+    private const val MINUTES_PER_DAY = 24 * 60
 }

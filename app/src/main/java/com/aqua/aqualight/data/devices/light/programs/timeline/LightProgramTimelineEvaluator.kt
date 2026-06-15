@@ -1,7 +1,7 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.core.programs.timeline
+package com.aqua.aqualight.data.devices.light.programs.timeline
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.interpolator.LightCurveInterpolator
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurveChannelValues
+import com.aqua.aqualight.data.devices.light.curve.interpolator.LightCurveInterpolator
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurveChannelValues
 import kotlin.math.roundToInt
 
 object LightProgramTimelineEvaluator {
@@ -84,7 +84,7 @@ object LightProgramTimelineEvaluator {
             peakPercent = safePeak,
             transitionMode = phase.transitionMode
         ).sortedBy { point ->
-            point.x
+            point.minute
         }
 
         if (points.isEmpty()) {
@@ -94,31 +94,31 @@ object LightProgramTimelineEvaluator {
         val currentMinute = minute.toDouble()
 
         val previous = points.lastOrNull { point ->
-            point.x.toDouble() <= currentMinute
+            point.minute.toDouble() <= currentMinute
         }
 
         val next = points.firstOrNull { point ->
-            point.x.toDouble() >= currentMinute
+            point.minute.toDouble() >= currentMinute
         }
 
         val value = when {
             previous == null -> {
-                points.first().y.toDouble()
+                points.first().percent.toDouble()
             }
 
             next == null -> {
-                points.last().y.toDouble()
+                points.last().percent.toDouble()
             }
 
-            previous.x == next.x -> {
-                previous.y.toDouble()
+            previous.minute == next.minute -> {
+                previous.percent.toDouble()
             }
 
             else -> {
-                val previousX = previous.x.toDouble()
-                val nextX = next.x.toDouble()
-                val previousY = previous.y.toDouble()
-                val nextY = next.y.toDouble()
+                val previousX = previous.minute.toDouble()
+                val nextX = next.minute.toDouble()
+                val previousY = previous.percent.toDouble()
+                val nextY = next.percent.toDouble()
 
                 val progress =
                     (currentMinute - previousX) / (nextX - previousX)

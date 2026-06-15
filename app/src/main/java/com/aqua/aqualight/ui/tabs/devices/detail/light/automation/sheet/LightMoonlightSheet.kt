@@ -7,7 +7,7 @@ import android.widget.TextView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.BottomSheetLightMoonlightBinding
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.sheet.LightCurveTimePickerSheet
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.curve.model.LightCurvePoint
+import com.aqua.aqualight.data.devices.light.curve.model.LightCurvePoint
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.automation.model.MoonlightChannel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.automation.model.MoonlightSettings
 import com.google.android.material.bottomsheet.BottomSheetDialog
