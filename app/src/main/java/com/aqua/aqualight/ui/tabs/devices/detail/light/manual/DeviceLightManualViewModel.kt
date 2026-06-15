@@ -8,12 +8,14 @@ import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightMode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.math.LightOutputMath
+import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
 import com.aqua.aqualight.data.devices.light.math.LightRgbwPowerCalibration
 import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideStore
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
+import com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightPreset
@@ -52,8 +54,14 @@ class DeviceLightManualViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val appContext = application.applicationContext
+
     private val runtimeAccessor = LightRuntimeDeviceAccessor(
-        context = application.applicationContext
+        context = appContext
+    )
+
+    private val presetStore = LightPresetDataStoreManager.create(
+        context = appContext
     )
 
     private val _uiState = MutableStateFlow(
@@ -74,6 +82,7 @@ class DeviceLightManualViewModel(
     private var powerCalibration: LightRgbwPowerCalibration? = null
     private var selectedScene: ManualLightScene? = null
     private var savedPresets: List<ManualLightPreset> = emptyList()
+    private var savedPresetCollectorJob: Job? = null
 
     private var isSliderInteractionActive: Boolean = false
     private var manualCommandWorkerJob: Job? = null
@@ -101,6 +110,9 @@ class DeviceLightManualViewModel(
             connectionStatusText = "Connecting to light controller",
             outputHintText = "Reading live RGBW output"
         )
+
+        observeSavedPresets()
+
         refreshRuntimeSnapshot(
             showLoading = true,
             forceAutoMode = false
@@ -186,28 +198,30 @@ class DeviceLightManualViewModel(
         name: String
     ) {
         val safeName = name.trim()
-        if (safeName.isBlank()) return
+        if (safeName.isBlank() || deviceId <= 0L) return
 
         val channels = displayedChannels().sanitized()
-        val preset = ManualLightPreset(
-            id = "manual-${System.currentTimeMillis()}",
-            name = safeName,
-            red = channels.safeRed,
-            green = channels.safeGreen,
-            blue = channels.safeBlue,
-            white = channels.safeWhite,
-            createdAtMillis = System.currentTimeMillis()
-        )
-
-        savedPresets = savedPresets + preset
-        renderCurrentState()
 
         viewModelScope.launch {
-            _events.emit(
-                ManualLightEvent.ShowMessage(
-                    "Preset saved"
+            runCatching {
+                presetStore.savePreset(
+                    deviceId = deviceId,
+                    name = safeName,
+                    channels = channels
                 )
-            )
+            }.onSuccess {
+                _events.emit(
+                    ManualLightEvent.ShowMessage(
+                        "Preset saved"
+                    )
+                )
+            }.onFailure { exception ->
+                _events.emit(
+                    ManualLightEvent.ShowError(
+                        exception.message ?: "Preset could not be saved"
+                    )
+                )
+            }
         }
     }
 
@@ -259,6 +273,20 @@ class DeviceLightManualViewModel(
                 channels = manualDraftChannels,
                 immediate = true
             )
+        }
+    }
+
+    private fun observeSavedPresets() {
+        savedPresetCollectorJob?.cancel()
+        savedPresetCollectorJob = viewModelScope.launch {
+            presetStore.presetsForDeviceFlow(deviceId).collect { presets ->
+                savedPresets = presets.map { preset ->
+                    preset.toManualLightPreset()
+                }
+                _uiState.value = _uiState.value.copy(
+                    savedPresets = savedPresets
+                )
+            }
         }
     }
 
@@ -668,6 +696,18 @@ class DeviceLightManualViewModel(
         }
 
         return null
+    }
+
+    private fun SavedLightPreset.toManualLightPreset(): ManualLightPreset {
+        return ManualLightPreset(
+            id = id,
+            name = name,
+            red = red.coerceIn(0, 100),
+            green = green.coerceIn(0, 100),
+            blue = blue.coerceIn(0, 100),
+            white = white.coerceIn(0, 100),
+            createdAtMillis = createdAt
+        )
     }
 
     private fun LightRgbwChannels.toApiChannelValues(): LightChannelValues {

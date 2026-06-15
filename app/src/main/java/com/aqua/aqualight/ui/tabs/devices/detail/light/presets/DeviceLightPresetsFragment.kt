@@ -150,6 +150,7 @@ class DeviceLightPresetsFragment :
                 viewModel.events.collect { event ->
                     when (event) {
                         is DeviceLightPresetsEvent.ShowMessage -> {
+                            syncActivePresetFromRuntime()
                             showDeviceSnack(
                                 message = event.message,
                                 type = DeviceFeedbackType.SUCCESS

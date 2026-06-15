@@ -113,6 +113,51 @@ class LightRuntimeDeviceAccessor(
         }
     }
 
+    suspend fun setSceneOutput(
+        deviceId: Long,
+        channelValues: LightChannelValues,
+        sceneName: String,
+        sceneSource: String?
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light device id is missing"
+            )
+        }
+
+        val normalizedChannels = channelValues.normalized()
+        return commandGateway.execute(
+            deviceId = deviceId
+        ) { device, connection ->
+            when (val deviceApi = createLightDeviceApi(device, connection)) {
+                is ApiResult.Success -> {
+                    when (val result = deviceApi.value.lightApi.setManual(
+                        connection = deviceApi.value.connection,
+                        request = LightManualRequest(
+                            powerOn = !normalizedChannels.isOff,
+                            channelValues = normalizedChannels
+                        )
+                    )) {
+                        is ApiResult.Success -> {
+                            LightLocalOverrideStore.recordScene(
+                                deviceId = deviceId,
+                                sceneName = sceneName,
+                                sceneSource = sceneSource,
+                                channels = normalizedChannels
+                            )
+                            result
+                        }
+
+                        is ApiResult.Error -> result
+                    }
+                }
+
+                is ApiResult.Error -> deviceApi
+            }
+        }
+    }
+
     suspend fun resumeAuto(
         deviceId: Long
     ): ApiResult<Unit> {

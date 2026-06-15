@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.devices.light.presets.store";
+option java_multiple_files = true;
+
+message LightPresetsStore {
+  repeated StoredLightPreset presets = 1;
+}
+
+message StoredLightPreset {
+  string id = 1;
+  string owner_uid = 2;
+
+  int64 device_id = 3;
+  string device_uid = 4;
+  string product_id = 5;
+
+  string name = 6;
+  int32 red = 7;
+  int32 green = 8;
+  int32 blue = 9;
+  int32 white = 10;
+
+  int64 created_at_millis = 11;
+  int64 updated_at_millis = 12;
+}
