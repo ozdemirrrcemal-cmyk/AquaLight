@@ -60,6 +60,16 @@ class DeviceLightFragment : Fragment(R.layout.fragment_device_light) {
         )
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.onDashboardVisible()
+    }
+
+    override fun onStop() {
+        viewModel.onDashboardHidden()
+        super.onStop()
+    }
+
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
             fragment = this,

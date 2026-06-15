@@ -6,7 +6,8 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceRuntimeSnapshot
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.catalog.AquaDeviceCategory
-import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeReadProfile
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -14,16 +15,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 
 /**
- * Optional tank-detail runtime source for Light devices.
- *
- * This class is intentionally not registered as the default source yet. When we
- * connect live data to TankDetail, TankAssignedDevicesRepository can receive
- * this source (or a CompositeTankDeviceRuntimeDataSource containing it) without
- * changing UI fragments.
+ * Tank-detail runtime source backed by the central Light runtime repository.
  */
 class LightTankDeviceRuntimeDataSource(
     context: Context,
-    private val runtimeAccessor: LightRuntimeDeviceAccessor = LightRuntimeDeviceAccessor(
+    private val runtimeRepository: LightRuntimeRepository = LightRuntimeRepository.get(
         context = context.applicationContext
     ),
     private val pollIntervalMillis: Long = DEFAULT_POLL_INTERVAL_MILLIS
@@ -54,9 +50,12 @@ class LightTankDeviceRuntimeDataSource(
     ): Map<Long, TankDeviceRuntimeSnapshot> {
         return buildMap {
             devices.forEach { device ->
-                val snapshot = when (val result = runtimeAccessor.readSnapshot(device.id)) {
+                val session = runtimeRepository.session(device.id)
+                val snapshot = when (val result = session.refreshNow(
+                    readProfile = LightRuntimeReadProfile.LIVE
+                )) {
                     is ApiResult.Success -> result.value
-                    is ApiResult.Error -> null
+                    is ApiResult.Error -> session.state.value.snapshot
                 } ?: return@forEach
 
                 put(

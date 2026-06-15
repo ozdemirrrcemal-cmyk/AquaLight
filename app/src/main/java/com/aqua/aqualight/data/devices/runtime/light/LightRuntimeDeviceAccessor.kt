@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.api.AquaDeviceApiFactory
 import com.aqua.aqualight.data.devices.api.AquaDeviceConnection
 import com.aqua.aqualight.data.devices.api.AquaLightDeviceApi
+import com.aqua.aqualight.data.devices.api.DeviceApiMode
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightManualRequest
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
@@ -15,12 +16,11 @@ import com.aqua.aqualight.data.devices.runtime.DeviceCommandGateway
 import com.aqua.aqualight.data.devices.runtime.DeviceEndpointResolver
 
 /**
- * Single entry point for Light runtime reads and live commands from a stored
- * Aqua device.
+ * Low-level command gateway for stored Light controllers.
  *
- * UI code passes only the local deviceId. IP is resolved here through the
- * central gateway. If the cached IP fails, the gateway rediscoveres the same
- * physical device by identity, updates DataStore, and retries once.
+ * This class resolves the current network endpoint and talks to the firmware API.
+ * Screen/ViewModel code should use LightRuntimeRepository instead so all visible
+ * Light screens share the same runtime StateFlow.
  */
 class LightRuntimeDeviceAccessor(
     context: Context,
@@ -39,8 +39,22 @@ class LightRuntimeDeviceAccessor(
     }
 
     suspend fun readSnapshot(
-        deviceId: Long
+        deviceId: Long,
+        readProfile: LightRuntimeReadProfile = LightRuntimeReadProfile.STANDARD
     ): ApiResult<LightRuntimeSnapshot> {
+        return when (val result = readSnapshotWithDevice(
+            deviceId = deviceId,
+            readProfile = readProfile
+        )) {
+            is ApiResult.Success -> ApiResult.success(result.value.snapshot)
+            is ApiResult.Error -> result
+        }
+    }
+
+    suspend fun readSnapshotWithDevice(
+        deviceId: Long,
+        readProfile: LightRuntimeReadProfile = LightRuntimeReadProfile.STANDARD
+    ): ApiResult<LightRuntimeDeviceSnapshot> {
         if (deviceId <= 0L) {
             return ApiResult.failure(
                 code = ApiErrorCode.INVALID_REQUEST,
@@ -53,13 +67,18 @@ class LightRuntimeDeviceAccessor(
         ) { device, connection ->
             when (val deviceApi = createLightDeviceApi(device, connection)) {
                 is ApiResult.Success -> {
-                    when (val snapshot = LightRuntimeRepositoryFactory
-                        .create(deviceApi.value)
-                        .readSnapshot(deviceApi.value.connection)) {
+                    val runtimeConnection = deviceApi.value.connection.forReadProfile(
+                        readProfile
+                    )
+                    when (val snapshot = createRuntimeDataSource(deviceApi.value)
+                        .readSnapshot(runtimeConnection)) {
                         is ApiResult.Success -> ApiResult.success(
-                            LightLocalOverrideStore.applyToSnapshot(
-                                deviceId = deviceId,
-                                snapshot = snapshot.value
+                            LightRuntimeDeviceSnapshot(
+                                device = device,
+                                snapshot = LightLocalOverrideStore.applyToSnapshot(
+                                    deviceId = deviceId,
+                                    snapshot = snapshot.value
+                                )
                             )
                         )
 
@@ -190,6 +209,27 @@ class LightRuntimeDeviceAccessor(
         }
     }
 
+    private fun createRuntimeDataSource(
+        deviceApi: AquaLightDeviceApi
+    ): LightRuntimeDataSource {
+        return when (deviceApi.mode) {
+            DeviceApiMode.LEGACY -> LegacyLightRuntimeDataSource(deviceApi.lightApi)
+            DeviceApiMode.V1 -> V1LightRuntimeDataSource(deviceApi.lightApi)
+        }
+    }
+
+    private fun AquaDeviceConnection.forReadProfile(
+        readProfile: LightRuntimeReadProfile
+    ): AquaDeviceConnection {
+        return when (readProfile) {
+            LightRuntimeReadProfile.STANDARD -> this
+            LightRuntimeReadProfile.LIVE -> copy(
+                connectTimeoutMillis = minOf(connectTimeoutMillis, LIVE_READ_TIMEOUT_MILLIS),
+                readTimeoutMillis = minOf(readTimeoutMillis, LIVE_READ_TIMEOUT_MILLIS)
+            )
+        }
+    }
+
     private fun createLightDeviceApi(
         device: DevicesDataStoreManager.DeviceInfo,
         connection: AquaDeviceConnection
@@ -244,5 +284,9 @@ class LightRuntimeDeviceAccessor(
             supportedFeatures = supportedFeatures,
             supportedScreens = supportedScreens
         )
+    }
+
+    private companion object {
+        const val LIVE_READ_TIMEOUT_MILLIS = 1_500
     }
 }

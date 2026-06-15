@@ -6,12 +6,14 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
 import com.aqua.aqualight.data.devices.api.light.LightMode
+import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.math.LightOutputMath
 import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
 import com.aqua.aqualight.data.devices.light.math.LightRgbwPowerCalibration
-import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideStore
-import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeState
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.data.devices.light.model.LightRgbwChannels
@@ -29,6 +31,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.abs
@@ -54,9 +57,11 @@ class DeviceLightManualViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val consumerKey = "light_manual_${System.identityHashCode(this)}"
+
     private val appContext = application.applicationContext
 
-    private val runtimeAccessor = LightRuntimeDeviceAccessor(
+    private val runtimeRepository = LightRuntimeRepository.get(
         context = appContext
     )
 
@@ -75,6 +80,8 @@ class DeviceLightManualViewModel(
         _events.asSharedFlow()
 
     private var deviceId: Long = 0L
+    private var runtimeSession: LightRuntimeSession? = null
+    private var runtimeStateCollectorJob: Job? = null
 
     private var controlMode: ManualLightControlMode = ManualLightControlMode.AUTO
     private var runtimeChannels: LightRgbwChannels = LightRgbwChannels(0, 0, 0, 0)
@@ -94,9 +101,18 @@ class DeviceLightManualViewModel(
     fun initialize(
         deviceId: Long
     ) {
+        if (this.deviceId == deviceId && runtimeSession != null) {
+            return
+        }
+
+        runtimeStateCollectorJob?.cancel()
+        runtimeSession?.release(consumerKey)
+        savedPresetCollectorJob?.cancel()
+
         this.deviceId = deviceId
 
         if (deviceId <= 0L) {
+            runtimeSession = null
             _uiState.value = buildState(
                 controlsEnabled = false,
                 connectionStatusText = LIGHT_DEVICE_INFORMATION_MISSING,
@@ -105,18 +121,23 @@ class DeviceLightManualViewModel(
             return
         }
 
+        runtimeSession = runtimeRepository.session(deviceId)
+        observeRuntimeState()
+        observeSavedPresets()
+
         _uiState.value = buildState(
             controlsEnabled = false,
             connectionStatusText = "Connecting to light controller",
             outputHintText = "Reading live RGBW output"
         )
+    }
 
-        observeSavedPresets()
+    fun onManualVisible() {
+        runtimeSession?.acquire(consumerKey)
+    }
 
-        refreshRuntimeSnapshot(
-            showLoading = true,
-            forceAutoMode = false
-        )
+    fun onManualHidden() {
+        runtimeSession?.release(consumerKey)
     }
 
     fun applyScene(
@@ -155,17 +176,14 @@ class DeviceLightManualViewModel(
             when (val result = sendResumeAutoCommand()) {
                 is ApiResult.Success -> {
                     controlMode = ManualLightControlMode.AUTO
-                    val refreshed = refreshRuntimeSnapshotNow(
-                        showLoading = false,
-                        forceAutoMode = true
-                    )
-                    if (refreshed) {
-                        _events.emit(
-                            ManualLightEvent.ShowMessage(
-                                "Auto schedule resumed"
-                            )
+                    selectedScene = null
+                    manualDraftChannels = runtimeChannels
+                    renderCurrentState()
+                    _events.emit(
+                        ManualLightEvent.ShowMessage(
+                            "Auto schedule resumed"
                         )
-                    }
+                    )
                 }
 
                 is ApiResult.Error -> {
@@ -290,60 +308,46 @@ class DeviceLightManualViewModel(
         }
     }
 
-    private fun refreshRuntimeSnapshot(
-        showLoading: Boolean,
-        forceAutoMode: Boolean
-    ) {
-        viewModelScope.launch {
-            refreshRuntimeSnapshotNow(
-                showLoading = showLoading,
-                forceAutoMode = forceAutoMode
-            )
+    private fun observeRuntimeState() {
+        runtimeStateCollectorJob?.cancel()
+        val session = runtimeSession ?: return
+
+        runtimeStateCollectorJob = viewModelScope.launch {
+            session.state.collectLatest { runtimeState ->
+                applyRuntimeState(runtimeState)
+            }
         }
     }
 
-    private suspend fun refreshRuntimeSnapshotNow(
-        showLoading: Boolean,
-        forceAutoMode: Boolean
-    ): Boolean {
-        if (showLoading) {
-            _events.emit(
-                ManualLightEvent.SetLoading(true)
+    private fun applyRuntimeState(
+        runtimeState: LightRuntimeState
+    ) {
+        val snapshot = runtimeState.snapshot
+        if (snapshot == null) {
+            _uiState.value = buildState(
+                controlsEnabled = false,
+                connectionStatusText = runtimeState.errorMessage ?: "Connecting to light controller",
+                outputHintText = runtimeState.errorMessage ?: "Reading live RGBW output"
+            )
+            return
+        }
+
+        if (!isSliderInteractionActive) {
+            applyRuntimeSnapshot(
+                snapshot = snapshot,
+                forceAutoMode = false
             )
         }
 
-        val success = when (val snapshot = runtimeAccessor.readSnapshot(deviceId)) {
-            is ApiResult.Success -> {
-                applyRuntimeSnapshot(
-                    snapshot = snapshot.value,
-                    forceAutoMode = forceAutoMode
-                )
-                renderCurrentState()
-                true
-            }
-
-            is ApiResult.Error -> {
-                _uiState.value = buildState(
-                    controlsEnabled = false,
-                    connectionStatusText = "Light controller is not reachable",
-                    outputHintText = snapshot.error.message
-                )
-                _events.emit(
-                    ManualLightEvent.ShowError(
-                        snapshot.error.message
-                    )
-                )
-                false
-            }
-        }
-
-        if (showLoading) {
-            _events.emit(
-                ManualLightEvent.SetLoading(false)
-            )
-        }
-
-        return success
+        _uiState.value = buildState(
+            controlsEnabled = runtimeState.isDeviceOnline,
+            connectionStatusText = when {
+                runtimeState.errorMessage != null -> runtimeState.errorMessage
+                runtimeState.isRefreshing -> "Syncing light controller"
+                else -> modeSubtitle()
+            },
+            outputHintText = modeOutputHint()
+        )
     }
 
     private fun applyRuntimeSnapshot(
@@ -493,7 +497,6 @@ class DeviceLightManualViewModel(
 
         when (val result = sendManualOutputCommand(safeChannels)) {
             is ApiResult.Success -> {
-                recordSceneOverrideIfNeeded(safeChannels)
                 lastCommandFlushAtMillis = SystemClock.uptimeMillis()
             }
 
@@ -506,20 +509,6 @@ class DeviceLightManualViewModel(
                 )
             }
         }
-    }
-
-    private fun recordSceneOverrideIfNeeded(
-        channels: LightRgbwChannels
-    ) {
-        val scene = selectedScene ?: return
-        if (controlMode != ManualLightControlMode.SCENE_OVERRIDE) return
-
-        LightLocalOverrideStore.recordScene(
-            deviceId = deviceId,
-            sceneName = scene.title,
-            sceneSource = scene.name,
-            channels = channels.toApiChannelValues()
-        )
     }
 
     private fun renderCurrentState() {
@@ -723,16 +712,40 @@ class DeviceLightManualViewModel(
     private suspend fun sendManualOutputCommand(
         channels: LightRgbwChannels
     ): ApiResult<Unit> {
-        return runtimeAccessor.setManualOutput(
-            deviceId = deviceId,
-            channelValues = channels.toApiChannelValues()
+        val session = runtimeSession ?: return ApiResult.failure(
+            code = ApiErrorCode.INVALID_REQUEST,
+            message = LIGHT_DEVICE_INFORMATION_MISSING
         )
+
+        val scene = selectedScene
+        return if (controlMode == ManualLightControlMode.SCENE_OVERRIDE && scene != null) {
+            session.setSceneOutput(
+                channelValues = channels.toApiChannelValues(),
+                sceneName = scene.title,
+                sceneSource = scene.name
+            )
+        } else {
+            session.setManualOutput(
+                channelValues = channels.toApiChannelValues()
+            )
+        }
     }
 
     private suspend fun sendResumeAutoCommand(): ApiResult<Unit> {
-        return runtimeAccessor.resumeAuto(
-            deviceId = deviceId
+        val session = runtimeSession ?: return ApiResult.failure(
+            code = ApiErrorCode.INVALID_REQUEST,
+            message = LIGHT_DEVICE_INFORMATION_MISSING
         )
+
+        return session.resumeAuto()
+    }
+
+    override fun onCleared() {
+        runtimeStateCollectorJob?.cancel()
+        savedPresetCollectorJob?.cancel()
+        manualCommandWorkerJob?.cancel()
+        runtimeSession?.release(consumerKey)
+        super.onCleared()
     }
 
     companion object {

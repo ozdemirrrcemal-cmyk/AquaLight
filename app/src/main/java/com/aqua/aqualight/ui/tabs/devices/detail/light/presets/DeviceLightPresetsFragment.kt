@@ -67,9 +67,19 @@ class DeviceLightPresetsFragment :
         observeEvents()
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.onPresetsVisible()
+    }
+
     override fun onResume() {
         super.onResume()
         syncActivePresetFromRuntime()
+    }
+
+    override fun onStop() {
+        viewModel.onPresetsHidden()
+        super.onStop()
     }
 
     private fun setupHeader() {

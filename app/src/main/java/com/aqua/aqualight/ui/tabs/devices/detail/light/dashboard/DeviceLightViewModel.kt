@@ -4,32 +4,28 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.data.devices.api.model.ApiResult
-import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.DeviceLightDashboardUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.model.LightDashboardMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.dashboard.timeline.LightDashboardTimelineMapper
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class DeviceLightViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val runtimeAccessor = LightRuntimeDeviceAccessor(
+    private val consumerKey = "light_dashboard_${System.identityHashCode(this)}"
+
+    private val runtimeRepository = LightRuntimeRepository.get(
         context = application.applicationContext
     )
-    private val refreshMutex = Mutex()
 
-    private val _uiState = MutableStateFlow(
+    private val _uiState = kotlinx.coroutines.flow.MutableStateFlow(
         unavailableState(
             reason = getApplication<Application>().getString(
                 R.string.light_dashboard_timeline_not_connected
@@ -37,31 +33,24 @@ class DeviceLightViewModel(
         )
     )
 
-    val uiState: StateFlow<DeviceLightDashboardUiState> =
-        _uiState.asStateFlow()
+    val uiState: kotlinx.coroutines.flow.StateFlow<DeviceLightDashboardUiState> =
+        _uiState
 
     private var deviceId: Long = 0L
-    private var runtimeJob: Job? = null
+    private var runtimeSession: LightRuntimeSession? = null
+    private var runtimeCollectorJob: Job? = null
 
     fun initialize(
         deviceId: Long
     ) {
-        if (this.deviceId == deviceId && runtimeJob?.isActive == true) {
+        if (this.deviceId == deviceId && runtimeSession != null) {
             return
         }
 
+        runtimeCollectorJob?.cancel()
+        runtimeSession?.release(consumerKey)
+        runtimeSession = null
         this.deviceId = deviceId
-        startRuntimePolling()
-    }
-
-    fun refreshNow() {
-        viewModelScope.launch {
-            readAndRenderSnapshot()
-        }
-    }
-
-    private fun startRuntimePolling() {
-        runtimeJob?.cancel()
 
         if (deviceId <= 0L) {
             _uiState.value = unavailableState(
@@ -70,36 +59,62 @@ class DeviceLightViewModel(
             return
         }
 
-        runtimeJob = viewModelScope.launch {
-            readAndRenderSnapshot()
-
-            while (isActive) {
-                delay(RUNTIME_REFRESH_INTERVAL_MILLIS)
-                readAndRenderSnapshot()
+        val session = runtimeRepository.session(deviceId)
+        runtimeSession = session
+        runtimeCollectorJob = viewModelScope.launch {
+            session.state.collectLatest { runtimeState ->
+                renderRuntimeState(runtimeState)
             }
         }
     }
 
-    private suspend fun readAndRenderSnapshot() {
-        refreshMutex.withLock {
-            if (deviceId <= 0L) {
-                _uiState.value = unavailableState(
-                    reason = LIGHT_DEVICE_INFORMATION_MISSING
-                )
-                return@withLock
-            }
-
-            _uiState.value = when (val result = runtimeAccessor.readSnapshot(deviceId)) {
-                is ApiResult.Success -> LightDashboardRuntimeUiMapper.map(
-                    context = getApplication<Application>(),
-                    snapshot = result.value
-                )
-
-                is ApiResult.Error -> unavailableState(
-                    reason = result.error.message
-                )
-            }
+    fun onDashboardVisible() {
+        if (deviceId <= 0L) {
+            _uiState.value = unavailableState(
+                reason = LIGHT_DEVICE_INFORMATION_MISSING
+            )
+            return
         }
+
+        runtimeSession?.acquire(consumerKey)
+    }
+
+    fun onDashboardHidden() {
+        runtimeSession?.release(consumerKey)
+    }
+
+    fun refreshNow() {
+        runtimeSession?.refreshAsync()
+    }
+
+    private fun renderRuntimeState(
+        runtimeState: LightRuntimeState
+    ) {
+        val snapshot = runtimeState.snapshot
+        if (snapshot == null) {
+            _uiState.value = unavailableState(
+                reason = runtimeState.errorMessage
+                    ?: getApplication<Application>().getString(
+                        R.string.light_dashboard_timeline_not_connected
+                    )
+            )
+            return
+        }
+
+        val connectionText = when {
+            runtimeState.errorMessage != null -> runtimeState.errorMessage
+            runtimeState.isRefreshing -> "Syncing light controller"
+            else -> "Live data synced"
+        }
+
+        _uiState.value = LightDashboardRuntimeUiMapper.map(
+            context = getApplication<Application>(),
+            snapshot = snapshot
+        ).copy(
+            isDeviceOnline = runtimeState.isDeviceOnline,
+            controlsEnabled = runtimeState.isDeviceOnline,
+            connectionStatusText = connectionText
+        )
     }
 
     private fun unavailableState(
@@ -137,11 +152,9 @@ class DeviceLightViewModel(
     }
 
     override fun onCleared() {
-        runtimeJob?.cancel()
+        runtimeCollectorJob?.cancel()
+        runtimeSession?.release(consumerKey)
         super.onCleared()
     }
 
-    companion object {
-        private const val RUNTIME_REFRESH_INTERVAL_MILLIS = 5_000L
-    }
 }

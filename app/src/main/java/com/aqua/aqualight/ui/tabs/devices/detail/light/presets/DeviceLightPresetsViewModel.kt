@@ -4,11 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
+import com.aqua.aqualight.data.devices.api.light.LightMode
+import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
-import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideStore
-import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideType
-import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
 import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
@@ -34,13 +35,15 @@ class DeviceLightPresetsViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
+    private val consumerKey = "light_presets_${System.identityHashCode(this)}"
+
     private val appContext = application.applicationContext
 
     private val presetStore = LightPresetDataStoreManager.create(
         context = appContext
     )
 
-    private val runtimeAccessor = LightRuntimeDeviceAccessor(
+    private val runtimeRepository = LightRuntimeRepository.get(
         context = appContext
     )
 
@@ -55,6 +58,7 @@ class DeviceLightPresetsViewModel(
         _events.asSharedFlow()
 
     private var deviceId: Long = 0L
+    private var runtimeSession: LightRuntimeSession? = null
     private var presetCollectorJob: Job? = null
 
     fun initialize(
@@ -62,11 +66,15 @@ class DeviceLightPresetsViewModel(
     ) {
         this.deviceId = deviceId
         presetCollectorJob?.cancel()
+        runtimeSession?.release(consumerKey)
+        runtimeSession = null
 
         if (deviceId <= 0L) {
             _presetsFlow.value = emptyList()
             return
         }
+
+        runtimeSession = runtimeRepository.session(deviceId)
 
         presetCollectorJob = viewModelScope.launch {
             presetStore.presetsForDeviceFlow(deviceId).collect { presets ->
@@ -75,25 +83,32 @@ class DeviceLightPresetsViewModel(
         }
     }
 
-    fun currentManualRuntime(): LightManualRuntimeSnapshot {
-        val override = LightLocalOverrideStore.current(
-            deviceId = deviceId
-        ) ?: return LightManualRuntimeSnapshot(
-            deviceId = deviceId
-        )
+    fun onPresetsVisible() {
+        runtimeSession?.acquire(consumerKey)
+    }
 
-        if (override.type != LightLocalOverrideType.SCENE) {
+    fun onPresetsHidden() {
+        runtimeSession?.release(consumerKey)
+    }
+
+    fun currentManualRuntime(): LightManualRuntimeSnapshot {
+        val snapshot = runtimeSession?.state?.value?.snapshot
+            ?: return LightManualRuntimeSnapshot(
+                deviceId = deviceId
+            )
+
+        if (snapshot.mode != LightMode.SCENE) {
             return LightManualRuntimeSnapshot(
                 deviceId = deviceId
             )
         }
 
-        val channels = override.channels.normalized()
+        val channels = snapshot.channels.normalized()
         return LightManualRuntimeSnapshot(
             deviceId = deviceId,
             isManualScene = true,
-            activeSceneName = override.sceneName,
-            activeSceneSource = override.sceneSource,
+            activeSceneName = snapshot.activeSceneName ?: snapshot.localOverride?.sceneName,
+            activeSceneSource = snapshot.activeSceneSource ?: snapshot.localOverride?.sceneSource,
             red = channels.red,
             green = channels.green,
             blue = channels.blue,
@@ -111,11 +126,13 @@ class DeviceLightPresetsViewModel(
                 DeviceLightPresetsEvent.SetLoading(true)
             )
 
-            val result = runtimeAccessor.setSceneOutput(
-                deviceId = deviceId,
+            val result = runtimeSession?.setSceneOutput(
                 channelValues = preset.toLightChannelValues(),
                 sceneName = preset.title,
                 sceneSource = preset.sceneSourceKey()
+            ) ?: ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light device id is missing"
             )
 
             when (result) {
@@ -175,6 +192,12 @@ class DeviceLightPresetsViewModel(
         }
     }
 
+    override fun onCleared() {
+        presetCollectorJob?.cancel()
+        runtimeSession?.release(consumerKey)
+        super.onCleared()
+    }
+
     private fun LightPresetItem.toLightChannelValues(): LightChannelValues {
         return LightChannelValues(
             red = red.coerceIn(0, 100),
@@ -191,6 +214,7 @@ class DeviceLightPresetsViewModel(
             id
         }
     }
+
 }
 
 data class LightManualRuntimeSnapshot(

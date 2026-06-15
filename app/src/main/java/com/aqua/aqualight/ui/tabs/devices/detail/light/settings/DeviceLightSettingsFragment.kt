@@ -21,7 +21,6 @@ import com.aqua.aqualight.ui.tabs.devices.common.feedback.showDeviceSnack
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.sheet.LightSettingValueSheet
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.navigation.fragment.navArgs
 
@@ -54,7 +53,16 @@ class DeviceLightSettingsFragment :
         observeEvents()
 
         viewModel.initialize(deviceId)
-        startAutoRefresh()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.onSettingsVisible()
+    }
+
+    override fun onStop() {
+        viewModel.onSettingsHidden()
+        super.onStop()
     }
 
     private fun setupHeader() {
@@ -253,17 +261,6 @@ class DeviceLightSettingsFragment :
         }
     }
 
-    private fun startAutoRefresh() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                while (true) {
-                    viewModel.refreshAll(showMessage = false)
-                    delay(SETTINGS_AUTO_REFRESH_INTERVAL_MS)
-                }
-            }
-        }
-    }
-
     private fun renderUiState(
         state: DeviceLightSettingsUiState
     ) {
@@ -439,7 +436,7 @@ class DeviceLightSettingsFragment :
         binding.rowFanStart.alpha = alpha
         binding.rowFanFullSpeed.alpha = alpha
 
-        if (!enabled) {
+        if (!state.isDeviceOnline) {
             binding.tvThermalProtectionStatus.text = "Runtime data unavailable"
             binding.tvCoolingStatus.text = "Unavailable"
             binding.tvCoolingMode.text = "Unavailable"
@@ -468,7 +465,6 @@ class DeviceLightSettingsFragment :
     }
 
     companion object {
-        private const val SETTINGS_AUTO_REFRESH_INTERVAL_MS = 5_000L
         const val ARG_DEVICE_ID = "deviceId"
     }
 }

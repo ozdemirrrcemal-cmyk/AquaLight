@@ -76,6 +76,16 @@ class DeviceLightManualFragment :
         )
     }
 
+    override fun onStart() {
+        super.onStart()
+        viewModel.onManualVisible()
+    }
+
+    override fun onStop() {
+        viewModel.onManualHidden()
+        super.onStop()
+    }
+
     private fun setupHeader() {
         binding.appHeader.setupAquaHeader(
             fragment = this,
