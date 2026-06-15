@@ -14,7 +14,7 @@ import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideStore
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFORMATION_MISSING
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
+import com.aqua.aqualight.data.devices.light.model.LightRgbwChannels
 import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.light.manual.model.ManualLightEvent
