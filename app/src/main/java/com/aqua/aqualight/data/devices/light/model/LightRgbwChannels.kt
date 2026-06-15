@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.core.color
+package com.aqua.aqualight.data.devices.light.model
 
 /**
  * Normalized WRGB channel values used by every light screen.

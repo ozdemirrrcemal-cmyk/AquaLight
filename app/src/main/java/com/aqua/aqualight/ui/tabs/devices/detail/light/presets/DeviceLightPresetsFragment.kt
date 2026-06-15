@@ -14,7 +14,7 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightPresetsBinding
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.model.SavedLightPreset
+import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.devices.common.feedback.DeviceConfirmBottomSheet

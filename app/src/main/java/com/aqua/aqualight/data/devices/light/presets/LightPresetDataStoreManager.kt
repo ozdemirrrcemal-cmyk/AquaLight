@@ -10,8 +10,8 @@ import com.aqua.aqualight.data.devices.DevicesDataStoreManager
 import com.aqua.aqualight.data.devices.light.presets.store.LightPresetsStore
 import com.aqua.aqualight.data.devices.light.presets.store.StoredLightPreset
 import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.model.SavedLightPreset
+import com.aqua.aqualight.data.devices.light.model.LightRgbwChannels
+import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

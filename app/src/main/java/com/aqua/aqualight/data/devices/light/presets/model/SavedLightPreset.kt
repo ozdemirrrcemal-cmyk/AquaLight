@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.model
+package com.aqua.aqualight.data.devices.light.presets.model
 
 data class SavedLightPreset(
     val id: String,

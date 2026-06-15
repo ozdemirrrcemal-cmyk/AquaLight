@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.catalog
 
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.color.LightRgbwChannels
+import com.aqua.aqualight.data.devices.light.model.LightRgbwChannels
 
 data class LightBuiltInPreset(
     val id: String,

@@ -9,7 +9,7 @@ import com.aqua.aqualight.data.devices.light.presets.LightPresetDataStoreManager
 import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideStore
 import com.aqua.aqualight.data.devices.runtime.light.LightLocalOverrideType
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeDeviceAccessor
-import com.aqua.aqualight.ui.tabs.devices.detail.light.core.presets.model.SavedLightPreset
+import com.aqua.aqualight.data.devices.light.presets.model.SavedLightPreset
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.DeviceLightPresetsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presets.model.LightPresetItem
 import kotlinx.coroutines.Job
