@@ -52,4 +52,25 @@ class V1LightApi(
     ): ApiResult<Unit> {
         return ApiResult.notConnected()
     }
+
+    override suspend fun setThermalProtection(
+        connection: AquaDeviceConnection,
+        request: LightThermalProtectionRequest
+    ): ApiResult<Unit> {
+        return ApiResult.notConnected()
+    }
+
+    override suspend fun setCoolingController(
+        connection: AquaDeviceConnection,
+        request: LightCoolingControllerRequest
+    ): ApiResult<Unit> {
+        return ApiResult.notConnected()
+    }
+
+    override suspend fun syncTime(
+        connection: AquaDeviceConnection,
+        request: LightTimeSyncRequest
+    ): ApiResult<Unit> {
+        return ApiResult.notConnected()
+    }
 }

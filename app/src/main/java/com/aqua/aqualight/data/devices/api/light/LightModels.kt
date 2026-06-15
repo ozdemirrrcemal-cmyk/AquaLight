@@ -80,6 +80,30 @@ data class LightAutomationRequest(
     val cloudSimulationEnabled: Boolean = false
 )
 
+data class LightThermalProtectionRequest(
+    val sensorIndexes: List<Int> = emptyList(),
+    val limitTemperatureCelsius: Int? = null,
+    val lightReductionPercent: Int? = null,
+    val recoveryIntervalSeconds: Int? = null
+)
+
+data class LightCoolingControllerRequest(
+    val controllerIndex: Int,
+    val enabled: Boolean? = null,
+    val fanStartTemperatureCelsius: Int? = null,
+    val fanFullSpeedTemperatureCelsius: Int? = null
+)
+
+data class LightTimeSyncRequest(
+    val year: Int,
+    val month: Int,
+    val day: Int,
+    val weekDay: Int,
+    val hour: Int,
+    val minute: Int,
+    val second: Int
+)
+
 data class LightDeviceState(
     val status: LightStatus = LightStatus(),
     val channels: LightChannelValues = LightChannelValues(),

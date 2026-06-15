@@ -59,28 +59,19 @@ class LegacyLightApi(
         connection: AquaDeviceConnection,
         request: LightManualRequest
     ): ApiResult<Unit> {
-        val command = buildManualCommand(request)
-        return when (val response = client.set(
+        return sendLegacySet(
             connection = connection,
-            command = command
-        )) {
-            is ApiResult.Success -> ApiResult.success(Unit)
-            is ApiResult.Error -> response
-        }
+            json = buildManualJson(request)
+        )
     }
-
 
     override suspend fun resumeAuto(
         connection: AquaDeviceConnection
     ): ApiResult<Unit> {
-        val command = buildResumeAutoCommand()
-        return when (val response = client.set(
+        return sendLegacySet(
             connection = connection,
-            command = command
-        )) {
-            is ApiResult.Success -> ApiResult.success(Unit)
-            is ApiResult.Error -> response
-        }
+            json = buildResumeAutoJson()
+        )
     }
 
     override suspend fun setAutomation(
@@ -91,6 +82,185 @@ class LegacyLightApi(
             code = ApiErrorCode.UNSUPPORTED_FIRMWARE,
             message = "Legacy light automation write is intentionally not enabled in the data layer yet"
         )
+    }
+
+    override suspend fun setThermalProtection(
+        connection: AquaDeviceConnection,
+        request: LightThermalProtectionRequest
+    ): ApiResult<Unit> {
+        val json = JSONObject()
+        var hasUpdate = false
+
+        request.limitTemperatureCelsius?.let { value ->
+            val sensorIndexes = request.sensorIndexes
+                .filter { index -> index >= 0 }
+                .distinct()
+                .sorted()
+
+            if (sensorIndexes.isEmpty()) {
+                return ApiResult.failure(
+                    code = ApiErrorCode.INVALID_REQUEST,
+                    message = "No temperature sensor is available for thermal limit"
+                )
+            }
+
+            val data = JSONObject().apply {
+                sensorIndexes.forEach { index ->
+                    put(
+                        index.toString(),
+                        JSONObject().apply {
+                            put("TempLightErr", value.coerceIn(MIN_TEMPERATURE_CELSIUS, MAX_TEMPERATURE_CELSIUS))
+                        }
+                    )
+                }
+            }
+
+            json.put(
+                KEY_TEMPERATURE,
+                JSONObject().apply {
+                    put("Data", data)
+                }
+            )
+            hasUpdate = true
+        }
+
+        val lightSettings = JSONObject()
+        request.lightReductionPercent?.let { value ->
+            lightSettings.put(
+                "LightDownErr",
+                value.coerceIn(MIN_PERCENT, MAX_PERCENT)
+            )
+            hasUpdate = true
+        }
+        request.recoveryIntervalSeconds?.let { value ->
+            lightSettings.put(
+                "TimeDownErr",
+                value.coerceIn(MIN_RECOVERY_SECONDS, MAX_RECOVERY_SECONDS)
+            )
+            hasUpdate = true
+        }
+
+        if (lightSettings.length() > 0) {
+            json.put(KEY_LIGHT_PROGRAM, lightSettings)
+        }
+
+        if (!hasUpdate) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "No thermal protection setting was provided"
+            )
+        }
+
+        return sendLegacySet(
+            connection = connection,
+            json = json
+        )
+    }
+
+    override suspend fun setCoolingController(
+        connection: AquaDeviceConnection,
+        request: LightCoolingControllerRequest
+    ): ApiResult<Unit> {
+        if (request.controllerIndex < 0) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Cooling controller is missing"
+            )
+        }
+
+        val controllerSettings = JSONObject()
+        request.enabled?.let { enabled ->
+            controllerSettings.put("Enabled", enabled)
+        }
+        request.fanStartTemperatureCelsius?.let { value ->
+            controllerSettings.put(
+                "TMin",
+                value.coerceIn(MIN_TEMPERATURE_CELSIUS, MAX_TEMPERATURE_CELSIUS)
+            )
+        }
+        request.fanFullSpeedTemperatureCelsius?.let { value ->
+            controllerSettings.put(
+                "TMax",
+                value.coerceIn(MIN_TEMPERATURE_CELSIUS, MAX_TEMPERATURE_CELSIUS)
+            )
+        }
+
+        if (controllerSettings.length() == 0) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "No cooling controller setting was provided"
+            )
+        }
+
+        val start = request.fanStartTemperatureCelsius
+        val full = request.fanFullSpeedTemperatureCelsius
+        if (start != null && full != null && full <= start) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Fan full speed temperature must be higher than fan start temperature"
+            )
+        }
+
+        val json = JSONObject().apply {
+            put(
+                KEY_COOLING,
+                JSONObject().apply {
+                    put(
+                        "Data",
+                        JSONObject().apply {
+                            put(request.controllerIndex.toString(), controllerSettings)
+                        }
+                    )
+                }
+            )
+        }
+
+        return sendLegacySet(
+            connection = connection,
+            json = json
+        )
+    }
+
+    override suspend fun syncTime(
+        connection: AquaDeviceConnection,
+        request: LightTimeSyncRequest
+    ): ApiResult<Unit> {
+        val setTime = JSONObject().apply {
+            put("Y", request.year.coerceIn(MIN_YEAR, MAX_YEAR))
+            put("Mn", request.month.coerceIn(1, 12))
+            put("D", request.day.coerceIn(1, 31))
+            put("WD", request.weekDay.coerceIn(1, 7))
+            put("H", request.hour.coerceIn(0, 23))
+            put("M", request.minute.coerceIn(0, 59))
+            put("S", request.second.coerceIn(0, 59))
+        }
+
+        val json = JSONObject().apply {
+            put(
+                KEY_TIME,
+                JSONObject().apply {
+                    put("SetTime", setTime)
+                }
+            )
+        }
+
+        return sendLegacySet(
+            connection = connection,
+            json = json
+        )
+    }
+
+    private suspend fun sendLegacySet(
+        connection: AquaDeviceConnection,
+        json: JSONObject
+    ): ApiResult<Unit> {
+        return when (val response = client.set(
+            connection = connection,
+            command = buildSetCommand(json)
+        )) {
+            is ApiResult.Success -> ApiResult.success(Unit)
+            is ApiResult.Error -> response
+        }
     }
 
     private fun buildFullStateQuery(): Map<String, String> {
@@ -109,9 +279,9 @@ class LegacyLightApi(
         )
     }
 
-    private fun buildManualCommand(
+    private fun buildManualJson(
         request: LightManualRequest
-    ): String {
+    ): JSONObject {
         val values = request.channelValues.normalized()
         val data = JSONObject().apply {
             put(
@@ -140,7 +310,7 @@ class LegacyLightApi(
             )
         }
 
-        val json = JSONObject().apply {
+        return JSONObject().apply {
             put(
                 KEY_LED_PWM,
                 JSONObject().apply {
@@ -148,20 +318,9 @@ class LegacyLightApi(
                 }
             )
         }
-
-        return buildString {
-            append(PARAM_JSON)
-            append('=')
-            append(json.toString())
-            append('&')
-            append(PARAM_RETURN)
-            append('=')
-            append(returnObject().toString())
-        }
     }
 
-
-    private fun buildResumeAutoCommand(): String {
+    private fun buildResumeAutoJson(): JSONObject {
         val data = JSONObject().apply {
             listOf(
                 LEGACY_WHITE_INDEX,
@@ -176,7 +335,7 @@ class LegacyLightApi(
             }
         }
 
-        val json = JSONObject().apply {
+        return JSONObject().apply {
             put(
                 KEY_LED_PWM,
                 JSONObject().apply {
@@ -184,7 +343,11 @@ class LegacyLightApi(
                 }
             )
         }
+    }
 
+    private fun buildSetCommand(
+        json: JSONObject
+    ): String {
         return buildString {
             append(PARAM_JSON)
             append('=')
@@ -209,8 +372,6 @@ class LegacyLightApi(
             )
         }
     }
-
-
 
     private fun resumeAutoChannelObject(): JSONObject {
         return JSONObject().apply {
@@ -284,6 +445,14 @@ class LegacyLightApi(
         const val LEGACY_RED_INDEX = 1
         const val LEGACY_GREEN_INDEX = 2
         const val LEGACY_BLUE_INDEX = 3
+        const val MIN_PERCENT = 0
+        const val MAX_PERCENT = 100
+        const val MIN_TEMPERATURE_CELSIUS = 0
+        const val MAX_TEMPERATURE_CELSIUS = 100
+        const val MIN_RECOVERY_SECONDS = 1
+        const val MAX_RECOVERY_SECONDS = 3600
+        const val MIN_YEAR = 2020
+        const val MAX_YEAR = 2099
         const val MANUAL_OVERRIDE_TIMEOUT_MILLIS = 24 * 60 * 60 * 1000
         const val MANUAL_RESUME_VALUE = -1.0
         const val LEGACY_PROGRAM_ID = "legacy-light-schedule"

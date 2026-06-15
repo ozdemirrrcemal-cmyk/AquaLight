@@ -1,7 +1,10 @@
 package com.aqua.aqualight.data.devices.runtime.light
 
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
+import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightMode
+import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
+import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.light.math.LightPowerMath
@@ -277,6 +280,225 @@ class LightRuntimeSession internal constructor(
                     result
                 }
             }
+        }
+    }
+
+    suspend fun setThermalProtection(
+        request: LightThermalProtectionRequest
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            setInvalidDeviceState()
+            return invalidDeviceResult()
+        }
+
+        val previousSnapshot = _state.value.snapshot
+        applyOptimisticThermalProtection(request)
+
+        return withContext(ioDispatcher) {
+            when (val result = accessor.setThermalProtection(
+                deviceId = deviceId,
+                request = request
+            )) {
+                is ApiResult.Success -> {
+                    refreshAsync(
+                        readProfile = LightRuntimeReadProfile.STANDARD
+                    )
+                    result
+                }
+
+                is ApiResult.Error -> {
+                    restoreAfterCommandError(
+                        previousSnapshot = previousSnapshot,
+                        message = result.error.message
+                    )
+                    result
+                }
+            }
+        }
+    }
+
+    suspend fun setCoolingController(
+        request: LightCoolingControllerRequest
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            setInvalidDeviceState()
+            return invalidDeviceResult()
+        }
+
+        val previousSnapshot = _state.value.snapshot
+        applyOptimisticCoolingController(request)
+
+        return withContext(ioDispatcher) {
+            when (val result = accessor.setCoolingController(
+                deviceId = deviceId,
+                request = request
+            )) {
+                is ApiResult.Success -> {
+                    refreshAsync(
+                        readProfile = LightRuntimeReadProfile.STANDARD
+                    )
+                    result
+                }
+
+                is ApiResult.Error -> {
+                    restoreAfterCommandError(
+                        previousSnapshot = previousSnapshot,
+                        message = result.error.message
+                    )
+                    result
+                }
+            }
+        }
+    }
+
+    suspend fun syncTime(
+        request: LightTimeSyncRequest
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            setInvalidDeviceState()
+            return invalidDeviceResult()
+        }
+
+        val previousSnapshot = _state.value.snapshot
+        applyOptimisticTimeSync(request)
+
+        return withContext(ioDispatcher) {
+            when (val result = accessor.syncTime(
+                deviceId = deviceId,
+                request = request
+            )) {
+                is ApiResult.Success -> {
+                    refreshAsync(
+                        readProfile = LightRuntimeReadProfile.STANDARD
+                    )
+                    result
+                }
+
+                is ApiResult.Error -> {
+                    restoreAfterCommandError(
+                        previousSnapshot = previousSnapshot,
+                        message = result.error.message
+                    )
+                    result
+                }
+            }
+        }
+    }
+
+    private fun applyOptimisticThermalProtection(
+        request: LightThermalProtectionRequest
+    ) {
+        val previous = _state.value.snapshot
+        if (previous == null) {
+            markCommandInProgress()
+            return
+        }
+
+        val limit = request.limitTemperatureCelsius?.toDouble()
+        val sensorIndexes = request.sensorIndexes.toSet()
+        val updatedSensors = if (limit == null || sensorIndexes.isEmpty()) {
+            previous.temperatureSensors
+        } else {
+            previous.temperatureSensors.map { sensor ->
+                if (sensor.index in sensorIndexes) {
+                    sensor.copy(
+                        lightLimitCelsius = limit
+                    )
+                } else {
+                    sensor
+                }
+            }
+        }
+
+        _state.update { state ->
+            state.copy(
+                snapshot = previous.copy(
+                    temperatureSensors = updatedSensors,
+                    thermalProtection = previous.thermalProtection.copy(
+                        lightDownErrPercent = request.lightReductionPercent
+                            ?: previous.thermalProtection.lightDownErrPercent,
+                        recoveryIntervalSeconds = request.recoveryIntervalSeconds
+                            ?: previous.thermalProtection.recoveryIntervalSeconds,
+                        limitCelsius = limit ?: previous.thermalProtection.limitCelsius
+                    )
+                ),
+                isDeviceOnline = true,
+                isRefreshing = true,
+                errorMessage = null
+            )
+        }
+    }
+
+    private fun applyOptimisticCoolingController(
+        request: LightCoolingControllerRequest
+    ) {
+        val previous = _state.value.snapshot
+        if (previous == null) {
+            markCommandInProgress()
+            return
+        }
+
+        _state.update { state ->
+            state.copy(
+                snapshot = previous.copy(
+                    coolingControllers = previous.coolingControllers.map { controller ->
+                        if (controller.index == request.controllerIndex) {
+                            controller.copy(
+                                enabled = request.enabled ?: controller.enabled,
+                                startCelsius = request.fanStartTemperatureCelsius?.toDouble()
+                                    ?: controller.startCelsius,
+                                fullSpeedCelsius = request.fanFullSpeedTemperatureCelsius?.toDouble()
+                                    ?: controller.fullSpeedCelsius
+                            )
+                        } else {
+                            controller
+                        }
+                    }
+                ),
+                isDeviceOnline = true,
+                isRefreshing = true,
+                errorMessage = null
+            )
+        }
+    }
+
+    private fun applyOptimisticTimeSync(
+        request: LightTimeSyncRequest
+    ) {
+        val previous = _state.value.snapshot
+        if (previous == null) {
+            markCommandInProgress()
+            return
+        }
+
+        val minuteOfDay = request.hour * 60 + request.minute
+        val timeText = "%02d:%02d:%02d".format(
+            request.hour,
+            request.minute,
+            request.second
+        )
+
+        _state.update { state ->
+            state.copy(
+                snapshot = previous.copy(
+                    deviceTime = previous.deviceTime.copy(
+                        currentText = timeText,
+                        currentMinuteOfDay = minuteOfDay
+                    )
+                ),
+                isDeviceOnline = true,
+                isRefreshing = true,
+                errorMessage = null
+            )
+        }
+    }
+
+    private fun markCommandInProgress() {
+        _state.update { state ->
+            state.copy(
+                isRefreshing = true,
+                errorMessage = null
+            )
         }
     }
 

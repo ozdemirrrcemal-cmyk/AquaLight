@@ -4,7 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.data.devices.DevicesDataStoreManager
+import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
+import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
+import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiResult
+import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeReadProfile
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSession
 import com.aqua.aqualight.data.devices.runtime.light.LightRuntimeSnapshot
@@ -13,6 +17,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.common.LIGHT_DEVICE_INFOR
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsEvent
 import com.aqua.aqualight.ui.tabs.devices.detail.light.settings.model.DeviceLightSettingsUiState
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -102,7 +107,9 @@ class DeviceLightSettingsViewModel(
                 )
             }
 
-            when (val result = session.refreshNow()) {
+            when (val result = session.refreshNow(
+                readProfile = LightRuntimeReadProfile.STANDARD
+            )) {
                 is ApiResult.Success -> {
                     if (showMessage) {
                         _events.emit(
@@ -141,47 +148,149 @@ class DeviceLightSettingsViewModel(
     }
 
     fun syncTimeWithPhone() {
-        emitReadOnlyWarning()
+        val request = currentTimeSyncRequest()
+        runSettingsCommand(
+            successMessage = "Device time synced"
+        ) { session ->
+            session.syncTime(request)
+        }
     }
 
     fun updateFirmware() {
-        emitReadOnlyWarning()
+        emitFirmwareUpdateUnavailable()
     }
 
     fun updateLimitTemperature(
         value: Int
     ) {
-        emitReadOnlyWarning()
+        val sensorIndexes = currentTemperatureSensorIndexes()
+        if (sensorIndexes.isEmpty()) {
+            emitSettingsError(
+                "No temperature sensor is available for thermal limit"
+            )
+            return
+        }
+
+        runSettingsCommand(
+            successMessage = "Limit temperature updated"
+        ) { session ->
+            session.setThermalProtection(
+                LightThermalProtectionRequest(
+                    sensorIndexes = sensorIndexes,
+                    limitTemperatureCelsius = value
+                )
+            )
+        }
     }
 
     fun updateLightReduction(
         value: Int
     ) {
-        emitReadOnlyWarning()
+        runSettingsCommand(
+            successMessage = "Light reduction updated"
+        ) { session ->
+            session.setThermalProtection(
+                LightThermalProtectionRequest(
+                    lightReductionPercent = value
+                )
+            )
+        }
     }
 
     fun updateRecoveryInterval(
         value: Int
     ) {
-        emitReadOnlyWarning()
+        runSettingsCommand(
+            successMessage = "Recovery interval updated"
+        ) { session ->
+            session.setThermalProtection(
+                LightThermalProtectionRequest(
+                    recoveryIntervalSeconds = value
+                )
+            )
+        }
     }
 
     fun updateCoolingMode(
         enabled: Boolean
     ) {
-        emitReadOnlyWarning()
+        val controllerIndex = firstCoolingControllerIndex() ?: run {
+            emitSettingsError(
+                "Cooling controller is not available on this device"
+            )
+            return
+        }
+
+        runSettingsCommand(
+            successMessage = if (enabled) {
+                "Cooling enabled"
+            } else {
+                "Cooling disabled"
+            }
+        ) { session ->
+            session.setCoolingController(
+                LightCoolingControllerRequest(
+                    controllerIndex = controllerIndex,
+                    enabled = enabled
+                )
+            )
+        }
     }
 
     fun updateFanStartTemperature(
         value: Int
     ) {
-        emitReadOnlyWarning()
+        val controller = firstCoolingController() ?: run {
+            emitSettingsError(
+                "Cooling controller is not available on this device"
+            )
+            return
+        }
+        val currentFullSpeed = controller.fullSpeedCelsius?.roundToInt()
+        val adjustedFullSpeed = currentFullSpeed
+            ?.takeIf { fullSpeed -> fullSpeed <= value }
+            ?.let { (value + MIN_FAN_TEMPERATURE_GAP_CELSIUS).coerceAtMost(MAX_TEMPERATURE_CELSIUS) }
+
+        runSettingsCommand(
+            successMessage = "Fan start temperature updated"
+        ) { session ->
+            session.setCoolingController(
+                LightCoolingControllerRequest(
+                    controllerIndex = controller.index,
+                    fanStartTemperatureCelsius = value,
+                    fanFullSpeedTemperatureCelsius = adjustedFullSpeed
+                )
+            )
+        }
     }
 
     fun updateFanFullSpeedTemperature(
         value: Int
     ) {
-        emitReadOnlyWarning()
+        val controller = firstCoolingController() ?: run {
+            emitSettingsError(
+                "Cooling controller is not available on this device"
+            )
+            return
+        }
+        val currentStart = controller.startCelsius?.roundToInt()
+        if (currentStart != null && value <= currentStart) {
+            emitSettingsError(
+                "Fan full speed temperature must be higher than fan start temperature"
+            )
+            return
+        }
+
+        runSettingsCommand(
+            successMessage = "Fan full speed temperature updated"
+        ) { session ->
+            session.setCoolingController(
+                LightCoolingControllerRequest(
+                    controllerIndex = controller.index,
+                    fanFullSpeedTemperatureCelsius = value
+                )
+            )
+        }
     }
 
     private fun renderRuntimeState(
@@ -255,13 +364,12 @@ class DeviceLightSettingsViewModel(
             thermalProtectionStatusText = thermalStatusText(
                 limitCelsius = thermal.limitCelsius,
                 reductionPercent = thermal.reductionPercent
-                    ?: thermal.lightDownErrPercent
             ),
             currentTemperatureText = formatTemperature(primaryTemperature),
             temperatureSensorCount = snapshot.temperatureSensors.size,
             limitTemperatureCelsius = thermal.limitCelsius?.roundToInt() ?: DEFAULT_LIMIT_CELSIUS,
-            lightReductionPercent = thermal.reductionPercent
-                ?: thermal.lightDownErrPercent
+            lightReductionPercent = thermal.lightDownErrPercent
+                ?: thermal.reductionPercent
                 ?: DEFAULT_LIGHT_REDUCTION_PERCENT,
             recoveryIntervalSeconds = thermal.recoveryIntervalSeconds
                 ?: DEFAULT_RECOVERY_INTERVAL_SECONDS,
@@ -290,7 +398,7 @@ class DeviceLightSettingsViewModel(
             fanFullSpeedTemperatureCelsius = coolingController?.fullSpeedCelsius?.roundToInt()
                 ?: DEFAULT_FAN_FULL_SPEED_CELSIUS,
             isDeviceOnline = runtimeState.isDeviceOnline,
-            controlsEnabled = false,
+            controlsEnabled = runtimeState.isDeviceOnline,
             connectionStatusText = connectionStatus
         )
     }
@@ -336,7 +444,7 @@ class DeviceLightSettingsViewModel(
         reductionPercent: Int?
     ): String {
         return when {
-            reductionPercent != null && reductionPercent > 0 -> {
+            reductionPercent != null && reductionPercent in 0..99 -> {
                 "Thermal reduction active · $reductionPercent%"
             }
             limitCelsius != null -> {
@@ -402,11 +510,98 @@ class DeviceLightSettingsViewModel(
         ).format(Date(millis))
     }
 
-    private fun emitReadOnlyWarning() {
+    private fun runSettingsCommand(
+        successMessage: String,
+        command: suspend (LightRuntimeSession) -> ApiResult<Unit>
+    ) {
+        val session = runtimeSession ?: run {
+            emitSettingsError(
+                "Light runtime session is not ready"
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _events.emit(
+                DeviceLightSettingsEvent.SetLoading(true)
+            )
+
+            when (val result = command(session)) {
+                is ApiResult.Success -> {
+                    _events.emit(
+                        DeviceLightSettingsEvent.ShowMessage(
+                            successMessage
+                        )
+                    )
+                }
+
+                is ApiResult.Error -> {
+                    _events.emit(
+                        DeviceLightSettingsEvent.ShowError(
+                            result.error.message
+                        )
+                    )
+                }
+            }
+
+            _events.emit(
+                DeviceLightSettingsEvent.SetLoading(false)
+            )
+        }
+    }
+
+    private fun currentTemperatureSensorIndexes(): List<Int> {
+        return currentSnapshot()
+            ?.temperatureSensors
+            ?.map { sensor -> sensor.index }
+            ?.filter { index -> index >= 0 }
+            ?.distinct()
+            ?.sorted()
+            .orEmpty()
+    }
+
+    private fun firstCoolingControllerIndex(): Int? {
+        return firstCoolingController()?.index
+    }
+
+    private fun firstCoolingController() = currentSnapshot()
+        ?.coolingControllers
+        ?.firstOrNull()
+
+    private fun currentSnapshot(): LightRuntimeSnapshot? {
+        return runtimeSession?.state?.value?.snapshot
+    }
+
+    private fun currentTimeSyncRequest(): LightTimeSyncRequest {
+        val now = Calendar.getInstance()
+        return LightTimeSyncRequest(
+            year = now.get(Calendar.YEAR),
+            month = now.get(Calendar.MONTH) + 1,
+            day = now.get(Calendar.DAY_OF_MONTH),
+            weekDay = now.get(Calendar.DAY_OF_WEEK),
+            hour = now.get(Calendar.HOUR_OF_DAY),
+            minute = now.get(Calendar.MINUTE),
+            second = now.get(Calendar.SECOND)
+        )
+    }
+
+    private fun emitFirmwareUpdateUnavailable() {
         viewModelScope.launch {
             _events.emit(
                 DeviceLightSettingsEvent.ShowWarning(
-                    "Live settings are read-only on the current controller firmware."
+                    "Firmware update requires a dedicated upload flow and is not wired to Light settings yet."
+                )
+            )
+        }
+    }
+
+    private fun emitSettingsError(
+        message: String
+    ) {
+        viewModelScope.launch {
+            _events.emit(
+                DeviceLightSettingsEvent.ShowError(
+                    message
                 )
             )
         }
@@ -424,5 +619,7 @@ class DeviceLightSettingsViewModel(
         private const val DEFAULT_RECOVERY_INTERVAL_SECONDS = 60
         private const val DEFAULT_FAN_START_CELSIUS = 30
         private const val DEFAULT_FAN_FULL_SPEED_CELSIUS = 50
+        private const val MIN_FAN_TEMPERATURE_GAP_CELSIUS = 5
+        private const val MAX_TEMPERATURE_CELSIUS = 100
     }
 }

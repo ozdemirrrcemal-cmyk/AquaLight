@@ -7,7 +7,10 @@ import com.aqua.aqualight.data.devices.api.AquaDeviceConnection
 import com.aqua.aqualight.data.devices.api.AquaLightDeviceApi
 import com.aqua.aqualight.data.devices.api.DeviceApiMode
 import com.aqua.aqualight.data.devices.api.light.LightChannelValues
+import com.aqua.aqualight.data.devices.api.light.LightCoolingControllerRequest
 import com.aqua.aqualight.data.devices.api.light.LightManualRequest
+import com.aqua.aqualight.data.devices.api.light.LightThermalProtectionRequest
+import com.aqua.aqualight.data.devices.api.light.LightTimeSyncRequest
 import com.aqua.aqualight.data.devices.api.model.ApiErrorCode
 import com.aqua.aqualight.data.devices.api.model.ApiResult
 import com.aqua.aqualight.data.devices.api.model.DeviceIdentity
@@ -202,6 +205,87 @@ class LightRuntimeDeviceAccessor(
 
                         is ApiResult.Error -> result
                     }
+                }
+
+                is ApiResult.Error -> deviceApi
+            }
+        }
+    }
+
+    suspend fun setThermalProtection(
+        deviceId: Long,
+        request: LightThermalProtectionRequest
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light device id is missing"
+            )
+        }
+
+        return commandGateway.execute(
+            deviceId = deviceId
+        ) { device, connection ->
+            when (val deviceApi = createLightDeviceApi(device, connection)) {
+                is ApiResult.Success -> {
+                    deviceApi.value.lightApi.setThermalProtection(
+                        connection = deviceApi.value.connection,
+                        request = request
+                    )
+                }
+
+                is ApiResult.Error -> deviceApi
+            }
+        }
+    }
+
+    suspend fun setCoolingController(
+        deviceId: Long,
+        request: LightCoolingControllerRequest
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light device id is missing"
+            )
+        }
+
+        return commandGateway.execute(
+            deviceId = deviceId
+        ) { device, connection ->
+            when (val deviceApi = createLightDeviceApi(device, connection)) {
+                is ApiResult.Success -> {
+                    deviceApi.value.lightApi.setCoolingController(
+                        connection = deviceApi.value.connection,
+                        request = request
+                    )
+                }
+
+                is ApiResult.Error -> deviceApi
+            }
+        }
+    }
+
+    suspend fun syncTime(
+        deviceId: Long,
+        request: LightTimeSyncRequest
+    ): ApiResult<Unit> {
+        if (deviceId <= 0L) {
+            return ApiResult.failure(
+                code = ApiErrorCode.INVALID_REQUEST,
+                message = "Light device id is missing"
+            )
+        }
+
+        return commandGateway.execute(
+            deviceId = deviceId
+        ) { device, connection ->
+            when (val deviceApi = createLightDeviceApi(device, connection)) {
+                is ApiResult.Success -> {
+                    deviceApi.value.lightApi.syncTime(
+                        connection = deviceApi.value.connection,
+                        request = request
+                    )
                 }
 
                 is ApiResult.Error -> deviceApi

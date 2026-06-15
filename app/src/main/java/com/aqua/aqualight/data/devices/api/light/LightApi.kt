@@ -35,4 +35,19 @@ interface LightApi {
         connection: AquaDeviceConnection,
         request: LightAutomationRequest
     ): ApiResult<Unit>
+
+    suspend fun setThermalProtection(
+        connection: AquaDeviceConnection,
+        request: LightThermalProtectionRequest
+    ): ApiResult<Unit>
+
+    suspend fun setCoolingController(
+        connection: AquaDeviceConnection,
+        request: LightCoolingControllerRequest
+    ): ApiResult<Unit>
+
+    suspend fun syncTime(
+        connection: AquaDeviceConnection,
+        request: LightTimeSyncRequest
+    ): ApiResult<Unit>
 }
